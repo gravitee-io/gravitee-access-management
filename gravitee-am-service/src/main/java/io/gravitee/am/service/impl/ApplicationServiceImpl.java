@@ -85,6 +85,7 @@ import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
+import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
 import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -198,6 +199,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private TokenExchangeClaimMappingsValidator tokenExchangeClaimMappingsValidator;
+
+    @Autowired
+    private ApplicationCrossAppAccessValidator crossAppAccessValidator;
 
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
@@ -1149,6 +1153,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return validateTokenCustomClaims(app)
                             .flatMap(this::validateTokenExchangeClaimMappings)
+                            .flatMap(this::validateCrossAppAccessSettings)
                             .flatMap(GrantTypeUtils::validateGrantTypes)
                             .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
                             .flatMap(this::validateScopes)
@@ -1166,6 +1171,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         return claimValidation.isInvalid()
                 ? Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()))
                 : Single.just(application);
+    }
+
+    private Single<Application> validateCrossAppAccessSettings(Application application) {
+        return crossAppAccessValidator.validate(application.getSettings().getOauth())
+                .<Single<Application>>map(error -> Single.error(new InvalidClientMetadataException(error)))
+                .orElseGet(() -> Single.just(application));
     }
 
     private Single<Application> validateTokenExchangeClaimMappings(Application application) {

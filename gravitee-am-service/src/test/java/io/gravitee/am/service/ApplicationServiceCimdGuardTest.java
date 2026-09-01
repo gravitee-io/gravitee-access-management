@@ -32,6 +32,7 @@ import io.gravitee.am.service.impl.OAuthClientUniquenessValidator;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
+import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeClaimMappingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -120,6 +121,9 @@ public class ApplicationServiceCimdGuardTest {
 
     @Spy
     private TokenExchangeClaimMappingsValidator tokenExchangeClaimMappingsValidator = new TokenExchangeClaimMappingsValidator(20);
+
+    @Spy
+    private ApplicationCrossAppAccessValidator crossAppAccessValidator = new ApplicationCrossAppAccessValidator();
 
     @Before
     public void setUp() {

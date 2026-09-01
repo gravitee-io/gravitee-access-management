@@ -1,3 +1,22 @@
+.claim-group-header {
+  display: inline-flex;
+  align-items: center;
+  color: grey;
+  font-size: 14px;
+  gap: 4px;
+  text-decoration: none;
+}
+
+:host ::ng-deep .token-validity-field {
+  .mat-mdc-form-field-subscript-wrapper {
+    height: 20px;
+  }
+
+  .mat-mdc-form-field-hint {
+    white-space: nowrap;
+  }
+}
+
 .datatable-input {
   align-self: center;
 }

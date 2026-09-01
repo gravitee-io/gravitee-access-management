@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ApplicationCrossAppAccessSettings } from './ApplicationCrossAppAccessSettings';
+import {
+  ApplicationCrossAppAccessSettingsFromJSON,
+  ApplicationCrossAppAccessSettingsFromJSONTyped,
+  ApplicationCrossAppAccessSettingsToJSON,
+  ApplicationCrossAppAccessSettingsToJSONTyped,
+} from './ApplicationCrossAppAccessSettings';
 import type { TokenClaim } from './TokenClaim';
 import { TokenClaimFromJSON, TokenClaimFromJSONTyped, TokenClaimToJSON, TokenClaimToJSONTyped } from './TokenClaim';
 import type { JWKSet } from './JWKSet';
@@ -115,6 +122,12 @@ export interface PatchApplicationOAuthSettings {
   contacts?: Array<string>;
   /**
    *
+   * @type {ApplicationCrossAppAccessSettings}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  crossAppAccessSettings?: ApplicationCrossAppAccessSettings;
+  /**
+   *
    * @type {Array<string>}
    * @memberof PatchApplicationOAuthSettings
    */
@@ -161,6 +174,12 @@ export interface PatchApplicationOAuthSettings {
    * @memberof PatchApplicationOAuthSettings
    */
   grantTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  idJagValiditySeconds?: number;
   /**
    *
    * @type {string}
@@ -455,6 +474,8 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     clientSecretExpiresAt: json['clientSecretExpiresAt'] == null ? undefined : json['clientSecretExpiresAt'],
     clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
     contacts: json['contacts'] == null ? undefined : json['contacts'],
+    crossAppAccessSettings:
+      json['crossAppAccessSettings'] == null ? undefined : ApplicationCrossAppAccessSettingsFromJSON(json['crossAppAccessSettings']),
     defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
     defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
     disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
@@ -464,6 +485,7 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
     forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
     forceS256CodeChallengeMethod: json['forceS256CodeChallengeMethod'] == null ? undefined : json['forceS256CodeChallengeMethod'],
     grantTypes: json['grantTypes'] == null ? undefined : json['grantTypes'],
+    idJagValiditySeconds: json['idJagValiditySeconds'] == null ? undefined : json['idJagValiditySeconds'],
     idTokenEncryptedResponseAlg: json['idTokenEncryptedResponseAlg'] == null ? undefined : json['idTokenEncryptedResponseAlg'],
     idTokenEncryptedResponseEnc: json['idTokenEncryptedResponseEnc'] == null ? undefined : json['idTokenEncryptedResponseEnc'],
     idTokenSignedResponseAlg: json['idTokenSignedResponseAlg'] == null ? undefined : json['idTokenSignedResponseAlg'],
@@ -537,6 +559,7 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     clientSecretExpiresAt: value['clientSecretExpiresAt'],
     clientUri: value['clientUri'],
     contacts: value['contacts'],
+    crossAppAccessSettings: ApplicationCrossAppAccessSettingsToJSON(value['crossAppAccessSettings']),
     defaultACRvalues: value['defaultACRvalues'],
     defaultMaxAge: value['defaultMaxAge'],
     disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
@@ -545,6 +568,7 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     forcePKCE: value['forcePKCE'],
     forceS256CodeChallengeMethod: value['forceS256CodeChallengeMethod'],
     grantTypes: value['grantTypes'],
+    idJagValiditySeconds: value['idJagValiditySeconds'],
     idTokenEncryptedResponseAlg: value['idTokenEncryptedResponseAlg'],
     idTokenEncryptedResponseEnc: value['idTokenEncryptedResponseEnc'],
     idTokenSignedResponseAlg: value['idTokenSignedResponseAlg'],

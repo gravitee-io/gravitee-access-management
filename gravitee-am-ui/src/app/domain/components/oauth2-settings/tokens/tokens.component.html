@@ -20,13 +20,13 @@
     <form (keydown.enter)="(false)" (ngSubmit)="modelChanged()">
       <div class="gv-form-section">
         <div class="gv-form-section-title">
-          <h5>{{ context === 'Application' ? 'Tokens & User Profile' : 'Tokens' }}</h5>
+          <h5>Tokens TTL (seconds)</h5>
           <mat-divider></mat-divider>
         </div>
 
         <div fxLayout="column">
           <div fxLayout="row" fxLayoutGap="10px">
-            <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+            <mat-form-field class="token-validity-field" appearance="outline" floatLabel="always" [fxFlex]="validityFieldFlex">
               <mat-icon matPrefix>timer</mat-icon>
               <input
                 matInput
@@ -38,9 +38,15 @@
                 [(ngModel)]="oauthSettings.accessTokenValiditySeconds"
                 [disabled]="readonly"
               />
-              <mat-hint>Expiration of the Access tokens (seconds).</mat-hint>
+              <mat-hint>Access token</mat-hint>
             </mat-form-field>
-            <mat-form-field *ngIf="context !== 'McpServer'" appearance="outline" floatLabel="always" fxFlex="32">
+            <mat-form-field
+              *ngIf="context !== 'McpServer'"
+              class="token-validity-field"
+              appearance="outline"
+              floatLabel="always"
+              [fxFlex]="validityFieldFlex"
+            >
               <mat-icon matPrefix>timer</mat-icon>
               <input
                 matInput
@@ -52,9 +58,15 @@
                 [(ngModel)]="oauthSettings.refreshTokenValiditySeconds"
                 [disabled]="readonly"
               />
-              <mat-hint>Expiration of the Refresh tokens (seconds).</mat-hint>
+              <mat-hint>Refresh token</mat-hint>
             </mat-form-field>
-            <mat-form-field *ngIf="context !== 'McpServer'" appearance="outline" floatLabel="always" fxFlex="32">
+            <mat-form-field
+              *ngIf="context !== 'McpServer'"
+              class="token-validity-field"
+              appearance="outline"
+              floatLabel="always"
+              [fxFlex]="validityFieldFlex"
+            >
               <mat-icon matPrefix>timer</mat-icon>
               <input
                 matInput
@@ -66,7 +78,27 @@
                 [(ngModel)]="oauthSettings.idTokenValiditySeconds"
                 [disabled]="readonly"
               />
-              <mat-hint>Expiration of the ID tokens (seconds).</mat-hint>
+              <mat-hint>ID token</mat-hint>
+            </mat-form-field>
+            <mat-form-field
+              *ngIf="context !== 'McpServer'"
+              class="token-validity-field"
+              appearance="outline"
+              floatLabel="always"
+              [fxFlex]="validityFieldFlex"
+            >
+              <mat-icon matPrefix>timer</mat-icon>
+              <input
+                matInput
+                type="number"
+                placeholder="ID-JAG validity"
+                name="idJagValidity"
+                [min]="MIN_ID_JAG_VALIDITY_SECONDS"
+                (ngModelChange)="modelChanged()"
+                [(ngModel)]="oauthSettings.idJagValiditySeconds"
+                [disabled]="readonly"
+              />
+              <mat-hint>ID-JAG</mat-hint>
             </mat-form-field>
           </div>
         </div>
@@ -78,7 +110,7 @@
             <h5 style="margin: 0">Custom claims</h5>
             <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
           </div>
-          <small>You can add custom claims to the tokens (ID Token, Access Token) by picking attributes from the execution context.</small>
+          <small>You can add custom claims to the tokens by picking attributes from the execution context.</small>
           <mat-divider></mat-divider>
         </div>
         <div class="token-custom-claims">
@@ -101,15 +133,9 @@
             <ngx-datatable-group-header [rowHeight]="50">
               <ng-template let-group="group" let-expanded="expanded" ngx-datatable-group-header-template>
                 <div style="padding: 5px">
-                  <a
-                    href="javascript:void(0);"
-                    style="color: grey; text-decoration: none; font-size: 14px"
-                    [class.datatable-icon-right]="!expanded"
-                    [class.datatable-icon-down]="expanded"
-                    title="Expand/Collapse Group"
-                    (click)="toggleExpandGroup(group)"
-                  >
-                    {{ group.value[0].tokenType | uppercase }}
+                  <a href="javascript:void(0);" class="claim-group-header" title="Expand/Collapse Group" (click)="toggleExpandGroup(group)">
+                    <span [class.datatable-icon-right]="!expanded" [class.datatable-icon-down]="expanded"></span>
+                    <span>{{ group.value[0].tokenType | uppercase }}</span>
                   </a>
                 </div>
               </ng-template>
