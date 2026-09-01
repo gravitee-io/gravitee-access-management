@@ -1,0 +1,18 @@
+databaseChangeLog:
+  # What AM issues towards a trusted domain, as opposed to what it accepts from it: the resource
+  # servers it may mint an ID-JAG for, the expression producing "aud_sub", and the outbound scope
+  # mappings. Stored as one JSON document, null on every trusted domain that does not participate.
+  - changeSet:
+      id: 4.13.0-trust-domains-cross-app-access
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: trust_domains
+                columnName: cross_app_access
+      changes:
+        - addColumn:
+            tableName: trust_domains
+            columns:
+              - column: { name: cross_app_access, type: clob, constraints: { nullable: true } }

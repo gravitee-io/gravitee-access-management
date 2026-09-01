@@ -54,6 +54,7 @@ export class TrustDomainService {
         scopeMappings: trustDomain.scopeMappings,
         userBindingEnabled: trustDomain.userBindingEnabled,
         userBindingCriteria: trustDomain.userBindingCriteria,
+        crossAppAccess: trustDomain.crossAppAccess,
       })
       .pipe(map(normalizeTrustDomain));
   }

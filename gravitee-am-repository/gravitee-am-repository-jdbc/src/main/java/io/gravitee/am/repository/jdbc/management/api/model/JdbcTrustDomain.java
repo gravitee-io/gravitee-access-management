@@ -79,6 +79,12 @@ public class JdbcTrustDomain {
     @Column("user_binding_criteria")
     private String userBindingCriteria;
 
+    /**
+     * JSON-encoded {@code CrossAppAccessSettings}.
+     */
+    @Column("cross_app_access")
+    private String crossAppAccess;
+
     @Column("created_at")
     private LocalDateTime createdAt;
 
@@ -219,5 +225,13 @@ public class JdbcTrustDomain {
 
     public void setSpiffeTrustDomain(String spiffeTrustDomain) {
         this.spiffeTrustDomain = spiffeTrustDomain;
+    }
+
+    public String getCrossAppAccess() {
+        return crossAppAccess;
+    }
+
+    public void setCrossAppAccess(String crossAppAccess) {
+        this.crossAppAccess = crossAppAccess;
     }
 }

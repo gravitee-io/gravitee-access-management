@@ -16,7 +16,7 @@
 import { Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
-export type TrustDomainUsage = 'SPIFFE' | 'ISSUER';
+export type TrustDomainUsage = 'SPIFFE' | 'ISSUER' | 'TOKEN_EXCHANGE' | 'CROSS_APP_ACCESS';
 
 /** Page object for the merged Trusted Domain create/edit form. */
 export class TrustedDomainDetailPage extends BasePage {
@@ -157,6 +157,67 @@ export class TrustedDomainDetailPage extends BasePage {
     await this.userAttributeInput.fill(attribute);
     await this.claimExpressionInput.fill(expression);
     await this.addUserBindingButton.click();
+    await this.waitForReady();
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Cross App Access (trusted-issuer usage only)                       */
+  /* ------------------------------------------------------------------ */
+
+  get resourceServerNameInput(): Locator {
+    return this.page.locator('[data-testid="resourceServerNameInput"]');
+  }
+
+  get resourceServerResourceInput(): Locator {
+    return this.page.locator('[data-testid="resourceServerResourceInput"]');
+  }
+
+  get crossAppAccessAudienceInput(): Locator {
+    return this.page.locator('[data-testid="crossAppAccessAudienceInput"]');
+  }
+
+  get addResourceServerButton(): Locator {
+    return this.page.locator('[data-testid="addResourceServerButton"]');
+  }
+
+  get resourceServerRows(): Locator {
+    return this.page.locator('[data-testid="resourceServersTable"] .datatable-body-row');
+  }
+
+  get audSubMappingInput(): Locator {
+    return this.page.locator('[data-testid="audSubMappingInput"]');
+  }
+
+  get outboundDomainScopeInput(): Locator {
+    return this.page.locator('[data-testid="outboundDomainScopeAutocomplete"]');
+  }
+
+  get outboundExternalScopeInput(): Locator {
+    return this.page.locator('[data-testid="outboundExternalScopeInput"]');
+  }
+
+  get addOutboundScopeMappingButton(): Locator {
+    return this.page.locator('[data-testid="addOutboundScopeMappingButton"]');
+  }
+
+  get outboundScopeMappingRows(): Locator {
+    return this.page.locator('[data-testid="outboundScopeMappingsTable"] .datatable-body-row');
+  }
+
+  async addResourceServer(name: string, resource: string): Promise<void> {
+    await this.resourceServerNameInput.fill(name);
+    await this.resourceServerResourceInput.fill(resource);
+    await this.addResourceServerButton.click();
+    await this.waitForReady();
+  }
+
+  async addOutboundScopeMapping(domainScope: string, externalScope: string): Promise<void> {
+    await expect(this.outboundDomainScopeInput).toBeVisible();
+    await this.outboundDomainScopeInput.fill(domainScope);
+    await this.page.locator('mat-option').filter({ hasText: domainScope }).first().click();
+
+    await this.outboundExternalScopeInput.fill(externalScope);
+    await this.addOutboundScopeMappingButton.click();
     await this.waitForReady();
   }
 
