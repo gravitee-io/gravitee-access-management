@@ -77,6 +77,14 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> assignDataPlane(IdentityProvider identityProvider, String dataPlaneId);
 
+    /**
+     * Writes back the storage the platform owns on a pinned identity provider. Bypasses the guard
+     * that rejects a storage change through {@link #update}, which exists to stop a caller from
+     * moving the users of such a provider: here the platform is realigning the stored configuration
+     * with the store the provider already reads.
+     */
+    Single<IdentityProvider> updatePinnedStorage(IdentityProvider identityProvider, String configuration);
+
     default Completable delete(String domain, String identityProviderId, User principal) {
         return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
     }

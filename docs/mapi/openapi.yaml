@@ -11589,8 +11589,8 @@ paths:
           description: Installation configuration successfully fetched
         "500":
           description: Internal server error
-      summary: Get the installation type of this instance and the storage rules it
-        applies to identity providers
+      summary: Get the installation type of this instance and whether it owns the
+        storage of identity providers on the system cluster
       tags:
       - platform
   /platform/configuration/spel/grammar:
@@ -14847,18 +14847,11 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
-    IdentityProviderStorage:
-      type: object
-      properties:
-        pinDatabase:
-          type: boolean
-        prefixUsersCollection:
-          type: boolean
     InstallationConfiguration:
       type: object
       properties:
-        identityProviderStorage:
-          $ref: "#/components/schemas/IdentityProviderStorage"
+        systemClusterRestricted:
+          type: boolean
         type:
           type: string
     InstallationEntity:

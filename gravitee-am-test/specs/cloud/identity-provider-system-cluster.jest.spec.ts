@@ -30,7 +30,7 @@ import {
   platformDatabase,
   defaultIdpType,
   isMongoStack,
-  readStorageRules,
+  readsPinnedStorage,
   createOrganizationIdp,
   updateOrganizationIdp,
   deleteOrganizationIdp,
@@ -69,11 +69,9 @@ const itMongoOnly = isMongoStack ? it : it.skip;
 const newMongoIdp = (useSystemCluster: boolean) => createCloudIdp(scope, buildMongoIdpBody({ useSystemCluster }));
 
 describe('Identity provider reusing the system cluster', () => {
-  it(jira`should report both storage rules to the console ${'AM-7584'}`, async () => {
-    // The console shapes the mongo form from these two rules, one per pinned field.
-    const rules = await readStorageRules(scope);
-
-    expect(rules).toEqual({ pinDatabase: true, prefixUsersCollection: true });
+  it(jira`should report the storage rule to the console ${'AM-7584'}`, async () => {
+    // The console shapes the mongo form from this rule, which owns both pinned fields.
+    expect(await readsPinnedStorage(scope)).toEqual(true);
   });
 
   it(jira`should pin the storage of a provider created with the system cluster ${'AM-7584'}`, async () => {

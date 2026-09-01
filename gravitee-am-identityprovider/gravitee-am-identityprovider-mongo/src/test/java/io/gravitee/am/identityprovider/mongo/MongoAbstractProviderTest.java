@@ -204,7 +204,6 @@ public class MongoAbstractProviderTest {
 
     @Test
     public void restrictedProvider_readsTheDatabaseFromItsClientWrapper() {
-        environment.setProperty("repositories.system-cluster-idp.pin-database", "true");
         identityProviderEntity.setSystem(false);
         identityProviderEntity.setDataPlaneId(null);
         identityProviderEntity.setSystemClusterRestricted(true);
@@ -217,23 +216,6 @@ public class MongoAbstractProviderTest {
         provider.afterPropertiesSet();
 
         Assert.assertEquals("gravitee-am", configuration.getDatabase());
-    }
-
-    @Test
-    public void restrictedProvider_keepsItsDatabaseWhenOnlyTheCollectionRuleIsOn() {
-        environment.setProperty("repositories.system-cluster-idp.pin-database", "false");
-        environment.setProperty("repositories.system-cluster-idp.prefix-users-collection", "true");
-        identityProviderEntity.setSystem(false);
-        identityProviderEntity.setDataPlaneId(null);
-        identityProviderEntity.setSystemClusterRestricted(true);
-        configuration.setUseSystemCluster(true);
-        configuration.setDatabase("configured-db");
-        when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
-        when(commonConnectionProvider.getClientWrapper(Scope.MANAGEMENT.getName())).thenReturn(commonClientWrapper);
-
-        provider.afterPropertiesSet();
-
-        Assert.assertEquals("configured-db", configuration.getDatabase());
     }
 
     @Test

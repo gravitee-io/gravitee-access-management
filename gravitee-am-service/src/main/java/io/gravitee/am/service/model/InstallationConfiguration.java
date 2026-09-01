@@ -18,9 +18,5 @@ package io.gravitee.am.service.model;
 /**
  * @author GraviteeSource Team
  */
-public record InstallationConfiguration(String type, IdentityProviderStorage identityProviderStorage) {
-
-    /** The storage rules the console reads to shape the mongo identity provider form. */
-    public record IdentityProviderStorage(boolean pinDatabase, boolean prefixUsersCollection) {
-    }
+public record InstallationConfiguration(String type, boolean systemClusterRestricted) {
 }

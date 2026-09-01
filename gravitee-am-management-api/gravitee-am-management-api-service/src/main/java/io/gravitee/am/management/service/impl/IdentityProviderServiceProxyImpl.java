@@ -157,6 +157,11 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     @Override
+    public Single<IdentityProvider> updatePinnedStorage(IdentityProvider identityProvider, String configuration) {
+        return identityProviderService.updatePinnedStorage(identityProvider, configuration);
+    }
+
+    @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal) {
         return identityProviderService.delete(referenceType, referenceId, identityProviderId, principal);
     }

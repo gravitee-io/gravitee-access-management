@@ -20,16 +20,15 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /**
- * The storage rules applied to a mongo identity provider that reuses the system cluster.
- * {@link SystemClusterIdpPolicy} enforces them and the console reads them to shape its forms.
+ * The storage rule applied to a mongo identity provider that reuses the system cluster.
+ * {@link SystemClusterIdpPolicy} enforces it and the console reads it to shape its forms.
  *
  * @author GraviteeSource Team
  */
 @Component
 public class SystemClusterIdpSettings {
 
-    static final String PIN_DATABASE = "repositories.system-cluster-idp.pin-database";
-    static final String PREFIX_USERS_COLLECTION = "repositories.system-cluster-idp.prefix-users-collection";
+    static final String SYSTEM_CLUSTER_RESTRICTED = "repositories.system-cluster-restricted";
 
     private final Environment environment;
 
@@ -37,22 +36,17 @@ public class SystemClusterIdpSettings {
         this.environment = environment;
     }
 
-    /** The database comes from the repository layer settings rather than from the form. */
-    public boolean isPinDatabase() {
-        return enabled(PIN_DATABASE);
-    }
-
-    /** The users collection is derived from the identity provider id. */
-    public boolean isPrefixUsersCollection() {
-        return enabled(PREFIX_USERS_COLLECTION);
-    }
-
     /**
-     * A rule left out of the configuration follows the deployment: on in a Gravitee-managed cloud
-     * installation, off elsewhere.
+     * The platform owns where the users of such a provider are stored: both the database and the
+     * users collection come from the platform rather than from the form. The two go together, so
+     * that a provider can never end up with a collection the platform named inside a database it
+     * did not choose.
+     *
+     * <p>A rule left out of the configuration follows the deployment: on in a Gravitee-managed
+     * cloud installation, off elsewhere.
      */
-    private boolean enabled(String key) {
-        final Boolean value = environment.getProperty(key, Boolean.class);
+    public boolean isRestricted() {
+        final Boolean value = environment.getProperty(SYSTEM_CLUSTER_RESTRICTED, Boolean.class);
         return value != null ? value : CloudProperties.isManagedCloudEnabled(environment);
     }
 }

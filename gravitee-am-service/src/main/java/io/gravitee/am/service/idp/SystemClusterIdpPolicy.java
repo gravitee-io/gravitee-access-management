@@ -19,19 +19,18 @@ import com.nimbusds.jose.util.JSONObjectUtils;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import lombok.CustomLog;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Pins the storage location of a Mongo identity provider that reuses the system cluster: the
- * database comes from the repository layer settings and the collection is derived from the
- * identity provider id. Only providers created under this regime are affected, so an existing
- * provider keeps working whatever the settings become later.
+ * database is the one the serving node reads and the collection is derived from the identity
+ * provider id. Only providers created under this regime are affected, so an existing provider keeps
+ * working whatever the setting becomes later.
  *
  * @author GraviteeSource Team
  */
@@ -45,23 +44,19 @@ public class SystemClusterIdpPolicy {
      */
     public static final String MONGO_IDP_TYPE = "mongo-am-idp";
 
-    static final String SYSTEM_CLUSTER = "repositories.system-cluster";
-    static final String DEFAULT_SYSTEM_CLUSTER = "management";
     static final String COLLECTION_PREFIX = "idp_";
-    static final String MONGODB_TYPE = "mongodb";
-    static final String DEFAULT_DATABASE = "gravitee-am";
 
     private static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
     private static final String DATASOURCE_ID = "datasourceId";
     private static final String DATABASE = "database";
     private static final String USERS_COLLECTION = "usersCollection";
 
-    private final Environment environment;
+    private final SystemClusterDatabaseResolver databaseResolver;
 
     private final SystemClusterIdpSettings settings;
 
-    public SystemClusterIdpPolicy(Environment environment, SystemClusterIdpSettings settings) {
-        this.environment = environment;
+    public SystemClusterIdpPolicy(SystemClusterDatabaseResolver databaseResolver, SystemClusterIdpSettings settings) {
+        this.databaseResolver = databaseResolver;
         this.settings = settings;
     }
 
@@ -100,22 +95,43 @@ public class SystemClusterIdpPolicy {
             return;
         }
 
-        if (settings.isPinDatabase()) {
-            pinDatabase(identityProvider, configuration);
-        }
-        if (settings.isPrefixUsersCollection()) {
-            configuration.put(USERS_COLLECTION, COLLECTION_PREFIX + identityProvider.getId());
-        }
+        pinDatabase(identityProvider, configuration);
+        configuration.put(USERS_COLLECTION, COLLECTION_PREFIX + identityProvider.getId());
 
         identityProvider.setConfiguration(JSONObjectUtils.toJSONString(configuration));
         identityProvider.setSystemClusterRestricted(true);
+    }
+
+    /** The configuration to store and the database it now names, for the caller to report. */
+    public record RepinnedDatabase(String configuration, String database) {
+    }
+
+    /**
+     * The database of a pinned provider is written from the platform settings, so it goes stale when
+     * those settings change - a data plane added or moved, a connection uri rewritten. Re-reads it,
+     * and returns empty when the stored configuration already names the right database.
+     */
+    public Optional<RepinnedDatabase> refreshPinnedDatabase(IdentityProvider identityProvider) {
+        if (!identityProvider.isSystemClusterRestricted() || !isEligible(identityProvider)) {
+            return Optional.empty();
+        }
+        final Map<String, Object> configuration = parse(identityProvider.getConfiguration());
+        if (configuration == null || !isUseSystemCluster(configuration) || hasDatasourceId(configuration)) {
+            return Optional.empty();
+        }
+        final String database = databaseResolver.resolve(identityProvider);
+        if (database == null || database.isEmpty() || database.equals(configuration.get(DATABASE))) {
+            return Optional.empty();
+        }
+        configuration.put(DATABASE, database);
+        return Optional.of(new RepinnedDatabase(JSONObjectUtils.toJSONString(configuration), database));
     }
 
     private void pinDatabase(IdentityProvider identityProvider, Map<String, Object> configuration) {
         // The key stays in the configuration: the plugin schema requires it unless a datasource
         // is named, so removing it would leave the stored configuration invalid and block every
         // later update. Each node still overrides it from its own client wrapper at runtime.
-        final String database = resolvePlatformDatabase();
+        final String database = databaseResolver.resolve(identityProvider);
         if (database != null && !database.isEmpty()) {
             configuration.put(DATABASE, database);
         } else {
@@ -150,14 +166,13 @@ public class SystemClusterIdpPolicy {
         }
     }
 
-    /** True when either storage rule is on, so a provider created now joins the regime. */
+    /**
+     * True when the platform owns where a provider created now stores its users: it names both the
+     * database and the collection, so nothing outside the platform may choose either, nor the id
+     * the collection is named after.
+     */
     public boolean ownsStorageLocation() {
-        return settings.isPinDatabase() || settings.isPrefixUsersCollection();
-    }
-
-    /** The id becomes the collection name, so nothing outside the platform may choose it. */
-    public boolean derivesCollectionFromId() {
-        return settings.isPrefixUsersCollection();
+        return settings.isRestricted();
     }
 
     private boolean isEligible(IdentityProvider identityProvider) {
@@ -178,43 +193,6 @@ public class SystemClusterIdpPolicy {
                 || !Objects.equals(current.get(DATASOURCE_ID), updated.get(DATASOURCE_ID))) {
             throw new InvalidParameterException("Identity provider storage settings cannot be changed");
         }
-    }
-
-    /**
-     * Mirrors {@code MongoConnectionProvider#getDatabaseName}, which is private to the repository
-     * plugin. A node that resolves the database differently from this method pins one value and
-     * reads another, so the two must stay in step.
-     */
-    private String resolvePlatformDatabase() {
-        final String scope = resolveDatabaseScope();
-        // Only a mongo repository names a database to pin. The packaged gravitee.yml still carries a
-        // mongodb block on a jdbc platform, so without this the policy pins a database that has no store.
-        if (!MONGODB_TYPE.equalsIgnoreCase(environment.getProperty("repositories." + scope + ".type", MONGODB_TYPE))) {
-            return null;
-        }
-        final String prefix = "repositories." + scope + ".mongodb.";
-        final String uri = environment.getProperty(prefix + "uri", "");
-        if (!uri.isEmpty()) {
-            final String path = URI.create(uri).getPath();
-            if (path != null && path.length() > 1) {
-                return path.substring(1);
-            }
-        }
-        return environment.getProperty(prefix + "dbname", DEFAULT_DATABASE);
-    }
-
-    /**
-     * The gateway scope reuses the management settings unless it is told not to, so the database of
-     * a provider pinned to the gateway scope usually comes from the management block.
-     */
-    private String resolveDatabaseScope() {
-        final String scope = environment.getProperty(SYSTEM_CLUSTER, String.class, DEFAULT_SYSTEM_CLUSTER);
-        if (DEFAULT_SYSTEM_CLUSTER.equals(scope)) {
-            return scope;
-        }
-        final boolean useManagementSettings =
-                environment.getProperty("repositories." + scope + ".use-management-settings", Boolean.class, true);
-        return useManagementSettings ? DEFAULT_SYSTEM_CLUSTER : scope;
     }
 
     private boolean isUseSystemCluster(Map<String, Object> configuration) {
