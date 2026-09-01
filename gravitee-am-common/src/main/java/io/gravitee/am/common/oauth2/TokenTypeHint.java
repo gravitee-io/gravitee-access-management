@@ -28,7 +28,8 @@ public enum TokenTypeHint {
 
     ACCESS_TOKEN,
     REFRESH_TOKEN,
-    ID_TOKEN;
+    ID_TOKEN,
+    ID_JAG;
 
     public static TokenTypeHint from(String name) throws IllegalArgumentException {
         return TokenTypeHint.valueOf(name.toUpperCase());

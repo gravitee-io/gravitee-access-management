@@ -42,6 +42,8 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -70,6 +72,7 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
+import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -189,6 +192,9 @@ public class ApplicationServiceTest {
 
     @Spy
     private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
+
+    @Spy
+    private ApplicationCrossAppAccessValidator crossAppAccessValidator = new ApplicationCrossAppAccessValidator();
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -1017,6 +1023,85 @@ public class ApplicationServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(err -> err instanceof InvalidParameterException);
+    }
+
+    @Test
+    public void shouldInvalidatePatch_cross_app_access_duplicate_resource_server() {
+        Application toPatch = appWithCrossAppAccess(300,
+                crossAppAccessMapping("rs-1", "client-1"),
+                crossAppAccessMapping("rs-1", "client-2"));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", oauthPatch(), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("crossAppAccessSettings.resourceServers must not repeat resource server rs-1"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_cross_app_access_blank_client_id() {
+        Application toPatch = appWithCrossAppAccess(300, crossAppAccessMapping("rs-1", " "));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", oauthPatch(), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("crossAppAccessSettings.resourceServers entries must have a non-blank clientId"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidateUpdate_cross_app_access_id_jag_validity_below_one() {
+        Application toUpdate = appWithCrossAppAccess(0, crossAppAccessMapping("rs-1", "client-1"));
+        toUpdate.getSettings().getOauth().setGrantTypes(List.of("implicit"));
+        toUpdate.getSettings().getOauth().setResponseTypes(List.of("token"));
+
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        TestObserver<Application> testObserver = applicationService.update(toUpdate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("idJagValiditySeconds must be at least 1"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    private static ApplicationCrossAppAccessResourceServer crossAppAccessMapping(String resourceServerId, String clientId) {
+        return ApplicationCrossAppAccessResourceServer.builder()
+                .trustDomainId("td-1")
+                .resourceServerId(resourceServerId)
+                .clientId(clientId)
+                .build();
+    }
+
+    private static Application appWithCrossAppAccess(int idJagValiditySeconds,
+                                                     ApplicationCrossAppAccessResourceServer... resourceServers) {
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setIdJagValiditySeconds(idJagValiditySeconds);
+        oAuthSettings.setCrossAppAccessSettings(ApplicationCrossAppAccessSettings.builder()
+                .enabled(true)
+                .resourceServers(List.of(resourceServers))
+                .build());
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+
+        Application application = emptyAppWithDomain();
+        application.setSettings(settings);
+        return application;
+    }
+
+    private static PatchApplication oauthPatch() {
+        PatchApplication patchClient = new PatchApplication();
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
+        patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
+        patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+        return patchClient;
     }
 
     private Optional<Set<PatchApplicationIdentityProvider>> getApplicationIdentityProviders() {

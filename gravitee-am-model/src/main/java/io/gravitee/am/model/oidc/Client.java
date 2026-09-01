@@ -66,6 +66,7 @@ public class Client implements Cloneable, Resource {
     public static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     public static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
     public static final int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
+    public static final int DEFAULT_ID_JAG_VALIDITY_SECONDS = 300;
     public static final List<String> DEFAULT_GRANT_TYPES = Collections.singletonList(GrantType.AUTHORIZATION_CODE);
     public static final List<String> DEFAULT_RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
 
@@ -166,6 +167,8 @@ public class Client implements Cloneable, Resource {
     private int refreshTokenValiditySeconds = DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS;
 
     private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
+
+    private int idJagValiditySeconds = DEFAULT_ID_JAG_VALIDITY_SECONDS;
 
     private String tlsClientAuthSubjectDn;
 
@@ -309,6 +312,8 @@ public class Client implements Cloneable, Resource {
 
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
+    private ApplicationCrossAppAccessSettings crossAppAccessSettings;
+
     private SecretExpirationSettings secretExpirationSettings;
 
     private AgentType agentType;
@@ -366,6 +371,7 @@ public class Client implements Cloneable, Resource {
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
+        this.idJagValiditySeconds = other.idJagValiditySeconds;
         this.domain = other.domain;
         this.enabled = other.enabled;
         this.createdAt = other.createdAt;
@@ -420,6 +426,7 @@ public class Client implements Cloneable, Resource {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
+        this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
@@ -1308,6 +1315,22 @@ public class Client implements Cloneable, Resource {
 
     public void setTokenExchangeOAuthSettings(TokenExchangeOAuthSettings tokenExchangeOAuthSettings) {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
+    }
+
+    public ApplicationCrossAppAccessSettings getCrossAppAccessSettings() {
+        return crossAppAccessSettings;
+    }
+
+    public void setCrossAppAccessSettings(ApplicationCrossAppAccessSettings crossAppAccessSettings) {
+        this.crossAppAccessSettings = crossAppAccessSettings;
+    }
+
+    public int getIdJagValiditySeconds() {
+        return idJagValiditySeconds;
+    }
+
+    public void setIdJagValiditySeconds(int idJagValiditySeconds) {
+        this.idJagValiditySeconds = idJagValiditySeconds;
     }
 
     public List<ApplicationSecretSettings> getSecretSettings() {

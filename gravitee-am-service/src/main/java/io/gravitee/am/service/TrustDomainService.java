@@ -17,7 +17,9 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.NewTrustedDomain;
@@ -43,6 +45,8 @@ public interface TrustDomainService {
     Maybe<TrustedDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
 
     Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId);
+
+    Flowable<CrossAppAccessResourceServerView> searchCrossAppAccessResourceServers(Reference reference, String query, int limit);
 
     Single<TrustedDomain> create(Domain domain, NewTrustedDomain newTrustedDomain, User principal);
 

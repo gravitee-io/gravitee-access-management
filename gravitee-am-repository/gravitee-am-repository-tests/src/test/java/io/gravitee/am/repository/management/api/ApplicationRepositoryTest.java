@@ -34,6 +34,8 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.common.Page;
@@ -250,6 +252,16 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings().getOauth().getTokenExchangeOAuthSettings() != null
                 && a.getSettings().getOauth().getTokenExchangeOAuthSettings().getScopeHandling() == TokenExchangeScopeHandling.PERMISSIVE
                 && !a.getSettings().getOauth().getTokenExchangeOAuthSettings().isInherited());
+        testObserver.assertValue(a -> a.getSettings().getOauth().getIdJagValiditySeconds() == 120);
+        testObserver.assertValue(a -> {
+            var crossAppAccess = a.getSettings().getOauth().getCrossAppAccessSettings();
+            return crossAppAccess != null
+                    && crossAppAccess.isEnabled()
+                    && crossAppAccess.getResourceServers().size() == 1
+                    && "td-1".equals(crossAppAccess.getResourceServers().get(0).getTrustDomainId())
+                    && "rs-1".equals(crossAppAccess.getResourceServers().get(0).getResourceServerId())
+                    && "calendar-client".equals(crossAppAccess.getResourceServers().get(0).getClientId());
+        });
     }
 
     private static Application buildApplication() {
@@ -308,6 +320,15 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         teSettings.setInherited(false);
         teSettings.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
         oauth.setTokenExchangeOAuthSettings(teSettings);
+        oauth.setIdJagValiditySeconds(120);
+        oauth.setCrossAppAccessSettings(ApplicationCrossAppAccessSettings.builder()
+                .enabled(true)
+                .resourceServers(List.of(ApplicationCrossAppAccessResourceServer.builder()
+                        .trustDomainId("td-1")
+                        .resourceServerId("rs-1")
+                        .clientId("calendar-client")
+                        .build()))
+                .build());
 
         final AccountSettings account = new AccountSettings();
         account.setResetPasswordInvalidateTokens(true);

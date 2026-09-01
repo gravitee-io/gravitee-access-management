@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+
 import org.bson.Document;
 
 import java.util.Date;
@@ -73,6 +75,7 @@ public class ApplicationOAuthSettingsMongo {
     private int accessTokenValiditySeconds;
     private int refreshTokenValiditySeconds;
     private int idTokenValiditySeconds;
+    private int idJagValiditySeconds = ApplicationOAuthSettings.DEFAULT_ID_JAG_VALIDITY_SECONDS;
     private List<TokenClaimMongo> tokenCustomClaims;
     private List<UserInfoClaimMongo> userinfoCustomClaims;
     private String tlsClientAuthSubjectDn;
@@ -102,6 +105,7 @@ public class ApplicationOAuthSettingsMongo {
     private boolean optInScopeSelection;
 
     private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
+    private ApplicationCrossAppAccessSettingsMongo crossAppAccessSettings;
 
     public String getClientId() {
         return clientId;
@@ -479,6 +483,14 @@ public class ApplicationOAuthSettingsMongo {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
     }
 
+    public int getIdJagValiditySeconds() {
+        return idJagValiditySeconds;
+    }
+
+    public void setIdJagValiditySeconds(int idJagValiditySeconds) {
+        this.idJagValiditySeconds = idJagValiditySeconds;
+    }
+
     public List<TokenClaimMongo> getTokenCustomClaims() {
         return tokenCustomClaims;
     }
@@ -685,5 +697,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTokenExchangeOAuthSettings(TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings) {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
+    }
+
+    public ApplicationCrossAppAccessSettingsMongo getCrossAppAccessSettings() {
+        return crossAppAccessSettings;
+    }
+
+    public void setCrossAppAccessSettings(ApplicationCrossAppAccessSettingsMongo crossAppAccessSettings) {
+        this.crossAppAccessSettings = crossAppAccessSettings;
     }
 }

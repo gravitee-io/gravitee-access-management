@@ -364,6 +364,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(TrustDomainsResource.class);
     }
 
+    @Path("xaa/resource-servers")
+    public CrossAppAccessResourceServersResource getCrossAppAccessResourceServersResource() {
+        return resourceContext.getResource(CrossAppAccessResourceServersResource.class);
+    }
+
     @Path("authorization-engines")
     public AuthorizationEnginesResource getAuthorizationEnginesResource() {
         return resourceContext.getResource(AuthorizationEnginesResource.class);
