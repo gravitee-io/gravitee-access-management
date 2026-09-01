@@ -16,8 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
 import * as cheerio from 'cheerio';
-import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
-import { waitFor } from '@management-commands/domain-management-commands';
+import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { followUpGet, processLoginFromContext } from './fixture/mfa-flow-fixture';
 import { setup } from '../../test-fixture';
@@ -40,7 +39,7 @@ const domain = {
 const matchesUsername = (username: string) => `{#context.attributes['user'].username == '${username}'}`;
 
 /** Unparseable on purpose — an unterminated expression. */
-const MALFORMED_RULE = "{#context.attributes[";
+const MALFORMED_RULE = '{#context.attributes[';
 
 let factorA: string;
 let factorB: string;
@@ -126,9 +125,8 @@ beforeAll(async () => {
   );
 
   await enableDomain(domain);
-  await waitFor(3000);
 
-  const oidc = await getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200);
+  const oidc = await waitForOidcReady(domain.domain.domainHrid);
   const endpoint = oidc.body.authorization_endpoint;
 
   ruledFactorBCtx = new TestSuiteContext(domain, oneRuled, userOne, endpoint);
