@@ -164,14 +164,24 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
         }
         Optional.ofNullable(trustDomain.getSpiffeTrustDomain())
                 .ifPresent(spiffeTrustDomain -> bySpiffeTrustDomain.put(spiffeTrustDomain, trustDomain));
-        Optional.ofNullable(trustDomain.getDomainIdentifier())
+        tokenExchangeIssuer(trustDomain)
                 .ifPresent(issuer -> byIssuer.put(issuer, trustDomain));
     }
 
     private void unindex(TrustedDomain trustDomain) {
         Optional.ofNullable(trustDomain.getSpiffeTrustDomain())
                 .ifPresent(spiffeTrustDomain -> bySpiffeTrustDomain.remove(spiffeTrustDomain, trustDomain));
-        Optional.ofNullable(trustDomain.getDomainIdentifier())
+        tokenExchangeIssuer(trustDomain)
                 .ifPresent(issuer -> byIssuer.remove(issuer, trustDomain));
+    }
+
+    /**
+     * The identifier names the authority in both directions, so only a trusted domain AM accepts JWTs
+     * from belongs in the issuer index.
+     */
+    private static Optional<String> tokenExchangeIssuer(TrustedDomain trustDomain) {
+        return trustDomain.trustsTokenExchange()
+                ? Optional.ofNullable(trustDomain.getDomainIdentifier())
+                : Optional.empty();
     }
 }

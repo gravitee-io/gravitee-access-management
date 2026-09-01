@@ -38,14 +38,34 @@ test.describe('Trusted Domains CRUD', () => {
     await expect(listPage.emptyState).toContainText(/trusted domains will appear here/i);
   });
 
-  test('creation defaults to the trusted-issuer usage and reveals the matcher of each usage picked', async ({ page, testDomain }) => {
+  test('the three usages are offered side by side and picked independently', async ({ page, testDomain }) => {
     const detailPage = new TrustedDomainDetailPage(page);
     await detailPage.navigateToNew(testDomain.id);
 
-    await expect(detailPage.usageChoice('ISSUER')).toBeVisible();
+    expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(true);
+    expect(await detailPage.isUsageSelected('CROSS_APP_ACCESS')).toBe(false);
+    expect(await detailPage.isUsageSelected('SPIFFE')).toBe(false);
+
+    await detailPage.setUsage('TOKEN_EXCHANGE', false);
+    await expect(detailPage.issuerUrlInput).toHaveCount(0);
+    await expect(detailPage.validationErrors.filter({ hasText: /at least one usage/i })).toHaveCount(1);
+    await expect(detailPage.saveButton).toBeDisabled();
+
+    await detailPage.setUsage('CROSS_APP_ACCESS', true);
+    await expect(detailPage.usageChoice('TOKEN_EXCHANGE')).toBeVisible();
+    await expect(detailPage.issuerUrlInput).toBeVisible();
+    await expect(detailPage.resourceServerNameInput).toBeVisible();
+    await expect(detailPage.validationErrors.filter({ hasText: /at least one usage/i })).toHaveCount(0);
+  });
+
+  test('creation defaults to the token exchange usage and reveals the matcher of each usage picked', async ({ page, testDomain }) => {
+    const detailPage = new TrustedDomainDetailPage(page);
+    await detailPage.navigateToNew(testDomain.id);
+
+    await expect(detailPage.usageChoice('TOKEN_EXCHANGE')).toBeVisible();
     await expect(detailPage.usageChoice('SPIFFE')).toBeVisible();
-    await expect(detailPage.usageChoice('ISSUER')).toContainText(/OIDC - Trusted Issuer/i);
-    expect(await detailPage.isUsageSelected('ISSUER')).toBe(true);
+    await expect(detailPage.usageChoice('TOKEN_EXCHANGE')).toContainText(/Token exchange/i);
+    expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(true);
     expect(await detailPage.isUsageSelected('SPIFFE')).toBe(false);
     await expect(detailPage.nameInput).toBeVisible();
     await expect(detailPage.issuerUrlInput).toBeVisible();
@@ -55,7 +75,7 @@ test.describe('Trusted Domains CRUD', () => {
     await expect(detailPage.spiffeTrustDomainInput).toBeVisible();
     await expect(detailPage.issuerUrlInput).toBeVisible();
 
-    await detailPage.setUsage('ISSUER', false);
+    await detailPage.setUsage('TOKEN_EXCHANGE', false);
     await expect(detailPage.issuerUrlInput).toHaveCount(0);
     await expect(detailPage.spiffeTrustDomainInput).toBeVisible();
   });
@@ -97,7 +117,7 @@ test.describe('Trusted Domains CRUD', () => {
     const detailPage = new TrustedDomainDetailPage(page);
     await detailPage.navigateToNew(testDomain.id);
     await detailPage.setUsage('SPIFFE', true);
-    await detailPage.setUsage('ISSUER', false);
+    await detailPage.setUsage('TOKEN_EXCHANGE', false);
 
     await detailPage.nameInput.fill('spire-prod');
     await detailPage.spiffeTrustDomainInput.fill('spire.example');
@@ -130,7 +150,8 @@ test.describe('Trusted Domains CRUD', () => {
     await listPage.navigateTo(testDomain.id);
     await expect(listPage.trustDomainRows).toHaveCount(1);
     await expect(listPage.rowByName('acme-corp')).toHaveCount(1);
-    await expect(listPage.usageOf(0)).toHaveText(/SPIFFE, OIDC - Trusted Issuer/i);
+    await expect(listPage.usageOf(0)).toHaveText(/^2 usages$/);
+    expect(await listPage.usageTooltipOf(0)).toBe('SPIFFE, OIDC - Trusted Issuer');
   });
 
   test('a detail page is addressed by identifier and can be linked to directly', async ({ page, testDomain }) => {
@@ -191,6 +212,118 @@ test.describe('Trusted Domains CRUD', () => {
 
     await detailPage.saveButton.click();
     await detailPage.expectSnackbar(/created/i);
+  });
+
+  test('create a Cross-App-Access-only trusted domain without key material', async ({ page, testDomain }) => {
+    const detailPage = new TrustedDomainDetailPage(page);
+    await detailPage.navigateToNew(testDomain.id);
+
+    await expect(detailPage.usageChoice('CROSS_APP_ACCESS')).toBeVisible();
+    await detailPage.setUsage('CROSS_APP_ACCESS', true);
+    await detailPage.setUsage('TOKEN_EXCHANGE', false);
+    await expect(detailPage.issuerUrlInput).toBeVisible();
+    await expect(detailPage.keySourceSelect).toHaveCount(0);
+
+    await detailPage.issuerUrlInput.fill('https://new-auth.acme.com');
+    await detailPage.nameInput.fill('acme-suite');
+    await detailPage.addResourceServer('Acme Calendar', 'https://new.calendar.acme.com');
+    await expect(detailPage.validationErrors).toHaveCount(0);
+
+    await detailPage.saveButton.click();
+    await detailPage.expectSnackbar(/created/i);
+
+    await page.reload();
+    await detailPage.waitForReady();
+    await expect(detailPage.resourceServerRows).toHaveCount(1);
+    await expect(detailPage.usageBadge).toHaveText(/^Cross App Access$/);
+
+    const listPage = new TrustedDomainListPage(page);
+    await listPage.navigateTo(testDomain.id);
+    await expect(listPage.usageOf(0)).toHaveText(/^Cross App Access$/);
+  });
+
+  test('configure Cross App Access beside token exchange on a trusted-issuer trusted domain', async ({ page, testDomain }) => {
+    const detailPage = new TrustedDomainDetailPage(page);
+    await detailPage.navigateToNew(testDomain.id);
+    await detailPage.issuerUrlInput.fill('https://xaa-test.example.com');
+    await detailPage.selectKeySource(/PEM/i);
+    await detailPage.pemCertTextarea.fill(createKeyMaterial().certificatePem);
+    await detailPage.saveButton.click();
+    await detailPage.expectSnackbar(/created/i);
+
+    await expect(detailPage.usageChoice('CROSS_APP_ACCESS')).toBeVisible();
+    await expect(detailPage.resourceServerNameInput).toHaveCount(0);
+
+    await detailPage.setUsage('CROSS_APP_ACCESS', true);
+    await detailPage.addResourceServer('Acme Calendar', 'https://calendar.acme.com');
+    await detailPage.audSubMappingInput.fill('{#user.email}');
+    await detailPage.addOutboundScopeMapping('openid', 'acme:openid');
+    await detailPage.saveButton.click();
+    await detailPage.expectSnackbar(/updated/i);
+
+    await page.reload();
+    await detailPage.waitForReady();
+    await expect(detailPage.resourceServerRows).toHaveCount(1);
+    await expect(detailPage.resourceServerRows.first()).toContainText('Acme Calendar');
+    await expect(detailPage.resourceServerRows.first()).toContainText('https://calendar.acme.com');
+    await expect(detailPage.audSubMappingInput).toHaveValue('{#user.email}');
+    await expect(detailPage.outboundScopeMappingRows).toHaveCount(1);
+    await expect(detailPage.outboundScopeMappingRows.first()).toContainText('acme:openid');
+    await expect(detailPage.usageBadge).toHaveText(/OIDC - Trusted Issuer, Cross App Access/i);
+
+    const listPage = new TrustedDomainListPage(page);
+    await listPage.navigateTo(testDomain.id);
+    await expect(listPage.usageOf(0)).toHaveText(/^2 usages$/);
+    expect(await listPage.usageTooltipOf(0)).toBe('OIDC - Trusted Issuer, Cross App Access');
+  });
+
+  test('a trusted domain narrowed to Cross App Access keeps its issuer and hides key material', async ({ page, testDomain }) => {
+    const detailPage = new TrustedDomainDetailPage(page);
+    await detailPage.navigateToNew(testDomain.id);
+    await detailPage.issuerUrlInput.fill('https://xaa-only.example.com');
+    await detailPage.selectKeySource(/PEM/i);
+    await detailPage.pemCertTextarea.fill(createKeyMaterial().certificatePem);
+    await detailPage.saveButton.click();
+    await detailPage.expectSnackbar(/created/i);
+
+    await detailPage.setUsage('CROSS_APP_ACCESS', true);
+    await detailPage.addResourceServer('Acme Calendar', 'https://only.calendar.acme.com');
+    await detailPage.setUsage('TOKEN_EXCHANGE', false);
+
+    await expect(detailPage.issuerUrlInput).toHaveValue('https://xaa-only.example.com');
+    await expect(detailPage.keySourceSelect).toHaveCount(0);
+    await expect(detailPage.validationErrors).toHaveCount(0);
+    await detailPage.saveButton.click();
+    await detailPage.expectSnackbar(/updated/i);
+
+    await page.reload();
+    await detailPage.waitForReady();
+    await expect(detailPage.issuerUrlInput).toHaveValue('https://xaa-only.example.com');
+    expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(false);
+    expect(await detailPage.isUsageSelected('CROSS_APP_ACCESS')).toBe(true);
+    await expect(detailPage.usageBadge).toHaveText(/^Cross App Access$/);
+
+    const listPage = new TrustedDomainListPage(page);
+    await listPage.navigateTo(testDomain.id);
+    await expect(listPage.usageOf(0)).toHaveText(/^Cross App Access$/);
+  });
+
+  test('a resource server resource URI that is not absolute keeps the trusted domain unsaveable', async ({ page, testDomain }) => {
+    const detailPage = new TrustedDomainDetailPage(page);
+    await detailPage.navigateToNew(testDomain.id);
+    await detailPage.issuerUrlInput.fill('https://xaa-invalid.example.com');
+    await detailPage.selectKeySource(/PEM/i);
+    await detailPage.pemCertTextarea.fill(createKeyMaterial().certificatePem);
+    await detailPage.saveButton.click();
+    await detailPage.expectSnackbar(/created/i);
+
+    await detailPage.setUsage('CROSS_APP_ACCESS', true);
+    await detailPage.resourceServerNameInput.fill('Acme Calendar');
+    await expect(detailPage.addResourceServerButton).toBeDisabled();
+
+    await detailPage.addResourceServer('Acme Calendar', 'calendar.acme.com');
+    await expect(detailPage.validationErrors).toContainText(/absolute URI/i);
+    await expect(detailPage.saveButton).toBeDisabled();
   });
 
   test('delete a trusted domain from the list', async ({ page, testDomain }) => {

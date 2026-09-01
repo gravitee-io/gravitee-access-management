@@ -15,7 +15,13 @@
  */
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 
-import { JwkSet, KEY_MATERIAL_SOURCE_OPTIONS, KeyMaterialSource, TrustDomainKeyMaterial } from '../trust-domain.types';
+import {
+  DEFAULT_KEY_MATERIAL_SOURCE,
+  JwkSet,
+  KEY_MATERIAL_SOURCE_OPTIONS,
+  KeyMaterialSource,
+  TrustDomainKeyMaterial,
+} from '../trust-domain.types';
 
 @Component({
   selector: 'app-trust-domain-key-material',
@@ -30,7 +36,7 @@ export class TrustDomainKeyMaterialComponent implements OnChanges {
 
   readonly KEY_MATERIAL_SOURCE_OPTIONS = KEY_MATERIAL_SOURCE_OPTIONS;
 
-  source: KeyMaterialSource = 'JWKS_URL';
+  source: KeyMaterialSource = DEFAULT_KEY_MATERIAL_SOURCE;
   jwksUrl = '';
   jwkSetText = '';
   certificate = '';
@@ -42,7 +48,7 @@ export class TrustDomainKeyMaterialComponent implements OnChanges {
     if (this.keyMaterial === this.emitted) {
       return;
     }
-    this.source = this.keyMaterial?.source ?? 'JWKS_URL';
+    this.source = this.keyMaterial?.source ?? DEFAULT_KEY_MATERIAL_SOURCE;
     this.jwksUrl = this.keyMaterial?.jwksUrl ?? '';
     this.certificate = this.keyMaterial?.certificate ?? '';
     this.jwkSetText = this.keyMaterial?.jwkSet ? JSON.stringify(this.keyMaterial.jwkSet, null, 2) : '';

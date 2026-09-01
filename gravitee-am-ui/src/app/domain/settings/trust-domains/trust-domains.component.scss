@@ -22,6 +22,11 @@ $color-shield: map.get(gio.$mat-success-palette, darker20);
 .gv-page-container {
   .gv-page-content {
     ngx-datatable {
+      .badge {
+        margin: 0;
+        text-transform: none;
+      }
+
       .trust-domain-header {
         align-items: center;
         padding: 6px 0;

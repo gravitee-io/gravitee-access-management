@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
@@ -39,7 +40,7 @@ public class NewTrustedDomain {
 
     @Schema(description = "Issuer identifier of this authority's authorization server. Matched against "
             + "the \"iss\" of an external JWT inbound, and carried as the \"aud\" of an ID-JAG outbound. "
-            + "Required when tokenExchange is present.",
+            + "Required when token exchange or Cross App Access is enabled.",
             example = "https://sso.acme.com")
     @Size(max = TrustedDomain.ISSUER_MAX_LENGTH, message = "Domain identifier must be at most {max} characters")
     private String domainIdentifier;
@@ -52,4 +53,8 @@ public class NewTrustedDomain {
 
     @Valid
     private TokenExchangeTrustSettings tokenExchange;
+
+    @Schema(description = "What AM issues towards this authority. Absent means Cross App Access disabled.")
+    @Valid
+    private CrossAppAccessSettings crossAppAccess;
 }

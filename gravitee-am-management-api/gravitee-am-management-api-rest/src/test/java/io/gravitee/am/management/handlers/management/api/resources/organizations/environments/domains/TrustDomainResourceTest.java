@@ -86,6 +86,7 @@ public class TrustDomainResourceTest extends JerseySpringTest {
                         .build())
                 .domainIdentifier("https://issuer.example.org")
                 .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .enabled(true)
                         .scopeMappings(Map.of("read", "domain:read"))
                         .userBindingEnabled(true)
                         .userBindingCriteria(List.of(criterion))

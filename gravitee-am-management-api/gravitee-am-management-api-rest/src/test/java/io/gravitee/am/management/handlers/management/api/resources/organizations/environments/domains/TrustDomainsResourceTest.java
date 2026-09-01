@@ -172,6 +172,7 @@ public class TrustDomainsResourceTest extends JerseySpringTest {
         td.setSpiffe(null);
         td.setDomainIdentifier("https://issuer.example.org");
         td.setTokenExchange(TokenExchangeTrustSettings.builder()
+                .enabled(true)
                 .scopeMappings(Map.of("read", "domain:read"))
                 .userBindingEnabled(true)
                 .userBindingCriteria(List.of(criterion))

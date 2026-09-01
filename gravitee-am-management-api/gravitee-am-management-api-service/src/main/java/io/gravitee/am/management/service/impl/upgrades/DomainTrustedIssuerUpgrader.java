@@ -174,6 +174,7 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
                 .domainIdentifier(issuer.getIssuer())
                 .keyMaterial(keyMaterialOf(issuer))
                 .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .enabled(true)
                         .scopeMappings(issuer.getScopeMappings())
                         .userBindingEnabled(issuer.isUserBindingEnabled())
                         .userBindingCriteria(issuer.getUserBindingCriteria())

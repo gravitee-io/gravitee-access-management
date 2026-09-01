@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainM
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
@@ -99,7 +100,7 @@ class TrustDomainManagerImplTest {
                 .id(id)
                 .name(name)
                 .domainIdentifier(issuer)
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
     }
 
@@ -132,12 +133,26 @@ class TrustDomainManagerImplTest {
                 .name("acme-corp")
                 .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("acme.org").build())
                 .domainIdentifier("https://sso.acme.com")
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
         preload(both);
 
         assertThat(manager.findBySpiffeTrustDomain("acme.org").orElseThrow().getId()).isEqualTo("td-3");
         assertThat(manager.findByIssuer("https://sso.acme.com").orElseThrow().getId()).isEqualTo("td-3");
+    }
+
+    @Test
+    void shouldNotIndexATrustedDomainAmOnlyIssuesTowardsUnderItsIssuer() {
+        TrustedDomain crossAppAccessOnly = TrustedDomain.builder()
+                .id("td-4")
+                .name("acme-suite")
+                .domainIdentifier("https://auth.acme.com")
+                .crossAppAccess(CrossAppAccessSettings.builder().enabled(true).build())
+                .build();
+        preload(crossAppAccessOnly);
+
+        assertThat(manager.findByIssuer("https://auth.acme.com")).isEmpty();
+        assertThat(manager.hasTokenExchangeTrust()).isFalse();
     }
 
     @Test

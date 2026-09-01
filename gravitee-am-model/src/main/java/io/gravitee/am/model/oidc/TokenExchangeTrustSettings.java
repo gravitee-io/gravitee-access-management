@@ -36,6 +36,11 @@ import java.util.Map;
                 + "exchange, matched by domainIdentifier.")
 public class TokenExchangeTrustSettings {
 
+    @Schema(description = "Whether AM accepts this authority's JWTs during an RFC 8693 exchange. Requires "
+            + "a domainIdentifier. Written false, it drops the block and the settings under it, keeping the "
+            + "identifier Cross App Access needs.", defaultValue = "false")
+    private boolean enabled;
+
     @Schema(description = "One-to-one mapping from external scope to domain scope. Unmapped issuer "
             + "scopes are dropped (fail-closed).")
     private Map<String, String> scopeMappings;
@@ -50,6 +55,7 @@ public class TokenExchangeTrustSettings {
     private List<UserBindingCriterion> userBindingCriteria;
 
     public TokenExchangeTrustSettings(TokenExchangeTrustSettings other) {
+        this.enabled = other.enabled;
         this.scopeMappings = other.scopeMappings == null ? null : new LinkedHashMap<>(other.scopeMappings);
         this.userBindingEnabled = other.userBindingEnabled;
         this.userBindingCriteria = other.userBindingCriteria == null ? null : new ArrayList<>(other.userBindingCriteria);

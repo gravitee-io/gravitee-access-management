@@ -80,6 +80,8 @@ export * from './ConsoleUserPreferences';
 export * from './CookieSettings';
 export * from './CorsSettings';
 export * from './Credential';
+export * from './CrossAppAccessResourceServer';
+export * from './CrossAppAccessSettings';
 export * from './CspSettings';
 export * from './DPoPSettings';
 export * from './DataPlane';

@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.certificate.api.X509CertUtils;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyRetrievalSettings;
@@ -26,6 +27,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
@@ -57,16 +60,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static io.gravitee.am.common.event.Type.TRUST_DOMAIN;
+import static io.gravitee.am.common.spel.SpelExpressionValidator.parses;
+import static java.util.stream.Collectors.toSet;
 import lombok.CustomLog;
 
 @Component
@@ -124,13 +134,17 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         td.setKeyMaterial(input.getKeyMaterial());
         td.setSpiffe(normalizeSpiffe(input.getSpiffe()));
         td.setTokenExchange(input.getTokenExchange());
+        td.setCrossAppAccess(input.getCrossAppAccess());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
 
         return validate(domain, td)
                 .andThen(rejectDuplicates(domain, td, null))
-                .andThen(Single.defer(() -> repository.create(collapseUnusedSections(td))))
+                .andThen(Single.defer(() -> {
+                    td.setCrossAppAccess(copyWithGeneratedIds(td.getCrossAppAccess(), null));
+                    return repository.create(collapseUnusedSections(td));
+                }))
                 .flatMap(created -> publish(domain, created, Action.CREATE).andThen(Single.just(created)))
                 .doOnSuccess(created -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
                         .principal(principal)
@@ -177,12 +191,18 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                     if (input.getTokenExchange() != null) {
                         updated.setTokenExchange(input.getTokenExchange());
                     }
+                    if (input.getCrossAppAccess() != null) {
+                        updated.setCrossAppAccess(input.getCrossAppAccess());
+                    }
                     updated.setUpdatedAt(new Date());
                     updatedRef.set(updated);
 
                     return validate(domain, updated)
                             .andThen(rejectDuplicates(domain, updated, existing))
-                            .andThen(Single.defer(() -> repository.update(collapseUnusedSections(updated))))
+                            .andThen(Single.defer(() -> {
+                                updated.setCrossAppAccess(copyWithGeneratedIds(updated.getCrossAppAccess(), existing));
+                                return repository.update(collapseUnusedSections(updated));
+                            }))
                             .flatMap(saved -> publish(domain, saved, Action.UPDATE).andThen(Single.just(saved)));
                 })
                 .doOnSuccess(saved -> auditService.report(AuditBuilder.builder(TrustDomainAuditBuilder.class)
@@ -317,7 +337,7 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         if (td.getSpiffe() != null && td.getSpiffe().getSpiffeTrustDomain() == null) {
             td.setSpiffe(null);
         }
-        if (td.getDomainIdentifier() == null) {
+        if (!td.trustsTokenExchange()) {
             td.setTokenExchange(null);
         }
         return td;
@@ -331,6 +351,35 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         String spiffeTrustDomain = trimToNull(normalized.getSpiffeTrustDomain());
         normalized.setSpiffeTrustDomain(spiffeTrustDomain != null ? spiffeTrustDomain.toLowerCase(Locale.ROOT) : null);
         return normalized;
+    }
+
+    /**
+     * Stamps every written resource server with an id, keeping one a stored resource server already
+     * carries so a rename or a new resource never orphans an application referencing it. Runs once
+     * the block has been validated, so the copy never walks an entry validation would have rejected.
+     */
+    private static CrossAppAccessSettings copyWithGeneratedIds(CrossAppAccessSettings written, TrustedDomain existing) {
+        if (written == null) {
+            return null;
+        }
+        CrossAppAccessSettings settings = new CrossAppAccessSettings(written);
+        if (settings.getResourceServers() == null) {
+            return settings;
+        }
+        Set<String> stored = existing == null ? Set.of() : existing.crossAppAccessResourceServers().stream()
+                .map(CrossAppAccessResourceServer::getId)
+                .filter(Objects::nonNull)
+                .collect(toSet());
+        Set<String> taken = new HashSet<>();
+        settings.getResourceServers().stream()
+                .filter(Objects::nonNull)
+                .forEach(resourceServer -> {
+                    boolean keep = resourceServer.getId() != null
+                            && stored.contains(resourceServer.getId())
+                            && taken.add(resourceServer.getId());
+                    resourceServer.setId(keep ? resourceServer.getId() : RandomString.generate());
+                });
+        return settings;
     }
 
     private Completable rejectDuplicates(Domain domain, TrustedDomain td, TrustedDomain beforeUpdate) {
@@ -404,9 +453,15 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         if (userBindingError.isPresent()) {
             return Completable.error(new InvalidTrustDomainException(userBindingError.get()));
         }
-        Optional<String> keyMaterialError = validateKeyMaterial(td.getKeyMaterial(), settings);
-        if (keyMaterialError.isPresent()) {
-            return Completable.error(new InvalidTrustDomainException(keyMaterialError.get()));
+        Optional<String> crossAppAccessError = validateCrossAppAccess(td.getCrossAppAccess());
+        if (crossAppAccessError.isPresent()) {
+            return Completable.error(new InvalidTrustDomainException(crossAppAccessError.get()));
+        }
+        if (td.trustsSpiffe() || td.trustsTokenExchange()) {
+            Optional<String> keyMaterialError = validateKeyMaterial(td.getKeyMaterial(), settings);
+            if (keyMaterialError.isPresent()) {
+                return Completable.error(new InvalidTrustDomainException(keyMaterialError.get()));
+            }
         }
         if (td.getRefreshIntervalSeconds() <= 0) {
             return Completable.error(new InvalidTrustDomainException("refreshIntervalSeconds must be positive"));
@@ -424,8 +479,11 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     }
 
     private Optional<String> validateMatchers(TrustedDomain td, SpiffeDomainSettings spiffeSettings) {
-        if (!td.trustsSpiffe() && !td.trustsTokenExchange()) {
-            return Optional.of("a trusted domain must declare spiffeTrustDomain, issuer, or both");
+        if (td.getTokenExchange() != null && td.getTokenExchange().isEnabled() && td.getDomainIdentifier() == null) {
+            return Optional.of("domainIdentifier is required when token exchange is enabled");
+        }
+        if (!td.trustsSpiffe() && !td.trustsTokenExchange() && !td.trustsCrossAppAccess()) {
+            return Optional.of("a trusted domain must declare spiffe, tokenExchange, or crossAppAccess");
         }
         if (td.trustsSpiffe()) {
             if (!spiffeSettings.isEnabled()) {
@@ -438,18 +496,35 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                 return Optional.of("spiffeTrustDomain must be at most " + TrustedDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH + " characters");
             }
         }
-        if (td.trustsTokenExchange() && td.getDomainIdentifier().length() > TrustedDomain.ISSUER_MAX_LENGTH) {
-            return Optional.of("issuer must be at most " + TrustedDomain.ISSUER_MAX_LENGTH + " characters");
+        if (td.getDomainIdentifier() != null && td.getDomainIdentifier().length() > TrustedDomain.ISSUER_MAX_LENGTH) {
+            return Optional.of("domainIdentifier must be at most " + TrustedDomain.ISSUER_MAX_LENGTH + " characters");
         }
         if (!td.trustsTokenExchange()) {
             if (td.getScopeMappings() != null && !td.getScopeMappings().isEmpty()) {
-                return Optional.of("scopeMappings requires an issuer");
+                return Optional.of("scopeMappings requires token exchange to be enabled");
             }
             if (td.isUserBindingEnabled()) {
-                return Optional.of("userBindingEnabled requires an issuer");
+                return Optional.of("userBindingEnabled requires token exchange to be enabled");
             }
         }
-        return Optional.empty();
+        return validateCrossAppAccessIdentifier(td);
+    }
+
+    /**
+     * The "aud" of an ID-JAG is the issuer identifier of the authorization server it is presented to,
+     * which is what the trusted domain's identifier names.
+     */
+    private Optional<String> validateCrossAppAccessIdentifier(TrustedDomain td) {
+        if (!td.trustsCrossAppAccess()) {
+            return Optional.empty();
+        }
+        String identifier = td.getDomainIdentifier();
+        if (identifier == null) {
+            return Optional.of("domainIdentifier is required when Cross App Access is enabled");
+        }
+        return isAbsolute(identifier)
+                ? Optional.empty()
+                : Optional.of("domainIdentifier must be an absolute URI when Cross App Access is enabled: " + identifier);
     }
 
     private Optional<String> validateUserBinding(TrustedDomain td) {
@@ -463,9 +538,109 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         boolean incomplete = criteria.stream().anyMatch(c -> c == null
                 || c.getAttribute() == null || c.getAttribute().isBlank()
                 || c.getExpression() == null || c.getExpression().isBlank());
+        if (incomplete) {
+            return Optional.of("userBindingCriteria entries must have a non-blank attribute and expression");
+        }
+        return criteria.stream()
+                .map(c -> parses(c.getExpression())
+                        ? null
+                        : "userBindingCriteria expression is not a valid expression: " + c.getExpression())
+                .filter(Objects::nonNull)
+                .findFirst();
+    }
+
+    private Optional<String> validateCrossAppAccess(CrossAppAccessSettings settings) {
+        if (settings == null) {
+            return Optional.empty();
+        }
+        Optional<String> audSubError = validateAudSubMapping(settings.getAudSubMapping());
+        if (audSubError.isPresent()) {
+            return audSubError;
+        }
+        Optional<String> scopeMappingError = validateOutboundScopeMappings(settings.getScopeMappings());
+        if (scopeMappingError.isPresent()) {
+            return scopeMappingError;
+        }
+        Optional<String> resourceServerError = validateResourceServers(settings.getResourceServers());
+        if (resourceServerError.isPresent()) {
+            return resourceServerError;
+        }
+        if (settings.isEnabled() && (settings.getResourceServers() == null || settings.getResourceServers().isEmpty())) {
+            return Optional.of("crossAppAccess.resourceServers must declare at least one resource server when Cross App Access is enabled");
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> validateResourceServers(List<CrossAppAccessResourceServer> resourceServers) {
+        if (resourceServers == null) {
+            return Optional.empty();
+        }
+        Set<String> resources = new HashSet<>();
+        for (CrossAppAccessResourceServer resourceServer : resourceServers) {
+            if (resourceServer == null) {
+                return Optional.of("crossAppAccess.resourceServers must not contain a null entry");
+            }
+            if (trimToNull(resourceServer.getName()) == null) {
+                return Optional.of("crossAppAccess.resourceServers entries must have a non-blank name");
+            }
+            if (resourceServer.getName().length() > CrossAppAccessResourceServer.NAME_MAX_LENGTH) {
+                return Optional.of("crossAppAccess.resourceServers name must be at most "
+                        + CrossAppAccessResourceServer.NAME_MAX_LENGTH + " characters");
+            }
+            Optional<String> resourceError = validateResource(resourceServer.getResource());
+            if (resourceError.isPresent()) {
+                return resourceError;
+            }
+            if (!resources.add(resourceServer.getResource())) {
+                return Optional.of("crossAppAccess.resourceServers must not repeat resource " + resourceServer.getResource());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> validateResource(String resource) {
+        if (trimToNull(resource) == null) {
+            return Optional.of("crossAppAccess.resourceServers entries must have a non-blank resource");
+        }
+        if (resource.length() > CrossAppAccessResourceServer.RESOURCE_MAX_LENGTH) {
+            return Optional.of("crossAppAccess.resourceServers resource must be at most "
+                    + CrossAppAccessResourceServer.RESOURCE_MAX_LENGTH + " characters");
+        }
+        return isAbsolute(resource)
+                ? Optional.empty()
+                : Optional.of("crossAppAccess.resourceServers resource must be an absolute URI: " + resource);
+    }
+
+    private static boolean isAbsolute(String uri) {
+        try {
+            return new URI(uri).isAbsolute();
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    private Optional<String> validateOutboundScopeMappings(Map<String, String> scopeMappings) {
+        if (scopeMappings == null) {
+            return Optional.empty();
+        }
+        boolean incomplete = scopeMappings.entrySet().stream()
+                .anyMatch(entry -> trimToNull(entry.getKey()) == null || trimToNull(entry.getValue()) == null);
         return incomplete
-                ? Optional.of("userBindingCriteria entries must have a non-blank attribute and expression")
+                ? Optional.of("crossAppAccess.scopeMappings must not contain a blank domain or external scope")
                 : Optional.empty();
+    }
+
+    private Optional<String> validateAudSubMapping(String audSubMapping) {
+        if (audSubMapping == null || audSubMapping.isBlank()) {
+            return Optional.empty();
+        }
+        if (audSubMapping.length() > CrossAppAccessSettings.AUD_SUB_MAPPING_MAX_LENGTH) {
+            return Optional.of("crossAppAccess.audSubMapping must be at most "
+                    + CrossAppAccessSettings.AUD_SUB_MAPPING_MAX_LENGTH + " characters");
+        }
+        return parses(audSubMapping)
+                ? Optional.empty()
+                : Optional.of("crossAppAccess.audSubMapping is not a valid expression: " + audSubMapping);
     }
 
     private Optional<String> validateKeyMaterial(TrustDomainKeyMaterial keyMaterial, KeyRetrievalSettings settings) {

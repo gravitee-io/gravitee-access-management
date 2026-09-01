@@ -334,7 +334,7 @@ class TrustedIssuerResolverImplTest {
                 .name("trusted.example.com")
                 .keyMaterial(keyMaterial)
                 .domainIdentifier(ISSUER)
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
     }
 

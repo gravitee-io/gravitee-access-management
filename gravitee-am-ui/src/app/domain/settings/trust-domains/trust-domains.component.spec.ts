@@ -40,6 +40,7 @@ describe('DomainSettingsTrustDomainsComponent', () => {
     id: 'td-te',
     name: 'external-idp',
     issuer: 'https://issuer.example.com',
+    tokenExchangeEnabled: true,
     keyMaterial: { source: 'PEM', certificate: 'cert' },
   };
   const bothEntry: TrustDomain = {
@@ -47,7 +48,25 @@ describe('DomainSettingsTrustDomainsComponent', () => {
     name: 'acme-corp',
     spiffeTrustDomain: 'acme.org',
     issuer: 'https://sso.acme.com',
+    tokenExchangeEnabled: true,
     keyMaterial: { source: 'JWKS_URL', jwksUrl: 'https://sso.acme.com/keys' },
+  };
+  const crossAppAccessEntry: TrustDomain = {
+    id: 'td-xaa',
+    name: 'acme-suite',
+    issuer: 'https://auth.acme.com',
+    crossAppAccess: {
+      enabled: true,
+      resourceServers: [{ name: 'Acme Calendar', resource: 'https://calendar.acme.com' }],
+    },
+  };
+  const issuerAndCrossAppAccessEntry: TrustDomain = {
+    id: 'td-te-xaa',
+    name: 'acme-sso',
+    issuer: 'https://sso.acme.com',
+    tokenExchangeEnabled: true,
+    keyMaterial: { source: 'PEM', certificate: 'cert' },
+    crossAppAccess: { enabled: true },
   };
 
   beforeEach(waitForAsync(() => {
@@ -65,7 +84,12 @@ describe('DomainSettingsTrustDomainsComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { data: { domain: { id: 'domain-1' }, trustDomains: [spiffeEntry, issuerEntry, bothEntry] } },
+            snapshot: {
+              data: {
+                domain: { id: 'domain-1' },
+                trustDomains: [spiffeEntry, issuerEntry, bothEntry, crossAppAccessEntry, issuerAndCrossAppAccessEntry],
+              },
+            },
           },
         },
       ],
@@ -81,12 +105,24 @@ describe('DomainSettingsTrustDomainsComponent', () => {
   });
 
   it('shouldLabelEachEntryWithTheUsagesItDeclares', () => {
-    expect(component.trustDomains).toHaveLength(3);
+    expect(component.trustDomains).toHaveLength(5);
     expect(component.trustDomains.map((td) => component.usagesLabel(td))).toEqual([
       'SPIFFE',
       'OIDC - Trusted Issuer',
       'SPIFFE, OIDC - Trusted Issuer',
+      'Cross App Access',
+      'OIDC - Trusted Issuer, Cross App Access',
     ]);
+  });
+
+  it('shouldCollapseSeveralUsagesIntoACountedBadgeKeepingTheListInTheTooltip', () => {
+    expect(component.usagesBadgeLabel(bothEntry)).toBe('2 usages');
+    expect(component.usagesLabel(bothEntry)).toBe('SPIFFE, OIDC - Trusted Issuer');
+  });
+
+  it('shouldNameTheUsageOnTheBadgeWhenOnlyOneIsDeclared', () => {
+    expect(component.usagesBadgeLabel(spiffeEntry)).toBe('SPIFFE');
+    expect(component.usagesBadgeLabel(crossAppAccessEntry)).toBe('Cross App Access');
   });
 
   it('shouldShowTheIssuerAsTheSubtitleOfATrustedIssuerEntry', () => {

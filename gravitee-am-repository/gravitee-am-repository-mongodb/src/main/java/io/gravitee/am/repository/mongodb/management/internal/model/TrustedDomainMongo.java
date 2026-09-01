@@ -15,21 +15,25 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 @Getter
 @Setter
-public class TrustDomainKeyMaterialMongo {
+public class TrustedDomainMongo extends Auditable {
 
-    private String source;
-    private String jwksUrl;
-    private Integer refreshIntervalSeconds;
+    @BsonId
+    private String id;
 
-    /**
-     * JSON-encoded JWK set; the JWK hierarchy has no BSON codec of its own.
-     */
-    private String jwkSet;
-
-    private String certificate;
+    private String referenceId;
+    private String referenceType;
+    private String name;
+    private String description;
+    private String domainIdentifier;
+    private TrustDomainKeyMaterialMongo keyMaterial;
+    private SpiffeTrustSettingsMongo spiffe;
+    private TokenExchangeTrustSettingsMongo tokenExchange;
+    private CrossAppAccessSettingsMongo crossAppAccess;
 }

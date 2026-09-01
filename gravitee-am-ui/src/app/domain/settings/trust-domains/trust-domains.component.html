@@ -40,7 +40,9 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Usage" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <span data-testid="trustDomainUsage">{{ usagesLabel(row) }}</span>
+          <span class="gio-badge-neutral badge" data-testid="trustDomainUsage" [matTooltip]="usagesLabel(row)">{{
+            usagesBadgeLabel(row)
+          }}</span>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Key source" [flexGrow]="1">
@@ -72,7 +74,6 @@
     *ngIf="isEmpty()"
     data-testid="trustDomainsEmptyState"
     [message]="'Trusted domains will appear here'"
-    [subMessage]="'Register a trusted domain to accept JWT-SVIDs or external token-exchange tokens'"
     [icon]="'verified_user'"
   ></app-emptystate>
 
