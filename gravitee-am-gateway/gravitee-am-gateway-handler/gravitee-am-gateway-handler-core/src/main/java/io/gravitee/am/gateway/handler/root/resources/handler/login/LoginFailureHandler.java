@@ -27,6 +27,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
+import io.gravitee.am.gateway.handler.common.utils.UserFacingFailureMessage;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Domain;
@@ -77,7 +78,10 @@ public class LoginFailureHandler extends LoginAbstractHandler {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
             if (throwable instanceof PolicyChainException policyChainException) {
-                handlePolicyChainException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                LOGGER.warn("Policy chain failed during login on domain '{}' [key={}, status={}]: {}",
+                        domain.getId(), policyChainException.key(), policyChainException.statusCode(), policyChainException.getMessage());
+                handlePolicyChainException(routingContext, policyChainException.key(),
+                        UserFacingFailureMessage.from(policyChainException).orElse(null));
             } else if (throwable instanceof AccountPasswordExpiredException) {
                 handleException(routingContext, ((AccountPasswordExpiredException) throwable).getErrorCode(), throwable.getMessage());
             } else if (throwable instanceof AccountEnforcePasswordException) {
