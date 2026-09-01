@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.policy.impl;
 
 import com.google.common.base.Throwables;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.core.processor.AbstractProcessor;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
@@ -42,7 +43,6 @@ import lombok.CustomLog;
 @CustomLog
 public class PolicyChain extends AbstractProcessor<ExecutionContext> implements io.gravitee.policy.api.PolicyChain {
 
-    private static final String GATEWAY_POLICY_INTERNAL_ERROR_KEY = "GATEWAY_POLICY_INTERNAL_ERROR";
     private final List<Policy> policies;
     private final Iterator<Policy> policyIterator;
     private final ExecutionContext executionContext;
@@ -81,7 +81,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
                 request.metrics().setMessage(message);
                 if (errorHandler != null) {
                     errorHandler.handle(new PolicyChainProcessorFailure(PolicyResult.failure(
-                            GATEWAY_POLICY_INTERNAL_ERROR_KEY, ex.getMessage())));
+                            ConstantKeys.POLICY_CHAIN_ERROR_KEY_INTERNAL_ERROR, ex.getMessage())));
                 }
             }
         } else {

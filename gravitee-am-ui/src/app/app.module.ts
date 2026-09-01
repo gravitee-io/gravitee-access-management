@@ -392,9 +392,13 @@ import { PlatformAlertStatusResolver } from './resolvers/platform-alert-status.r
 import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
 import { BotDetectionService } from './services/bot-detection.service';
 import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { TrustDomainsContainerComponent } from './domain/settings/trust-domains/trust-domains-container.component';
 import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
 import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
 import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainFormComponent } from './domain/settings/trust-domains/form/trust-domain-form.component';
+import { TrustDomainKeyMaterialComponent } from './domain/settings/trust-domains/key-material/trust-domain-key-material.component';
+import { TrustDomainKeyRetrievalComponent } from './domain/settings/trust-domains/key-retrieval/trust-domain-key-retrieval.component';
 import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
 import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
@@ -509,10 +513,7 @@ import { CreateClaimComponent } from './domain/components/oauth2-settings/claims
 import { CreateUserinfoClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
-import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
 import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
-import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
-import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
 
 @NgModule({
@@ -770,9 +771,13 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AlertNotifierFormComponent,
     DomainAlertNotifierComponent,
     DomainSettingsBotDetectionsComponent,
+    TrustDomainsContainerComponent,
     DomainSettingsTrustDomainsComponent,
     TrustDomainCreationComponent,
     TrustDomainComponent,
+    TrustDomainFormComponent,
+    TrustDomainKeyMaterialComponent,
+    TrustDomainKeyRetrievalComponent,
     BotDetectionCreationComponent,
     BotDetectionCreationStep1Component,
     BotDetectionCreationStep2Component,
@@ -807,10 +812,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopesComponent,
     AddScopeComponent,
     TokensComponent,
-    TokenExchangeContainerComponent,
     TokenExchangeSettingsComponent,
-    TrustedIssuersListComponent,
-    TrustedIssuerDetailComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -39,6 +40,9 @@ public class AbstractDomainResource extends AbstractResource {
 
     @Autowired
     protected DomainService domainService;
+
+    @Autowired
+    protected TrustedIssuerProjection trustedIssuerProjection;
 
     @Context
     protected ResourceContext resourceContext;
@@ -103,6 +107,7 @@ public class AbstractDomainResource extends AbstractResource {
         }
 
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
+            filteredDomain.setKeyRetrievalSettings(domain.getKeyRetrievalSettings());
             filteredDomain.setLoginSettings(domain.getLoginSettings());
             filteredDomain.setWebAuthnSettings(domain.getWebAuthnSettings());
             filteredDomain.setAccountSettings(domain.getAccountSettings());

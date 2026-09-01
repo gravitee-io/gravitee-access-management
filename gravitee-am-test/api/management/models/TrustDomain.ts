@@ -28,6 +28,20 @@
 import { mapValues } from '../runtime';
 import type { JWKSet } from './JWKSet';
 import { JWKSetFromJSON, JWKSetFromJSONTyped, JWKSetToJSON, JWKSetToJSONTyped } from './JWKSet';
+import type { UserBindingCriterion } from './UserBindingCriterion';
+import {
+  UserBindingCriterionFromJSON,
+  UserBindingCriterionFromJSONTyped,
+  UserBindingCriterionToJSON,
+  UserBindingCriterionToJSONTyped,
+} from './UserBindingCriterion';
+import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
+import {
+  TrustDomainKeyMaterialFromJSON,
+  TrustDomainKeyMaterialFromJSONTyped,
+  TrustDomainKeyMaterialToJSON,
+  TrustDomainKeyMaterialToJSONTyped,
+} from './TrustDomainKeyMaterial';
 
 /**
  *
@@ -42,9 +56,10 @@ export interface TrustDomain {
    */
   allowedAlgorithms?: Array<string>;
   /**
-   *
+   * Use keyMaterial.source instead. Null when the key material is a PEM certificate.
    * @type {string}
    * @memberof TrustDomain
+   * @deprecated
    */
   bundleSource?: TrustDomainBundleSourceEnum;
   /**
@@ -66,13 +81,26 @@ export interface TrustDomain {
    */
   id?: string;
   /**
-   *
+   * Expected value of the "iss" claim in an external JWT. Required to accept tokens during an RFC 8693 exchange.
    * @type {string}
    * @memberof TrustDomain
+   */
+  issuer?: string;
+  /**
+   * Use keyMaterial.jwksUrl instead.
+   * @type {string}
+   * @memberof TrustDomain
+   * @deprecated
    */
   jwksUrl?: string;
   /**
    *
+   * @type {TrustDomainKeyMaterial}
+   * @memberof TrustDomain
+   */
+  keyMaterial?: TrustDomainKeyMaterial;
+  /**
+   * Label the trusted domain is known by. Unique within the security domain.
    * @type {string}
    * @memberof TrustDomain
    */
@@ -96,6 +124,18 @@ export interface TrustDomain {
    */
   refreshIntervalSeconds?: number;
   /**
+   * One-to-one mapping from external scope to domain scope. Unmapped issuer scopes are dropped (fail-closed). Applies to tokens matched by "issuer".
+   * @type {{ [key: string]: string; }}
+   * @memberof TrustDomain
+   */
+  scopeMappings?: { [key: string]: string };
+  /**
+   * SPIFFE trust domain matched against the "sub" of a JWT-SVID, without the "spiffe://" scheme. Required to accept SPIFFE client assertions.
+   * @type {string}
+   * @memberof TrustDomain
+   */
+  spiffeTrustDomain?: string;
+  /**
    *
    * @type {JWKSet}
    * @memberof TrustDomain
@@ -107,6 +147,18 @@ export interface TrustDomain {
    * @memberof TrustDomain
    */
   updatedAt?: number;
+  /**
+   * Criteria used to locate a domain user when user binding is enabled. All criteria are combined with AND.
+   * @type {Array<UserBindingCriterion>}
+   * @memberof TrustDomain
+   */
+  userBindingCriteria?: Array<UserBindingCriterion>;
+  /**
+   * Whether the external JWT subject is resolved to a single domain user using the user binding criteria. When false, a virtual user is built from the token claims only.
+   * @type {boolean}
+   * @memberof TrustDomain
+   */
+  userBindingEnabled?: boolean;
 }
 
 /**
@@ -152,13 +204,20 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
+    issuer: json['issuer'] == null ? undefined : json['issuer'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
+    keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
     name: json['name'] == null ? undefined : json['name'],
     referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
+    scopeMappings: json['scopeMappings'] == null ? undefined : json['scopeMappings'],
+    spiffeTrustDomain: json['spiffeTrustDomain'] == null ? undefined : json['spiffeTrustDomain'],
     staticJwks: json['staticJwks'] == null ? undefined : JWKSetFromJSON(json['staticJwks']),
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
+    userBindingCriteria:
+      json['userBindingCriteria'] == null ? undefined : (json['userBindingCriteria'] as Array<any>).map(UserBindingCriterionFromJSON),
+    userBindingEnabled: json['userBindingEnabled'] == null ? undefined : json['userBindingEnabled'],
   };
 }
 
@@ -177,12 +236,19 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     createdAt: value['createdAt'],
     description: value['description'],
     id: value['id'],
+    issuer: value['issuer'],
     jwksUrl: value['jwksUrl'],
+    keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
     name: value['name'],
     referenceId: value['referenceId'],
     referenceType: value['referenceType'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
+    scopeMappings: value['scopeMappings'],
+    spiffeTrustDomain: value['spiffeTrustDomain'],
     staticJwks: JWKSetToJSON(value['staticJwks']),
     updatedAt: value['updatedAt'],
+    userBindingCriteria:
+      value['userBindingCriteria'] == null ? undefined : (value['userBindingCriteria'] as Array<any>).map(UserBindingCriterionToJSON),
+    userBindingEnabled: value['userBindingEnabled'],
   };
 }

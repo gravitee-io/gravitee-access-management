@@ -33,27 +33,31 @@ import { mapValues } from '../runtime';
  */
 export interface SpiffeDomainSettings {
   /**
-   * Whether trust bundles can be fetched from private IP addresses.
+   * Deprecated: moved to keyRetrievalSettings.allowPrivateIpAddress.
    * @type {boolean}
    * @memberof SpiffeDomainSettings
+   * @deprecated
    */
   allowPrivateIpAddress?: boolean;
   /**
-   * Whether trust bundles can be fetched over unsecured HTTP URIs.
+   * Deprecated: moved to keyRetrievalSettings.allowUnsecuredHttpUri.
    * @type {boolean}
    * @memberof SpiffeDomainSettings
+   * @deprecated
    */
   allowUnsecuredHttpUri?: boolean;
   /**
-   * Maximum number of trust bundle entries retained in the cache.
+   * Deprecated: moved to keyRetrievalSettings.cacheMaxEntries.
    * @type {number}
    * @memberof SpiffeDomainSettings
+   * @deprecated
    */
   cacheMaxEntries?: number;
   /**
-   * Time-to-live, in seconds, for cached trust bundle entries.
+   * Deprecated: moved to keyRetrievalSettings.cacheTtlSeconds.
    * @type {number}
    * @memberof SpiffeDomainSettings
+   * @deprecated
    */
   cacheTtlSeconds?: number;
   /**
@@ -75,9 +79,10 @@ export interface SpiffeDomainSettings {
    */
   enabled?: boolean;
   /**
-   * Timeout, in milliseconds, for fetching trust bundles.
+   * Deprecated: moved to keyRetrievalSettings.fetchTimeoutMs.
    * @type {number}
    * @memberof SpiffeDomainSettings
+   * @deprecated
    */
   fetchTimeoutMs?: number;
   /**
@@ -87,9 +92,10 @@ export interface SpiffeDomainSettings {
    */
   maxJwtLifetimeSeconds?: number;
   /**
-   * Maximum trust bundle response size, in kilobytes.
+   * Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb.
    * @type {number}
    * @memberof SpiffeDomainSettings
+   * @deprecated
    */
   maxResponseSizeKb?: number;
 }

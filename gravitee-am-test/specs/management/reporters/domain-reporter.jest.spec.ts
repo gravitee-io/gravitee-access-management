@@ -195,16 +195,30 @@ describe('Domain Reporter Attribute Mapping Validation', () => {
     ).rejects.toMatchObject({ response: { status: 400 } });
   });
 
-  it('should reject an invalid expression (missing braces)', async () => {
-    await expect(
-      invalid([{ expression: "#context.attributes['user'].id", exportedName: 'user_id' }]),
-    ).rejects.toMatchObject({ response: { status: 400 } });
+  it('should reject a blank expression', async () => {
+    await expect(invalid([{ expression: '   ', exportedName: 'user_id' }])).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+  });
+
+  it('should accept an expression with literal text around it, and a plain constant', async () => {
+    const reporter = await fixture.createReporter({
+      attributeMappings: [
+        { expression: "tenant-{#context.attributes['user'].id}", exportedName: 'tenant' },
+        { expression: 'production', exportedName: 'environment' },
+      ],
+    });
+
+    expect(reporter.attributeMappings).toEqual([
+      { expression: "tenant-{#context.attributes['user'].id}", exportedName: 'tenant' },
+      { expression: 'production', exportedName: 'environment' },
+    ]);
   });
 
   it('should reject an invalid exported name (too long)', async () => {
-    await expect(
-      invalid([{ expression: "{#context.attributes['user'].id}", exportedName: 'a'.repeat(65) }]),
-    ).rejects.toMatchObject({ response: { status: 400 } });
+    await expect(invalid([{ expression: "{#context.attributes['user'].id}", exportedName: 'a'.repeat(65) }])).rejects.toMatchObject({
+      response: { status: 400 },
+    });
   });
 });
 
@@ -218,9 +232,7 @@ describe('Domain System Reporter', () => {
         name: system.name,
         enabled: system.enabled,
         configuration: system.configuration ?? '{}',
-        attributeMappings: [
-          { expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' },
-        ],
+        attributeMappings: [{ expression: "{#context.attributes['user'].additionalInformation['sub']}", exportedName: 'user_sub' }],
       }),
     ).rejects.toMatchObject({ response: { status: 400 } });
   });

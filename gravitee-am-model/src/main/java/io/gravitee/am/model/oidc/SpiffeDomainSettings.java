@@ -22,16 +22,14 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Domain-level settings for SPIFFE workload identity support.
+ * Domain-level settings for SPIFFE workload identity support. The fetch, SSRF and cache limits this
+ * block used to carry now live in {@link io.gravitee.am.model.KeyRetrievalSettings}; they remain here, deprecated and
+ * unset on new domains, only so values written before the move can be read back and relocated.
  *
  * @author GraviteeSource Team
  */
 public class SpiffeDomainSettings {
 
-    public static final int DEFAULT_FETCH_TIMEOUT_MS = 5000;
-    public static final int DEFAULT_MAX_RESPONSE_SIZE_KB = 32;
-    public static final int DEFAULT_CACHE_TTL_SECONDS = 300;
-    public static final int DEFAULT_CACHE_MAX_ENTRIES = 50;
     public static final int DEFAULT_MAX_JWT_LIFETIME_SECONDS = 300;
     public static final int DEFAULT_CLOCK_SKEW_SECONDS = 30;
     public static final List<String> DEFAULT_ALLOWED_ALGORITHMS =
@@ -44,33 +42,35 @@ public class SpiffeDomainSettings {
             defaultValue = "false")
     private boolean enabled;
 
-    // --- SSRF Protection ---
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.allowUnsecuredHttpUri.",
+            deprecated = true)
+    @Deprecated
+    private Boolean allowUnsecuredHttpUri;
 
-    @Schema(description = "Whether trust bundles can be fetched over unsecured HTTP URIs.",
-            defaultValue = "false")
-    private boolean allowUnsecuredHttpUri;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.allowPrivateIpAddress.",
+            deprecated = true)
+    @Deprecated
+    private Boolean allowPrivateIpAddress;
 
-    @Schema(description = "Whether trust bundles can be fetched from private IP addresses.",
-            defaultValue = "false")
-    private boolean allowPrivateIpAddress;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.fetchTimeoutMs.",
+            deprecated = true)
+    @Deprecated
+    private Integer fetchTimeoutMs;
 
-    @Schema(description = "Timeout, in milliseconds, for fetching trust bundles.",
-            defaultValue = "5000")
-    private int fetchTimeoutMs = DEFAULT_FETCH_TIMEOUT_MS;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb.",
+            deprecated = true)
+    @Deprecated
+    private Integer maxResponseSizeKb;
 
-    @Schema(description = "Maximum trust bundle response size, in kilobytes.",
-            defaultValue = "32")
-    private int maxResponseSizeKb = DEFAULT_MAX_RESPONSE_SIZE_KB;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.cacheTtlSeconds.",
+            deprecated = true)
+    @Deprecated
+    private Integer cacheTtlSeconds;
 
-    // --- Bundle Caching ---
-
-    @Schema(description = "Time-to-live, in seconds, for cached trust bundle entries.",
-            defaultValue = "300")
-    private int cacheTtlSeconds = DEFAULT_CACHE_TTL_SECONDS;
-
-    @Schema(description = "Maximum number of trust bundle entries retained in the cache.",
-            defaultValue = "50")
-    private int cacheMaxEntries = DEFAULT_CACHE_MAX_ENTRIES;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.cacheMaxEntries.",
+            deprecated = true)
+    @Deprecated
+    private Integer cacheMaxEntries;
 
     // --- JWT Validation Policy ---
 
@@ -116,51 +116,63 @@ public class SpiffeDomainSettings {
         this.enabled = enabled;
     }
 
-    public boolean isAllowUnsecuredHttpUri() {
+    @Deprecated
+    public Boolean getAllowUnsecuredHttpUri() {
         return allowUnsecuredHttpUri;
     }
 
-    public void setAllowUnsecuredHttpUri(boolean allowUnsecuredHttpUri) {
+    @Deprecated
+    public void setAllowUnsecuredHttpUri(Boolean allowUnsecuredHttpUri) {
         this.allowUnsecuredHttpUri = allowUnsecuredHttpUri;
     }
 
-    public boolean isAllowPrivateIpAddress() {
+    @Deprecated
+    public Boolean getAllowPrivateIpAddress() {
         return allowPrivateIpAddress;
     }
 
-    public void setAllowPrivateIpAddress(boolean allowPrivateIpAddress) {
+    @Deprecated
+    public void setAllowPrivateIpAddress(Boolean allowPrivateIpAddress) {
         this.allowPrivateIpAddress = allowPrivateIpAddress;
     }
 
-    public int getFetchTimeoutMs() {
+    @Deprecated
+    public Integer getFetchTimeoutMs() {
         return fetchTimeoutMs;
     }
 
-    public void setFetchTimeoutMs(int fetchTimeoutMs) {
+    @Deprecated
+    public void setFetchTimeoutMs(Integer fetchTimeoutMs) {
         this.fetchTimeoutMs = fetchTimeoutMs;
     }
 
-    public int getMaxResponseSizeKb() {
+    @Deprecated
+    public Integer getMaxResponseSizeKb() {
         return maxResponseSizeKb;
     }
 
-    public void setMaxResponseSizeKb(int maxResponseSizeKb) {
+    @Deprecated
+    public void setMaxResponseSizeKb(Integer maxResponseSizeKb) {
         this.maxResponseSizeKb = maxResponseSizeKb;
     }
 
-    public int getCacheTtlSeconds() {
+    @Deprecated
+    public Integer getCacheTtlSeconds() {
         return cacheTtlSeconds;
     }
 
-    public void setCacheTtlSeconds(int cacheTtlSeconds) {
+    @Deprecated
+    public void setCacheTtlSeconds(Integer cacheTtlSeconds) {
         this.cacheTtlSeconds = cacheTtlSeconds;
     }
 
-    public int getCacheMaxEntries() {
+    @Deprecated
+    public Integer getCacheMaxEntries() {
         return cacheMaxEntries;
     }
 
-    public void setCacheMaxEntries(int cacheMaxEntries) {
+    @Deprecated
+    public void setCacheMaxEntries(Integer cacheMaxEntries) {
         this.cacheMaxEntries = cacheMaxEntries;
     }
 
@@ -190,5 +202,23 @@ public class SpiffeDomainSettings {
 
     public static SpiffeDomainSettings defaultSettings() {
         return new SpiffeDomainSettings();
+    }
+
+    public boolean hasLegacyRetrievalSettings() {
+        return allowUnsecuredHttpUri != null
+                || allowPrivateIpAddress != null
+                || fetchTimeoutMs != null
+                || maxResponseSizeKb != null
+                || cacheTtlSeconds != null
+                || cacheMaxEntries != null;
+    }
+
+    public void clearLegacyRetrievalSettings() {
+        this.allowUnsecuredHttpUri = null;
+        this.allowPrivateIpAddress = null;
+        this.fetchTimeoutMs = null;
+        this.maxResponseSizeKb = null;
+        this.cacheTtlSeconds = null;
+        this.cacheMaxEntries = null;
     }
 }

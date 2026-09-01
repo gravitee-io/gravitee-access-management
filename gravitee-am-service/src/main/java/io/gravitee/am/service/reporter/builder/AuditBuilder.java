@@ -34,6 +34,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
+import io.gravitee.am.reporter.api.audit.model.AuditEnrichmentContext;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 
@@ -85,6 +86,9 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
     protected Object oldValue;
     protected Object newValue;
 
+    protected io.gravitee.am.model.User capturedUser;
+    protected Client capturedClient;
+
     public static <T> T builder(Class<T> clazz) {
         try {
             return clazz.newInstance();
@@ -131,6 +135,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
             this.accessPointId = client.getId();
             this.accessPointAlternativeId = client.getClientId();
             this.accessPointName = client.getClientName();
+            this.capturedClient = client;
         }
         return (T) this;
     }
@@ -213,6 +218,13 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         }
 
         return null;
+    }
+
+    /**
+     * Every builder method that receives an {@code io.gravitee.am.model.User} must call this.
+     */
+    protected void captureUser(io.gravitee.am.model.User user) {
+        this.capturedUser = user;
     }
 
     public String getType() {
@@ -316,6 +328,10 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
             result.setMessage(throwable.getMessage() + (throwable.getCause() != null ? ". Cause: " + throwable.getCause().getMessage() : ""));
         }
         audit.setOutcome(result);
+
+        if (capturedUser != null || capturedClient != null) {
+            audit.setEnrichmentContext(new AuditEnrichmentContext(capturedUser, capturedClient));
+        }
 
         return audit;
     }

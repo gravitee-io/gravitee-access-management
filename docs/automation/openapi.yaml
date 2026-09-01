@@ -1750,6 +1750,8 @@ components:
           maxLength: 255
           minLength: 1
           title: Key
+        keyRetrievalSettings:
+          $ref: "#/components/schemas/KeyRetrievalSettings"
         loginSettings:
           $ref: "#/components/schemas/LoginSettings"
         master:
@@ -2186,6 +2188,40 @@ components:
           description: Input type of the field.
           example: email
       title: Form field
+    KeyRetrievalSettings:
+      type: object
+      description: "Fetch, SSRF and cache limits applied to every trusted domain in\
+        \ the security domain."
+      properties:
+        allowPrivateIpAddress:
+          type: boolean
+          default: false
+          description: Whether key material can be fetched from private IP addresses.
+        allowUnsecuredHttpUri:
+          type: boolean
+          default: false
+          description: Whether key material can be fetched over unsecured HTTP URIs.
+        cacheMaxEntries:
+          type: integer
+          format: int32
+          default: 50
+          description: Maximum number of key material entries retained in the cache.
+        cacheTtlSeconds:
+          type: integer
+          format: int32
+          default: 300
+          description: "Time-to-live, in seconds, for cached key material."
+        fetchTimeoutMs:
+          type: integer
+          format: int32
+          default: 5000
+          description: "Timeout, in milliseconds, for fetching key material."
+        maxResponseSizeKb:
+          type: integer
+          format: int32
+          default: 32
+          description: "Maximum key material response size, in kilobytes."
+      title: Trusted domain key retrieval settings
     LoginSettings:
       type: object
       description: Configuration of the domain's login flow and the features offered
@@ -2411,22 +2447,22 @@ components:
       properties:
         allowPrivateIpAddress:
           type: boolean
-          default: false
-          description: Whether trust bundles can be fetched from private IP addresses.
+          deprecated: true
+          description: "Deprecated: moved to keyRetrievalSettings.allowPrivateIpAddress."
         allowUnsecuredHttpUri:
           type: boolean
-          default: false
-          description: Whether trust bundles can be fetched over unsecured HTTP URIs.
+          deprecated: true
+          description: "Deprecated: moved to keyRetrievalSettings.allowUnsecuredHttpUri."
         cacheMaxEntries:
           type: integer
           format: int32
-          default: 50
-          description: Maximum number of trust bundle entries retained in the cache.
+          deprecated: true
+          description: "Deprecated: moved to keyRetrievalSettings.cacheMaxEntries."
         cacheTtlSeconds:
           type: integer
           format: int32
-          default: 300
-          description: "Time-to-live, in seconds, for cached trust bundle entries."
+          deprecated: true
+          description: "Deprecated: moved to keyRetrievalSettings.cacheTtlSeconds."
         clockSkewSeconds:
           type: integer
           format: int32
@@ -2449,8 +2485,8 @@ components:
         fetchTimeoutMs:
           type: integer
           format: int32
-          default: 5000
-          description: "Timeout, in milliseconds, for fetching trust bundles."
+          deprecated: true
+          description: "Deprecated: moved to keyRetrievalSettings.fetchTimeoutMs."
         maxJwtLifetimeSeconds:
           type: integer
           format: int32
@@ -2460,8 +2496,8 @@ components:
         maxResponseSizeKb:
           type: integer
           format: int32
-          default: 32
-          description: "Maximum trust bundle response size, in kilobytes."
+          deprecated: true
+          description: "Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb."
     TokenExchangeClaimMapping:
       type: object
       description: Copies a claim from the validated subject or actor token onto the
@@ -2570,13 +2606,17 @@ components:
           $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         trustedIssuers:
           type: array
-          description: "External issuers whose JWTs may be accepted as subject or\
-            \ actor tokens. When unset, only domain-issued tokens are accepted."
+          deprecated: true
+          description: "Deprecated: use the trusted-domains API instead. External\
+            \ issuers whose JWTs may be accepted as subject or actor tokens. A projection\
+            \ over the security domain's token-exchange trusted domains; a write replaces\
+            \ the list, so an omitted issuer is no longer trusted."
           items:
             $ref: "#/components/schemas/TrustedIssuer"
       title: Token exchange settings
     TrustedIssuer:
       type: object
+      deprecated: true
       description: "An external token issuer whose JWTs are accepted as subject or\
         \ actor tokens during token exchange, validated with the configured key material."
       properties:

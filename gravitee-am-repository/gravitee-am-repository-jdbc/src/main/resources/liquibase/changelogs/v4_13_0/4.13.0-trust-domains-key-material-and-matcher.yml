@@ -1,0 +1,76 @@
+databaseChangeLog:
+  # A trusted domain now describes its key material in one shared shape, and the SPIFFE trust domain
+  # it vouches for moves out of the name into a matcher of its own, leaving the name a plain label.
+  # Rows written before this changeset are trusted for SPIFFE under their name, and their key material
+  # lives in the legacy bundle_source / jwks_url columns; those columns are kept readable but no
+  # longer written.
+  - changeSet:
+      id: 4.13.0-trust-domains-key-material-and-matcher
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: trust_domains
+                columnName: key_material
+      changes:
+        - addColumn:
+            tableName: trust_domains
+            columns:
+              - column: { name: key_material, type: clob, constraints: { nullable: true } }
+              - column: { name: spiffe_trust_domain, type: nvarchar(255), constraints: { nullable: true } }
+
+        - update:
+            tableName: trust_domains
+            columns:
+              - column: { name: spiffe_trust_domain, valueComputed: name }
+            where: spiffe_trust_domain IS NULL
+
+        - dropNotNullConstraint:
+            tableName: trust_domains
+            columnName: bundle_source
+            columnDataType: nvarchar(64)
+
+  # A SPIFFE trust domain is vouched for by at most one trusted domain per security domain. Trusted
+  # domains that are not trusted for SPIFFE leave the column null, and PostgreSQL / MySQL / MariaDB
+  # treat nulls as distinct in a unique index.
+  - changeSet:
+      id: 4.13.0-trust-domains-spiffe-unique
+      author: GraviteeSource Team
+      dbms: postgresql, mysql, mariadb
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: trust_domains
+                indexName: idx_trust_domains_ref_spiffe
+      changes:
+        - createIndex:
+            columns:
+              - column: { name: reference_type }
+              - column: { name: reference_id }
+              - column: { name: spiffe_trust_domain }
+            indexName: idx_trust_domains_ref_spiffe
+            tableName: trust_domains
+            unique: true
+
+  # SQL Server treats nulls as equal in a unique index, so the same constraint has to be filtered
+  # down to the rows that actually carry a SPIFFE trust domain. SQL Server refuses to build a
+  # filtered index unless QUOTED_IDENTIFIER is ON, so the batch sets it rather than trusting the
+  # connection.
+  - changeSet:
+      id: 4.13.0-trust-domains-spiffe-unique-mssql
+      author: GraviteeSource Team
+      dbms: mssql
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: trust_domains
+                indexName: idx_trust_domains_ref_spiffe
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              SET QUOTED_IDENTIFIER ON;
+              CREATE UNIQUE INDEX idx_trust_domains_ref_spiffe ON trust_domains (reference_type, reference_id, spiffe_trust_domain) WHERE spiffe_trust_domain IS NOT NULL;

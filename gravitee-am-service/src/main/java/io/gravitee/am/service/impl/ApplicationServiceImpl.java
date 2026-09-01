@@ -1504,7 +1504,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        return trustDomainRepository.findByName(ReferenceType.DOMAIN,
+        return trustDomainRepository.findBySpiffeTrustDomain(ReferenceType.DOMAIN,
                         application.getDomain(), spiffe.getTrustDomain())
                 .switchIfEmpty(Single.error(new InvalidClientMetadataException(
                         "spiffe.trustDomain '" + spiffe.getTrustDomain() + "' is not registered for this domain")))

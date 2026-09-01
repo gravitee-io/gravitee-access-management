@@ -209,9 +209,11 @@ import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
 import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
 import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
 import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { TrustDomainsContainerComponent } from './domain/settings/trust-domains/trust-domains-container.component';
 import { DomainSettingsTrustDomainsComponent } from './domain/settings/trust-domains/trust-domains.component';
 import { TrustDomainCreationComponent } from './domain/settings/trust-domains/creation/trust-domain-creation.component';
 import { TrustDomainComponent } from './domain/settings/trust-domains/trust-domain/trust-domain.component';
+import { TrustDomainKeyRetrievalComponent } from './domain/settings/trust-domains/key-retrieval/trust-domain-key-retrieval.component';
 import { TrustDomainsResolver } from './resolvers/trust-domains.resolver';
 import { TrustDomainResolver } from './resolvers/trust-domain.resolver';
 import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
@@ -272,10 +274,7 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
 import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
-import { TokenExchangeContainerComponent } from './domain/settings/oauth/token-exchange/token-exchange-container.component';
 import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
-import { TrustedIssuersListComponent } from './domain/settings/oauth/token-exchange/trusted-issuers-list/trusted-issuers-list.component';
-import { TrustedIssuerDetailComponent } from './domain/settings/oauth/token-exchange/trusted-issuer-detail/trusted-issuer-detail.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { ApplicationOAuth2Service, McpServerOAuth2Service, OAUTH2_SETTINGS_SERVICE } from './services/oauth2-settings.service';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
@@ -2369,11 +2368,12 @@ export const routes: Routes = [
                       },
                       {
                         path: 'trust-domains',
+                        component: TrustDomainsContainerComponent,
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
-                            label: 'Trust Domains',
-                            section: 'Workload Identity',
+                            label: 'Trusted Domains',
+                            section: 'Security',
                             level: 'level2',
                           },
                           perms: {
@@ -2381,16 +2381,31 @@ export const routes: Routes = [
                           },
                         },
                         children: [
+                          { path: '', redirectTo: 'domains', pathMatch: 'full' },
                           {
-                            path: '',
-                            pathMatch: 'full',
+                            path: 'domains',
                             component: DomainSettingsTrustDomainsComponent,
+                            data: {
+                              breadcrumb: {
+                                disabled: true,
+                              },
+                            },
                             resolve: {
                               trustDomains: TrustDomainsResolver,
                             },
                           },
                           {
-                            path: 'new',
+                            path: 'key-retrieval',
+                            component: TrustDomainKeyRetrievalComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_settings_read'],
+                              },
+                            },
+                          },
+                          {
+                            path: 'domains/new',
                             component: TrustDomainCreationComponent,
                             canActivate: [AuthGuard],
                             data: {
@@ -2400,7 +2415,7 @@ export const routes: Routes = [
                             },
                           },
                           {
-                            path: ':trustDomainId',
+                            path: 'domains/:trustDomainId',
                             component: TrustDomainComponent,
                             canActivate: [AuthGuard],
                             resolve: {
@@ -3009,7 +3024,7 @@ export const routes: Routes = [
                       },
                       {
                         path: 'token-exchange',
-                        component: TokenExchangeContainerComponent,
+                        component: TokenExchangeSettingsComponent,
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
@@ -3021,22 +3036,6 @@ export const routes: Routes = [
                             only: ['domain_openid_read'],
                           },
                         },
-                        children: [
-                          { path: '', redirectTo: 'settings', pathMatch: 'full' },
-                          { path: 'settings', component: TokenExchangeSettingsComponent },
-                          {
-                            path: 'trusted-issuers',
-                            children: [
-                              { path: '', component: TrustedIssuersListComponent, pathMatch: 'full' },
-                              { path: 'new', component: TrustedIssuerDetailComponent },
-                              {
-                                path: ':issuerIndex',
-                                component: TrustedIssuerDetailComponent,
-                                data: { breadcrumb: { label: 'detail' } },
-                              },
-                            ],
-                          },
-                        ],
                       },
                       {
                         path: 'cimd',

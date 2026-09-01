@@ -24,6 +24,11 @@ setup(120000);
 const JWT_SPIFFE_ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-spiffe';
 const JWT_FORMAT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
+// Bootstrapped by SPIRE under the fixture's PREFIX (spiffe://am.local/agent/test/).
+const IN_PREFIX_INSTANCE = 'spiffe://am.local/agent/test/sample';
+// Provisioned but outside that prefix — the negative case.
+const OUT_OF_PREFIX_INSTANCE = 'spiffe://am.local/agent/billing';
+
 /**
  * GMA-329 — SPIFFE per-instance agent identity.
  *
@@ -53,40 +58,47 @@ describeIfSpire('Blueprint Agent — SPIFFE PREFIX subject matching', () => {
     await fixture?.cleanUp();
   });
 
-  function postClientAssertion(assertion: string) {
+  function postClientAssertion(agent: SpiffePrefixFixture, instanceId: string) {
+    const assertion = agent.fetchSvid(instanceId, agent.oidc.token_endpoint);
     // Pin the client_id to our blueprint so client lookup resolves to it; otherwise
     // the validator falls back to looking the client up by the SVID's `sub`, which
     // would mask the PREFIX-mismatch path in the negative case below.
     const body =
       `grant_type=client_credentials` +
-      `&client_id=${encodeURIComponent(fixture.clientId)}` +
+      `&client_id=${encodeURIComponent(agent.clientId)}` +
       `&client_assertion_type=${encodeURIComponent(JWT_SPIFFE_ASSERTION_TYPE)}` +
       `&client_assertion=${encodeURIComponent(assertion)}`;
-    return performPost(fixture.oidc.token_endpoint, '', body, {
+    return performPost(agent.oidc.token_endpoint, '', body, {
       'Content-type': 'application/x-www-form-urlencoded',
     });
   }
 
   it('mints a per-instance token when the SVID is under the configured subject prefix', async () => {
-    const instanceId = 'spiffe://am.local/agent/test/sample';
-    const svid = fixture.fetchSvid(instanceId, fixture.oidc.token_endpoint);
-
-    const response = await postClientAssertion(svid).expect(200);
+    const response = await postClientAssertion(fixture, IN_PREFIX_INSTANCE).expect(200);
 
     expect(response.body.access_token).toMatch(JWT_FORMAT);
     expect(response.body.token_type).toEqual('bearer');
 
     const decoded = decodeJwt(response.body.access_token);
-    expect(decoded.sub).toEqual(instanceId);
+    expect(decoded.sub).toEqual(IN_PREFIX_INSTANCE);
     expect(decoded.act).toBeDefined();
     expect((decoded.act as any).sub).toEqual(fixture.clientId);
   });
 
   it('rejects SVIDs whose sub falls outside the configured subject prefix', async () => {
-    // Provisioned but unrelated to fixture.prefixSubject (spiffe://am.local/agent/test/).
-    const outOfPrefix = 'spiffe://am.local/agent/billing';
-    const svid = fixture.fetchSvid(outOfPrefix, fixture.oidc.token_endpoint);
+    await postClientAssertion(fixture, OUT_OF_PREFIX_INSTANCE).expect(401);
+  });
 
-    await postClientAssertion(svid).expect(401);
+  it('stops accepting SVIDs once the trust domain is revoked', async () => {
+    const revocable = await setupSpiffePrefixFixture();
+    try {
+      await postClientAssertion(revocable, IN_PREFIX_INSTANCE).expect(200);
+
+      await revocable.revokeTrustDomain();
+
+      await postClientAssertion(revocable, IN_PREFIX_INSTANCE).expect(401);
+    } finally {
+      await revocable.cleanUp();
+    }
   });
 });

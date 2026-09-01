@@ -36,14 +36,18 @@ public class CookieHandler implements Handler<RoutingContext> {
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
     private final boolean cookieSecure;
     private final CookieSameSite sameSite;
+    private final CookieTracer cookieTracer;
 
-    public CookieHandler(boolean cookieSecure, CookieSameSite sameSite) {
+    public CookieHandler(boolean cookieSecure, CookieSameSite sameSite, CookieTracer cookieTracer) {
         this.cookieSecure = cookieSecure;
         this.sameSite = sameSite;
+        this.cookieTracer = cookieTracer;
     }
 
     @Override
     public void handle(RoutingContext context) {
+
+        cookieTracer.traceRequest(context);
 
         context.addHeadersEndHandler(v -> {
             // save the cookies
@@ -51,6 +55,7 @@ public class CookieHandler implements Handler<RoutingContext> {
             for (Cookie cookie: cookies) {
                 if (cookie instanceof ServerCookie && ((ServerCookie) cookie).isChanged()) {
                     finalizeCookie(context, (ServerCookie) cookie);
+                    cookieTracer.traceResponse(context, (ServerCookie) cookie);
                 }
             }
         });

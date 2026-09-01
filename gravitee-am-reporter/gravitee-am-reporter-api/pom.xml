@@ -48,6 +48,13 @@
             <artifactId>gravitee-secret-api</artifactId>
         </dependency>
 
+        <!-- Jackson annotations -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- RxJava -->
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>

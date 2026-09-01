@@ -23,12 +23,6 @@ import { DomainStoreService } from '../../../../stores/domain.store';
 
 const DEFAULT_SETTINGS = {
   enabled: false,
-  allowUnsecuredHttpUri: false,
-  allowPrivateIpAddress: false,
-  fetchTimeoutMs: 5000,
-  maxResponseSizeKb: 32,
-  cacheTtlSeconds: 300,
-  cacheMaxEntries: 50,
   maxJwtLifetimeSeconds: 300,
   clockSkewSeconds: 30,
   defaultAllowedAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'EdDSA'],
@@ -66,15 +60,15 @@ export class SpiffeSettingsComponent implements OnInit {
   }
 
   save() {
-    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe({
+    this.domainService.patch(this.domainId, { oidc: this.domain.oidc }).subscribe({
       next: (data) => {
         this.domainStore.set(data);
         this.domain = data;
         this.formChanged = false;
-        this.snackbarService.open('SPIFFE configuration updated');
+        this.snackbarService.open('Configuration updated');
       },
       error: (err: unknown) => {
-        const message = (err as any)?.error?.message || 'Failed to update SPIFFE configuration';
+        const message = (err as any)?.error?.message || 'Failed to update configuration';
         this.snackbarService.open(message);
       },
     });
@@ -90,16 +84,6 @@ export class SpiffeSettingsComponent implements OnInit {
 
   isSpiffeEnabled(): boolean {
     return this.domain.oidc?.workloadIdentitySettings?.enabled === true;
-  }
-
-  toggleAllowUnsecuredHttpUri(event) {
-    this.domain.oidc.workloadIdentitySettings.allowUnsecuredHttpUri = event.checked;
-    this.formChanged = true;
-  }
-
-  toggleAllowPrivateIpAddress(event) {
-    this.domain.oidc.workloadIdentitySettings.allowPrivateIpAddress = event.checked;
-    this.formChanged = true;
   }
 
   modelChanged(): void {

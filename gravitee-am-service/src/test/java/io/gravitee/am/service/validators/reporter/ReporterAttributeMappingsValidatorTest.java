@@ -29,6 +29,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.gravitee.am.service.validators.reporter.ReporterAttributeMappingsValidator.MAX_COUNT;
+import static io.gravitee.am.service.validators.reporter.ReporterAttributeMappingsValidator.MAX_EXPRESSION_LENGTH;
 
 /**
  * @author GraviteeSource Team
@@ -113,18 +114,22 @@ class ReporterAttributeMappingsValidatorTest {
         }
 
         @ParameterizedTest
-        @NullAndEmptySource
         @ValueSource(strings = {
-                "   ",                                  // whitespace only
-                "#context.attributes['user']",          // no braces at all
-                "{#context.attributes['user']",         // opening brace only
-                "#context.attributes['user']}",         // closing brace only
-                "{}",                                   // braces with nothing to evaluate
-                "{",                                    // a single brace satisfies neither end
-                " {#context.attributes['user']}",       // leading space: stored as-is, so rejected
-                "{#context.attributes['user']} "        // trailing space
+                "tenant-{#context.attributes['user'].id}",      // literal prefix, interpolated
+                "{#context.attributes['user'].id}-suffix",      // literal suffix, interpolated
+                "{#context.attributes['a']} of {#context.attributes['b']}", // literal between two
+                "production",                                   // a plain constant used as a static tag
+                "{}",                                           // template text, exported as-is
+                "{"                                             // template text, exported as-is
         })
-        void rejectsAnExpressionThatIsNotWrappedInBraces(String expression) {
+        void acceptsAnythingTheEngineWillTake(String expression) {
+            assertThat(validator.validate(List.of(mapping(expression, "user_sub"))).isInvalid()).isFalse();
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   ", "\t", "\n"})
+        void rejectsAnExpressionWithNothingInIt(String expression) {
             var result = validator.validate(List.of(mapping(expression, "user_sub")));
 
             assertThat(result.isInvalid()).isTrue();
@@ -153,12 +158,14 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void reportsEveryDistinctInvalidExpressionOnce() {
+            var tooLong = expressionOfLength(MAX_EXPRESSION_LENGTH + 1);
             var result = validator.validate(List.of(
-                    mapping("no braces", "first"),
-                    mapping("no braces", "second"),
-                    mapping("{unterminated", "third")));
+                    mapping("   ", "first"),
+                    mapping("   ", "second"),
+                    mapping(tooLong, "third")));
 
-            assertThat(result.invalidExpressions()).containsExactly("no braces", "{unterminated");
+            assertThat(result.invalidExpressions())
+                    .containsExactly("   ", tooLong.substring(0, 80) + "...");
         }
     }
 
@@ -277,7 +284,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void expressionsAreDescribedBeforeNamesWhenBothAreInvalid() {
-            var result = validator.validate(List.of(mapping("no braces", "not a name")));
+            var result = validator.validate(List.of(mapping("   ", "not a name")));
 
             assertThat(result.invalidExpressions()).isNotEmpty();
             assertThat(result.invalidExportedNames()).isNotEmpty();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Locator, Page, expect } from '@playwright/test';
-import { AUTH_CODE_FORMAT, BRIEF_TIMEOUT, MOCK_MFA_CODE, MULTI_PHASE_TEST_TIMEOUT } from './test-constants';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, BRIEF_TIMEOUT, MOCK_MFA_CODE, MULTI_PHASE_TEST_TIMEOUT } from './test-constants';
 import { reachOAuthAuthorizationCallback } from './oauth-callback-helpers';
 import { buildAuthorizeUrl } from './webauthn-helpers';
 
@@ -113,6 +113,28 @@ export async function skipMfaEnrollment(page: Page): Promise<void> {
     }),
     skipButton.click(),
   ]);
+}
+
+/**
+ * Signs in from the authorize endpoint and reports where the gateway stopped, rather than assuming
+ * which page comes next. Waits for whichever of enrollment, challenge or the callback arrives, so a
+ * test can assert on the one it expects and fail on the others by name instead of by timeout.
+ */
+export async function signInAndReportMfaStop(
+  page: Page,
+  gatewayUrl: string,
+  clientId: string,
+  username: string,
+  password: string = API_USER_PASSWORD,
+): Promise<{ askedToEnroll: boolean; challenged: boolean }> {
+  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+  await page.waitForURL(/.*login.*/i);
+  await submitLogin(page, username, password);
+  await page.waitForURL((url) => /\/mfa\/(enroll|challenge)/i.test(url.href) || url.searchParams.has('code'));
+  return {
+    askedToEnroll: /\/mfa\/enroll/i.test(page.url()),
+    challenged: /\/mfa\/challenge/i.test(page.url()),
+  };
 }
 
 /**

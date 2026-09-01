@@ -78,6 +78,10 @@
             <a>certificateSettings</a>
             <b>certificateSettings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.KeyRetrievalSettingsConverter">
+            <a>keyRetrievalSettings</a>
+            <b>keyRetrievalSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

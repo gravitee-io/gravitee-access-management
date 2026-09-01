@@ -16,22 +16,15 @@
 import { Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
-/** Page object for Domain > Settings > OAuth > Token Exchange > Settings. */
+/** Page object for Domain > Settings > OAuth > Token Exchange. */
 export class DomainTokenExchangePage extends BasePage {
   async navigateTo(domainId: string): Promise<void> {
-    await this.navigate(`/environments/${this.envHrid}/domains/${domainId}/settings/token-exchange/settings`);
+    await this.navigate(`/environments/${this.envHrid}/domains/${domainId}/settings/token-exchange`);
   }
 
-  /* ------------------------------------------------------------------ */
-  /*  Tab navigation                                                     */
-  /* ------------------------------------------------------------------ */
-
-  get settingsTab(): Locator {
-    return this.page.locator('a[mat-tab-link]').filter({ hasText: /settings/i });
-  }
-
-  get trustedIssuersTab(): Locator {
-    return this.page.locator('a[mat-tab-link]').filter({ hasText: /trusted issuers/i });
+  /** Cross-link that leads operators to where issuer configuration now lives. */
+  get trustedDomainsLink(): Locator {
+    return this.page.locator('[data-testid="trustedDomainsLink"]');
   }
 
   /* ------------------------------------------------------------------ */

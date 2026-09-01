@@ -1,0 +1,131 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <div>
+    <div fxFlex="70">
+      <form (ngSubmit)="save()">
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>SSRF protection</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <mat-slide-toggle
+            (change)="toggleAllowUnsecuredHttpUri($event)"
+            [checked]="domain.keyRetrievalSettings.allowUnsecuredHttpUri"
+            [disabled]="!editMode"
+          >
+            Allow unsecured HTTP JWKS URLs
+          </mat-slide-toggle>
+          <div class="gv-form-hint">Disabled: only <code>https://</code> JWKS URLs are accepted (recommended).</div>
+
+          <mat-slide-toggle
+            (change)="toggleAllowPrivateIpAddress($event)"
+            [checked]="domain.keyRetrievalSettings.allowPrivateIpAddress"
+            [disabled]="!editMode"
+            style="margin-top: 12px"
+          >
+            Allow JWKS URLs resolving to private IP addresses
+          </mat-slide-toggle>
+          <div class="gv-form-hint">Enable only when trusted domain key endpoints live on the internal network.</div>
+
+          <mat-form-field appearance="outline" style="margin-top: 16px">
+            <mat-icon matPrefix>timer</mat-icon>
+            <input
+              matInput
+              type="number"
+              placeholder="Fetch timeout (ms)"
+              name="fetchTimeoutMs"
+              min="100"
+              (ngModelChange)="modelChanged()"
+              [(ngModel)]="domain.keyRetrievalSettings.fetchTimeoutMs"
+              [disabled]="!editMode"
+            />
+            <mat-hint>Maximum time to wait when fetching a JWKS endpoint. Default: 5000.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>data_usage</mat-icon>
+            <input
+              matInput
+              type="number"
+              placeholder="Max JWKS response size (KB)"
+              name="maxResponseSizeKb"
+              min="1"
+              (ngModelChange)="modelChanged()"
+              [(ngModel)]="domain.keyRetrievalSettings.maxResponseSizeKb"
+              [disabled]="!editMode"
+            />
+            <mat-hint>Reject JWKS responses larger than this. Default: 32.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="gv-form-section" fxLayout="column">
+          <div class="gv-form-section-title">
+            <h5>Key cache</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>cached</mat-icon>
+            <input
+              matInput
+              type="number"
+              placeholder="Cache TTL (seconds)"
+              name="cacheTtlSeconds"
+              min="1"
+              (ngModelChange)="modelChanged()"
+              [(ngModel)]="domain.keyRetrievalSettings.cacheTtlSeconds"
+              [disabled]="!editMode"
+            />
+            <mat-hint>Default cache lifetime when a trusted domain does not override the refresh interval. Default: 300.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>storage</mat-icon>
+            <input
+              matInput
+              type="number"
+              placeholder="Cache max entries"
+              name="cacheMaxEntries"
+              min="1"
+              (ngModelChange)="modelChanged()"
+              [(ngModel)]="domain.keyRetrievalSettings.cacheMaxEntries"
+              [disabled]="!editMode"
+            />
+            <mat-hint>Max number of cached key sets. Default: 50.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div fxLayout="row" *ngIf="editMode">
+          <button mat-raised-button color="primary" data-testid="saveButton" [disabled]="!formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>Key retrieval</h3>
+      <div class="gv-page-description-content">
+        <p>
+          These limits apply to every trusted domain in this security domain, whichever usage it serves. They bound what AM will fetch when
+          a trusted domain resolves its keys from a JWKS URL, and how long the resolved keys are kept.
+        </p>
+        <p>
+          Key sources and refresh intervals are set per trusted domain, on the trusted domain itself. Leaving both SSRF toggles off keeps AM
+          from fetching keys over plain HTTP or from addresses on the internal network.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

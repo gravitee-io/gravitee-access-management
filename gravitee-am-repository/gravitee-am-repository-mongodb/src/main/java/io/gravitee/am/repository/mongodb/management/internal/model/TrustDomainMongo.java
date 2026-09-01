@@ -19,6 +19,7 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.List;
+import java.util.Map;
 
 public class TrustDomainMongo extends Auditable {
 
@@ -29,10 +30,25 @@ public class TrustDomainMongo extends Auditable {
     private String referenceType;
     private String name;
     private String description;
+    private TrustDomainKeyMaterialMongo keyMaterial;
+
+    /**
+     * Superseded by {@link #keyMaterial}; still read so trust domains stored before the shared
+     * key-material shape existed keep working.
+     */
     private String bundleSource;
+
+    /**
+     * Superseded by {@link #keyMaterial}; see {@link #bundleSource}.
+     */
     private String jwksUrl;
     private int refreshIntervalSeconds;
     private List<String> allowedAlgorithms;
+    private String spiffeTrustDomain;
+    private String issuer;
+    private Map<String, String> scopeMappings;
+    private Boolean userBindingEnabled;
+    private List<UserBindingCriterionMongo> userBindingCriteria;
 
     public String getId() {
         return id;
@@ -56,6 +72,14 @@ public class TrustDomainMongo extends Auditable {
 
     public void setReferenceType(String referenceType) {
         this.referenceType = referenceType;
+    }
+
+    public TrustDomainKeyMaterialMongo getKeyMaterial() {
+        return keyMaterial;
+    }
+
+    public void setKeyMaterial(TrustDomainKeyMaterialMongo keyMaterial) {
+        this.keyMaterial = keyMaterial;
     }
 
     public String getName() {
@@ -104,5 +128,45 @@ public class TrustDomainMongo extends Auditable {
 
     public void setAllowedAlgorithms(List<String> allowedAlgorithms) {
         this.allowedAlgorithms = allowedAlgorithms;
+    }
+
+    public String getSpiffeTrustDomain() {
+        return spiffeTrustDomain;
+    }
+
+    public void setSpiffeTrustDomain(String spiffeTrustDomain) {
+        this.spiffeTrustDomain = spiffeTrustDomain;
+    }
+
+    public String getIssuer() {
+        return issuer;
+    }
+
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+
+    public Map<String, String> getScopeMappings() {
+        return scopeMappings;
+    }
+
+    public void setScopeMappings(Map<String, String> scopeMappings) {
+        this.scopeMappings = scopeMappings;
+    }
+
+    public Boolean getUserBindingEnabled() {
+        return userBindingEnabled;
+    }
+
+    public void setUserBindingEnabled(Boolean userBindingEnabled) {
+        this.userBindingEnabled = userBindingEnabled;
+    }
+
+    public List<UserBindingCriterionMongo> getUserBindingCriteria() {
+        return userBindingCriteria;
+    }
+
+    public void setUserBindingCriteria(List<UserBindingCriterionMongo> userBindingCriteria) {
+        this.userBindingCriteria = userBindingCriteria;
     }
 }

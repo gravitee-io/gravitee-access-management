@@ -15,14 +15,21 @@
  */
 package io.gravitee.am.model.jose;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.Set;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc7517#section-4">JSON Web Key (JWK)</a>
  *
+ * <p>Reading a JWK back from JSON needs {@link JWKModule} on the mapper, which dispatches on the
+ * {@code kty} member. Derived members such as {@code private} are output-only and are ignored on
+ * the way back in.
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne@graviteesource.com)
  * @author GraviteeSource Team
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class JWK {
 
     /**

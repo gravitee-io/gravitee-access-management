@@ -114,20 +114,30 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
     }
 
     private Maybe<String> extractDeviceId(RoutingContext routingContext, Client client) {
-        var deviceId = routingContext.request().getParam(DEVICE_ID);
         final var deviceIdCookie = routingContext.request().getCookie(rememberDeviceCookiName);
-        if (deviceIdentifierManager.useCookieBasedDeviceIdentifier(client) && deviceIdCookie != null) {
+        final var cookieBasedDeviceIdentifier = deviceIdentifierManager.useCookieBasedDeviceIdentifier(client);
+        log.debug("Remember device cookie '{}' lookup for clientID '{}': cookieBasedDeviceIdentifier={}, cookiePresent={}",
+                rememberDeviceCookiName, client.getClientId(), cookieBasedDeviceIdentifier, deviceIdCookie != null);
+        if (cookieBasedDeviceIdentifier && deviceIdCookie != null) {
             return jwtService.decodeAndVerify(deviceIdCookie.getValue(), client, JWTService.TokenType.SESSION)
                     .map(JWT::getJti)
                     .toMaybe()
                     .onErrorResumeNext((err) -> {
                         log.debug("Remember device cookie validation fails for clientID '{}', fallback to the new deviceId", client.getClientId(), err);
                         // validation fail, remove the cookie to force new generation.
-                        routingContext.response().removeCookie(rememberDeviceCookiName);
-                        return isNullOrEmpty(deviceId) ? Maybe.empty() : Maybe.just(deviceId);
+                        final var removedCookie = routingContext.response().removeCookie(rememberDeviceCookiName);
+                        log.debug("Remember device cookie '{}' removal for clientID '{}': {}",
+                                rememberDeviceCookiName, client.getClientId(),
+                                removedCookie != null ? "invalidated, Max-Age=0 will be sent" : "no-op, cookie absent from the jar");
+                        return extractDeviceId(routingContext);
                     });
         } else {
-            return isNullOrEmpty(deviceId) ? Maybe.empty() : Maybe.just(deviceId);
+            return extractDeviceId(routingContext);
         }
+    }
+
+    private Maybe<String> extractDeviceId(RoutingContext routingContext) {
+        var deviceId = routingContext.request().getParam(DEVICE_ID);
+        return isNullOrEmpty(deviceId) ? Maybe.empty() : Maybe.just(deviceId);
     }
 }

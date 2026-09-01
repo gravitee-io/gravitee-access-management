@@ -61,8 +61,10 @@ public class JWTConfiguration {
     }
 
     @Bean("uncachedJwkSetFetcher")
-    public JWKSetFetcher uncachedJwkSetFetcher(Vertx vertx, WebClientBuilder webClient) {
-        return new WebClientJWKSetFetcher(webClient.createWebClient(vertx));
+    public JWKSetFetcher uncachedJwkSetFetcher(Vertx vertx,
+                                               WebClientBuilder webClient,
+                                               @Value("${jwt.jwks.requestTimeoutMs:10000}") long requestTimeoutMs) {
+        return new WebClientJWKSetFetcher(webClient.createWebClient(vertx), requestTimeoutMs);
     }
 
     @Bean("managementSecretKey")
