@@ -392,7 +392,7 @@ class DomainTrustedIssuerUpgraderTest {
                 .referenceId(DOMAIN_ID)
                 .name(name)
                 .domainIdentifier("https://other.example.com")
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
     }
 
@@ -403,7 +403,7 @@ class DomainTrustedIssuerUpgraderTest {
                 .referenceId(DOMAIN_ID)
                 .name("already-migrated")
                 .domainIdentifier(issuer)
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
     }
 

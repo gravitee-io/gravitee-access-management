@@ -15,30 +15,34 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcTrustDomain;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcTrustedDomain;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
-public interface SpringTrustedDomainRepository extends RxJava3CrudRepository<JdbcTrustDomain, String> {
+public interface SpringTrustedDomainRepository extends RxJava3CrudRepository<JdbcTrustedDomain, String> {
 
-    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId")
-    Flowable<JdbcTrustDomain> findByReference(@Param("refType") String refType, @Param("refId") String refId);
+    @Query("select * from trusted_domains where reference_type = :refType and reference_id = :refId")
+    Flowable<JdbcTrustedDomain> findByReference(@Param("refType") String refType, @Param("refId") String refId);
 
-    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and name = :name")
-    Maybe<JdbcTrustDomain> findByName(@Param("refType") String refType,
-                                      @Param("refId") String refId,
-                                      @Param("name") String name);
-
-    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and spiffe_trust_domain = :spiffeTrustDomain")
-    Maybe<JdbcTrustDomain> findBySpiffeTrustDomain(@Param("refType") String refType,
-                                                   @Param("refId") String refId,
-                                                   @Param("spiffeTrustDomain") String spiffeTrustDomain);
-
-    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and issuer = :issuer")
-    Maybe<JdbcTrustDomain> findByIssuer(@Param("refType") String refType,
+    @Query("select * from trusted_domains where reference_type = :refType and reference_id = :refId and name = :name")
+    Maybe<JdbcTrustedDomain> findByName(@Param("refType") String refType,
                                         @Param("refId") String refId,
-                                        @Param("issuer") String issuer);
+                                        @Param("name") String name);
+
+    @Query("select * from trusted_domains where reference_type = :refType and reference_id = :refId and domain_identifier = :domainIdentifier")
+    Maybe<JdbcTrustedDomain> findByDomainIdentifier(@Param("refType") String refType,
+                                                    @Param("refId") String refId,
+                                                    @Param("domainIdentifier") String domainIdentifier);
+
+    @Query("""
+            select td.* from trusted_domains td
+            join trusted_domains_spiffe spiffe on spiffe.trusted_domain_id = td.id
+            where spiffe.reference_type = :refType and spiffe.reference_id = :refId and spiffe.spiffe_trust_domain = :spiffeTrustDomain
+            """)
+    Maybe<JdbcTrustedDomain> findBySpiffeTrustDomain(@Param("refType") String refType,
+                                                     @Param("refId") String refId,
+                                                     @Param("spiffeTrustDomain") String spiffeTrustDomain);
 }

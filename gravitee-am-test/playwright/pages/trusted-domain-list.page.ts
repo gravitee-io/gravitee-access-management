@@ -59,6 +59,14 @@ export class TrustedDomainListPage extends BasePage {
     return this.trustDomainRows.nth(index).locator('[data-testid="trustDomainUsage"]');
   }
 
+  async usageTooltipOf(index: number): Promise<string> {
+    const describedBy = await this.usageOf(index).getAttribute('aria-describedby');
+    if (!describedBy) {
+      return '';
+    }
+    return ((await this.page.locator(`#${describedBy}`).textContent()) ?? '').trim();
+  }
+
   rowByName(name: string): Locator {
     return this.trustDomainRows.filter({ hasText: name });
   }

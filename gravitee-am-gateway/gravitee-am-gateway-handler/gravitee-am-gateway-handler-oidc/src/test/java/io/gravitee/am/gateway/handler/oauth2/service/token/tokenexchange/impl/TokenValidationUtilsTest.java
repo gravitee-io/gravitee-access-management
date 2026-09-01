@@ -196,7 +196,7 @@ public class TokenValidationUtilsTest {
 
         TrustedDomain trustedDomain = TrustedDomain.builder()
                 .domainIdentifier("https://external.example.com")
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
 
         Map<String, Object> claims = new HashMap<>();

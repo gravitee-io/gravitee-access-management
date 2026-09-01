@@ -177,7 +177,7 @@ public class DomainResourceTest extends JerseySpringTest {
                         .jwksUrl(issuer + "/keys")
                         .build())
                 .domainIdentifier(issuer)
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
     }
 

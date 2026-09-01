@@ -2521,6 +2521,7 @@ public class TokenExchangeServiceImplTest {
     private TokenValidator trustedIssuerValidator(String issuer, Map<String, Object> additionalClaims,
                                                   List<UserBindingCriterion> bindingCriteria) {
         TokenExchangeTrustSettings tokenExchange = new TokenExchangeTrustSettings();
+        tokenExchange.setEnabled(true);
         if (bindingCriteria != null) {
             tokenExchange.setUserBindingEnabled(true);
             tokenExchange.setUserBindingCriteria(bindingCriteria);

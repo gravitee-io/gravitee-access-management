@@ -76,20 +76,25 @@ public class TrustedIssuerProjection {
 
     /**
      * Translates a written inline list into trusted-domain creates, updates and deletes. The list
-     * replaces what the security domain trusts, so an issuer absent from it is deleted. A null
+     * replaces what the security domain trusts, so an issuer absent from it is withdrawn. A written
+     * issuer is matched against every trusted domain of the security domain, so one already holding
+     * the identifier with token exchange off is amended rather than created a second time. A null
      * list means the deprecated field was not written and leaves the trusted domains alone.
      */
     public Completable apply(Domain domain, List<TrustedIssuer> written, User principal) {
         if (written == null) {
             return Completable.complete();
         }
-        return tokenExchangeTrustDomains(domain.getId())
+        return trustDomainService.findByReference(ReferenceType.DOMAIN, domain.getId())
+                .toList()
                 .flatMapCompletable(existing -> replace(domain, existing, written, principal));
     }
 
     private Completable replace(Domain domain, List<TrustedDomain> existing, List<TrustedIssuer> written, User principal) {
         Map<String, TrustedDomain> byIssuer = new LinkedHashMap<>();
-        existing.forEach(trustDomain -> byIssuer.put(trustDomain.getDomainIdentifier(), trustDomain));
+        existing.stream()
+                .filter(trustDomain -> trustDomain.getDomainIdentifier() != null)
+                .forEach(trustDomain -> byIssuer.put(trustDomain.getDomainIdentifier(), trustDomain));
 
         List<TrustedIssuer> declared = written.stream()
                 .filter(issuer -> issuer != null && issuer.getIssuer() != null && !issuer.getIssuer().isBlank())
@@ -106,11 +111,23 @@ public class TrustedIssuerProjection {
                             ? trustDomainService.update(domain, match.getId(), asUpdate(issuer, match), principal).ignoreElement()
                             : trustDomainService.create(domain, asNew(issuer, derivedNames.get(issuer.getIssuer())), principal).ignoreElement();
                 });
-        Completable deletions = Flowable.fromIterable(existing)
+        Completable withdrawals = Flowable.fromIterable(existing)
+                .filter(TrustedDomain::trustsTokenExchange)
                 .filter(trustDomain -> !declaredIssuers.contains(trustDomain.getDomainIdentifier()))
-                .concatMapCompletable(trustDomain -> trustDomainService.delete(domain, trustDomain.getId(), principal));
+                .concatMapCompletable(trustDomain -> withdraw(domain, trustDomain, principal));
 
-        return upserts.andThen(deletions);
+        return upserts.andThen(withdrawals);
+    }
+
+    /**
+     * Drops an issuer the written list no longer declares, keeping the row when it also vouches for a
+     * SPIFFE trust domain or carries a Cross App Access block: the deprecated settings must not delete
+     * what they cannot see.
+     */
+    private Completable withdraw(Domain domain, TrustedDomain trustDomain, User principal) {
+        return trustDomain.trustsSpiffe() || trustDomain.getCrossAppAccess() != null
+                ? trustDomainService.update(domain, trustDomain.getId(), asTokenExchangeCleared(trustDomain), principal).ignoreElement()
+                : trustDomainService.delete(domain, trustDomain.getId(), principal);
     }
 
     private Single<List<TrustedDomain>> tokenExchangeTrustDomains(String domainId) {
@@ -155,8 +172,22 @@ public class TrustedIssuerProjection {
         return updateTrustDomain;
     }
 
+    /**
+     * Stops accepting this authority's JWTs, keeping the identifier the Cross App Access block still
+     * needs. A disabled token-exchange block drops it and the settings that only make sense with it.
+     */
+    private static UpdateTrustedDomain asTokenExchangeCleared(TrustedDomain existing) {
+        UpdateTrustedDomain updateTrustDomain = new UpdateTrustedDomain();
+        updateTrustDomain.setDescription(existing.getDescription());
+        updateTrustDomain.setSpiffe(existing.getSpiffe());
+        updateTrustDomain.setKeyMaterial(existing.getKeyMaterial());
+        updateTrustDomain.setTokenExchange(new TokenExchangeTrustSettings());
+        return updateTrustDomain;
+    }
+
     private static TokenExchangeTrustSettings tokenExchangeOf(TrustedIssuer issuer) {
         return TokenExchangeTrustSettings.builder()
+                .enabled(true)
                 .scopeMappings(issuer.getScopeMappings())
                 .userBindingEnabled(issuer.isUserBindingEnabled())
                 .userBindingCriteria(issuer.getUserBindingCriteria())

@@ -57,6 +57,7 @@ class TrustedIssuerUserResolverTest {
         return TrustedDomain.builder()
                 .domainIdentifier(ISSUER)
                 .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .enabled(true)
                         .userBindingEnabled(userBindingEnabled)
                         .userBindingCriteria(criteria)
                         .build())

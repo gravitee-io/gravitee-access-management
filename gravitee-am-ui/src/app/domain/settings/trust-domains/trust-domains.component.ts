@@ -21,7 +21,7 @@ import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TrustDomainService } from '../../../services/trust-domain.service';
 
-import { keyMaterialSourceLabel, TrustDomain, trustDomainUsagesLabel } from './trust-domain.types';
+import { keyMaterialSourceLabel, TrustDomain, trustDomainUsages, trustDomainUsagesLabel } from './trust-domain.types';
 
 @Component({
   selector: 'app-domain-trust-domains',
@@ -51,6 +51,11 @@ export class DomainSettingsTrustDomainsComponent implements OnInit {
 
   usagesLabel(trustDomain: TrustDomain): string {
     return trustDomainUsagesLabel(trustDomain);
+  }
+
+  usagesBadgeLabel(trustDomain: TrustDomain): string {
+    const usages = trustDomainUsages(trustDomain);
+    return usages.length > 1 ? `${usages.length} usages` : trustDomainUsagesLabel(trustDomain);
   }
 
   subtitle(trustDomain: TrustDomain): string {

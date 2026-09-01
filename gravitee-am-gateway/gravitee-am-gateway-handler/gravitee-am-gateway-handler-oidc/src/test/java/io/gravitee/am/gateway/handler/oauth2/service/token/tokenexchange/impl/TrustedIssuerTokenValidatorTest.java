@@ -502,7 +502,7 @@ public class TrustedIssuerTokenValidatorTest {
                         .certificate("some-pem")
                         .build())
                 .domainIdentifier(EXTERNAL_ISSUER)
-                .tokenExchange(new TokenExchangeTrustSettings())
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                 .build();
     }
 

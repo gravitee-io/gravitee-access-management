@@ -22,15 +22,15 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.TrustDomainService;
-import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.NewTrustedDomain;
-import io.gravitee.am.service.model.UpdateTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustedDomain;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -181,6 +182,87 @@ class TrustedIssuerProjectionTest {
     }
 
     @Test
+    void shouldLeaveACrossAppAccessOnlyTrustedDomainUntouchedByALegacyWrite() {
+        Domain domain = domain();
+        stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER), crossAppAccessOnly("td-2", "acme-corp"));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustedDomain.class), any()))
+                .thenReturn(Single.just(new TrustedDomain()));
+
+        projection.apply(domain, List.of(jwksIssuer(ISSUER)), principal).blockingAwait();
+
+        verify(trustDomainService, never()).delete(eq(domain), eq("td-2"), any());
+        verify(trustDomainService, never()).update(eq(domain), eq("td-2"), any(UpdateTrustedDomain.class), any());
+    }
+
+    @Test
+    void shouldClearOnlyTokenExchangeWhenALegacyWriteDropsTheIssuerFromACrossAppAccessTrustedDomain() {
+        Domain domain = domain();
+        stubExisting(withCrossAppAccess(tokenExchange("td-1", "https-issuer.example.com", ISSUER)));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustedDomain.class), any()))
+                .thenReturn(Single.just(new TrustedDomain()));
+
+        projection.apply(domain, List.of(), principal).blockingAwait();
+
+        verify(trustDomainService, never()).delete(any(), any(), any());
+        ArgumentCaptor<UpdateTrustedDomain> captor = ArgumentCaptor.forClass(UpdateTrustedDomain.class);
+        verify(trustDomainService).update(eq(domain), eq("td-1"), captor.capture(), eq(principal));
+        assertNull(captor.getValue().getDomainIdentifier());
+        assertFalse(captor.getValue().getTokenExchange().isEnabled());
+        assertNull(captor.getValue().getCrossAppAccess());
+    }
+
+    @Test
+    void shouldClearOnlyTokenExchangeWhenALegacyWriteDropsTheIssuerFromASpiffeTrustedDomain() {
+        Domain domain = domain();
+        stubExisting(withSpiffe(tokenExchange("td-1", "acme-corp", ISSUER), "acme.local"));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustedDomain.class), any()))
+                .thenReturn(Single.just(new TrustedDomain()));
+
+        projection.apply(domain, List.of(), principal).blockingAwait();
+
+        verify(trustDomainService, never()).delete(any(), any(), any());
+        ArgumentCaptor<UpdateTrustedDomain> captor = ArgumentCaptor.forClass(UpdateTrustedDomain.class);
+        verify(trustDomainService).update(eq(domain), eq("td-1"), captor.capture(), eq(principal));
+        assertFalse(captor.getValue().getTokenExchange().isEnabled());
+        assertEquals("acme.local", captor.getValue().getSpiffe().getSpiffeTrustDomain());
+        assertEquals(ISSUER + "/keys", captor.getValue().getKeyMaterial().getJwksUrl());
+    }
+
+    @Test
+    void shouldClearOnlyTokenExchangeWhenALegacyWriteDropsTheIssuerFromATrustedDomainHoldingADisabledCrossAppAccessBlock() {
+        Domain domain = domain();
+        stubExisting(withDisabledCrossAppAccess(tokenExchange("td-1", "https-issuer.example.com", ISSUER)));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustedDomain.class), any()))
+                .thenReturn(Single.just(new TrustedDomain()));
+
+        projection.apply(domain, List.of(), principal).blockingAwait();
+
+        verify(trustDomainService, never()).delete(any(), any(), any());
+        ArgumentCaptor<UpdateTrustedDomain> captor = ArgumentCaptor.forClass(UpdateTrustedDomain.class);
+        verify(trustDomainService).update(eq(domain), eq("td-1"), captor.capture(), eq(principal));
+        assertFalse(captor.getValue().getTokenExchange().isEnabled());
+        assertNull(captor.getValue().getCrossAppAccess());
+    }
+
+    @Test
+    void shouldAmendTheTrustedDomainAlreadyHoldingTheWrittenIssuerWithTokenExchangeOff() {
+        Domain domain = domain();
+        stubExisting(spiffeHoldingIssuer("td-1", "acme-corp", "acme.local", ISSUER));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustedDomain.class), any()))
+                .thenReturn(Single.just(new TrustedDomain()));
+
+        projection.apply(domain, List.of(jwksIssuer(ISSUER)), principal).blockingAwait();
+
+        verify(trustDomainService, never()).create(any(), any(NewTrustedDomain.class), any());
+        verify(trustDomainService, never()).delete(any(), any(), any());
+        ArgumentCaptor<UpdateTrustedDomain> captor = ArgumentCaptor.forClass(UpdateTrustedDomain.class);
+        verify(trustDomainService).update(eq(domain), eq("td-1"), captor.capture(), eq(principal));
+        assertEquals(ISSUER, captor.getValue().getDomainIdentifier());
+        assertTrue(captor.getValue().getTokenExchange().isEnabled());
+        assertEquals("acme.local", captor.getValue().getSpiffe().getSpiffeTrustDomain());
+    }
+
+    @Test
     void shouldLeaveTrustedDomainsAloneWhenTheDeprecatedFieldWasNotWritten() {
         Domain domain = domain();
 
@@ -224,10 +306,55 @@ class TrustedIssuerProjectionTest {
                         .build())
                 .domainIdentifier(issuer)
                 .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .enabled(true)
                         .scopeMappings(Map.of("ext:read", "read"))
                         .userBindingEnabled(true)
                         .userBindingCriteria(List.of(criterion))
                         .build())
+                .build();
+    }
+
+    private static TrustedDomain crossAppAccessOnly(String id, String name) {
+        return TrustedDomain.builder().id(id).name(name)
+                .domainIdentifier("https://auth.acme.com")
+                .crossAppAccess(crossAppAccess())
+                .build();
+    }
+
+    private static TrustedDomain withCrossAppAccess(TrustedDomain trustDomain) {
+        trustDomain.setCrossAppAccess(crossAppAccess());
+        return trustDomain;
+    }
+
+    private static CrossAppAccessSettings crossAppAccess() {
+        return CrossAppAccessSettings.builder()
+                .enabled(true)
+                .resourceServers(List.of(CrossAppAccessResourceServer.builder()
+                        .id("rs-1")
+                        .name("Calendar")
+                        .resource("https://calendar.acme.com")
+                        .build()))
+                .build();
+    }
+
+    private static TrustedDomain withSpiffe(TrustedDomain trustDomain, String spiffeTrustDomain) {
+        trustDomain.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(spiffeTrustDomain).build());
+        return trustDomain;
+    }
+
+    private static TrustedDomain withDisabledCrossAppAccess(TrustedDomain trustDomain) {
+        trustDomain.setCrossAppAccess(crossAppAccess().toBuilder().enabled(false).build());
+        return trustDomain;
+    }
+
+    private static TrustedDomain spiffeHoldingIssuer(String id, String name, String spiffeTrustDomain, String issuer) {
+        return TrustedDomain.builder().id(id).name(name)
+                .domainIdentifier(issuer)
+                .keyMaterial(TrustDomainKeyMaterial.builder()
+                        .source(KeyMaterialSource.JWKS_URL)
+                        .jwksUrl(issuer + "/keys")
+                        .build())
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(spiffeTrustDomain).build())
                 .build();
     }
 

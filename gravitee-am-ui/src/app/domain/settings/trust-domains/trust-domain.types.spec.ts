@@ -16,6 +16,7 @@
 import {
   deriveNameFromIssuer,
   fromTrustedDomain,
+  isAbsoluteUri,
   isValidSpiffeTrustDomain,
   keyMaterialErrors,
   keyMaterialSourceLabel,
@@ -26,22 +27,55 @@ import {
 } from './trust-domain.types';
 
 describe('trust domain types', () => {
-  it('shouldLabelBothUsages', () => {
+  it('shouldLabelEveryUsage', () => {
     expect(trustDomainUsageLabel('SPIFFE')).toBe('SPIFFE');
     expect(trustDomainUsageLabel('ISSUER')).toBe('OIDC - Trusted Issuer');
+    expect(trustDomainUsageLabel('CROSS_APP_ACCESS')).toBe('Cross App Access');
   });
 
   it('shouldReadUsagesOffTheMatchers', () => {
     expect(trustDomainUsages({ name: 'a', spiffeTrustDomain: 'am.local' })).toEqual(['SPIFFE']);
-    expect(trustDomainUsages({ name: 'a', issuer: 'https://issuer.example' })).toEqual(['ISSUER']);
-    expect(trustDomainUsages({ name: 'a', spiffeTrustDomain: 'am.local', issuer: 'https://issuer.example' })).toEqual(['SPIFFE', 'ISSUER']);
+    expect(trustDomainUsages({ name: 'a', issuer: 'https://issuer.example', tokenExchangeEnabled: true })).toEqual(['ISSUER']);
+    expect(
+      trustDomainUsages({ name: 'a', spiffeTrustDomain: 'am.local', issuer: 'https://issuer.example', tokenExchangeEnabled: true }),
+    ).toEqual(['SPIFFE', 'ISSUER']);
     expect(trustDomainUsages({ name: 'a' })).toEqual([]);
   });
 
+  it('shouldNotReadTheIssuerAloneAsATokenExchangeUsage', () => {
+    expect(trustDomainUsages({ name: 'a', issuer: 'https://auth.acme.com', crossAppAccess: { enabled: true } })).toEqual([
+      'CROSS_APP_ACCESS',
+    ]);
+  });
+
+  it('shouldReadCrossAppAccessOffTheEnabledFlag', () => {
+    expect(trustDomainUsages({ name: 'a', crossAppAccess: { enabled: true } })).toEqual(['CROSS_APP_ACCESS']);
+    expect(trustDomainUsages({ name: 'a', crossAppAccess: { enabled: false } })).toEqual([]);
+    expect(trustDomainUsages({ name: 'a', crossAppAccess: {} })).toEqual([]);
+  });
+
+  it('shouldDistinguishACrossAppAccessOnlyTrustedDomainFromATokenExchangeOne', () => {
+    expect(trustDomainUsagesLabel({ name: 'a', crossAppAccess: { enabled: true } })).toBe('Cross App Access');
+    expect(trustDomainUsagesLabel({ name: 'a', issuer: 'https://sso.acme.com', tokenExchangeEnabled: true })).toBe('OIDC - Trusted Issuer');
+    expect(
+      trustDomainUsagesLabel({
+        name: 'a',
+        issuer: 'https://sso.acme.com',
+        tokenExchangeEnabled: true,
+        crossAppAccess: { enabled: true },
+      }),
+    ).toBe('OIDC - Trusted Issuer, Cross App Access');
+  });
+
   it('shouldLabelATrustedDomainServingBothUsages', () => {
-    expect(trustDomainUsagesLabel({ name: 'acme-corp', spiffeTrustDomain: 'acme.org', issuer: 'https://sso.acme.com' })).toBe(
-      'SPIFFE, OIDC - Trusted Issuer',
-    );
+    expect(
+      trustDomainUsagesLabel({
+        name: 'acme-corp',
+        spiffeTrustDomain: 'acme.org',
+        issuer: 'https://sso.acme.com',
+        tokenExchangeEnabled: true,
+      }),
+    ).toBe('SPIFFE, OIDC - Trusted Issuer');
   });
 
   it('shouldHumanizeValuesTheOptionListsDoNotKnow', () => {
@@ -75,6 +109,20 @@ describe('trust domain types', () => {
     expect(isValidSpiffeTrustDomain('prod.example')).toBe(true);
   });
 
+  describe('isAbsoluteUri', () => {
+    it('shouldAcceptAnAbsoluteUri', () => {
+      expect(isAbsoluteUri('https://calendar.acme.com')).toBe(true);
+      expect(isAbsoluteUri('urn:acme:calendar')).toBe(true);
+    });
+
+    it('shouldRejectAnythingWithoutAScheme', () => {
+      expect(isAbsoluteUri('calendar.acme.com')).toBe(false);
+      expect(isAbsoluteUri('/calendar')).toBe(false);
+      expect(isAbsoluteUri('')).toBe(false);
+      expect(isAbsoluteUri(undefined)).toBe(false);
+    });
+  });
+
   describe('fromTrustedDomain', () => {
     it('shouldFlattenTheNestedBlocksOntoTheFormModel', () => {
       const response = {
@@ -84,6 +132,7 @@ describe('trust domain types', () => {
         keyMaterial: { source: 'jwks_url', jwksUrl: 'https://sso.acme.com/keys', refreshIntervalSeconds: 600 },
         spiffe: { spiffeTrustDomain: 'acme.org', allowedAlgorithms: ['RS256'] },
         tokenExchange: {
+          enabled: true,
           scopeMappings: { 'external:read': 'openid' },
           userBindingEnabled: true,
           userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
@@ -96,13 +145,25 @@ describe('trust domain types', () => {
         description: undefined,
         spiffeTrustDomain: 'acme.org',
         issuer: 'https://sso.acme.com',
+        tokenExchangeEnabled: true,
         keyMaterial: { source: 'JWKS_URL', jwksUrl: 'https://sso.acme.com/keys', refreshIntervalSeconds: 600 },
         refreshIntervalSeconds: 600,
         allowedAlgorithms: ['RS256'],
         scopeMappings: { 'external:read': 'openid' },
         userBindingEnabled: true,
         userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
+        crossAppAccess: undefined,
       });
+    });
+
+    it('shouldReadTheCrossAppAccessBlockAsItIs', () => {
+      const flat = fromTrustedDomain({
+        id: 'td-1',
+        name: 'acme-corp',
+        crossAppAccess: { enabled: true, resourceServers: [] },
+      }) as any;
+
+      expect(flat.crossAppAccess).toEqual({ enabled: true, resourceServers: [] });
     });
 
     it('shouldDefaultTheAbsentBlocks', () => {
@@ -110,6 +171,7 @@ describe('trust domain types', () => {
 
       expect(flat.spiffeTrustDomain).toBeUndefined();
       expect(flat.issuer).toBeUndefined();
+      expect(flat.tokenExchangeEnabled).toBe(false);
       expect(flat.allowedAlgorithms).toEqual([]);
       expect(flat.userBindingEnabled).toBe(false);
       expect(flat.refreshIntervalSeconds).toBe(300);
@@ -161,16 +223,29 @@ describe('trust domain types', () => {
       const request = toTrustedDomainRequest({
         name: 'acme',
         issuer: 'https://sso.acme.com',
+        tokenExchangeEnabled: true,
         scopeMappings: { 'external:read': 'openid' },
         userBindingEnabled: true,
         userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
       });
 
       expect(request.tokenExchange).toEqual({
+        enabled: true,
         scopeMappings: { 'external:read': 'openid' },
         userBindingEnabled: true,
         userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
       });
+    });
+
+    it('shouldSendTheIssuerWithoutTokenExchangeWhenAmOnlyIssuesTowardsIt', () => {
+      const request = toTrustedDomainRequest({
+        name: 'acme-suite',
+        issuer: 'https://auth.acme.com',
+        crossAppAccess: { enabled: true },
+      });
+
+      expect(request.domainIdentifier).toBe('https://auth.acme.com');
+      expect(request.tokenExchange.enabled).toBe(false);
     });
 
     it('shouldPutTheSpiffeMatcherAndAlgorithmsUnderSpiffe', () => {
@@ -190,7 +265,7 @@ describe('trust domain types', () => {
       const request = toTrustedDomainRequest({ name: 'acme', spiffeTrustDomain: 'acme.org' });
 
       expect(request.domainIdentifier).toBe('');
-      expect(request.tokenExchange).toEqual({ scopeMappings: {}, userBindingEnabled: false, userBindingCriteria: [] });
+      expect(request.tokenExchange).toEqual({ enabled: false, scopeMappings: {}, userBindingEnabled: false, userBindingCriteria: [] });
       expect(request.spiffe.spiffeTrustDomain).toBe('acme.org');
     });
 
@@ -199,6 +274,22 @@ describe('trust domain types', () => {
 
       expect(request.spiffe.spiffeTrustDomain).toBe('');
       expect(request.domainIdentifier).toBe('https://sso.acme.com');
+    });
+
+    it('shouldCarryTheCrossAppAccessBlockAsItIs', () => {
+      const crossAppAccess = {
+        enabled: true,
+        resourceServers: [{ name: 'Calendar', resource: 'https://calendar.acme.com' }],
+      };
+      const request = toTrustedDomainRequest({ name: 'acme', issuer: 'https://sso.acme.com', crossAppAccess });
+
+      expect(request.crossAppAccess).toEqual(crossAppAccess);
+    });
+
+    it('shouldDisableCrossAppAccessWhenTheFormDeclaresNone', () => {
+      const request = toTrustedDomainRequest({ name: 'acme', issuer: 'https://sso.acme.com' });
+
+      expect(request.crossAppAccess).toEqual({ enabled: false });
     });
   });
 });

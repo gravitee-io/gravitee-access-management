@@ -73,7 +73,7 @@ export const issuerTrustDomainBody = () => {
   return {
     name: label,
     domainIdentifier: `https://${label}.example.com`,
-    tokenExchange: {},
+    tokenExchange: { enabled: true },
     keyMaterial: { source: 'JWKS_URL', jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.TOKEN_EXCHANGE_JWKS_URL },
   };
 };
@@ -85,7 +85,7 @@ export const bothUsagesTrustDomainBody = () => {
     name: label,
     spiffe: { spiffeTrustDomain: `${label}.local` },
     domainIdentifier: `https://${label}.example.com`,
-    tokenExchange: {},
+    tokenExchange: { enabled: true },
     keyMaterial: { source: 'JWKS_URL', jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.BOTH_JWKS_URL },
   };
 };

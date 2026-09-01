@@ -27,6 +27,7 @@ import lombok.Setter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -52,8 +53,9 @@ public class TrustedDomain {
     private String description;
 
     @Schema(description = "Issuer identifier of this authority's authorization server. Matched against "
-            + "the \"iss\" of an external JWT during an RFC 8693 exchange.",
-            example = "https://sso.acme.com")
+            + "the \"iss\" of an external JWT during an RFC 8693 exchange, and carried by the \"aud\" "
+            + "claim of an ID-JAG minted towards it. Unique within the security domain.",
+            example = "https://sso.acme.com", maxLength = ISSUER_MAX_LENGTH)
     private String domainIdentifier;
 
     private TrustDomainKeyMaterial keyMaterial;
@@ -65,6 +67,9 @@ public class TrustedDomain {
     @Schema(description = "Accepts this authority's JWTs as subject or actor tokens during an RFC 8693 "
             + "exchange. Absent when this authority is not trusted for token exchange.")
     private TokenExchangeTrustSettings tokenExchange;
+
+    @Schema(description = "What AM issues towards this authority. Absent means Cross App Access disabled.")
+    private CrossAppAccessSettings crossAppAccess;
 
     @Schema(type = "java.lang.Long")
     private Date createdAt;
@@ -82,6 +87,7 @@ public class TrustedDomain {
                          TrustDomainKeyMaterial keyMaterial,
                          SpiffeTrustSettings spiffe,
                          TokenExchangeTrustSettings tokenExchange,
+                         CrossAppAccessSettings crossAppAccess,
                          Date createdAt,
                          Date updatedAt) {
         this.id = id;
@@ -93,6 +99,7 @@ public class TrustedDomain {
         this.keyMaterial = keyMaterial;
         this.spiffe = spiffe;
         this.tokenExchange = tokenExchange;
+        this.crossAppAccess = crossAppAccess;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -107,6 +114,7 @@ public class TrustedDomain {
         this.keyMaterial = other.keyMaterial != null ? new TrustDomainKeyMaterial(other.keyMaterial) : null;
         this.spiffe = other.spiffe != null ? new SpiffeTrustSettings(other.spiffe) : null;
         this.tokenExchange = other.tokenExchange != null ? new TokenExchangeTrustSettings(other.tokenExchange) : null;
+        this.crossAppAccess = other.crossAppAccess != null ? new CrossAppAccessSettings(other.crossAppAccess) : null;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -116,7 +124,24 @@ public class TrustedDomain {
     }
 
     public boolean trustsTokenExchange() {
-        return tokenExchange != null && domainIdentifier != null;
+        return tokenExchange != null && tokenExchange.isEnabled() && domainIdentifier != null;
+    }
+
+    /**
+     * Whether AM may mint an ID-JAG towards this authority.
+     */
+    public boolean trustsCrossAppAccess() {
+        return crossAppAccess != null && crossAppAccess.isEnabled();
+    }
+
+    /**
+     * The resource servers of this authority, empty when there is no Cross App Access block.
+     */
+    public List<CrossAppAccessResourceServer> crossAppAccessResourceServers() {
+        if (crossAppAccess == null || crossAppAccess.getResourceServers() == null) {
+            return List.of();
+        }
+        return crossAppAccess.getResourceServers().stream().filter(Objects::nonNull).toList();
     }
 
     @JsonIgnore

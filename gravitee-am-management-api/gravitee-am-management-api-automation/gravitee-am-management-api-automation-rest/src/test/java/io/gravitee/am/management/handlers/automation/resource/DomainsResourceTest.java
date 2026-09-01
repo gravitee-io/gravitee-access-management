@@ -178,7 +178,7 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
                         .id("td-1")
                         .name("https-issuer.example.com")
                         .domainIdentifier("https://issuer.example.com")
-                        .tokenExchange(new TokenExchangeTrustSettings())
+                        .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
                         .build()));
         when(trustDomainService.delete(eq(existing), anyString(), any())).thenReturn(Completable.complete());
 
