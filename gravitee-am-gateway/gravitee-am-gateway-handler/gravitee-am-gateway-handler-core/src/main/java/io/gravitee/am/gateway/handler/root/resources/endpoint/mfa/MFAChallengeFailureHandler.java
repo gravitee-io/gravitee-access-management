@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
+import io.gravitee.am.gateway.handler.common.utils.UserFacingFailureMessage;
 import io.gravitee.am.gateway.handler.common.utils.UsernameHelper;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
@@ -54,7 +55,11 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
     }
 
     private void handleException(RoutingContext context, Throwable throwable) {
-        String errorDescription = throwable == null ? "MFA Challenge failed for unexpected reason" : throwable.getMessage();
+        if (throwable != null) {
+            log.warn("MFA challenge failed: {}", throwable.getMessage());
+            log.debug("MFA challenge failure", throwable);
+        }
+        String errorDescription = UserFacingFailureMessage.from(throwable).orElse("MFA Challenge failed for unexpected reason");
         final MultiMap queryParams = updateQueryParams(context, errorDescription);
         String uri;
         if (throwable instanceof SendChallengeException) {
