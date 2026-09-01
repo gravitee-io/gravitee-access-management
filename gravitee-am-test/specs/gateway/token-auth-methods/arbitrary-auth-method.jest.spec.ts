@@ -20,6 +20,8 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { setup } from '../../test-fixture';
 import { ArbitraryAuthMethodFixture, AuthMethodApp, setupArbitraryAuthMethodFixture } from './fixtures/arbitrary-auth-method-fixture';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 setup(200000);
 
@@ -32,13 +34,6 @@ setup(200000);
  * empty and the matching credentials are present.
  *
  * The two applications live in one domain, so the comparison differs only in that setting.
- *
- * Assertion-based methods are deliberately not covered here. An unset application refuses
- * client_secret_jwt even though `ClientAssertionAuthProvider.canHandle` carries the same
- * empty-method branch as basic and post — the identical assertion is accepted once the method is
- * set explicitly. That looks like a defect rather than intended behaviour, so it is tracked as
- * AM-7591 instead of being written down here as expected. Add the assertion cases to this file
- * once that is resolved.
  */
 let fixture: ArbitraryAuthMethodFixture;
 
@@ -70,6 +65,34 @@ const withRequestBody = (app: AuthMethodApp) =>
     FORM,
   );
 
+const JWT_BEARER = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+
+/** A signed assertion carrying the credentials — client_secret_jwt. */
+const withSignedAssertion = (app: AuthMethodApp) => {
+  const now = Math.floor(Date.now() / 1000);
+  const assertion = jwt.sign(
+    {
+      iss: app.clientId,
+      sub: app.clientId,
+      aud: fixture.oidc.token_endpoint,
+      jti: crypto.randomUUID(),
+      iat: now,
+      exp: now + 300,
+    },
+    app.clientSecret,
+    { algorithm: 'HS256' },
+  );
+
+  return performPost(
+    fixture.oidc.token_endpoint,
+    '',
+    `grant_type=client_credentials&client_assertion_type=${encodeURIComponent(JWT_BEARER)}&client_assertion=${encodeURIComponent(
+      assertion,
+    )}`,
+    FORM,
+  );
+};
+
 describe('An application with no authentication method set', () => {
   it(jira`is stored with an empty method rather than a default ${'AM-2232'}`, async () => {
     // Anchors the rest of the file. Omitting the field on create is not the same thing: the
@@ -91,6 +114,13 @@ describe('An application with no authentication method set', () => {
     expect(response.status).toEqual(200);
     expect(response.body.access_token).toMatch(JWT_FORMAT);
   });
+
+  it(jira`also accepts a signed assertion ${'AM-7591'}`, async () => {
+    const response = await withSignedAssertion(fixture.unsetApp);
+
+    expect(response.status).toEqual(200);
+    expect(response.body.access_token).toMatch(JWT_FORMAT);
+  });
 });
 
 describe('An application fixed to one authentication method', () => {
@@ -106,6 +136,13 @@ describe('An application fixed to one authentication method', () => {
 
     // The same request the unset application accepts above. Same domain, same identity provider,
     // same credentials — only the setting differs, which is what makes the option meaningful.
+    expect(response.status).toEqual(401);
+    expect(response.body.error).toEqual('invalid_client');
+  });
+
+  it(jira`refuses a signed assertion ${'AM-7591'}`, async () => {
+    const response = await withSignedAssertion(fixture.fixedApp);
+
     expect(response.status).toEqual(401);
     expect(response.body.error).toEqual('invalid_client');
   });

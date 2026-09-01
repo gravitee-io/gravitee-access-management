@@ -22,8 +22,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -54,6 +59,12 @@ public class AuditMessageValueDto {
     private String nodeHostname;
 
     /**
+     * The extra attributes this reporter was configured to export, keyed by the operator's chosen name;
+     * values that are not already strings are serialized as JSON
+     */
+    private Map<String, String> customAttributes;
+
+    /**
      * @deprecated moved into the {@link #outcome} field
      */
     @Deprecated(since = "4.5", forRemoval = true)
@@ -73,9 +84,28 @@ public class AuditMessageValueDto {
                 .actor(AuditEntityDto.from(audit.getActor()))
                 .target(AuditEntityDto.from(audit.getTarget()))
                 .outcome(AuditOutcomeDto.from(audit.getOutcome()))
+                .customAttributes(asStringValues(audit.getCustomAttributes()))
                 .context(context)
                 .node(node)
                 .build();
+    }
+
+    private static Map<String, String> asStringValues(Map<String, Object> customAttributes) {
+        if (customAttributes == null || customAttributes.isEmpty()) {
+            return null;
+        }
+        var mapper = new ObjectMapper();
+        return customAttributes.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> {
+                    if (e.getValue() instanceof String value) {
+                        return value;
+                    }
+                    try {
+                        return mapper.writeValueAsString(e.getValue());
+                    } catch (JsonProcessingException ex) {
+                        return "";
+                    }
+                }));
     }
 
     @SuppressWarnings("unused") // additional methods for @lombok.Builder

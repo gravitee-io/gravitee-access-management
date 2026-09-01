@@ -46,6 +46,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
 
     public EmailAuditBuilder user(User user) {
         if (user != null) {
+            captureUser(user);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
         }
         return this;

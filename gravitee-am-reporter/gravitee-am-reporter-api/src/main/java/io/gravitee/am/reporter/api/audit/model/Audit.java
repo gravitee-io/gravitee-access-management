@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.reporter.api.audit.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.Reportable;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * Security Audit based on RFC 3881 - Security Audit and Access Accountability Message
@@ -85,6 +88,39 @@ public class Audit implements Reportable {
      * The date when the event was logged
      */
     private Instant timestamp;
+
+    /**
+     * Additional attributes the receiving reporter was configured to export, keyed by the operator's chosen name
+     */
+    @Schema(hidden = true)
+    private Map<String, Object> customAttributes;
+
+    /**
+     * The user and client behind the event, for reporters that resolve attribute mappings
+     */
+    @JsonIgnore
+    @Schema(hidden = true)
+    private transient AuditEnrichmentContext enrichmentContext;
+
+    public Audit() {
+    }
+
+    /**
+     * Copies the exported fields, sharing the nested objects
+     */
+    public Audit(Audit other) {
+        this.id = other.id;
+        this.transactionId = other.transactionId;
+        this.type = other.type;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
+        this.accessPoint = other.accessPoint;
+        this.actor = other.actor;
+        this.target = other.target;
+        this.outcome = other.outcome;
+        this.timestamp = other.timestamp;
+        this.customAttributes = other.customAttributes;
+    }
 
     public String getId() {
         return id;
@@ -167,5 +203,26 @@ public class Audit implements Reportable {
 
     public void setOutcome(AuditOutcome outcome) {
         this.outcome = outcome;
+    }
+
+    @Schema(hidden = true)
+    public Map<String, Object> getCustomAttributes() {
+        return customAttributes;
+    }
+
+    public void setCustomAttributes(Map<String, Object> customAttributes) {
+        this.customAttributes = customAttributes;
+    }
+
+    @JsonIgnore
+    @Schema(hidden = true)
+    public AuditEnrichmentContext getEnrichmentContext() {
+        return enrichmentContext;
+    }
+
+    @JsonIgnore
+    @Schema(hidden = true)
+    public void setEnrichmentContext(AuditEnrichmentContext enrichmentContext) {
+        this.enrichmentContext = enrichmentContext;
     }
 }

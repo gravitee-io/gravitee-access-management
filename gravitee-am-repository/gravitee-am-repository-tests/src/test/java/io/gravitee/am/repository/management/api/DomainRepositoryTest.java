@@ -20,11 +20,15 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
+import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
+import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.application.TokenExchangeClaimMapping;
 import io.gravitee.am.model.application.TokenExchangeClaimSource;
@@ -89,6 +93,28 @@ public class DomainRepositoryTest extends AbstractManagementTest {
                 domain1.getTags().equals(domain2.getTags()) &&
                 domain1.getIdentities().equals(domain2.getIdentities()) &&
                 domain1.getLoginSettings().getResetPasswordOnExpiration().equals(domain2.getLoginSettings().getResetPasswordOnExpiration());
+    }
+
+    @Test
+    public void shouldNotPersistInlineTrustedIssuers() {
+        Domain domain = initDomain();
+        TokenExchangeSettings tokenExchange = new TokenExchangeSettings();
+        tokenExchange.setEnabled(true);
+        TrustedIssuer trustedIssuer = new TrustedIssuer();
+        trustedIssuer.setIssuer("https://issuer.example.com");
+        trustedIssuer.setKeyResolutionMethod(KeyResolutionMethod.JWKS_URL);
+        trustedIssuer.setJwksUri("https://issuer.example.com/.well-known/jwks.json");
+        tokenExchange.setTrustedIssuers(List.of(trustedIssuer));
+        domain.setTokenExchangeSettings(tokenExchange);
+
+        Domain created = domainRepository.create(domain).blockingGet();
+
+        TestObserver<Domain> testObserver = domainRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(d -> d.getTokenExchangeSettings() != null && d.getTokenExchangeSettings().isEnabled());
+        testObserver.assertValue(d -> d.getTokenExchangeSettings().getTrustedIssuers() == null);
     }
 
     private Domain initDomain() {
@@ -157,6 +183,12 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         tokenExchangeSettings.setTokenExchangeOAuthSettings(tokenExchangeOAuthSettings);
         domain.setTokenExchangeSettings(tokenExchangeSettings);
 
+        KeyRetrievalSettings keyRetrievalSettings = new KeyRetrievalSettings();
+        keyRetrievalSettings.setAllowPrivateIpAddress(true);
+        keyRetrievalSettings.setFetchTimeoutMs(1234);
+        keyRetrievalSettings.setCacheMaxEntries(7);
+        domain.setKeyRetrievalSettings(keyRetrievalSettings);
+
         SAMLSettings saml = new SAMLSettings();
         saml.setEnabled(true);
         saml.setEntityId("https://idp.example.com");
@@ -173,6 +205,24 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         mapping.setSourceClaim(sourceClaim);
         mapping.setTokenClaim(tokenClaim);
         return mapping;
+    }
+
+    @Test
+    public void testKeyRetrievalSettingsRoundTrip() {
+        Domain domainCreated = domainRepository.create(initDomain()).blockingGet();
+
+        TestObserver<Domain> testObserver = domainRepository.findById(domainCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(d -> {
+            var settings = d.getKeyRetrievalSettings();
+            return settings.isAllowPrivateIpAddress()
+                    && !settings.isAllowUnsecuredHttpUri()
+                    && settings.getFetchTimeoutMs() == 1234
+                    && settings.getCacheMaxEntries() == 7
+                    && settings.getMaxResponseSizeKb() == KeyRetrievalSettings.DEFAULT_MAX_RESPONSE_SIZE_KB;
+        });
     }
 
     @Test

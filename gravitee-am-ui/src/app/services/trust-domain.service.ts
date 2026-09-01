@@ -16,8 +16,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
+import { normalizeTrustDomain } from '../domain/settings/trust-domains/trust-domain.types';
 
 @Injectable()
 export class TrustDomainService {
@@ -26,25 +28,34 @@ export class TrustDomainService {
   constructor(private http: HttpClient) {}
 
   list(domainId: string): Observable<any> {
-    return this.http.get<any>(this.domainBaseURL + domainId + '/trust-domains');
+    return this.http
+      .get<any>(this.domainBaseURL + domainId + '/trust-domains')
+      .pipe(map((trustDomains) => (trustDomains ?? []).map(normalizeTrustDomain)));
   }
 
   get(domainId: string, id: string): Observable<any> {
-    return this.http.get<any>(this.domainBaseURL + domainId + '/trust-domains/' + id);
+    return this.http.get<any>(this.domainBaseURL + domainId + '/trust-domains/' + id).pipe(map(normalizeTrustDomain));
   }
 
   create(domainId: string, trustDomain: any): Observable<any> {
-    return this.http.post<any>(this.domainBaseURL + domainId + '/trust-domains', trustDomain);
+    return this.http.post<any>(this.domainBaseURL + domainId + '/trust-domains', trustDomain).pipe(map(normalizeTrustDomain));
   }
 
   update(domainId: string, id: string, trustDomain: any): Observable<any> {
-    return this.http.put<any>(this.domainBaseURL + domainId + '/trust-domains/' + id, {
-      description: trustDomain.description,
-      bundleSource: trustDomain.bundleSource,
-      jwksUrl: trustDomain.jwksUrl,
-      refreshIntervalSeconds: trustDomain.refreshIntervalSeconds,
-      allowedAlgorithms: trustDomain.allowedAlgorithms,
-    });
+    return this.http
+      .put<any>(this.domainBaseURL + domainId + '/trust-domains/' + id, {
+        name: trustDomain.name,
+        description: trustDomain.description,
+        spiffeTrustDomain: trustDomain.spiffeTrustDomain,
+        issuer: trustDomain.issuer,
+        keyMaterial: trustDomain.keyMaterial,
+        refreshIntervalSeconds: trustDomain.refreshIntervalSeconds,
+        allowedAlgorithms: trustDomain.allowedAlgorithms,
+        scopeMappings: trustDomain.scopeMappings,
+        userBindingEnabled: trustDomain.userBindingEnabled,
+        userBindingCriteria: trustDomain.userBindingCriteria,
+      })
+      .pipe(map(normalizeTrustDomain));
   }
 
   delete(domainId: string, id: string): Observable<any> {

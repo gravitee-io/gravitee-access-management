@@ -62,6 +62,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Expression language -->
+        <dependency>
+            <groupId>io.gravitee.el</groupId>
+            <artifactId>gravitee-expression-language</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.gravitee.am.password.dictionary</groupId>
             <artifactId>gravitee-am-password-dictionary</artifactId>

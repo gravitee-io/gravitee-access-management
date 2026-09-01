@@ -77,6 +77,8 @@ describe('A policy in the login flow that refuses', () => {
     // application: no authorization code is issued.
     expect(location).toContain('error=login_failed');
     expect(location).toContain('error_code=REQUEST_VALIDATION_INVALID');
+    // The policy refused on purpose and named itself, so its message is meant to be read.
+    expect(new URL(location).searchParams.get('error_description')).toBeTruthy();
     // Anchored so it matches only an authorization code parameter, not response_type=code
     // or error_code= which are both present on the refusal redirect.
     expect(location).not.toMatch(/[?&]code=/);
@@ -106,10 +108,18 @@ describe('A policy in the login flow that refuses', () => {
     expect(url.pathname).toEqual(`/${fixture.domain.hrid}/login`);
     expect(location).not.toMatch(/[?&]code=/);
     expect(location).not.toContain(REDIRECT_URI);
+  });
 
-    // The gateway currently puts the script's own runtime message into error_description. That is
-    // deliberately not asserted here: the wording belongs to the JVM rather than to AM, and an
-    // internal message reaching the browser at all is tracked as AM-7593. Should that be fixed to
-    // a generic description, this test keeps passing.
+  it("the failing script's own message stays out of the redirect", async () => {
+    await fixture.setLoginPolicies('post', [throwingPolicy()]);
+
+    const location = await signInAndReadRedirect();
+    const url = new URL(location);
+
+    expect(url.searchParams.get('error')).toEqual('login_failed');
+    expect(url.searchParams.get('error_description')).toBeNull();
+    expect(location).not.toContain('somethingThatDoesNotExist');
+
+    // An engine that reported a thrown script under a key of its own would put the message back here.
   });
 });

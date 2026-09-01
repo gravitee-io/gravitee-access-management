@@ -60,7 +60,7 @@ public class WebClientJWKSetFetcherTest {
 
     @Test
     public void getKeys_nonOkStatus_returnsInvalidClientMetadataException() {
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
+        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class, Mockito.RETURNS_SELF);
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
         when(webClient.getAbs(anyString())).thenReturn(request);
@@ -76,7 +76,7 @@ public class WebClientJWKSetFetcherTest {
 
     @Test
     public void getKeys_nullBody_returnsInvalidClientMetadataException() {
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
+        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class, Mockito.RETURNS_SELF);
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
         when(webClient.getAbs(anyString())).thenReturn(request);
@@ -91,7 +91,7 @@ public class WebClientJWKSetFetcherTest {
 
     @Test
     public void getKeys_unparseableBody_returnsInvalidClientMetadataException() {
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
+        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class, Mockito.RETURNS_SELF);
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
         when(webClient.getAbs(anyString())).thenReturn(request);
@@ -107,7 +107,7 @@ public class WebClientJWKSetFetcherTest {
 
     @Test
     public void getKeys_validBody_returnsJWKSet() {
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
+        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class, Mockito.RETURNS_SELF);
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
         String bodyAsString = "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"enc\",\"kid\":\"KID\",\"n\":\"modulus\",\"e\":\"exponent\"}]}";
@@ -127,7 +127,7 @@ public class WebClientJWKSetFetcherTest {
 
     @Test
     public void getKeys_emptyKeysArray_emitsJWKSetWithNoKeys() {
-        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class);
+        HttpRequest<Buffer> request = Mockito.mock(HttpRequest.class, Mockito.RETURNS_SELF);
         HttpResponse<Buffer> response = Mockito.mock(HttpResponse.class);
 
         when(webClient.getAbs(anyString())).thenReturn(request);

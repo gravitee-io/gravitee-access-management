@@ -13,3 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.trust-domain-usage {
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container-high, rgb(0 0 0 / 6%));
+  font-size: 75%;
+  text-transform: uppercase;
+}

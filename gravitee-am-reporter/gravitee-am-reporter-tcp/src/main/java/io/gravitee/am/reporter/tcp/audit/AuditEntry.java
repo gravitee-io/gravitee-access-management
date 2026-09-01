@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.tcp.audit;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
@@ -23,6 +24,7 @@ import io.gravitee.am.reporter.tcp.formatter.ReportEntry;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * Wire representation of an {@link io.gravitee.am.reporter.api.audit.model.Audit} event,
@@ -48,4 +50,11 @@ public class AuditEntry implements ReportEntry {
     private String organizationId;
     private String nodeId;
     private String nodeHostname;
+
+    /**
+     * The extra attributes this reporter was configured to export, keyed by the operator's chosen name
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Map<String, Object> customAttributes;
+
 }

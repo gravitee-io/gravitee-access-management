@@ -87,8 +87,9 @@ public class DomainResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
-                                .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
+                        .flatMapSingle(domain -> trustedIssuerProjection.project(domain)
+                                .flatMap(projected -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
+                                        .map(userPermissions -> filterDomainInfos(projected, userPermissions)))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -216,6 +217,7 @@ public class DomainResource extends AbstractDomainResource {
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
                 .andThen(domainService.updateCertificateSettings(new GraviteeContext(organizationId, environmentId, domainId), domainId, certificateSettings, authenticatedUser)
+                        .flatMap(trustedIssuerProjection::project)
                         .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
                                 .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                 .subscribe(response::resume, response::resume);
@@ -374,6 +376,7 @@ public class DomainResource extends AbstractDomainResource {
                     .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, permission, Acl.UPDATE)).collect(Collectors.toList()))
                     .andThen(checkVhostCloudModeChange(domainId, patchDomain))
                     .andThen(Single.defer(() -> domainService.patch(new GraviteeContext(organizationId, environmentId, domainId), domainId, patchDomain, authenticatedUser)
+                            .flatMap(trustedIssuerProjection::project)
                             .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
                                     .map(userPermissions -> filterDomainInfos(domain, userPermissions)))))
                     .subscribe(response::resume, response::resume);

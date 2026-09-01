@@ -31,4 +31,14 @@ public interface SpringTrustDomainRepository extends RxJava3CrudRepository<JdbcT
     Maybe<JdbcTrustDomain> findByName(@Param("refType") String refType,
                                       @Param("refId") String refId,
                                       @Param("name") String name);
+
+    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and spiffe_trust_domain = :spiffeTrustDomain")
+    Maybe<JdbcTrustDomain> findBySpiffeTrustDomain(@Param("refType") String refType,
+                                                   @Param("refId") String refId,
+                                                   @Param("spiffeTrustDomain") String spiffeTrustDomain);
+
+    @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId and issuer = :issuer")
+    Maybe<JdbcTrustDomain> findByIssuer(@Param("refType") String refType,
+                                        @Param("refId") String refId,
+                                        @Param("issuer") String issuer);
 }

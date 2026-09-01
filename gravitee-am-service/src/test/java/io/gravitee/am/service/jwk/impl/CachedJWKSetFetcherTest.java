@@ -152,6 +152,32 @@ public class CachedJWKSetFetcherTest {
         verify(delegate, times(1)).getKeys(JWKS_URI_B);
     }
 
+    @Test
+    public void shouldPassSizeBoundToDelegateAndCacheTheResult() {
+        JWKSetFetchResponse response = response("key-a");
+        when(delegate.getKeys(JWKS_URI_A, 2048L)).thenReturn(Maybe.just(response));
+
+        cache.getKeys(JWKS_URI_A, 2048L).test().assertValue(response);
+        cache.getKeys(JWKS_URI_A, 2048L).test().assertValue(response);
+
+        verify(delegate, times(1)).getKeys(JWKS_URI_A, 2048L);
+        verifyNoMoreInteractions(delegate);
+    }
+
+    @Test
+    public void shouldNotServeAnUnboundedEntryToABoundedCaller() {
+        JWKSetFetchResponse unbounded = response("key-a");
+        JWKSetFetchResponse bounded = response("key-b");
+        when(delegate.getKeys(JWKS_URI_A)).thenReturn(Maybe.just(unbounded));
+        when(delegate.getKeys(JWKS_URI_A, 2048L)).thenReturn(Maybe.just(bounded));
+
+        cache.getKeys(JWKS_URI_A).test().assertValue(unbounded);
+        cache.getKeys(JWKS_URI_A, 2048L).test().assertValue(bounded);
+
+        verify(delegate, times(1)).getKeys(JWKS_URI_A);
+        verify(delegate, times(1)).getKeys(JWKS_URI_A, 2048L);
+    }
+
     private static JWKSetFetchResponse response(String kid) {
         RSAKey key = new RSAKey();
         key.setKty("RSA");

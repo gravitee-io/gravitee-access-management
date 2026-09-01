@@ -109,6 +109,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder idTokenFor(User user) {
         if (user != null && user.getId() != null) {
+            captureUser(user);
             var userId = user.getId();
             tokenNewValue.put(TokenTypeHint.ID_TOKEN.name(), format("Delivered for sub '%s'", userId));
         }
@@ -130,6 +131,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder tokenActor(User user) {
         if (user != null) {
+            captureUser(user);
             setActor(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
                 reference(Reference.domain(user.getReferenceId()));
@@ -141,6 +143,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
 
     public ClientTokenAuditBuilder tokenTarget(User user) {
         if (user != null) {
+            captureUser(user);
             setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId(), user.getExternalId(), user.getSource());
             if (ReferenceType.DOMAIN.equals(user.getReferenceType())) {
                 reference(Reference.domain(user.getReferenceId()));

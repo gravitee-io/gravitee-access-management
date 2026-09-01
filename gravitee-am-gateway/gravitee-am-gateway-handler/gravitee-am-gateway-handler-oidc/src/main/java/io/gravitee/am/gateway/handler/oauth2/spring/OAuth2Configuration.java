@@ -50,6 +50,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenEx
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.*;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
+import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
@@ -100,8 +103,8 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TrustedIssuerResolver trustedIssuerResolver() {
-        return new TrustedIssuerResolverImpl();
+    public TrustedIssuerResolver trustedIssuerResolver(TrustDomainKeyService trustDomainKeyService, JWSService jwsService) {
+        return new TrustedIssuerResolverImpl(trustDomainKeyService, jwsService);
     }
 
     @Bean
@@ -122,11 +125,13 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public TokenValidator jwtTokenValidator(JWTService jwtService, TrustedIssuerResolver trustedIssuerResolver) {
+    public TokenValidator jwtTokenValidator(JWTService jwtService,
+                                            TrustedIssuerResolver trustedIssuerResolver,
+                                            TrustDomainManager trustDomainManager) {
         DefaultTokenValidator domainValidator = new DefaultTokenValidator(
                 jwtService, JWTService.TokenType.JWT, TokenType.JWT);
         return new TrustedIssuerTokenValidator(
-                domainValidator, trustedIssuerResolver, jwtService,
+                domainValidator, trustedIssuerResolver, trustDomainManager, jwtService,
                 JWTService.TokenType.JWT, TokenType.JWT);
     }
 

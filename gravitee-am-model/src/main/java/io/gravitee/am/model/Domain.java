@@ -23,6 +23,7 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.model.webprotection.WebProtectionSettings;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -224,6 +225,12 @@ public class Domain implements Resource, Managed {
      */
     private ManagedBy managedBy;
 
+    /**
+     * Fetch, SSRF and cache limits applied when key material is retrieved for a trusted domain
+     */
+    @Schema(description = "Fetch, SSRF and cache limits applied to every trusted domain in the security domain.")
+    private KeyRetrievalSettings keyRetrievalSettings;
+
     public Domain() {
     }
 
@@ -270,6 +277,7 @@ public class Domain implements Resource, Managed {
         this.tokenExchangeSettings = other.tokenExchangeSettings;
         this.certificateSettings = other.certificateSettings != null ? new CertificateSettings(other.certificateSettings) : null;
         this.managedBy = other.managedBy;
+        this.keyRetrievalSettings = other.keyRetrievalSettings != null ? new KeyRetrievalSettings(other.keyRetrievalSettings) : null;
     }
 
     @Override
@@ -535,6 +543,26 @@ public class Domain implements Resource, Managed {
 
     public void setCertificateSettings(CertificateSettings certificateSettings) {
         this.certificateSettings = certificateSettings;
+    }
+
+    /**
+     * The limits applied to trusted-domain key retrieval. Falls back to the values the SPIFFE block
+     * carried before they were promoted here, so a domain reads the same limits before and after the
+     * relocation upgrader has run.
+     */
+    public KeyRetrievalSettings getKeyRetrievalSettings() {
+        return keyRetrievalSettings != null
+                ? keyRetrievalSettings
+                : KeyRetrievalSettings.fromLegacySpiffeSettings(oidc != null ? oidc.getWorkloadIdentitySettings() : null);
+    }
+
+    public void setKeyRetrievalSettings(KeyRetrievalSettings keyRetrievalSettings) {
+        this.keyRetrievalSettings = keyRetrievalSettings;
+    }
+
+    @JsonIgnore
+    public KeyRetrievalSettings getConfiguredKeyRetrievalSettings() {
+        return keyRetrievalSettings;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

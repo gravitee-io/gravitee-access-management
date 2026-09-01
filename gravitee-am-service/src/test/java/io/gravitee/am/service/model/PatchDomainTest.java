@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -29,6 +30,7 @@ import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
+import io.gravitee.am.service.model.openid.PatchSpiffeDomainSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,6 +44,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -269,6 +272,65 @@ public class PatchDomainTest {
     }
 
     @Test
+    public void shouldPatchKeyRetrievalSettings() {
+        PatchKeyRetrievalSettings patchKeyRetrieval = new PatchKeyRetrievalSettings();
+        patchKeyRetrieval.setFetchTimeoutMs(Optional.of(1234));
+        patchKeyRetrieval.setAllowPrivateIpAddress(Optional.of(true));
+        PatchDomain patch = new PatchDomain();
+        patch.setKeyRetrievalSettings(Optional.of(patchKeyRetrieval));
+
+        Domain result = patch.patch(new Domain());
+
+        assertEquals(1234, result.getKeyRetrievalSettings().getFetchTimeoutMs());
+        assertTrue(result.getKeyRetrievalSettings().isAllowPrivateIpAddress());
+        assertEquals(KeyRetrievalSettings.DEFAULT_CACHE_TTL_SECONDS, result.getKeyRetrievalSettings().getCacheTtlSeconds());
+    }
+
+    @Test
+    public void shouldRelocateRetrievalLimitsWrittenAgainstTheSpiffeBlock() {
+        PatchSpiffeDomainSettings patchSpiffe = new PatchSpiffeDomainSettings();
+        patchSpiffe.setEnabled(Optional.of(true));
+        patchSpiffe.setFetchTimeoutMs(Optional.of(1234));
+        PatchOIDCSettings patchOidc = new PatchOIDCSettings();
+        patchOidc.setWorkloadIdentitySettings(Optional.of(patchSpiffe));
+        PatchDomain patch = new PatchDomain();
+        patch.setOidc(Optional.of(patchOidc));
+
+        Domain result = patch.patch(new Domain());
+
+        assertEquals(1234, result.getKeyRetrievalSettings().getFetchTimeoutMs());
+        assertTrue(result.getOidc().getWorkloadIdentitySettings().isEnabled());
+        assertNull(result.getOidc().getWorkloadIdentitySettings().getFetchTimeoutMs());
+    }
+
+    @Test
+    public void shouldPreferKeyRetrievalSettingsOverTheDeprecatedSpiffeLimits() {
+        PatchSpiffeDomainSettings patchSpiffe = new PatchSpiffeDomainSettings();
+        patchSpiffe.setFetchTimeoutMs(Optional.of(1234));
+        PatchOIDCSettings patchOidc = new PatchOIDCSettings();
+        patchOidc.setWorkloadIdentitySettings(Optional.of(patchSpiffe));
+        PatchKeyRetrievalSettings patchKeyRetrieval = new PatchKeyRetrievalSettings();
+        patchKeyRetrieval.setFetchTimeoutMs(Optional.of(999));
+        PatchDomain patch = new PatchDomain();
+        patch.setOidc(Optional.of(patchOidc));
+        patch.setKeyRetrievalSettings(Optional.of(patchKeyRetrieval));
+
+        Domain result = patch.patch(new Domain());
+
+        assertEquals(999, result.getKeyRetrievalSettings().getFetchTimeoutMs());
+    }
+
+    @Test
+    public void shouldRejectNonPositiveKeyRetrievalLimit() {
+        PatchKeyRetrievalSettings patchKeyRetrieval = new PatchKeyRetrievalSettings();
+        patchKeyRetrieval.setCacheMaxEntries(Optional.of(0));
+        PatchDomain patch = new PatchDomain();
+        patch.setKeyRetrievalSettings(Optional.of(patchKeyRetrieval));
+
+        assertThrows(InvalidParameterException.class, () -> patch.patch(new Domain()));
+    }
+
+    @Test
     public void testGetRequiredPermissions() {
 
         PatchDomain patchDomain = new PatchDomain();
@@ -303,6 +365,10 @@ public class PatchDomainTest {
 
         patchDomain = new PatchDomain();
         patchDomain.setCertificateSettings(Optional.of(new CertificateSettings()));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setKeyRetrievalSettings(Optional.of(new PatchKeyRetrievalSettings()));
         assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
 
         patchDomain = new PatchDomain();

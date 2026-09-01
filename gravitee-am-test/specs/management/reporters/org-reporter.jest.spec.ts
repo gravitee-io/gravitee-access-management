@@ -273,9 +273,9 @@ describe('Org Reporter Attribute Mapping Validation', () => {
     ).rejects.toMatchObject({ response: { status: 400 } });
   });
 
-  it('should reject an expression that is not wrapped in braces', async () => {
-    await expect(
-      invalid([{ expression: "#context.attributes['user'].id", exportedName: 'user_id' }]),
-    ).rejects.toMatchObject({ response: { status: 400 } });
+  it('should reject a blank expression', async () => {
+    await expect(invalid([{ expression: '   ', exportedName: 'user_id' }])).rejects.toMatchObject({
+      response: { status: 400 },
+    });
   });
 });

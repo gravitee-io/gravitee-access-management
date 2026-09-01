@@ -80,9 +80,7 @@ describe('Automation API - Reporters (resource under a domain)', () => {
 
     const response = await fixture.client.listReporters(fixture.domainKey);
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([
-      expect.objectContaining({ key, attributeMappings: DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS }),
-    ]);
+    expect(response.body).toEqual([expect.objectContaining({ key, attributeMappings: DEFAULT_REPORTER_ATTRIBUTE_MAPPINGS })]);
   });
 
   it('should update the reporter via a second PUT (idempotent)', async () => {
@@ -129,10 +127,7 @@ describe('Automation API - Reporters (resource under a domain)', () => {
   });
 
   it('should reject an invalid key pattern (400)', async () => {
-    const response = await fixture.client.putReporter(
-      fixture.domainKey,
-      buildAutomationReporterDef({ key: 'Invalid Key!' }),
-    );
+    const response = await fixture.client.putReporter(fixture.domainKey, buildAutomationReporterDef({ key: 'Invalid Key!' }));
     expect(response.status).toBe(400);
   });
 
@@ -174,9 +169,9 @@ describe('Automation API - Reporters - payload validation', () => {
     expect(response.status).toBe(400);
   });
 
-  it('should reject a mapping whose expression is not wrapped in braces (400)', async () => {
+  it('should reject a mapping whose expression is blank (400)', async () => {
     const { response } = await fixture.putNewReporter({
-      attributeMappings: [{ expression: "#context.attributes['user'].id", exportedName: 'user_id' }],
+      attributeMappings: [{ expression: '   ', exportedName: 'user_id' }],
     });
     expect(response.status).toBe(400);
   });
@@ -232,10 +227,7 @@ describe('Automation API - System reporter', () => {
     const { key } = await fixture.putNewSystemReporter();
 
     // the reporter was created with system:true; PUT it again as non-system -> rejected (immutable)
-    const response = await fixture.client.putReporter(
-      fixture.domainKey,
-      buildAutomationReporterDef({ key, system: false }),
-    );
+    const response = await fixture.client.putReporter(fixture.domainKey, buildAutomationReporterDef({ key, system: false }));
     expect(response.status).toBe(400);
   });
 

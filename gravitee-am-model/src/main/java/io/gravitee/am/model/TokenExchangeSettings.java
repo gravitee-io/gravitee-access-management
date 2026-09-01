@@ -15,19 +15,13 @@
  */
 package io.gravitee.am.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oauth2.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.common.oauth2.TokenType.ID_TOKEN;
@@ -95,16 +89,17 @@ public class TokenExchangeSettings {
             "1–100.", defaultValue = "25")
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
-    @Schema(description = "External issuers whose JWTs may be accepted as subject or actor tokens. When unset, " +
-            "only domain-issued tokens are accepted.")
-    private List<TrustedIssuer> trustedIssuers;
-
     /**
-     * Map representation of the TrustedIssuer list to each the lookup
+     * @deprecated superseded by token-exchange trusted domains. Neither stored nor read here: a
+     * projection over the trusted domains of the security domain, assembled on read and translated
+     * into trusted-domain creates, updates and deletes on write.
      */
-    @Setter(AccessLevel.NONE)
-    @JsonIgnore
-    private Map<String, TrustedIssuer> mapOfTrustedIssuers = Map.of();
+    @Deprecated
+    @Schema(deprecated = true, description = "Deprecated: use the trusted-domains API instead. External " +
+            "issuers whose JWTs may be accepted as subject or actor tokens. A projection over the security " +
+            "domain's token-exchange trusted domains; a write replaces the list, so an omitted issuer is " +
+            "no longer trusted.")
+    private List<TrustedIssuer> trustedIssuers;
 
     @Schema(description = "Domain-level default token-exchange OAuth settings, such as scope handling. " +
             "Applications can inherit or override these. When unset, system defaults apply.")
@@ -114,6 +109,18 @@ public class TokenExchangeSettings {
         this.allowedSubjectTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, REFRESH_TOKEN, ID_TOKEN, JWT));
         this.allowedRequestedTokenTypes = new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
         this.allowedActorTokenTypes = new ArrayList<>(List.of(ACCESS_TOKEN, ID_TOKEN, JWT));
+    }
+
+    public TokenExchangeSettings(TokenExchangeSettings other) {
+        this.enabled = other.enabled;
+        this.allowedSubjectTokenTypes = other.allowedSubjectTokenTypes;
+        this.allowedRequestedTokenTypes = other.allowedRequestedTokenTypes;
+        this.allowImpersonation = other.allowImpersonation;
+        this.allowedActorTokenTypes = other.allowedActorTokenTypes;
+        this.allowDelegation = other.allowDelegation;
+        this.maxDelegationDepth = other.maxDelegationDepth;
+        this.trustedIssuers = other.trustedIssuers;
+        this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings;
     }
 
     /**
@@ -135,18 +142,5 @@ public class TokenExchangeSettings {
      */
     public void setMaxDelegationDepth(int maxDelegationDepth) {
         this.maxDelegationDepth = Math.max(MIN_MAX_DELEGATION_DEPTH, Math.min(MAX_MAX_DELEGATION_DEPTH, maxDelegationDepth));
-    }
-
-    public void setTrustedIssuers(List<TrustedIssuer> trustedIssuers) {
-        this.trustedIssuers = trustedIssuers;
-        if (trustedIssuers != null) {
-            this.mapOfTrustedIssuers = trustedIssuers.stream()
-                    // make sure the issuer has value to avoid "null" in the map
-                    .filter(ti -> StringUtils.hasText(ti.getIssuer()))
-                    // in case of two issuer definitions keep the first one.
-                    .collect(Collectors.toMap(TrustedIssuer::getIssuer, Function.identity(), (issuer1, issuer2) -> issuer1));
-        } else {
-            this.mapOfTrustedIssuers = Map.of();
-        }
     }
 }

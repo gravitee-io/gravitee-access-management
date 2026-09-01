@@ -24,100 +24,17 @@
           <mat-slide-toggle (change)="enableSpiffe($event)" [checked]="isSpiffeEnabled()" [disabled]="!editMode">
             Enable SPIFFE
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">
+          <div class="gv-form-hint">
             Allow clients in this domain to authenticate using the <code>spiffe_jwt</code> token-endpoint method. Requires at least one
-            Trust Domain configured under Workload Identity → Trust Domains.
-          </mat-hint>
-        </div>
-
-        <div class="gv-form-section" fxLayout="column" *ngIf="isSpiffeEnabled()">
-          <div class="gv-form-section-title">
-            <h5>Bundle fetch (SSRF protection)</h5>
-            <mat-divider></mat-divider>
+            trusted domain carrying the SPIFFE usage.
           </div>
-          <mat-slide-toggle
-            (change)="toggleAllowUnsecuredHttpUri($event)"
-            [checked]="domain.oidc.workloadIdentitySettings.allowUnsecuredHttpUri"
-            [disabled]="!editMode"
-          >
-            Allow unsecured HTTP JWKS URLs
-          </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">Disabled: only <code>https://</code> JWKS URLs are accepted (recommended).</mat-hint>
-
-          <mat-slide-toggle
-            (change)="toggleAllowPrivateIpAddress($event)"
-            [checked]="domain.oidc.workloadIdentitySettings.allowPrivateIpAddress"
-            [disabled]="!editMode"
-            style="margin-top: 12px"
-          >
-            Allow JWKS URLs resolving to private IP addresses
-          </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">Enable only when SPIRE/SPIFFE bundle endpoints live on the internal network.</mat-hint>
-
-          <mat-form-field appearance="outline" style="margin-top: 16px">
-            <mat-icon matPrefix>timer</mat-icon>
-            <input
-              matInput
-              type="number"
-              placeholder="Fetch timeout (ms)"
-              name="fetchTimeoutMs"
-              min="100"
-              (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.fetchTimeoutMs"
-              [disabled]="!editMode"
-            />
-            <mat-hint>Maximum time to wait when fetching a JWKS endpoint. Default: 5000.</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix>data_usage</mat-icon>
-            <input
-              matInput
-              type="number"
-              placeholder="Max JWKS response size (KB)"
-              name="maxResponseSizeKb"
-              min="1"
-              (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.maxResponseSizeKb"
-              [disabled]="!editMode"
-            />
-            <mat-hint>Reject JWKS responses larger than this. Default: 32.</mat-hint>
-          </mat-form-field>
-        </div>
-
-        <div class="gv-form-section" fxLayout="column" *ngIf="isSpiffeEnabled()">
-          <div class="gv-form-section-title">
-            <h5>Bundle cache</h5>
-            <mat-divider></mat-divider>
+          <div *ngIf="isSpiffeEnabled()" style="margin-top: 12px">
+            <div *hasPermission="['domain_trust_domain_list']">
+              <a mat-stroked-button data-testid="trustedDomainsLink" [routerLink]="['../trust-domains']">
+                <mat-icon>verified_user</mat-icon> Trusted Domains
+              </a>
+            </div>
           </div>
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix>cached</mat-icon>
-            <input
-              matInput
-              type="number"
-              placeholder="Cache TTL (seconds)"
-              name="cacheTtlSeconds"
-              min="1"
-              (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.cacheTtlSeconds"
-              [disabled]="!editMode"
-            />
-            <mat-hint>Default cache lifetime when a Trust Domain does not override the refresh interval. Default: 300.</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix>storage</mat-icon>
-            <input
-              matInput
-              type="number"
-              placeholder="Cache max entries"
-              name="cacheMaxEntries"
-              min="1"
-              (ngModelChange)="modelChanged()"
-              [(ngModel)]="domain.oidc.workloadIdentitySettings.cacheMaxEntries"
-              [disabled]="!editMode"
-            />
-            <mat-hint>Max number of cached JWKS bundles. Default: 50.</mat-hint>
-          </mat-form-field>
         </div>
 
         <div class="gv-form-section" fxLayout="column" *ngIf="isSpiffeEnabled()">
@@ -164,7 +81,7 @@
             >
               <mat-option *ngFor="let alg of supportedAlgorithms" [value]="alg">{{ alg }}</mat-option>
             </mat-select>
-            <mat-hint><code>none</code> and HMAC algorithms are always rejected. Trust Domains may override this list.</mat-hint>
+            <mat-hint><code>none</code> and HMAC algorithms are always rejected. Trusted domains may override this list.</mat-hint>
           </mat-form-field>
         </div>
 
@@ -179,12 +96,12 @@
         <p>
           <a href="https://spiffe.io">SPIFFE</a> (Secure Production Identity Framework For Everyone) issues short-lived workload identities
           as JWT-SVIDs. When SPIFFE is enabled, applications in this domain can use the <code>spiffe_jwt</code> token-endpoint
-          authentication method: clients present a JWT-SVID instead of a client secret, and AM verifies it against a configured Trust Domain
-          bundle.
+          authentication method: clients present a JWT-SVID instead of a client secret, and AM verifies it against a configured trusted
+          domain bundle.
         </p>
         <p>
-          The settings on this page are domain-wide guards (SSRF protection, JWKS fetch limits, validation policy). Per-trust-domain JWKS
-          sources and refresh intervals live under <strong>Workload Identity → Trust Domains</strong>.
+          The JWT-SVID validation policy on this page is SPIFFE-specific. Per-trusted-domain key sources and refresh intervals, and the
+          domain-wide key retrieval limits that govern every trusted domain, live under <strong>Security &rarr; Trusted Domains</strong>.
         </p>
       </div>
     </div>

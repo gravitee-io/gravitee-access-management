@@ -882,6 +882,8 @@ public class TcpAuditReporter extends AbstractService<Reporter> implements Audit
             entry.setTarget(copy);
         }
 
+        entry.setCustomAttributes(audit.getCustomAttributes());
+
         if (context != null) {
             entry.setOrganizationId(context.getOrganizationId());
             entry.setEnvironmentId(context.getEnvironmentId());

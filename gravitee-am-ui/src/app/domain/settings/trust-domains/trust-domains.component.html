@@ -16,34 +16,50 @@
 
 -->
 <div class="gv-page-container">
-  <h1 *ngIf="!isEmpty()">Trust Domains</h1>
   <div class="gv-page-content" *ngIf="!isEmpty()">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [rowHeight]="50" [rows]="trustDomains">
-      <ngx-datatable-column name="trust-domains" [flexGrow]="4">
+    <ngx-datatable
+      class="material"
+      data-testid="trustDomainsTable"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [rowHeight]="50"
+      [rows]="trustDomains"
+    >
+      <ngx-datatable-column name="Trusted Domain" [flexGrow]="4" [cellClass]="'trust-domain-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="bot-header" fxLayout="row">
-            <div class="bot-icon">
+          <div class="trust-domain-header" fxLayout="row">
+            <div class="trust-domain-icon">
               <mat-icon>verified_user</mat-icon>
             </div>
-            <div class="bot-information" fxLayout="column">
-              <h3>{{ row.name }}</h3>
-              <small>{{ row.description || row.jwksUrl }}</small>
+            <div class="trust-domain-information" fxLayout="column">
+              <span class="trust-domain-name">{{ row.name }}</span>
+              <small>{{ subtitle(row) }}</small>
             </div>
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Source" [flexGrow]="1">
+      <ngx-datatable-column name="Usage" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{ bundleSourceLabel(row.bundleSource) }}
+          <span data-testid="trustDomainUsage">{{ usagesLabel(row) }}</span>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Key source" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ keySourceLabel(row) }}
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-button [routerLink]="[row.id]" *hasPermission="['domain_trust_domain_read']">
+            <a mat-button [routerLink]="[row.id]" data-testid="trustDomainSettingsAction" *hasPermission="['domain_trust_domain_read']">
               <mat-icon matTooltip="Settings">settings</mat-icon>
             </a>
-            <a mat-button (click)="delete(row.id, row.name, $event)" *hasPermission="['domain_trust_domain_delete']">
+            <a
+              mat-button
+              (click)="delete(row.id, row.name, $event)"
+              data-testid="trustDomainDeleteAction"
+              *hasPermission="['domain_trust_domain_delete']"
+            >
               <mat-icon matTooltip="Delete">delete</mat-icon>
             </a>
           </div>
@@ -54,13 +70,14 @@
 
   <app-emptystate
     *ngIf="isEmpty()"
-    [message]="'SPIFFE trust domains will appear here'"
-    [subMessage]="'Register a trust domain to enable workload-identity authentication'"
+    data-testid="trustDomainsEmptyState"
+    [message]="'Trusted domains will appear here'"
+    [subMessage]="'Register a trusted domain to accept JWT-SVIDs or external token-exchange tokens'"
     [icon]="'verified_user'"
   ></app-emptystate>
 
   <div *hasPermission="['domain_trust_domain_create']" [ngClass]="{ 'gv-add-button': !isEmpty(), 'gv-add-button-center': isEmpty() }">
-    <a mat-fab color="primary" [routerLink]="['new']">
+    <a mat-fab color="primary" data-testid="addTrustDomainButton" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>
   </div>

@@ -51,6 +51,13 @@ import {
   SecretExpirationSettingsToJSON,
   SecretExpirationSettingsToJSONTyped,
 } from './SecretExpirationSettings';
+import type { PatchKeyRetrievalSettings } from './PatchKeyRetrievalSettings';
+import {
+  PatchKeyRetrievalSettingsFromJSON,
+  PatchKeyRetrievalSettingsFromJSONTyped,
+  PatchKeyRetrievalSettingsToJSON,
+  PatchKeyRetrievalSettingsToJSONTyped,
+} from './PatchKeyRetrievalSettings';
 import type { PatchSAMLSettings } from './PatchSAMLSettings';
 import {
   PatchSAMLSettingsFromJSON,
@@ -160,6 +167,12 @@ export interface PatchDomain {
    * @memberof PatchDomain
    */
   enabled?: boolean;
+  /**
+   *
+   * @type {PatchKeyRetrievalSettings}
+   * @memberof PatchDomain
+   */
+  keyRetrievalSettings?: PatchKeyRetrievalSettings;
   /**
    *
    * @type {PatchLoginSettings}
@@ -370,6 +383,8 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     description: json['description'] == null ? undefined : json['description'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    keyRetrievalSettings:
+      json['keyRetrievalSettings'] == null ? undefined : PatchKeyRetrievalSettingsFromJSON(json['keyRetrievalSettings']),
     loginSettings: json['loginSettings'] == null ? undefined : PatchLoginSettingsFromJSON(json['loginSettings']),
     master: json['master'] == null ? undefined : json['master'],
     name: json['name'] == null ? undefined : json['name'],
@@ -411,6 +426,7 @@ export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscrim
     dataPlaneId: value['dataPlaneId'],
     description: value['description'],
     enabled: value['enabled'],
+    keyRetrievalSettings: PatchKeyRetrievalSettingsToJSON(value['keyRetrievalSettings']),
     loginSettings: PatchLoginSettingsToJSON(value['loginSettings']),
     master: value['master'],
     name: value['name'],

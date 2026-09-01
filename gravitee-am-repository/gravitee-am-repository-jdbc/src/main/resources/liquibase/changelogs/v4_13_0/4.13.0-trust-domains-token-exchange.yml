@@ -1,0 +1,65 @@
+databaseChangeLog:
+  # A trusted domain that vouches for an issuer declares it here, along with the scopes it may grant
+  # and how its subjects bind to domain users. These columns stay null on trusted domains that only
+  # match SPIFFE.
+  - changeSet:
+      id: 4.13.0-trust-domains-token-exchange
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: trust_domains
+                columnName: issuer
+      changes:
+        - addColumn:
+            tableName: trust_domains
+            columns:
+              - column: { name: issuer, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: scope_mappings, type: clob, constraints: { nullable: true } }
+              - column: { name: user_binding_enabled, type: boolean, constraints: { nullable: true } }
+              - column: { name: user_binding_criteria, type: clob, constraints: { nullable: true } }
+
+  # An issuer is vouched for by at most one trusted domain per security domain. SPIFFE rows leave
+  # issuer null, and PostgreSQL / MySQL / MariaDB treat nulls as distinct in a unique index.
+  # The index key is (64 + 64 + 512) chars; at utf8mb4 that is 2560 bytes, inside InnoDB's 3072-byte
+  # limit, which is what bounds the issuer column width.
+  - changeSet:
+      id: 4.13.0-trust-domains-issuer-unique
+      author: GraviteeSource Team
+      dbms: postgresql, mysql, mariadb
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: trust_domains
+                indexName: idx_trust_domains_ref_issuer
+      changes:
+        - createIndex:
+            columns:
+              - column: { name: reference_type }
+              - column: { name: reference_id }
+              - column: { name: issuer }
+            indexName: idx_trust_domains_ref_issuer
+            tableName: trust_domains
+            unique: true
+
+  # SQL Server treats nulls as equal in a unique index, so the same constraint has to be filtered
+  # down to the rows that actually carry an issuer. SQL Server refuses to build a filtered index
+  # unless QUOTED_IDENTIFIER is ON, so the batch sets it rather than trusting the connection.
+  - changeSet:
+      id: 4.13.0-trust-domains-issuer-unique-mssql
+      author: GraviteeSource Team
+      dbms: mssql
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: trust_domains
+                indexName: idx_trust_domains_ref_issuer
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              SET QUOTED_IDENTIFIER ON;
+              CREATE UNIQUE INDEX idx_trust_domains_ref_issuer ON trust_domains (reference_type, reference_id, issuer) WHERE issuer IS NOT NULL;

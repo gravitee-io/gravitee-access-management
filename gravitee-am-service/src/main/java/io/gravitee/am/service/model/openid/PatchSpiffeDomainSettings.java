@@ -17,22 +17,40 @@ package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.model.PatchKeyRetrievalSettings;
 import io.gravitee.am.service.utils.SetterUtils;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+/**
+ * The retrieval limits below are still accepted here so configuration written before they moved to
+ * {@link PatchKeyRetrievalSettings} keeps working; they are applied to the block that now owns them.
+ */
 @NoArgsConstructor
 public class PatchSpiffeDomainSettings {
 
     private Optional<Boolean> enabled;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.allowUnsecuredHttpUri.", deprecated = true)
+    @Deprecated
     private Optional<Boolean> allowUnsecuredHttpUri;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.allowPrivateIpAddress.", deprecated = true)
+    @Deprecated
     private Optional<Boolean> allowPrivateIpAddress;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.fetchTimeoutMs.", deprecated = true)
+    @Deprecated
     private Optional<Integer> fetchTimeoutMs;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb.", deprecated = true)
+    @Deprecated
     private Optional<Integer> maxResponseSizeKb;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.cacheTtlSeconds.", deprecated = true)
+    @Deprecated
     private Optional<Integer> cacheTtlSeconds;
+    @Schema(description = "Deprecated: moved to keyRetrievalSettings.cacheMaxEntries.", deprecated = true)
+    @Deprecated
     private Optional<Integer> cacheMaxEntries;
     private Optional<Integer> maxJwtLifetimeSeconds;
     private Optional<Integer> clockSkewSeconds;
@@ -41,23 +59,50 @@ public class PatchSpiffeDomainSettings {
     public Optional<Boolean> getEnabled() { return enabled; }
     public void setEnabled(Optional<Boolean> enabled) { this.enabled = enabled; }
 
+    @Deprecated
     public Optional<Boolean> getAllowUnsecuredHttpUri() { return allowUnsecuredHttpUri; }
+    @Deprecated
     public void setAllowUnsecuredHttpUri(Optional<Boolean> allowUnsecuredHttpUri) { this.allowUnsecuredHttpUri = allowUnsecuredHttpUri; }
 
+    @Deprecated
     public Optional<Boolean> getAllowPrivateIpAddress() { return allowPrivateIpAddress; }
+    @Deprecated
     public void setAllowPrivateIpAddress(Optional<Boolean> allowPrivateIpAddress) { this.allowPrivateIpAddress = allowPrivateIpAddress; }
 
+    @Deprecated
     public Optional<Integer> getFetchTimeoutMs() { return fetchTimeoutMs; }
+    @Deprecated
     public void setFetchTimeoutMs(Optional<Integer> fetchTimeoutMs) { this.fetchTimeoutMs = fetchTimeoutMs; }
 
+    @Deprecated
     public Optional<Integer> getMaxResponseSizeKb() { return maxResponseSizeKb; }
+    @Deprecated
     public void setMaxResponseSizeKb(Optional<Integer> maxResponseSizeKb) { this.maxResponseSizeKb = maxResponseSizeKb; }
 
+    @Deprecated
     public Optional<Integer> getCacheTtlSeconds() { return cacheTtlSeconds; }
+    @Deprecated
     public void setCacheTtlSeconds(Optional<Integer> cacheTtlSeconds) { this.cacheTtlSeconds = cacheTtlSeconds; }
 
+    @Deprecated
     public Optional<Integer> getCacheMaxEntries() { return cacheMaxEntries; }
+    @Deprecated
     public void setCacheMaxEntries(Optional<Integer> cacheMaxEntries) { this.cacheMaxEntries = cacheMaxEntries; }
+
+    public PatchKeyRetrievalSettings toKeyRetrievalPatch() {
+        if (allowUnsecuredHttpUri == null && allowPrivateIpAddress == null && fetchTimeoutMs == null
+                && maxResponseSizeKb == null && cacheTtlSeconds == null && cacheMaxEntries == null) {
+            return null;
+        }
+        PatchKeyRetrievalSettings relocated = new PatchKeyRetrievalSettings();
+        relocated.setAllowUnsecuredHttpUri(allowUnsecuredHttpUri);
+        relocated.setAllowPrivateIpAddress(allowPrivateIpAddress);
+        relocated.setFetchTimeoutMs(fetchTimeoutMs);
+        relocated.setMaxResponseSizeKb(maxResponseSizeKb);
+        relocated.setCacheTtlSeconds(cacheTtlSeconds);
+        relocated.setCacheMaxEntries(cacheMaxEntries);
+        return relocated;
+    }
 
     public Optional<Integer> getMaxJwtLifetimeSeconds() { return maxJwtLifetimeSeconds; }
     public void setMaxJwtLifetimeSeconds(Optional<Integer> maxJwtLifetimeSeconds) { this.maxJwtLifetimeSeconds = maxJwtLifetimeSeconds; }
@@ -72,16 +117,6 @@ public class PatchSpiffeDomainSettings {
         validate();
         SpiffeDomainSettings result = toPatch != null ? toPatch : SpiffeDomainSettings.defaultSettings();
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
-        SetterUtils.safeSet(result::setAllowUnsecuredHttpUri, this.getAllowUnsecuredHttpUri(), boolean.class);
-        SetterUtils.safeSet(result::setAllowPrivateIpAddress, this.getAllowPrivateIpAddress(), boolean.class);
-        Optional.ofNullable(getFetchTimeoutMs())
-                .ifPresent(opt -> result.setFetchTimeoutMs(opt.orElse(SpiffeDomainSettings.DEFAULT_FETCH_TIMEOUT_MS)));
-        Optional.ofNullable(getMaxResponseSizeKb())
-                .ifPresent(opt -> result.setMaxResponseSizeKb(opt.orElse(SpiffeDomainSettings.DEFAULT_MAX_RESPONSE_SIZE_KB)));
-        Optional.ofNullable(getCacheTtlSeconds())
-                .ifPresent(opt -> result.setCacheTtlSeconds(opt.orElse(SpiffeDomainSettings.DEFAULT_CACHE_TTL_SECONDS)));
-        Optional.ofNullable(getCacheMaxEntries())
-                .ifPresent(opt -> result.setCacheMaxEntries(opt.orElse(SpiffeDomainSettings.DEFAULT_CACHE_MAX_ENTRIES)));
         Optional.ofNullable(getMaxJwtLifetimeSeconds())
                 .ifPresent(opt -> result.setMaxJwtLifetimeSeconds(opt.orElse(SpiffeDomainSettings.DEFAULT_MAX_JWT_LIFETIME_SECONDS)));
         Optional.ofNullable(getClockSkewSeconds())
@@ -91,10 +126,6 @@ public class PatchSpiffeDomainSettings {
     }
 
     private void validate() {
-        requirePositive("fetchTimeoutMs", fetchTimeoutMs);
-        requirePositive("maxResponseSizeKb", maxResponseSizeKb);
-        requirePositive("cacheTtlSeconds", cacheTtlSeconds);
-        requirePositive("cacheMaxEntries", cacheMaxEntries);
         requirePositive("maxJwtLifetimeSeconds", maxJwtLifetimeSeconds);
         requireNonNegative("clockSkewSeconds", clockSkewSeconds);
         if (defaultAllowedAlgorithms != null && defaultAllowedAlgorithms.isPresent()) {

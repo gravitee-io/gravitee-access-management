@@ -20,9 +20,9 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
-import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
@@ -53,11 +53,11 @@ public class TrustedIssuerUserResolver implements TokenExchangeUserResolver {
 
     @Override
     public Maybe<User> resolve(ValidatedToken subjectToken) {
-        TrustedIssuer trustedIssuer = subjectToken.getTrustedIssuer();
-        if (trustedIssuer == null || !trustedIssuer.isUserBindingEnabled()) {
+        TrustDomain trustedDomain = subjectToken.getTrustedDomain();
+        if (trustedDomain == null || !trustedDomain.isUserBindingEnabled()) {
             return Maybe.empty();
         }
-        List<UserBindingCriterion> criteria = trustedIssuer.getUserBindingCriteria();
+        List<UserBindingCriterion> criteria = trustedDomain.getUserBindingCriteria();
         if (criteria == null || criteria.isEmpty()) {
             return Maybe.empty();
         }

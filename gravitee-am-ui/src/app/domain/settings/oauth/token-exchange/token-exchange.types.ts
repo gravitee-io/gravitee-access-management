@@ -79,30 +79,3 @@ export const TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS: readonly { label: string; va
   { label: 'Downscoping (default)', value: 'downscoping' },
   { label: 'Permissive', value: 'permissive' },
 ];
-
-/** Key resolution method for a trusted issuer (lowercase matches enum serialization). */
-export const KEY_RESOLUTION_JWKS_URL = 'jwks_url';
-export const KEY_RESOLUTION_PEM = 'pem';
-export type KeyResolutionMethod = typeof KEY_RESOLUTION_JWKS_URL | typeof KEY_RESOLUTION_PEM;
-
-/** One criterion for resolving an external JWT subject to a domain user (attribute + EL expression). */
-export interface UserBindingCriterion {
-  attribute: string;
-  expression: string;
-}
-
-export interface TrustedIssuer {
-  issuer: string;
-  keyResolutionMethod: KeyResolutionMethod;
-  jwksUri?: string;
-  certificate?: string;
-  scopeMappings?: Record<string, string>;
-  /** UI-only: key-value rows for scope mappings form. */
-  _scopeMappingRows?: { key: string; value: string }[];
-  /** When true, resolve external JWT subject to a domain user using criteria below. */
-  userBindingEnabled?: boolean;
-  /** Criteria (attribute + EL expression) for user lookup; ANDed. Sent to API. */
-  userBindingCriteria?: UserBindingCriterion[];
-  /** UI-only: rows for user binding criteria form. */
-  _userBindingRows?: UserBindingCriterion[];
-}

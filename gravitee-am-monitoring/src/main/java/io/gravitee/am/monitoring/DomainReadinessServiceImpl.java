@@ -151,6 +151,21 @@ public class DomainReadinessServiceImpl implements DomainReadinessService {
     }
 
     @Override
+    public void pluginRemoved(String domainId, String pluginId) {
+        if (domainId == null) {
+            log.warn("Received pluginRemoved for null domainId. Plugin: {}", pluginId);
+            return;
+        }
+
+        pluginUnloaded(domainId, pluginId);
+
+        DomainState domainState = domainStates.get(domainId);
+        if (domainState != null) {
+            domainState.setLastSync(System.currentTimeMillis());
+        }
+    }
+
+    @Override
     public void updateDomainStatus(String domainId, DomainState.Status status) {
         if (domainId == null) {
             log.warn("Received updateDomainStatus for null domainId. Status: {}", status);

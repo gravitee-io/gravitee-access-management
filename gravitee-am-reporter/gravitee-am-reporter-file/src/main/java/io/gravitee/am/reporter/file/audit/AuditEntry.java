@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.reporter.file.audit;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
@@ -23,6 +24,7 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -94,6 +96,12 @@ public class AuditEntry implements ReportEntry {
     private String nodeId;
 
     private String nodeHostname;
+
+    /**
+     * The extra attributes this reporter was configured to export, keyed by the operator's chosen name
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Map<String, Object> customAttributes;
 
     /**
      * Indicates whether the event succeeded or failed

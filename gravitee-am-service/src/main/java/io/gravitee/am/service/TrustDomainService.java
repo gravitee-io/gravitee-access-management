@@ -30,7 +30,15 @@ public interface TrustDomainService {
 
     Maybe<TrustDomain> findById(String id);
 
+    /**
+     * Looks up a trusted domain by the label it is known by, unique within a reference.
+     */
     Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name);
+
+    /**
+     * Looks up the trusted domain that vouches for a SPIFFE trust domain, unique within a reference.
+     */
+    Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
 
     Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
 

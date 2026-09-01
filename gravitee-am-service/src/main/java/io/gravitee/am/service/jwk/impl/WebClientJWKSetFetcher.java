@@ -21,34 +21,55 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.gravitee.am.service.utils.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.service.utils.vertx.BoundedBufferWriteStream;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.rxjava3.ext.web.client.HttpResponse;
+import io.vertx.rxjava3.core.streams.WriteStream;
+import io.vertx.rxjava3.ext.web.codec.BodyCodec;
 import io.vertx.rxjava3.ext.web.client.WebClient;
-import lombok.RequiredArgsConstructor;
 import lombok.CustomLog;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-@RequiredArgsConstructor
 @CustomLog
 public class WebClientJWKSetFetcher implements JWKSetFetcher {
+
+    public static final long DEFAULT_REQUEST_TIMEOUT_MS = 10_000L;
+
     private final WebClient client;
+
+    private final long requestTimeoutMs;
 
     private final static JWKSetDeserializer JWK_SET_DESERIALIZER = new JWKSetDeserializer();
 
-    @Override
-    public Maybe<JWKSetFetchResponse> getKeys(String jwksUri) {
-        return fetch(jwksUri);
+    public WebClientJWKSetFetcher(WebClient client) {
+        this(client, DEFAULT_REQUEST_TIMEOUT_MS);
     }
 
-    private Maybe<JWKSetFetchResponse> fetch(String jwksUri) {
+    public WebClientJWKSetFetcher(WebClient client, long requestTimeoutMs) {
+        this.client = client;
+        this.requestTimeoutMs = requestTimeoutMs > 0 ? requestTimeoutMs : DEFAULT_REQUEST_TIMEOUT_MS;
+    }
+
+    @Override
+    public Maybe<JWKSetFetchResponse> getKeys(String jwksUri) {
+        return fetch(jwksUri, 0L);
+    }
+
+    @Override
+    public Maybe<JWKSetFetchResponse> getKeys(String jwksUri, long maxResponseSizeBytes) {
+        return fetch(jwksUri, maxResponseSizeBytes);
+    }
+
+    private Maybe<JWKSetFetchResponse> fetch(String jwksUri, long maxResponseSizeBytes) {
         try {
             String url = UriBuilder.fromHttpUrl(jwksUri).build().toString();
-            return client.getAbs(url)
-                    .rxSend()
+            return send(url, maxResponseSizeBytes)
                     .flatMapMaybe(res -> {
                         if (res.statusCode() == 200) {
                             return Maybe.just(res);
@@ -57,11 +78,13 @@ public class WebClientJWKSetFetcher implements JWKSetFetcher {
                                 "HTTP status %s retrieving JWK set from %s. Body: %s",
                                 res.statusCode(),
                                 url,
-                                res.bodyAsString());
+                                res.body());
                         return Maybe.error(new IOException(errorMessage));
                     })
                     .flatMap(this::toResponse)
-                    .onErrorResumeNext(exception -> Maybe.error(new InvalidClientMetadataException("Unable to parse jwks from : " + jwksUri)));
+                    .onErrorResumeNext(exception -> Maybe.error(oversized(exception)
+                            ? new InvalidClientMetadataException("JWK set from " + jwksUri + " exceeds the maximum allowed response size")
+                            : new InvalidClientMetadataException("Unable to parse jwks from : " + jwksUri)));
         } catch (IllegalArgumentException | URISyntaxException ex) {
             log.debug("Unable to parse jwks from : {}", jwksUri, ex);
             return Maybe.error(new InvalidClientMetadataException(jwksUri + " is not valid."));
@@ -71,11 +94,41 @@ public class WebClientJWKSetFetcher implements JWKSetFetcher {
         }
     }
 
-    private Maybe<JWKSetFetchResponse> toResponse(HttpResponse response) {
-        String raw = response.bodyAsString();
+    private Single<FetchedResponse> send(String url, long maxResponseSizeBytes) {
+        if (maxResponseSizeBytes <= 0) {
+            return client.getAbs(url)
+                    .followRedirects(false)
+                    .timeout(requestTimeoutMs)
+                    .rxSend()
+                    .map(res -> new FetchedResponse(res.statusCode(), res.bodyAsString(), res.getHeader(HttpHeaders.CONTENT_TYPE)));
+        }
+        return Single.defer(() -> {
+            BoundedBufferWriteStream collector = new BoundedBufferWriteStream(maxResponseSizeBytes);
+            return client.getAbs(url)
+                    .followRedirects(false)
+                    .timeout(requestTimeoutMs)
+                    .as(BodyCodec.pipe(WriteStream.newInstance(collector), false))
+                    .rxSend()
+                    .map(res -> new FetchedResponse(res.statusCode(), bodyOf(collector), res.getHeader(HttpHeaders.CONTENT_TYPE)));
+        });
+    }
+
+    private static String bodyOf(BoundedBufferWriteStream collector) {
+        Buffer body = collector.body();
+        return body.length() > 0 ? body.toString(StandardCharsets.UTF_8) : null;
+    }
+
+    private static boolean oversized(Throwable exception) {
+        return exception instanceof BoundedBufferWriteStream.MaxResponseSizeExceededException;
+    }
+
+    private Maybe<JWKSetFetchResponse> toResponse(FetchedResponse response) {
+        String raw = response.body();
         Optional<JWKSet> jwkSet = JWK_SET_DESERIALIZER.convert(raw);
         return Maybe.fromOptional(jwkSet)
-                .map(res -> new JWKSetFetchResponse(res, new Resource(raw, response.getHeader(HttpHeaders.CONTENT_TYPE))));
+                .map(res -> new JWKSetFetchResponse(res, new Resource(raw, response.contentType())));
     }
+
+    private record FetchedResponse(int statusCode, String body, String contentType) {}
 
 }

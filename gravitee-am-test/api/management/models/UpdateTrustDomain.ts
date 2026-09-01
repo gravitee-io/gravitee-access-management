@@ -26,6 +26,21 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { UserBindingCriterion } from './UserBindingCriterion';
+import {
+  UserBindingCriterionFromJSON,
+  UserBindingCriterionFromJSONTyped,
+  UserBindingCriterionToJSON,
+  UserBindingCriterionToJSONTyped,
+} from './UserBindingCriterion';
+import type { TrustDomainKeyMaterial } from './TrustDomainKeyMaterial';
+import {
+  TrustDomainKeyMaterialFromJSON,
+  TrustDomainKeyMaterialFromJSONTyped,
+  TrustDomainKeyMaterialToJSON,
+  TrustDomainKeyMaterialToJSONTyped,
+} from './TrustDomainKeyMaterial';
+
 /**
  *
  * @export
@@ -39,9 +54,10 @@ export interface UpdateTrustDomain {
    */
   allowedAlgorithms?: Array<string>;
   /**
-   *
+   * Use keyMaterial.source instead.
    * @type {string}
    * @memberof UpdateTrustDomain
+   * @deprecated
    */
   bundleSource?: UpdateTrustDomainBundleSourceEnum;
   /**
@@ -55,13 +71,56 @@ export interface UpdateTrustDomain {
    * @type {string}
    * @memberof UpdateTrustDomain
    */
+  issuer?: string;
+  /**
+   * Use keyMaterial.jwksUrl instead.
+   * @type {string}
+   * @memberof UpdateTrustDomain
+   * @deprecated
+   */
   jwksUrl?: string;
+  /**
+   *
+   * @type {TrustDomainKeyMaterial}
+   * @memberof UpdateTrustDomain
+   */
+  keyMaterial?: TrustDomainKeyMaterial;
+  /**
+   * New label for the trusted domain. Left unchanged when absent.
+   * @type {string}
+   * @memberof UpdateTrustDomain
+   */
+  name?: string;
   /**
    *
    * @type {number}
    * @memberof UpdateTrustDomain
    */
   refreshIntervalSeconds?: number;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof UpdateTrustDomain
+   */
+  scopeMappings?: { [key: string]: string };
+  /**
+   * SPIFFE trust domain matched against the "sub" of a JWT-SVID. Supplying either matcher replaces both; supplying neither leaves them unchanged.
+   * @type {string}
+   * @memberof UpdateTrustDomain
+   */
+  spiffeTrustDomain?: string;
+  /**
+   *
+   * @type {Array<UserBindingCriterion>}
+   * @memberof UpdateTrustDomain
+   */
+  userBindingCriteria?: Array<UserBindingCriterion>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateTrustDomain
+   */
+  userBindingEnabled?: boolean;
 }
 
 /**
@@ -92,8 +151,16 @@ export function UpdateTrustDomainFromJSONTyped(json: any, ignoreDiscriminator: b
     allowedAlgorithms: json['allowedAlgorithms'] == null ? undefined : json['allowedAlgorithms'],
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
     description: json['description'] == null ? undefined : json['description'],
+    issuer: json['issuer'] == null ? undefined : json['issuer'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
+    keyMaterial: json['keyMaterial'] == null ? undefined : TrustDomainKeyMaterialFromJSON(json['keyMaterial']),
+    name: json['name'] == null ? undefined : json['name'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
+    scopeMappings: json['scopeMappings'] == null ? undefined : json['scopeMappings'],
+    spiffeTrustDomain: json['spiffeTrustDomain'] == null ? undefined : json['spiffeTrustDomain'],
+    userBindingCriteria:
+      json['userBindingCriteria'] == null ? undefined : (json['userBindingCriteria'] as Array<any>).map(UserBindingCriterionFromJSON),
+    userBindingEnabled: json['userBindingEnabled'] == null ? undefined : json['userBindingEnabled'],
   };
 }
 
@@ -110,7 +177,15 @@ export function UpdateTrustDomainToJSONTyped(value?: UpdateTrustDomain | null, i
     allowedAlgorithms: value['allowedAlgorithms'],
     bundleSource: value['bundleSource'],
     description: value['description'],
+    issuer: value['issuer'],
     jwksUrl: value['jwksUrl'],
+    keyMaterial: TrustDomainKeyMaterialToJSON(value['keyMaterial']),
+    name: value['name'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
+    scopeMappings: value['scopeMappings'],
+    spiffeTrustDomain: value['spiffeTrustDomain'],
+    userBindingCriteria:
+      value['userBindingCriteria'] == null ? undefined : (value['userBindingCriteria'] as Array<any>).map(UserBindingCriterionToJSON),
+    userBindingEnabled: value['userBindingEnabled'],
   };
 }
