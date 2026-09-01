@@ -146,7 +146,7 @@ test.describe('Optional enrolment skip duration (AM-2821)', () => {
               },
               challenge: { active: false },
             },
-            // The consent page is not part of this behaviour; skipping it lets the sign-in run
+            // The consent page is not part of this behavior; skipping it lets the sign-in run
             // through to the callback the same way the fixture's own application does.
             advanced: { skipConsent: true },
           },
