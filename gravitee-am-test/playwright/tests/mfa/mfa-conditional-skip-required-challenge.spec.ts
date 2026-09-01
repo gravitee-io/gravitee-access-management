@@ -18,17 +18,16 @@ import { test } from '../../fixtures/mfa-enrollment-matrix.fixture';
 import { linkJira } from '../../utils/jira';
 import { clearSessionOnly } from '../../utils/webauthn-helpers';
 import {
-  buildAuthorizeUrl,
   completeMfaChallenge,
   enrollMockFactor,
   reachOAuthAuthorizationCallback,
+  signInAndReportMfaStop,
   skipMfaEnrollment,
-  submitLogin,
 } from '../../utils/mfa-helpers';
-import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
 
 /**
- * AM-2842 — conditional enrolment with a skip rule, alongside a required challenge.
+ * AM-2842 — conditional enrollment with a skip rule, alongside a required challenge.
  *
  * The two tests are each other's control. Both applications are configured identically and both
  * users sign in twice; the only difference is whether the first visit ended in enrolling or in
@@ -39,13 +38,13 @@ import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '.
  * the user already holds a method. Skipping instead goes through `MFAEnrollPostEndpoint`, which
  * marks the challenge complete for that authorisation leg at the same time as recording the skip.
  */
-test.describe('Conditional enrolment with a skip rule and a required challenge (AM-2842)', () => {
+test.describe('Conditional enrollment with a skip rule and a required challenge (AM-2842)', () => {
   test.use({
     enrollActive: true,
     enrollType: 'CONDITIONAL',
     // Force is on so the skip control is decided by the skip rule rather than short-circuited.
     enrollForce: true,
-    // The rule does not hold, so the user is asked to enrol...
+    // The rule does not hold, so the user is asked to enroll...
     enrollRule: '{{ false }}',
     // ...but the skip rule does, so they are offered a way past it.
     enrollSkipActive: true,
@@ -57,42 +56,24 @@ test.describe('Conditional enrolment with a skip rule and a required challenge (
   });
   test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
-  const signIn = async (page, gatewayUrl: string, clientId: string, username: string) => {
-    await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
-    await page.waitForURL(/.*login.*/i);
-    await submitLogin(page, username, API_USER_PASSWORD);
-    await page.waitForURL(
-      (url) => /\/mfa\/(enroll|challenge)/i.test(url.href) || url.searchParams.has('code'),
-    );
-    return {
-      askedToEnrol: /\/mfa\/enroll/i.test(page.url()),
-      challenged: /\/mfa\/challenge/i.test(page.url()),
-    };
-  };
-
-  test('a user who enrolled is asked for a code on a later sign-in', async ({
-    page,
-    gatewayUrl,
-    matrixApp,
-    matrixUser,
-  }, testInfo) => {
+  test('a user who enrolled is asked for a code on a later sign-in', async ({ page, gatewayUrl, matrixApp, matrixUser }, testInfo) => {
     linkJira(testInfo, 'AM-2842');
 
     const clientId = matrixApp.settings.oauth.clientId;
 
     // First visit: the skip is offered, but this user enrols instead.
-    const first = await signIn(page, gatewayUrl, clientId, matrixUser.username);
-    expect(first.askedToEnrol).toBe(true);
+    const first = await signInAndReportMfaStop(page, gatewayUrl, clientId, matrixUser.username);
+    expect(first.askedToEnroll).toBe(true);
     await enrollMockFactor(page);
     // The verification the gateway always asks for straight after enrolling.
     await completeMfaChallenge(page);
     await reachOAuthAuthorizationCallback(page);
 
-    // Second visit: they hold a method now, so enrolment is behind them and the required
+    // Second visit: they hold a method now, so enrollment is behind them and the required
     // challenge is what they meet.
     await clearSessionOnly(page);
-    const second = await signIn(page, gatewayUrl, clientId, matrixUser.username);
-    expect(second.askedToEnrol).toBe(false);
+    const second = await signInAndReportMfaStop(page, gatewayUrl, clientId, matrixUser.username);
+    expect(second.askedToEnroll).toBe(false);
     expect(second.challenged).toBe(true);
 
     await completeMfaChallenge(page);
@@ -112,11 +93,11 @@ test.describe('Conditional enrolment with a skip rule and a required challenge (
 
     // Same application and the same required challenge as the test above — this user takes the
     // skip rather than enrolling.
-    const first = await signIn(page, gatewayUrl, clientId, matrixUser.username);
-    expect(first.askedToEnrol).toBe(true);
+    const first = await signInAndReportMfaStop(page, gatewayUrl, clientId, matrixUser.username);
+    expect(first.askedToEnroll).toBe(true);
 
-    // The skip rule holds, so the way past enrolment is offered even though the rule requiring
-    // enrolment did not. Asserted here rather than left to the helper.
+    // The skip rule holds, so the way past enrollment is offered even though the rule requiring
+    // enrollment did not. Asserted here rather than left to the helper.
     await expect(page.locator('button[name="user_mfa_enrollment"][value="false"]')).toBeVisible();
 
     await skipMfaEnrollment(page);
@@ -126,8 +107,8 @@ test.describe('Conditional enrolment with a skip rule and a required challenge (
     // Second visit, still inside the skip window: no method to be challenged for, and the skip
     // still standing, so they are asked for neither.
     await clearSessionOnly(page);
-    const second = await signIn(page, gatewayUrl, clientId, matrixUser.username);
-    expect(second.askedToEnrol).toBe(false);
+    const second = await signInAndReportMfaStop(page, gatewayUrl, clientId, matrixUser.username);
+    expect(second.askedToEnroll).toBe(false);
     expect(second.challenged).toBe(false);
     expect(new URL(page.url()).searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
   });
