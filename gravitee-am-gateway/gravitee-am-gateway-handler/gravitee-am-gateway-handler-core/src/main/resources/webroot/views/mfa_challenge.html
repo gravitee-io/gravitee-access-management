@@ -78,7 +78,10 @@
         </form>
 
         <details th:if="${qrCode}" class="expander">
-            <summary th:text="#{mfa_challenge.otp.qr.expander}"></summary>
+            <summary>
+                <span th:text="#{mfa_challenge.otp.qr.expander}"></span>
+                <span class="icons">expand_more</span>
+            </summary>
             <div class="expander-content">
                 <span class="expander-description" th:text="#{mfa_challenge.otp.qr.description}"></span>
                 <div class="otp-container">
