@@ -37,6 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.TreeSet;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -149,6 +150,79 @@ public class LoginFailureHandlerTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.contains("/login?error=login_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=%7B%22errorTest%22%3A+%22Test+Error%22%7D"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotLeakScriptFailureToLoginPage_policyFailureWithoutKey() throws Exception {
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setHideForm(false);
+        when(domain.getLoginSettings()).thenReturn(loginSettings);
+
+        Client mockClient = mock(Client.class);
+
+        when(policyChainException.key()).thenReturn(null);
+        when(policyChainException.getMessage()).thenReturn("Cannot invoke method somethingThatDoesNotExist() on null object");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, mockClient);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/login?error=login_failed"));
+                    assertFalse(location.contains("error_description"));
+                    assertFalse(location.contains("somethingThatDoesNotExist"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotLeakScriptFailureToClientRedirectUri_policyFailureWithoutKey() throws Exception {
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(false);
+        loginSettings.setHideForm(true);
+        when(domain.getLoginSettings()).thenReturn(loginSettings);
+
+        IdentityProvider idp = mock(IdentityProvider.class);
+        when(idp.isExternal()).thenReturn(true);
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(idp);
+
+        Client mockClient = mock(Client.class);
+        final ApplicationIdentityProvider applicationIdentityProvider = new ApplicationIdentityProvider();
+        TreeSet<ApplicationIdentityProvider> idps = new TreeSet<>();
+        idps.add(applicationIdentityProvider);
+        applicationIdentityProvider.setIdentity("idp");
+        when(mockClient.getIdentityProviders()).thenReturn(idps);
+
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+        multiMap.add("redirect_uri", "http://myhost/login/callback");
+
+        when(policyChainException.key()).thenReturn(null);
+        when(policyChainException.getMessage()).thenReturn("Cannot invoke method somethingThatDoesNotExist() on null object");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, mockClient);
+            routingContext.put(PARAM_CONTEXT_KEY, multiMap);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.startsWith("http://myhost/login/callback?error=login_failed"));
+                    assertFalse(location.contains("error_description"));
+                    assertFalse(location.contains("somethingThatDoesNotExist"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
