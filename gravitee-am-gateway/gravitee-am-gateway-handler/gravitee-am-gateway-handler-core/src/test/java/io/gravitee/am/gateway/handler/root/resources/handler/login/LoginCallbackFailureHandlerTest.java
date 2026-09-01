@@ -103,7 +103,8 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/login?error=social_authentication_failed&error_description=policy_exception"));
+                    assertTrue(location.contains("/login?error=social_authentication_failed"));
+                    assertFalse(location.contains("policy_exception"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -167,7 +168,8 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/login?error=social_authentication_failed&error_description=policy_exception"));
+                    assertTrue(location.contains("/login?error=social_authentication_failed"));
+                    assertFalse(location.contains("policy_exception"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -239,7 +241,8 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/login?error=social_authentication_failed&error_description=policy_exception"));
+                    assertTrue(location.contains("/login?error=social_authentication_failed"));
+                    assertFalse(location.contains("policy_exception"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -279,7 +282,7 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     Assertions.assertThat(location)
                             .isNotNull()
-                            .isEqualTo("https://sp-app/callback?error=server_error&error_description=policy_exception&state=12345");
+                            .isEqualTo("https://sp-app/callback?error=server_error&state=12345");
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -319,7 +322,7 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.equals("https://sp-app/callback?error=server_error&error_description=policy_exception&state=12345"));
+                    assertTrue(location.equals("https://sp-app/callback?error=server_error&state=12345"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -358,7 +361,7 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.equals("https://sp-app/callback#error=server_error&error_description=policy_exception&state=12345"));
+                    assertTrue(location.equals("https://sp-app/callback#error=server_error&state=12345"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -398,7 +401,7 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.equals("https://sp-app/callback#error=server_error&error_description=policy_exception&state=12345"));
+                    assertTrue(location.equals("https://sp-app/callback#error=server_error&state=12345"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

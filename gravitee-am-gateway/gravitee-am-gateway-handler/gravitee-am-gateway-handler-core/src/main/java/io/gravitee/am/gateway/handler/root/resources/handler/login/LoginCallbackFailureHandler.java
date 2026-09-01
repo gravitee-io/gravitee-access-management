@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
+import io.gravitee.am.gateway.handler.common.utils.UserFacingFailureMessage;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
@@ -227,7 +228,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         // create final redirect uri
         final var error = new ErrorInfo("server_error", null,
-                throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage(),
+                getUserFacingDescription(throwable),
                 originalParams != null ? originalParams.get(Parameters.STATE) : null);
 
         boolean fragment = originalParams != null &&
@@ -298,7 +299,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
         if (!(throwable instanceof UserAuthenticationAbortedException)) {
             params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
-            String errorDescription = throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage();
+            String errorDescription = getUserFacingDescription(throwable);
             String toHash = "social_authentication_failed";
             if (!StringUtils.isEmpty(errorDescription)) {
                 params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, encodeURIComponent(errorDescription));
@@ -319,6 +320,15 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         final String replacement = loginSettings != null && loginSettings.isIdentifierFirstEnabled() ? "/identifier" : "";
         final String path = context.request().path().replaceFirst("/callback", replacement);
         return UriBuilderRequest.resolveProxyRequest(context.request(), path, params);
+    }
+
+    private static String getUserFacingDescription(Throwable throwable) {
+        if (throwable instanceof PolicyChainException policyFailure) {
+            logger.warn("Policy chain failed on the login callback [key={}, status={}]: {}",
+                    policyFailure.key(), policyFailure.statusCode(), policyFailure.getMessage());
+            return UserFacingFailureMessage.from(policyFailure).orElse(null);
+        }
+        return throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage();
     }
 
     private void addErrorToSession(RoutingContext context, ErrorInfo errorInfo) {
