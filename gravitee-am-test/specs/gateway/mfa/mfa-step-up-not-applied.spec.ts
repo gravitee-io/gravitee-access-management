@@ -15,8 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
-import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
-import { waitFor } from '@management-commands/domain-management-commands';
+import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { get, processLoginFromContext, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
 import { setup } from '../../test-fixture';
@@ -28,8 +27,9 @@ setup(300000);
  * session.
  *
  * "Not challenged" is only worth asserting if something here is challenged, otherwise these tests
- * would pass just as well with multi-factor authentication switched off altogether. The last test
- * carries that weight: one session, two applications, opposite outcomes.
+ * would pass just as well with multi-factor authentication switched off altogether. The test
+ * covering one session across two applications carries that weight, by getting opposite outcomes
+ * from the same session.
  */
 const domain = {
   admin: { username: 'admin', password: 'adminadmin' },
@@ -78,9 +78,8 @@ beforeAll(async () => {
   const stepUpOff = await initClient(domain, 'step-up-off', stepUpSettings(domain, '', false));
   const ruleApplies = await initClient(domain, 'step-up-rule-true', stepUpSettings(domain, '{{ true }}', true));
   await enableDomain(domain);
-  await waitFor(3000);
 
-  const oidc = await getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200);
+  const oidc = await waitForOidcReady(domain.domain.domainHrid);
   const endpoint = oidc.body.authorization_endpoint;
   ruleDoesNotApplyCtx = new TestSuiteContext(domain, ruleDoesNotApply, domain.domain.users[0], endpoint);
   stepUpOffCtx = new TestSuiteContext(domain, stepUpOff, domain.domain.users[1], endpoint);
@@ -101,7 +100,7 @@ describe('Step-up authentication that does not apply', () => {
     expect(again.location).not.toContain('/mfa/challenge');
   });
 
-  it(jira`the same is true when step-up is switched off ${'AM-2209'}`, async () => {
+  it(jira`an already signed-in user is not challenged when step-up is switched off ${'AM-2209'}`, async () => {
     const session = await signInAndKeepSession(stepUpOffCtx);
 
     const again = await returnToApplication(stepUpOffCtx, session);
