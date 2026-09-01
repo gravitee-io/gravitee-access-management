@@ -626,6 +626,33 @@ div#passwordSettings > p {
     height: 72px;
 }
 
+.expander {
+    width: 100%;
+    text-align: left;
+    padding-top: 8px;
+}
+
+.expander > summary {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--link-text-color);
+}
+
+.expander-content {
+    padding-top: 16px;
+}
+
+.expander-description {
+    display: block;
+    padding-bottom: 8px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--font-light-color);
+}
+
 .checkbox {
     display: flex;
     flex-direction: row;

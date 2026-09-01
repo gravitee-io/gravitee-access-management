@@ -38,6 +38,7 @@ import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.Handler;
@@ -58,6 +59,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -104,6 +106,8 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
     private MFAChallengeGetEndpoint mfaChallengeGetEndpoint;
 
     private SessionModifier sessionModifier;
+
+    private static final String QR_CODE = "data:image/png;base64,QRCODE";
 
     private static class SessionModifier {
         private Function<io.vertx.rxjava3.ext.web.Session, io.vertx.rxjava3.ext.web.Session> sessionTransformer;
@@ -486,6 +490,104 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
       Assert.assertEquals("context-client-id", clientIdCaptor.getValue());
   }
 
+  @Test
+  public void shouldExposeQrCode_whenOtpEnrollmentIsPending() {
+      FactorProvider factorProvider = mock(FactorProvider.class);
+      when(factorProvider.needChallengeSending()).thenReturn(false);
+      when(factorProvider.generateQrCode(any(), any())).thenReturn(Maybe.just(QR_CODE));
+      Factor factor = mock(Factor.class);
+      when(factor.getId()).thenReturn("factorId");
+      when(factor.getFactorType()).thenReturn(FactorType.OTP);
+      when(factor.is(FactorType.OTP)).thenReturn(true);
+      when(factorManager.get("factorId")).thenReturn(factorProvider);
+      when(factorManager.getFactor("factorId")).thenReturn(factor);
+      ArgumentCaptor<Map> templateData = ArgumentCaptor.forClass(Map.class);
+      when(templateEngine.render(templateData.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
+
+      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+      spyRoutingContext.setMethod(HttpMethod.GET);
+      Client client = new Client();
+      client.setFactors(Collections.singleton("factorId"));
+      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, "shared-secret");
+      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(createUser())));
+      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+      mfaChallengeGetEndpoint.handle(spyRoutingContext);
+
+      awaitResponseEnd(spyRoutingContext);
+
+      Assert.assertEquals(QR_CODE, templateData.getValue().get(ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY));
+  }
+
+  @Test
+  public void shouldNotExposeQrCode_whenOtpFactorIsActivated() {
+      FactorProvider factorProvider = mock(FactorProvider.class);
+      when(factorProvider.needChallengeSending()).thenReturn(false);
+      Factor factor = mock(Factor.class);
+      when(factor.getId()).thenReturn("factorId");
+      when(factor.is(FactorType.OTP)).thenReturn(true);
+      when(factorManager.get("factorId")).thenReturn(factorProvider);
+      when(factorManager.getFactor("factorId")).thenReturn(factor);
+      ArgumentCaptor<Map> templateData = ArgumentCaptor.forClass(Map.class);
+      when(templateEngine.render(templateData.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
+
+      User endUser = createUser();
+      endUser.getFactors().get(0).setStatus(FactorStatus.ACTIVATED);
+      endUser.getFactors().get(0).setCreatedAt(new Date(1_000));
+
+      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+      spyRoutingContext.setMethod(HttpMethod.GET);
+      Client client = new Client();
+      client.setFactors(Collections.singleton("factorId"));
+      ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+      applicationFactorSettings.setId("factorId");
+      FactorSettings factorSettings = new FactorSettings();
+      factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+      client.setFactorSettings(factorSettings);
+      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
+      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+      mfaChallengeGetEndpoint.handle(spyRoutingContext);
+
+      awaitResponseEnd(spyRoutingContext);
+
+      Assert.assertNull(templateData.getValue().get(ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY));
+      verify(factorProvider, never()).generateQrCode(any(), any());
+  }
+
+  @Test
+  public void shouldNotExposeQrCode_whenPendingFactorIsNotOtp() {
+      FactorProvider factorProvider = mock(FactorProvider.class);
+      when(factorProvider.needChallengeSending()).thenReturn(false);
+      Factor factor = mock(Factor.class);
+      when(factor.getId()).thenReturn("factorId");
+      when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+      when(factorManager.get("factorId")).thenReturn(factorProvider);
+      when(factorManager.getFactor("factorId")).thenReturn(factor);
+      ArgumentCaptor<Map> templateData = ArgumentCaptor.forClass(Map.class);
+      when(templateEngine.render(templateData.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
+
+      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+      spyRoutingContext.setMethod(HttpMethod.GET);
+      Client client = new Client();
+      client.setFactors(Collections.singleton("factorId"));
+      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(createUser())));
+      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+      mfaChallengeGetEndpoint.handle(spyRoutingContext);
+
+      awaitResponseEnd(spyRoutingContext);
+
+      Assert.assertNull(templateData.getValue().get(ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY));
+      verify(factorProvider, never()).generateQrCode(any(), any());
+  }
+
   private static User createUser() {
       User user = new User();
       user.setId("userId");
@@ -498,7 +600,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
       EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
       enrolledFactor.setFactorId("factorId");
       enrolledFactor.setSecurity(enrolledFactorSecurity);
-      user.setFactors(Collections.singletonList(enrolledFactor));
+      user.setFactors(new ArrayList<>(List.of(enrolledFactor)));
   }
 
 }
