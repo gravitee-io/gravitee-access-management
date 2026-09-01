@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
+import io.gravitee.am.gateway.handler.common.utils.UserFacingFailureMessage;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
@@ -71,7 +72,10 @@ public class ErrorHandler extends AbstractErrorHandler {
                 if (policyChainException.statusCode() == 302) {
                     doRedirect(routingContext.response(), (String) policyChainException.parameters().get(ConstantKeys.RETURN_URL_KEY));
                 } else {
-                    handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
+                    logger.warn("Policy chain failed [key={}, status={}]: {}",
+                            policyChainException.key(), policyChainException.statusCode(), policyChainException.getMessage());
+                    handleException(routingContext, policyChainException.key(),
+                            UserFacingFailureMessage.from(policyChainException).orElse(null));
                 }
             } else if (throwable instanceof HttpException) {
                 HttpException httpStatusException = (HttpException) throwable;
