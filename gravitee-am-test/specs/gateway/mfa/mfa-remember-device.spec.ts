@@ -15,8 +15,8 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
-import { performDelete, performGet, getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
-import { waitFor } from '@management-commands/domain-management-commands';
+import { performDelete, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { waitFor, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { processLoginFromContext, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
@@ -30,10 +30,14 @@ setup(300000);
  * Every test remembers a device and confirms the challenge is skipped before doing anything else,
  * so a later challenge means the trust ended rather than remember-device never having worked.
  */
-const EXPIRATION_SECONDS = 10;
+const EXPIRATION_SECONDS = 5;
 
-/** Long enough past `expiresAt` that a slow gateway cannot make the result ambiguous. */
-const WAIT_PAST_EXPIRY_MS = (EXPIRATION_SECONDS + 3) * 1000;
+/**
+ * Margin added to the device's own `expiresAt` before signing in again. Trust ends the moment that
+ * timestamp passes — every device read filters on `gte(expiresAt, now)` — so this covers request
+ * latency and clock skew rather than waiting for anything to run.
+ */
+const GRACE_PAST_EXPIRY_MS = 500;
 
 const domain = {
   admin: { username: 'admin', password: 'adminadmin' },
@@ -112,8 +116,7 @@ beforeAll(async () => {
   await initDomain(domain, 3);
   client = await initClient(domain, 'remember-device', rememberDeviceSettings(domain));
   await enableDomain(domain);
-  await waitFor(3000);
-  const oidc = await getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200);
+  const oidc = await waitForOidcReady(domain.domain.domainHrid);
   authorizationEndpoint = oidc.body.authorization_endpoint;
 });
 
@@ -130,13 +133,19 @@ describe('Remember device stops being trusted', () => {
     // The period is what decides the trust, so it is read back rather than assumed.
     expect(device.expiresAt - device.createdAt).toEqual(EXPIRATION_SECONDS * 1000);
 
-    await waitFor(WAIT_PAST_EXPIRY_MS);
+    // Waiting on the record's own expiry rather than a fixed period, so the test only sleeps for
+    // what is left of the window. Asserting there is something left also keeps the failure clear
+    // if the sign-in above ever overran the window on a slow run.
+    const remainingMs = device.expiresAt - Date.now();
+    expect(remainingMs).toBeGreaterThan(0);
+    await waitFor(remainingMs + GRACE_PAST_EXPIRY_MS);
 
     const afterExpiry = await signInOn(ctx, 'am2218-device-expiry');
     expect(afterExpiry.skippedChallenge).toBe(false);
     expect(afterExpiry.location).toContain('/mfa/challenge');
 
-    // The record is removed once it lapses rather than left behind unused.
+    // A lapsed device also stops being listed. The row itself lingers until Mongo's TTL monitor
+    // removes it, so this is the read filter rather than a deletion.
     expect(await listDevices(userId)).toEqual([]);
   });
 
