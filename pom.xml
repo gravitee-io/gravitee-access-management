@@ -149,7 +149,7 @@
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>7.0.0</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>5.0.1</gravitee-policy-groovy.version>
-        <gravitee-policy-ipfiltering.version>3.0.0</gravitee-policy-ipfiltering.version>
+        <gravitee-policy-ipfiltering.version>3.0.1</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.15.1</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>2.0.1</gravitee-policy-latency.version>
         <gravitee-cockpit-connectors.version>6.0.0</gravitee-cockpit-connectors.version>
