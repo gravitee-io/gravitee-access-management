@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
+import io.gravitee.am.gateway.handler.common.utils.UserFacingFailureMessage;
 import io.gravitee.am.gateway.handler.common.utils.UsernameHelper;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
@@ -57,7 +58,12 @@ public class MFAEnrollFailureHandler extends AbstractErrorHandler {
     }
 
     private String getErrorDescription(RoutingContext context){
-        return context.failure() == null ? "MFA Enrollment failed for unexpected reason" : context.failure().getMessage();
+        final Throwable failure = context.failure();
+        if (failure != null) {
+            logger.warn("MFA enrollment failed: {}", failure.getMessage());
+            logger.debug("MFA enrollment failure", failure);
+        }
+        return UserFacingFailureMessage.from(failure).orElse("MFA Enrollment failed for unexpected reason");
     }
 
     private MultiMap updateQueryParams(RoutingContext context, String errorDescription) {
