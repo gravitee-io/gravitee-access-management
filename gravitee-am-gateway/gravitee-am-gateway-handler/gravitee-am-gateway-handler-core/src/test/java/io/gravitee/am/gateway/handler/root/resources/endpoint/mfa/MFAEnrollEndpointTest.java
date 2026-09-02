@@ -246,8 +246,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(mock(Enrollment.class)));
 
-        renderPageWithSession(factorProvider, session -> {
-        });
+        renderPage(factorProvider);
 
         verify(factorProvider).enroll(any(FactorContext.class));
         verify(factorProvider, never()).generateQrCode(any(), any());
@@ -280,15 +279,16 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
         assertNull(flagWhenRendered.get());
     }
 
+    private void renderPage(FactorProvider factorProvider) throws Exception {
+        renderPageWithSession(factorProvider, session -> {
+        });
+    }
+
     private void renderPageWithSession(FactorProvider factorProvider, Consumer<Session> sessionSetup) throws Exception {
         renderPageWithSession(factorProvider, sessionSetup, ctx -> {
         });
     }
 
-    /**
-     * Renders the enroll page for a single OTP factor, letting the caller seed the session first and
-     * inspect the routing context at the moment the template is rendered.
-     */
     private void renderPageWithSession(FactorProvider factorProvider,
                                        Consumer<Session> sessionSetup,
                                        Consumer<RoutingContext> onRender) throws Exception {

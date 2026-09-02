@@ -147,12 +147,10 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
                 Map<String, Object> templateData = generateData(routingContext, domainDataPlane.getDomain(), client);
                 if (enrolledFactor != null) {
                     templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(enrolledFactor));
-                }
-                if (enrolledFactor != null && PENDING_ACTIVATION.equals(enrolledFactor.getStatus())) {
-                    // the factor is not activated yet, so the user can go back to the enroll page
-                    // and see the secret they are part way through enrolling
-                    templateData.put(MFA_ENROLL_BACK_ACTION_KEY,
-                            resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/enroll", queryParams, true));
+                    if (PENDING_ACTIVATION.equals(enrolledFactor.getStatus())) {
+                        templateData.put(MFA_ENROLL_BACK_ACTION_KEY,
+                                resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/enroll", queryParams, true));
+                    }
                 }
                 this.renderPage(routingContext, templateData, client, logger, "Unable to render MFA challenge page");
             });

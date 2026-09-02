@@ -107,8 +107,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 return;
             }
 
-            // rendering this page means the user has not completed enrollment, whether they arrived
-            // from the authorize endpoint or came back from the challenge page
             routingContext.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
 
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
@@ -122,7 +120,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // load factor providers
             final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
             factorContext.registerData(FactorContext.KEY_USER, endUser);
-            load(factors, factorContext, endUser, routingContext.session(), h -> {
+            load(factors, factorContext, routingContext.session(), h -> {
                 if (h.failed()) {
                     logger.error("An error occurs while loading factor providers", h.cause());
                     routingContext.fail(503);
@@ -206,11 +204,10 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers,
                       FactorContext factorContext,
-                      User endUser,
                       Session session,
                       Handler<AsyncResult<List<Factor>>> handler) {
         Observable.fromIterable(providers.entrySet())
-                .flatMapSingle(entry -> enroll(entry.getKey(), entry.getValue(), factorContext, endUser, session)
+                .flatMapSingle(entry -> resolveEnrollment(entry.getKey(), entry.getValue(), factorContext, session)
                         .map(enrollment -> new Factor(entry.getKey(), enrollment))
                 )
                 .toList()
@@ -219,16 +216,10 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                         error -> handler.handle(Future.failedFuture(error)));
     }
 
-    /**
-     * Enrolls the given factor, reusing the shared secret already held in the session when there is one.
-     * A user who returns to this page from the challenge page keeps the secret they have already scanned,
-     * so the code produced by their authenticator still matches.
-     */
-    private Single<Enrollment> enroll(io.gravitee.am.model.Factor factor,
-                                      FactorProvider provider,
-                                      FactorContext factorContext,
-                                      User endUser,
-                                      Session session) {
+    private Single<Enrollment> resolveEnrollment(io.gravitee.am.model.Factor factor,
+                                                FactorProvider provider,
+                                                FactorContext factorContext,
+                                                Session session) {
         final String sharedSecret = session.get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
         final String enrolledFactorId = session.get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
         if (!hasText(sharedSecret) || !factor.getId().equals(enrolledFactorId)) {
@@ -238,7 +229,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final EnrolledFactor enrolledFactor = new EnrolledFactor();
         enrolledFactor.setFactorId(factor.getId());
         enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, sharedSecret));
-        return provider.generateQrCode(endUser, enrolledFactor)
+        return provider.generateQrCode(factorContext.getUser(), enrolledFactor)
                 .map(barCode -> new Enrollment(sharedSecret, barCode))
                 .switchIfEmpty(Single.defer(() -> provider.enroll(factorContext)));
     }

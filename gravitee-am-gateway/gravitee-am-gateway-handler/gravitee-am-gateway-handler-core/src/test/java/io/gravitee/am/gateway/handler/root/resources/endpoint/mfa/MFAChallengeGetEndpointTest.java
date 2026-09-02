@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
@@ -53,7 +54,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -364,10 +364,6 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         assertFalse(templateData.containsKey(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
     }
 
-    /**
-     * Renders the challenge page for a user holding a single enrolled factor in the given status,
-     * and returns the data handed to the template engine.
-     */
     private Map<String, Object> renderChallengeForFactorWithStatus(FactorStatus status) {
         EnrolledFactor enrolledFactor = new EnrolledFactor();
         enrolledFactor.setFactorId("factorId");

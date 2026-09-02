@@ -78,7 +78,7 @@
         </form>
 
         <div th:if="${mfaEnrollBackAction}" class="section">
-            <a th:href="${mfaEnrollBackAction}"><span class="icons">arrow_back</span><span th:text="#{mfa_challenge.enroll.back}"/></a>
+            <a id="backToEnroll" th:href="${mfaEnrollBackAction}"><span class="icons">arrow_back</span><span th:text="#{mfa_challenge.enroll.back}"/></a>
         </div>
 
         <div th:if="${mfaAlternativesEnabled}" class="section">
