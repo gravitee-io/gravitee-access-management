@@ -188,9 +188,11 @@ test.describe('Navbar domain picker', () => {
 
     await homePage.navigate('/');
 
-    // toDefault is deleted, so toPin is the only domain left — the fallback
-    // deterministically lands here, proving the redirect chain actually completed
-    await homePage.expectUrlMatches(new RegExp(`/domains/${extraDomains.toPin.id}`));
+    // The fallback picks the first domain in the environment's list, which isn't
+    // necessarily toPin — other specs running in parallel share the same DEFAULT
+    // environment. Just prove the redirect chain completed onto some live domain,
+    // rather than staying stuck or landing back on the one we just deleted.
+    await homePage.expectUrlMatches(/\/domains\/[0-9a-f-]{36}/);
     await expect(page).not.toHaveURL(new RegExp(extraDomains.toDefault.id));
     await expect(page.locator('text=/not found|error/i')).toHaveCount(0);
   });
