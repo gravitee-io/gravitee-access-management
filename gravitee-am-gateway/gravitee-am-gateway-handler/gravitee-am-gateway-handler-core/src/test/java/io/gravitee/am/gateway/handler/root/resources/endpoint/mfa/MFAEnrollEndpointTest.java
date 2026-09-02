@@ -32,18 +32,21 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import io.vertx.rxjava3.ext.web.Session;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -54,6 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
@@ -62,6 +67,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyMap;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -72,6 +79,9 @@ import static org.mockito.Mockito.when;
 public class MFAEnrollEndpointTest extends RxWebTestBase {
 
     private static final String REQUEST_PATH = "/mfa/enroll";
+    private static final String FACTOR_ID = "factor-id";
+    private static final String SHARED_SECRET = "5DPI7NJ2Y7WBQEQV";
+    private static final String BAR_CODE = "data:image/png;base64,barcode";
 
     @Mock
     private Domain domain;
@@ -217,6 +227,100 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                 REQUEST_PATH,
                 200,
                 "OK");
+    }
+
+    @Test
+    public void shouldReuseSharedSecretFromSession() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.generateQrCode(any(), any())).thenReturn(Maybe.just(BAR_CODE));
+
+        renderPageWithSession(factorProvider, session -> {
+            session.put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, FACTOR_ID);
+            session.put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, SHARED_SECRET);
+        });
+
+        ArgumentCaptor<EnrolledFactor> captor = ArgumentCaptor.forClass(EnrolledFactor.class);
+        verify(factorProvider).generateQrCode(any(), captor.capture());
+        assertEquals(SHARED_SECRET, captor.getValue().getSecurity().getValue());
+        verify(factorProvider, never()).enroll(any(FactorContext.class));
+    }
+
+    @Test
+    public void shouldGenerateNewSharedSecret_whenSessionHoldsNone() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(mock(Enrollment.class)));
+
+        renderPage(factorProvider);
+
+        verify(factorProvider).enroll(any(FactorContext.class));
+        verify(factorProvider, never()).generateQrCode(any(), any());
+    }
+
+    @Test
+    public void shouldGenerateNewSharedSecret_whenSessionSecretBelongsToAnotherFactor() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(mock(Enrollment.class)));
+
+        renderPageWithSession(factorProvider, session -> {
+            session.put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "another-factor-id");
+            session.put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, SHARED_SECRET);
+        });
+
+        verify(factorProvider).enroll(any(FactorContext.class));
+        verify(factorProvider, never()).generateQrCode(any(), any());
+    }
+
+    @Test
+    public void shouldClearEnrollmentCompletedFlag() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.enroll(any(FactorContext.class))).thenReturn(Single.just(mock(Enrollment.class)));
+
+        AtomicReference<Object> flagWhenRendered = new AtomicReference<>();
+        renderPageWithSession(factorProvider,
+                session -> session.put(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY, true),
+                ctx -> flagWhenRendered.set(ctx.session().get(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY)));
+
+        assertNull(flagWhenRendered.get());
+    }
+
+    private void renderPage(FactorProvider factorProvider) throws Exception {
+        renderPageWithSession(factorProvider, session -> {
+        });
+    }
+
+    private void renderPageWithSession(FactorProvider factorProvider, Consumer<Session> sessionSetup) throws Exception {
+        renderPageWithSession(factorProvider, sessionSetup, ctx -> {
+        });
+    }
+
+    private void renderPageWithSession(FactorProvider factorProvider,
+                                       Consumer<Session> sessionSetup,
+                                       Consumer<RoutingContext> onRender) throws Exception {
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn(FACTOR_ID);
+        when(factor.getFactorType()).thenReturn(FactorType.OTP);
+        when(factorManager.get(FACTOR_ID)).thenReturn(factorProvider);
+        when(factorManager.getFactor(FACTOR_ID)).thenReturn(factor);
+
+        router.route(REQUEST_PATH)
+                .handler(ctx -> {
+                    Client client = new Client();
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(FACTOR_ID)));
+                    client.setFactorSettings(factorSettings);
+                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+                    ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    sessionSetup.accept(ctx.session());
+                    doAnswer(answer -> {
+                        onRender.accept(ctx);
+                        return Single.just(Buffer.buffer());
+                    }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any());
+                    ctx.next();
+                })
+                .handler(mfaEnrollEndpoint)
+                .handler(rc -> rc.response().end());
+
+        testRequest(HttpMethod.GET, REQUEST_PATH, 200, "OK");
     }
 
     private static FactorSettings getFactorSettings(String emailFactor, String smsFactor) {

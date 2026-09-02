@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -31,10 +32,13 @@ import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -103,6 +107,8 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 return;
             }
 
+            routingContext.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
+
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
@@ -114,7 +120,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             // load factor providers
             final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
             factorContext.registerData(FactorContext.KEY_USER, endUser);
-            load(factors, factorContext, h -> {
+            load(factors, factorContext, routingContext.session(), h -> {
                 if (h.failed()) {
                     log.error("An error occurs while loading factor providers", h.cause());
                     routingContext.fail(503);
@@ -198,15 +204,34 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers,
                       FactorContext factorContext,
+                      Session session,
                       Handler<AsyncResult<List<Factor>>> handler) {
         Observable.fromIterable(providers.entrySet())
-                .flatMapSingle(entry -> entry.getValue().enroll(factorContext)
+                .flatMapSingle(entry -> resolveEnrollment(entry.getKey(), entry.getValue(), factorContext, session)
                         .map(enrollment -> new Factor(entry.getKey(), enrollment))
                 )
                 .toList()
                 .subscribe(
                         factors -> handler.handle(Future.succeededFuture(factors)),
                         error -> handler.handle(Future.failedFuture(error)));
+    }
+
+    private Single<Enrollment> resolveEnrollment(io.gravitee.am.model.Factor factor,
+                                                FactorProvider provider,
+                                                FactorContext factorContext,
+                                                Session session) {
+        final String sharedSecret = session.get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
+        final String enrolledFactorId = session.get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
+        if (!hasText(sharedSecret) || !factor.getId().equals(enrolledFactorId)) {
+            return provider.enroll(factorContext);
+        }
+
+        final EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId(factor.getId());
+        enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, sharedSecret));
+        return provider.generateQrCode(factorContext.getUser(), enrolledFactor)
+                .map(barCode -> new Enrollment(sharedSecret, barCode))
+                .switchIfEmpty(Single.defer(() -> provider.enroll(factorContext)));
     }
 
     private Map<io.gravitee.am.model.Factor, FactorProvider> getFactors(Client client) {
