@@ -41,6 +41,7 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 
@@ -102,16 +103,16 @@ public class TelemetryConfiguration {
         Environment environment,
         ObjectMapper objectMapper,
         InstallationService installationService,
-        NodeMonitoringRepository nodeMonitoringRepository,
+        @Lazy NodeMonitoringRepository nodeMonitoringRepository,
         DataPlaneRegistry dataPlaneRegistry,
         LicenseManager licenseManager,
-        DomainRepository domainRepository,
-        ApplicationRepository applicationRepository,
-        IdentityProviderRepository identityProviderRepository,
-        FactorRepository factorRepository,
-        CertificateRepository certificateRepository,
-        OrganizationRepository organizationRepository,
-        EnvironmentRepository environmentRepository,
+        @Lazy DomainRepository domainRepository,
+        @Lazy ApplicationRepository applicationRepository,
+        @Lazy IdentityProviderRepository identityProviderRepository,
+        @Lazy FactorRepository factorRepository,
+        @Lazy CertificateRepository certificateRepository,
+        @Lazy OrganizationRepository organizationRepository,
+        @Lazy EnvironmentRepository environmentRepository,
         LastDomainPassHolder lastDomainPassHolder
     ) {
         return new SummaryReportCollector(
@@ -139,11 +140,11 @@ public class TelemetryConfiguration {
         TelemetrySettings settings,
         ObjectMapper objectMapper,
         TelemetryPublisher publisher,
-        DomainRepository domainRepository,
-        ApplicationRepository applicationRepository,
-        IdentityProviderRepository identityProviderRepository,
-        FactorRepository factorRepository,
-        CertificateRepository certificateRepository,
+        @Lazy DomainRepository domainRepository,
+        @Lazy ApplicationRepository applicationRepository,
+        @Lazy IdentityProviderRepository identityProviderRepository,
+        @Lazy FactorRepository factorRepository,
+        @Lazy CertificateRepository certificateRepository,
         DataPlaneRegistry dataPlaneRegistry,
         LastDomainPassHolder lastDomainPassHolder
     ) {
