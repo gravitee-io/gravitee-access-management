@@ -83,6 +83,10 @@
             <div id="mfa-resend-message" class="item" style="display: block; visibility: hidden"></div>
         </div>
 
+        <div th:if="${mfaEnrollBackAction}" class="section">
+            <a id="backToEnroll" th:href="${mfaEnrollBackAction}"><span class="icons">arrow_back</span><span th:text="#{mfa_challenge.enroll.back}"/></a>
+        </div>
+
         <div th:if="${mfaAlternativesEnabled}" class="section">
             <a th:href="${mfaAlternativesAction}"><span th:text="#{mfa_challenge.alternate}"/><span class="icons">arrow_forward</span></a>
         </div>
