@@ -16,29 +16,31 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
+import { TokenClaim } from '@management-models/TokenClaim';
 import { setup } from '../../test-fixture';
 import { setupTrustedIssuerFixture, TrustedIssuerFixture } from './fixtures/trusted-issuer-fixture';
-import { ClaimMapping } from './fixtures/token-exchange-fixture';
 
 setup();
 
 const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
 
+const SUBJECT_CLAIMS = "#context.attributes['token_exchange']['subject']['subject_token_claims']";
+const ACTOR_CLAIMS = "#context.attributes['token_exchange']['actor']['actor_token_claims']";
+
 /**
- * The reserved-claim rules exist because a mapping can read from a subject token an external issuer
- * signed. These tests run that exact topology: a JWT signed by a domain trusted issuer, exchanged
- * with a mapper configured on the application.
+ * The subject token here is a JWT signed by a domain trusted issuer, not one the domain minted.
+ * Its claims reach the issued token only through custom claims reading the token exchange context.
  */
-const MAPPINGS: ClaimMapping[] = [
-  { source: 'SUBJECT_TOKEN', sourceClaim: 'claim_id', tokenClaim: 'business_claim_id' },
-  { source: 'SUBJECT_TOKEN', sourceClaim: 'no_such_claim', tokenClaim: 'never_appears' },
-  { source: 'ACTOR_TOKEN', sourceClaim: 'email', tokenClaim: 'agent_email' },
+const CUSTOM_CLAIMS: TokenClaim[] = [
+  { claimName: 'business_claim_id', claimValue: `{${SUBJECT_CLAIMS}['claim_id']}`, tokenType: 'ACCESS_TOKEN' },
+  { claimName: 'never_appears', claimValue: `{${SUBJECT_CLAIMS}['no_such_claim']}`, tokenType: 'ACCESS_TOKEN' },
+  { claimName: 'agent_email', claimValue: `{${ACTOR_CLAIMS}['email']}`, tokenType: 'ACCESS_TOKEN' },
 ];
 
 let fixture: TrustedIssuerFixture;
 
 beforeAll(async () => {
-  fixture = await setupTrustedIssuerFixture({ claimMappings: MAPPINGS });
+  fixture = await setupTrustedIssuerFixture({ tokenCustomClaims: CUSTOM_CLAIMS });
 });
 
 afterAll(async () => {
@@ -61,7 +63,7 @@ const exchangeExternalJwt = async (externalJwt: string) => {
   return response.body;
 };
 
-describe('Token Exchange claims mapper over a trusted issuer subject token', () => {
+describe('Token Exchange subject token claims in EL over a trusted issuer subject token', () => {
   it('should copy a claim from the externally signed subject token onto the issued token', async () => {
     const externalJwt = fixture.signExternalJwt({
       sub: 'external-user-123',
@@ -82,7 +84,7 @@ describe('Token Exchange claims mapper over a trusted issuer subject token', () 
       scope: 'external:read',
       iss: fixture.externalIssuer,
       claim_id: 'EXTERNAL-42',
-      // the mapper must not give the external issuer a route onto these
+      // only the claims named by a custom claim reach the issued token
       client_id: 'spoofed-client',
     });
 
@@ -93,7 +95,7 @@ describe('Token Exchange claims mapper over a trusted issuer subject token', () 
     expect(exchanged.payload['client_id']).not.toEqual('spoofed-client');
   });
 
-  it('should skip a mapping whose source claim is absent from the external token', async () => {
+  it('should omit a custom claim whose source claim is absent from the external token', async () => {
     const externalJwt = fixture.signExternalJwt({
       sub: 'external-user-123',
       scope: 'external:read',
@@ -107,7 +109,7 @@ describe('Token Exchange claims mapper over a trusted issuer subject token', () 
     expect(exchanged.payload).not.toHaveProperty('never_appears');
   });
 
-  it('should resolve an actor token mapping to nothing when impersonating with an external token', async () => {
+  it('should resolve an actor token claim to nothing when impersonating with an external token', async () => {
     const externalJwt = fixture.signExternalJwt({
       sub: 'external-user-123',
       scope: 'external:read',

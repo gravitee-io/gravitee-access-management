@@ -28,7 +28,7 @@ import { Domain } from '@management-models/Domain';
 import { SignJWT } from 'jose';
 import request from 'supertest';
 
-import { ClaimMapping, OidcConfiguration } from './token-exchange-fixture';
+import { OidcConfiguration } from './token-exchange-fixture';
 
 const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 const JWT_BEARER_GRANT = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
@@ -44,11 +44,10 @@ const ASSERTION_SECRET = 'BfC_B_jsbmj81-d0P9680nsOQWixjv5VsBjlj6BUzGg';
 /** The claim the external issuer puts on the assertion, and that the exchange must propagate. */
 export const ASSERTION_CLAIM = 'claim_id';
 
-/** Where the mapper writes it on the exchanged token. */
-export const MAPPED_CLAIM = 'business_claim_id';
-
-/** Where a custom claim written in the expression language writes it on the exchanged token. */
+/** Where the custom claim reading the subject token writes it on the exchanged token. */
 export const EL_CLAIM = 'el_claim_id';
+
+const EL_CLAIM_VALUE = `{#context.attributes['token_exchange']['subject']['subject_token_claims']['${ASSERTION_CLAIM}']}`;
 
 export interface JwtBearerSubjectFixture {
   domain: Domain;
@@ -64,18 +63,11 @@ export interface JwtBearerSubjectFixture {
   cleanup: () => Promise<void>;
 }
 
-export interface JwtBearerSubjectFixtureConfig {
-  /** Mappings set on the exchange application. Defaults to claim_id -> business_claim_id. */
-  claimMappings?: ClaimMapping[];
-}
-
 /**
  * Reproduces the reported customer topology: an external issuer mints an assertion, the JWT Bearer
  * extension grant turns it into a subject token, and token exchange issues the final token.
  */
-export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtureConfig = {}): Promise<JwtBearerSubjectFixture> => {
-  const { claimMappings = [{ source: 'SUBJECT_TOKEN', sourceClaim: ASSERTION_CLAIM, tokenClaim: MAPPED_CLAIM }] } = config;
-
+export const setupJwtBearerSubjectFixture = async (): Promise<JwtBearerSubjectFixture> => {
   const accessToken = await requestAdminAccessToken();
   let domain: Domain | null = null;
 
@@ -104,7 +96,7 @@ export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtu
       configuration: JSON.stringify({
         publicKeyResolver: 'GIVEN_KEY',
         publicKey: ASSERTION_SECRET,
-        // the extension grant plugin's own property, unrelated to token exchange claimMappings
+        // the extension grant plugin's own property: copies assertion claims onto the user
         claimsMapper: [{ assertion_claim: ASSERTION_CLAIM, token_claim: ASSERTION_CLAIM }],
       }),
     });
@@ -132,15 +124,11 @@ export const setupJwtBearerSubjectFixture = async (config: JwtBearerSubjectFixtu
         oauth: {
           grantTypes: [TOKEN_EXCHANGE_GRANT],
           scopeSettings: [{ scope: 'openid', defaultScope: true }],
-          tokenExchangeOAuthSettings: { inherited: false, claimMappings },
-          // The declarative mapper and the expression language read the same subject token, so both
-          // routes are covered against a subject token the JWT Bearer grant issued.
+          // The custom claims read the subject token the JWT Bearer grant issued, for both token
+          // types the exchange can be asked for.
           tokenCustomClaims: [
-            {
-              claimName: EL_CLAIM,
-              claimValue: `{#context.attributes['token_exchange']['subject']['subject_token_claims']['${ASSERTION_CLAIM}']}`,
-              tokenType: 'ACCESS_TOKEN',
-            },
+            { claimName: EL_CLAIM, claimValue: EL_CLAIM_VALUE, tokenType: 'ACCESS_TOKEN' },
+            { claimName: EL_CLAIM, claimValue: EL_CLAIM_VALUE, tokenType: 'ID_TOKEN' },
           ],
         },
       },

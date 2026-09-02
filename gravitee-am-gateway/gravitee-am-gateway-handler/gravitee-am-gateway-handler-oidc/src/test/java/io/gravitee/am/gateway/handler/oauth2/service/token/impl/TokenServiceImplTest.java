@@ -34,7 +34,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
@@ -42,8 +41,6 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.el.TemplateEngine;
-import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -1216,73 +1213,5 @@ public class TokenServiceImplTest {
             assertThat(token.getAdditionalInformation()).doesNotContainKey("authorization_details");
             return true;
         });
-    }
-
-
-    @Test
-    public void copiesTokenExchangeMappedClaimsOntoTheAccessToken() {
-        OAuth2Request request = new OAuth2Request();
-        request.setParameters(new LinkedMultiValueMap());
-        request.setClientId("exchange-client");
-        request.setGrantType(GrantType.TOKEN_EXCHANGE);
-        request.setSupportRefreshToken(false);
-        request.setScopes(Set.of("openid"));
-        request.setOrigin("https://auth.example.com");
-        request.setTokenExchangeMappedClaims(Map.of("business_id", "acme-42"));
-
-        Client client = createClient("exchange-client");
-        User user = createUser("user-exchange");
-        setupCommonMocks(request);
-        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
-                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
-
-        executeTokenCreation(request, client, user);
-
-        assertThat(captureAccessTokenJWT().get("business_id")).isEqualTo("acme-42");
-    }
-
-    @Test
-    public void letsACustomClaimWinOverATokenExchangeMappedClaimOfTheSameName() {
-        OAuth2Request request = new OAuth2Request();
-        request.setParameters(new LinkedMultiValueMap());
-        request.setClientId("exchange-client");
-        request.setGrantType(GrantType.TOKEN_EXCHANGE);
-        request.setSupportRefreshToken(false);
-        request.setScopes(Set.of("openid"));
-        request.setOrigin("https://auth.example.com");
-        request.setTokenExchangeMappedClaims(Map.of("business_id", "from-mapper"));
-
-        Client client = createClient("exchange-client");
-        client.setTokenCustomClaims(List.of(customClaim(TokenTypeHint.ACCESS_TOKEN, "business_id", "from-custom-claim")));
-        User user = createUser("user-exchange");
-
-        TemplateEngine templateEngine = Mockito.mock(TemplateEngine.class);
-        when(templateEngine.getValue("from-custom-claim", Object.class)).thenReturn("from-custom-claim");
-        ExecutionContext executionContext = Mockito.mock(ExecutionContext.class);
-        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
-        when(executionContextFactory.create(any())).thenReturn(executionContext);
-        when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
-        when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
-        when(tokenManager.storeTokens(any(), any())).thenReturn(Completable.complete());
-        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
-                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
-
-        executeTokenCreation(request, client, user);
-
-        assertThat(captureAccessTokenJWT().get("business_id")).isEqualTo("from-custom-claim");
-    }
-
-    private JWT captureAccessTokenJWT() {
-        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
-        verify(jwtService, Mockito.times(1)).encodeJwt(jwtCaptor.capture(), any(Client.class));
-        return jwtCaptor.getValue();
-    }
-
-    private static TokenClaim customClaim(TokenTypeHint tokenType, String name, String value) {
-        TokenClaim claim = new TokenClaim();
-        claim.setTokenType(tokenType);
-        claim.setClaimName(name);
-        claim.setClaimValue(value);
-        return claim;
     }
 }

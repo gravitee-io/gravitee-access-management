@@ -21,12 +21,8 @@ import { DomainStoreService } from '../../../../stores/domain.store';
 import { TrustDomainService } from '../../../../services/trust-domain.service';
 import {
   TokenExchangeScopeHandling,
-  TokenExchangeClaimMapping,
-  CLAIM_SOURCE_SUBJECT_TOKEN,
   TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
-  TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS,
   DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
-  RESERVED_TOKEN_CLAIMS,
 } from '../../../settings/oauth/token-exchange/token-exchange.types';
 
 @Component({
@@ -62,8 +58,6 @@ export class GrantFlowsComponent implements OnInit {
 
   readonly DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING = DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING;
   readonly TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS = TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS;
-  readonly TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS = TOKEN_EXCHANGE_CLAIM_SOURCE_OPTIONS;
-  newClaimMapping: TokenExchangeClaimMapping = { source: CLAIM_SOURCE_SUBJECT_TOKEN, sourceClaim: '', tokenClaim: '' };
 
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
@@ -237,22 +231,9 @@ export class GrantFlowsComponent implements OnInit {
   }
 
   enableTokenExchangeInherit(event: any) {
-    // an override replaces the domain configuration wholesale, so seed it from the domain rather
-    // than presenting an empty table that reads as "nothing configured yet"
-    const current = this.oauthSettings.tokenExchangeOAuthSettings;
-    // claimMappings is undefined until the application overrides for the first time, so this seeds
-    // the domain configuration once and leaves later edits alone
-    const seedFromDomain = !event.checked && current?.claimMappings === undefined;
-    const domainSettings = this.domainStore.current?.tokenExchangeSettings?.tokenExchangeOAuthSettings;
     this.oauthSettings.tokenExchangeOAuthSettings = {
-      ...current,
+      ...this.oauthSettings.tokenExchangeOAuthSettings,
       inherited: event.checked,
-      ...(seedFromDomain
-        ? {
-            scopeHandling: domainSettings?.scopeHandling ?? current?.scopeHandling ?? this.DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
-            claimMappings: [...(domainSettings?.claimMappings ?? [])],
-          }
-        : {}),
     };
     this.modelChanged();
   }
@@ -261,52 +242,6 @@ export class GrantFlowsComponent implements OnInit {
     this.oauthSettings.tokenExchangeOAuthSettings = {
       ...this.oauthSettings.tokenExchangeOAuthSettings,
       scopeHandling: value,
-    };
-    this.modelChanged();
-  }
-
-  get tokenExchangeClaimMappings(): TokenExchangeClaimMapping[] {
-    return this.oauthSettings.tokenExchangeOAuthSettings?.claimMappings ?? [];
-  }
-
-  isNewClaimMappingValid(): boolean {
-    return !!this.newClaimMapping.sourceClaim?.trim() && !!this.newClaimMapping.tokenClaim?.trim() && !this.newClaimMappingError();
-  }
-
-  newClaimMappingError(): string | null {
-    const target = this.newClaimMapping.tokenClaim?.trim();
-    if (!target) {
-      return null;
-    }
-    if (RESERVED_TOKEN_CLAIMS.includes(target)) {
-      return `"${target}" is reserved by Access Management and cannot be a target claim.`;
-    }
-    if (this.tokenExchangeClaimMappings.some((mapping) => mapping.tokenClaim === target)) {
-      return `"${target}" is already mapped.`;
-    }
-    return null;
-  }
-
-  addClaimMapping() {
-    this.oauthSettings.tokenExchangeOAuthSettings = {
-      ...this.oauthSettings.tokenExchangeOAuthSettings,
-      claimMappings: [
-        ...this.tokenExchangeClaimMappings,
-        {
-          source: this.newClaimMapping.source,
-          sourceClaim: this.newClaimMapping.sourceClaim.trim(),
-          tokenClaim: this.newClaimMapping.tokenClaim.trim(),
-        },
-      ],
-    };
-    this.newClaimMapping = { source: CLAIM_SOURCE_SUBJECT_TOKEN, sourceClaim: '', tokenClaim: '' };
-    this.modelChanged();
-  }
-
-  removeClaimMapping(index: number) {
-    this.oauthSettings.tokenExchangeOAuthSettings = {
-      ...this.oauthSettings.tokenExchangeOAuthSettings,
-      claimMappings: this.tokenExchangeClaimMappings.filter((_, i) => i !== index),
     };
     this.modelChanged();
   }

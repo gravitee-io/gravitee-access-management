@@ -18,13 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { parseJwt } from '@api-fixtures/jwt';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
-import {
-  ASSERTION_CLAIM,
-  EL_CLAIM,
-  JwtBearerSubjectFixture,
-  MAPPED_CLAIM,
-  setupJwtBearerSubjectFixture,
-} from './fixtures/jwt-bearer-subject-fixture';
+import { ASSERTION_CLAIM, EL_CLAIM, JwtBearerSubjectFixture, setupJwtBearerSubjectFixture } from './fixtures/jwt-bearer-subject-fixture';
 
 setup(180000);
 
@@ -53,8 +47,10 @@ describe('Token Exchange over a JWT Bearer subject token (RFC 8693)', () => {
     expect(parseJwt(subjectToken).payload[ASSERTION_CLAIM]).toEqual(claimValue);
 
     const body = await fixture.exchange(subjectToken);
+    const exchanged = parseJwt(body.access_token);
 
-    expect(parseJwt(body.access_token).payload[MAPPED_CLAIM]).toEqual(claimValue);
+    expect(exchanged.payload[EL_CLAIM]).toEqual(claimValue);
+    expect(exchanged.payload['sub']).toEqual(parseJwt(subjectToken).payload['sub']);
   });
 
   it('should propagate the value of each assertion, not a value fixed at configuration time', async () => {
@@ -64,8 +60,8 @@ describe('Token Exchange over a JWT Bearer subject token (RFC 8693)', () => {
     const first = await fixture.exchange(firstToken);
     const second = await fixture.exchange(secondToken);
 
-    expect(parseJwt(first.access_token).payload[MAPPED_CLAIM]).toEqual('AGENT-201');
-    expect(parseJwt(second.access_token).payload[MAPPED_CLAIM]).toEqual('AGENT-202');
+    expect(parseJwt(first.access_token).payload[EL_CLAIM]).toEqual('AGENT-201');
+    expect(parseJwt(second.access_token).payload[EL_CLAIM]).toEqual('AGENT-202');
   });
 
   it('should carry the assertion claim onto an exchanged id_token', async () => {
@@ -74,16 +70,6 @@ describe('Token Exchange over a JWT Bearer subject token (RFC 8693)', () => {
     const body = await fixture.exchange(subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
 
     expect(body.issued_token_type).toEqual(ID_TOKEN_TYPE);
-    expect(parseJwt(body.access_token).payload[MAPPED_CLAIM]).toEqual('AGENT-301');
-  });
-
-  it('should expose the JWT Bearer subject token claims to the expression language', async () => {
-    const subjectToken = await fixture.obtainSubjectToken('AGENT-401');
-
-    const body = await fixture.exchange(subjectToken);
-    const exchanged = parseJwt(body.access_token);
-
-    expect(exchanged.payload[EL_CLAIM]).toEqual('AGENT-401');
-    expect(exchanged.payload['sub']).toEqual(parseJwt(subjectToken).payload['sub']);
+    expect(parseJwt(body.access_token).payload[EL_CLAIM]).toEqual('AGENT-301');
   });
 });

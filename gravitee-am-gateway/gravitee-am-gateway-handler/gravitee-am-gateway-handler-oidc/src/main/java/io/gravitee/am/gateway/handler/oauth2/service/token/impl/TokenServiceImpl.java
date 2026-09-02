@@ -493,12 +493,6 @@ public class TokenServiceImpl implements TokenService {
             jwt.setClaimsRequestParameter(requestParameters.getFirst(Parameters.CLAIMS));
         }
 
-        // Token Exchange (RFC 8693) - copy the claims resolved by the declarative mapper.
-        // Applied before the custom claims so a tokenCustomClaims entry of the same name wins.
-        if (request.getTokenExchangeMappedClaims() != null && !request.getTokenExchangeMappedClaims().isEmpty()) {
-            request.getTokenExchangeMappedClaims().forEach(jwt::put);
-        }
-
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 

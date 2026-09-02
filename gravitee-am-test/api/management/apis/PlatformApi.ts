@@ -1122,7 +1122,7 @@ export class PlatformApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get the installation type of this instance and the storage rules it applies to identity providers
+   * Get the installation type of this instance and whether it owns the storage of identity providers on the system cluster
    */
   async getInstallationConfigurationRaw(
     initOverrides?: RequestInit | runtime.InitOverideFunction,
@@ -1154,7 +1154,7 @@ export class PlatformApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get the installation type of this instance and the storage rules it applies to identity providers
+   * Get the installation type of this instance and whether it owns the storage of identity providers on the system cluster
    */
   async getInstallationConfiguration(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<InstallationConfiguration> {
     const response = await this.getInstallationConfigurationRaw(initOverrides);
