@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Domain;
@@ -375,6 +376,56 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
 
         verify(factorManager).getFactor("activated-factor");
         verify(factorManager, never()).getFactor("pending-factor");
+    }
+
+    @Test
+    public void shouldOfferBackToEnroll_whenFactorIsPendingActivation() throws Exception {
+        Map<String, Object> templateData = renderChallengeForFactorWithStatus(FactorStatus.PENDING_ACTIVATION);
+
+        assertEquals("/my-domain/mfa/enroll", templateData.get(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
+    }
+
+    @Test
+    public void shouldNotOfferBackToEnroll_whenFactorIsActivated() throws Exception {
+        Map<String, Object> templateData = renderChallengeForFactorWithStatus(FactorStatus.ACTIVATED);
+
+        assertFalse(templateData.containsKey(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
+    }
+
+    private Map<String, Object> renderChallengeForFactorWithStatus(FactorStatus status) throws Exception {
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorId");
+        enrolledFactor.setStatus(status);
+        User endUser = new User();
+        endUser.setFactors(List.of(enrolledFactor));
+
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(false);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Set.of("factorId"));
+        ApplicationFactorSettings factorSettings = new ApplicationFactorSettings();
+        factorSettings.setId("factorId");
+        FactorSettings settings = new FactorSettings();
+        settings.setApplicationFactors(List.of(factorSettings));
+        client.setFactorSettings(settings);
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+        spyRoutingContext.put(UriBuilderRequest.CONTEXT_PATH, "/my-domain");
+
+        handleAndAwaitEnd(spyRoutingContext);
+
+        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+        verify(templateEngine).render(captor.capture(), any());
+        return captor.getValue();
     }
 
     @Test

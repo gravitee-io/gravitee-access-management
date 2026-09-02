@@ -17,7 +17,7 @@ import { requestAccessToken } from '@management-commands/token-management-comman
 import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
-import { createApplication, patchApplication } from '@management-commands/application-management-commands';
+import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createDevice } from '@management-commands/device-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { expect } from '@jest/globals';
@@ -321,4 +321,36 @@ export const createCallFactor = async (domain, accessToken, twilioResource, name
   expect(callFactor).toBeDefined();
   expect(callFactor.id).not.toBeNull();
   return callFactor;
+};
+
+export const createRequiredMfaApp = async (domain, accessToken, factorIds: string[]) => {
+  const application = await createApplication(domain.id, accessToken, {
+    name: uniqueName('mfa-app', true),
+    type: 'WEB',
+    clientId: uniqueName('mfa-client', true),
+    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
+  });
+  return updateApplication(
+    domain.id,
+    accessToken,
+    {
+      settings: {
+        oauth: {
+          redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
+          scopeSettings: [{ scope: 'openid', defaultScope: true }],
+        },
+        mfa: {
+          factor: {
+            defaultFactorId: factorIds[0],
+            applicationFactors: factorIds.map((id) => ({ id, selectionRule: '' } as any)),
+          },
+          enroll: { active: true, forceEnrollment: true, type: 'REQUIRED' },
+          challenge: { active: true, type: 'REQUIRED' },
+        },
+      },
+      identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+      factors: factorIds,
+    },
+    application.id,
+  );
 };
