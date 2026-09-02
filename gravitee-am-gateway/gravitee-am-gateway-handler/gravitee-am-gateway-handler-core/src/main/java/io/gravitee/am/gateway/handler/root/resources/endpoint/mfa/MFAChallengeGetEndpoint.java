@@ -52,6 +52,7 @@ import static io.gravitee.am.common.factor.FactorType.FIDO2;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
@@ -59,6 +60,7 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.ge
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -141,9 +143,14 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
                     return;
                 }
 
+                final EnrolledFactor enrolledFactor = resChallenge.result();
                 Map<String, Object> templateData = generateData(routingContext, domainDataPlane.getDomain(), client);
-                if (resChallenge.result() != null) {
-                    templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(resChallenge.result()));
+                if (enrolledFactor != null) {
+                    templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(enrolledFactor));
+                    if (PENDING_ACTIVATION.equals(enrolledFactor.getStatus())) {
+                        templateData.put(MFA_ENROLL_BACK_ACTION_KEY,
+                                resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/enroll", queryParams, true));
+                    }
                 }
                 this.renderPage(routingContext, templateData, client, logger, "Unable to render MFA challenge page");
             });
