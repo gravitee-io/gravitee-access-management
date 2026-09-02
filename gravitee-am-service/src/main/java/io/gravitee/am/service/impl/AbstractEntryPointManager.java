@@ -56,6 +56,7 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
 
 
     private final ConcurrentMap<String, Entrypoint> entrypoints = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Completable> environmentLoads = new ConcurrentHashMap<>();
 
     private final EventManager eventManager;
     private final Node node;
@@ -110,6 +111,23 @@ public abstract class AbstractEntryPointManager extends AbstractService<EntryPoi
         return entrypoints.values().stream()
                 .filter(entrypoint -> environmentId != null && environmentId.equals(entrypoint.getEnvironmentId()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Completable ensureEnvironmentLoaded(String environmentId) {
+        if (environmentId == null) {
+            return Completable.complete();
+        }
+        return Completable.defer(() -> findAllByEnvironmentId(environmentId).isEmpty()
+                ? environmentLoads.computeIfAbsent(environmentId, id -> loadEnvironment(id).cache())
+                : Completable.complete());
+    }
+
+    private Completable loadEnvironment(String environmentId) {
+        return cache(loadEnvironmentEntrypoints(environmentId))
+                .doOnComplete(() -> log.debug("Entrypoints of environment {} loaded on demand - cache now holds {} entrypoint(s)", environmentId, entrypoints.size()))
+                .doOnError(error -> log.error("Unable to load the entrypoints of environment {}", environmentId, error))
+                .doFinally(() -> environmentLoads.remove(environmentId));
     }
 
     @Override

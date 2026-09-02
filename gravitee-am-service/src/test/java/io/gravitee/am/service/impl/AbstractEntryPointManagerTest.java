@@ -28,8 +28,11 @@ import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.SimpleEvent;
 import io.gravitee.node.api.Node;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.processors.PublishProcessor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,12 +40,16 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -240,6 +247,99 @@ public class AbstractEntryPointManagerTest {
         cut.onEvent(event(EntrypointEvent.DEPLOY, "e1"));
         cut.onEvent(event(EntrypointEvent.UPDATE, "e1"));
 
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
+    }
+
+    @Test
+    public void shouldLoadEnvironmentEntrypointsOnDemand() {
+        Environment environment = new Environment();
+        environment.setId("env#1");
+        environment.setOrganizationId("org#1");
+        when(environmentRepository.findById("env#1")).thenReturn(Maybe.just(environment));
+        Entrypoint entrypoint = entrypoint("e1", "org#1", "env#1");
+        when(entrypointRepository.findByEnvironment("org#1", "env#1")).thenReturn(Flowable.just(entrypoint));
+
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
+
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
+    }
+
+    @Test
+    public void shouldNotReadTheStoreAgainOnceAnEnvironmentIsLoaded() {
+        Environment environment = new Environment();
+        environment.setId("env#1");
+        environment.setOrganizationId("org#1");
+        when(environmentRepository.findById("env#1")).thenReturn(Maybe.just(environment));
+        when(entrypointRepository.findByEnvironment("org#1", "env#1")).thenReturn(Flowable.just(entrypoint("e1", "org#1", "env#1")));
+
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
+
+        verify(entrypointRepository, times(1)).findByEnvironment("org#1", "env#1");
+    }
+
+    @Test
+    public void shouldReadTheStoreAgainWhenTheOnDemandLoadFailed() {
+        Environment environment = new Environment();
+        environment.setId("env#1");
+        environment.setOrganizationId("org#1");
+        when(environmentRepository.findById("env#1")).thenReturn(Maybe.just(environment));
+        Entrypoint entrypoint = entrypoint("e1", "org#1", "env#1");
+        when(entrypointRepository.findByEnvironment("org#1", "env#1"))
+                .thenReturn(Flowable.error(new RuntimeException("database unavailable")), Flowable.just(entrypoint));
+
+        cut.ensureEnvironmentLoaded("env#1").test().awaitDone(10, TimeUnit.SECONDS).assertError(RuntimeException.class);
+        assertTrue(cut.findAllByEnvironmentId("env#1").isEmpty());
+
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
+    }
+
+    @Test
+    public void shouldNotLoadOnDemandWhenTheEnvironmentIsAlreadyCached() throws Exception {
+        Entrypoint entrypoint = entrypoint("e1", "org#1", "env#1");
+        cache(entrypoint);
+
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
+
+        verifyNoInteractions(environmentRepository);
+        assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
+    }
+
+    @Test
+    public void shouldShareOneReadBetweenConcurrentCallers() {
+        Environment environment = new Environment();
+        environment.setId("env#1");
+        environment.setOrganizationId("org#1");
+        when(environmentRepository.findById("env#1")).thenReturn(Maybe.just(environment));
+        PublishProcessor<Entrypoint> stored = PublishProcessor.create();
+        when(entrypointRepository.findByEnvironment("org#1", "env#1")).thenReturn(stored);
+
+        TestObserver<Void> first = cut.ensureEnvironmentLoaded("env#1").test();
+        TestObserver<Void> second = cut.ensureEnvironmentLoaded("env#1").test();
+        assertTrue(stored.hasSubscribers());
+
+        stored.onNext(entrypoint("e1", "org#1", "env#1"));
+        stored.onComplete();
+        first.awaitDone(10, TimeUnit.SECONDS).assertComplete();
+        second.awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(entrypointRepository, times(1)).findByEnvironment("org#1", "env#1");
+    }
+
+    @Test
+    public void shouldReadAgainForAnEnvironmentThatHadNothingToLoad() {
+        Environment environment = new Environment();
+        environment.setId("env#1");
+        environment.setOrganizationId("org#1");
+        when(environmentRepository.findById("env#1")).thenReturn(Maybe.just(environment));
+        Entrypoint entrypoint = entrypoint("e1", "org#1", "env#1");
+        when(entrypointRepository.findByEnvironment("org#1", "env#1")).thenReturn(Flowable.empty(), Flowable.just(entrypoint));
+
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
+        assertTrue(cut.findAllByEnvironmentId("env#1").isEmpty());
+
+        cut.ensureEnvironmentLoaded("env#1").blockingAwait();
         assertEquals(List.of(entrypoint), cut.findAllByEnvironmentId("env#1"));
     }
 

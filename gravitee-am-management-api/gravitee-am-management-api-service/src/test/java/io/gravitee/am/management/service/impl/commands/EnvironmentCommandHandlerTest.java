@@ -16,12 +16,11 @@
 package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.common.env.CloudProperties;
-import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.model.NewEntrypoint;
+import io.gravitee.am.service.model.DesiredEntrypoint;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
@@ -30,7 +29,6 @@ import io.gravitee.cockpit.api.command.v1.environment.EnvironmentCommandPayload;
 import io.gravitee.cockpit.api.command.v1.environment.EnvironmentReply;
 import io.gravitee.exchange.api.command.CommandStatus;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,12 +45,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -181,83 +177,19 @@ class EnvironmentCommandHandlerTest {
         verifyNoInteractions(environmentService, entrypointService);
     }
 
-    private void enableCloudMode() {
-        springEnvironment.setProperty("cloud.enabled", "true");
-        springEnvironment.setProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED);
-    }
-
     @Test
-    void handleCloudMode_syncsEntrypoints_deleteThenRecreate() {
+    void handleCloudMode_statesTheGatewayAccessPointsAsTheEnvironmentEntrypoints() {
         enableCloudMode();
 
-        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
-                .id("env#1")
-                .hrids(Collections.singletonList("env-1"))
-                .organizationId("orga#1")
-                .description("Environment description")
-                .name("Environment name")
-                .accessPoints(List.of(
-                        AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
-                        AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build(),
-                        AccessPoint.builder().target(AccessPoint.Target.CONSOLE).host("console.io").build()))
-                .build();
-        EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
+        handleSuccessfully(environmentCommand(List.of(
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build(),
+                AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction2.io").build(),
+                // a CONSOLE access point must not become an entrypoint
+                AccessPoint.builder().target(AccessPoint.Target.CONSOLE).host("console.io").build())));
 
-        when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
-
-        Entrypoint existing1 = new Entrypoint();
-        existing1.setId("entrypoint#1");
-        Entrypoint existing2 = new Entrypoint();
-        existing2.setId("entrypoint#2");
-        when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.just(existing1, existing2));
-        when(entrypointService.delete(eq("entrypoint#1"), eq("orga#1"), isNull())).thenReturn(Completable.complete());
-        when(entrypointService.delete(eq("entrypoint#2"), eq("orga#1"), isNull())).thenReturn(Completable.complete());
-        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
-
-        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
-
-        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
-
-        verify(entrypointService, times(1)).delete("entrypoint#1", "orga#1", null);
-        verify(entrypointService, times(1)).delete("entrypoint#2", "orga#1", null);
-        verify(entrypointService, times(1)).create(eq("orga#1"), argThat(newEntrypoint ->
-                newEntrypoint.getUrl().equals("https://domain.restriction1.io")
-                        && newEntrypoint.getName().equals("domain.restriction1.io")
-                        && "env#1".equals(newEntrypoint.getEnvironmentId())), eq(true), isNull());
-        verify(entrypointService, times(1)).create(eq("orga#1"), argThat(newEntrypoint ->
-                newEntrypoint.getUrl().equals("https://domain.restriction2.io")
-                        && newEntrypoint.getName().equals("domain.restriction2.io")
-                        && "env#1".equals(newEntrypoint.getEnvironmentId())), eq(true), isNull());
-        // CONSOLE access point must not generate an entrypoint
-        verify(entrypointService, times(2)).create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull());
-    }
-
-    @Test
-    void handleCloudMode_noPriorEntrypoints_createsNewOnes() {
-        enableCloudMode();
-
-        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
-                .id("env#1")
-                .hrids(Collections.singletonList("env-1"))
-                .organizationId("orga#1")
-                .description("Environment description")
-                .name("Environment name")
-                .accessPoints(List.of(AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("domain.restriction1.io").build()))
-                .build();
-        EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
-
-        when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
-        when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.empty());
-        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
-
-        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
-
-        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
-
-        verify(entrypointService, never()).delete(any(), any(), any());
-        verify(entrypointService, times(1)).create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull());
+        verify(entrypointService).syncForEnvironment("orga#1", "env#1", List.of(
+                new DesiredEntrypoint("https://domain.restriction1.io", "domain.restriction1.io", true),
+                new DesiredEntrypoint("https://domain.restriction2.io", "domain.restriction2.io", true)), null);
     }
 
     @Test
@@ -283,38 +215,12 @@ class EnvironmentCommandHandlerTest {
         verifyNoInteractions(entrypointService);
     }
 
-    /**
-     * The access point Cockpit generates itself becomes the environment's default entrypoint; the
-     * customer's overriding one does not. Resolution later drops the default whenever an override
-     * exists, so getting this inversion right is what makes the override win.
-     */
-    private void assertPersistedDefaultFlag(List<AccessPoint> accessPoints, String host, boolean expectedDefaultFlag) {
-        EnvironmentCommandPayload environmentPayload = EnvironmentCommandPayload.builder()
-                .id("env#1")
-                .hrids(Collections.singletonList("env-1"))
-                .organizationId("orga#1")
-                .name("Environment name")
-                .accessPoints(accessPoints)
-                .build();
-
-        when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
-        when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.empty());
-        when(entrypointService.create(eq("orga#1"), any(NewEntrypoint.class), anyBoolean(), isNull())).thenAnswer(i -> Single.just(new Entrypoint()));
-
-        TestObserver<EnvironmentReply> obs = cut.handle(new EnvironmentCommand(environmentPayload)).test();
-
-        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        obs.assertValue(reply -> reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
-        verify(entrypointService, times(1)).create(eq("orga#1"),
-                argThat(newEntrypoint -> newEntrypoint.getName().equals(host)), eq(expectedDefaultFlag), isNull());
-    }
-
     @Test
     void handleCloudMode_overridingAccessPoint_isNotTheDefaultEntrypoint() {
         enableCloudMode();
 
         // The non-overriding companion is what keeps the payload valid.
-        assertPersistedDefaultFlag(List.of(
+        assertStatedDefaultFlag(List.of(
                 AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("auth.acme.com").overriding(true).build(),
                 AccessPoint.builder().target(AccessPoint.Target.GATEWAY).host("env-acme.gravitee.io").build()),
                 "auth.acme.com", false);
@@ -324,7 +230,7 @@ class EnvironmentCommandHandlerTest {
     void handleCloudMode_nonOverridingAccessPoint_becomesTheDefaultEntrypoint() {
         enableCloudMode();
 
-        assertPersistedDefaultFlag(List.of(AccessPoint.builder()
+        assertStatedDefaultFlag(List.of(AccessPoint.builder()
                 .target(AccessPoint.Target.GATEWAY)
                 .host("env-acme.gravitee.io")
                 .overriding(false)
@@ -337,31 +243,10 @@ class EnvironmentCommandHandlerTest {
 
         // `overriding` is a primitive boolean, so a payload omitting it deserializes to false and every
         // entrypoint ends up flagged default. Resolution copes by returning them all rather than none.
-        assertPersistedDefaultFlag(List.of(AccessPoint.builder()
+        assertStatedDefaultFlag(List.of(AccessPoint.builder()
                 .target(AccessPoint.Target.GATEWAY)
                 .host("env-acme.gravitee.io")
                 .build()), "env-acme.gravitee.io", true);
-    }
-
-    private EnvironmentCommand commandWithAccessPoints(AccessPoint... accessPoints) {
-        return new EnvironmentCommand(EnvironmentCommandPayload.builder()
-                .id("env#1")
-                .hrids(Collections.singletonList("env-1"))
-                .organizationId("orga#1")
-                .description("Environment description")
-                .name("Environment name")
-                // Arrays.asList, not List.of: one case deliberately passes a null entry.
-                .accessPoints(Arrays.asList(accessPoints))
-                .build());
-    }
-
-    private void assertRejectedForMissingHost(EnvironmentCommand command) {
-        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
-
-        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        obs.assertNoErrors();
-        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
-        verifyNoInteractions(environmentService, entrypointService);
     }
 
     /**
@@ -408,15 +293,6 @@ class EnvironmentCommandHandlerTest {
         // The guard runs before the reactive chain is built, so a null entry would escape handle() as a
         // synchronous throw rather than reaching onErrorReturn.
         assertRejectedInCloudMode(commandWithAccessPoints(new AccessPoint[]{null}));
-    }
-
-    private void assertRejectedInCloudMode(EnvironmentCommand command) {
-        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
-
-        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        obs.assertNoErrors();
-        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
-        verifyNoInteractions(environmentService, entrypointService);
     }
 
     @Test
@@ -519,12 +395,74 @@ class EnvironmentCommandHandlerTest {
         EnvironmentCommand command = new EnvironmentCommand(environmentPayload);
 
         when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
-        when(entrypointService.findByEnvironment("orga#1", "env#1")).thenReturn(Flowable.error(new TechnicalException("boom")));
+        when(entrypointService.syncForEnvironment(any(), any(), anyList(), any())).thenReturn(Completable.error(new TechnicalException("boom")));
 
         TestObserver<EnvironmentReply> obs = cut.handle(command).test();
 
         obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         obs.assertNoErrors();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+    }
+
+    private void enableCloudMode() {
+        springEnvironment.setProperty("cloud.enabled", "true");
+        springEnvironment.setProperty("installation.type", CloudProperties.INSTALLATION_TYPE_MANAGED);
+    }
+
+    private void handleSuccessfully(EnvironmentCommand command) {
+        when(environmentService.createOrUpdate(eq("orga#1"), eq("env#1"), any(NewEnvironment.class), isNull())).thenReturn(Single.just(new Environment()));
+        when(entrypointService.syncForEnvironment(any(), any(), anyList(), any())).thenReturn(Completable.complete());
+
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        obs.assertValue(reply -> reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
+    }
+
+    private EnvironmentCommand environmentCommand(List<AccessPoint> accessPoints) {
+        return new EnvironmentCommand(EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
+                .organizationId("orga#1")
+                .name("Environment name")
+                .accessPoints(accessPoints)
+                .build());
+    }
+
+    private EnvironmentCommand commandWithAccessPoints(AccessPoint... accessPoints) {
+        return new EnvironmentCommand(EnvironmentCommandPayload.builder()
+                .id("env#1")
+                .hrids(Collections.singletonList("env-1"))
+                .organizationId("orga#1")
+                .description("Environment description")
+                .name("Environment name")
+                // Arrays.asList, not List.of: one case deliberately passes a null entry.
+                .accessPoints(Arrays.asList(accessPoints))
+                .build());
+    }
+
+    private void assertStatedDefaultFlag(List<AccessPoint> accessPoints, String host, boolean expectedDefaultFlag) {
+        handleSuccessfully(environmentCommand(accessPoints));
+
+        verify(entrypointService).syncForEnvironment(eq("orga#1"), eq("env#1"),
+                argThat(desired -> desired.contains(new DesiredEntrypoint("https://" + host, host, expectedDefaultFlag))), isNull());
+    }
+
+    private void assertRejectedForMissingHost(EnvironmentCommand command) {
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(environmentService, entrypointService);
+    }
+
+    private void assertRejectedInCloudMode(EnvironmentCommand command) {
+        TestObserver<EnvironmentReply> obs = cut.handle(command).test();
+
+        obs.awaitDone(HANDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        obs.assertNoErrors();
+        obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.ERROR));
+        verifyNoInteractions(environmentService, entrypointService);
     }
 }

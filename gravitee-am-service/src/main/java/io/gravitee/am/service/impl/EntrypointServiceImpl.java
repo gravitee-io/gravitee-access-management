@@ -19,7 +19,6 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.env.CloudProperties;
-import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
@@ -30,10 +29,9 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
-import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
+import io.gravitee.am.service.model.DesiredEntrypoint;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
 import io.gravitee.am.service.exception.LastDefaultEntrypointException;
@@ -60,6 +58,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 /**
@@ -75,7 +75,6 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final AuditService auditService;
     private final VirtualHostValidator virtualHostValidator;
     private final EventService eventService;
-    private final DataPlaneDefinitionService dataPlaneDefinitionService;
     private final String gatewayUrl;
     private final boolean managedCloudEnabled;
 
@@ -84,7 +83,6 @@ public class EntrypointServiceImpl implements EntrypointService {
                                  AuditService auditService,
                                  VirtualHostValidator virtualHostValidator,
                                  EventService eventService,
-                                 @Lazy DataPlaneDefinitionService dataPlaneDefinitionService,
                                  @Value("${gateway.url:http://localhost:8092}") String gatewayUrl,
                                  Environment environment) {
         this.entrypointRepository = entrypointRepository;
@@ -92,7 +90,6 @@ public class EntrypointServiceImpl implements EntrypointService {
         this.auditService = auditService;
         this.virtualHostValidator = virtualHostValidator;
         this.eventService = eventService;
-        this.dataPlaneDefinitionService = dataPlaneDefinitionService;
         this.gatewayUrl = gatewayUrl;
         this.managedCloudEnabled = CloudProperties.isManagedCloudEnabled(environment);
     }
@@ -177,6 +174,53 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     @Override
+    public Completable syncForEnvironment(String organizationId, String environmentId, List<DesiredEntrypoint> desired, User principal) {
+
+        log.debug("Sync {} entrypoint(s) for organization {} and environment {}", desired.size(), organizationId, environmentId);
+
+        Map<String, DesiredEntrypoint> wanted = indexByUrl(desired);
+
+        return findByEnvironment(organizationId, environmentId)
+                .toList()
+                .flatMapCompletable(stored -> {
+                    Set<String> kept = new LinkedHashSet<>();
+                    List<Entrypoint> obsolete = new ArrayList<>();
+                    for (Entrypoint entrypoint : stored) {
+                        if (matches(entrypoint, wanted.get(entrypoint.getUrl())) && kept.add(entrypoint.getUrl())) {
+                            continue;
+                        }
+                        // kept.add is false for a second row holding the same url
+                        obsolete.add(entrypoint);
+                    }
+                    Completable deletions = Flowable.fromIterable(obsolete)
+                            .flatMapCompletable(entrypoint -> delete(entrypoint.getId(), organizationId, principal));
+                    // sequenced: a replaced url is deleted before it is created again
+                    return deletions.andThen(Completable.defer(() -> Completable.merge(wanted.values().stream()
+                            .filter(candidate -> !kept.contains(candidate.url()))
+                            .map(candidate -> createDesired(organizationId, environmentId, candidate, principal))
+                            .toList())));
+                });
+    }
+
+    private boolean matches(Entrypoint entrypoint, DesiredEntrypoint desired) {
+        return desired != null && entrypoint.isDefaultEntrypoint() == desired.defaultEntrypoint();
+    }
+
+    private Map<String, DesiredEntrypoint> indexByUrl(List<DesiredEntrypoint> desired) {
+        Map<String, DesiredEntrypoint> byUrl = new LinkedHashMap<>();
+        desired.forEach(entrypoint -> byUrl.putIfAbsent(entrypoint.url(), entrypoint));
+        return byUrl;
+    }
+
+    private Completable createDesired(String organizationId, String environmentId, DesiredEntrypoint desired, User principal) {
+        NewEntrypoint newEntrypoint = new NewEntrypoint();
+        newEntrypoint.setUrl(desired.url());
+        newEntrypoint.setName(desired.name());
+        newEntrypoint.setEnvironmentId(environmentId);
+        return create(organizationId, newEntrypoint, desired.defaultEntrypoint(), principal).ignoreElement();
+    }
+
+    @Override
     public Single<Entrypoint> update(String entrypointId, String organizationId, UpdateEntrypoint updateEntrypoint, User principal) {
 
         log.debug("Update an existing entrypoint {}", updateEntrypoint);
@@ -213,7 +257,7 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     private Single<Entrypoint> deleteEntrypoint(Entrypoint e) {
-        // Skipped in cloud, where EnvironmentCommandHandler deletes every environment entrypoint to recreate them.
+        // Skipped in cloud, where an environment entrypoint goes whenever its access point does.
         if (e.isDefaultEntrypoint() && !managedCloudEnabled) {
             return isNotTheLastDefaultEntryPoint(e)
                     .flatMap(notLast -> notLast ? Single.just(e) : Single.error(new LastDefaultEntrypointException("You cannot remove the last default entrypoint")));
@@ -247,40 +291,9 @@ public class EntrypointServiceImpl implements EntrypointService {
         ReferenceType referenceType = entrypoint.getEnvironmentId() != null ? ReferenceType.ENVIRONMENT : ReferenceType.ORGANIZATION;
         String referenceId = entrypoint.getEnvironmentId() != null ? entrypoint.getEnvironmentId() : entrypoint.getOrganizationId();
         Payload payload = new Payload(entrypoint.getId(), referenceType, referenceId, action);
-        return resolveDataPlaneIds(entrypoint)
-                .flatMapCompletable(dataPlaneIds -> Flowable.fromIterable(dataPlaneIds)
-                        .flatMapCompletable(dataPlaneId -> eventService
-                                .create(new Event(Type.ENTRYPOINT, payload, dataPlaneId, entrypoint.getEnvironmentId()))
-                                .ignoreElement()));
-    }
-
-    /**
-     * Route an entrypoint event to every data plane that can serve a domain in this environment, so
-     * whichever gateway holds one picks it up (SyncManager polls events by data-plane id). One event
-     * per plane rather than one for the first row: an environment may hold several linked planes, and
-     * a gateway pinned to any other one would never see the change. Org-scoped entrypoints go to
-     * {@code default}.
-     */
-    private Single<Set<String>> resolveDataPlaneIds(Entrypoint entrypoint) {
-        if (entrypoint.getEnvironmentId() == null) {
-            return Single.just(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
-        }
-        return dataPlaneDefinitionService.findByEnvironmentId(entrypoint.getEnvironmentId())
-                .map(DataPlaneDefinitionSummary::id)
-                .toList()
-                .map(this::targetPlanes);
-    }
-
-    private Set<String> targetPlanes(List<String> linkedForEnv) {
-        Set<String> targets = new LinkedHashSet<>(linkedForEnv);
-        // Cloud binds every domain to one of the environment's linked planes, so those are the only
-        // gateways that can be serving it. Outside managed cloud a domain may also sit on a plane the
-        // node's configuration declares while the environment has another provisioned against it, and
-        // dropping `default` there strands the entrypoints of every domain bound to it.
-        if (!managedCloudEnabled || targets.isEmpty()) {
-            targets.add(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
-        }
-        return targets;
+        // no data plane id: every gateway polls for it, whichever plane serves the environment
+        return eventService.create(new Event(Type.ENTRYPOINT, payload, null, entrypoint.getEnvironmentId()))
+                .ignoreElement();
     }
 
     private Completable validate(Entrypoint entrypoint) {

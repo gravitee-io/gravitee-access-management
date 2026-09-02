@@ -50,14 +50,15 @@ export interface CloudEntrypointFixture {
   resyncAccessPoints: (accessPoints: AccessPointSpec[]) => Promise<string[]>;
   /** The entrypoint URLs the gateway currently has cached for this domain's environment, sorted. */
   cachedEntrypointUrls: () => Promise<string[]>;
+  /** The entrypoint URLs the management API stores for this environment, sorted. */
+  storedEntrypointUrls: () => Promise<string[]>;
   cleanup: () => Promise<void>;
 }
 
 /**
  * Deploys an enabled domain in the shared cloud environment so its cached entrypoints can be
  * observed through the domain state endpoint. `resyncAccessPoints` re-issues the ENVIRONMENT
- * command to exercise the live update/eviction path (the handler deletes-and-recreates the
- * environment's entrypoints each time).
+ * command to exercise the live update/eviction path.
  *
  * Managed-cloud stack only (local-stack.sh --cloud).
  */
@@ -66,12 +67,8 @@ export const setupCloudEntrypointFixture = async (): Promise<CloudEntrypointFixt
   const { organizationId, environmentId, accessToken, dataPlaneId } = shared;
   const uniqueHost = () => `${uniqueName('gw', true)}.example.com`;
 
-  // Track every host we ever provision so cleanup removes all of them, not just the current set
-  // (each ENVIRONMENT command deletes-and-recreates the environment's entrypoints).
-  const provisionedHosts = new Set<string>();
   const resyncAccessPoints = async (accessPoints: AccessPointSpec[]): Promise<string[]> => {
     const hosts = accessPoints.map(hostOf);
-    hosts.forEach((host) => provisionedHosts.add(host));
     await sendCockpitCommand({
       type: 'ENVIRONMENT',
       payload: {
@@ -111,26 +108,23 @@ export const setupCloudEntrypointFixture = async (): Promise<CloudEntrypointFixt
     return (state.entrypoints ?? []).map((e) => e.url).sort();
   };
 
+  const storedEntrypointUrls = async (): Promise<string[]> => {
+    const entrypoints = await getEntrypointsApi(accessToken).listEntrypoints({ organizationId });
+    return entrypoints
+      .filter((e: any) => e.environmentId === environmentId)
+      .map((e: any) => e.url)
+      .sort();
+  };
+
   const deleteDomain = bindSafeDeleteCloudDomain({ accessToken, organizationId, environmentId });
 
   const cleanup = async () => {
     await deleteDomain(domain.id);
-    const provisionedUrls = [...provisionedHosts].map(urlFor);
-    const entrypoints = await getEntrypointsApi(accessToken)
-      .listEntrypoints({ organizationId })
-      .catch((e) => {
-        console.warn(`cleanup: failed to list entrypoints: ${e.message}`);
-        return [] as any[];
-      });
-    await Promise.all(
-      entrypoints
-        .filter((e: any) => provisionedUrls.includes(e.url))
-        .map((e: any) =>
-          getEntrypointsApi(accessToken)
-            .deleteEntrypoint({ organizationId, entrypointId: e.id })
-            .catch((err) => console.warn(`cleanup: failed to delete entrypoint ${e.id}: ${err.message}`)),
-        ),
-    );
+    try {
+      await shared.restoreAccessPoints();
+    } catch (err: any) {
+      console.warn(`cleanup: failed to restore the shared environment's access points: ${err.message}`);
+    }
   };
 
   return {
@@ -142,6 +136,7 @@ export const setupCloudEntrypointFixture = async (): Promise<CloudEntrypointFixt
     uniqueHost,
     resyncAccessPoints,
     cachedEntrypointUrls,
+    storedEntrypointUrls,
     cleanup,
   };
 };

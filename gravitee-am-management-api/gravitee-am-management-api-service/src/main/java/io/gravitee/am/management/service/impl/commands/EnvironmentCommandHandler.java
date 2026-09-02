@@ -18,7 +18,7 @@ package io.gravitee.am.management.service.impl.commands;
 import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.model.NewEntrypoint;
+import io.gravitee.am.service.model.DesiredEntrypoint;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.cockpit.api.command.model.accesspoint.AccessPoint;
 import io.gravitee.cockpit.api.command.v1.CockpitCommandType;
@@ -115,21 +115,26 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
         if (!CloudProperties.isManagedCloudEnabled(environment)) {
             return Completable.complete();
         }
+        return entrypointService.syncForEnvironment(
+                environmentPayload.organizationId(),
+                environmentPayload.id(),
+                toDesiredEntrypoints(environmentPayload),
+                null);
+    }
 
-        String organizationId = environmentPayload.organizationId();
-        String environmentId = environmentPayload.id();
-
-        List<AccessPoint> gatewayAccessPoints = environmentPayload.accessPoints() == null
-                ? List.of()
-                : environmentPayload.accessPoints().stream()
-                        .filter(this::isGatewayAccessPoint)
-                        .collect(Collectors.toList());
-
-        return entrypointService.findByEnvironment(organizationId, environmentId)
-                .flatMapCompletable(entrypoint -> entrypointService.delete(entrypoint.getId(), organizationId, null))
-                .andThen(Completable.defer(() -> Completable.merge(gatewayAccessPoints.stream()
-                        .map(accessPoint -> createEntrypoint(organizationId, environmentId, accessPoint))
-                        .collect(Collectors.toList()))));
+    /**
+     * Maps the access point Cockpit generates itself to the environment's <em>default</em> entrypoint and
+     * the customer's overriding one to a non-default, which is how
+     * {@code EntryPointManager#findByEnvironmentId} lets an override win.
+     */
+    private List<DesiredEntrypoint> toDesiredEntrypoints(EnvironmentCommandPayload environmentPayload) {
+        if (environmentPayload.accessPoints() == null) {
+            return List.of();
+        }
+        return environmentPayload.accessPoints().stream()
+                .filter(this::isGatewayAccessPoint)
+                .map(accessPoint -> new DesiredEntrypoint("https://" + accessPoint.getHost(), accessPoint.getHost(), !accessPoint.isOverriding()))
+                .collect(Collectors.toList());
     }
 
     private Optional<String> validateGatewayAccessPoints(EnvironmentCommandPayload environmentPayload) {
@@ -162,17 +167,5 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
 
     private boolean hasHost(AccessPoint accessPoint) {
         return accessPoint.getHost() != null && !accessPoint.getHost().isBlank();
-    }
-
-    private Completable createEntrypoint(String organizationId, String environmentId, AccessPoint accessPoint) {
-        NewEntrypoint newEntrypoint = new NewEntrypoint();
-        newEntrypoint.setUrl("https://" + accessPoint.getHost());
-        newEntrypoint.setName(accessPoint.getHost());
-        newEntrypoint.setEnvironmentId(environmentId);
-
-        // Counter-intuitive but avoids introducing a field: the access point Cockpit generates itself is
-        // the environment's *default* entrypoint, and the customer's overriding one is not. Resolution
-        // then drops the default whenever an override exists, see EntryPointManager#findByEnvironmentId.
-        return entrypointService.create(organizationId, newEntrypoint, !accessPoint.isOverriding(), null).ignoreElement();
     }
 }

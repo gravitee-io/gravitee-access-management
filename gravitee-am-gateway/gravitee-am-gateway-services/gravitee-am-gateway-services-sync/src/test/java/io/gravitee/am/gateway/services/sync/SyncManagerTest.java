@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.Scope;
@@ -46,7 +47,9 @@ import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,6 +59,7 @@ import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -105,12 +109,16 @@ public class SyncManagerTest {
     @Mock
     private DomainReadinessService domainReadinessService;
 
+    @Mock
+    private EntryPointManager entryPointManager;
+
     @Before
     public void before() throws Exception {
         lenient().when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(), META_ENVIRONMENTS, new HashSet<>()));
         lenient().when(environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id", String.class, DEFAULT_DATA_PLANE_ID)).thenReturn(DEFAULT_DATA_PLANE_ID);
         syncManager.afterPropertiesSet();
         syncManager.setDeploymentScheduler(Schedulers.trampoline());
+        lenient().when(entryPointManager.ensureEnvironmentLoaded(any())).thenReturn(Completable.complete());
         lenient().when(securityDomainManager.deployReactive(any())).thenReturn(Completable.complete());
         lenient().when(securityDomainManager.updateReactive(any())).thenReturn(Completable.complete());
         lenient().when(securityDomainManager.undeployReactive(anyString())).thenReturn(Completable.complete());
@@ -292,6 +300,76 @@ public class SyncManagerTest {
         verify(securityDomainManager, never()).undeployReactive(domain.getId());
         verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.INITIALIZING));
         verify(domainReadinessService, times(2)).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
+    }
+
+    @Test
+    public void init_declares_the_environment_of_every_deployed_domain() {
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
+
+        syncManager.refresh();
+
+        verify(entryPointManager).ensureEnvironmentLoaded("env-1");
+    }
+
+    @Test
+    public void init_loadsTheEnvironmentEntrypoints_beforeDeployingTheDomain() {
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
+
+        List<String> subscribed = new ArrayList<>();
+        when(entryPointManager.ensureEnvironmentLoaded("env-1")).thenReturn(Completable.fromRunnable(() -> subscribed.add("entrypoints")));
+        when(securityDomainManager.deployReactive(domain)).thenReturn(Completable.fromRunnable(() -> subscribed.add("domain")));
+
+        syncManager.refresh();
+
+        assertEquals(List.of("entrypoints", "domain"), subscribed);
+    }
+
+    @Test
+    public void init_entrypointLoadFailure_stillDeploysTheDomain() {
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
+        when(entryPointManager.ensureEnvironmentLoaded("env-1")).thenReturn(Completable.error(new RuntimeException("database unavailable")));
+
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(1)).deployReactive(domain);
+        verify(domainReadinessService).updateDomainStatus(eq("domain-1"), eq(DomainState.Status.DEPLOYED));
+    }
+
+    @Test
+    public void test_declares_the_environment_of_a_domain_deployed_from_an_event() {
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        syncManager.refresh();
+
+        Event event = new Event();
+        event.setType(Type.DOMAIN);
+        event.setPayload(new Payload("domain-1", ReferenceType.DOMAIN, "domain-1", Action.CREATE));
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.just(event));
+        when(domainRepository.findById("domain-1")).thenReturn(Maybe.just(domain));
+
+        syncManager.refresh();
+
+        verify(entryPointManager).ensureEnvironmentLoaded("env-1");
     }
 
     @Test
