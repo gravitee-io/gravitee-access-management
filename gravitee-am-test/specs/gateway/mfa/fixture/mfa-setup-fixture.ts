@@ -19,7 +19,7 @@ import { buildCreateAndTestUser } from '@management-commands/user-management-com
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { createDevice } from '@management-commands/device-management-commands';e } from '@utils-commands/misc';
+import { createDevice } from '@management-commands/device-management-commands';
 import { expect } from '@jest/globals';
 
 export interface Domain {
