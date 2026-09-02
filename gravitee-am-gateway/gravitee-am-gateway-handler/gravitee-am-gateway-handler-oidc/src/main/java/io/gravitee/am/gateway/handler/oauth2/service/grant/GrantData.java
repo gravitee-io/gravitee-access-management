@@ -50,7 +50,6 @@ public sealed interface GrantData permits
      * @param actorTokenId the ID of the actor token (only for delegation)
      * @param actorTokenType the type of the actor token (only for delegation)
      * @param actorInfo actor information for delegation scenarios (null for impersonation)
-     * @param mappedClaims claims resolved from the declarative claims mapper
      */
     record TokenExchangeData(
             String issuedTokenType,
@@ -60,7 +59,6 @@ public sealed interface GrantData permits
             String actorTokenId,
             String actorTokenType,
             ActorTokenInfo actorInfo,
-            Map<String, Object> mappedClaims,
             Set<String> allParentJtis
     ) implements GrantData {
         public boolean isDelegation() {

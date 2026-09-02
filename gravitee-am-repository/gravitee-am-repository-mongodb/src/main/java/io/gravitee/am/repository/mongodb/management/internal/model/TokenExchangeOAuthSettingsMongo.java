@@ -18,9 +18,6 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * MongoDB representation of {@link TokenExchangeOAuthSettings}.
  */
@@ -28,7 +25,6 @@ public class TokenExchangeOAuthSettingsMongo {
 
     private boolean inherited = true;
     private String scopeHandling;
-    private List<TokenExchangeClaimMappingMongo> claimMappings;
 
     public boolean isInherited() {
         return inherited;
@@ -46,14 +42,6 @@ public class TokenExchangeOAuthSettingsMongo {
         this.scopeHandling = scopeHandling;
     }
 
-    public List<TokenExchangeClaimMappingMongo> getClaimMappings() {
-        return claimMappings;
-    }
-
-    public void setClaimMappings(List<TokenExchangeClaimMappingMongo> claimMappings) {
-        this.claimMappings = claimMappings;
-    }
-
     /**
      * Convert this MongoDB representation to the domain model.
      */
@@ -62,11 +50,6 @@ public class TokenExchangeOAuthSettingsMongo {
         settings.setInherited(isInherited());
         if (getScopeHandling() != null) {
             settings.setScopeHandling(TokenExchangeScopeHandling.valueOf(getScopeHandling()));
-        }
-        if (getClaimMappings() != null) {
-            settings.setClaimMappings(getClaimMappings().stream()
-                    .map(TokenExchangeClaimMappingMongo::convert)
-                    .collect(Collectors.toList()));
         }
         return settings;
     }
@@ -82,11 +65,6 @@ public class TokenExchangeOAuthSettingsMongo {
         mongo.setInherited(settings.isInherited());
         if (settings.getScopeHandling() != null) {
             mongo.setScopeHandling(settings.getScopeHandling().name());
-        }
-        if (settings.getClaimMappings() != null) {
-            mongo.setClaimMappings(settings.getClaimMappings().stream()
-                    .map(TokenExchangeClaimMappingMongo::convert)
-                    .collect(Collectors.toList()));
         }
         return mongo;
     }

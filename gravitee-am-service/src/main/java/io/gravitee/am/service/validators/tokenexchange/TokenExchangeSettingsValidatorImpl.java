@@ -20,7 +20,6 @@ import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
-import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,13 +39,10 @@ import java.util.Set;
 public class TokenExchangeSettingsValidatorImpl implements TokenExchangeSettingsValidator {
 
     private final int trustedIssuersMaxCount;
-    private final TokenExchangeClaimMappingsValidator claimMappingsValidator;
 
     public TokenExchangeSettingsValidatorImpl(
-            @Value("${domain.tokenExchange.trustedIssuers.maxCount:5}") int trustedIssuersMaxCount,
-            TokenExchangeClaimMappingsValidator claimMappingsValidator) {
+            @Value("${domain.tokenExchange.trustedIssuers.maxCount:5}") int trustedIssuersMaxCount) {
         this.trustedIssuersMaxCount = trustedIssuersMaxCount;
-        this.claimMappingsValidator = claimMappingsValidator;
     }
 
     @Override
@@ -73,14 +69,6 @@ public class TokenExchangeSettingsValidatorImpl implements TokenExchangeSettings
                     || settings.getMaxDelegationDepth() > TokenExchangeSettings.MAX_MAX_DELEGATION_DEPTH)) {
             return error("Max delegation depth must be between "
                     + TokenExchangeSettings.MIN_MAX_DELEGATION_DEPTH + " and " + TokenExchangeSettings.MAX_MAX_DELEGATION_DEPTH);
-        }
-
-        TokenExchangeOAuthSettings oauthSettings = settings.getTokenExchangeOAuthSettings();
-        if (oauthSettings != null) {
-            var mapperValidation = claimMappingsValidator.validate(oauthSettings.getClaimMappings());
-            if (mapperValidation.isInvalid()) {
-                return error(mapperValidation.describe());
-            }
         }
 
         return validateTrustedIssuers(settings.getTrustedIssuers());

@@ -19,9 +19,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Token exchange OAuth settings, with optional inheritance from domain defaults.
  */
@@ -36,19 +33,12 @@ public class TokenExchangeOAuthSettings {
             "issued token to a subset of the original scopes.",
             defaultValue = "DOWNSCOPING")
     private TokenExchangeScopeHandling scopeHandling = TokenExchangeScopeHandling.DOWNSCOPING;
-    @Schema(description = "Claims copied from the validated subject or actor token onto the issued token. " +
-            "A claim that is absent from its source token is skipped.")
-    private List<TokenExchangeClaimMapping> claimMappings;
 
     public TokenExchangeOAuthSettings() {}
 
     public TokenExchangeOAuthSettings(TokenExchangeOAuthSettings other) {
         this.inherited = other.inherited;
         this.scopeHandling = other.scopeHandling;
-        if (other.claimMappings != null) {
-            this.claimMappings = new ArrayList<>();
-            other.claimMappings.forEach(mapping -> this.claimMappings.add(new TokenExchangeClaimMapping(mapping)));
-        }
     }
 
     public boolean isInherited() {
@@ -65,14 +55,6 @@ public class TokenExchangeOAuthSettings {
 
     public void setScopeHandling(TokenExchangeScopeHandling scopeHandling) {
         this.scopeHandling = scopeHandling;
-    }
-
-    public List<TokenExchangeClaimMapping> getClaimMappings() {
-        return claimMappings;
-    }
-
-    public void setClaimMappings(List<TokenExchangeClaimMapping> claimMappings) {
-        this.claimMappings = claimMappings;
     }
 
     /**

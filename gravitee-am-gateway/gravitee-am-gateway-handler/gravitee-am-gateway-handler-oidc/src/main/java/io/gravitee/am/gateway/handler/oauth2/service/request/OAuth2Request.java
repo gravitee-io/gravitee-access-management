@@ -174,12 +174,6 @@ public class OAuth2Request extends BaseRequest {
     private Map<String, Object> actClaim;
 
     /**
-     * Token Exchange (RFC 8693) - claims resolved from the declarative claims mapper,
-     * copied onto the issued token before the custom claim enhancement
-     */
-    private Map<String, Object> tokenExchangeMappedClaims;
-
-    /**
      * Token Exchange (RFC 8693) - indicates if this is a delegation scenario
      */
     private boolean delegation;
@@ -227,7 +221,6 @@ public class OAuth2Request extends BaseRequest {
         this.issuedTokenType = other.issuedTokenType;
         this.exchangeExpiration = other.exchangeExpiration;
         this.actClaim = other.actClaim;
-        this.tokenExchangeMappedClaims = other.tokenExchangeMappedClaims;
         this.delegation = other.delegation;
         this.subjectTokenId = other.subjectTokenId;
         this.subjectTokenType = other.subjectTokenType;

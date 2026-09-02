@@ -17,10 +17,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
+import { TokenClaim } from '@management-models/TokenClaim';
 import { setup } from '../../test-fixture';
 import {
   ACCESS_TOKEN_TYPE,
-  ClaimMapping,
   setupTokenExchangeFixture,
   TOKEN_EXCHANGE_GRANT,
   TOKEN_EXCHANGE_TEST,
@@ -32,8 +32,13 @@ setup(240000);
 
 const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
 
-const SUBJECT_MAPPING: ClaimMapping[] = [{ source: 'SUBJECT_TOKEN', sourceClaim: 'jti', tokenClaim: 'mapped_subject_jti' }];
-const EXTERNAL_MAPPING: ClaimMapping[] = [{ source: 'SUBJECT_TOKEN', sourceClaim: 'claim_id', tokenClaim: 'business_claim_id' }];
+const SUBJECT_CLAIMS = "#context.attributes['token_exchange']['subject']['subject_token_claims']";
+
+/** Custom claims copying one subject token claim onto the issued token, so a refused token can be shown to contribute nothing. */
+const SUBJECT_JTI_CLAIM: TokenClaim[] = [{ claimName: 'subject_jti', claimValue: `{${SUBJECT_CLAIMS}['jti']}`, tokenType: 'ACCESS_TOKEN' }];
+const EXTERNAL_CLAIM: TokenClaim[] = [
+  { claimName: 'business_claim_id', claimValue: `{${SUBJECT_CLAIMS}['claim_id']}`, tokenType: 'ACCESS_TOKEN' },
+];
 
 const FORGED_JTI = 'forged-jti-value';
 
@@ -54,7 +59,7 @@ const unsign = (token: string): string => {
 
 let defaultFixture: TokenExchangeFixture;
 let delegationFixture: TokenExchangeFixture;
-let mapperFixture: TokenExchangeFixture;
+let subjectClaimFixture: TokenExchangeFixture;
 let externalFixture: TrustedIssuerFixture;
 
 beforeAll(async () => {
@@ -74,18 +79,18 @@ beforeAll(async () => {
 
   // a domain that sources a claim from the subject token, so a refused token can be shown to
   // contribute nothing
-  mapperFixture = await setupTokenExchangeFixture({
-    domainNamePrefix: 'token-exchange-mapper',
+  subjectClaimFixture = await setupTokenExchangeFixture({
+    domainNamePrefix: 'token-exchange-subject-claim',
     domainDescription: 'Token exchange sourcing a claim from the subject token',
-    clientName: 'token-exchange-mapper-client',
+    clientName: 'token-exchange-subject-claim-client',
     allowImpersonation: true,
     allowDelegation: false,
-    claimMappings: SUBJECT_MAPPING,
+    tokenCustomClaims: SUBJECT_JTI_CLAIM,
   });
 
   // the externally signed case, where the expiry of someone else's JWT is the only thing between
   // their claims and the issued token
-  externalFixture = await setupTrustedIssuerFixture({ claimMappings: EXTERNAL_MAPPING });
+  externalFixture = await setupTrustedIssuerFixture({ tokenCustomClaims: EXTERNAL_CLAIM });
 });
 
 afterAll(async () => {
@@ -95,7 +100,7 @@ afterAll(async () => {
   if (delegationFixture) {
     await delegationFixture.cleanup();
   }
-  await mapperFixture?.cleanup();
+  await subjectClaimFixture?.cleanup();
   await externalFixture?.cleanup();
 });
 
@@ -170,11 +175,11 @@ describe('Token Exchange with invalid tokens', () => {
     expect(response.body.error_description).toBe('The presented token is invalid');
   });
 
-  it('should refuse a subject token whose mapped claim was edited after signing', async () => {
-    const { accessToken: subjectToken } = await mapperFixture.obtainSubjectToken();
+  it('should refuse a subject token whose copied claim was edited after signing', async () => {
+    const { accessToken: subjectToken } = await subjectClaimFixture.obtainSubjectToken();
 
-    const genuine = await mapperFixture.exchange(subjectToken);
-    expect(parseJwt(genuine.access_token).payload['mapped_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
+    const genuine = await subjectClaimFixture.exchange(subjectToken);
+    expect(parseJwt(genuine.access_token).payload['subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
 
     // unlike the tampered-signature cases above, this carries the ORIGINAL signature - correct
     // length and encoding - so it reaches the cryptographic comparison rather than failing on shape
@@ -182,7 +187,7 @@ describe('Token Exchange with invalid tokens', () => {
     expect(parseJwt(forged).payload['jti']).toEqual(FORGED_JTI);
     expect(forged.split('.')[2]).toEqual(subjectToken.split('.')[2]);
 
-    const response = await rawExchange(mapperFixture, forged).expect(400);
+    const response = await rawExchange(subjectClaimFixture, forged).expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
     expect(response.body.error_description).toEqual('The presented token is invalid');
@@ -190,31 +195,31 @@ describe('Token Exchange with invalid tokens', () => {
   });
 
   it('should refuse an unsigned subject token declaring alg none', async () => {
-    const { accessToken: subjectToken } = await mapperFixture.obtainSubjectToken();
+    const { accessToken: subjectToken } = await subjectClaimFixture.obtainSubjectToken();
 
-    const genuine = await mapperFixture.exchange(subjectToken);
-    expect(parseJwt(genuine.access_token).payload['mapped_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
+    const genuine = await subjectClaimFixture.exchange(subjectToken);
+    expect(parseJwt(genuine.access_token).payload['subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
 
     const unsigned = unsign(forgeClaim(subjectToken, 'jti', FORGED_JTI));
     expect(parseJwt(unsigned).header['alg']).toEqual('none');
     expect(parseJwt(unsigned).payload['jti']).toEqual(FORGED_JTI);
 
-    const response = await rawExchange(mapperFixture, unsigned).expect(400);
+    const response = await rawExchange(subjectClaimFixture, unsigned).expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
     expect(response.body).not.toHaveProperty('access_token');
   });
 
   it('should refuse a subject token minted by another domain', async () => {
-    const { accessToken: ownToken } = await mapperFixture.obtainSubjectToken();
+    const { accessToken: ownToken } = await subjectClaimFixture.obtainSubjectToken();
     const { accessToken: foreignToken } = await defaultFixture.obtainSubjectToken();
 
-    const genuine = await mapperFixture.exchange(ownToken);
-    expect(parseJwt(genuine.access_token).payload['mapped_subject_jti']).toEqual(parseJwt(ownToken).payload['jti']);
+    const genuine = await subjectClaimFixture.exchange(ownToken);
+    expect(parseJwt(genuine.access_token).payload['subject_jti']).toEqual(parseJwt(ownToken).payload['jti']);
 
     // correctly signed, but by another domain's certificate: a valid signature is not enough,
     // it has to be valid under the trust anchor of the domain being asked
-    const response = await rawExchange(mapperFixture, foreignToken).expect(400);
+    const response = await rawExchange(subjectClaimFixture, foreignToken).expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
     expect(response.body).not.toHaveProperty('access_token');

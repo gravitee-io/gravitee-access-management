@@ -254,7 +254,6 @@ models/Tag.ts
 models/Theme.ts
 models/ThemeEntity.ts
 models/TokenClaim.ts
-models/TokenExchangeClaimMapping.ts
 models/TokenExchangeOAuthSettings.ts
 models/TokenExchangeSettings.ts
 models/TrustDomain.ts

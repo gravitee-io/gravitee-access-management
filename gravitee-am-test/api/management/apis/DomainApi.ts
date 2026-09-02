@@ -4945,7 +4945,7 @@ export class DomainApi extends runtime.BaseAPI {
 
   /**
    * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
-   * Register a SPIFFE trust domain on the security domain
+   * Register a trust domain on the security domain
    */
   async createTrustDomainRaw(
     requestParameters: CreateTrustDomainRequest,
@@ -5012,7 +5012,7 @@ export class DomainApi extends runtime.BaseAPI {
 
   /**
    * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
-   * Register a SPIFFE trust domain on the security domain
+   * Register a trust domain on the security domain
    */
   async createTrustDomain(
     requestParameters: CreateTrustDomainRequest,

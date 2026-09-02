@@ -79,7 +79,6 @@ public class TokenExchangeStrategy implements GrantStrategy {
                         result.actorTokenId(),
                         result.actorTokenType(),
                         result.actorInfo(),
-                        result.mappedClaims(),
                         result.jtisOfParents(),
                         result.buildExecutionContext()
                 ));

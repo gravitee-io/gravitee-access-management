@@ -29,10 +29,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.KeyRetrievalSettings;
-import io.gravitee.am.model.TokenExchangeSettings;
-import io.gravitee.am.model.application.TokenExchangeClaimMapping;
-import io.gravitee.am.model.application.TokenExchangeClaimSource;
-import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -173,16 +169,6 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         certificateSettings.setFallbackCertificateKey("fallback-cert-key");
         domain.setCertificateSettings(certificateSettings);
 
-        TokenExchangeOAuthSettings tokenExchangeOAuthSettings = new TokenExchangeOAuthSettings();
-        tokenExchangeOAuthSettings.setInherited(false);
-        tokenExchangeOAuthSettings.setClaimMappings(List.of(
-                claimMapping(TokenExchangeClaimSource.SUBJECT_TOKEN, "claim_id", "business_claim_id"),
-                claimMapping(TokenExchangeClaimSource.ACTOR_TOKEN, "email", "agent_email")));
-        TokenExchangeSettings tokenExchangeSettings = new TokenExchangeSettings();
-        tokenExchangeSettings.setEnabled(true);
-        tokenExchangeSettings.setTokenExchangeOAuthSettings(tokenExchangeOAuthSettings);
-        domain.setTokenExchangeSettings(tokenExchangeSettings);
-
         KeyRetrievalSettings keyRetrievalSettings = new KeyRetrievalSettings();
         keyRetrievalSettings.setAllowPrivateIpAddress(true);
         keyRetrievalSettings.setFetchTimeoutMs(1234);
@@ -197,14 +183,6 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setSaml(saml);
 
         return domain;
-    }
-
-    private static TokenExchangeClaimMapping claimMapping(TokenExchangeClaimSource source, String sourceClaim, String tokenClaim) {
-        TokenExchangeClaimMapping mapping = new TokenExchangeClaimMapping();
-        mapping.setSource(source);
-        mapping.setSourceClaim(sourceClaim);
-        mapping.setTokenClaim(tokenClaim);
-        return mapping;
     }
 
     @Test
@@ -222,29 +200,6 @@ public class DomainRepositoryTest extends AbstractManagementTest {
                     && settings.getFetchTimeoutMs() == 1234
                     && settings.getCacheMaxEntries() == 7
                     && settings.getMaxResponseSizeKb() == KeyRetrievalSettings.DEFAULT_MAX_RESPONSE_SIZE_KB;
-        });
-    }
-
-    @Test
-    public void testTokenExchangeClaimMappingsRoundTrip() {
-        Domain domainCreated = domainRepository.create(initDomain()).blockingGet();
-
-        TestObserver<Domain> testObserver = domainRepository.findById(domainCreated.getId()).test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(d -> {
-            var oauthSettings = d.getTokenExchangeSettings().getTokenExchangeOAuthSettings();
-            var mappings = oauthSettings.getClaimMappings();
-            return !oauthSettings.isInherited()
-                    && mappings != null
-                    && mappings.size() == 2
-                    && mappings.get(0).getSource() == TokenExchangeClaimSource.SUBJECT_TOKEN
-                    && "claim_id".equals(mappings.get(0).getSourceClaim())
-                    && "business_claim_id".equals(mappings.get(0).getTokenClaim())
-                    && mappings.get(1).getSource() == TokenExchangeClaimSource.ACTOR_TOKEN
-                    && "email".equals(mappings.get(1).getSourceClaim())
-                    && "agent_email".equals(mappings.get(1).getTokenClaim());
         });
     }
 

@@ -104,7 +104,6 @@ public record TokenCreationRequest(
             String actorTokenId,
             String actorTokenType,
             ActorTokenInfo actorInfo,
-            Map<String, Object> mappedClaims,
             Set<String> allParentJtis,
             Map<String, Object> tokenExchangeExecutionContext) {
 
@@ -113,7 +112,7 @@ public record TokenCreationRequest(
                 GrantType.TOKEN_EXCHANGE,
                 original.getScopes(),
                 user,
-                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, mappedClaims, allParentJtis),
+                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, allParentJtis),
                 false, // token exchange doesn't support refresh
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
