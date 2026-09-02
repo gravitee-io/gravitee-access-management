@@ -40,22 +40,16 @@ import static io.gravitee.am.common.factor.FactorType.FIDO2;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
-<<<<<<< HEAD
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_RESEND_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_RESEND_ENABLED_KEY;
-=======
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY;
->>>>>>> d6794c5 (feat(mfa): let users return to the enrollment page from the verify page (#8497))
 import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
-<<<<<<< HEAD
-import lombok.CustomLog;
-=======
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
->>>>>>> d6794c5 (feat(mfa): let users return to the enrollment page from the verify page (#8497))
+import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

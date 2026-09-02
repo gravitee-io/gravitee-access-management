@@ -36,7 +36,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.Session;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
@@ -308,7 +307,7 @@ public class MFAEnrollEndpointTest extends RxWebTestBase {
                     FactorSettings factorSettings = new FactorSettings();
                     factorSettings.setApplicationFactors(List.of(getApplicationFactorSettings(FACTOR_ID)));
                     client.setFactorSettings(factorSettings);
-                    ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+                    setUser(ctx, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User()));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     sessionSetup.accept(ctx.session());
                     doAnswer(answer -> {

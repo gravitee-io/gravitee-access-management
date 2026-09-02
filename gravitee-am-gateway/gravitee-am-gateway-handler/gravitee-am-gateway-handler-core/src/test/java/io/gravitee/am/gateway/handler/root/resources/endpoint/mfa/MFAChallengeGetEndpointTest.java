@@ -379,20 +379,20 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldOfferBackToEnroll_whenFactorIsPendingActivation() {
+    public void shouldOfferBackToEnroll_whenFactorIsPendingActivation() throws Exception {
         Map<String, Object> templateData = renderChallengeForFactorWithStatus(FactorStatus.PENDING_ACTIVATION);
 
         assertEquals("/my-domain/mfa/enroll", templateData.get(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
     }
 
     @Test
-    public void shouldNotOfferBackToEnroll_whenFactorIsActivated() {
+    public void shouldNotOfferBackToEnroll_whenFactorIsActivated() throws Exception {
         Map<String, Object> templateData = renderChallengeForFactorWithStatus(FactorStatus.ACTIVATED);
 
         assertFalse(templateData.containsKey(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
     }
 
-    private Map<String, Object> renderChallengeForFactorWithStatus(FactorStatus status) {
+    private Map<String, Object> renderChallengeForFactorWithStatus(FactorStatus status) throws Exception {
         EnrolledFactor enrolledFactor = new EnrolledFactor();
         enrolledFactor.setFactorId("factorId");
         enrolledFactor.setStatus(status);
@@ -421,8 +421,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
         spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
         spyRoutingContext.put(UriBuilderRequest.CONTEXT_PATH, "/my-domain");
 
-        mfaChallengeGetEndpoint.handle(spyRoutingContext);
-        awaitResponseEnd(spyRoutingContext);
+        handleAndAwaitEnd(spyRoutingContext);
 
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(templateEngine).render(captor.capture(), any());

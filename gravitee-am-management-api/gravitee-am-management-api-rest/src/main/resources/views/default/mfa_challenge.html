@@ -78,14 +78,13 @@
             </div>
         </form>
 
-<<<<<<< HEAD
         <div th:if="${mfaChallengeResendEnabled}" id="mfa-resend-container" class="form">
             <button type="button" id="mfa-resend-button" class="button secondary" th:text="${factor.factorType.type == 'CALL' ? #messages.msg('mfa_challenge.button.call.resend') : #messages.msg('mfa_challenge.button.resend')}"></button>
             <div id="mfa-resend-message" class="item" style="display: block; visibility: hidden"></div>
-=======
+        </div>
+
         <div th:if="${mfaEnrollBackAction}" class="section">
             <a id="backToEnroll" th:href="${mfaEnrollBackAction}"><span class="icons">arrow_back</span><span th:text="#{mfa_challenge.enroll.back}"/></a>
->>>>>>> d6794c5 (feat(mfa): let users return to the enrollment page from the verify page (#8497))
         </div>
 
         <div th:if="${mfaAlternativesEnabled}" class="section">
