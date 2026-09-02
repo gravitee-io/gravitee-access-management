@@ -30,6 +30,7 @@ import io.gravitee.am.monitoring.DomainState;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.service.EntryPointManager;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Completable;
@@ -117,6 +118,10 @@ public class SyncManager implements InitializingBean, DisposableBean {
 
     @Autowired
     private DomainReadinessService domainReadinessService;
+
+    @Lazy
+    @Autowired
+    private EntryPointManager entryPointManager;
 
     private Optional<List<String>> shardingTags;
 
@@ -266,7 +271,18 @@ public class SyncManager implements InitializingBean, DisposableBean {
     }
 
     private Completable deployOne(Domain domain) {
-        return securityDomainManager.deployReactive(domain);
+        return warmEntrypointCache(domain).andThen(securityDomainManager.deployReactive(domain));
+    }
+
+    private Completable warmEntrypointCache(Domain domain) {
+        Completable warm = entryPointManager.ensureEnvironmentLoaded(domain.getReferenceId());
+        if (eventsTimeOut > 0) {
+            warm = warm.timeout(eventsTimeOut, TimeUnit.MILLISECONDS);
+        }
+        return warm
+                .doOnError(error -> log.warn("Domain {} is deploying without the entrypoints of environment {}", domain.getId(), domain.getReferenceId(), error))
+                .onErrorComplete()
+                .observeOn(deploymentScheduler);
     }
 
     private Completable processEvents(long from, long to) {
@@ -347,7 +363,7 @@ public class SyncManager implements InitializingBean, DisposableBean {
                                     Completable updateReadiness = domain.isEnabled()
                                             ? Completable.fromRunnable(() -> domainReadinessService.updateDomainStatus(domain.getId(), DomainState.Status.DEPLOYED))
                                             : Completable.fromRunnable(() -> domainReadinessService.removeDomain(domain.getId()));
-                                    return deployOrUpdate.andThen(updateReadiness);
+                                    return warmEntrypointCache(domain).andThen(deployOrUpdate).andThen(updateReadiness);
                                 }));
             }
             case DELETE -> Completable.fromRunnable(() -> domainReadinessService.updateDomainStatus(domainId, DomainState.Status.REMOVING))

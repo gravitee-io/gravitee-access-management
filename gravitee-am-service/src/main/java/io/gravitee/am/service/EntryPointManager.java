@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Entrypoint;
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.common.service.Service;
 import io.gravitee.node.logging.NodeLoggerFactory;
 import jakarta.annotation.Nullable;
@@ -56,6 +57,12 @@ public interface EntryPointManager extends Service<EntryPointManager> {
         List<Entrypoint> overriding = all.stream().filter(entrypoint -> !entrypoint.isDefaultEntrypoint()).toList();
         return overriding.isEmpty() ? all : overriding;
     }
+
+    /**
+     * Loads an environment's entrypoints when the cache holds none for it, completing once they are
+     * cached. Read once per environment, and concurrent callers share the one read.
+     */
+    Completable ensureEnvironmentLoaded(String environmentId);
 
     /**
      * The single entrypoint a user-facing URL should be built from for the given environment.

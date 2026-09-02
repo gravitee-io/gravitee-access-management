@@ -38,9 +38,7 @@ afterAll(async () => {
 });
 
 // These specs share one environment/domain and run in order (jest --runInBand): the initial access
-// points are asserted first, then re-synced to a new set. Each ENVIRONMENT command deletes-and-recreates
-// the environment's entrypoints, and the gateway cache refreshes off the sync event without redeploying
-// the domain.
+// points are asserted first, then re-synced to a new set.
 describe('Cloud entrypoint cache (Cockpit access points -> gateway)', () => {
   it("surfaces the environment's Cockpit access points as cached entrypoints on the domain state", async () => {
     const state = await retryUntil(
@@ -73,5 +71,12 @@ describe('Cloud entrypoint cache (Cockpit access points -> gateway)', () => {
 
     expect(cached).toEqual([...expectedUrls].sort());
     expect(cached).not.toContain(droppedUrl);
+  });
+
+  it('holds exactly what the management API stores for the environment', async () => {
+    const stored = await fixture.storedEntrypointUrls();
+
+    expect(stored.length).toBeGreaterThan(0);
+    expect(await fixture.cachedEntrypointUrls()).toEqual(stored);
   });
 });

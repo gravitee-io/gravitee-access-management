@@ -68,6 +68,11 @@ const dataPlaneStore = () =>
 export interface CloudSharedFixture extends CloudOrganizationFixture {
   /** Id of the data plane linked to the shared environment, and the one the gateway is pinned to. */
   dataPlaneId: string;
+  /**
+   * Puts the shared environment back on the access point this fixture provisioned.
+   * The cloud way to clean up.
+   */
+  restoreAccessPoints: () => Promise<void>;
 }
 
 let cached: Promise<CloudSharedFixture> | null = null;
@@ -130,6 +135,8 @@ const provision = async (): Promise<CloudSharedFixture> => {
       accessPoints: [{ target: 'GATEWAY', host: `${ENVIRONMENT_ID}.example.com` }],
     });
 
+  // Issued before the data plane below exists, and not replayed after it: the entrypoints created here
+  // have to reach the gateway on their own.
   await syncEnvironment();
   const grantEnvironmentOwnership = (environmentId: string): Promise<CockpitQueueEntry> =>
     awaitCommand('MEMBERSHIP', {
@@ -165,10 +172,6 @@ const provision = async (): Promise<CloudSharedFixture> => {
     throw new Error(`Failed to provision shared data plane: status=${dpResponse.status} body=${dpResponse.raw}`);
   }
 
-  // The ENVIRONMENT command above created the entrypoints while the environment had no linked plane,
-  // so those events went to `default`. Replay it now the link exists and they route to DATA_PLANE_ID.
-  await syncEnvironment();
-
   const accessToken = await cockpitSignIn({ sub: USER_ID, organizationId: ORGANIZATION_ID, environmentId: ENVIRONMENT_ID });
 
   return {
@@ -177,6 +180,7 @@ const provision = async (): Promise<CloudSharedFixture> => {
     userId: USER_ID,
     accessToken,
     dataPlaneId: DATA_PLANE_ID,
+    restoreAccessPoints: () => syncEnvironment().then(() => undefined),
     resync,
     grantEnvironmentOwnership,
     // Nothing to reset: every spec sharing this organization owns its own state and clears it itself.

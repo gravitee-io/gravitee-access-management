@@ -18,11 +18,14 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.service.model.DesiredEntrypoint;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -43,6 +46,12 @@ public interface EntrypointService {
     Single<Entrypoint> create(String organizationId, NewEntrypoint entrypoint, boolean defaultEntrypoint, User principal);
 
     Flowable<Entrypoint> createDefaults(Organization organization);
+
+    /**
+     * Reconciles the environment's entrypoints against {@code desired}, deleting the stored ones it no
+     * longer lists. Idempotent: re-stating the same set leaves every row, and its id, untouched.
+     */
+    Completable syncForEnvironment(String organizationId, String environmentId, List<DesiredEntrypoint> desired, User principal);
 
     Single<Entrypoint> update(String entrypointId, String organizationId, UpdateEntrypoint entrypoint, User principal);
 
