@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneE
 import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
+import io.gravitee.am.management.handlers.internalapi.endpoints.TelemetryEndpoint;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.management.http.endpoint.ManagementEndpointManager;
 import lombok.CustomLog;
@@ -48,6 +49,9 @@ public class InternalApiService extends AbstractService<InternalApiService> {
     @Autowired
     private DeleteDataPlaneEndpoint deleteDataPlaneEndpoint;
 
+    @Autowired
+    private TelemetryEndpoint telemetryEndpoint;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -55,6 +59,7 @@ public class InternalApiService extends AbstractService<InternalApiService> {
         endpointManager.register(listDataPlanesEndpoint);
         endpointManager.register(getDataPlaneEndpoint);
         endpointManager.register(deleteDataPlaneEndpoint);
+        endpointManager.register(telemetryEndpoint);
         log.info("Internal API endpoints have been registered");
     }
 }

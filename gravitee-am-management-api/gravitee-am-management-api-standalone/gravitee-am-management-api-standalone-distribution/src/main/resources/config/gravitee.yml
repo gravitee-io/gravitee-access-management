@@ -590,6 +590,28 @@ gateway:
 #  api:
 #    url: http://localhost:8093/management
 
+# Anonymous usage telemetry.
+# The management node sends a daily usage summary and a weekly domain report to Gravitee.
+# The reports carry counts, feature flags, plugin identifiers and a random installation UUID.
+# They never carry a host name, an IP address, a URL, a domain name or any user data.
+# Read exactly what this node would send at GET /_node/telemetry on the technical API port.
+telemetry:
+  enabled: true                             # set to false to turn both reports off (default: true)
+#  endpoint: https://telemetry.gravitee.io/v1/am   # collector base URL; /reports and /domains are appended
+#  label: ""                                 # free text, 64 characters at most. A set label identifies the reports
+#  initialDelay: 600000                      # delay in ms before the first summary after start (default: 10 minutes)
+#  timeout: 10000                            # connect plus response timeout in ms per request (default: 10s)
+#  spreadMinutes: 60                         # random delay in minutes added to each run to spread the global load
+#  summary:
+#    cron: "0 0 4 * * *"                     # daily summary schedule (default: 04:00 node time)
+#  domains:
+#    enabled: true                           # turns the domain pass off while the summary stays on
+#    cron: "0 0 3 * * SUN"                   # weekly domain pass schedule (default: Sunday 03:00 node time)
+#    batchSize: 100                          # domains per request
+#    batchDelay: 1000                        # pause in ms between two batches, keeps the database load flat
+#    concurrency: 4                          # parallel count queries during enrichment
+#    maxDuration: 3600000                    # the pass stops when this budget in ms expires (default: 1 hour)
+
 # Beta subject to change
 alerts:
 #  risk_assessment:

@@ -21,6 +21,10 @@ import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneE
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
+import io.gravitee.am.management.handlers.internalapi.endpoints.TelemetryEndpoint;
+import io.gravitee.am.management.service.telemetry.DomainPassRunner;
+import io.gravitee.am.management.service.telemetry.SummaryReportCollector;
+import io.gravitee.am.service.InstallationService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
@@ -59,6 +63,14 @@ public class InternalApiConfiguration {
                                                            ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
                                                            ObjectMapper objectMapper) {
         return new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, dataPlaneRegistry, provisionedDataPlaneLoader, objectMapper);
+    }
+
+    @Bean
+    public TelemetryEndpoint telemetryEndpoint(SummaryReportCollector summaryReportCollector,
+                                               DomainPassRunner domainPassRunner,
+                                               InstallationService installationService,
+                                               ObjectMapper objectMapper) {
+        return new TelemetryEndpoint(summaryReportCollector, domainPassRunner, installationService, objectMapper);
     }
 
     @Bean

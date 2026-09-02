@@ -28,6 +28,7 @@ import io.gravitee.am.management.service.impl.ProtectedResourceSecretManager;
 import io.gravitee.am.management.service.impl.ProvisionedDataPlaneManager;
 import io.gravitee.am.management.service.spring.ManagementUpgraderConfiguration;
 import io.gravitee.am.management.service.tasks.TasksLoader;
+import io.gravitee.am.management.service.telemetry.TelemetryService;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.service.EntryPointManager;
@@ -100,6 +101,7 @@ public class ManagementNode extends JettyNode implements AmNode {
         components.add(ScheduledPurgeService.class);
         components.add(EntryPointManager.class);
         components.add(InternalApiService.class);
+        components.add(TelemetryService.class);
         return components;
     }
 }

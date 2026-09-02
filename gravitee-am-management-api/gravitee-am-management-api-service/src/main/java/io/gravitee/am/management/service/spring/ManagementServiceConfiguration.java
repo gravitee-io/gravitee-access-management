@@ -31,7 +31,8 @@ import org.springframework.context.annotation.Import;
         PlatformNotifierConfiguration.class,
         EmailNotifierConfiguration.class,
         ManagementUpgraderConfiguration.class,
-        ManagementPurgeServiceConfiguration.class})
+        ManagementPurgeServiceConfiguration.class,
+        TelemetryConfiguration.class})
 public class ManagementServiceConfiguration {
 
 }

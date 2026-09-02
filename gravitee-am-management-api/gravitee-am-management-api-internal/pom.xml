@@ -41,6 +41,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- The telemetry endpoint previews the reports built by the management service module. -->
+        <dependency>
+            <groupId>io.gravitee.am.management</groupId>
+            <artifactId>gravitee-am-management-api-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>io.gravitee.common</groupId>
             <artifactId>gravitee-common</artifactId>
