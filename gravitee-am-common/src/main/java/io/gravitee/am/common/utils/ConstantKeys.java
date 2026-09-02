@@ -111,6 +111,8 @@ public interface ConstantKeys {
 
     String MFA_ALTERNATIVES_ENABLE_KEY = "mfaAlternativesEnabled";
 
+    String MFA_ENROLL_BACK_ACTION_KEY = "mfaEnrollBackAction";
+
     String USER_MFA_ENROLLMENT = "user_mfa_enrollment";
     String MFA_FORCE_ENROLLMENT = "mfa_force_enrollment";
     String MFA_ENROLLMENT_FACTOR_ID = "factorId";
