@@ -61,14 +61,12 @@ describe('MFA enroll back navigation (AM-7609)', () => {
     const authorize = await loginUserNameAndPassword(clientId, user, user.password, false, openIdConfiguration, domain);
     expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
-    // first visit to the enroll page: read the generated secret
     const firstEnrollPage = await performGet(authorize.headers['location'], '', {
       Cookie: authorize.headers['set-cookie'],
     }).expect(200);
     const firstEnrollment = extractSharedSecret(firstEnrollPage, 'TOTP');
     expect(firstEnrollment.sharedSecret).toBeTruthy();
 
-    // enroll, which sends the user on to the challenge page
     const enrollPost = await performPost(
       firstEnrollment.action,
       '',
@@ -93,18 +91,15 @@ describe('MFA enroll back navigation (AM-7609)', () => {
       Cookie: challengeRedirect.headers['set-cookie'],
     }).expect(200);
 
-    // the challenge page offers a way back while the factor is not activated
-    const backAction = cheerio.load(challengePage.text)('a[href*="/mfa/enroll"]').attr('href');
+    const backAction = cheerio.load(challengePage.text)('#backToEnroll').attr('href');
     expect(backAction).toBeDefined();
 
-    // second visit to the enroll page: the secret the user already scanned is still there
     const secondEnrollPage = await performGet(backAction, '', {
       Cookie: challengePage.headers['set-cookie'],
     }).expect(200);
     const secondEnrollment = extractSharedSecret(secondEnrollPage, 'TOTP');
     expect(secondEnrollment.sharedSecret).toEqual(firstEnrollment.sharedSecret);
 
-    // re-enrolling with that secret still produces a code the gateway accepts
     const secondEnrollPost = await performPost(
       secondEnrollment.action,
       '',
@@ -143,7 +138,6 @@ describe('MFA enroll back navigation (AM-7609)', () => {
       },
     ).expect(302);
 
-    // MFA is satisfied, so the flow moves on to consent and then to the callback
     const consentRedirect = await performGet(verified.headers['location'], '', {
       Cookie: verified.headers['set-cookie'],
     }).expect(302);
