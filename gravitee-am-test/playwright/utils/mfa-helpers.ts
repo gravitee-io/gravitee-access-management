@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Page, expect } from '@playwright/test';
-import { AUTH_CODE_FORMAT, BRIEF_TIMEOUT, MOCK_MFA_CODE, MULTI_PHASE_TEST_TIMEOUT } from './test-constants';
+import { Locator, Page, expect } from '@playwright/test';
+import { API_USER_PASSWORD, AUTH_CODE_FORMAT, BRIEF_TIMEOUT, MOCK_MFA_CODE, MULTI_PHASE_TEST_TIMEOUT } from './test-constants';
 import { reachOAuthAuthorizationCallback } from './oauth-callback-helpers';
 import { buildAuthorizeUrl } from './webauthn-helpers';
 
@@ -86,6 +86,17 @@ export async function completeMfaChallenge(
   await page.locator('#verify').click();
 }
 
+/** The control on the MFA enrollment page for going past it without enrolling. */
+export function mfaEnrollmentSkipButton(page: Page): Locator {
+  return page.locator('button[name="user_mfa_enrollment"][value="false"]');
+}
+
+/** Asserts whether the enrollment page offers a way past it. */
+export async function expectSkipEnrollmentOffered(page: Page, offered: boolean): Promise<void> {
+  const skipButton = mfaEnrollmentSkipButton(page);
+  await (offered ? expect(skipButton).toBeVisible() : expect(skipButton).toBeHidden());
+}
+
 /**
  * Click the "Skip" button on the MFA enrollment page.
  * Only visible when enrollment is optional (forceEnrollment=false).
@@ -94,7 +105,7 @@ export async function completeMfaChallenge(
  * (the gateway may update session asynchronously after skip).
  */
 export async function skipMfaEnrollment(page: Page): Promise<void> {
-  const skipButton = page.locator('button[name="user_mfa_enrollment"][value="false"]');
+  const skipButton = mfaEnrollmentSkipButton(page);
   await expect(skipButton).toBeVisible();
   await Promise.all([
     page.waitForURL((u) => !/\/mfa\/enroll/i.test(new URL(u).pathname), {
@@ -102,6 +113,28 @@ export async function skipMfaEnrollment(page: Page): Promise<void> {
     }),
     skipButton.click(),
   ]);
+}
+
+/**
+ * Signs in from the authorize endpoint and reports where the gateway stopped, rather than assuming
+ * which page comes next. Waits for whichever of enrollment, challenge or the callback arrives, so a
+ * test can assert on the one it expects and fail on the others by name instead of by timeout.
+ */
+export async function signInAndReportMfaStop(
+  page: Page,
+  gatewayUrl: string,
+  clientId: string,
+  username: string,
+  password: string = API_USER_PASSWORD,
+): Promise<{ askedToEnroll: boolean; challenged: boolean }> {
+  await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
+  await page.waitForURL(/.*login.*/i);
+  await submitLogin(page, username, password);
+  await page.waitForURL((url) => /\/mfa\/(enroll|challenge)/i.test(url.href) || url.searchParams.has('code'));
+  return {
+    askedToEnroll: /\/mfa\/enroll/i.test(page.url()),
+    challenged: /\/mfa\/challenge/i.test(page.url()),
+  };
 }
 
 /**
