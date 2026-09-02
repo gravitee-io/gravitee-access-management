@@ -165,6 +165,14 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 ---
 
+### Telemetry PoC (branch `poc/telemetry-reporter` only)
+
+The reporter under `io.gravitee.am.management.service.telemetry` POSTs to a collector that lives
+in a separate repository: `sclarkamlab/gravitee-telemetry-collector`. That repository holds the
+JSON schemas both reports must satisfy, the Docker stack, and the Grafana dashboards. A schema
+change has to land in both places. The design and the PoC findings are in the `work-docs` vault
+at `Investigations/2026/am-telemetry-collector-poc.md`.
+
 ## 3. Workflow
 
 ### Plan First
