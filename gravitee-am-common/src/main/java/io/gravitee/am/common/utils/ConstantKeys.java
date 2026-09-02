@@ -106,11 +106,11 @@ public interface ConstantKeys {
 
     String ENROLLED_FACTOR_KEY = "enrolledFactor";
 
-    String MFA_CHALLENGE_QR_CODE_KEY = "qrCode";
-
     String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
 
     String MFA_ALTERNATIVES_ENABLE_KEY = "mfaAlternativesEnabled";
+
+    String MFA_ENROLL_BACK_ACTION_KEY = "mfaEnrollBackAction";
 
     String USER_MFA_ENROLLMENT = "user_mfa_enrollment";
     String MFA_FORCE_ENROLLMENT = "mfa_force_enrollment";

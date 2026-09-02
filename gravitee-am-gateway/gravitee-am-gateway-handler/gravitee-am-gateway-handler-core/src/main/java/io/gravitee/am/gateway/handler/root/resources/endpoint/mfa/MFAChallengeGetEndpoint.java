@@ -49,11 +49,10 @@ import java.util.Set;
 import static io.gravitee.am.common.audit.EventType.MFA_CHALLENGE_SENT;
 import static io.gravitee.am.common.audit.EventType.MFA_RATE_LIMIT_REACHED;
 import static io.gravitee.am.common.factor.FactorType.FIDO2;
-import static io.gravitee.am.common.factor.FactorType.OTP;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
@@ -69,7 +68,6 @@ import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
  */
 public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeGetEndpoint.class);
-    private static final String UNABLE_TO_RENDER_MESSAGE = "Unable to render MFA challenge page";
 
     private final ApplicationContext applicationContext;
     private final RateLimiterService rateLimiterService;
@@ -150,43 +148,18 @@ public class MFAChallengeGetEndpoint extends MFAChallengeEndpoint {
                 if (enrolledFactor != null) {
                     templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(enrolledFactor));
                 }
-                renderPageWithPendingEnrollmentQrCode(routingContext, templateData, client, factorProvider, factor, endUser, enrolledFactor);
+                if (enrolledFactor != null && PENDING_ACTIVATION.equals(enrolledFactor.getStatus())) {
+                    // the factor is not activated yet, so the user can go back to the enroll page
+                    // and see the secret they are part way through enrolling
+                    templateData.put(MFA_ENROLL_BACK_ACTION_KEY,
+                            resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/enroll", queryParams, true));
+                }
+                this.renderPage(routingContext, templateData, client, logger, "Unable to render MFA challenge page");
             });
         } catch (Exception ex) {
             logger.error("An error has occurred when rendering MFA challenge page", ex);
             routingContext.fail(503);
         }
-    }
-
-    /**
-     * Renders the MFA challenge page, adding the TOTP QR code when the user is still enrolling.
-     * The QR code is withheld once the factor is activated so that the shared secret is never
-     * disclosed to a session that has not yet passed the second factor.
-     */
-    private void renderPageWithPendingEnrollmentQrCode(RoutingContext routingContext,
-                                                       Map<String, Object> templateData,
-                                                       Client client,
-                                                       FactorProvider factorProvider,
-                                                       Factor factor,
-                                                       User endUser,
-                                                       EnrolledFactor enrolledFactor) {
-        if (!factor.is(OTP) || enrolledFactor == null || !PENDING_ACTIVATION.equals(enrolledFactor.getStatus())) {
-            this.renderPage(routingContext, templateData, client, logger, UNABLE_TO_RENDER_MESSAGE);
-            return;
-        }
-
-        factorProvider.generateQrCode(endUser, enrolledFactor)
-                .subscribe(
-                        qrCode -> {
-                            templateData.put(MFA_CHALLENGE_QR_CODE_KEY, qrCode);
-                            this.renderPage(routingContext, templateData, client, logger, UNABLE_TO_RENDER_MESSAGE);
-                        },
-                        error -> {
-                            logger.warn("Unable to generate the MFA challenge QR code", error);
-                            this.renderPage(routingContext, templateData, client, logger, UNABLE_TO_RENDER_MESSAGE);
-                        },
-                        () -> this.renderPage(routingContext, templateData, client, logger, UNABLE_TO_RENDER_MESSAGE)
-                );
     }
 
     private void sendChallenge(FactorProvider factorProvider, RoutingContext routingContext, Factor factor, User endUser, Handler<AsyncResult<EnrolledFactor>> handler) {

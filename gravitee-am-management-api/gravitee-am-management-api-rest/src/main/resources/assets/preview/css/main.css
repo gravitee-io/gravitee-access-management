@@ -593,47 +593,6 @@ div#passwordSettings > p {
     height: 72px;
 }
 
-.expander {
-    width: 100%;
-    text-align: center;
-    padding-top: 8px;
-}
-
-.expander > summary {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
-    color: var(--link-text-color);
-    list-style: none;
-}
-
-.expander > summary::-webkit-details-marker {
-    display: none;
-}
-
-.expander[open] > summary .icons {
-    transform: rotate(180deg);
-}
-
-.expander-content {
-    padding-top: 16px;
-}
-
-.expander-description {
-    display: block;
-    padding-bottom: 8px;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
-    color: var(--font-light-color);
-}
-
 .checkbox {
     display: flex;
     flex-direction: row;

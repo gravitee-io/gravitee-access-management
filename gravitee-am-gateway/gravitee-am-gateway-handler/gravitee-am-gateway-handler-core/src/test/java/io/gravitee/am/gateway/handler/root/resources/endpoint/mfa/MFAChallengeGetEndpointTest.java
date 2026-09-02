@@ -38,7 +38,6 @@ import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.Handler;
@@ -54,12 +53,12 @@ import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -106,8 +105,6 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
     private MFAChallengeGetEndpoint mfaChallengeGetEndpoint;
 
     private SessionModifier sessionModifier;
-
-    private static final String QR_CODE = "data:image/png;base64,QRCODE";
 
     private static class SessionModifier {
         private Function<io.vertx.rxjava3.ext.web.Session, io.vertx.rxjava3.ext.web.Session> sessionTransformer;
@@ -354,6 +351,61 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldOfferBackToEnroll_whenFactorIsPendingActivation() {
+        Map<String, Object> templateData = renderChallengeForFactorWithStatus(FactorStatus.PENDING_ACTIVATION);
+
+        assertEquals("/my-domain/mfa/enroll", templateData.get(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
+    }
+
+    @Test
+    public void shouldNotOfferBackToEnroll_whenFactorIsActivated() {
+        Map<String, Object> templateData = renderChallengeForFactorWithStatus(FactorStatus.ACTIVATED);
+
+        assertFalse(templateData.containsKey(ConstantKeys.MFA_ENROLL_BACK_ACTION_KEY));
+    }
+
+    /**
+     * Renders the challenge page for a user holding a single enrolled factor in the given status,
+     * and returns the data handed to the template engine.
+     */
+    private Map<String, Object> renderChallengeForFactorWithStatus(FactorStatus status) {
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId("factorId");
+        enrolledFactor.setStatus(status);
+        User endUser = new User();
+        endUser.setFactors(List.of(enrolledFactor));
+
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(false);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Set.of("factorId"));
+        ApplicationFactorSettings factorSettings = new ApplicationFactorSettings();
+        factorSettings.setId("factorId");
+        FactorSettings settings = new FactorSettings();
+        settings.setApplicationFactors(List.of(factorSettings));
+        client.setFactorSettings(settings);
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+        spyRoutingContext.put(UriBuilderRequest.CONTEXT_PATH, "/my-domain");
+
+        mfaChallengeGetEndpoint.handle(spyRoutingContext);
+        awaitResponseEnd(spyRoutingContext);
+
+        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+        verify(templateEngine).render(captor.capture(), any());
+        return captor.getValue();
+    }
+
+    @Test
     public void shouldRedirectToMfaChallenge_errorCouldNotSendCode() throws Exception {
         FactorProvider factorProvider = mock(FactorProvider.class);
         when(factorProvider.needChallengeSending()).thenReturn(true);
@@ -490,104 +542,6 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
       Assert.assertEquals("context-client-id", clientIdCaptor.getValue());
   }
 
-  @Test
-  public void shouldExposeQrCode_whenOtpEnrollmentIsPending() {
-      FactorProvider factorProvider = mock(FactorProvider.class);
-      when(factorProvider.needChallengeSending()).thenReturn(false);
-      when(factorProvider.generateQrCode(any(), any())).thenReturn(Maybe.just(QR_CODE));
-      Factor factor = mock(Factor.class);
-      when(factor.getId()).thenReturn("factorId");
-      when(factor.getFactorType()).thenReturn(FactorType.OTP);
-      when(factor.is(FactorType.OTP)).thenReturn(true);
-      when(factorManager.get("factorId")).thenReturn(factorProvider);
-      when(factorManager.getFactor("factorId")).thenReturn(factor);
-      ArgumentCaptor<Map> templateData = ArgumentCaptor.forClass(Map.class);
-      when(templateEngine.render(templateData.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
-
-      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
-      spyRoutingContext.setMethod(HttpMethod.GET);
-      Client client = new Client();
-      client.setFactors(Collections.singleton("factorId"));
-      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
-      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, "shared-secret");
-      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(createUser())));
-      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
-
-      mfaChallengeGetEndpoint.handle(spyRoutingContext);
-
-      awaitResponseEnd(spyRoutingContext);
-
-      Assert.assertEquals(QR_CODE, templateData.getValue().get(ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY));
-  }
-
-  @Test
-  public void shouldNotExposeQrCode_whenOtpFactorIsActivated() {
-      FactorProvider factorProvider = mock(FactorProvider.class);
-      when(factorProvider.needChallengeSending()).thenReturn(false);
-      Factor factor = mock(Factor.class);
-      when(factor.getId()).thenReturn("factorId");
-      when(factor.is(FactorType.OTP)).thenReturn(true);
-      when(factorManager.get("factorId")).thenReturn(factorProvider);
-      when(factorManager.getFactor("factorId")).thenReturn(factor);
-      ArgumentCaptor<Map> templateData = ArgumentCaptor.forClass(Map.class);
-      when(templateEngine.render(templateData.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
-
-      User endUser = createUser();
-      endUser.getFactors().get(0).setStatus(FactorStatus.ACTIVATED);
-      endUser.getFactors().get(0).setCreatedAt(new Date(1_000));
-
-      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
-      spyRoutingContext.setMethod(HttpMethod.GET);
-      Client client = new Client();
-      client.setFactors(Collections.singleton("factorId"));
-      ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
-      applicationFactorSettings.setId("factorId");
-      FactorSettings factorSettings = new FactorSettings();
-      factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
-      client.setFactorSettings(factorSettings);
-      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser)));
-      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
-
-      mfaChallengeGetEndpoint.handle(spyRoutingContext);
-
-      awaitResponseEnd(spyRoutingContext);
-
-      Assert.assertNull(templateData.getValue().get(ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY));
-      verify(factorProvider, never()).generateQrCode(any(), any());
-  }
-
-  @Test
-  public void shouldNotExposeQrCode_whenPendingFactorIsNotOtp() {
-      FactorProvider factorProvider = mock(FactorProvider.class);
-      when(factorProvider.needChallengeSending()).thenReturn(false);
-      Factor factor = mock(Factor.class);
-      when(factor.getId()).thenReturn("factorId");
-      when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
-      when(factorManager.get("factorId")).thenReturn(factorProvider);
-      when(factorManager.getFactor("factorId")).thenReturn(factor);
-      ArgumentCaptor<Map> templateData = ArgumentCaptor.forClass(Map.class);
-      when(templateEngine.render(templateData.capture(), any())).thenReturn(Single.just(Buffer.buffer()));
-
-      SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
-      spyRoutingContext.setMethod(HttpMethod.GET);
-      Client client = new Client();
-      client.setFactors(Collections.singleton("factorId"));
-      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
-      spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
-      spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(createUser())));
-      spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-      spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
-
-      mfaChallengeGetEndpoint.handle(spyRoutingContext);
-
-      awaitResponseEnd(spyRoutingContext);
-
-      Assert.assertNull(templateData.getValue().get(ConstantKeys.MFA_CHALLENGE_QR_CODE_KEY));
-      verify(factorProvider, never()).generateQrCode(any(), any());
-  }
-
   private static User createUser() {
       User user = new User();
       user.setId("userId");
@@ -600,7 +554,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
       EnrolledFactorSecurity enrolledFactorSecurity = new EnrolledFactorSecurity();
       enrolledFactor.setFactorId("factorId");
       enrolledFactor.setSecurity(enrolledFactorSecurity);
-      user.setFactors(new ArrayList<>(List.of(enrolledFactor)));
+      user.setFactors(Collections.singletonList(enrolledFactor));
   }
 
 }

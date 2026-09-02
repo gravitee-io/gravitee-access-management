@@ -77,18 +77,9 @@
             </div>
         </form>
 
-        <details th:if="${qrCode}" class="expander">
-            <summary>
-                <span th:text="#{mfa_challenge.otp.qr.expander}"></span>
-                <span class="icons">expand_more</span>
-            </summary>
-            <div class="expander-content">
-                <span class="expander-description" th:text="#{mfa_challenge.otp.qr.description}"></span>
-                <div class="otp-container">
-                    <img id="qrCode" th:src="${qrCode}" th:alt="#{mfa_challenge.otp.qr.expander}"/>
-                </div>
-            </div>
-        </details>
+        <div th:if="${mfaEnrollBackAction}" class="section">
+            <a th:href="${mfaEnrollBackAction}"><span class="icons">arrow_back</span><span th:text="#{mfa_challenge.enroll.back}"/></a>
+        </div>
 
         <div th:if="${mfaAlternativesEnabled}" class="section">
             <a th:href="${mfaAlternativesAction}"><span th:text="#{mfa_challenge.alternate}"/><span class="icons">arrow_forward</span></a>
