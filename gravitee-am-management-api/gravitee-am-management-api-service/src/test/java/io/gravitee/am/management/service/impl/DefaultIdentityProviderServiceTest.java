@@ -19,8 +19,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -219,18 +217,20 @@ public class DefaultIdentityProviderServiceTest {
     // --- repositories.system-cluster binding ---
 
     @Test
-    public void managementScope_isNotBoundToTheSystemCluster() {
+    public void mongoBackend_bindsTheProviderToTheSystemCluster() {
         environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
         environment.setProperty("repositories.management.mongodb.port", "27018");
         environment.setProperty("repositories.management.mongodb.dbname", "mgmt-db");
 
         Map<String, Object> config = cut.createProviderConfiguration("test", null);
 
+        // the connection settings stay a fallback: the Mongo provider replaces both the client and the
+        // database with the system cluster's when it honors this flag
         assertEquals("mgmt-host", config.get("host"));
         assertEquals(27018, config.get("port"));
         assertEquals("mgmt-db", config.get("database"));
         assertEquals("mongodb://mgmt-host:27018/?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
-        assertEquals(false, config.get("useSystemCluster"));
+        assertEquals(true, config.get("useSystemCluster"));
     }
 
     @Test
@@ -250,34 +250,12 @@ public class DefaultIdentityProviderServiceTest {
     }
 
     @Test
-    public void gatewayScope_bindsTheProviderToTheSystemCluster() {
+    public void bindingDoesNotDependOnTheSystemClusterScope() {
         environment.setProperty("repositories.system-cluster", "gateway");
-        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
-        environment.setProperty("repositories.management.mongodb.dbname", "mgmt-db");
 
         Map<String, Object> config = cut.createProviderConfiguration("test", null);
 
-        // the connection settings stay a fallback: the Mongo provider replaces both the client and the
-        // database with the data plane's when it honors this flag
-        assertEquals("mgmt-host", config.get("host"));
-        assertEquals("mgmt-db", config.get("database"));
         assertEquals(true, config.get("useSystemCluster"));
-    }
-
-    @Test
-    public void invalidSystemClusterScope_isRejected() {
-        environment.setProperty("repositories.system-cluster", "oauth2");
-
-        IllegalStateException error = assertThrows(IllegalStateException.class,
-                () -> cut.createProviderConfiguration("test", null));
-        assertTrue(error.getMessage().contains("oauth2"));
-    }
-
-    @Test
-    public void unknownSystemClusterScope_isRejected() {
-        environment.setProperty("repositories.system-cluster", "not-a-scope");
-
-        assertThrows(IllegalStateException.class, () -> cut.createProviderConfiguration("test", null));
     }
 
     @Test
@@ -304,7 +282,6 @@ public class DefaultIdentityProviderServiceTest {
     @Test
     public void jdbcBackend_isNeverBoundToTheSystemCluster() {
         environment.setProperty("repositories.management.type", "jdbc");
-        environment.setProperty("repositories.system-cluster", "gateway");
         environment.setProperty("repositories.management.jdbc.host", "mgmt-jdbc");
 
         Map<String, Object> config = cut.createProviderConfiguration("test", null);
@@ -316,8 +293,7 @@ public class DefaultIdentityProviderServiceTest {
     // --- refreshProviderConfiguration preserves the binding made at creation time ---
 
     @Test
-    public void refresh_keepsAnExistingProviderUnboundEvenWhenGatewayIsConfigured() {
-        environment.setProperty("repositories.system-cluster", "gateway");
+    public void refresh_keepsAProviderCreatedBeforeTheFlagUnbound() {
         environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
 
         Map<String, Object> config = cut.refreshProviderConfiguration(
@@ -329,8 +305,6 @@ public class DefaultIdentityProviderServiceTest {
 
     @Test
     public void refresh_keepsAnExplicitlyUnboundProviderUnbound() {
-        environment.setProperty("repositories.system-cluster", "gateway");
-
         Map<String, Object> config = cut.refreshProviderConfiguration(
                 existingProvider("{\"useSystemCluster\":false,\"passwordEncoder\":\"BCrypt\"}"));
 
@@ -339,22 +313,9 @@ public class DefaultIdentityProviderServiceTest {
 
     @Test
     public void refresh_keepsABoundProviderBound() {
-        environment.setProperty("repositories.system-cluster", "gateway");
-
         Map<String, Object> config = cut.refreshProviderConfiguration(
                 existingProvider("{\"useSystemCluster\":true,\"passwordEncoder\":\"BCrypt\"}"));
 
-        assertEquals(true, config.get("useSystemCluster"));
-    }
-
-    @Test
-    public void refresh_keepsTheBindingWhenTheScopeIsMovedBackToManagement() {
-        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
-
-        Map<String, Object> config = cut.refreshProviderConfiguration(
-                existingProvider("{\"useSystemCluster\":true,\"passwordEncoder\":\"BCrypt\"}"));
-
-        assertEquals("mgmt-host", config.get("host"));
         assertEquals(true, config.get("useSystemCluster"));
     }
 
