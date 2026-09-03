@@ -24,6 +24,11 @@
     <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
     <node.version>v20.11.1</node.version>
     <yarn.version>v1.22.22</yarn.version>
+    <!-- Distribution bundle: published on download.gravitee.io, never on Nexus/Artifactory/Maven Central.
+         maven.deploy.skip covers maven-deploy-plugin; central-publishing-maven-plugin takes over the
+         deploy phase and never sees it, so it needs skipPublishing of its own. -->
+    <maven.deploy.skip>true</maven.deploy.skip>
+    <skipPublishing>true</skipPublishing>
   </properties>
 
   <parent>
