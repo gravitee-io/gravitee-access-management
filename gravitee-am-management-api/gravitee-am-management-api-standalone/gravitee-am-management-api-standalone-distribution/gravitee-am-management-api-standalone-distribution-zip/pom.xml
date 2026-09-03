@@ -28,6 +28,14 @@
 
     <artifactId>gravitee-am-management-api-standalone-distribution-zip</artifactId>
     <name>Gravitee IO - Access Management - Management API - Standalone - Distribution - Zip</name>
+
+    <properties>
+        <!-- Distribution bundle: published on download.gravitee.io, never on Nexus/Artifactory/Maven Central.
+             maven.deploy.skip covers maven-deploy-plugin; central-publishing-maven-plugin takes over the
+             deploy phase and never sees it, so it needs skipPublishing of its own. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <skipPublishing>true</skipPublishing>
+    </properties>
     <packaging>pom</packaging>
 
     <dependencies>
