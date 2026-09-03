@@ -54,6 +54,13 @@
       <h3>Identity Provider</h3>
       <div class="gv-page-description-content">
         <p>Identity providers offer user authentication as a service.</p>
+        <ng-container *ngIf="showMongoStorageGuidance && stepper.selectedIndex === 1">
+          <h5>User storage</h5>
+          <small>
+            Prefer a data source. It is the connection the provider actually uses (ahead of the system cluster and any URI on this form) and
+            credentials stay in the platform configuration.
+          </small>
+        </ng-container>
       </div>
     </div>
   </div>

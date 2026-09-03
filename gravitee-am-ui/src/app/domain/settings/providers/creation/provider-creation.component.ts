@@ -19,6 +19,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { ProviderService } from '../../../../services/provider.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { MONGO_IDP_TYPE } from '../provider/provider.form.enricher';
 
 @Component({
   selector: 'app-idp-creation',
@@ -45,6 +46,10 @@ export class ProviderCreationComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
+  }
+
+  get showMongoStorageGuidance(): boolean {
+    return this.provider?.type === MONGO_IDP_TYPE;
   }
 
   create() {

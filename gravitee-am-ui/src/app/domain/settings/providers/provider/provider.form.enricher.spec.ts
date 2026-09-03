@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { enrichFormWithSystemClusterCreationHints, enrichFormWithSystemClusterRestrictions } from './provider.form.enricher';
+import {
+  enrichFormWithSystemClusterCreationHints,
+  enrichFormWithSystemClusterDisclaimer,
+  enrichFormWithSystemClusterLock,
+  enrichFormWithSystemClusterRestrictions,
+} from './provider.form.enricher';
 
 describe('enrichFormWithSystemClusterRestrictions', () => {
   const mongoSchema = () =>
@@ -133,5 +138,128 @@ describe('enrichFormWithSystemClusterCreationHints', () => {
     enrichFormWithSystemClusterCreationHints(original, 'mongo-am-idp', pinned);
 
     expect(original.properties.usersCollection.description).toBeUndefined();
+  });
+});
+
+describe('enrichFormWithSystemClusterLock', () => {
+  const mongoSchema = () =>
+    ({
+      id: 'urn:jsonschema:io:gravitee:am:identityprovider:mongo:MongoIdentityProviderConfiguration',
+      version: '1',
+      properties: {
+        useSystemCluster: { type: 'boolean' },
+        database: { type: 'string' },
+        usersCollection: { type: 'string' },
+        datasourceId: { type: 'string' },
+      },
+    }) as any;
+
+  it('locks the toggle of a provider that already reuses the system cluster', () => {
+    const enriched = enrichFormWithSystemClusterLock(mongoSchema(), 'mongo-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.readonly).toBe(true);
+  });
+
+  it('leaves the storage fields and the datasource editable', () => {
+    const enriched = enrichFormWithSystemClusterLock(mongoSchema(), 'mongo-am-idp', true);
+
+    expect(enriched.properties.database.readonly).toBeUndefined();
+    expect(enriched.properties.usersCollection.readonly).toBeUndefined();
+    expect(enriched.properties.datasourceId.readonly).toBeUndefined();
+  });
+
+  it('leaves the schema alone for a provider of another type', () => {
+    const enriched = enrichFormWithSystemClusterLock(mongoSchema(), 'inline-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.readonly).toBeUndefined();
+  });
+
+  it('leaves a schema without the toggle alone', () => {
+    const schema = { id: 'other', version: '1', properties: { usernameField: { type: 'string' } } } as any;
+
+    expect(enrichFormWithSystemClusterLock(schema, 'mongo-am-idp', true)).toBe(schema);
+  });
+
+  it('does not mutate the schema it was given', () => {
+    const original = mongoSchema();
+
+    enrichFormWithSystemClusterLock(original, 'mongo-am-idp', true);
+
+    expect(original.properties.useSystemCluster.readonly).toBeUndefined();
+  });
+});
+
+describe('enrichFormWithSystemClusterDisclaimer', () => {
+  const mongoSchema = (title?: string) =>
+    ({
+      id: 'urn:jsonschema:io:gravitee:am:identityprovider:mongo:MongoIdentityProviderConfiguration',
+      version: '1',
+      properties: {
+        useSystemCluster: title ? { type: 'boolean', title } : { type: 'boolean' },
+        usernameField: { type: 'string' },
+      },
+    }) as any;
+
+  // The widget drawing a boolean reads the title and never the description, so the sentence has to
+  // ride on the label the administrator already sees.
+  it('appends the disclaimer to the toggle label', () => {
+    const enriched = enrichFormWithSystemClusterDisclaimer(mongoSchema('Use System Cluster'), 'mongo-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.title).toEqual(
+      'Use System Cluster<br><small>Once saved, this option cannot be changed.</small>',
+    );
+  });
+
+  it('leaves the description alone', () => {
+    const enriched = enrichFormWithSystemClusterDisclaimer(mongoSchema('Use System Cluster'), 'mongo-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.description).toBeUndefined();
+  });
+
+  it('sets the disclaimer when the toggle has no label', () => {
+    const enriched = enrichFormWithSystemClusterDisclaimer(mongoSchema(), 'mongo-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.title).toEqual('Once saved, this option cannot be changed.');
+  });
+
+  it('leaves the toggle editable', () => {
+    const enriched = enrichFormWithSystemClusterDisclaimer(mongoSchema(), 'mongo-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.readonly).toBeUndefined();
+  });
+
+  it('leaves the schema alone for a provider of another type', () => {
+    const enriched = enrichFormWithSystemClusterDisclaimer(mongoSchema('Use System Cluster'), 'inline-am-idp', true);
+
+    expect(enriched.properties.useSystemCluster.title).toEqual('Use System Cluster');
+  });
+
+  it('does not mutate the schema it was given', () => {
+    const original = mongoSchema('Use System Cluster');
+
+    enrichFormWithSystemClusterDisclaimer(original, 'mongo-am-idp', true);
+
+    expect(original.properties.useSystemCluster.title).toEqual('Use System Cluster');
+  });
+});
+
+describe('system cluster enrichers outside the storage rule', () => {
+  const mongoSchema = () =>
+    ({
+      id: 'urn:jsonschema:io:gravitee:am:identityprovider:mongo:MongoIdentityProviderConfiguration',
+      version: '1',
+      properties: { useSystemCluster: { type: 'boolean', title: 'Use System Cluster' } },
+    }) as any;
+
+  it('leaves the toggle open, because the setting is not held outside the storage rule', () => {
+    const enriched = enrichFormWithSystemClusterLock(mongoSchema(), 'mongo-am-idp', false);
+
+    expect(enriched.properties.useSystemCluster.readonly).toBeUndefined();
+  });
+
+  it('leaves the label alone, because there is nothing irreversible to warn about', () => {
+    const enriched = enrichFormWithSystemClusterDisclaimer(mongoSchema(), 'mongo-am-idp', false);
+
+    expect(enriched.properties.useSystemCluster.title).toEqual('Use System Cluster');
   });
 });

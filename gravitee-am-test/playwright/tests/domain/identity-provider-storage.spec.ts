@@ -20,7 +20,7 @@ import { createIdp, deleteIdp } from '@management-commands/idp-management-comman
 
 const MONGO_IDP_TYPE = 'mongo-am-idp';
 
-const mongoIdpBody = (name: string) => ({
+const mongoIdpBody = (name: string, useSystemCluster = true) => ({
   external: false,
   type: MONGO_IDP_TYPE,
   domainWhitelist: [],
@@ -30,7 +30,7 @@ const mongoIdpBody = (name: string) => ({
     host: 'localhost',
     port: 27017,
     enableCredentials: false,
-    useSystemCluster: true,
+    useSystemCluster,
     database: 'my-own-database',
     usersCollection: 'my-own-users',
     findUserByUsernameQuery: '{username: ?}',
@@ -41,6 +41,10 @@ const mongoIdpBody = (name: string) => ({
   }),
 });
 
+const DATASOURCE_ADVICE = 'Prefer a data source';
+
+const IMMUTABLE_HINT = 'Once saved, this option cannot be changed.';
+
 const readsPinStorage = async (request, adminToken: string): Promise<boolean> => {
   const response = await request.get(`${process.env.AM_MANAGEMENT_URL}/management/platform/configuration/installation`, {
     headers: { Authorization: `Bearer ${adminToken}` },
@@ -48,7 +52,7 @@ const readsPinStorage = async (request, adminToken: string): Promise<boolean> =>
   return (await response.json())?.systemClusterRestricted === true;
 };
 
-/** Skipped unless the installation pins storage: a standalone stack has nothing to lock. */
+/** Two regimes share this file: each test skips on the installation the other one covers. */
 test.describe('Identity provider storage', () => {
   test('AM-7581: creation screen tells the administrator which fields the platform will set', async ({
     page,
@@ -87,6 +91,47 @@ test.describe('Identity provider storage', () => {
       // The widget drops the form binding for a boolean marked readonly, leaving it disabled.
       await expect(providerPage.systemClusterToggle).toBeChecked();
       await expect(providerPage.systemClusterToggle).toBeDisabled();
+    } finally {
+      await deleteIdp(testDomain.id, adminToken, idp.id);
+    }
+  });
+
+  test('edit screen leaves the toggle open when the platform does not own the storage', async ({
+    page,
+    adminToken,
+    testDomain,
+    request,
+  }) => {
+    test.skip(await readsPinStorage(request, adminToken), 'The installation pins storage, which locks the toggle');
+
+    const idp = await createIdp(testDomain.id, adminToken, mongoIdpBody('system-cluster-provider'));
+    try {
+      const providerPage = new IdentityProviderSettingsPage(page);
+      await providerPage.navigateToSettings(testDomain.id, idp.id);
+
+      await expect(providerPage.systemClusterToggle).toBeChecked();
+      await expect(providerPage.systemClusterToggle).toBeEnabled();
+      await expect(page.getByText(IMMUTABLE_HINT)).toHaveCount(0);
+    } finally {
+      await deleteIdp(testDomain.id, adminToken, idp.id);
+    }
+  });
+
+  test('the creation wizard recommends a data source', async ({ page, testDomain }) => {
+    const providerPage = new IdentityProviderSettingsPage(page);
+    await providerPage.navigateToCreation(testDomain.id);
+    await providerPage.chooseType('Mongo DB');
+
+    await expect(providerPage.descriptionPanel).toContainText(DATASOURCE_ADVICE);
+  });
+
+  test('the edit screen repeats the storage guidance beside the form', async ({ page, adminToken, testDomain }) => {
+    const idp = await createIdp(testDomain.id, adminToken, mongoIdpBody('guidance-provider'));
+    try {
+      const providerPage = new IdentityProviderSettingsPage(page);
+      await providerPage.navigateToSettings(testDomain.id, idp.id);
+
+      await expect(providerPage.descriptionPanel).toContainText(DATASOURCE_ADVICE);
     } finally {
       await deleteIdp(testDomain.id, adminToken, idp.id);
     }

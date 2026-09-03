@@ -30,11 +30,15 @@ import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
 import {
   enrichFormWithCerts,
+  enrichFormWithSystemClusterDisclaimer,
+  enrichFormWithSystemClusterLock,
   enrichFormWithSystemClusterRestrictions,
+  MONGO_IDP_TYPE,
   PINNED_STORAGE_FIELDS,
   PINNED_STORAGE_TOGGLE,
 } from '../provider.form.enricher';
 import { DataSourcesService } from '../../../../../services/datasources.service';
+import { CloudModeService } from '../../../../../services/cloud-mode.service';
 
 @Component({
   selector: 'provider-settings',
@@ -60,6 +64,7 @@ export class ProviderSettingsComponent implements OnInit {
   certificates: any[];
   licenseOptions: LicenseOptions = {};
   isMissingFeature$: Observable<boolean>;
+  private systemClusterRestricted = false;
   private datasources: any[];
 
   constructor(
@@ -73,6 +78,7 @@ export class ProviderSettingsComponent implements OnInit {
     private entrypointService: EntrypointService,
     private dataSourcesService: DataSourcesService,
     private pluginFeatureService: PluginFeatureService,
+    private cloudModeService: CloudModeService,
   ) {}
 
   ngOnInit() {
@@ -108,11 +114,18 @@ export class ProviderSettingsComponent implements OnInit {
     }
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
-    this.organizationService
-      .identitySchema(this.provider.type)
+    this.cloudModeService
+      .isSystemClusterRestricted()
       .pipe(
-        map((schema) => enrichFormWithCerts(schema, this.certificates)),
-        map((schema) => enrichFormWithSystemClusterRestrictions(schema, this.provider.type, this.provider.systemClusterRestricted)),
+        switchMap((restricted) =>
+          this.organizationService.identitySchema(this.provider.type).pipe(
+            map((schema) => enrichFormWithCerts(schema, this.certificates)),
+            map((schema) => enrichFormWithSystemClusterRestrictions(schema, this.provider.type, this.provider.systemClusterRestricted)),
+            map((schema) => enrichFormWithSystemClusterLock(schema, this.provider.type, restricted)),
+            map((schema) => enrichFormWithSystemClusterDisclaimer(schema, this.provider.type, restricted)),
+            tap(() => (this.systemClusterRestricted = restricted)),
+          ),
+        ),
       )
       .subscribe((data) => {
         this.providerSchema = data;
@@ -133,6 +146,10 @@ export class ProviderSettingsComponent implements OnInit {
           this.providerSchema = this.dataSourcesService.applyDataSourceSelection(this.providerSchema, this.datasources);
         }
       });
+  }
+
+  get showMongoStorageGuidance(): boolean {
+    return this.provider?.type === MONGO_IDP_TYPE;
   }
 
   update(event: Event): void {
@@ -199,16 +216,24 @@ export class ProviderSettingsComponent implements OnInit {
   }
 
   /**
-   * Angular leaves a disabled control out of the form value, so the system cluster flag of a pinned
-   * provider would reach the server as undefined and read as a change. Send back what is stored.
+   * Angular leaves a readonly control out of the form value, so a field the form shows closed would
+   * reach the server as undefined and read as a change. Send back what is stored.
    */
   private withPinnedStorage(configuration: any): any {
-    if (!this.provider.systemClusterRestricted || typeof this.provider.configuration !== 'string') {
+    if (typeof this.provider.configuration !== 'string') {
+      return configuration;
+    }
+    const closed = this.provider.systemClusterRestricted
+      ? [PINNED_STORAGE_TOGGLE, ...PINNED_STORAGE_FIELDS]
+      : this.systemClusterRestricted
+        ? [PINNED_STORAGE_TOGGLE]
+        : [];
+    if (closed.length === 0) {
       return configuration;
     }
     const stored = JSON.parse(this.provider.configuration);
     const pinned = {};
-    [PINNED_STORAGE_TOGGLE, ...PINNED_STORAGE_FIELDS].forEach((field) => {
+    closed.forEach((field) => {
       pinned[field] = stored[field];
     });
     return { ...configuration, ...pinned };

@@ -99,7 +99,7 @@ export class ProviderMappersComponent implements OnInit {
     const dialogRef = this.dialog.open(CreateMapperComponent, { width: '700px' });
     dialogRef.afterClosed().subscribe((mapper) => {
       if (mapper) {
-        if (!this.attributeExits(mapper.key)) {
+        if (!this.attributeExists(mapper.key)) {
           this.mappers.push(mapper);
           this.mappers = [...this.mappers];
           this.update('Attribute added');
@@ -124,7 +124,7 @@ export class ProviderMappersComponent implements OnInit {
   updateMapper(event, cell, rowIndex) {
     const mapper = event.target.value;
     if (mapper) {
-      if (cell === 'key' && this.attributeExits(mapper)) {
+      if (cell === 'key' && this.attributeExists(mapper)) {
         this.snackbarService.open(`Error : mapper ${mapper} already exists`);
         return;
       }
@@ -148,7 +148,7 @@ export class ProviderMappersComponent implements OnInit {
     });
   }
 
-  attributeExits(attribute): boolean {
+  attributeExists(attribute): boolean {
     return (
       this.mappers
         .map(function (m) {

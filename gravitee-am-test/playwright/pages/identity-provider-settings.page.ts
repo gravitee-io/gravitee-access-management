@@ -44,6 +44,10 @@ export class IdentityProviderSettingsPage extends BasePage {
     return this.page.locator('mat-checkbox').filter({ hasText: 'Use System Cluster' }).locator('input[type=checkbox]');
   }
 
+  get descriptionPanel(): Locator {
+    return this.page.locator('.gv-page-description-content');
+  }
+
   get saveButton(): Locator {
     return this.page.locator('button:has-text("SAVE")');
   }
