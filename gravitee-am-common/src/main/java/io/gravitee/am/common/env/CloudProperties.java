@@ -25,6 +25,9 @@ import org.springframework.core.env.Environment;
 public final class CloudProperties {
     public static final String INSTALLATION_TYPE_STANDALONE = "standalone";
     public static final String INSTALLATION_TYPE_MANAGED = "managed";
+    public static final String SETTINGS_INSTALLATION_TYPE = "installation.type";
+    public static final String SETTINGS_CLOUD_ENABLED = "cloud.enabled";
+    public static final String SETTINGS_COCKPIT_ENABLED = "cockpit.enabled";
 
     private CloudProperties() {
     }
@@ -37,14 +40,14 @@ public final class CloudProperties {
     }
 
     private static boolean isCloudEnabled(Environment environment) {
-        final Boolean cloudEnabled = environment.getProperty("cloud.enabled", Boolean.class);
+        final Boolean cloudEnabled = environment.getProperty(SETTINGS_CLOUD_ENABLED, Boolean.class);
         if (cloudEnabled != null) {
             return cloudEnabled;
         }
-        return environment.getProperty("cockpit.enabled", Boolean.class, false);
+        return environment.getProperty(SETTINGS_COCKPIT_ENABLED, Boolean.class, false);
     }
 
     private static boolean isManagedInstallation(Environment environment) {
-        return INSTALLATION_TYPE_MANAGED.equalsIgnoreCase(environment.getProperty("installation.type", INSTALLATION_TYPE_STANDALONE));
+        return INSTALLATION_TYPE_MANAGED.equalsIgnoreCase(environment.getProperty(SETTINGS_INSTALLATION_TYPE, INSTALLATION_TYPE_STANDALONE));
     }
 }

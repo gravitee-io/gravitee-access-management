@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.gravitee.am.repository.BackendConfigurationUtils.DEFAULT_SYSTEM_CLUSTER;
 import static io.gravitee.am.repository.BackendConfigurationUtils.getMongoDatabaseName;
 import static io.gravitee.am.repository.BackendConfigurationUtils.SYSTEM_CLUSTER;
 
@@ -50,13 +52,15 @@ import static io.gravitee.am.repository.BackendConfigurationUtils.SYSTEM_CLUSTER
 @CustomLog
 public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProviderService {
 
+    public static final String SETTINGS_DEFAULT_IDP_USE_SYSTEM_CLUSTER = "domains.identities.default.useSystemCluster";
     public static final String DEFAULT_IDP_PREFIX = "default-idp-";
+    public static final String PASSWORD = "password";
+    public static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
+
     private static final String DEFAULT_IDP_NAME = "Default Identity Provider";
     private static final String DEFAULT_MONGO_IDP_TYPE = "mongo-am-idp";
     private static final String DEFAULT_JDBC_IDP_TYPE = "jdbc-am-idp";
     private static final int TABLE_NAME_MAX_LENGTH = 50;
-    public static final String PASSWORD = "password";
-    public static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
     private static final String PASSWORD_ENCODER = "passwordEncoder";
     private static final String PASSWORD_ENCODER_OPTIONS = "passwordEncoderOptions";
 
@@ -83,7 +87,11 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     public Single<IdentityProvider> create(Domain domain) {
         NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
         return populateDefault(domain, newIdentityProvider)
-                .flatMap(populated -> identityProviderService.create(domain, populated, null, true));
+                .flatMap(populated -> identityProviderService.create(domain, populated, null, evalBoundToSystemCluster()));
+    }
+
+    private boolean evalBoundToSystemCluster() {
+        return environment.getProperty(SETTINGS_DEFAULT_IDP_USE_SYSTEM_CLUSTER, Boolean.class, true) || CloudProperties.isManagedCloudEnabled(environment.getDelegate());
     }
 
     @Override
@@ -114,9 +122,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
     @Override
     public Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
-        // A new default identity provider always reuses the system cluster; the Mongo provider decides at
-        // runtime which scope serves it.
-        return buildProviderConfiguration(referenceId, identityProvider, true);
+        return buildProviderConfiguration(referenceId, identityProvider, evalBoundToSystemCluster());
     }
 
     @Override
@@ -172,9 +178,13 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
             String mongoUri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri", defaultMongoUri);
 
-            configMap.put("uri", mongoUri);
-            configMap.put("host", (mongoHost != null) ? mongoHost : "");
-            configMap.put("port", (mongoPort != null) ? Integer.parseInt(mongoPort): null);
+            if (!boundToSystemCluster) {
+                configMap.put("uri", mongoUri);
+                configMap.put("host", (mongoHost != null) ? mongoHost : "");
+                configMap.put("port", (mongoPort != null) ? Integer.parseInt(mongoPort) : null);
+            } else {
+                configMap.put("uri", String.format("from-system-cluster:%s", environment.getProperty(SYSTEM_CLUSTER, DEFAULT_SYSTEM_CLUSTER)));
+            }
             configMap.put("enableCredentials", false);
             configMap.put("database", mongoDBName);
             configMap.put("usersCollection", "idp_users_" + lowerCaseId);
