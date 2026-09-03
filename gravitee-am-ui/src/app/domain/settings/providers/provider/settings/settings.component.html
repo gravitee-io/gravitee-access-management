@@ -102,6 +102,13 @@
       <h3>Manage identity provider</h3>
       <div class="gv-page-description-content">
         <p>Register your users to interact with the Access Management {{ organizationContext ? 'Portal' : 'Server' }}.</p>
+        <ng-container *ngIf="showMongoStorageGuidance">
+          <h5>User storage</h5>
+          <small>
+            Prefer a data source. It is the connection the provider actually uses (ahead of the system cluster and any URI on this form) and
+            credentials stay in the platform configuration.
+          </small>
+        </ng-container>
       </div>
       <div *ngIf="provider.external" class="social-provider-settings-description">
         <h5>Social/Enterprise Identity Provider</h5>

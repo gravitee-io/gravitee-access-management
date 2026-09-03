@@ -18,7 +18,7 @@ const OIDC_JSON_FORM = {
   version: '05-2024',
 };
 
-const MONGO_IDP_TYPE = 'mongo-am-idp';
+export const MONGO_IDP_TYPE = 'mongo-am-idp';
 
 export const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
 
@@ -26,6 +26,8 @@ export const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
 export const PINNED_STORAGE_TOGGLE = 'useSystemCluster';
 
 const CREATION_HINT = 'The platform sets this value when "use system cluster" is selected.';
+
+const IMMUTABLE_HINT = 'Once saved, this option cannot be changed.';
 
 const LDAP_JSON_FORM = {
   id: 'urn:jsonschema:com:graviteesource:am:identityprovider:ldap:LdapIdentityProviderConfiguration',
@@ -57,6 +59,32 @@ export function enrichFormWithSystemClusterRestrictions(schema: FormSchema, prov
     .forEach((field) => {
       updatedSchema.properties[field] = { ...updatedSchema.properties[field], readonly: true };
     });
+  return updatedSchema;
+}
+
+/** Edit screen only: the toggle is closed under the storage rule, whichever way it is set. */
+export function enrichFormWithSystemClusterLock(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
+  if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties?.[PINNED_STORAGE_TOGGLE]) {
+    return schema;
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  updatedSchema.properties[PINNED_STORAGE_TOGGLE] = { ...updatedSchema.properties[PINNED_STORAGE_TOGGLE], readonly: true };
+  return updatedSchema;
+}
+
+/** The widget drawing a boolean reads only `title`, never `description`, so the sentence rides on the label. */
+export function enrichFormWithSystemClusterDisclaimer(schema: FormSchema, providerType: string, restricted: boolean): FormSchema {
+  if (!restricted || providerType !== MONGO_IDP_TYPE || !schema?.properties?.[PINNED_STORAGE_TOGGLE]) {
+    return schema;
+  }
+
+  const updatedSchema = { ...schema, properties: { ...schema.properties } };
+  const property = updatedSchema.properties[PINNED_STORAGE_TOGGLE];
+  updatedSchema.properties[PINNED_STORAGE_TOGGLE] = {
+    ...property,
+    title: property.title ? `${property.title}<br><small>${IMMUTABLE_HINT}</small>` : IMMUTABLE_HINT,
+  };
   return updatedSchema;
 }
 
@@ -96,6 +124,7 @@ interface FormProperty {
   enum?: string[];
   enumNames?: string[];
   description?: string;
+  title?: string;
   readonly?: boolean;
 }
 

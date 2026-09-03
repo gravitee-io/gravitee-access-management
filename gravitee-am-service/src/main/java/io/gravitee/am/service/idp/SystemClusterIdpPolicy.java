@@ -32,6 +32,9 @@ import java.util.Optional;
  * provider id. Only providers created under this regime are affected, so an existing provider keeps
  * working whatever the setting becomes later.
  *
+ * <p>Under that regime a provider's use of the system cluster is settled at creation, whether or not
+ * the platform pinned it.
+ *
  * @author GraviteeSource Team
  */
 @Component
@@ -45,6 +48,9 @@ public class SystemClusterIdpPolicy {
     public static final String MONGO_IDP_TYPE = "mongo-am-idp";
 
     static final String COLLECTION_PREFIX = "idp_";
+
+    static final String SYSTEM_CLUSTER_CANNOT_BE_CHANGED =
+            "useSystemCluster cannot be changed after the identity provider has been created.";
 
     private static final String USE_SYSTEM_CLUSTER = "useSystemCluster";
     private static final String DATASOURCE_ID = "datasourceId";
@@ -65,24 +71,8 @@ public class SystemClusterIdpPolicy {
             checkStorageUnchanged(stored, identityToUpdate.getConfiguration());
             return;
         }
-        final Map<String, Object> current = parse(stored.getConfiguration());
-        // An identity provider that already reuses the system cluster keeps the settings it has
-        // today, whatever the mode says now.
-        if (current == null || isUseSystemCluster(current)) {
-            return;
-        }
-        rejectSystemClusterSwitch(identityToUpdate);
-    }
-
-    // The collection comes from the id, and users already stored elsewhere do not move, so joining
-    // the regime later would hide them.
-    private void rejectSystemClusterSwitch(IdentityProvider identityToUpdate) {
-        if (!ownsStorageLocation() || !isEligible(identityToUpdate)) {
-            return;
-        }
-        final Map<String, Object> updated = parse(identityToUpdate.getConfiguration());
-        if (updated != null && isUseSystemCluster(updated) && !hasDatasourceId(updated)) {
-            throw new InvalidParameterException("The system cluster can only be selected when the identity provider is created");
+        if (ownsStorageLocation() && isEligible(identityToUpdate)) {
+            checkSystemClusterUnchanged(stored, identityToUpdate);
         }
     }
 
@@ -192,6 +182,17 @@ public class SystemClusterIdpPolicy {
                 || !Objects.equals(current.get(DATABASE), updated.get(DATABASE))
                 || !Objects.equals(current.get(DATASOURCE_ID), updated.get(DATASOURCE_ID))) {
             throw new InvalidParameterException("Identity provider storage settings cannot be changed");
+        }
+    }
+
+    private void checkSystemClusterUnchanged(IdentityProvider stored, IdentityProvider identityToUpdate) {
+        final Map<String, Object> current = parse(stored.getConfiguration());
+        final Map<String, Object> updated = parse(identityToUpdate.getConfiguration());
+        if (current == null || updated == null) {
+            return;
+        }
+        if (isUseSystemCluster(current) != isUseSystemCluster(updated)) {
+            throw new InvalidParameterException(SYSTEM_CLUSTER_CANNOT_BE_CHANGED);
         }
     }
 

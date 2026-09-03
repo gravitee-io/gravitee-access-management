@@ -264,6 +264,116 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
+    void should_reject_an_update_that_turns_the_system_cluster_off() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp(configuration(false, "custom-db", "my-users", null));
+
+        var thrown = assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
+
+        assertEquals(SystemClusterIdpPolicy.SYSTEM_CLUSTER_CANNOT_BE_CHANGED, thrown.getMessage());
+    }
+
+    @Test
+    void should_allow_an_update_that_turns_the_system_cluster_off_outside_managed_cloud() {
+        var standalone = policyWith(new MockEnvironment());
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        var original = configuration(false, "custom-db", "my-users", null);
+        var toUpdate = mongoIdp(original);
+
+        standalone.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+    }
+
+    @Test
+    void should_reject_an_update_that_turns_the_system_cluster_off_outside_managed_cloud_when_pinning_is_turned_on() {
+        var environment = new MockEnvironment();
+        environment.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "true");
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp(configuration(false, "custom-db", "my-users", null));
+
+        assertThrows(InvalidParameterException.class, () -> policyWith(environment).applyOnUpdate(stored, toUpdate));
+    }
+
+    @Test
+    void should_allow_a_datasource_added_to_a_system_cluster_provider() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        var original = configuration(true, "custom-db", "my-users", "ds-1");
+        var toUpdate = mongoIdp(original);
+
+        policy.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+    }
+
+    @Test
+    void should_reject_an_update_that_turns_the_system_cluster_off_alongside_a_datasource() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", "ds-1"));
+        var toUpdate = mongoIdp(configuration(false, "custom-db", "my-users", "ds-1"));
+
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
+    }
+
+    @Test
+    void should_allow_a_datasource_removed_from_a_system_cluster_provider() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", "ds-1"));
+        var original = configuration(true, "custom-db", "my-users", null);
+        var toUpdate = mongoIdp(original);
+
+        policy.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+    }
+
+    @Test
+    void should_allow_a_datasource_removed_outside_managed_cloud() {
+        var standalone = policyWith(new MockEnvironment());
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", "ds-1"));
+        var original = configuration(true, "custom-db", "my-users", null);
+        var toUpdate = mongoIdp(original);
+
+        standalone.applyOnUpdate(stored, toUpdate);
+
+        assertEquals(original, toUpdate.getConfiguration());
+    }
+
+    @Test
+    void should_allow_a_system_identity_provider_to_leave_the_system_cluster() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        stored.setSystem(true);
+        var toUpdate = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        toUpdate.setSystem(true);
+
+        policy.applyOnUpdate(stored, toUpdate);
+    }
+
+    @Test
+    void should_allow_a_non_mongo_identity_provider_to_leave_the_system_cluster() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        stored.setType("inline-am-idp");
+        var toUpdate = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        toUpdate.setType("inline-am-idp");
+
+        policy.applyOnUpdate(stored, toUpdate);
+    }
+
+    @Test
+    void should_allow_an_update_when_the_stored_configuration_cannot_be_read() {
+        var stored = mongoIdp("not json");
+        var toUpdate = mongoIdp(configuration(false, "custom-db", "my-users", null));
+
+        policy.applyOnUpdate(stored, toUpdate);
+    }
+
+    @Test
+    void should_allow_an_update_when_the_new_configuration_cannot_be_read() {
+        var stored = mongoIdp(configuration(true, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp("not json");
+
+        policy.applyOnUpdate(stored, toUpdate);
+    }
+
+    @Test
     void should_reject_an_update_that_turns_the_system_cluster_on() {
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
         var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
@@ -272,7 +382,7 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_reject_an_update_that_turns_the_system_cluster_on_in_managed_cloud_when_the_setting_is_turned_off() {
+    void should_keep_rejecting_an_update_that_turns_the_system_cluster_on_in_managed_cloud_when_the_setting_is_turned_off() {
         environment.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "false");
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
         var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
@@ -304,15 +414,11 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_allow_an_update_that_turns_the_system_cluster_on_for_a_datasource_provider() {
+    void should_reject_an_update_that_turns_the_system_cluster_on_for_a_datasource_provider() {
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", "ds-1"));
-        var original = configuration(true, "custom-db", "my-users", "ds-1");
-        var toUpdate = mongoIdp(original);
+        var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", "ds-1"));
 
-        policy.applyOnUpdate(stored, toUpdate);
-
-        assertEquals(original, toUpdate.getConfiguration());
-        assertFalse(toUpdate.isSystemClusterRestricted());
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
     }
 
     @Test

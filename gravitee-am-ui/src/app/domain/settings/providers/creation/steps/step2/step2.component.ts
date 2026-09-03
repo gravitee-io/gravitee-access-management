@@ -19,7 +19,11 @@ import { map, switchMap } from 'rxjs/operators';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
-import { enrichFormWithCerts, enrichFormWithSystemClusterCreationHints } from '../../../provider/provider.form.enricher';
+import {
+  enrichFormWithCerts,
+  enrichFormWithSystemClusterCreationHints,
+  enrichFormWithSystemClusterDisclaimer,
+} from '../../../provider/provider.form.enricher';
 import { DataSourcesService } from '../../../../../../services/datasources.service';
 import { CloudModeService } from '../../../../../../services/cloud-mode.service';
 
@@ -62,6 +66,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
             this.organizationService.identitySchema(providerType).pipe(
               map((schema) => enrichFormWithCerts(schema, this.certificates)),
               map((schema) => enrichFormWithSystemClusterCreationHints(schema, providerType, restricted)),
+              map((schema) => enrichFormWithSystemClusterDisclaimer(schema, providerType, restricted)),
             ),
           ),
         )

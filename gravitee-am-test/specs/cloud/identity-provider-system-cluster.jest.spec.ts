@@ -132,6 +132,17 @@ describe('Identity provider reusing the system cluster', () => {
     expect(unchanged.systemClusterRestricted).toBeFalsy();
   });
 
+  itMongoOnly(jira`should reject an update that turns the system cluster off ${'AM-7585'}`, async () => {
+    const idp = await newMongoIdp(true);
+
+    await expect(updateCloudIdp(scope, idp.id, buildMongoIdpUpdateBody(idp, { useSystemCluster: false }))).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+
+    const unchanged = await getCloudIdp(scope, idp.id);
+    expect(JSON.parse(unchanged.configuration).useSystemCluster).toEqual(true);
+  });
+
   it(jira`should accept the same automation manifest applied twice ${'AM-7586'}`, async () => {
     const manifest = buildMongoAutomationIdpDef(uniqueName('am7264-auto', true).toLowerCase());
 
