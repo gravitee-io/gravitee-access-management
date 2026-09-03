@@ -28,6 +28,11 @@
 
     <artifactId>gravitee-am-management-api-standalone-distribution-zip</artifactId>
     <name>Gravitee IO - Access Management - Management API - Standalone - Distribution - Zip</name>
+
+    <properties>
+        <!-- Distribution bundle: published on download.gravitee.io, never on Nexus/Artifactory/Maven -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
     <packaging>pom</packaging>
 
     <dependencies>

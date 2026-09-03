@@ -438,8 +438,9 @@ jobs:
       - run:
           name: Maven Package & deploy on artifactory
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean deploy -pl \!gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,\!gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
-            mvn -s /tmp/.gravitee.settings.xml -P ee-bundle,addons-bundle package -DskipTests -pl gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip,gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip
+            # The distribution bundle modules (gateway/mgmt-api standalone zips, webui) set
+            # maven.deploy.skip in their pom, so they are packaged but never pushed to Artifactory.
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle clean deploy
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/

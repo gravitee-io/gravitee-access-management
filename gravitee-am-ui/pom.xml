@@ -24,6 +24,8 @@
     <frontend-maven-plugin.version>1.15.4</frontend-maven-plugin.version>
     <node.version>v20.11.1</node.version>
     <yarn.version>v1.22.22</yarn.version>
+    <!-- Distribution bundle: published on download.gravitee.io, never on Nexus/Artifactory/Maven -->
+    <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
 
   <parent>
