@@ -100,14 +100,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
             // make sure the DataPlane plugin is a Mongo one
             if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-                final ClientWrapper<MongoClient> clientWrapper = provider.getClientWrapper();
-                // Only a domain's default identity provider follows the data plane's database: it has no
-                // connection settings of its own to honor. A user-configured provider keeps the database
-                // from its own form to preserve historical behavior.
-                if (this.identityProviderEntity.isSystem()) {
-                    this.configuration.setDatabase(clientWrapper.getDatabaseName());
-                }
-                return clientWrapper;
+                return provider.getClientWrapper();
             }
         }
 
@@ -120,11 +113,17 @@ public abstract class MongoAbstractProvider implements InitializingBean {
                 : getClientWrapperBasedOnConfig(scope);
     }
 
+    // A domain's default identity provider has no connection settings of its own to honor, so its
+    // database follows the client. A user-configured provider only does so when it was created under
+    // the storage regime and the database is pinned.
     private boolean shouldTakeDatabaseFromSystemCluster() {
-        return this.identityProviderEntity != null
-                && this.identityProviderEntity.isSystemClusterRestricted()
-                && this.configuration.isUseSystemCluster()
-                && !shouldUseDatasource();
+        if (this.identityProviderEntity == null || !this.configuration.isUseSystemCluster() || shouldUseDatasource()) {
+            return false;
+        }
+        if (this.identityProviderEntity.isSystem()) {
+            return true;
+        }
+        return this.identityProviderEntity.isSystemClusterRestricted();
     }
 
     private boolean shouldUseDatasource() {

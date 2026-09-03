@@ -114,7 +114,9 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
     @Override
     public Map<String, Object> createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
-        return buildProviderConfiguration(referenceId, identityProvider, boundToSystemClusterByConfiguration());
+        // A new default identity provider always reuses the system cluster; the Mongo provider decides at
+        // runtime which scope serves it.
+        return buildProviderConfiguration(referenceId, identityProvider, true);
     }
 
     @Override
@@ -137,24 +139,6 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Unable to read the default idp configuration for domain '" + identityProvider.getReferenceId() + "'", e);
         }
-    }
-
-    private boolean boundToSystemClusterByConfiguration() {
-        return useMongoRepositories() && systemClusterScope() == Scope.GATEWAY;
-    }
-
-    private Scope systemClusterScope() {
-        final String value = environment.getProperty(SYSTEM_CLUSTER, Scope.MANAGEMENT.getName());
-        final Scope scope;
-        try {
-            scope = Scope.fromName(value);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER + "' value '" + value + "', only 'management' or 'gateway' are accepted", e);
-        }
-        if (scope != Scope.MANAGEMENT && scope != Scope.GATEWAY) {
-            throw new IllegalStateException("Invalid '" + SYSTEM_CLUSTER + "' value '" + value + "', only 'management' or 'gateway' are accepted");
-        }
-        return scope;
     }
 
     private Map<String, Object> buildProviderConfiguration(String referenceId, NewIdentityProvider identityProvider, boolean boundToSystemCluster) {

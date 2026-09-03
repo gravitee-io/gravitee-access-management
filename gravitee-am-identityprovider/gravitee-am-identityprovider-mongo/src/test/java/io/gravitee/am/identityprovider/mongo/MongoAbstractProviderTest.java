@@ -169,7 +169,7 @@ public class MongoAbstractProviderTest {
 
     @Test
     public void systemProviderOnTheManagementScope_usesTheManagementClient() {
-        // the flag alone is not enough: gravitee.yml still has to select the gateway scope
+        // the flag alone does not select the data plane: gravitee.yml still has to select the gateway scope
         configuration.setUseSystemCluster(true);
         when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
         when(commonConnectionProvider.getClientWrapper()).thenReturn(commonClientWrapper);
@@ -178,6 +178,20 @@ public class MongoAbstractProviderTest {
 
         Assert.assertSame(commonClientWrapper, ReflectionTestUtils.getField(provider, "clientWrapper"));
         verify(dataPlaneRegistry, never()).getProviderById(DATA_PLANE_ID);
+    }
+
+    @Test
+    public void systemProviderOnTheManagementScope_readsTheManagementDatabase() {
+        // whichever scope serves a default identity provider, its database follows the client it is given
+        configuration.setUseSystemCluster(true);
+        configuration.setDatabase("persisted-db");
+        when(commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)).thenReturn(true);
+        when(commonConnectionProvider.getClientWrapper()).thenReturn(commonClientWrapper);
+        when(commonClientWrapper.getDatabaseName()).thenReturn("management-db");
+
+        provider.afterPropertiesSet();
+
+        Assert.assertEquals("management-db", configuration.getDatabase());
     }
 
     @Test

@@ -393,9 +393,7 @@ handlers:
       enabled: false
 
 repositories:
-  # specify which scope is used as reference
-  # to initialize the IdentityProviders with the "use system cluster"
-  # option enabled (only management and gateway scopes are allowed as value)
+  # Cluster bound to Mongo IDPs that have "use system cluster" option enabled (management or gateway)
   system-cluster: management
   # Management repository is used to store global configuration such as domains, clients, ...
   # This is the default configuration using MongoDB (single server)
