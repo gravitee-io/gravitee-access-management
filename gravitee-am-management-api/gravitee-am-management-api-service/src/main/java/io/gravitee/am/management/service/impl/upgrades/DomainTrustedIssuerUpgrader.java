@@ -26,6 +26,7 @@ import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
@@ -170,12 +171,13 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(domain.getId())
                 .name(name)
-                .issuer(issuer.getIssuer())
+                .domainIdentifier(issuer.getIssuer())
                 .keyMaterial(keyMaterialOf(issuer))
-                .refreshIntervalSeconds(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS)
-                .scopeMappings(issuer.getScopeMappings())
-                .userBindingEnabled(issuer.isUserBindingEnabled())
-                .userBindingCriteria(issuer.getUserBindingCriteria())
+                .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .scopeMappings(issuer.getScopeMappings())
+                        .userBindingEnabled(issuer.isUserBindingEnabled())
+                        .userBindingCriteria(issuer.getUserBindingCriteria())
+                        .build())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

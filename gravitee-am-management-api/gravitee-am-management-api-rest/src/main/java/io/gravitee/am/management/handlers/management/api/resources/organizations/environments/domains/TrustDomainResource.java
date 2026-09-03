@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.spring.ManagementObjectMapperConfiguration;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.oidc.TrustDomain;
@@ -23,17 +26,19 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
+import io.gravitee.am.service.model.TrustDomainRequestVersion;
 import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustDomainRequest;
+import io.gravitee.am.service.model.UpdateTrustDomainV2;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -45,6 +50,7 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Tag(name = "trust-domain")
 public class TrustDomainResource extends AbstractResource {
@@ -54,6 +60,10 @@ public class TrustDomainResource extends AbstractResource {
 
     @Autowired
     private TrustDomainService trustDomainService;
+
+    @Autowired
+    @Qualifier(ManagementObjectMapperConfiguration.MANAGEMENT_API_OBJECT_MAPPER)
+    private ObjectMapper objectMapper;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -103,16 +113,29 @@ public class TrustDomainResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
             @PathParam("trustDomainId") String trustDomainId,
-            @Parameter(name = "trustDomain", required = true)
-            @Valid @NotNull final UpdateTrustDomain updateTrustDomain,
+            @RequestBody(required = true, content = @Content(mediaType = "application/json",
+                    schema = @Schema(oneOf = {UpdateTrustDomain.class, UpdateTrustDomainV2.class})))
+            @NotNull final JsonNode body,
             @Suspended final AsyncResponse response) {
         final var authenticatedUser = getAuthenticatedUser();
+        final UpdateTrustDomainRequest updateTrustDomain = readBody(body);
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
                 .flatMapSingle(domain -> trustDomainService.update(domain, trustDomainId, updateTrustDomain, authenticatedUser))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private UpdateTrustDomainRequest readBody(JsonNode body) {
+        Class<? extends UpdateTrustDomainRequest> type = TrustDomainRequestVersion.isV2(body)
+                ? UpdateTrustDomainV2.class
+                : UpdateTrustDomain.class;
+        try {
+            return objectMapper.treeToValue(body, type);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new jakarta.ws.rs.BadRequestException(e.getOriginalMessage());
+        }
     }
 
     @DELETE

@@ -23,6 +23,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -128,14 +130,10 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         td.setReferenceType(entity.getReferenceType() != null ? ReferenceType.valueOf(entity.getReferenceType()) : null);
         td.setName(entity.getName());
         td.setDescription(entity.getDescription());
-        td.setSpiffeTrustDomain(readSpiffeTrustDomain(entity));
-        td.setIssuer(entity.getIssuer());
+        td.setDomainIdentifier(entity.getIssuer());
         td.setKeyMaterial(readKeyMaterial(entity));
-        td.setRefreshIntervalSeconds(entity.getRefreshIntervalSeconds());
-        td.setAllowedAlgorithms(parseJson(entity.getAllowedAlgorithms(), STRING_LIST, "allowed algorithms"));
-        td.setScopeMappings(parseJson(entity.getScopeMappings(), STRING_MAP, "scope mappings"));
-        td.setUserBindingEnabled(Boolean.TRUE.equals(entity.getUserBindingEnabled()));
-        td.setUserBindingCriteria(parseJson(entity.getUserBindingCriteria(), CRITERION_LIST, "user binding criteria"));
+        td.setSpiffe(readSpiffe(entity));
+        td.setTokenExchange(readTokenExchange(entity));
         td.setCreatedAt(toDate(entity.getCreatedAt()));
         td.setUpdatedAt(toDate(entity.getUpdatedAt()));
         return td;
@@ -169,12 +167,38 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
      * trust domains stored before it existed.
      */
     static TrustDomainKeyMaterial readKeyMaterial(JdbcTrustDomain entity) {
-        if (entity.getKeyMaterial() != null && !entity.getKeyMaterial().isBlank()) {
-            return parseJson(entity.getKeyMaterial(), KEY_MATERIAL, "key material");
+        TrustDomainKeyMaterial model = entity.getKeyMaterial() != null && !entity.getKeyMaterial().isBlank()
+                ? parseJson(entity.getKeyMaterial(), KEY_MATERIAL, "key material")
+                : TrustDomainKeyMaterial.fromBundleSource(
+                        entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null,
+                        entity.getJwksUrl());
+        if (model != null) {
+            model.setRefreshIntervalSeconds(entity.getRefreshIntervalSeconds());
         }
-        return TrustDomainKeyMaterial.fromBundleSource(
-                entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null,
-                entity.getJwksUrl());
+        return model;
+    }
+
+    static SpiffeTrustSettings readSpiffe(JdbcTrustDomain entity) {
+        String spiffeTrustDomain = readSpiffeTrustDomain(entity);
+        List<String> allowedAlgorithms = parseJson(entity.getAllowedAlgorithms(), STRING_LIST, "allowed algorithms");
+        if (spiffeTrustDomain == null && allowedAlgorithms == null) {
+            return null;
+        }
+        return SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(spiffeTrustDomain)
+                .allowedAlgorithms(allowedAlgorithms)
+                .build();
+    }
+
+    static TokenExchangeTrustSettings readTokenExchange(JdbcTrustDomain entity) {
+        if (entity.getIssuer() == null) {
+            return null;
+        }
+        return TokenExchangeTrustSettings.builder()
+                .scopeMappings(parseJson(entity.getScopeMappings(), STRING_MAP, "scope mappings"))
+                .userBindingEnabled(Boolean.TRUE.equals(entity.getUserBindingEnabled()))
+                .userBindingCriteria(parseJson(entity.getUserBindingCriteria(), CRITERION_LIST, "user binding criteria"))
+                .build();
     }
 
     /**
