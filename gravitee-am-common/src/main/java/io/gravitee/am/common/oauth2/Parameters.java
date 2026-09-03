@@ -170,8 +170,20 @@ public interface Parameters {
      */
     String ACTOR_TOKEN_TYPE = "actor_token_type";
 
+    /**
+     * Device Authorization Grant: the device verification code issued to the device.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.4">RFC 8628 Section 3.4</a>
+     */
+    String DEVICE_CODE = "device_code";
+
+    /**
+     * Device Authorization Grant: the end-user code displayed on the device.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc8628#section-3.2">RFC 8628 Section 3.2</a>
+     */
+    String USER_CODE = "user_code";
+
     Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
                 REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
                 DPOP_JKT, CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR, RESOURCE, SUBJECT_TOKEN, SUBJECT_TOKEN_TYPE, REQUESTED_TOKEN_TYPE,
-                ACTOR_TOKEN, ACTOR_TOKEN_TYPE);
+                ACTOR_TOKEN, ACTOR_TOKEN_TYPE, DEVICE_CODE, USER_CODE);
 }

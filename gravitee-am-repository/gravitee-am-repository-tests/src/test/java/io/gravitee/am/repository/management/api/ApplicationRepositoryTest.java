@@ -26,6 +26,7 @@ import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -263,6 +264,9 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                     && "email".equals(mappings.get(1).getSourceClaim())
                     && "actor_email".equals(mappings.get(1).getTokenClaim());
         });
+        testObserver.assertValue(a -> a.getSettings().getOauth().getDeviceFlowSettings() != null
+                && a.getSettings().getOauth().getDeviceFlowSettings().getDeviceCodeExpiry() == 120
+                && a.getSettings().getOauth().getDeviceFlowSettings().getPollingInterval() == 2);
     }
 
     private static Application buildApplication() {
@@ -330,6 +334,10 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         actorMapping.setTokenClaim("actor_email");
         teSettings.setClaimMappings(List.of(subjectMapping, actorMapping));
         oauth.setTokenExchangeOAuthSettings(teSettings);
+        ApplicationDeviceFlowSettings deviceFlowSettings = new ApplicationDeviceFlowSettings();
+        deviceFlowSettings.setDeviceCodeExpiry(120);
+        deviceFlowSettings.setPollingInterval(2);
+        oauth.setDeviceFlowSettings(deviceFlowSettings);
 
         final AccountSettings account = new AccountSettings();
         account.setResetPasswordInvalidateTokens(true);
@@ -604,6 +612,22 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(updatedApp, testObserver);
+    }
+
+    @Test
+    public void shouldClearTheDeviceFlowOverrideAndReturnToInheriting() {
+        Application appCreated = applicationRepository.create(buildApplication()).blockingGet();
+
+        Application updatedApp = buildApplication();
+        updatedApp.setId(appCreated.getId());
+        updatedApp.getSettings().getOauth().setDeviceFlowSettings(null);
+        applicationRepository.update(updatedApp).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(appCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(a -> a.getSettings().getOauth().getDeviceFlowSettings() == null);
     }
 
     @Test

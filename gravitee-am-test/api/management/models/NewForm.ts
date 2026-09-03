@@ -69,6 +69,8 @@ export const NewFormTemplateEnum = {
   ForgotPassword: 'FORGOT_PASSWORD',
   ResetPassword: 'RESET_PASSWORD',
   Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
+  DeviceCodeEntry: 'DEVICE_CODE_ENTRY',
+  DeviceCompletion: 'DEVICE_COMPLETION',
   MfaEnroll: 'MFA_ENROLL',
   MfaChallenge: 'MFA_CHALLENGE',
   MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',

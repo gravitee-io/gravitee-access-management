@@ -273,6 +273,7 @@ public class ClientServiceImpl implements ClientService {
         // token exchange settings are not part of the DCR contract, so carry the stored value over
         // rather than dropping it on every registration update or secret renewal
         oAuthSettings.setTokenExchangeOAuthSettings(client.getTokenExchangeOAuthSettings());
+        oAuthSettings.setDeviceFlowSettings(client.getDeviceFlowSettings());
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings

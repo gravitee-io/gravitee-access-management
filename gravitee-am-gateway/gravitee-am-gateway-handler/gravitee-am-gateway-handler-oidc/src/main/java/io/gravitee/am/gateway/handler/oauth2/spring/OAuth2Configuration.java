@@ -26,6 +26,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeServi
 import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCodeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.impl.UserConsentServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
@@ -150,6 +152,11 @@ public class OAuth2Configuration implements ProtocolConfiguration {
             @Value("${oauth2.approval.expiry:-1}") int approvalExpirySeconds
     ) {
         return new UserConsentServiceImpl(approvalExpirySeconds);
+    }
+
+    @Bean
+    public DeviceAuthorizationRequestService deviceAuthorizationRequestService() {
+        return new DeviceAuthorizationRequestServiceImpl();
     }
 
     @Bean

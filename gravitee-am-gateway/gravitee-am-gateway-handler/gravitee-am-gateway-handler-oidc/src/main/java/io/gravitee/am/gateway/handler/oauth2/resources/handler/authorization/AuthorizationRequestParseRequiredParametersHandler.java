@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -74,6 +75,9 @@ public class AuthorizationRequestParseRequiredParametersHandler extends Abstract
     }
 
     private void parseResponseTypeParameter(RoutingContext context) {
+        if (DeviceFlowContext.isDeviceFlow(context)) {
+            return;
+        }
         String responseType = context.request().getParam(Parameters.RESPONSE_TYPE);
         OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
 

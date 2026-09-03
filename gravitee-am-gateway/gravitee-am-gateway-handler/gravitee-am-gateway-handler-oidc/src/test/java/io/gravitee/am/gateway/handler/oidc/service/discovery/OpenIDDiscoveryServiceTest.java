@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.discovery;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.AcrValues;
 import io.gravitee.am.common.oidc.BrazilAcrValues;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
@@ -225,6 +226,27 @@ public class OpenIDDiscoveryServiceTest {
         assertTrue(openIDProviderMetadata.getBackchannelAuthenticationSigningAlg().containsAll(JWAlgorithmUtils.getSupportedBackchannelAuthenticationSigningAl()));
         assertNotNull(openIDProviderMetadata.getBackchannelTokenDeliveryModesSupported());
         assertTrue(openIDProviderMetadata.getBackchannelTokenDeliveryModesSupported().containsAll(List.of(CIBADeliveryMode.POLL)));
+    }
+
+    @Test
+    public void shouldOmitDeviceFlowMetadataWhenDeviceFlowDisabled() {
+        when(domain.useDeviceFlow()).thenReturn(false);
+
+        final OpenIDProviderMetadata metadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertNull(metadata.getDeviceAuthorizationEndpoint());
+        assertFalse(metadata.getGrantTypesSupported().contains(GrantType.DEVICE_CODE));
+    }
+
+    @Test
+    public void shouldAdvertiseDeviceFlowMetadataWhenDeviceFlowEnabled() {
+        when(domain.useDeviceFlow()).thenReturn(true);
+
+        final OpenIDProviderMetadata metadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertTrue("device authorization endpoint is required",
+                metadata.getDeviceAuthorizationEndpoint().contains("oauth/device_authorization"));
+        assertTrue(metadata.getGrantTypesSupported().contains(GrantType.DEVICE_CODE));
     }
 
     @Test

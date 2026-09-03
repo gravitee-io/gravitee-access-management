@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.discovery.impl;
 
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -56,6 +57,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
     private static final String ENDSESSION_ENDPOINT = "/logout";
     private static final String REGISTRATION_ENDPOINT = "/oidc/register";
     private static final String CIBA_AUTHENTICATION_ENDPOINT = "/oidc/ciba/authenticate";
+    private static final String DEVICE_AUTHORIZATION_ENDPOINT = "/oauth/device_authorization";
     private static final String OIDC_ENDPOINT = "/oidc";
     private static final String REQUEST_OBJECT_ENDPOINT = "/oidc/ros";
     public static final List<String> BRAZIL_CLAIMS = Arrays.asList("cpf", "cnpj");
@@ -125,7 +127,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
         openIDProviderMetadata.setResponseModesSupported(ResponseMode.supportedValues());
-        openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
+        openIDProviderMetadata.setGrantTypesSupported(getGrantTypesSupported());
         openIDProviderMetadata.setClaimTypesSupported(ClaimType.supportedValues());
         openIDProviderMetadata.setSubjectTypesSupported(SubjectTypeUtils.getSupportedSubjectTypes());
         final Boolean filterCustomValues = env.getProperty("legacy.openid.filterCustomPrompt", Boolean.class, false);
@@ -192,6 +194,10 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
             openIDProviderMetadata.setBackchannelUserCodeSupported(false);
         }
 
+        if (domain.useDeviceFlow()) {
+            openIDProviderMetadata.setDeviceAuthorizationEndpoint(getEndpointAbsoluteURL(basePath, DEVICE_AUTHORIZATION_ENDPOINT));
+        }
+
         final boolean mtlsEnabled = clientCert != null || (secured && !clientAuth.equalsIgnoreCase("none"));
         openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(mtlsEnabled);
 
@@ -252,6 +258,14 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
 
     private String getEndpointAbsoluteURL (String basePath, String endpointPath){
         return basePath + endpointPath;
+    }
+
+    private List<String> getGrantTypesSupported() {
+        final List<String> grantTypes = new ArrayList<>(GrantTypeUtils.getSupportedGrantTypes());
+        if (!domain.useDeviceFlow()) {
+            grantTypes.remove(GrantType.DEVICE_CODE);
+        }
+        return grantTypes;
     }
 
 }

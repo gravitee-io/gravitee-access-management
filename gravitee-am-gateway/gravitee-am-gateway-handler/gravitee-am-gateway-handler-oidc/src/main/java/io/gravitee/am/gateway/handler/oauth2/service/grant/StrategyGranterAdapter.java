@@ -347,6 +347,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             case GrantData.ClientCredentialsData ignored -> { }
             case GrantData.PasswordData ignored -> { }
             case GrantData.CibaData data -> oAuth2Request.setAuthorizationDetails(data.authorizationDetails());
+            case GrantData.DeviceCodeData ignored -> { }
             case GrantData.ExtensionGrantData ignored -> { }
         }
     }

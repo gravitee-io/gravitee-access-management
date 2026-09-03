@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-device-authorization-requests-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: device_authorization_requests
+      changes:
+        ## device_authorization_requests
+        ###############################
+        - createTable:
+            tableName: device_authorization_requests
+            columns:
+              - column: { name: id, type: nvarchar(128), constraints: { nullable: false } }
+              - column: { name: user_code, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: client, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: subject, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: status, type: nvarchar(32), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: last_access_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: interval_increment, type: integer, defaultValue: 0, constraints: { nullable: false } }
+              - column: { name: scopes, type: clob, constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_device_authorization_requests
+            columnNames: id
+            tableName: device_authorization_requests
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_code
+            indexName: idx_device_authorization_requests_user_code
+            tableName: device_authorization_requests
+            unique: true
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_device_authorization_requests_expire
+            tableName: device_authorization_requests
+            unique: false

@@ -39,6 +39,13 @@ import {
 } from './ApplicationScopeSettings';
 import type { UserInfoClaim } from './UserInfoClaim';
 import { UserInfoClaimFromJSON, UserInfoClaimFromJSONTyped, UserInfoClaimToJSON, UserInfoClaimToJSONTyped } from './UserInfoClaim';
+import type { ApplicationDeviceFlowSettings } from './ApplicationDeviceFlowSettings';
+import {
+  ApplicationDeviceFlowSettingsFromJSON,
+  ApplicationDeviceFlowSettingsFromJSONTyped,
+  ApplicationDeviceFlowSettingsToJSON,
+  ApplicationDeviceFlowSettingsToJSONTyped,
+} from './ApplicationDeviceFlowSettings';
 import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
 import {
   TokenExchangeOAuthSettingsFromJSON,
@@ -173,6 +180,12 @@ export interface ApplicationOAuthSettings {
    * @memberof ApplicationOAuthSettings
    */
   defaultScopes?: Array<string>;
+  /**
+   *
+   * @type {ApplicationDeviceFlowSettings}
+   * @memberof ApplicationOAuthSettings
+   */
+  deviceFlowSettings?: ApplicationDeviceFlowSettings;
   /**
    *
    * @type {boolean}
@@ -532,6 +545,7 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
     defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
+    deviceFlowSettings: json['deviceFlowSettings'] == null ? undefined : ApplicationDeviceFlowSettingsFromJSON(json['deviceFlowSettings']),
     disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
     dpopBoundAccessTokens: json['dpopBoundAccessTokens'] == null ? undefined : json['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions:
@@ -622,6 +636,7 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     defaultACRvalues: value['defaultACRvalues'],
     defaultMaxAge: value['defaultMaxAge'],
     defaultScopes: value['defaultScopes'],
+    deviceFlowSettings: ApplicationDeviceFlowSettingsToJSON(value['deviceFlowSettings']),
     disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
     dpopBoundAccessTokens: value['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],

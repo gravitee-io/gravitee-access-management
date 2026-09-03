@@ -238,6 +238,7 @@ import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-en
 import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
+import { DeviceFlowSettingsComponent } from './domain/settings/openid/device-flow/device-flow-settings.component';
 import { SpiffeSettingsComponent } from './domain/settings/openid/spiffe/spiffe-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
 import { CimdSettingsComponent } from './domain/settings/cimd/cimd.component';
@@ -3170,6 +3171,21 @@ export const routes: Routes = [
                             },
                           },
                         ],
+                      },
+                      {
+                        path: 'device-flow',
+                        component: DeviceFlowSettingsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Device Flow',
+                            section: 'OAuth 2.0',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_openid_read'],
+                          },
+                        },
                       },
                       {
                         path: 'saml2',

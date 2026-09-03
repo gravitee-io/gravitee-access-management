@@ -26,6 +26,7 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
@@ -98,11 +99,13 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         // proceed nonce parameter
         parseNonceParameter(context);
 
-        // proceed grant_type parameter
-        parseGrantTypeParameter(client);
+        if (!DeviceFlowContext.isDeviceFlow(context)) {
+            // proceed grant_type parameter
+            parseGrantTypeParameter(client);
 
-        // proceed response_type parameter
-        parseResponseTypeParameter(context, client);
+            // proceed response_type parameter
+            parseResponseTypeParameter(context, client);
+        }
 
         context.next();
     }

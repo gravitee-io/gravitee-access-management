@@ -103,6 +103,8 @@ public class ApplicationOAuthSettingsMongo {
 
     private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
 
+    private ApplicationDeviceFlowSettingsMongo deviceFlowSettings;
+
     public String getClientId() {
         return clientId;
     }
@@ -685,5 +687,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTokenExchangeOAuthSettings(TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings) {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
+    }
+
+    public ApplicationDeviceFlowSettingsMongo getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettingsMongo deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
     }
 }

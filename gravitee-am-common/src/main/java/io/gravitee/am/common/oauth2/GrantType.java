@@ -61,7 +61,7 @@ public interface GrantType {
      * Device code flow
      * See <a href="https://tools.ietf.org/html/draft-ietf-oauth-device-flow-15#section-3.4">3.4 Device Access Token Request</a>
      */
-    String DEVIDE_CODE = "urn:ietf:params:oauth:grant-type:device_code";
+    String DEVICE_CODE = "urn:ietf:params:oauth:grant-type:device_code";
 
     /**
      * SAML 2.0 Bearer

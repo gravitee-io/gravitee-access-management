@@ -309,6 +309,8 @@ public class Client implements Cloneable, Resource {
 
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
+    private ApplicationDeviceFlowSettings deviceFlowSettings;
+
     private SecretExpirationSettings secretExpirationSettings;
 
     private AgentType agentType;
@@ -420,6 +422,7 @@ public class Client implements Cloneable, Resource {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
+        this.deviceFlowSettings = other.deviceFlowSettings != null ? new ApplicationDeviceFlowSettings(other.deviceFlowSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
@@ -1308,6 +1311,14 @@ public class Client implements Cloneable, Resource {
 
     public void setTokenExchangeOAuthSettings(TokenExchangeOAuthSettings tokenExchangeOAuthSettings) {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
+    }
+
+    public ApplicationDeviceFlowSettings getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettings deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
     }
 
     public List<ApplicationSecretSettings> getSecretSettings() {

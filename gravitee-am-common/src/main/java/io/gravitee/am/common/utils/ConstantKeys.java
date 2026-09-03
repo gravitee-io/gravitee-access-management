@@ -302,4 +302,8 @@ public interface ConstantKeys {
     String PROTOCOL_VALUE_SAML_REDIRECT = "SAML/HTTP-Redirect";
     String PROTOCOL_VALUE_SAML_POST = "SAML/HTTP-POST";
     String IDP_CODE_VERIFIER = "idp_code_verifier";
+
+    String DEVICE_FLOW_DEVICE_CODE_KEY = "deviceFlowDeviceCode";
+    String DEVICE_FLOW_CLIENT_ID_KEY = "deviceFlowClientId";
+    String DEVICE_FLOW_ERROR_KEY = "deviceFlowError";
 }

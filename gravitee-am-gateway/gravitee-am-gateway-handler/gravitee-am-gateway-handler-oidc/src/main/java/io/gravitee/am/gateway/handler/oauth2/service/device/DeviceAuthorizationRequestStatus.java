@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.ciba.exception;
-
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+package io.gravitee.am.gateway.handler.oauth2.service.device;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationPendingException extends OAuth2Exception {
-
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "authorization_pending";
-    }
-
+public enum DeviceAuthorizationRequestStatus {
+    PENDING,
+    APPROVED,
+    DENIED
 }

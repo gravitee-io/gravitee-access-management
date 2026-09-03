@@ -425,6 +425,7 @@ import { UserDevicesComponent } from './domain/settings/users/user/devices/devic
 import { UserDevicesResolver } from './resolvers/user-devices.resolver';
 import { DynamicUserRolesResolver } from './resolvers/dynamic-user-roles.resolver';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
+import { DeviceFlowSettingsComponent } from './domain/settings/openid/device-flow/device-flow-settings.component';
 import { DeviceNotifiersCreationComponent } from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
 import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
 import { DeviceNotifiersService } from './services/device-notifiers.service';
@@ -747,6 +748,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     OIDCProfileComponent,
     CibaComponent,
     CibaSettingsComponent,
+    DeviceFlowSettingsComponent,
     SpiffeSettingsComponent,
     Saml2Component,
     CimdSettingsComponent,

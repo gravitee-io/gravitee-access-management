@@ -20,14 +20,13 @@ import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.common.ciba.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestExpiredException;
+import io.gravitee.am.common.polling.PollingRequestState;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationRejectedException;
-import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
+import io.gravitee.am.gateway.handler.oauth2.service.polling.AbstractPollingRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -35,7 +34,6 @@ import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
@@ -52,8 +50,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
-import java.time.Instant;
-import java.util.Date;
 import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
@@ -65,7 +61,7 @@ import lombok.CustomLog;
  * @author GraviteeSource Team
  */
 @CustomLog
-public class AuthenticationRequestServiceImpl implements AuthenticationRequestService {
+public class AuthenticationRequestServiceImpl extends AbstractPollingRequestService<CibaAuthRequest> implements AuthenticationRequestService {
 
 
     @Autowired
@@ -102,22 +98,58 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     private int requestRetentionInSec = 900;
 
     @Override
+    protected Maybe<CibaAuthRequest> findRequestById(String requestId) {
+        return this.authRequestRepository.findById(requestId);
+    }
+
+    @Override
+    protected Single<CibaAuthRequest> createRequest(CibaAuthRequest request) {
+        return this.authRequestRepository.create(request);
+    }
+
+    @Override
+    protected Single<CibaAuthRequest> updateRequest(CibaAuthRequest request) {
+        return this.authRequestRepository.update(request);
+    }
+
+    @Override
+    protected Completable deleteRequest(String requestId) {
+        return this.authRequestRepository.delete(requestId);
+    }
+
+    @Override
+    protected String initialStatus() {
+        return AuthenticationRequestStatus.ONGOING.name();
+    }
+
+    @Override
+    protected PollingRequestState stateOf(CibaAuthRequest request) {
+        return switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
+            case ONGOING -> PollingRequestState.PENDING;
+            case REJECTED -> PollingRequestState.DENIED;
+            default -> PollingRequestState.APPROVED;
+        };
+    }
+
+    @Override
+    protected int getRetentionInSec() {
+        return requestRetentionInSec;
+    }
+
+    @Override
+    protected String getRequestIdParameterName() {
+        return Parameters.AUTH_REQ_ID;
+    }
+
+    @Override
     public Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client) {
-        Instant now = Instant.now();
         final Integer requestedExpiry = request.getRequestedExpiry();
         final long ttl = requestedExpiry != null ? requestedExpiry: domain.getOidc().getCibaSettings().getAuthReqExpiry();
 
         CibaAuthRequest entity = new CibaAuthRequest();
-        entity.setClientId(client.getClientId());
         entity.setId(request.getId());
         entity.setScopes(request.getScopes());
         entity.setSubject(request.getSubject());
-        entity.setStatus(AuthenticationRequestStatus.ONGOING.name());
-        entity.setCreatedAt(new Date(now.toEpochMilli()));
-        entity.setLastAccessAt(new Date(now.toEpochMilli()));
-        // as the application has to be informed of an expired request, we add retention time to the ttl
-        // to avoid removing the request information from the database when ttl has expired
-        entity.setExpireAt(new Date(now.plusSeconds(ttl + requestRetentionInSec).toEpochMilli()));
         // Copy RFC 9396 authorization_details onto the persisted entity (presence-gated; no flag read)
         if (request.getAuthorizationDetails() != null && !request.getAuthorizationDetails().isEmpty()) {
             entity.setAuthorizationDetails(request.getAuthorizationDetails());
@@ -132,38 +164,13 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
 
         log.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds for client {}", entity.getId(), ttl, client.getClientId());
 
-        return authRequestRepository.create(entity);
+        return super.register(entity, client.getClientId(), ttl);
     }
 
     @Override
     public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client) {
         log.debug("Search for authentication request with id {} for client {}", authReqId, client.getClientId());
-        return this.authRequestRepository.findById(authReqId)
-                .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
-                .flatMap(request -> {
-                    if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
-                        return Single.error(new AuthenticationRequestExpiredException());
-                    }
-                    if (!client.getClientId().equals(request.getClientId())) {
-                        return Single.error(new InvalidGrantException(String.format("Invalid client: auth_req_id '%s' issued to client '%s' cannot be used by client '%s'", authReqId, request.getClientId(), client.getClientId())));
-                    }
-                    switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
-                        case ONGOING:
-                            // Check if the request interval is respected by the client
-                            // if the client request to often the endpoint, throws a SlowDown error
-                            // otherwise, update the last Access date before sending the pending exception
-                            final int interval = domain.getOidc().getCibaSettings().getTokenReqInterval();
-                            if (request.getLastAccessAt().toInstant().plusSeconds(interval).isAfter(Instant.now())) {
-                                return Single.error(new SlowDownException());
-                            }
-                            request.setLastAccessAt(new Date());
-                            return this.authRequestRepository.update(request).flatMap(__ -> Single.error(new AuthorizationPendingException()));
-                        case REJECTED:
-                            return this.authRequestRepository.delete(authReqId).toSingle(() -> { throw new AuthorizationRejectedException(); });
-                        default:
-                            return this.authRequestRepository.delete(authReqId).toSingle(() -> request);
-                    }
-                });
+        return super.retrieve(authReqId, client, domain.getOidc().getCibaSettings().getTokenReqInterval());
     }
 
     @Override

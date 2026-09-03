@@ -24,7 +24,7 @@
           <mat-divider></mat-divider>
         </div>
         <div fxLayout="row wrap">
-          <div *ngFor="let grantType of filteredGrantTypes" class="oauth2-grant-type">
+          <div *ngFor="let grantType of filteredGrantTypes" class="oauth2-grant-type" [matTooltip]="grantTypeDisabledReason(grantType)">
             <mat-checkbox
               name="grantTypes"
               value="{{ grantType.value }}"
@@ -180,6 +180,62 @@
           <mat-hint style="font-size: 75%">
             A claim that is absent from its source token is skipped. A custom token claim of the same name overrides the mapping.
           </mat-hint>
+        </div>
+      </div>
+
+      <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT && isDeviceFlowEnabledAtDomain()">
+        <div class="gv-form-section-title">
+          <h5>Device Flow</h5>
+          <small>Override the security domain device code expiry and polling interval for this application.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableDeviceFlowOverride($event)"
+            [checked]="isDeviceFlowOverridden()"
+            [disabled]="readonly || (!isDeviceFlowSelected() && !isDeviceFlowOverridden())"
+          >
+            Override configuration
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%" *ngIf="!isDeviceFlowOverridden()">
+            Inheriting the security domain: device code expiry {{ inheritedDeviceFlowSettings.deviceCodeExpiry }} seconds, polling interval
+            {{ inheritedDeviceFlowSettings.pollingInterval }} seconds.
+          </mat-hint>
+          <mat-hint style="font-size: 75%" *ngIf="isDeviceFlowOverridden()">
+            This application uses its own timings and no longer follows the security domain.
+          </mat-hint>
+        </div>
+        <div *ngIf="isDeviceFlowOverridden()" class="override-form-section">
+          <mat-divider></mat-divider>
+          <mat-form-field appearance="outline">
+            <mat-label>Device Code Expiry</mat-label>
+            <input
+              matInput
+              type="number"
+              name="deviceFlowDeviceCodeExpiry"
+              required
+              [min]="DEVICE_FLOW_TIMING_MIN"
+              [(ngModel)]="oauthSettings.deviceFlowSettings.deviceCodeExpiry"
+              (ngModelChange)="modelChanged()"
+              [disabled]="readonly"
+            />
+            <mat-hint>Validity period of an issued device code and user code (seconds).</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Polling Interval</mat-label>
+            <input
+              matInput
+              type="number"
+              name="deviceFlowPollingInterval"
+              required
+              [min]="DEVICE_FLOW_TIMING_MIN"
+              [(ngModel)]="oauthSettings.deviceFlowSettings.pollingInterval"
+              (ngModelChange)="modelChanged()"
+              [disabled]="readonly"
+            />
+            <mat-hint>Minimum delay between two polls of the token endpoint with the same device code (seconds).</mat-hint>
+          </mat-form-field>
+          <mat-error *ngIf="!isDeviceFlowOverrideValid()" style="font-size: 75%">{{ DEVICE_FLOW_TIMINGS_ERROR }}</mat-error>
         </div>
       </div>
 

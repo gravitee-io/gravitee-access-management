@@ -255,6 +255,31 @@ public record TokenCreationRequest(
     }
 
     /**
+     * Create request for the Device Authorization grant (RFC 8628).
+     */
+    public static TokenCreationRequest forDeviceCode(
+            TokenRequest original,
+            User user,
+            String deviceCode,
+            boolean supportRefresh) {
+
+        return new TokenCreationRequest(
+                original.getClientId(),
+                GrantType.DEVICE_CODE,
+                original.getScopes(),
+                user,
+                new GrantData.DeviceCodeData(deviceCode),
+                supportRefresh,
+                original.getResources(),
+                original.getOriginalAuthorizationResources(),
+                HttpRequestInfo.from(original),
+                original.getAdditionalParameters(),
+                original.getContext(),
+                Map.of()
+        );
+    }
+
+    /**
      * Create request for UMA grant.
      */
     public static TokenCreationRequest forUma(

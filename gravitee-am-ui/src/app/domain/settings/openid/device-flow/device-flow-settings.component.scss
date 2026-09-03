@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.ciba.exception;
-
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class AuthenticationRequestExpiredException extends OAuth2Exception {
-
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "expired_token";
-    }
+:host {
+  display: block;
 }
