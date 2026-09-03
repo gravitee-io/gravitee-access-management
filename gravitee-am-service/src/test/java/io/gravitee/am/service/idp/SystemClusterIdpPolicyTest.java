@@ -186,15 +186,16 @@ class SystemClusterIdpPolicyTest {
     }
 
     @Test
-    void should_leave_the_configuration_alone_when_pinning_is_turned_off() {
+    void should_keep_pinning_in_managed_cloud_when_the_setting_is_turned_off() throws ParseException {
         environment.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "false");
-        var original = configuration(true, "custom-db", "my-users", null);
-        var idp = mongoIdp(original);
+        var idp = mongoIdp(configuration(true, "custom-db", "my-users", null));
 
         policy.applyOnCreate(idp);
 
-        assertEquals(original, idp.getConfiguration());
-        assertFalse(idp.isSystemClusterRestricted());
+        var configuration = JSONObjectUtils.parse(idp.getConfiguration());
+        assertEquals(PLATFORM_DATABASE, configuration.get("database"));
+        assertEquals("idp_" + IDP_ID, configuration.get("usersCollection"));
+        assertTrue(idp.isSystemClusterRestricted());
     }
 
     @Test
@@ -264,6 +265,15 @@ class SystemClusterIdpPolicyTest {
 
     @Test
     void should_reject_an_update_that_turns_the_system_cluster_on() {
+        var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
+        var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
+
+        assertThrows(InvalidParameterException.class, () -> policy.applyOnUpdate(stored, toUpdate));
+    }
+
+    @Test
+    void should_reject_an_update_that_turns_the_system_cluster_on_in_managed_cloud_when_the_setting_is_turned_off() {
+        environment.setProperty(SystemClusterIdpSettings.SYSTEM_CLUSTER_RESTRICTED, "false");
         var stored = mongoIdp(configuration(false, "custom-db", "my-users", null));
         var toUpdate = mongoIdp(configuration(true, "custom-db", "my-users", null));
 

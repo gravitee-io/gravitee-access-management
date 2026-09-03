@@ -42,11 +42,10 @@ public class SystemClusterIdpSettings {
      * that a provider can never end up with a collection the platform named inside a database it
      * did not choose.
      *
-     * <p>A rule left out of the configuration follows the deployment: on in a Gravitee-managed
-     * cloud installation, off elsewhere.
+     * <p>Enabled in a Gravitee-managed cloud installation, otherwise by system configuration.
      */
     public boolean isRestricted() {
-        final Boolean value = environment.getProperty(SYSTEM_CLUSTER_RESTRICTED, Boolean.class);
-        return value != null ? value : CloudProperties.isManagedCloudEnabled(environment);
+        return CloudProperties.isManagedCloudEnabled(environment)
+                || environment.getProperty(SYSTEM_CLUSTER_RESTRICTED, Boolean.class, false);
     }
 }
