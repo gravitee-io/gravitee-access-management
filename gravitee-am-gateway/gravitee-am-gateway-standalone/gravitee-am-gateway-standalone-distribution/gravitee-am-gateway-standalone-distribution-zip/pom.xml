@@ -30,6 +30,11 @@
 
     <artifactId>gravitee-am-gateway-standalone-distribution-zip</artifactId>
     <name>Gravitee IO - Access Management - Gateway - Standalone - Distribution - Zip</name>
+
+    <properties>
+        <!-- Distribution bundle: published on download.gravitee.io, never on Nexus/Artifactory/Maven -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
     <packaging>pom</packaging>
 
     <dependencies>
