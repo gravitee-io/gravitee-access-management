@@ -15,6 +15,7 @@
  */
 import {
   deriveNameFromIssuer,
+  isAbsoluteUri,
   normalizeTrustDomain,
   isValidSpiffeTrustDomain,
   keyMaterialErrors,
@@ -25,9 +26,10 @@ import {
 } from './trust-domain.types';
 
 describe('trust domain types', () => {
-  it('shouldLabelBothUsages', () => {
+  it('shouldLabelEveryUsage', () => {
     expect(trustDomainUsageLabel('SPIFFE')).toBe('SPIFFE');
     expect(trustDomainUsageLabel('ISSUER')).toBe('OIDC - Trusted Issuer');
+    expect(trustDomainUsageLabel('CROSS_APP_ACCESS')).toBe('Cross App Access');
   });
 
   it('shouldReadUsagesOffTheMatchers', () => {
@@ -35,6 +37,20 @@ describe('trust domain types', () => {
     expect(trustDomainUsages({ name: 'a', issuer: 'https://issuer.example' })).toEqual(['ISSUER']);
     expect(trustDomainUsages({ name: 'a', spiffeTrustDomain: 'am.local', issuer: 'https://issuer.example' })).toEqual(['SPIFFE', 'ISSUER']);
     expect(trustDomainUsages({ name: 'a' })).toEqual([]);
+  });
+
+  it('shouldReadCrossAppAccessOffTheEnabledFlag', () => {
+    expect(trustDomainUsages({ name: 'a', crossAppAccess: { enabled: true } })).toEqual(['CROSS_APP_ACCESS']);
+    expect(trustDomainUsages({ name: 'a', crossAppAccess: { enabled: false } })).toEqual([]);
+    expect(trustDomainUsages({ name: 'a', crossAppAccess: {} })).toEqual([]);
+  });
+
+  it('shouldDistinguishACrossAppAccessOnlyTrustedDomainFromATokenExchangeOne', () => {
+    expect(trustDomainUsagesLabel({ name: 'a', crossAppAccess: { enabled: true } })).toBe('Cross App Access');
+    expect(trustDomainUsagesLabel({ name: 'a', issuer: 'https://sso.acme.com' })).toBe('OIDC - Trusted Issuer');
+    expect(trustDomainUsagesLabel({ name: 'a', issuer: 'https://sso.acme.com', crossAppAccess: { enabled: true } })).toBe(
+      'OIDC - Trusted Issuer, Cross App Access',
+    );
   });
 
   it('shouldLabelATrustedDomainServingBothUsages', () => {
@@ -72,6 +88,20 @@ describe('trust domain types', () => {
     expect(isValidSpiffeTrustDomain('Prod.Example')).toBe(false);
     expect(isValidSpiffeTrustDomain('-prod.example')).toBe(false);
     expect(isValidSpiffeTrustDomain('prod.example')).toBe(true);
+  });
+
+  describe('isAbsoluteUri', () => {
+    it('shouldAcceptAnAbsoluteUri', () => {
+      expect(isAbsoluteUri('https://calendar.acme.com')).toBe(true);
+      expect(isAbsoluteUri('urn:acme:calendar')).toBe(true);
+    });
+
+    it('shouldRejectAnythingWithoutAScheme', () => {
+      expect(isAbsoluteUri('calendar.acme.com')).toBe(false);
+      expect(isAbsoluteUri('/calendar')).toBe(false);
+      expect(isAbsoluteUri('')).toBe(false);
+      expect(isAbsoluteUri(undefined)).toBe(false);
+    });
   });
 
   describe('normalizeTrustDomain', () => {

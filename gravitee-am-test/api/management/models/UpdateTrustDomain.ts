@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { CrossAppAccessSettings } from './CrossAppAccessSettings';
+import {
+  CrossAppAccessSettingsFromJSON,
+  CrossAppAccessSettingsFromJSONTyped,
+  CrossAppAccessSettingsToJSON,
+  CrossAppAccessSettingsToJSONTyped,
+} from './CrossAppAccessSettings';
 import type { UserBindingCriterion } from './UserBindingCriterion';
 import {
   UserBindingCriterionFromJSON,
@@ -60,6 +67,12 @@ export interface UpdateTrustDomain {
    * @deprecated
    */
   bundleSource?: UpdateTrustDomainBundleSourceEnum;
+  /**
+   *
+   * @type {CrossAppAccessSettings}
+   * @memberof UpdateTrustDomain
+   */
+  crossAppAccess?: CrossAppAccessSettings;
   /**
    *
    * @type {string}
@@ -150,6 +163,7 @@ export function UpdateTrustDomainFromJSONTyped(json: any, ignoreDiscriminator: b
   return {
     allowedAlgorithms: json['allowedAlgorithms'] == null ? undefined : json['allowedAlgorithms'],
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
+    crossAppAccess: json['crossAppAccess'] == null ? undefined : CrossAppAccessSettingsFromJSON(json['crossAppAccess']),
     description: json['description'] == null ? undefined : json['description'],
     issuer: json['issuer'] == null ? undefined : json['issuer'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
@@ -176,6 +190,7 @@ export function UpdateTrustDomainToJSONTyped(value?: UpdateTrustDomain | null, i
   return {
     allowedAlgorithms: value['allowedAlgorithms'],
     bundleSource: value['bundleSource'],
+    crossAppAccess: CrossAppAccessSettingsToJSON(value['crossAppAccess']),
     description: value['description'],
     issuer: value['issuer'],
     jwksUrl: value['jwksUrl'],

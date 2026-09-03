@@ -191,6 +191,12 @@ export const PERMISSION_ENDPOINTS: PermissionEndpoint[] = [
   },
   {
     method: 'GET',
+    route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/caa/resource-servers',
+    permission: 'domain_settings_read',
+    summary: 'List the resource servers an application of this security domain may be mapped to',
+  },
+  {
+    method: 'GET',
     route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/certificates',
     permission: 'domain_certificate_list',
     summary: 'List registered certificates for a security domain',

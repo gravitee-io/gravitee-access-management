@@ -25,6 +25,8 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -38,6 +40,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.exception.TrustDomainAlreadyExistsException;
+import io.gravitee.am.service.exception.TrustDomainAudienceAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.exception.TrustDomainSpiffeAlreadyExistsException;
@@ -45,6 +48,7 @@ import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
 import io.gravitee.am.service.reporter.builder.management.TrustDomainAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
@@ -55,6 +59,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -754,7 +759,7 @@ public class TrustDomainServiceImplTest {
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
-                .assertError(err -> err.getMessage().contains("must declare spiffeTrustDomain, issuer, or both"));
+                .assertError(err -> err.getMessage().contains("must declare spiffeTrustDomain, issuer, or crossAppAccess"));
     }
 
     @Test
@@ -940,6 +945,257 @@ public class TrustDomainServiceImplTest {
             assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
             return true;
         }));
+    }
+
+    @Test
+    public void shouldNotInventASpiffeMatcherWhenCrossAppAccessIsTheOnlyUsage() {
+        stubRepoForCreate();
+        stubNoSiblingTrustDomains();
+
+        service.create(domain, crossAppAccessInput(), null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getSpiffeTrustDomain() == null)
+                .assertValue(created -> created.getIssuer() == null)
+                .assertValue(TrustDomain::trustsCrossAppAccess);
+    }
+
+    @Test
+    public void shouldAcceptCrossAppAccessAsTheOnlyDeclaredUsage() {
+        stubRepoForCreate();
+        stubNoSiblingTrustDomains();
+        NewTrustDomain input = crossAppAccessInput();
+        input.setIssuer("  ");
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getSpiffeTrustDomain() == null)
+                .assertValue(created -> created.getIssuer() == null);
+    }
+
+    @Test
+    public void shouldRejectATrustedDomainWhoseCrossAppAccessBlockIsDisabled() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.setIssuer("  ");
+        input.getCrossAppAccess().setEnabled(false);
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("must declare spiffeTrustDomain, issuer, or crossAppAccess"));
+    }
+
+    @Test
+    public void shouldNotFallBackToTheNameWhenTheCrossAppAccessBlockIsDisabled() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.getCrossAppAccess().setEnabled(false);
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("must declare spiffeTrustDomain, issuer, or crossAppAccess"));
+    }
+
+    @Test
+    public void shouldRejectAUserBindingExpressionThatDoesNotParse() {
+        NewTrustDomain input = tokenExchangeInput();
+        input.setUserBindingEnabled(true);
+        input.setUserBindingCriteria(List.of(criterion("email", "{#token['email']")));
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("userBindingCriteria expression is not a valid expression"));
+    }
+
+    @Test
+    public void shouldAcceptAPlainClaimNameAsAUserBindingExpression() {
+        stubRepoForCreate();
+        stubNoSiblingTrustDomains();
+        NewTrustDomain input = tokenExchangeInput();
+        input.setUserBindingEnabled(true);
+        input.setUserBindingCriteria(List.of(criterion("email", "email")));
+
+        service.create(domain, input, null).test()
+                .assertNoErrors();
+    }
+
+    @Test
+    public void shouldRejectCrossAppAccessEnabledWithoutAnAudience() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.getCrossAppAccess().setAudience("  ");
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("crossAppAccess.audience is required"));
+    }
+
+    @Test
+    public void shouldRejectAnAudienceThatIsNotAnAbsoluteUri() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.getCrossAppAccess().setAudience("/auth");
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("crossAppAccess.audience must be an absolute URI"));
+    }
+
+    @Test
+    public void shouldRejectAnAudienceAlreadyHeldByAnotherTrustedDomain() {
+        stubRepoForCreate();
+        TrustDomain sibling = new TrustDomain();
+        sibling.setId("td-sibling");
+        sibling.setCrossAppAccess(crossAppAccessSettings());
+        when(repository.findByReference(any(), any())).thenReturn(Flowable.just(sibling));
+
+        service.create(domain, crossAppAccessInput(), null).test()
+                .assertError(TrustDomainAudienceAlreadyExistsException.class);
+    }
+
+    @Test
+    public void shouldRejectTheSameResourceTwiceWithinOneTrustedDomain() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.getCrossAppAccess().setResourceServers(List.of(
+                CrossAppAccessResourceServer.builder().name("Calendar").resource("https://calendar.acme.com").build(),
+                CrossAppAccessResourceServer.builder().name("Calendar again").resource("https://calendar.acme.com").build()));
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("must not repeat resource"));
+    }
+
+    @Test
+    public void shouldRejectANullResourceServerEntry() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.getCrossAppAccess().setResourceServers(Collections.singletonList(null));
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("must not contain a null entry"));
+    }
+
+    @Test
+    public void shouldRejectCrossAppAccessEnabledWithoutAnyResourceServer() {
+        NewTrustDomain input = crossAppAccessInput();
+        input.getCrossAppAccess().setResourceServers(List.of());
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("must declare at least one resource server"));
+    }
+
+    @Test
+    public void shouldNotRequireKeyMaterialOnACrossAppAccessOnlyTrustedDomain() {
+        stubRepoForCreate();
+        stubNoSiblingTrustDomains();
+        NewTrustDomain input = crossAppAccessInput();
+        input.setKeyMaterial(null);
+
+        service.create(domain, input, null).test()
+                .assertNoErrors()
+                .assertValue(created -> created.getKeyMaterial() == null);
+    }
+
+    @Test
+    public void shouldKeepKeyMaterialWhenATrustedDomainIsNarrowedToCrossAppAccessOnly() {
+        stubExistingTokenExchangeForUpdate();
+        stubNoSiblingTrustDomains();
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setIssuer("");
+        input.setScopeMappings(Map.of());
+        input.setCrossAppAccess(crossAppAccessSettings());
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> saved.getIssuer() == null)
+                .assertValue(saved -> "https://example.com/issuer/keys".equals(saved.getKeyMaterial().getJwksUrl()));
+    }
+
+    @Test
+    public void shouldKeepAStoredResourceServerIdAcrossARenameAndANewResource() {
+        stubExistingCrossAppAccessForUpdate();
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setIssuer("https://issuer.example.com");
+        input.setCrossAppAccess(writtenResourceServer("rs-1", "Renamed", "https://calendar.acme.com/moved"));
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> "rs-1".equals(resourceServer(saved).getId()))
+                .assertValue(saved -> "Renamed".equals(resourceServer(saved).getName()))
+                .assertValue(saved -> "https://calendar.acme.com/moved".equals(resourceServer(saved).getResource()));
+    }
+
+    @Test
+    public void shouldGiveAFreshIdToAResourceServerThatIsNotStored() {
+        stubExistingCrossAppAccessForUpdate();
+        UpdateTrustDomain input = new UpdateTrustDomain();
+        input.setIssuer("https://issuer.example.com");
+        input.setCrossAppAccess(writtenResourceServer("invented", "Calendar", "https://calendar.acme.com"));
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> resourceServer(saved).getId() != null)
+                .assertValue(saved -> !"invented".equals(resourceServer(saved).getId()));
+    }
+
+    @Test
+    public void shouldGenerateAnIdForEveryResourceServerOnCreate() {
+        stubRepoForCreate();
+        stubNoSiblingTrustDomains();
+
+        service.create(domain, crossAppAccessInput(), null).test()
+                .assertNoErrors()
+                .assertValue(created -> resourceServer(created).getId() != null);
+    }
+
+    private static CrossAppAccessResourceServer resourceServer(TrustDomain td) {
+        return td.getCrossAppAccess().getResourceServers().get(0);
+    }
+
+    private static CrossAppAccessSettings writtenResourceServer(String id, String name, String resource) {
+        CrossAppAccessSettings written = crossAppAccessSettings();
+        written.setResourceServers(List.of(CrossAppAccessResourceServer.builder()
+                .id(id)
+                .name(name)
+                .resource(resource)
+                .build()));
+        return written;
+    }
+
+    private void stubExistingCrossAppAccessForUpdate() {
+        TrustDomain existing = tokenExchangeEntity();
+        CrossAppAccessSettings stored = crossAppAccessSettings();
+        stored.getResourceServers().get(0).setId("rs-1");
+        existing.setCrossAppAccess(stored);
+        when(repository.findById("td-1")).thenReturn(Maybe.just(existing));
+        when(repository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new io.gravitee.am.model.common.event.Event()));
+        stubNoSiblingTrustDomains();
+    }
+
+    private static CrossAppAccessSettings crossAppAccessSettings() {
+        CrossAppAccessSettings settings = new CrossAppAccessSettings();
+        settings.setEnabled(true);
+        settings.setAudience("https://auth.acme.com");
+        settings.setResourceServers(List.of(CrossAppAccessResourceServer.builder()
+                .name("Calendar")
+                .resource("https://calendar.acme.com")
+                .build()));
+        settings.setAudSubMapping("{#user.email}");
+        settings.setScopeMappings(Map.of("domain:read", "calendar.read"));
+        return settings;
+    }
+
+    private NewTrustDomain crossAppAccessInput() {
+        NewTrustDomain input = new NewTrustDomain();
+        input.setName("acme-corp");
+        input.setKeyMaterial(TrustDomainKeyMaterial.builder()
+                .source(KeyMaterialSource.JWKS_URL)
+                .jwksUrl("https://example.com/issuer/keys")
+                .build());
+        input.setRefreshIntervalSeconds(60);
+        input.setCrossAppAccess(crossAppAccessSettings());
+        return input;
+    }
+
+    private void stubNoSiblingTrustDomains() {
+        when(repository.findByReference(any(), any())).thenReturn(Flowable.empty());
     }
 
     private NewTrustDomain tokenExchangeInput() {

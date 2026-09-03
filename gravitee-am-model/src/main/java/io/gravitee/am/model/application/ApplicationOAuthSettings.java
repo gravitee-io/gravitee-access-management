@@ -39,6 +39,7 @@ public class ApplicationOAuthSettings {
     private static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     private static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
     private static final int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
+    public static final int DEFAULT_ID_JAG_VALIDITY_SECONDS = 300;
 
     /**
      * The client identifier
@@ -242,6 +243,12 @@ public class ApplicationOAuthSettings {
      */
     private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
     /**
+     * ID-JAG validity in seconds
+     */
+    @Schema(description = "Lifetime in seconds of an ID-JAG minted for this application.",
+            defaultValue = "300", minimum = "1")
+    private int idJagValiditySeconds = DEFAULT_ID_JAG_VALIDITY_SECONDS;
+    /**
      * Token claims mapping settings
      */
     private List<TokenClaim> tokenCustomClaims;
@@ -331,6 +338,10 @@ public class ApplicationOAuthSettings {
 
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
+    @Schema(description = "Resource servers this application may request an ID-JAG for. Absent means "
+            + "Cross App Access disabled.")
+    private ApplicationCrossAppAccessSettings crossAppAccessSettings;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -383,6 +394,7 @@ public class ApplicationOAuthSettings {
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
+        this.idJagValiditySeconds = other.idJagValiditySeconds;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.userinfoCustomClaims = other.userinfoCustomClaims != null ? new ArrayList<>(other.userinfoCustomClaims) : null;
         this.tlsClientAuthSubjectDn = other.tlsClientAuthSubjectDn;
@@ -408,6 +420,7 @@ public class ApplicationOAuthSettings {
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
+        this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
     }
 
     public String getClientId() {
@@ -819,6 +832,14 @@ public class ApplicationOAuthSettings {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
     }
 
+    public int getIdJagValiditySeconds() {
+        return idJagValiditySeconds;
+    }
+
+    public void setIdJagValiditySeconds(int idJagValiditySeconds) {
+        this.idJagValiditySeconds = idJagValiditySeconds;
+    }
+
     public List<TokenClaim> getTokenCustomClaims() {
         return tokenCustomClaims;
     }
@@ -1019,6 +1040,14 @@ public class ApplicationOAuthSettings {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
     }
 
+    public ApplicationCrossAppAccessSettings getCrossAppAccessSettings() {
+        return crossAppAccessSettings;
+    }
+
+    public void setCrossAppAccessSettings(ApplicationCrossAppAccessSettings crossAppAccessSettings) {
+        this.crossAppAccessSettings = crossAppAccessSettings;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -1062,6 +1091,7 @@ public class ApplicationOAuthSettings {
         client.setAccessTokenValiditySeconds(this.accessTokenValiditySeconds);
         client.setRefreshTokenValiditySeconds(this.refreshTokenValiditySeconds);
         client.setIdTokenValiditySeconds(this.idTokenValiditySeconds);
+        client.setIdJagValiditySeconds(this.idJagValiditySeconds);
         client.setEnhanceScopesWithUserPermissions(this.enhanceScopesWithUserPermissions);
         client.setScopeSettings(this.scopeSettings);
         client.setTokenCustomClaims(this.tokenCustomClaims);
@@ -1089,5 +1119,6 @@ public class ApplicationOAuthSettings {
         client.setDisableRefreshTokenRotation(this.disableRefreshTokenRotation);
         client.setOptInScopeSelection(this.optInScopeSelection);
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
+        client.setCrossAppAccessSettings(this.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(this.crossAppAccessSettings) : null);
     }
 }

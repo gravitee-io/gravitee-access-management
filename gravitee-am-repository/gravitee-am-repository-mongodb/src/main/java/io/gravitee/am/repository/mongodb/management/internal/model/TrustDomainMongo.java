@@ -49,6 +49,7 @@ public class TrustDomainMongo extends Auditable {
     private Map<String, String> scopeMappings;
     private Boolean userBindingEnabled;
     private List<UserBindingCriterionMongo> userBindingCriteria;
+    private CrossAppAccessSettingsMongo crossAppAccess;
 
     public String getId() {
         return id;
@@ -168,5 +169,13 @@ public class TrustDomainMongo extends Auditable {
 
     public void setUserBindingCriteria(List<UserBindingCriterionMongo> userBindingCriteria) {
         this.userBindingCriteria = userBindingCriteria;
+    }
+
+    public CrossAppAccessSettingsMongo getCrossAppAccess() {
+        return crossAppAccess;
+    }
+
+    public void setCrossAppAccess(CrossAppAccessSettingsMongo crossAppAccess) {
+        this.crossAppAccess = crossAppAccess;
     }
 }

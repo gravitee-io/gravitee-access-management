@@ -183,6 +183,16 @@
         </div>
       </div>
 
+      <app-cross-app-access-settings
+        *ngIf="context !== MCP_SERVER_CONTEXT"
+        [oauthSettings]="oauthSettings"
+        [domainId]="domainId"
+        [readonly]="readonly"
+        [disabled]="!isTokenExchangeFlowSelected() || !isTokenExchangeEnabledAtDomain()"
+        (settingsChange)="modelChanged()"
+      >
+      </app-cross-app-access-settings>
+
       <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT">
         <div class="gv-form-section-title">
           <h5>Proof Key for Code Exchange (PKCE)</h5>

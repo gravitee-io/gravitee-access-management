@@ -159,6 +159,7 @@ import { CertificatesResolver } from './resolvers/certificates.resolver';
 import { SignCertificatesResolver } from './resolvers/sign-certificates.resolver';
 import { CertificateService } from './services/certificate.service';
 import { TrustDomainService } from './services/trust-domain.service';
+import { CrossAppAccessService } from './services/cross-app-access.service';
 import { CertificateCreationStep1Component } from './domain/settings/certificates/creation/steps/step1/step1.component';
 import { CertificateFormComponent } from './domain/settings/certificates/certificate/form/form.component';
 import { CertificateResolver } from './resolvers/certificate.resolver';
@@ -506,6 +507,7 @@ import { DomainMcpServerToolEditDialogComponent } from './domain/mcp-servers/mcp
 import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-tools-table.component';
 import { MaterialMultiselectComponent } from './components/json-schema-form/material-multiselect.component';
 import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows/grant-flows.component';
+import { CrossAppAccessComponent } from './domain/components/oauth2-settings/cross-app-access/cross-app-access.component';
 import { ScopesComponent } from './domain/components/oauth2-settings/scopes/scopes.component';
 import { AddScopeComponent } from './domain/components/oauth2-settings/add/add-scope.component';
 import { TokensComponent } from './domain/components/oauth2-settings/tokens/tokens.component';
@@ -809,6 +811,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     OpenFGAComponent,
     McpToolsTableComponent,
     GrantFlowsComponent,
+    CrossAppAccessComponent,
     ScopesComponent,
     AddScopeComponent,
     TokensComponent,
@@ -894,6 +897,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AuthService,
     CertificateService,
     TrustDomainService,
+    CrossAppAccessService,
     RoleService,
     DashboardService,
     UserService,

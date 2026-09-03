@@ -60,21 +60,31 @@
     >
       OIDC - Trusted Issuer
     </mat-checkbox>
-    <mat-hint class="section-hint">Validates external subject and actor tokens during an RFC 8693 token exchange.</mat-hint>
+    <mat-hint class="section-hint">What AM exchanges with this authority over OIDC. Pick at least one.</mat-hint>
 
-    <mat-form-field *ngIf="issuerEnabled" appearance="outline" class="trust-domain-field">
-      <mat-label>Issuer URL</mat-label>
-      <input
-        matInput
-        name="issuer"
-        data-testid="issuerUrlInput"
-        [(ngModel)]="model.issuer"
-        (ngModelChange)="onIssuerChange()"
+    <div *ngIf="issuerEnabled" class="usage-children" fxLayout="column">
+      <mat-checkbox
+        name="tokenExchangeEnabled"
+        data-testid="usageChoice-TOKEN_EXCHANGE"
+        [(ngModel)]="tokenExchangeEnabled"
+        (ngModelChange)="onUsageToggle()"
         [disabled]="!editMode"
-        placeholder="https://external-idp.example.com"
-      />
-      <mat-hint>The expected "iss" claim value in the external JWT. Unique within this security domain.</mat-hint>
-    </mat-form-field>
+      >
+        Token exchange
+      </mat-checkbox>
+      <mat-hint class="section-hint">Validates external subject and actor tokens during an RFC 8693 token exchange.</mat-hint>
+
+      <mat-checkbox
+        name="crossAppAccessEnabled"
+        data-testid="usageChoice-CROSS_APP_ACCESS"
+        [(ngModel)]="crossAppAccessEnabled"
+        (ngModelChange)="onUsageToggle()"
+        [disabled]="!editMode"
+      >
+        Cross App Access
+      </mat-checkbox>
+      <mat-hint class="section-hint">Mints an ID-JAG towards the resource servers this authority exposes.</mat-hint>
+    </div>
 
     <mat-checkbox
       name="spiffeEnabled"
@@ -102,7 +112,7 @@
     </mat-form-field>
   </div>
 
-  <div class="gv-form-section" fxLayout="column">
+  <div *ngIf="!crossAppAccessOnly" class="gv-form-section" fxLayout="column">
     <div class="gv-form-section-title">
       <h5>Key material</h5>
       <mat-divider></mat-divider>
@@ -155,11 +165,28 @@
     </mat-form-field>
   </div>
 
-  <div *ngIf="issuerEnabled" class="gv-form-section" fxLayout="column">
+  <div *ngIf="tokenExchangeEnabled" class="gv-form-section" fxLayout="column">
     <div class="gv-form-section-title">
-      <h5>Scope mappings</h5>
+      <h5>Token exchange</h5>
       <mat-divider></mat-divider>
     </div>
+    <mat-hint class="section-hint">What AM accepts from this issuer during an RFC 8693 token exchange.</mat-hint>
+
+    <mat-form-field appearance="outline" class="trust-domain-field">
+      <mat-label>Issuer URL</mat-label>
+      <input
+        matInput
+        name="issuer"
+        data-testid="issuerUrlInput"
+        [(ngModel)]="model.issuer"
+        (ngModelChange)="onIssuerChange()"
+        [disabled]="!editMode"
+        placeholder="https://external-idp.example.com"
+      />
+      <mat-hint>The expected "iss" claim value in the external JWT. Unique within this security domain.</mat-hint>
+    </mat-form-field>
+
+    <h5 class="sub-section-title">Scope mappings</h5>
     <mat-hint class="section-hint">Map external scopes from this issuer to domain scopes. Unmapped scopes are dropped.</mat-hint>
     <div class="staging-row">
       <mat-form-field appearance="outline" class="staging-field">
@@ -240,13 +267,8 @@
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
-  </div>
 
-  <div *ngIf="issuerEnabled" class="gv-form-section" fxLayout="column">
-    <div class="gv-form-section-title">
-      <h5>User binding</h5>
-      <mat-divider></mat-divider>
-    </div>
+    <h5 class="sub-section-title">User binding</h5>
     <mat-slide-toggle
       name="userBindingEnabled"
       data-testid="userBindingToggle"
@@ -322,6 +344,207 @@
           <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
             <div fxLayout="row" class="gv-table-cell-actions">
               <button mat-button type="button" (click)="removeUserBindingCriterion(rowIndex)" [disabled]="!editMode">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+  </div>
+
+  <div *ngIf="crossAppAccessEnabled" class="gv-form-section" fxLayout="column">
+    <div class="gv-form-section-title">
+      <h5>Cross App Access</h5>
+      <mat-divider></mat-divider>
+    </div>
+    <mat-hint class="section-hint">What AM issues towards this authority: an ID-JAG for the resource servers it exposes.</mat-hint>
+
+    <mat-form-field appearance="outline" class="trust-domain-field">
+      <mat-label>Authorization server</mat-label>
+      <input
+        matInput
+        name="crossAppAccessAudience"
+        data-testid="crossAppAccessAudienceInput"
+        [(ngModel)]="crossAppAccessAudience"
+        (ngModelChange)="onFieldChange()"
+        [disabled]="!editMode"
+        placeholder="https://auth.acme.com"
+      />
+      <mat-hint>
+        Issuer identifier of this authority's authorization server, the one an ID-JAG is presented to. Becomes the "aud" claim. Unique
+        within this security domain.
+      </mat-hint>
+    </mat-form-field>
+
+    <div>
+      <h5 class="sub-section-title">Resource servers</h5>
+      <mat-hint class="section-hint">
+        The protected resources behind that authorization server, and which AM may mint an ID-JAG towards.
+      </mat-hint>
+      <div class="staging-row">
+        <mat-form-field appearance="outline" class="staging-field">
+          <mat-label>Name</mat-label>
+          <input
+            matInput
+            name="newResourceServerName"
+            data-testid="resourceServerNameInput"
+            [(ngModel)]="newResourceServerStaging.name"
+            [disabled]="!editMode"
+            placeholder="e.g. Acme Calendar"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="staging-field">
+          <mat-label>Resource URI</mat-label>
+          <input
+            matInput
+            name="newResourceServerResource"
+            data-testid="resourceServerResourceInput"
+            [(ngModel)]="newResourceServerStaging.resource"
+            [disabled]="!editMode"
+            placeholder="https://calendar.acme.com"
+          />
+          <mat-hint>Absolute URI identifying the resource server. Becomes the "resource" claim. Unique within this authority.</mat-hint>
+        </mat-form-field>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="addResourceServerButton"
+          (click)="addResourceServer()"
+          [disabled]="!editMode || !canAddResourceServer()"
+        >
+          <mat-icon>add</mat-icon> ADD
+        </button>
+      </div>
+      <ngx-datatable
+        class="material"
+        data-testid="resourceServersTable"
+        [columnMode]="'flex'"
+        [headerHeight]="40"
+        [rowHeight]="55"
+        [messages]="{ emptyMessage: 'No resource servers configured' }"
+        [rows]="resourceServerRows"
+      >
+        <ngx-datatable-column name="Name" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.name }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Resource URI" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.resource }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+            <div fxLayout="row" class="gv-table-cell-actions">
+              <button mat-button type="button" (click)="removeResourceServer(rowIndex)" [disabled]="!editMode">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+
+      <h5 class="sub-section-title">End-user identifier</h5>
+      <mat-form-field appearance="outline" class="trust-domain-field">
+        <mat-label>aud_sub expression</mat-label>
+        <input
+          matInput
+          name="audSubMapping"
+          data-testid="audSubMappingInput"
+          [(ngModel)]="audSubMapping"
+          (ngModelChange)="onFieldChange()"
+          [disabled]="!editMode"
+          placeholder="{#user.email}"
+        />
+        <mat-hint>
+          Evaluated over the user profile to produce the "aud_sub" claim, for every resource server of this authority. The claim is omitted
+          when the expression yields nothing.
+        </mat-hint>
+      </mat-form-field>
+
+      <h5 class="sub-section-title">Scope mappings</h5>
+      <mat-hint class="section-hint">
+        Map domain scopes to the names this authority knows them by. Unmapped domain scopes are dropped.
+      </mat-hint>
+      <div class="staging-row">
+        <mat-form-field *ngIf="domainScopes?.length" appearance="outline" class="staging-field">
+          <mat-label>Domain Scope</mat-label>
+          <input
+            matInput
+            name="newOutboundDomScope"
+            data-testid="outboundDomainScopeAutocomplete"
+            [formControl]="outboundDomainScopeCtrl"
+            [matAutocomplete]="outboundScopeAuto"
+            placeholder="Type to search scopes"
+          />
+          <mat-autocomplete
+            #outboundScopeAuto="matAutocomplete"
+            (optionSelected)="onOutboundDomainScopeSelected($event)"
+            [displayWith]="displayDomainScope"
+          >
+            <mat-option *ngFor="let scope of filteredOutboundDomainScopes" [value]="scope.key">
+              <span>{{ scope.name || scope.key }}</span>
+              <small *ngIf="scope.description"> | {{ scope.description }}</small>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field *ngIf="!domainScopes?.length" appearance="outline" class="staging-field">
+          <mat-label>Domain Scope</mat-label>
+          <input
+            matInput
+            name="newOutboundDomScopeText"
+            data-testid="outboundDomainScopeText"
+            [(ngModel)]="newOutboundScopeStaging.domainScope"
+            [disabled]="!editMode"
+            placeholder="Domain scope"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="staging-field">
+          <mat-label>External Scope</mat-label>
+          <input
+            matInput
+            name="newOutboundExtScope"
+            data-testid="outboundExternalScopeInput"
+            [(ngModel)]="newOutboundScopeStaging.externalScope"
+            [disabled]="!editMode"
+            placeholder="Name on the far side"
+          />
+        </mat-form-field>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="addOutboundScopeMappingButton"
+          (click)="addOutboundScopeMapping()"
+          [disabled]="!editMode || !canAddOutboundScopeMapping()"
+        >
+          <mat-icon>add</mat-icon> ADD
+        </button>
+      </div>
+      <ngx-datatable
+        class="material"
+        data-testid="outboundScopeMappingsTable"
+        [columnMode]="'flex'"
+        [headerHeight]="40"
+        [rowHeight]="55"
+        [messages]="{ emptyMessage: 'No scope mappings configured' }"
+        [rows]="outboundScopeMappingRows"
+      >
+        <ngx-datatable-column name="Domain Scope" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ domainScopes?.length ? domainScopeLabel(row.domainScope) : row.domainScope }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="External Scope" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.externalScope }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
+          <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+            <div fxLayout="row" class="gv-table-cell-actions">
+              <button mat-button type="button" (click)="removeOutboundScopeMapping(rowIndex)" [disabled]="!editMode">
                 <mat-icon>close</mat-icon>
               </button>
             </div>

@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.JWKModule;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
@@ -50,6 +51,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     private static final TypeReference<Map<String, String>> STRING_MAP = new TypeReference<>() {};
     private static final TypeReference<List<UserBindingCriterion>> CRITERION_LIST = new TypeReference<>() {};
     private static final TypeReference<TrustDomainKeyMaterial> KEY_MATERIAL = new TypeReference<>() {};
+    private static final TypeReference<CrossAppAccessSettings> CROSS_APP_ACCESS = new TypeReference<>() {};
 
     @Autowired
     private SpringTrustDomainRepository repository;
@@ -136,6 +138,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         td.setScopeMappings(parseJson(entity.getScopeMappings(), STRING_MAP, "scope mappings"));
         td.setUserBindingEnabled(Boolean.TRUE.equals(entity.getUserBindingEnabled()));
         td.setUserBindingCriteria(parseJson(entity.getUserBindingCriteria(), CRITERION_LIST, "user binding criteria"));
+        td.setCrossAppAccess(parseJson(entity.getCrossAppAccess(), CROSS_APP_ACCESS, "cross app access"));
         td.setCreatedAt(toDate(entity.getCreatedAt()));
         td.setUpdatedAt(toDate(entity.getUpdatedAt()));
         return td;
@@ -159,6 +162,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         entity.setScopeMappings(serializeJson(td.getScopeMappings(), "scope mappings"));
         entity.setUserBindingEnabled(td.isUserBindingEnabled());
         entity.setUserBindingCriteria(serializeJson(td.getUserBindingCriteria(), "user binding criteria"));
+        entity.setCrossAppAccess(serializeJson(td.getCrossAppAccess(), "cross app access"));
         entity.setCreatedAt(toLocalDateTime(td.getCreatedAt()));
         entity.setUpdatedAt(toLocalDateTime(td.getUpdatedAt()));
         return entity;
@@ -179,13 +183,15 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
 
     /**
      * Reads the SPIFFE matcher, falling back to the name for trust domains stored while the name was
-     * the matcher. Rows that carry an issuer were written by the migration and are not SPIFFE.
+     * the matcher. A row carrying an issuer or a Cross App Access block declares its own usage and
+     * predates nothing, so it is never read as SPIFFE.
      */
     static String readSpiffeTrustDomain(JdbcTrustDomain entity) {
         if (entity.getSpiffeTrustDomain() != null) {
             return entity.getSpiffeTrustDomain();
         }
-        return entity.getIssuer() == null ? entity.getName() : null;
+        boolean declaresCrossAppAccess = entity.getCrossAppAccess() != null && !entity.getCrossAppAccess().isBlank();
+        return entity.getIssuer() == null && !declaresCrossAppAccess ? entity.getName() : null;
     }
 
     private static <T> T parseJson(String json, TypeReference<T> type, String what) {

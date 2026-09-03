@@ -28,6 +28,7 @@ import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.mongodb.management.internal.model.CrossAppAccessSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainKeyMaterialMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserBindingCriterionMongo;
@@ -63,6 +64,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SPIFFE_TRUST_DOMAIN = "spiffeTrustDomain";
     private static final String FIELD_ISSUER = "issuer";
+    private static final String FIELD_CROSS_APP_ACCESS = "crossAppAccess";
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
 
@@ -90,11 +92,13 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     /**
      * Trust domains stored before the SPIFFE matcher was split out of the name are trusted for SPIFFE
      * under their name. Copying it onto the matcher puts them inside the matcher-scoped unique index,
-     * which the SPIFFE lookup now goes through.
+     * which the SPIFFE lookup now goes through. A document carrying a Cross App Access block declares
+     * its own usage and must not be turned into a SPIFFE trust domain named after itself.
      */
     private Completable stampSpiffeTrustDomainOnLegacyDocuments() {
         return Completable.fromPublisher(collection.updateMany(
-                        and(exists(FIELD_SPIFFE_TRUST_DOMAIN, false), exists(FIELD_ISSUER, false)),
+                        and(exists(FIELD_SPIFFE_TRUST_DOMAIN, false), exists(FIELD_ISSUER, false),
+                                exists(FIELD_CROSS_APP_ACCESS, false)),
                         List.of(new Document("$set", new Document(FIELD_SPIFFE_TRUST_DOMAIN, "$" + FIELD_NAME)))))
                 .doOnError(error -> log.warn("Unable to stamp the SPIFFE trust domain on legacy trust domains", error));
     }
@@ -185,6 +189,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         td.setScopeMappings(doc.getScopeMappings());
         td.setUserBindingEnabled(Boolean.TRUE.equals(doc.getUserBindingEnabled()));
         td.setUserBindingCriteria(UserBindingCriterionMongo.toModelList(doc.getUserBindingCriteria()));
+        td.setCrossAppAccess(doc.getCrossAppAccess() != null ? doc.getCrossAppAccess().convert() : null);
         td.setCreatedAt(doc.getCreatedAt());
         td.setUpdatedAt(doc.getUpdatedAt());
         return td;
@@ -208,6 +213,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         doc.setScopeMappings(td.getScopeMappings());
         doc.setUserBindingEnabled(td.isUserBindingEnabled());
         doc.setUserBindingCriteria(UserBindingCriterionMongo.fromModelList(td.getUserBindingCriteria()));
+        doc.setCrossAppAccess(CrossAppAccessSettingsMongo.convert(td.getCrossAppAccess()));
         doc.setCreatedAt(td.getCreatedAt());
         doc.setUpdatedAt(td.getUpdatedAt());
         return doc;
@@ -215,13 +221,14 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
 
     /**
      * Reads the SPIFFE matcher, falling back to the name for trust domains stored while the name was
-     * the matcher. Documents that carry an issuer were written by the migration and are not SPIFFE.
+     * the matcher. A document carrying an issuer or a Cross App Access block declares its own usage
+     * and predates nothing, so it is never read as SPIFFE.
      */
     static String readSpiffeTrustDomain(TrustDomainMongo doc) {
         if (doc.getSpiffeTrustDomain() != null) {
             return doc.getSpiffeTrustDomain();
         }
-        return doc.getIssuer() == null ? doc.getName() : null;
+        return doc.getIssuer() == null && doc.getCrossAppAccess() == null ? doc.getName() : null;
     }
 
     /**

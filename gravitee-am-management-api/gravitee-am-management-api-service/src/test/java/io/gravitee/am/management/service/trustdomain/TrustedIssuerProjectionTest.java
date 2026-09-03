@@ -22,6 +22,8 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
@@ -177,6 +179,35 @@ class TrustedIssuerProjectionTest {
     }
 
     @Test
+    void shouldLeaveACrossAppAccessOnlyTrustedDomainUntouchedByALegacyWrite() {
+        Domain domain = domain();
+        stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER), crossAppAccessOnly("td-2", "acme-corp"));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomain.class), any()))
+                .thenReturn(Single.just(new TrustDomain()));
+
+        projection.apply(domain, List.of(jwksIssuer(ISSUER)), principal).blockingAwait();
+
+        verify(trustDomainService, never()).delete(eq(domain), eq("td-2"), any());
+        verify(trustDomainService, never()).update(eq(domain), eq("td-2"), any(), any());
+    }
+
+    @Test
+    void shouldClearOnlyTheIssuerWhenALegacyWriteDropsItFromACrossAppAccessTrustedDomain() {
+        Domain domain = domain();
+        stubExisting(withCrossAppAccess(tokenExchange("td-1", "https-issuer.example.com", ISSUER)));
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomain.class), any()))
+                .thenReturn(Single.just(new TrustDomain()));
+
+        projection.apply(domain, List.of(), principal).blockingAwait();
+
+        verify(trustDomainService, never()).delete(any(), any(), any());
+        ArgumentCaptor<UpdateTrustDomain> captor = ArgumentCaptor.forClass(UpdateTrustDomain.class);
+        verify(trustDomainService).update(eq(domain), eq("td-1"), captor.capture(), eq(principal));
+        assertEquals("", captor.getValue().getIssuer());
+        assertTrue(captor.getValue().getCrossAppAccess().isEnabled());
+    }
+
+    @Test
     void shouldLeaveTrustedDomainsAloneWhenTheDeprecatedFieldWasNotWritten() {
         Domain domain = domain();
 
@@ -222,6 +253,27 @@ class TrustedIssuerProjectionTest {
                 .scopeMappings(Map.of("ext:read", "read"))
                 .userBindingEnabled(true)
                 .userBindingCriteria(List.of(criterion))
+                .build();
+    }
+
+    private static TrustDomain crossAppAccessOnly(String id, String name) {
+        return TrustDomain.builder().id(id).name(name).crossAppAccess(crossAppAccess()).build();
+    }
+
+    private static TrustDomain withCrossAppAccess(TrustDomain trustDomain) {
+        trustDomain.setCrossAppAccess(crossAppAccess());
+        return trustDomain;
+    }
+
+    private static CrossAppAccessSettings crossAppAccess() {
+        return CrossAppAccessSettings.builder()
+                .enabled(true)
+                .audience("https://auth.acme.com")
+                .resourceServers(List.of(CrossAppAccessResourceServer.builder()
+                        .id("rs-1")
+                        .name("Calendar")
+                        .resource("https://calendar.acme.com")
+                        .build()))
                 .build();
     }
 

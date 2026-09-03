@@ -30,14 +30,19 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * External authority an AM domain trusts, and the key material used to verify what it vouches for.
  *
  * <p>A trusted domain declares how tokens are recognised as coming from it: {@code spiffeTrustDomain}
  * matches the trust domain of a JWT-SVID presented as a client assertion, {@code issuer} matches the
- * {@code iss} claim of an external token presented during an RFC 8693 exchange. At least one is
- * required, and setting both lets one authority serve both usages on shared key material.
+ * {@code iss} claim of an external token presented during an RFC 8693 exchange. Setting both lets one
+ * authority serve both usages on shared key material.
+ *
+ * <p>{@code crossAppAccess} is the other direction: what AM issues towards this authority. A trusted
+ * domain must declare at least one of the three, and one that only declares Cross App Access needs
+ * neither an issuer nor key material.
  *
  * @author GraviteeSource Team
  */
@@ -110,6 +115,9 @@ public class TrustDomain {
             + "are combined with AND.")
     private List<UserBindingCriterion> userBindingCriteria;
 
+    @Schema(description = "What AM issues towards this authority. Absent means Cross App Access disabled.")
+    private CrossAppAccessSettings crossAppAccess;
+
     @Schema(type = "java.lang.Long")
     private Date createdAt;
 
@@ -130,6 +138,7 @@ public class TrustDomain {
         this.scopeMappings = other.scopeMappings != null ? new LinkedHashMap<>(other.scopeMappings) : null;
         this.userBindingEnabled = other.userBindingEnabled;
         this.userBindingCriteria = other.userBindingCriteria != null ? new ArrayList<>(other.userBindingCriteria) : null;
+        this.crossAppAccess = other.crossAppAccess != null ? new CrossAppAccessSettings(other.crossAppAccess) : null;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -146,6 +155,30 @@ public class TrustDomain {
      */
     public boolean trustsTokenExchange() {
         return issuer != null;
+    }
+
+    /**
+     * Whether AM may mint an ID-JAG towards this authority.
+     */
+    public boolean trustsCrossAppAccess() {
+        return crossAppAccess != null && crossAppAccess.isEnabled();
+    }
+
+    /**
+     * The resource servers of this authority, empty when there is no Cross App Access block.
+     */
+    public List<CrossAppAccessResourceServer> crossAppAccessResourceServers() {
+        if (crossAppAccess == null || crossAppAccess.getResourceServers() == null) {
+            return List.of();
+        }
+        return crossAppAccess.getResourceServers().stream().filter(Objects::nonNull).toList();
+    }
+
+    /**
+     * The issuer of this authority's authorization server, null when there is no Cross App Access block.
+     */
+    public String crossAppAccessAudience() {
+        return crossAppAccess == null ? null : crossAppAccess.getAudience();
     }
 
     /**

@@ -69,6 +69,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMo
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLAssertionAttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationCrossAppAccessSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserInfoClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
@@ -590,6 +591,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setAccessTokenValiditySeconds(other.getAccessTokenValiditySeconds());
         applicationOAuthSettingsMongo.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
         applicationOAuthSettingsMongo.setIdTokenValiditySeconds(other.getIdTokenValiditySeconds());
+        applicationOAuthSettingsMongo.setIdJagValiditySeconds(other.getIdJagValiditySeconds());
         applicationOAuthSettingsMongo.setTokenCustomClaims(getMongoTokenClaims(other.getTokenCustomClaims()));
         applicationOAuthSettingsMongo.setUserinfoCustomClaims(getMongoUserInfoClaims(other.getUserinfoCustomClaims()));
         applicationOAuthSettingsMongo.setTlsClientAuthSubjectDn(other.getTlsClientAuthSubjectDn());
@@ -620,8 +622,20 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setOptInScopeSelection(other.isOptInScopeSelection());
         applicationOAuthSettingsMongo.setTokenExchangeOAuthSettings(
                 TokenExchangeOAuthSettingsMongo.convert(other.getTokenExchangeOAuthSettings()));
+        applicationOAuthSettingsMongo.setCrossAppAccessSettings(
+                ApplicationCrossAppAccessSettingsMongo.convert(other.getCrossAppAccessSettings()));
 
         return applicationOAuthSettingsMongo;
+    }
+
+    /**
+     * Reads the ID-JAG lifetime of an application stored before the field existed, or stored with a
+     * value the minting side could never honour, as the default lifetime.
+     */
+    static int readIdJagValiditySeconds(ApplicationOAuthSettingsMongo other) {
+        return other.getIdJagValiditySeconds() > 0
+                ? other.getIdJagValiditySeconds()
+                : ApplicationOAuthSettings.DEFAULT_ID_JAG_VALIDITY_SECONDS;
     }
 
     private static ApplicationOAuthSettings convert(ApplicationOAuthSettingsMongo other) {
@@ -676,6 +690,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setAccessTokenValiditySeconds(other.getAccessTokenValiditySeconds());
         applicationOAuthSettings.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
         applicationOAuthSettings.setIdTokenValiditySeconds(other.getIdTokenValiditySeconds());
+        applicationOAuthSettings.setIdJagValiditySeconds(readIdJagValiditySeconds(other));
         applicationOAuthSettings.setTokenCustomClaims(getTokenClaims(other.getTokenCustomClaims()));
         applicationOAuthSettings.setUserinfoCustomClaims(getUserInfoClaims(other.getUserinfoCustomClaims()));
         applicationOAuthSettings.setTlsClientAuthSubjectDn(other.getTlsClientAuthSubjectDn());
@@ -706,6 +721,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setOptInScopeSelection(other.isOptInScopeSelection());
         applicationOAuthSettings.setTokenExchangeOAuthSettings(
                 other.getTokenExchangeOAuthSettings() != null ? other.getTokenExchangeOAuthSettings().convert() : null);
+        applicationOAuthSettings.setCrossAppAccessSettings(
+                other.getCrossAppAccessSettings() != null ? other.getCrossAppAccessSettings().convert() : null);
 
         return applicationOAuthSettings;
     }

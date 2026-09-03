@@ -18,6 +18,8 @@ package io.gravitee.am.common.oauth2;
 import java.util.Optional;
 
 /**
+ * Names a kind of token AM issues. Used as the RFC 7009 {@code token_type_hint} on revocation, and as
+ * the discriminator telling a custom claim which token it belongs on. Not every value is revocable.
  *
  * See <a href="https://tools.ietf.org/html/rfc7009#section-2.1"></a>
  *
@@ -28,7 +30,8 @@ public enum TokenTypeHint {
 
     ACCESS_TOKEN,
     REFRESH_TOKEN,
-    ID_TOKEN;
+    ID_TOKEN,
+    ID_JAG;
 
     public static TokenTypeHint from(String name) throws IllegalArgumentException {
         return TokenTypeHint.valueOf(name.toUpperCase());

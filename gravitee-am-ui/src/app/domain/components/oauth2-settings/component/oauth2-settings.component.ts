@@ -86,6 +86,8 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.jwks = newSettings.jwks;
     this.oauthSettings.disableRefreshTokenRotation = newSettings.disableRefreshTokenRotation;
     this.oauthSettings.tokenExchangeOAuthSettings = newSettings.tokenExchangeOAuthSettings;
+    this.oauthSettings.crossAppAccessSettings = newSettings.crossAppAccessSettings;
+    this.oauthSettings.idJagValiditySeconds = newSettings.idJagValiditySeconds;
 
     // Scopes
     this.oauthSettings.scopeSettings = newSettings.scopeSettings;
@@ -153,6 +155,7 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.jwksUri = this.oauthSettings.jwksUri;
     oauthSettings.disableRefreshTokenRotation = this.oauthSettings.disableRefreshTokenRotation;
     oauthSettings.tokenExchangeOAuthSettings = this.oauthSettings.tokenExchangeOAuthSettings;
+    oauthSettings.crossAppAccessSettings = this.oauthSettings.crossAppAccessSettings;
 
     // Parse jwks if it's a string
     if (this.oauthSettings.jwks !== undefined) {
@@ -168,6 +171,7 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;
     oauthSettings.refreshTokenValiditySeconds = this.oauthSettings.refreshTokenValiditySeconds;
     oauthSettings.idTokenValiditySeconds = this.oauthSettings.idTokenValiditySeconds;
+    oauthSettings.idJagValiditySeconds = this.oauthSettings.idJagValiditySeconds;
 
     // Filter out 'id' property from tokenCustomClaims (used only for UI tracking)
     if (this.oauthSettings.tokenCustomClaims !== undefined) {

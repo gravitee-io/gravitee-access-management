@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ApplicationCrossAppAccessSettings } from './ApplicationCrossAppAccessSettings';
+import {
+  ApplicationCrossAppAccessSettingsFromJSON,
+  ApplicationCrossAppAccessSettingsFromJSONTyped,
+  ApplicationCrossAppAccessSettingsToJSON,
+  ApplicationCrossAppAccessSettingsToJSONTyped,
+} from './ApplicationCrossAppAccessSettings';
 import type { TokenClaim } from './TokenClaim';
 import { TokenClaimFromJSON, TokenClaimFromJSONTyped, TokenClaimToJSON, TokenClaimToJSONTyped } from './TokenClaim';
 import type { JWKSet } from './JWKSet';
@@ -157,6 +164,12 @@ export interface ApplicationOAuthSettings {
   contacts?: Array<string>;
   /**
    *
+   * @type {ApplicationCrossAppAccessSettings}
+   * @memberof ApplicationOAuthSettings
+   */
+  crossAppAccessSettings?: ApplicationCrossAppAccessSettings;
+  /**
+   *
    * @type {Array<string>}
    * @memberof ApplicationOAuthSettings
    */
@@ -209,6 +222,12 @@ export interface ApplicationOAuthSettings {
    * @memberof ApplicationOAuthSettings
    */
   grantTypes?: Array<string>;
+  /**
+   * Lifetime in seconds of an ID-JAG minted for this application.
+   * @type {number}
+   * @memberof ApplicationOAuthSettings
+   */
+  idJagValiditySeconds?: number;
   /**
    *
    * @type {string}
@@ -529,6 +548,8 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     clientType: json['clientType'] == null ? undefined : json['clientType'],
     clientUri: json['clientUri'] == null ? undefined : json['clientUri'],
     contacts: json['contacts'] == null ? undefined : json['contacts'],
+    crossAppAccessSettings:
+      json['crossAppAccessSettings'] == null ? undefined : ApplicationCrossAppAccessSettingsFromJSON(json['crossAppAccessSettings']),
     defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
     defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
@@ -539,6 +560,7 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     forcePKCE: json['forcePKCE'] == null ? undefined : json['forcePKCE'],
     forceS256CodeChallengeMethod: json['forceS256CodeChallengeMethod'] == null ? undefined : json['forceS256CodeChallengeMethod'],
     grantTypes: json['grantTypes'] == null ? undefined : json['grantTypes'],
+    idJagValiditySeconds: json['idJagValiditySeconds'] == null ? undefined : json['idJagValiditySeconds'],
     idTokenEncryptedResponseAlg: json['idTokenEncryptedResponseAlg'] == null ? undefined : json['idTokenEncryptedResponseAlg'],
     idTokenEncryptedResponseEnc: json['idTokenEncryptedResponseEnc'] == null ? undefined : json['idTokenEncryptedResponseEnc'],
     idTokenSignedResponseAlg: json['idTokenSignedResponseAlg'] == null ? undefined : json['idTokenSignedResponseAlg'],
@@ -619,6 +641,7 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     clientType: value['clientType'],
     clientUri: value['clientUri'],
     contacts: value['contacts'],
+    crossAppAccessSettings: ApplicationCrossAppAccessSettingsToJSON(value['crossAppAccessSettings']),
     defaultACRvalues: value['defaultACRvalues'],
     defaultMaxAge: value['defaultMaxAge'],
     defaultScopes: value['defaultScopes'],
@@ -628,6 +651,7 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     forcePKCE: value['forcePKCE'],
     forceS256CodeChallengeMethod: value['forceS256CodeChallengeMethod'],
     grantTypes: value['grantTypes'],
+    idJagValiditySeconds: value['idJagValiditySeconds'],
     idTokenEncryptedResponseAlg: value['idTokenEncryptedResponseAlg'],
     idTokenEncryptedResponseEnc: value['idTokenEncryptedResponseEnc'],
     idTokenSignedResponseAlg: value['idTokenSignedResponseAlg'],

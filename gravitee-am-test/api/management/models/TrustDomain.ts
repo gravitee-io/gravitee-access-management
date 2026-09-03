@@ -26,6 +26,13 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { CrossAppAccessSettings } from './CrossAppAccessSettings';
+import {
+  CrossAppAccessSettingsFromJSON,
+  CrossAppAccessSettingsFromJSONTyped,
+  CrossAppAccessSettingsToJSON,
+  CrossAppAccessSettingsToJSONTyped,
+} from './CrossAppAccessSettings';
 import type { JWKSet } from './JWKSet';
 import { JWKSetFromJSON, JWKSetFromJSONTyped, JWKSetToJSON, JWKSetToJSONTyped } from './JWKSet';
 import type { UserBindingCriterion } from './UserBindingCriterion';
@@ -68,6 +75,12 @@ export interface TrustDomain {
    * @memberof TrustDomain
    */
   createdAt?: number;
+  /**
+   *
+   * @type {CrossAppAccessSettings}
+   * @memberof TrustDomain
+   */
+  crossAppAccess?: CrossAppAccessSettings;
   /**
    *
    * @type {string}
@@ -202,6 +215,7 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     allowedAlgorithms: json['allowedAlgorithms'] == null ? undefined : json['allowedAlgorithms'],
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
+    crossAppAccess: json['crossAppAccess'] == null ? undefined : CrossAppAccessSettingsFromJSON(json['crossAppAccess']),
     description: json['description'] == null ? undefined : json['description'],
     id: json['id'] == null ? undefined : json['id'],
     issuer: json['issuer'] == null ? undefined : json['issuer'],
@@ -234,6 +248,7 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     allowedAlgorithms: value['allowedAlgorithms'],
     bundleSource: value['bundleSource'],
     createdAt: value['createdAt'],
+    crossAppAccess: CrossAppAccessSettingsToJSON(value['crossAppAccess']),
     description: value['description'],
     id: value['id'],
     issuer: value['issuer'],

@@ -49,6 +49,22 @@ describe('DomainSettingsTrustDomainsComponent', () => {
     issuer: 'https://sso.acme.com',
     keyMaterial: { source: 'JWKS_URL', jwksUrl: 'https://sso.acme.com/keys' },
   };
+  const crossAppAccessEntry: TrustDomain = {
+    id: 'td-xaa',
+    name: 'acme-suite',
+    crossAppAccess: {
+      enabled: true,
+      audience: 'https://auth.acme.com',
+      resourceServers: [{ name: 'Acme Calendar', resource: 'https://calendar.acme.com' }],
+    },
+  };
+  const issuerAndCrossAppAccessEntry: TrustDomain = {
+    id: 'td-te-xaa',
+    name: 'acme-sso',
+    issuer: 'https://sso.acme.com',
+    keyMaterial: { source: 'PEM', certificate: 'cert' },
+    crossAppAccess: { enabled: true },
+  };
 
   beforeEach(waitForAsync(() => {
     trustDomainServiceStub = {
@@ -65,7 +81,12 @@ describe('DomainSettingsTrustDomainsComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { data: { domain: { id: 'domain-1' }, trustDomains: [spiffeEntry, issuerEntry, bothEntry] } },
+            snapshot: {
+              data: {
+                domain: { id: 'domain-1' },
+                trustDomains: [spiffeEntry, issuerEntry, bothEntry, crossAppAccessEntry, issuerAndCrossAppAccessEntry],
+              },
+            },
           },
         },
       ],
@@ -81,11 +102,13 @@ describe('DomainSettingsTrustDomainsComponent', () => {
   });
 
   it('shouldLabelEachEntryWithTheUsagesItDeclares', () => {
-    expect(component.trustDomains).toHaveLength(3);
+    expect(component.trustDomains).toHaveLength(5);
     expect(component.trustDomains.map((td) => component.usagesLabel(td))).toEqual([
       'SPIFFE',
       'OIDC - Trusted Issuer',
       'SPIFFE, OIDC - Trusted Issuer',
+      'Cross App Access',
+      'OIDC - Trusted Issuer, Cross App Access',
     ]);
   });
 

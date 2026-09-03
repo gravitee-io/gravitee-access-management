@@ -47,6 +47,8 @@ import static java.util.stream.Collectors.toSet;
 @Component
 public class TrustedIssuerProjection {
 
+    private static final String CLEAR_ISSUER = "";
+
     private final TrustDomainService trustDomainService;
 
     public TrustedIssuerProjection(TrustDomainService trustDomainService) {
@@ -105,11 +107,21 @@ public class TrustedIssuerProjection {
                             ? trustDomainService.update(domain, match.getId(), asUpdate(issuer, match), principal).ignoreElement()
                             : trustDomainService.create(domain, asNew(issuer, derivedNames.get(issuer.getIssuer())), principal).ignoreElement();
                 });
-        Completable deletions = Flowable.fromIterable(existing)
+        Completable withdrawals = Flowable.fromIterable(existing)
                 .filter(trustDomain -> !declaredIssuers.contains(trustDomain.getIssuer()))
-                .concatMapCompletable(trustDomain -> trustDomainService.delete(domain, trustDomain.getId(), principal));
+                .concatMapCompletable(trustDomain -> withdraw(domain, trustDomain, principal));
 
-        return upserts.andThen(deletions);
+        return upserts.andThen(withdrawals);
+    }
+
+    /**
+     * Drops an issuer the written list no longer declares, keeping the row when the trusted domain
+     * also issues towards the authority: the deprecated settings must not delete what they cannot see.
+     */
+    private Completable withdraw(Domain domain, TrustDomain trustDomain, User principal) {
+        return trustDomain.trustsCrossAppAccess()
+                ? trustDomainService.update(domain, trustDomain.getId(), asIssuerCleared(trustDomain), principal).ignoreElement()
+                : trustDomainService.delete(domain, trustDomain.getId(), principal);
     }
 
     private Single<List<TrustDomain>> tokenExchangeTrustDomains(String domainId) {
@@ -155,6 +167,25 @@ public class TrustedIssuerProjection {
         updateTrustDomain.setScopeMappings(issuer.getScopeMappings());
         updateTrustDomain.setUserBindingEnabled(issuer.isUserBindingEnabled());
         updateTrustDomain.setUserBindingCriteria(issuer.getUserBindingCriteria());
+        updateTrustDomain.setCrossAppAccess(existing.getCrossAppAccess());
+        return updateTrustDomain;
+    }
+
+    /**
+     * Clears the issuer and what only makes sense alongside it. A blank issuer removes it; a null one
+     * would leave it untouched.
+     */
+    private static UpdateTrustDomain asIssuerCleared(TrustDomain existing) {
+        UpdateTrustDomain updateTrustDomain = new UpdateTrustDomain();
+        updateTrustDomain.setName(existing.getName());
+        updateTrustDomain.setDescription(existing.getDescription());
+        updateTrustDomain.setSpiffeTrustDomain(existing.getSpiffeTrustDomain());
+        updateTrustDomain.setIssuer(CLEAR_ISSUER);
+        updateTrustDomain.setKeyMaterial(existing.getKeyMaterial());
+        updateTrustDomain.setScopeMappings(Map.of());
+        updateTrustDomain.setUserBindingEnabled(false);
+        updateTrustDomain.setUserBindingCriteria(List.of());
+        updateTrustDomain.setCrossAppAccess(existing.getCrossAppAccess());
         return updateTrustDomain;
     }
 
