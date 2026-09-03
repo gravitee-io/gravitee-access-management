@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -130,6 +131,10 @@ public class DefaultIdentityProviderServiceTest {
 
     @Test
     public void default_idp_config_has_null_port_when_mongo_servers_are_defined() {
+        environment.setProperty(DefaultIdentityProviderServiceImpl.SETTINGS_DEFAULT_IDP_USE_SYSTEM_CLUSTER, false);
+        environment.setProperty(CloudProperties.SETTINGS_INSTALLATION_TYPE, CloudProperties.INSTALLATION_TYPE_STANDALONE);
+        environment.setProperty(CloudProperties.SETTINGS_CLOUD_ENABLED, false);
+
         environment.setProperty("repositories.management.mongodb.servers[0].host", "localhost");
         environment.setProperty("repositories.management.mongodb.servers[0].port", 27017);
         environment.setProperty("repositories.management.mongodb.port", 99999); // this value should be ignored
@@ -224,17 +229,50 @@ public class DefaultIdentityProviderServiceTest {
 
         Map<String, Object> config = cut.createProviderConfiguration("test", null);
 
-        // the connection settings stay a fallback: the Mongo provider replaces both the client and the
-        // database with the system cluster's when it honors this flag
-        assertEquals("mgmt-host", config.get("host"));
-        assertEquals(27018, config.get("port"));
+        assertNull(config.get("host"));
+        assertNull(config.get("port"));
         assertEquals("mgmt-db", config.get("database"));
-        assertEquals("mongodb://mgmt-host:27018/?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
+        assertEquals("from-system-cluster:management", config.get("uri"));
         assertEquals(true, config.get("useSystemCluster"));
+        assertEquals("idp_users_test", config.get("usersCollection"));
+        assertEquals("{username: ?}", config.get("findUserByUsernameQuery"));
+        assertEquals("{email: ?}", config.get("findUserByEmailQuery"));
+        assertEquals("username", config.get("usernameField"));
+        assertEquals("password", config.get("passwordField"));
+        assertEquals("BCrypt", config.get("passwordEncoder"));
+    }
+
+    @Test
+    public void mongoBackend_force_bindTheProviderToTheSystemCluster_InCloudMode() {
+        environment.setProperty(DefaultIdentityProviderServiceImpl.SETTINGS_DEFAULT_IDP_USE_SYSTEM_CLUSTER, false);
+        environment.setProperty(CloudProperties.SETTINGS_INSTALLATION_TYPE, CloudProperties.INSTALLATION_TYPE_MANAGED);
+        environment.setProperty(CloudProperties.SETTINGS_CLOUD_ENABLED, true);
+
+        environment.setProperty("repositories.management.mongodb.host", "mgmt-host");
+        environment.setProperty("repositories.management.mongodb.port", "27018");
+        environment.setProperty("repositories.management.mongodb.dbname", "mgmt-db");
+
+        Map<String, Object> config = cut.createProviderConfiguration("test", null);
+
+        assertNull(config.get("host"));
+        assertNull(config.get("port"));
+        assertEquals("mgmt-db", config.get("database"));
+        assertEquals("from-system-cluster:management", config.get("uri"));
+        assertEquals(true, config.get("useSystemCluster"));
+        assertEquals("idp_users_test", config.get("usersCollection"));
+        assertEquals("{username: ?}", config.get("findUserByUsernameQuery"));
+        assertEquals("{email: ?}", config.get("findUserByEmailQuery"));
+        assertEquals("username", config.get("usernameField"));
+        assertEquals("password", config.get("passwordField"));
+        assertEquals("BCrypt", config.get("passwordEncoder"));
     }
 
     @Test
     public void mongoBackend_emitsTheFullProviderConfiguration() {
+        environment.setProperty(DefaultIdentityProviderServiceImpl.SETTINGS_DEFAULT_IDP_USE_SYSTEM_CLUSTER, false);
+        environment.setProperty(CloudProperties.SETTINGS_INSTALLATION_TYPE, CloudProperties.INSTALLATION_TYPE_STANDALONE);
+        environment.setProperty(CloudProperties.SETTINGS_CLOUD_ENABLED, false);
+
         Map<String, Object> config = cut.createProviderConfiguration("test", null);
 
         assertEquals("localhost", config.get("host"));

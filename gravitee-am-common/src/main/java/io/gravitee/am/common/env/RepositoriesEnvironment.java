@@ -88,4 +88,7 @@ public class RepositoriesEnvironment {
         return key;
     }
 
+    public Environment getDelegate() {
+        return environment;
+    }
 }
