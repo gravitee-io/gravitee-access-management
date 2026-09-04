@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
+import io.gravitee.am.gateway.handler.scim.model.Attribute;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
@@ -71,6 +72,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.json.Json;
@@ -1539,4 +1541,95 @@ public class ProvisioningUserServiceTest {
         assertEquals("app-id-123", clientCaptor.getValue().getId());
     }
 
+    @Test
+    public void shouldListUsers_withStoredEmailAttributeWithoutValue() {
+        final String domainID = "any-domain-id";
+        final io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setId("user-id");
+        user.setUsername("nullmail2");
+        user.setEmail("real@example.com");
+        user.setEmails(List.of(modelAttribute(null), modelAttribute("real@example.com")));
+
+        when(domain.getId()).thenReturn(domainID);
+        when(userRepository.findAllScim(new Reference(ReferenceType.DOMAIN, domainID), 0, 10))
+                .thenReturn(Single.just(new Page(List.of(user), 0, 1)));
+        when(groupService.findByMember(any())).thenReturn(Flowable.empty());
+
+        TestObserver<ListResponse<User>> observer = userService.list(null, 0, 10, "").test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+        observer.assertValue(listResp -> listResp.getResources().size() == 1
+                && listResp.getResources().get(0).getEmails().size() == 1
+                && "real@example.com".equals(listResp.getResources().get(0).getEmails().get(0).getValue()));
+    }
+
+    @Test
+    public void shouldNotCreateUser_whenAnEmailHasNoValue() {
+        User newUser = new User();
+        newUser.setUserName("nullmail2");
+        newUser.setEmails(List.of(new Attribute(null, "home"), new Attribute("real@example.com", null, true)));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(rejectedEmails());
+
+        verify(userRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdateUser_whenAnEmailHasNoValue() {
+        final String userId = "user-id";
+        User scimUser = new User();
+        scimUser.setUserName("nullmail2");
+        scimUser.setEmails(List.of(new Attribute(null, "home"), new Attribute("real@example.com", null, true)));
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
+
+        TestObserver<User> testObserver = userService.update(userId, scimUser, null, "/", null, null).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(rejectedEmails());
+
+        verify(userRepository, never()).update(any(), any());
+    }
+
+    @Test
+    public void shouldNotPatchUser_whenAnEmailHasNoValue() throws Exception {
+        final String userId = "user-id";
+
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId(userId);
+        existingUser.setUsername("nullmail2");
+        existingUser.setSource("user-idp");
+
+        User patchedScimUser = new User();
+        patchedScimUser.setUserName("nullmail2");
+        patchedScimUser.setEmails(List.of(new Attribute(null, "home"), new Attribute("real@example.com", null, true)));
+
+        ObjectNode userNode = mock(ObjectNode.class);
+        PatchOp patchOp = mock(PatchOp.class);
+        when(patchOp.getOperations()).thenReturn(Collections.emptyList());
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(existingUser));
+        when(groupService.findByMember(userId)).thenReturn(Flowable.empty());
+        when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
+        when(objectMapper.treeToValue(userNode, User.class)).thenReturn(patchedScimUser);
+
+        TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(rejectedEmails());
+
+        verify(userRepository, never()).update(any(), any());
+    }
+
+    /** Unrelated failures in these flows also surface as {@link InvalidValueException}. */
+    private static Predicate<Throwable> rejectedEmails() {
+        return throwable -> throwable instanceof InvalidValueException
+                && throwable.getMessage().contains("[emails]");
+    }
+
+    private static io.gravitee.am.model.scim.Attribute modelAttribute(String value) {
+        io.gravitee.am.model.scim.Attribute attribute = new io.gravitee.am.model.scim.Attribute();
+        attribute.setValue(value);
+        return attribute;
+    }
 }
