@@ -62,6 +62,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -363,6 +364,28 @@ public class ProvisioningUserServiceTest {
                 && "existing-user-id".equals(uniquenessException.getExistingUserId())
                 && "username-1".equals(uniquenessException.getExistingUsername()));
 
+        verify(userRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotCreateUserWhenTheProviderReportsADuplicate() {
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.error(new UserAlreadyExistsException("username-1")));
+
+        // nothing exists yet, so the pre-checks pass and the request reaches the provider
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+
+        User newUser = mock(User.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username-1");
+        when(newUser.getPassword()).thenReturn(UUID.randomUUID().toString());
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+
+        testObserver.assertError(UniquenessException.class);
         verify(userRepository, never()).create(any());
     }
 
