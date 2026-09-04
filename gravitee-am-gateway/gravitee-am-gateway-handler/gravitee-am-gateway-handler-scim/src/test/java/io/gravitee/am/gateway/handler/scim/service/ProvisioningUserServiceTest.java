@@ -367,25 +367,12 @@ public class ProvisioningUserServiceTest {
         verify(userRepository, never()).create(any());
     }
 
-    /**
-     * The two checks above run before the user is persisted, so they are not atomic. Two concurrent
-     * requests for the same username both pass them and race to the identity provider; the loser hits
-     * the database's unique constraint, which the provider reports as
-     * {@link UserAlreadyExistsException}. That much is covered at the provider layer by
-     * {@code JdbcUserProvider_Test#shouldReturnUserAlreadyExists_onConcurrentCreate}.
-     *
-     * <p>This pins the hop after it. {@code ScimErrorMapper} turns {@link UniquenessException} into
-     * the 409 the caller sees, so leaving the provider's exception unmapped surfaces a 500 instead —
-     * which is what was reported for {@code POST /scim/Users} on AM-7285, fixed in 4.9.27, 4.10.18,
-     * 4.11.12 and 4.12.2.
-     */
     @Test
     public void shouldNotCreateUserWhenTheProviderReportsADuplicate() {
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.error(new UserAlreadyExistsException("username-1")));
 
-        // nothing exists yet, so both checks pass and the request reaches the provider — the window
-        // two concurrent creates get through together
+        // nothing exists yet, so the pre-checks pass and the request reaches the provider
         when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
