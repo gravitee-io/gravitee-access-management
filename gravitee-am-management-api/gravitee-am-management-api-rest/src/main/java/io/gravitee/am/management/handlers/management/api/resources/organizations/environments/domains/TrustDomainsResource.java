@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
@@ -24,6 +26,9 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.NewTrustDomainRequest;
+import io.gravitee.am.service.model.TrustDomainRequestVersion;
+import io.gravitee.am.service.model.NewTrustDomainV2;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +38,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -46,6 +52,8 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.ext.Providers;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -56,6 +64,9 @@ public class TrustDomainsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Context
+    private Providers providers;
 
     @Autowired
     private DomainService domainService;
@@ -108,10 +119,12 @@ public class TrustDomainsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @Parameter(name = "trustDomain", required = true)
-            @Valid @NotNull final NewTrustDomain newTrustDomain,
+            @RequestBody(required = true, content = @Content(mediaType = "application/json",
+                    schema = @Schema(oneOf = {NewTrustDomain.class, NewTrustDomainV2.class})))
+            @NotNull final JsonNode body,
             @Suspended final AsyncResponse response) {
         final var authenticatedUser = getAuthenticatedUser();
+        final NewTrustDomainRequest newTrustDomain = readBody(body);
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.CREATE)
                 .andThen(domainService.findById(domainId)
@@ -125,6 +138,20 @@ public class TrustDomainsResource extends AbstractResource {
                         .entity(td)
                         .build())
                 .subscribe(response::resume, response::resume);
+    }
+
+    private NewTrustDomainRequest readBody(JsonNode body) {
+        Class<? extends NewTrustDomainRequest> type = TrustDomainRequestVersion.isV2(body)
+                ? NewTrustDomainV2.class
+                : NewTrustDomain.class;
+        try {
+            return providers
+                    .getContextResolver(ObjectMapper.class, jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                    .getContext(ObjectMapper.class)
+                    .treeToValue(body, type);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new jakarta.ws.rs.BadRequestException(e.getOriginalMessage());
+        }
     }
 
     @Path("{trustDomainId}")

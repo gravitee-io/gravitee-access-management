@@ -341,8 +341,8 @@ class TrustDomainKeyServiceImplTest {
                 .keyMaterial(TrustDomainKeyMaterial.builder()
                         .source(KeyMaterialSource.JWKS_URL)
                         .jwksUrl(JWKS_URL)
+                        .refreshIntervalSeconds(300)
                         .build())
-                .refreshIntervalSeconds(300)
                 .build();
         return td;
     }

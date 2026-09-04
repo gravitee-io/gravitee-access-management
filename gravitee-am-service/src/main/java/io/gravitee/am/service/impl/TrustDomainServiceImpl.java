@@ -29,6 +29,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
@@ -42,7 +43,11 @@ import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.exception.TrustDomainSpiffeAlreadyExistsException;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.NewTrustDomainRequest;
+import io.gravitee.am.service.model.NewTrustDomainV2;
 import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustDomainRequest;
+import io.gravitee.am.service.model.UpdateTrustDomainV2;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TrustDomainAuditBuilder;
 import io.gravitee.am.service.utils.PrivateAddressGuard;
@@ -108,23 +113,21 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     }
 
     @Override
-    public Single<TrustDomain> create(Domain domain, NewTrustDomain input, User principal) {
+    public Single<TrustDomain> create(Domain domain, NewTrustDomainRequest request, User principal) {
         Objects.requireNonNull(domain, "domain is required");
-        Objects.requireNonNull(input, "newTrustDomain is required");
+        Objects.requireNonNull(request, "newTrustDomain is required");
+
+        NewTrustDomainV2 input = normalize(request);
 
         TrustDomain td = new TrustDomain();
         td.setReferenceType(ReferenceType.DOMAIN);
         td.setReferenceId(domain.getId());
         td.setName(trimToNull(input.getName()));
         td.setDescription(input.getDescription());
-        applyMatchers(td, input.getSpiffeTrustDomain(), input.getIssuer());
-        td.setKeyMaterial(resolveKeyMaterial(input.getKeyMaterial(), input.getBundleSource(), input.getJwksUrl()));
-        td.setRefreshIntervalSeconds(Optional.ofNullable(input.getRefreshIntervalSeconds())
-                .orElse(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS));
-        td.setAllowedAlgorithms(input.getAllowedAlgorithms());
-        td.setScopeMappings(input.getScopeMappings());
-        td.setUserBindingEnabled(input.isUserBindingEnabled());
-        td.setUserBindingCriteria(input.getUserBindingCriteria());
+        td.setDomainIdentifier(trimToNull(input.getDomainIdentifier()));
+        td.setKeyMaterial(input.getKeyMaterial());
+        td.setSpiffe(normalizeSpiffe(input.getSpiffe()));
+        td.setTokenExchange(input.getTokenExchange());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
@@ -145,9 +148,9 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     }
 
     @Override
-    public Single<TrustDomain> update(Domain domain, String id, UpdateTrustDomain input, User principal) {
+    public Single<TrustDomain> update(Domain domain, String id, UpdateTrustDomainRequest request, User principal) {
         Objects.requireNonNull(domain, "domain is required");
-        Objects.requireNonNull(input, "updateTrustDomain is required");
+        Objects.requireNonNull(request, "updateTrustDomain is required");
         Objects.requireNonNull(id, "id is required");
 
         AtomicReference<TrustDomain> existingRef = new AtomicReference<>();
@@ -161,33 +164,23 @@ public class TrustDomainServiceImpl implements TrustDomainService {
                             || !domain.getId().equals(existing.getReferenceId())) {
                         return Single.error(new InvalidTrustDomainException("Trust domain is not linked to domain " + domain.getId()));
                     }
+                    UpdateTrustDomainV2 input = normalize(request, existing);
                     TrustDomain updated = new TrustDomain(existing);
                     if (input.getName() != null) {
                         updated.setName(trimToNull(input.getName()));
                     }
                     updated.setDescription(input.getDescription());
-                    if (input.getSpiffeTrustDomain() != null || input.getIssuer() != null) {
-                        applyMatchers(updated, input.getSpiffeTrustDomain(), input.getIssuer());
+                    if (input.getDomainIdentifier() != null) {
+                        updated.setDomainIdentifier(trimToNull(input.getDomainIdentifier()));
                     }
-                    TrustDomainKeyMaterial keyMaterial =
-                            resolveKeyMaterial(input.getKeyMaterial(), input.getBundleSource(), input.getJwksUrl());
-                    if (keyMaterial != null) {
-                        updated.setKeyMaterial(keyMaterial);
+                    if (input.getKeyMaterial() != null) {
+                        updated.setKeyMaterial(input.getKeyMaterial());
                     }
-                    if (input.getRefreshIntervalSeconds() != null) {
-                        updated.setRefreshIntervalSeconds(input.getRefreshIntervalSeconds());
+                    if (input.getSpiffe() != null) {
+                        updated.setSpiffe(normalizeSpiffe(input.getSpiffe()));
                     }
-                    if (input.getAllowedAlgorithms() != null) {
-                        updated.setAllowedAlgorithms(input.getAllowedAlgorithms());
-                    }
-                    if (input.getScopeMappings() != null) {
-                        updated.setScopeMappings(input.getScopeMappings());
-                    }
-                    if (input.getUserBindingEnabled() != null) {
-                        updated.setUserBindingEnabled(input.getUserBindingEnabled());
-                    }
-                    if (input.getUserBindingCriteria() != null) {
-                        updated.setUserBindingCriteria(input.getUserBindingCriteria());
+                    if (input.getTokenExchange() != null) {
+                        updated.setTokenExchange(input.getTokenExchange());
                     }
                     updated.setUpdatedAt(new Date());
                     updatedRef.set(updated);
@@ -261,12 +254,70 @@ public class TrustDomainServiceImpl implements TrustDomainService {
      * Sets the matchers a trusted domain is recognised by. A payload that declares neither is written
      * against the SPIFFE-only API that preceded the issuer matcher, and means the name.
      */
-    private static void applyMatchers(TrustDomain td, String spiffeTrustDomain, String issuer) {
-        String spiffe = spiffeTrustDomain == null && issuer == null
-                ? td.getName()
-                : trimToNull(spiffeTrustDomain);
-        td.setSpiffeTrustDomain(spiffe != null ? spiffe.toLowerCase(Locale.ROOT) : null);
-        td.setIssuer(trimToNull(issuer));
+    private static NewTrustDomainV2 normalize(NewTrustDomainRequest request) {
+        if (request instanceof NewTrustDomainV2 v2) {
+            return v2;
+        }
+        NewTrustDomain v1 = (NewTrustDomain) request;
+        NewTrustDomainV2 upgraded = new NewTrustDomainV2();
+        upgraded.setName(v1.getName());
+        upgraded.setDescription(v1.getDescription());
+        upgraded.setKeyMaterial(upgradeKeyMaterial(
+                v1.getBundleSource(), v1.getJwksUrl(), v1.getRefreshIntervalSeconds(), null));
+        upgraded.setSpiffe(SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(trimToNull(v1.getName()))
+                .allowedAlgorithms(v1.getAllowedAlgorithms())
+                .build());
+        return upgraded;
+    }
+
+    private static UpdateTrustDomainV2 normalize(UpdateTrustDomainRequest request, TrustDomain existing) {
+        if (request instanceof UpdateTrustDomainV2 v2) {
+            return v2;
+        }
+        UpdateTrustDomain v1 = (UpdateTrustDomain) request;
+        UpdateTrustDomainV2 upgraded = new UpdateTrustDomainV2();
+        upgraded.setDescription(v1.getDescription());
+        upgraded.setKeyMaterial(upgradeKeyMaterial(
+                v1.getBundleSource(), v1.getJwksUrl(), v1.getRefreshIntervalSeconds(), existing.getKeyMaterial()));
+        if (v1.getAllowedAlgorithms() != null) {
+            SpiffeTrustSettings spiffe = existing.getSpiffe() != null
+                    ? new SpiffeTrustSettings(existing.getSpiffe())
+                    : new SpiffeTrustSettings();
+            spiffe.setAllowedAlgorithms(v1.getAllowedAlgorithms());
+            upgraded.setSpiffe(spiffe);
+        }
+        return upgraded;
+    }
+
+    private static TrustDomainKeyMaterial upgradeKeyMaterial(SpiffeBundleSource bundleSource,
+                                                             String jwksUrl,
+                                                             Integer refreshIntervalSeconds,
+                                                             TrustDomainKeyMaterial existing) {
+        if (bundleSource == null && jwksUrl == null && refreshIntervalSeconds == null) {
+            return null;
+        }
+        TrustDomainKeyMaterial keyMaterial;
+        if (bundleSource != null || jwksUrl != null) {
+            keyMaterial = TrustDomainKeyMaterial.fromBundleSource(
+                    bundleSource != null ? bundleSource : SpiffeBundleSource.JWKS_URL, jwksUrl);
+        } else {
+            keyMaterial = existing != null ? new TrustDomainKeyMaterial(existing) : null;
+        }
+        if (keyMaterial != null && refreshIntervalSeconds != null) {
+            keyMaterial.setRefreshIntervalSeconds(refreshIntervalSeconds);
+        }
+        return keyMaterial;
+    }
+
+    private static SpiffeTrustSettings normalizeSpiffe(SpiffeTrustSettings spiffe) {
+        if (spiffe == null) {
+            return null;
+        }
+        SpiffeTrustSettings normalized = new SpiffeTrustSettings(spiffe);
+        String spiffeTrustDomain = trimToNull(normalized.getSpiffeTrustDomain());
+        normalized.setSpiffeTrustDomain(spiffeTrustDomain != null ? spiffeTrustDomain.toLowerCase(Locale.ROOT) : null);
+        return normalized;
     }
 
     private Completable rejectDuplicates(Domain domain, TrustDomain td, TrustDomain beforeUpdate) {
@@ -310,18 +361,6 @@ public class TrustDomainServiceImpl implements TrustDomainService {
      * fields are ignored whenever key material is supplied directly; a bare {@code jwksUrl} means
      * the JWKS-URL source, as it did before the bundle source became explicit.
      */
-    private static TrustDomainKeyMaterial resolveKeyMaterial(TrustDomainKeyMaterial keyMaterial,
-                                                             SpiffeBundleSource bundleSource,
-                                                             String jwksUrl) {
-        if (keyMaterial != null) {
-            return keyMaterial;
-        }
-        if (bundleSource == null && jwksUrl == null) {
-            return null;
-        }
-        return TrustDomainKeyMaterial.fromBundleSource(
-                bundleSource != null ? bundleSource : SpiffeBundleSource.JWKS_URL, jwksUrl);
-    }
 
     private static String trimToNull(String value) {
         if (value == null) {

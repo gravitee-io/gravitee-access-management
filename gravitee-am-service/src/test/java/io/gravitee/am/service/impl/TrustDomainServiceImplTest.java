@@ -32,6 +32,8 @@ import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.AuditService;
@@ -42,7 +44,9 @@ import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.exception.TrustDomainSpiffeAlreadyExistsException;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.NewTrustDomainV2;
 import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustDomainV2;
 import io.gravitee.am.service.reporter.builder.management.TrustDomainAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -144,8 +148,9 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenNameInvalid() {
-        NewTrustDomain input = validInput();
+        NewTrustDomain input = new NewTrustDomain();
         input.setName("INVALID NAME");
+        input.setJwksUrl("https://example.com/keys");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -154,7 +159,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenNameMissing() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setName(null);
 
         service.create(domain, input, null).test()
@@ -163,7 +168,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenKeyMaterialMissing() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(null);
 
         service.create(domain, input, null).test()
@@ -173,7 +178,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenKeyMaterialSourceMissing() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder().jwksUrl("https://example.com/keys").build());
 
         service.create(domain, input, null).test()
@@ -183,7 +188,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenJwksUrlMissing() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder().source(KeyMaterialSource.JWKS_URL).build());
 
         service.create(domain, input, null).test()
@@ -193,7 +198,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenJwksUrlBlank() {
-        NewTrustDomain input = jwksUrlInput("   ");
+        NewTrustDomainV2 input = jwksUrlInput("   ");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class);
@@ -201,7 +206,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenJwksUrlResolvesToPrivateAddress() {
-        NewTrustDomain input = jwksUrlInput("https://10.0.0.1/keys");
+        NewTrustDomainV2 input = jwksUrlInput("https://10.0.0.1/keys");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -211,7 +216,7 @@ public class TrustDomainServiceImplTest {
     @Test
     public void create_allowsPrivateAddress_whenPolicyPermits() {
         keyRetrievalSettings.setAllowPrivateIpAddress(true);
-        NewTrustDomain input = jwksUrlInput("https://10.0.0.1/keys");
+        NewTrustDomainV2 input = jwksUrlInput("https://10.0.0.1/keys");
         stubRepoForCreate();
 
         service.create(domain, input, null).test()
@@ -220,7 +225,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejectsHttp_whenPolicyDisallows() {
-        NewTrustDomain input = jwksUrlInput("http://example.org/keys");
+        NewTrustDomainV2 input = jwksUrlInput("http://example.org/keys");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -229,7 +234,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldDefaultSpiffeTrustDomainToName_whenNoMatcherProvided() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         stubRepoForCreate();
 
         service.create(domain, input, null).test()
@@ -240,9 +245,9 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldLowercaseTheSpiffeTrustDomainButKeepTheNameAsTyped() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setName("Acme Corp");
-        input.setSpiffeTrustDomain("ACME.ORG");
+        spiffeOf(input).setSpiffeTrustDomain("ACME.ORG");
         stubRepoForCreate();
 
         service.create(domain, input, null).test()
@@ -267,9 +272,9 @@ public class TrustDomainServiceImplTest {
     public void shouldServeBothUsagesFromOneTrustedDomain() {
         stubRepoForCreate();
         stubNoIssuerConflict();
-        NewTrustDomain input = tokenExchangeInput();
+        NewTrustDomainV2 input = tokenExchangeInput();
         input.setName("acme-corp");
-        input.setSpiffeTrustDomain("acme.org");
+        spiffeOf(input).setSpiffeTrustDomain("acme.org");
 
         service.create(domain, input, null).test()
                 .assertNoErrors()
@@ -299,8 +304,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectASpiffeTrustDomainThatIsNotADnsStyleLabel() {
-        NewTrustDomain input = validInput();
-        input.setSpiffeTrustDomain("-nope-");
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setSpiffeTrustDomain("-nope-");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -309,7 +314,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectANameLongerThanTheColumn() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setName("a".repeat(TrustDomain.NAME_MAX_LENGTH + 1));
 
         service.create(domain, input, null).test()
@@ -319,8 +324,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectASpiffeTrustDomainLongerThanTheColumn() {
-        NewTrustDomain input = validInput();
-        input.setSpiffeTrustDomain("a".repeat(TrustDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH + 1));
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setSpiffeTrustDomain("a".repeat(TrustDomain.SPIFFE_TRUST_DOMAIN_MAX_LENGTH + 1));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -329,9 +334,9 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldAcceptAFreeFormNameNowThatItIsOnlyALabel() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setName("Acme Corp (prod)");
-        input.setSpiffeTrustDomain("acme.org");
+        spiffeOf(input).setSpiffeTrustDomain("acme.org");
         stubRepoForCreate();
 
         service.create(domain, input, null).test().assertNoErrors();
@@ -339,7 +344,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldAcceptPemKeyMaterial() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.PEM)
                 .certificate(PEM_CERTIFICATE)
@@ -353,7 +358,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectUnparseablePemKeyMaterial() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.PEM)
                 .certificate("not-a-certificate")
@@ -366,7 +371,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectPemKeyMaterialWithoutCertificate() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder().source(KeyMaterialSource.PEM).build());
 
         service.create(domain, input, null).test()
@@ -376,7 +381,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldAcceptInlineJwkSetKeyMaterial() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWK_SET)
                 .jwkSet(inlineJwkSet())
@@ -390,7 +395,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectEmptyInlineJwkSet() {
-        NewTrustDomain input = validInput();
+        NewTrustDomainV2 input = validInput();
         input.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWK_SET)
                 .jwkSet(new JWKSet())
@@ -412,18 +417,6 @@ public class TrustDomainServiceImplTest {
         service.create(domain, input, null).test()
                 .assertNoErrors()
                 .assertValue(created -> created.getKeyMaterial().getSource() == KeyMaterialSource.JWKS_URL)
-                .assertValue(created -> "https://example.com/keys".equals(created.getKeyMaterial().getJwksUrl()));
-    }
-
-    @Test
-    public void shouldIgnoreDeprecatedBundleSourceInput_whenKeyMaterialSupplied() {
-        NewTrustDomain input = validInput();
-        input.setBundleSource(SpiffeBundleSource.JWKS_URL);
-        input.setJwksUrl("https://deprecated.example.com/keys");
-        stubRepoForCreate();
-
-        service.create(domain, input, null).test()
-                .assertNoErrors()
                 .assertValue(created -> "https://example.com/keys".equals(created.getKeyMaterial().getJwksUrl()));
     }
 
@@ -464,8 +457,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenRefreshIntervalZero() {
-        NewTrustDomain input = validInput();
-        input.setRefreshIntervalSeconds(0);
+        NewTrustDomainV2 input = validInput();
+        input.getKeyMaterial().setRefreshIntervalSeconds(0);
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -474,8 +467,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenRefreshIntervalNegative() {
-        NewTrustDomain input = validInput();
-        input.setRefreshIntervalSeconds(-1);
+        NewTrustDomainV2 input = validInput();
+        input.getKeyMaterial().setRefreshIntervalSeconds(-1);
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class);
@@ -483,8 +476,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_usesDefault_whenRefreshIntervalNotProvided() {
-        NewTrustDomain input = validInput();
-        input.setRefreshIntervalSeconds(null);
+        NewTrustDomainV2 input = validInput();
+        input.getKeyMaterial().setRefreshIntervalSeconds(null);
         stubRepoForCreate();
 
         service.create(domain, input, null).test()
@@ -493,8 +486,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenAllowedAlgorithmsContainsNone() {
-        NewTrustDomain input = validInput();
-        input.setAllowedAlgorithms(List.of("RS256", "none"));
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setAllowedAlgorithms(List.of("RS256", "none"));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -503,8 +496,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenAllowedAlgorithmsContainsHs256() {
-        NewTrustDomain input = validInput();
-        input.setAllowedAlgorithms(List.of("HS256"));
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setAllowedAlgorithms(List.of("HS256"));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class);
@@ -512,8 +505,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenAllowedAlgorithmsContainsHs512() {
-        NewTrustDomain input = validInput();
-        input.setAllowedAlgorithms(List.of("hs512"));
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setAllowedAlgorithms(List.of("hs512"));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class);
@@ -521,8 +514,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_rejects_whenAllowedAlgorithmsContainsBlank() {
-        NewTrustDomain input = validInput();
-        input.setAllowedAlgorithms(List.of("RS256", "  "));
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setAllowedAlgorithms(List.of("RS256", "  "));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class);
@@ -530,26 +523,65 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_acceptsValidAllowedAlgorithms() {
-        NewTrustDomain input = validInput();
-        input.setAllowedAlgorithms(List.of("RS256", "ES256", "EdDSA"));
+        NewTrustDomainV2 input = validInput();
+        spiffeOf(input).setAllowedAlgorithms(List.of("RS256", "ES256", "EdDSA"));
         stubRepoForCreate();
 
         service.create(domain, input, null).test().assertNoErrors();
     }
 
-    private NewTrustDomain validInput() {
+    private NewTrustDomainV2 validInput() {
         return jwksUrlInput("https://example.com/keys");
     }
 
-    private NewTrustDomain jwksUrlInput(String jwksUrl) {
-        NewTrustDomain input = new NewTrustDomain();
+    private NewTrustDomainV2 jwksUrlInput(String jwksUrl) {
+        NewTrustDomainV2 input = new NewTrustDomainV2();
         input.setName("example.org");
         input.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl(jwksUrl)
+                .refreshIntervalSeconds(60)
                 .build());
-        input.setRefreshIntervalSeconds(60);
+        input.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("example.org").build());
         return input;
+    }
+
+    private static SpiffeTrustSettings spiffeOf(NewTrustDomainV2 input) {
+        if (input.getSpiffe() == null) {
+            input.setSpiffe(new SpiffeTrustSettings());
+        }
+        return input.getSpiffe();
+    }
+
+    private static SpiffeTrustSettings spiffeOf(UpdateTrustDomainV2 input) {
+        if (input.getSpiffe() == null) {
+            input.setSpiffe(new SpiffeTrustSettings());
+        }
+        return input.getSpiffe();
+    }
+
+    private static TokenExchangeTrustSettings tokenExchangeOf(NewTrustDomainV2 input) {
+        if (input.getTokenExchange() == null) {
+            input.setTokenExchange(new TokenExchangeTrustSettings());
+        }
+        return input.getTokenExchange();
+    }
+
+    private static TokenExchangeTrustSettings tokenExchangeOf(UpdateTrustDomainV2 input) {
+        if (input.getTokenExchange() == null) {
+            input.setTokenExchange(new TokenExchangeTrustSettings());
+        }
+        return input.getTokenExchange();
+    }
+
+    private static void tokenExchangeIssuer(NewTrustDomainV2 input, String issuer) {
+        input.setDomainIdentifier(issuer);
+        tokenExchangeOf(input);
+    }
+
+    private static void tokenExchangeIssuer(UpdateTrustDomainV2 input, String issuer) {
+        input.setDomainIdentifier(issuer);
+        tokenExchangeOf(input);
     }
 
     private void stubExistingTrustDomainForUpdate() {
@@ -574,11 +606,11 @@ public class TrustDomainServiceImplTest {
         existing.setReferenceType(ReferenceType.DOMAIN);
         existing.setReferenceId(DOMAIN_ID);
         existing.setName("example.org");
-        existing.setSpiffeTrustDomain("example.org");
-        existing.setRefreshIntervalSeconds(60);
+        existing.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("example.org").build());
         existing.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://example.com/keys")
+                .refreshIntervalSeconds(60)
                 .build());
         return existing;
     }
@@ -701,9 +733,9 @@ public class TrustDomainServiceImplTest {
     public void shouldRoundTripScopeMappingsAndUserBinding() {
         stubRepoForCreate();
         stubNoIssuerConflict();
-        NewTrustDomain input = tokenExchangeInput();
-        input.setUserBindingEnabled(true);
-        input.setUserBindingCriteria(List.of(criterion("emails.value", "{#token['email']}")));
+        NewTrustDomainV2 input = tokenExchangeInput();
+        tokenExchangeOf(input).setUserBindingEnabled(true);
+        tokenExchangeOf(input).setUserBindingCriteria(List.of(criterion("emails.value", "{#token['email']}")));
 
         service.create(domain, input, null).test()
                 .assertNoErrors()
@@ -739,8 +771,8 @@ public class TrustDomainServiceImplTest {
     public void shouldAllowAlgorithmsOnATokenExchangeTrustedDomain() {
         stubRepoForCreate();
         stubNoIssuerConflict();
-        NewTrustDomain input = tokenExchangeInput();
-        input.setAllowedAlgorithms(List.of("RS256"));
+        NewTrustDomainV2 input = tokenExchangeInput();
+        spiffeOf(input).setAllowedAlgorithms(List.of("RS256"));
 
         service.create(domain, input, null).test()
                 .assertNoErrors()
@@ -749,8 +781,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectTrustedDomainWithoutAnyMatcher() {
-        NewTrustDomain input = tokenExchangeInput();
-        input.setIssuer("  ");
+        NewTrustDomainV2 input = tokenExchangeInput();
+        tokenExchangeIssuer(input, "  ");
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -759,8 +791,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectAnIssuerLongerThanTheColumn() {
-        NewTrustDomain input = tokenExchangeInput();
-        input.setIssuer("https://issuer.example.com/" + "a".repeat(TrustDomain.ISSUER_MAX_LENGTH));
+        NewTrustDomainV2 input = tokenExchangeInput();
+        tokenExchangeIssuer(input, "https://issuer.example.com/" + "a".repeat(TrustDomain.ISSUER_MAX_LENGTH));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -769,7 +801,7 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldAcceptAnIssuerOnlyTrustedDomainWithoutASpiffeTrustDomain() {
-        NewTrustDomain input = tokenExchangeInput();
+        NewTrustDomainV2 input = tokenExchangeInput();
         stubRepoForCreate();
 
         service.create(domain, input, null).test().assertNoErrors();
@@ -777,8 +809,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectScopeMappingsWithoutAnIssuer() {
-        NewTrustDomain input = validInput();
-        input.setScopeMappings(Map.of("read", "domain:read"));
+        NewTrustDomainV2 input = validInput();
+        tokenExchangeOf(input).setScopeMappings(Map.of("read", "domain:read"));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -787,8 +819,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectUserBindingWithoutAnIssuer() {
-        NewTrustDomain input = validInput();
-        input.setUserBindingEnabled(true);
+        NewTrustDomainV2 input = validInput();
+        tokenExchangeOf(input).setUserBindingEnabled(true);
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -797,8 +829,8 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectUserBindingWithoutCriteria() {
-        NewTrustDomain input = tokenExchangeInput();
-        input.setUserBindingEnabled(true);
+        NewTrustDomainV2 input = tokenExchangeInput();
+        tokenExchangeOf(input).setUserBindingEnabled(true);
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -807,9 +839,9 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void shouldRejectUserBindingCriterionWithBlankAttribute() {
-        NewTrustDomain input = tokenExchangeInput();
-        input.setUserBindingEnabled(true);
-        input.setUserBindingCriteria(List.of(criterion(" ", "{#token['email']}")));
+        NewTrustDomainV2 input = tokenExchangeInput();
+        tokenExchangeOf(input).setUserBindingEnabled(true);
+        tokenExchangeOf(input).setUserBindingCriteria(List.of(criterion(" ", "{#token['email']}")));
 
         service.create(domain, input, null).test()
                 .assertError(InvalidTrustDomainException.class)
@@ -850,9 +882,9 @@ public class TrustDomainServiceImplTest {
         stubExistingTokenExchangeForUpdate();
         stubNoIssuerConflict();
 
-        UpdateTrustDomain input = new UpdateTrustDomain();
-        input.setIssuer("https://issuer.example.com/v2");
-        input.setScopeMappings(Map.of("write", "domain:write"));
+        UpdateTrustDomainV2 input = new UpdateTrustDomainV2();
+        tokenExchangeIssuer(input, "https://issuer.example.com/v2");
+        tokenExchangeOf(input).setScopeMappings(Map.of("write", "domain:write"));
 
         service.update(domain, "td-1", input, null).test()
                 .assertNoErrors()
@@ -878,8 +910,8 @@ public class TrustDomainServiceImplTest {
         when(repository.findByIssuer(ReferenceType.DOMAIN, DOMAIN_ID, "https://issuer.example.com/v2"))
                 .thenReturn(Maybe.just(other));
 
-        UpdateTrustDomain input = new UpdateTrustDomain();
-        input.setIssuer("https://issuer.example.com/v2");
+        UpdateTrustDomainV2 input = new UpdateTrustDomainV2();
+        tokenExchangeIssuer(input, "https://issuer.example.com/v2");
 
         service.update(domain, "td-1", input, null).test()
                 .assertError(TrustDomainIssuerAlreadyExistsException.class);
@@ -890,9 +922,9 @@ public class TrustDomainServiceImplTest {
     public void shouldAllowUpdateKeepingItsOwnIssuer() {
         stubExistingTokenExchangeForUpdate();
 
-        UpdateTrustDomain input = new UpdateTrustDomain();
-        input.setIssuer("https://issuer.example.com");
-        input.setScopeMappings(Map.of("write", "domain:write"));
+        UpdateTrustDomainV2 input = new UpdateTrustDomainV2();
+        tokenExchangeIssuer(input, "https://issuer.example.com");
+        tokenExchangeOf(input).setScopeMappings(Map.of("write", "domain:write"));
 
         service.update(domain, "td-1", input, null).test().assertNoErrors();
         verify(repository, never()).findByIssuer(any(), any(), any());
@@ -903,9 +935,9 @@ public class TrustDomainServiceImplTest {
         stubExistingSpiffeTrustDomainForUpdate();
         stubNoIssuerConflict();
 
-        UpdateTrustDomain input = new UpdateTrustDomain();
-        input.setSpiffeTrustDomain("example.org");
-        input.setIssuer("https://issuer.example.com");
+        UpdateTrustDomainV2 input = new UpdateTrustDomainV2();
+        spiffeOf(input).setSpiffeTrustDomain("example.org");
+        tokenExchangeIssuer(input, "https://issuer.example.com");
 
         service.update(domain, "td-1", input, null).test()
                 .assertNoErrors()
@@ -942,16 +974,18 @@ public class TrustDomainServiceImplTest {
         }));
     }
 
-    private NewTrustDomain tokenExchangeInput() {
-        NewTrustDomain input = new NewTrustDomain();
+    private NewTrustDomainV2 tokenExchangeInput() {
+        NewTrustDomainV2 input = new NewTrustDomainV2();
         input.setName("issuer.example.com");
         input.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://example.com/issuer/keys")
+                .refreshIntervalSeconds(60)
                 .build());
-        input.setRefreshIntervalSeconds(60);
-        input.setIssuer("https://issuer.example.com");
-        input.setScopeMappings(Map.of("read", "domain:read"));
+        input.setDomainIdentifier("https://issuer.example.com");
+        input.setTokenExchange(TokenExchangeTrustSettings.builder()
+                .scopeMappings(Map.of("read", "domain:read"))
+                .build());
         return input;
     }
 
@@ -961,13 +995,15 @@ public class TrustDomainServiceImplTest {
         td.setReferenceType(ReferenceType.DOMAIN);
         td.setReferenceId(DOMAIN_ID);
         td.setName("issuer.example.com");
-        td.setRefreshIntervalSeconds(60);
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://example.com/issuer/keys")
+                .refreshIntervalSeconds(60)
                 .build());
-        td.setIssuer("https://issuer.example.com");
-        td.setScopeMappings(Map.of("read", "domain:read"));
+        td.setDomainIdentifier("https://issuer.example.com");
+        td.setTokenExchange(TokenExchangeTrustSettings.builder()
+                .scopeMappings(Map.of("read", "domain:read"))
+                .build());
         return td;
     }
 

@@ -31,6 +31,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.KeyRetrievalSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
@@ -332,7 +333,8 @@ class TrustedIssuerResolverImplTest {
                 .id("trust-domain-1")
                 .name("trusted.example.com")
                 .keyMaterial(keyMaterial)
-                .issuer(ISSUER)
+                .domainIdentifier(ISSUER)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 

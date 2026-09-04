@@ -23,11 +23,15 @@ import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.NewTrustDomainV2;
 import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustDomainV2;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -103,15 +107,15 @@ class TrustedIssuerProjectionTest {
     void shouldCreateATrustedDomainForAWrittenIssuer() {
         Domain domain = domain();
         stubExisting();
-        when(trustDomainService.create(eq(domain), any(NewTrustDomain.class), any()))
+        when(trustDomainService.create(eq(domain), any(NewTrustDomainV2.class), any()))
                 .thenReturn(Single.just(new TrustDomain()));
 
         projection.apply(domain, List.of(jwksIssuer(ISSUER)), principal).blockingAwait();
 
-        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
+        ArgumentCaptor<NewTrustDomainV2> captor = ArgumentCaptor.forClass(NewTrustDomainV2.class);
         verify(trustDomainService).create(eq(domain), captor.capture(), eq(principal));
         assertEquals("https-issuer.example.com", captor.getValue().getName());
-        assertEquals(ISSUER, captor.getValue().getIssuer());
+        assertEquals(ISSUER, captor.getValue().getDomainIdentifier());
         assertEquals(KeyMaterialSource.JWKS_URL, captor.getValue().getKeyMaterial().getSource());
         assertEquals(ISSUER + "/keys", captor.getValue().getKeyMaterial().getJwksUrl());
     }
@@ -120,16 +124,16 @@ class TrustedIssuerProjectionTest {
     void shouldAmendTheTrustedDomainAlreadyVouchingForAWrittenIssuer() {
         Domain domain = domain();
         stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER));
-        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomain.class), any()))
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomainV2.class), any()))
                 .thenReturn(Single.just(new TrustDomain()));
 
         TrustedIssuer written = jwksIssuer(ISSUER);
         written.setScopeMappings(Map.of("ext:write", "write"));
         projection.apply(domain, List.of(written), principal).blockingAwait();
 
-        ArgumentCaptor<UpdateTrustDomain> captor = ArgumentCaptor.forClass(UpdateTrustDomain.class);
+        ArgumentCaptor<UpdateTrustDomainV2> captor = ArgumentCaptor.forClass(UpdateTrustDomainV2.class);
         verify(trustDomainService).update(eq(domain), eq("td-1"), captor.capture(), eq(principal));
-        assertEquals(Map.of("ext:write", "write"), captor.getValue().getScopeMappings());
+        assertEquals(Map.of("ext:write", "write"), captor.getValue().getTokenExchange().getScopeMappings());
         verify(trustDomainService, never()).create(any(), any(), any());
     }
 
@@ -138,7 +142,7 @@ class TrustedIssuerProjectionTest {
         Domain domain = domain();
         stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER),
                 tokenExchange("td-2", "https-other.example.com", "https://other.example.com"));
-        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomain.class), any()))
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomainV2.class), any()))
                 .thenReturn(Single.just(new TrustDomain()));
         when(trustDomainService.delete(eq(domain), anyString(), any())).thenReturn(Completable.complete());
 
@@ -152,14 +156,14 @@ class TrustedIssuerProjectionTest {
     void shouldDisambiguateAWrittenIssuerWhoseDerivedNameIsAlreadyHeld() {
         Domain domain = domain();
         stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER));
-        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomain.class), any()))
+        when(trustDomainService.update(eq(domain), anyString(), any(UpdateTrustDomainV2.class), any()))
                 .thenReturn(Single.just(new TrustDomain()));
-        when(trustDomainService.create(eq(domain), any(NewTrustDomain.class), any()))
+        when(trustDomainService.create(eq(domain), any(NewTrustDomainV2.class), any()))
                 .thenReturn(Single.just(new TrustDomain()));
 
         projection.apply(domain, List.of(jwksIssuer(ISSUER), jwksIssuer(ISSUER + "/")), principal).blockingAwait();
 
-        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
+        ArgumentCaptor<NewTrustDomainV2> captor = ArgumentCaptor.forClass(NewTrustDomainV2.class);
         verify(trustDomainService).create(eq(domain), captor.capture(), eq(principal));
         assertNotEquals("https-issuer.example.com", captor.getValue().getName());
         assertTrue(captor.getValue().getName().startsWith("https-issuer.example.com-"));
@@ -218,14 +222,17 @@ class TrustedIssuerProjectionTest {
                         .source(KeyMaterialSource.JWKS_URL)
                         .jwksUrl(issuer + "/keys")
                         .build())
-                .issuer(issuer)
-                .scopeMappings(Map.of("ext:read", "read"))
-                .userBindingEnabled(true)
-                .userBindingCriteria(List.of(criterion))
+                .domainIdentifier(issuer)
+                .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .scopeMappings(Map.of("ext:read", "read"))
+                        .userBindingEnabled(true)
+                        .userBindingCriteria(List.of(criterion))
+                        .build())
                 .build();
     }
 
     private static TrustDomain spiffe(String id, String name) {
-        return TrustDomain.builder().id(id).name(name).spiffeTrustDomain(name).build();
+        return TrustDomain.builder().id(id).name(name)
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(name).build()).build();
     }
 }

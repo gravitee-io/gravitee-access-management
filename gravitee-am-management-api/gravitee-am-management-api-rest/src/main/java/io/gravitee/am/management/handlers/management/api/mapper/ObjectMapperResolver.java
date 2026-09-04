@@ -57,7 +57,15 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
     private final ObjectMapper mapper;
 
     public ObjectMapperResolver() {
-        mapper = new ObjectMapper();
+        this(newManagementObjectMapper());
+    }
+
+    public ObjectMapperResolver(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    public static ObjectMapper newManagementObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
 
         SimpleModule module = new SimpleModule();
         module.setDeserializerModifier(new BeanDeserializerModifier() {
@@ -112,6 +120,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
         mapper.registerModule(module);
         mapper.registerModule(new Jdk8Module());
         mapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+        return mapper;
     }
 
     @Override

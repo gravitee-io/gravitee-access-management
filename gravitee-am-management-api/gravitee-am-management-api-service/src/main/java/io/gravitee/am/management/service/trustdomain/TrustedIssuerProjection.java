@@ -25,8 +25,9 @@ import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.TrustDomainService;
-import io.gravitee.am.service.model.NewTrustDomain;
-import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.service.model.NewTrustDomainV2;
+import io.gravitee.am.service.model.UpdateTrustDomainV2;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -135,27 +136,31 @@ public class TrustedIssuerProjection {
         return trustedIssuer;
     }
 
-    private static NewTrustDomain asNew(TrustedIssuer issuer, String name) {
-        NewTrustDomain newTrustDomain = new NewTrustDomain();
+    private static NewTrustDomainV2 asNew(TrustedIssuer issuer, String name) {
+        NewTrustDomainV2 newTrustDomain = new NewTrustDomainV2();
         newTrustDomain.setName(name);
-        newTrustDomain.setIssuer(issuer.getIssuer());
+        newTrustDomain.setDomainIdentifier(issuer.getIssuer());
         newTrustDomain.setKeyMaterial(keyMaterialOf(issuer));
-        newTrustDomain.setScopeMappings(issuer.getScopeMappings());
-        newTrustDomain.setUserBindingEnabled(issuer.isUserBindingEnabled());
-        newTrustDomain.setUserBindingCriteria(issuer.getUserBindingCriteria());
+        newTrustDomain.setTokenExchange(tokenExchangeOf(issuer));
         return newTrustDomain;
     }
 
-    private static UpdateTrustDomain asUpdate(TrustedIssuer issuer, TrustDomain existing) {
-        UpdateTrustDomain updateTrustDomain = new UpdateTrustDomain();
+    private static UpdateTrustDomainV2 asUpdate(TrustedIssuer issuer, TrustDomain existing) {
+        UpdateTrustDomainV2 updateTrustDomain = new UpdateTrustDomainV2();
         updateTrustDomain.setDescription(existing.getDescription());
-        updateTrustDomain.setIssuer(issuer.getIssuer());
-        updateTrustDomain.setSpiffeTrustDomain(existing.getSpiffeTrustDomain());
+        updateTrustDomain.setDomainIdentifier(issuer.getIssuer());
+        updateTrustDomain.setSpiffe(existing.getSpiffe());
         updateTrustDomain.setKeyMaterial(keyMaterialOf(issuer));
-        updateTrustDomain.setScopeMappings(issuer.getScopeMappings());
-        updateTrustDomain.setUserBindingEnabled(issuer.isUserBindingEnabled());
-        updateTrustDomain.setUserBindingCriteria(issuer.getUserBindingCriteria());
+        updateTrustDomain.setTokenExchange(tokenExchangeOf(issuer));
         return updateTrustDomain;
+    }
+
+    private static TokenExchangeTrustSettings tokenExchangeOf(TrustedIssuer issuer) {
+        return TokenExchangeTrustSettings.builder()
+                .scopeMappings(issuer.getScopeMappings())
+                .userBindingEnabled(issuer.isUserBindingEnabled())
+                .userBindingCriteria(issuer.getUserBindingCriteria())
+                .build();
     }
 
     private static TrustDomainKeyMaterial keyMaterialOf(TrustedIssuer issuer) {

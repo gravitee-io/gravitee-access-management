@@ -8420,7 +8420,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NewTrustDomain"
+              oneOf:
+              - $ref: "#/components/schemas/NewTrustDomain"
+              - $ref: "#/components/schemas/NewTrustDomainV2"
         required: true
       responses:
         "201":
@@ -8542,7 +8544,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTrustDomain"
+              oneOf:
+              - $ref: "#/components/schemas/UpdateTrustDomain"
+              - $ref: "#/components/schemas/UpdateTrustDomainV2"
         required: true
       responses:
         "200":
@@ -14905,6 +14909,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/JWK"
+    JsonNode:
+      type: object
     KeyRetrievalSettings:
       type: object
       description: "Fetch, SSRF and cache limits applied to every trusted domain in\
@@ -15838,8 +15844,12 @@ components:
       properties:
         allowedAlgorithms:
           type: array
+          deprecated: true
+          description: Use spiffe.allowedAlgorithms instead.
           items:
             type: string
+            deprecated: true
+            description: Use spiffe.allowedAlgorithms instead.
         bundleSource:
           type: string
           deprecated: true
@@ -15849,16 +15859,10 @@ components:
           - STATIC_JWKS
         description:
           type: string
-        issuer:
-          type: string
-          maxLength: 512
-          minLength: 0
         jwksUrl:
           type: string
           deprecated: true
           description: Use keyMaterial.jwksUrl instead.
-        keyMaterial:
-          $ref: "#/components/schemas/TrustDomainKeyMaterial"
         name:
           type: string
           maxLength: 255
@@ -15866,22 +15870,43 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
-        scopeMappings:
-          type: object
-          additionalProperties:
-            type: string
-        spiffeTrustDomain:
+          deprecated: true
+          description: Use keyMaterial.refreshIntervalSeconds instead.
+        version:
           type: string
-          description: SPIFFE trust domain matched against the "sub" of a JWT-SVID.
-            Defaults to the name when no matcher is supplied.
+          description: Payload shape selector. Omit or "v1" for this flat shape.
+          example: v1
+    NewTrustDomainV2:
+      type: object
+      properties:
+        description:
+          type: string
+        domainIdentifier:
+          type: string
+          description: "Issuer identifier of this authority's authorization server.\
+            \ Matched against the \"iss\" of an external JWT inbound, and carried\
+            \ as the \"aud\" of an ID-JAG outbound. Required when tokenExchange is\
+            \ present."
+          example: https://sso.acme.com
+          maxLength: 512
+          minLength: 0
+        keyMaterial:
+          $ref: "#/components/schemas/TrustDomainKeyMaterial"
+        name:
+          type: string
+          description: Label the trusted domain is known by. Unique within the security
+            domain.
+          example: acme-corp
           maxLength: 255
           minLength: 0
-        userBindingCriteria:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserBindingCriterion"
-        userBindingEnabled:
-          type: boolean
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
+        version:
+          type: string
+          description: Payload shape selector. Must be "v2" to select this shape.
+          example: v2
     NewUser:
       type: object
       properties:
@@ -18050,6 +18075,25 @@ components:
           format: int32
           deprecated: true
           description: "Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb."
+    SpiffeTrustSettings:
+      type: object
+      description: Accepts JWT-SVIDs from this authority as client assertions.
+      properties:
+        allowedAlgorithms:
+          type: array
+          description: Signature algorithms accepted for JWT-SVID validation. Defaults
+            to workloadIdentitySettings.defaultAllowedAlgorithms when absent.
+          items:
+            type: string
+            description: Signature algorithms accepted for JWT-SVID validation. Defaults
+              to workloadIdentitySettings.defaultAllowedAlgorithms when absent.
+        spiffeTrustDomain:
+          type: string
+          description: "SPIFFE trust domain matched against the \"sub\" of a JWT-SVID,\
+            \ without the \"spiffe://\" scheme. Lowercased on write. Unique within\
+            \ the security domain."
+          example: acme.org
+      title: SPIFFE trust settings
     StatusEntity:
       type: object
       properties:
@@ -18282,13 +18326,43 @@ components:
           items:
             $ref: "#/components/schemas/TrustedIssuer"
       title: Token exchange settings
+    TokenExchangeTrustSettings:
+      type: object
+      description: "Accepts this authority's JWTs as subject or actor tokens during\
+        \ an RFC 8693 exchange, matched by domainIdentifier."
+      properties:
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+            description: One-to-one mapping from external scope to domain scope. Unmapped
+              issuer scopes are dropped (fail-closed).
+          description: One-to-one mapping from external scope to domain scope. Unmapped
+            issuer scopes are dropped (fail-closed).
+        userBindingCriteria:
+          type: array
+          description: Criteria used to locate a domain user when user binding is
+            enabled. All criteria are combined with AND.
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+          default: false
+          description: "Whether the external JWT subject is resolved to a single domain\
+            \ user using the user binding criteria. When false, a virtual user is\
+            \ built from the token claims only."
+      title: Token exchange trust settings
     TrustDomain:
       type: object
       properties:
         allowedAlgorithms:
           type: array
+          deprecated: true
+          description: Use spiffe.allowedAlgorithms instead.
           items:
             type: string
+            deprecated: true
+            description: Use spiffe.allowedAlgorithms instead.
         bundleSource:
           type: string
           deprecated: true
@@ -18303,13 +18377,17 @@ components:
           description: Epoch timestamp in milliseconds.
         description:
           type: string
+        domainIdentifier:
+          type: string
+          description: Issuer identifier of this authority's authorization server.
+            Matched against the "iss" of an external JWT during an RFC 8693 exchange.
+          example: https://sso.acme.com
         id:
           type: string
         issuer:
           type: string
-          description: Expected value of the "iss" claim in an external JWT. Required
-            to accept tokens during an RFC 8693 exchange.
-          example: https://sso.acme.com
+          deprecated: true
+          description: Use domainIdentifier instead.
         jwksUrl:
           type: string
           deprecated: true
@@ -18335,39 +18413,40 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
+          deprecated: true
+          description: Use keyMaterial.refreshIntervalSeconds instead.
         scopeMappings:
           type: object
           additionalProperties:
             type: string
-            description: One-to-one mapping from external scope to domain scope. Unmapped
-              issuer scopes are dropped (fail-closed). Applies to tokens matched by
-              "issuer".
-          description: One-to-one mapping from external scope to domain scope. Unmapped
-            issuer scopes are dropped (fail-closed). Applies to tokens matched by
-            "issuer".
+            deprecated: true
+            description: Use tokenExchange.scopeMappings instead.
+          deprecated: true
+          description: Use tokenExchange.scopeMappings instead.
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
         spiffeTrustDomain:
           type: string
-          description: "SPIFFE trust domain matched against the \"sub\" of a JWT-SVID,\
-            \ without the \"spiffe://\" scheme. Required to accept SPIFFE client assertions."
-          example: acme.org
+          deprecated: true
+          description: Use spiffe.spiffeTrustDomain instead.
         staticJwks:
           $ref: "#/components/schemas/JWKSet"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
         updatedAt:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
         userBindingCriteria:
           type: array
-          description: Criteria used to locate a domain user when user binding is
-            enabled. All criteria are combined with AND.
+          deprecated: true
+          description: Use tokenExchange.userBindingCriteria instead.
           items:
             $ref: "#/components/schemas/UserBindingCriterion"
         userBindingEnabled:
           type: boolean
-          default: false
-          description: "Whether the external JWT subject is resolved to a single domain\
-            \ user using the user binding criteria. When false, a virtual user is\
-            \ built from the token claims only."
+          deprecated: true
+          description: Use tokenExchange.userBindingEnabled instead.
     TrustDomainKeyMaterial:
       type: object
       description: Where the trusted domain's signing keys come from. Exactly one
@@ -18382,6 +18461,11 @@ components:
           type: string
           description: JWKS endpoint URL. Required when source is JWKS_URL.
           example: https://issuer.example.com/.well-known/jwks.json
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
+          description: "How often the JWKS endpoint is re-polled, clamped by keyRetrievalSettings.cacheTtlSeconds.\
+            \ Applies only when source is JWKS_URL."
         source:
           type: string
           description: Which of the three key sources this trusted domain uses.
@@ -18855,8 +18939,12 @@ components:
       properties:
         allowedAlgorithms:
           type: array
+          deprecated: true
+          description: Use spiffe.allowedAlgorithms instead.
           items:
             type: string
+            deprecated: true
+            description: Use spiffe.allowedAlgorithms instead.
         bundleSource:
           type: string
           deprecated: true
@@ -18866,41 +18954,48 @@ components:
           - STATIC_JWKS
         description:
           type: string
-        issuer:
-          type: string
-          maxLength: 512
-          minLength: 0
         jwksUrl:
           type: string
           deprecated: true
           description: Use keyMaterial.jwksUrl instead.
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
+          deprecated: true
+          description: Use keyMaterial.refreshIntervalSeconds instead.
+        version:
+          type: string
+          description: Payload shape selector. Omit or "v1" for this flat shape.
+          example: v1
+    UpdateTrustDomainV2:
+      type: object
+      properties:
+        description:
+          type: string
+        domainIdentifier:
+          type: string
+          description: "Issuer identifier of this authority's authorization server.\
+            \ Matched against the \"iss\" of an external JWT inbound, and carried\
+            \ as the \"aud\" of an ID-JAG outbound. Required when tokenExchange is\
+            \ present."
+          example: https://sso.acme.com
+          maxLength: 512
+          minLength: 0
         keyMaterial:
           $ref: "#/components/schemas/TrustDomainKeyMaterial"
         name:
           type: string
-          description: New label for the trusted domain. Left unchanged when absent.
+          description: New label for the trusted domain. Kept unchanged when absent.
           maxLength: 255
           minLength: 0
-        refreshIntervalSeconds:
-          type: integer
-          format: int32
-        scopeMappings:
-          type: object
-          additionalProperties:
-            type: string
-        spiffeTrustDomain:
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
+        version:
           type: string
-          description: SPIFFE trust domain matched against the "sub" of a JWT-SVID.
-            Supplying either matcher replaces both; supplying neither leaves them
-            unchanged.
-          maxLength: 255
-          minLength: 0
-        userBindingCriteria:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserBindingCriterion"
-        userBindingEnabled:
-          type: boolean
+          description: Payload shape selector. Must be "v2" to select this shape.
+          example: v2
     UpdateUser:
       type: object
       properties:

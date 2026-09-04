@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
@@ -2515,13 +2516,16 @@ public class TokenExchangeServiceImplTest {
 
     private TokenValidator trustedIssuerValidator(String issuer, Map<String, Object> additionalClaims,
                                                   List<UserBindingCriterion> bindingCriteria) {
-        TrustDomain.TrustDomainBuilder trustedDomainBuilder = TrustDomain.builder()
-                .name(issuer)
-                .issuer(issuer);
+        TokenExchangeTrustSettings tokenExchange = new TokenExchangeTrustSettings();
         if (bindingCriteria != null) {
-            trustedDomainBuilder.userBindingEnabled(true).userBindingCriteria(bindingCriteria);
+            tokenExchange.setUserBindingEnabled(true);
+            tokenExchange.setUserBindingCriteria(bindingCriteria);
         }
-        TrustDomain trustedDomain = trustedDomainBuilder.build();
+        TrustDomain trustedDomain = TrustDomain.builder()
+                .name(issuer)
+                .domainIdentifier(issuer)
+                .tokenExchange(tokenExchange)
+                .build();
         return new TokenValidator() {
             @Override
             public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {

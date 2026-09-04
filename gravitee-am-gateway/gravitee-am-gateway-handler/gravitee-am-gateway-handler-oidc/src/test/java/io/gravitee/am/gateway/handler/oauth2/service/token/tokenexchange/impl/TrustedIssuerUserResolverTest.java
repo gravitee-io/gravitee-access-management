@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
@@ -52,6 +53,16 @@ class TrustedIssuerUserResolverTest {
         resolver = new TrustedIssuerUserResolver(userGatewayService);
     }
 
+    private static TrustDomain trustedDomain(boolean userBindingEnabled, List<UserBindingCriterion> criteria) {
+        return TrustDomain.builder()
+                .domainIdentifier(ISSUER)
+                .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .userBindingEnabled(userBindingEnabled)
+                        .userBindingCriteria(criteria)
+                        .build())
+                .build();
+    }
+
     private ValidatedToken subjectTokenWith(TrustDomain trustedDomain) {
         return ValidatedToken.builder()
                 .subject("sub-1")
@@ -62,7 +73,7 @@ class TrustedIssuerUserResolverTest {
 
     @Test
     void resolve_returnsEmptyWhenUserBindingDisabled() {
-        TrustDomain trusted = TrustDomain.builder().issuer(ISSUER).userBindingEnabled(false).build();
+        TrustDomain trusted = trustedDomain(false, null);
 
         User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
 
@@ -78,9 +89,7 @@ class TrustedIssuerUserResolverTest {
 
     @Test
     void resolve_returnsEmptyWhenNoCriteria() {
-        TrustDomain trusted = TrustDomain.builder()
-                .issuer(ISSUER)
-                .userBindingEnabled(true).userBindingCriteria(Collections.emptyList()).build();
+        TrustDomain trusted = trustedDomain(true, Collections.emptyList());
 
         User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
 
@@ -89,12 +98,10 @@ class TrustedIssuerUserResolverTest {
 
     @Test
     void resolve_throwsWhenZeroUsersMatch() {
-        TrustDomain.TrustDomainBuilder trustedBuilder =
-                TrustDomain.builder().issuer(ISSUER).userBindingEnabled(true);
-        UserBindingCriterion c = new UserBindingCriterion();
+                UserBindingCriterion c = new UserBindingCriterion();
         c.setAttribute("emails.value");
         c.setExpression("{#token['email']}");
-        TrustDomain trusted = trustedBuilder.userBindingCriteria(List.of(c)).build();
+        TrustDomain trusted = trustedDomain(true, List.of(c));
 
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of()));
 
@@ -105,12 +112,10 @@ class TrustedIssuerUserResolverTest {
 
     @Test
     void resolve_returnsUserWhenOneMatch() {
-        TrustDomain.TrustDomainBuilder trustedBuilder =
-                TrustDomain.builder().issuer(ISSUER).userBindingEnabled(true);
-        UserBindingCriterion c = new UserBindingCriterion();
+                UserBindingCriterion c = new UserBindingCriterion();
         c.setAttribute("emails.value");
         c.setExpression("{#token['email']}");
-        TrustDomain trusted = trustedBuilder.userBindingCriteria(List.of(c)).build();
+        TrustDomain trusted = trustedDomain(true, List.of(c));
 
         User domainUser = new User();
         domainUser.setId("domain-user-id");
@@ -124,12 +129,10 @@ class TrustedIssuerUserResolverTest {
 
     @Test
     void resolve_throwsWhenMultipleUsersMatch() {
-        TrustDomain.TrustDomainBuilder trustedBuilder =
-                TrustDomain.builder().issuer(ISSUER).userBindingEnabled(true);
-        UserBindingCriterion c = new UserBindingCriterion();
+                UserBindingCriterion c = new UserBindingCriterion();
         c.setAttribute("emails.value");
         c.setExpression("{#token['email']}");
-        TrustDomain trusted = trustedBuilder.userBindingCriteria(List.of(c)).build();
+        TrustDomain trusted = trustedDomain(true, List.of(c));
 
         User u1 = new User();
         User u2 = new User();
@@ -143,12 +146,10 @@ class TrustedIssuerUserResolverTest {
     @Test
     void resolve_throwsWhenNullClaims() {
         // T3: ValidatedToken with null claims should produce InvalidRequestException
-        TrustDomain.TrustDomainBuilder trustedBuilder =
-                TrustDomain.builder().issuer(ISSUER).userBindingEnabled(true);
-        UserBindingCriterion c = new UserBindingCriterion();
+                UserBindingCriterion c = new UserBindingCriterion();
         c.setAttribute("emails.value");
         c.setExpression("{#token['email']}");
-        TrustDomain trusted = trustedBuilder.userBindingCriteria(List.of(c)).build();
+        TrustDomain trusted = trustedDomain(true, List.of(c));
 
         ValidatedToken noClaims = ValidatedToken.builder()
                 .subject("sub-1")
@@ -164,12 +165,10 @@ class TrustedIssuerUserResolverTest {
     @Test
     void resolve_throwsWhenExpressionEvaluatesToWhitespace() {
         // T4: EL expression evaluating to whitespace should produce InvalidRequestException
-        TrustDomain.TrustDomainBuilder trustedBuilder =
-                TrustDomain.builder().issuer(ISSUER).userBindingEnabled(true);
-        UserBindingCriterion c = new UserBindingCriterion();
+                UserBindingCriterion c = new UserBindingCriterion();
         c.setAttribute("emails.value");
         c.setExpression("{#token['email']}");
-        TrustDomain trusted = trustedBuilder.userBindingCriteria(List.of(c)).build();
+        TrustDomain trusted = trustedDomain(true, List.of(c));
 
         ValidatedToken whitespaceToken = ValidatedToken.builder()
                 .subject("sub-1")
@@ -184,12 +183,10 @@ class TrustedIssuerUserResolverTest {
 
     @Test
     void resolve_throwsWhenExpressionEvaluatesToNull() {
-        TrustDomain.TrustDomainBuilder trustedBuilder =
-                TrustDomain.builder().issuer(ISSUER).userBindingEnabled(true);
-        UserBindingCriterion c = new UserBindingCriterion();
+                UserBindingCriterion c = new UserBindingCriterion();
         c.setAttribute("emails.value");
         c.setExpression("{#token['nonexistent']}");
-        TrustDomain trusted = trustedBuilder.userBindingCriteria(List.of(c)).build();
+        TrustDomain trusted = trustedDomain(true, List.of(c));
 
         assertThatThrownBy(() -> resolver.resolve(subjectTokenWith(trusted)).blockingGet())
                 .isInstanceOf(InvalidRequestException.class)

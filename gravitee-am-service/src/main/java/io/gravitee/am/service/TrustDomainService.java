@@ -19,8 +19,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.TrustDomain;
-import io.gravitee.am.service.model.NewTrustDomain;
-import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.NewTrustDomainRequest;
+import io.gravitee.am.service.model.UpdateTrustDomainRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -42,9 +42,9 @@ public interface TrustDomainService {
 
     Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
 
-    Single<TrustDomain> create(Domain domain, NewTrustDomain newTrustDomain, User principal);
+    Single<TrustDomain> create(Domain domain, NewTrustDomainRequest newTrustDomain, User principal);
 
-    Single<TrustDomain> update(Domain domain, String id, UpdateTrustDomain updateTrustDomain, User principal);
+    Single<TrustDomain> update(Domain domain, String id, UpdateTrustDomainRequest updateTrustDomain, User principal);
 
     Completable delete(Domain domain, String id, User principal);
 }

@@ -25,6 +25,8 @@ import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
@@ -177,14 +179,10 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         td.setReferenceType(doc.getReferenceType() != null ? ReferenceType.valueOf(doc.getReferenceType()) : null);
         td.setName(doc.getName());
         td.setDescription(doc.getDescription());
-        td.setSpiffeTrustDomain(readSpiffeTrustDomain(doc));
-        td.setIssuer(doc.getIssuer());
+        td.setDomainIdentifier(doc.getIssuer());
         td.setKeyMaterial(readKeyMaterial(doc));
-        td.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
-        td.setAllowedAlgorithms(doc.getAllowedAlgorithms());
-        td.setScopeMappings(doc.getScopeMappings());
-        td.setUserBindingEnabled(Boolean.TRUE.equals(doc.getUserBindingEnabled()));
-        td.setUserBindingCriteria(UserBindingCriterionMongo.toModelList(doc.getUserBindingCriteria()));
+        td.setSpiffe(readSpiffe(doc));
+        td.setTokenExchange(readTokenExchange(doc));
         td.setCreatedAt(doc.getCreatedAt());
         td.setUpdatedAt(doc.getUpdatedAt());
         return td;
@@ -230,17 +228,42 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
      */
     static TrustDomainKeyMaterial readKeyMaterial(TrustDomainMongo doc) {
         TrustDomainKeyMaterialMongo keyMaterial = doc.getKeyMaterial();
-        if (keyMaterial != null) {
-            return TrustDomainKeyMaterial.builder()
-                    .source(keyMaterial.getSource() != null ? KeyMaterialSource.valueOf(keyMaterial.getSource()) : null)
-                    .jwksUrl(keyMaterial.getJwksUrl())
-                    .jwkSet(parseJwkSet(keyMaterial.getJwkSet()))
-                    .certificate(keyMaterial.getCertificate())
-                    .build();
+        TrustDomainKeyMaterial model = keyMaterial != null
+                ? TrustDomainKeyMaterial.builder()
+                        .source(keyMaterial.getSource() != null ? KeyMaterialSource.valueOf(keyMaterial.getSource()) : null)
+                        .jwksUrl(keyMaterial.getJwksUrl())
+                        .jwkSet(parseJwkSet(keyMaterial.getJwkSet()))
+                        .certificate(keyMaterial.getCertificate())
+                        .build()
+                : TrustDomainKeyMaterial.fromBundleSource(
+                        doc.getBundleSource() != null ? SpiffeBundleSource.valueOf(doc.getBundleSource()) : null,
+                        doc.getJwksUrl());
+        if (model != null) {
+            model.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
         }
-        return TrustDomainKeyMaterial.fromBundleSource(
-                doc.getBundleSource() != null ? SpiffeBundleSource.valueOf(doc.getBundleSource()) : null,
-                doc.getJwksUrl());
+        return model;
+    }
+
+    static SpiffeTrustSettings readSpiffe(TrustDomainMongo doc) {
+        String spiffeTrustDomain = readSpiffeTrustDomain(doc);
+        if (spiffeTrustDomain == null && doc.getAllowedAlgorithms() == null) {
+            return null;
+        }
+        return SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(spiffeTrustDomain)
+                .allowedAlgorithms(doc.getAllowedAlgorithms())
+                .build();
+    }
+
+    static TokenExchangeTrustSettings readTokenExchange(TrustDomainMongo doc) {
+        if (doc.getIssuer() == null) {
+            return null;
+        }
+        return TokenExchangeTrustSettings.builder()
+                .scopeMappings(doc.getScopeMappings())
+                .userBindingEnabled(Boolean.TRUE.equals(doc.getUserBindingEnabled()))
+                .userBindingCriteria(UserBindingCriterionMongo.toModelList(doc.getUserBindingCriteria()))
+                .build();
     }
 
     private static TrustDomainKeyMaterialMongo toMongo(TrustDomainKeyMaterial keyMaterial) {

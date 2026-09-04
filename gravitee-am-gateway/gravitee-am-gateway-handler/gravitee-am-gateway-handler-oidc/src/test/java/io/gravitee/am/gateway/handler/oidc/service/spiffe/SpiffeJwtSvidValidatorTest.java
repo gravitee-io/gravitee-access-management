@@ -24,6 +24,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -99,7 +100,7 @@ class SpiffeJwtSvidValidatorTest {
 
     @Test
     void validate_rejectsAlgorithm_notInAllowList() throws Exception {
-        trustDomain.setAllowedAlgorithms(List.of("ES256"));
+        spiffeOf(trustDomain).setAllowedAlgorithms(List.of("ES256"));
         SignedJWT jwt = signedJwt(defaultClaims().build(), JWSAlgorithm.RS256);
 
         assertThat(validator.validate(jwt, trustDomain, appSettings, TOKEN_ENDPOINT))
@@ -108,7 +109,7 @@ class SpiffeJwtSvidValidatorTest {
 
     @Test
     void validate_usesDomainDefaults_whenTrustDomainAllowListEmpty() throws Exception {
-        trustDomain.setAllowedAlgorithms(List.of());
+        spiffeOf(trustDomain).setAllowedAlgorithms(List.of());
         SignedJWT jwt = signedJwt(defaultClaims().build(), JWSAlgorithm.RS256);
 
         assertThat(validator.validate(jwt, trustDomain, appSettings, TOKEN_ENDPOINT)).isNull();
@@ -331,4 +332,12 @@ class SpiffeJwtSvidValidatorTest {
         jwt.sign(new RSASSASigner(rsaPrivateKey));
         return jwt;
     }
+
+    private static SpiffeTrustSettings spiffeOf(TrustDomain trustDomain) {
+        if (trustDomain.getSpiffe() == null) {
+            trustDomain.setSpiffe(new SpiffeTrustSettings());
+        }
+        return trustDomain.getSpiffe();
+    }
+
 }
