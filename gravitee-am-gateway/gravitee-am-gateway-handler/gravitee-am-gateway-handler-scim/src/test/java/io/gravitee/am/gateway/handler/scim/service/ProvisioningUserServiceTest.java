@@ -62,6 +62,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -363,6 +364,41 @@ public class ProvisioningUserServiceTest {
                 && "existing-user-id".equals(uniquenessException.getExistingUserId())
                 && "username-1".equals(uniquenessException.getExistingUsername()));
 
+        verify(userRepository, never()).create(any());
+    }
+
+    /**
+     * The two checks above run before the user is persisted, so they are not atomic. Two concurrent
+     * requests for the same username both pass them and race to the identity provider; the loser hits
+     * the database's unique constraint, which the provider reports as
+     * {@link UserAlreadyExistsException}. That much is covered at the provider layer by
+     * {@code JdbcUserProvider_Test#shouldReturnUserAlreadyExists_onConcurrentCreate}.
+     *
+     * <p>This pins the hop after it. {@code ScimErrorMapper} turns {@link UniquenessException} into
+     * the 409 the caller sees, so leaving the provider's exception unmapped surfaces a 500 instead —
+     * which is what was reported for {@code POST /scim/Users} on AM-7285, fixed in 4.9.27, 4.10.18,
+     * 4.11.12 and 4.12.2.
+     */
+    @Test
+    public void shouldNotCreateUserWhenTheProviderReportsADuplicate() {
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.error(new UserAlreadyExistsException("username-1")));
+
+        // nothing exists yet, so both checks pass and the request reaches the provider — the window
+        // two concurrent creates get through together
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(passwordService.isValid(any(), any(), any())).thenReturn(true);
+
+        User newUser = mock(User.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username-1");
+        when(newUser.getPassword()).thenReturn(UUID.randomUUID().toString());
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+
+        testObserver.assertError(UniquenessException.class);
         verify(userRepository, never()).create(any());
     }
 
