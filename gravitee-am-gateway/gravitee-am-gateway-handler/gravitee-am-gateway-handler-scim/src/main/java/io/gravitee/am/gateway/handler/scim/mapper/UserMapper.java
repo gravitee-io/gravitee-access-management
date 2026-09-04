@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.scim.mapper;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.Address;
 import io.gravitee.am.gateway.handler.scim.model.Attribute;
 import io.gravitee.am.gateway.handler.scim.model.Certificate;
@@ -40,6 +41,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -92,7 +94,7 @@ public class UserMapper {
             attribute.setValue(user.getEmail());
             attribute.setPrimary(true);
             if (scimUser.getEmails() != null) {
-                Optional<Attribute> optional = scimUser.getEmails().stream().filter(attribute1 -> attribute1.getValue().equals(attribute.getValue())).findFirst();
+                Optional<Attribute> optional = scimUser.getEmails().stream().filter(attribute1 -> Objects.equals(attribute1.getValue(), attribute.getValue())).findFirst();
                 if (optional.isEmpty()) {
                     scimUser.setEmails(Collections.singletonList(attribute));
                 }
@@ -147,6 +149,11 @@ public class UserMapper {
     }
 
     public static io.gravitee.am.model.User convert(User scimUser) {
+        requireAttributeValues("emails", scimUser.getEmails());
+        requireAttributeValues("phoneNumbers", scimUser.getPhoneNumbers());
+        requireAttributeValues("ims", scimUser.getIms());
+        requireAttributeValues("photos", scimUser.getPhotos());
+
         io.gravitee.am.model.User user = new io.gravitee.am.model.User();
         Map<String, Object> additionalInformation = new HashMap<>();
         if (scimUser.getExternalId() != null) {
@@ -321,6 +328,7 @@ public class UserMapper {
         }
         return modelAttributes
                 .stream()
+                .filter(modelAttribute -> modelAttribute != null && hasValue(modelAttribute.getValue()))
                 .map(modelAttribute -> {
                     Attribute scimAttribute = new Attribute();
                     scimAttribute.setPrimary(modelAttribute.isPrimary());
@@ -394,6 +402,19 @@ public class UserMapper {
                     scimCertificate.setValue(modelCertificate.getValue());
                     return scimCertificate;
                 }).collect(toList());
+    }
+
+    private static void requireAttributeValues(String attributeName, List<Attribute> attributes) {
+        if (attributes == null) {
+            return;
+        }
+        if (attributes.stream().anyMatch(attribute -> attribute == null || !hasValue(attribute.getValue()))) {
+            throw new InvalidValueException("Field [" + attributeName + "] contains an entry without a value");
+        }
+    }
+
+    private static boolean hasValue(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static List<String> restrictedClaims() {
