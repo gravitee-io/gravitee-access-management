@@ -39,28 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.when;
 
-/**
- * Pins the behaviour AM-7055 introduced: an attestation root certificate that cannot be loaded must
- * degrade the trust set, not stop the gateway starting.
- *
- * <p>Before that fix an expired certificate threw out of the {@link GraviteeWebAuthnOptions}
- * constructor. {@link WebAuthnFactory} is a {@code FactoryBean}, so the throw surfaced as
- * "FactoryBean threw exception on object creation" for the {@code webAuthn} bean, left
- * {@code rootProvider} with an unsatisfied dependency, and stopped {@code SyncManager} deploying any
- * security domain — including on installations that had never enabled WebAuthn. Six customers lost
- * their gateway in six days in May 2026.
- *
- * <p>The fix swallows the exception at two points, and neither had a test:
- * {@code pushAdditionalRootCertificate} for the roots compiled into the product, and
- * {@code putRootCertificate} for the ones a domain supplies through its WebAuthn settings. The
- * second is reachable by any customer with a malformed certificate in their configuration.
- *
- * <p>The two nested groups separate the levels: loading certificates into the options object, and
- * building the {@code webAuthn} bean through the factory that failed in the incident.
- *
- * <p>AM-7617 covers the other half of this P1 — noticing that a certificate is close to expiry
- * before it lapses.
- */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class WebAuthnFactoryResilienceTest {
@@ -99,8 +77,7 @@ class WebAuthnFactoryResilienceTest {
         void shouldBuildOptionsWhenAnEmbeddedCertificateCannotBeLoaded() {
             assertThatCode(GraviteeWebAuthnOptions::new)
                     .as("Constructing the options must not propagate a certificate failure. If it does, the "
-                            + "webAuthn bean fails, rootProvider cannot be built and no security domain "
-                            + "deploys — the May 2026 outage.")
+                            + "webAuthn bean fails, rootProvider cannot be built and no security domain deploys.")
                     .doesNotThrowAnyException();
 
             assertThat(androidRootsOf(new GraviteeWebAuthnOptions()))
@@ -150,8 +127,7 @@ class WebAuthnFactoryResilienceTest {
 
             assertThat(webAuthn)
                     .as("A malformed certificate in a domain's WebAuthn settings must not fail the webAuthn "
-                            + "bean. Any customer can put one there, and the blast radius is every security "
-                            + "domain on the gateway, not just theirs.")
+                            + "bean, which every security domain on the gateway depends on.")
                     .isNotNull();
         }
     }
