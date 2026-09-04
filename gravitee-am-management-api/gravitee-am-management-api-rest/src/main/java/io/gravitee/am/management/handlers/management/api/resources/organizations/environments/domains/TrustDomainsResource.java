@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.spring.ManagementObjectMapperConfiguration;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -53,9 +52,10 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.ext.Providers;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.net.URI;
 
@@ -65,9 +65,8 @@ public class TrustDomainsResource extends AbstractResource {
     @Context
     private ResourceContext resourceContext;
 
-    @Autowired
-    @Qualifier(ManagementObjectMapperConfiguration.MANAGEMENT_API_OBJECT_MAPPER)
-    private ObjectMapper objectMapper;
+    @Context
+    private Providers providers;
 
     @Autowired
     private DomainService domainService;
@@ -146,7 +145,10 @@ public class TrustDomainsResource extends AbstractResource {
                 ? NewTrustDomainV2.class
                 : NewTrustDomain.class;
         try {
-            return objectMapper.treeToValue(body, type);
+            return providers
+                    .getContextResolver(ObjectMapper.class, jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                    .getContext(ObjectMapper.class)
+                    .treeToValue(body, type);
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new jakarta.ws.rs.BadRequestException(e.getOriginalMessage());
         }

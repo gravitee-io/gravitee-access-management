@@ -22,10 +22,13 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.exception.TrustDomainIssuerAlreadyExistsException;
 import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustDomainV2;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -82,11 +85,12 @@ public class TrustDomainResourceTest extends JerseySpringTest {
                         .source(KeyMaterialSource.JWKS_URL)
                         .jwksUrl("https://issuer.example.org/keys")
                         .build())
-                .refreshIntervalSeconds(300)
-                .issuer("https://issuer.example.org")
-                .scopeMappings(Map.of("read", "domain:read"))
-                .userBindingEnabled(true)
-                .userBindingCriteria(List.of(criterion))
+                .domainIdentifier("https://issuer.example.org")
+                .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .scopeMappings(Map.of("read", "domain:read"))
+                        .userBindingEnabled(true)
+                        .userBindingCriteria(List.of(criterion))
+                        .build())
                 .build();
     }
 
@@ -137,36 +141,41 @@ public class TrustDomainResourceTest extends JerseySpringTest {
     public void shouldUpdateTokenExchangeSettings() {
         Domain domain = stubDomain();
         doReturn(Single.just(tokenExchangeTrustDomain()))
-                .when(trustDomainService).update(eq(domain), eq(TRUST_DOMAIN_ID), any(UpdateTrustDomain.class), any());
+                .when(trustDomainService).update(eq(domain), eq(TRUST_DOMAIN_ID), any(UpdateTrustDomainV2.class), any());
 
         final Response response = trustDomainTarget().request()
                 .put(Entity.json(Map.of(
+                        "version", "v2",
                         "keyMaterial", Map.of("source", "JWKS_URL", "jwksUrl", "https://issuer.example.org/v2/keys"),
-                        "issuer", "https://issuer.example.org/v2",
-                        "scopeMappings", Map.of("write", "domain:write"),
-                        "userBindingEnabled", true,
-                        "userBindingCriteria", List.of(Map.of(
-                                "attribute", "username",
-                                "expression", "{#token['sub']}")))));
+                        "domainIdentifier", "https://issuer.example.org/v2",
+                        "tokenExchange", Map.of(
+                                "scopeMappings", Map.of("write", "domain:write"),
+                                "userBindingEnabled", true,
+                                "userBindingCriteria", List.of(Map.of(
+                                        "attribute", "username",
+                                        "expression", "{#token['sub']}"))))));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        ArgumentCaptor<UpdateTrustDomain> captor = ArgumentCaptor.forClass(UpdateTrustDomain.class);
+        ArgumentCaptor<UpdateTrustDomainV2> captor = ArgumentCaptor.forClass(UpdateTrustDomainV2.class);
         verify(trustDomainService).update(eq(domain), eq(TRUST_DOMAIN_ID), captor.capture(), any());
-        UpdateTrustDomain received = captor.getValue();
-        assertEquals("https://issuer.example.org/v2", received.getIssuer());
-        assertEquals(Map.of("write", "domain:write"), received.getScopeMappings());
-        assertTrue(received.getUserBindingEnabled());
-        assertEquals("username", received.getUserBindingCriteria().get(0).getAttribute());
+        UpdateTrustDomainV2 received = captor.getValue();
+        assertEquals("https://issuer.example.org/v2", received.getDomainIdentifier());
+        assertEquals(Map.of("write", "domain:write"), received.getTokenExchange().getScopeMappings());
+        assertTrue(received.getTokenExchange().isUserBindingEnabled());
+        assertEquals("username", received.getTokenExchange().getUserBindingCriteria().get(0).getAttribute());
     }
 
     @Test
     public void shouldRejectUpdateIntroducingDuplicateIssuer() {
         Domain domain = stubDomain();
         doReturn(Single.error(new TrustDomainIssuerAlreadyExistsException("https://issuer.example.org")))
-                .when(trustDomainService).update(eq(domain), eq(TRUST_DOMAIN_ID), any(UpdateTrustDomain.class), any());
+                .when(trustDomainService).update(eq(domain), eq(TRUST_DOMAIN_ID), any(UpdateTrustDomainV2.class), any());
 
         final Response response = trustDomainTarget().request()
-                .put(Entity.json(Map.of("issuer", "https://issuer.example.org")));
+                .put(Entity.json(Map.of(
+                        "version", "v2",
+                        "domainIdentifier", "https://issuer.example.org",
+                        "tokenExchange", Map.of())));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
@@ -198,7 +207,7 @@ public class TrustDomainResourceTest extends JerseySpringTest {
         doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
         final Response response = trustDomainTarget().request()
-                .put(Entity.json(Map.of("issuer", "https://issuer.example.org")));
+                .put(Entity.json(Map.of("description", "amended")));
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
         verify(trustDomainService, never()).update(any(), any(), any(), any());

@@ -25,6 +25,8 @@ import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
@@ -201,7 +203,7 @@ class DomainTrustedIssuerUpgraderTest {
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(DOMAIN_ID)
                 .name("spiffe-label")
-                .spiffeTrustDomain("issuer.example.com")
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("issuer.example.com").build())
                 .build();
 
         List<TrustDomain> migrated = migrate(domain, spiffe);
@@ -389,7 +391,8 @@ class DomainTrustedIssuerUpgraderTest {
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(DOMAIN_ID)
                 .name(name)
-                .issuer("https://other.example.com")
+                .domainIdentifier("https://other.example.com")
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 
@@ -399,7 +402,8 @@ class DomainTrustedIssuerUpgraderTest {
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(DOMAIN_ID)
                 .name("already-migrated")
-                .issuer(issuer)
+                .domainIdentifier(issuer)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 

@@ -32,6 +32,8 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.permissions.Permission;
@@ -174,12 +176,14 @@ public class DomainResourceTest extends JerseySpringTest {
                         .source(KeyMaterialSource.JWKS_URL)
                         .jwksUrl(issuer + "/keys")
                         .build())
-                .issuer(issuer)
+                .domainIdentifier(issuer)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 
     private static TrustDomain spiffeTrustDomain(String id, String name) {
-        return TrustDomain.builder().id(id).name(name).spiffeTrustDomain(name).build();
+        return TrustDomain.builder().id(id).name(name)
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(name).build()).build();
     }
 
     @Test

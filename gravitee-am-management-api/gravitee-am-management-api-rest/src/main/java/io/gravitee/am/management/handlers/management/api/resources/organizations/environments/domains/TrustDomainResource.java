@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.spring.ManagementObjectMapperConfiguration;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.oidc.TrustDomain;
@@ -48,9 +47,10 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.ext.Providers;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 @Tag(name = "trust-domain")
 public class TrustDomainResource extends AbstractResource {
@@ -61,9 +61,8 @@ public class TrustDomainResource extends AbstractResource {
     @Autowired
     private TrustDomainService trustDomainService;
 
-    @Autowired
-    @Qualifier(ManagementObjectMapperConfiguration.MANAGEMENT_API_OBJECT_MAPPER)
-    private ObjectMapper objectMapper;
+    @Context
+    private Providers providers;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -132,7 +131,10 @@ public class TrustDomainResource extends AbstractResource {
                 ? UpdateTrustDomainV2.class
                 : UpdateTrustDomain.class;
         try {
-            return objectMapper.treeToValue(body, type);
+            return providers
+                    .getContextResolver(ObjectMapper.class, jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                    .getContext(ObjectMapper.class)
+                    .treeToValue(body, type);
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new jakarta.ws.rs.BadRequestException(e.getOriginalMessage());
         }

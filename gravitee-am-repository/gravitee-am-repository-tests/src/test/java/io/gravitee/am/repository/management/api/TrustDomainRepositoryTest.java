@@ -20,6 +20,8 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import org.junit.Test;
@@ -48,14 +50,16 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         td.setReferenceId(referenceId);
         td.setReferenceType(DOMAIN);
         td.setName(name);
-        td.setSpiffeTrustDomain(name);
         td.setDescription("desc-" + name);
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://example.com/" + name + "/keys")
+                .refreshIntervalSeconds(120)
                 .build());
-        td.setRefreshIntervalSeconds(120);
-        td.setAllowedAlgorithms(List.of("RS256", "ES256"));
+        td.setSpiffe(SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(name)
+                .allowedAlgorithms(List.of("RS256", "ES256"))
+                .build());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
@@ -178,8 +182,8 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
     public void shouldServeBothUsagesFromOneTrustedDomain() {
         String referenceId = randomUUID().toString();
         TrustDomain both = buildTrustDomain(referenceId, "acme-corp");
-        both.setSpiffeTrustDomain("acme.org");
-        both.setIssuer("https://sso.acme.com");
+        both.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("acme.org").build());
+        both.setDomainIdentifier("https://sso.acme.com");
         var created = repository.create(both).blockingGet();
 
         var bySpiffe = repository.findBySpiffeTrustDomain(DOMAIN, referenceId, "acme.org").test();
@@ -197,7 +201,7 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         repository.create(buildTrustDomain(referenceId, "example.org")).blockingGet();
 
         TrustDomain duplicate = buildTrustDomain(referenceId, "other-label");
-        duplicate.setSpiffeTrustDomain("example.org");
+        duplicate.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("example.org").build());
 
         var observer = repository.create(duplicate).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -269,8 +273,8 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         TrustDomain toUpdate = new TrustDomain(created);
         toUpdate.setDescription("updated-description");
         toUpdate.getKeyMaterial().setJwksUrl("https://example.com/v2/keys");
-        toUpdate.setRefreshIntervalSeconds(600);
-        toUpdate.setAllowedAlgorithms(List.of("RS512"));
+        toUpdate.getKeyMaterial().setRefreshIntervalSeconds(600);
+        toUpdate.getSpiffe().setAllowedAlgorithms(List.of("RS512"));
         toUpdate.setUpdatedAt(new Date());
 
         var observer = repository.update(toUpdate).test();
@@ -300,15 +304,16 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
 
     private TrustDomain buildTokenExchangeTrustDomain(String referenceId, String issuer) {
         TrustDomain td = buildTrustDomain(referenceId, "issuer.example");
-        td.setSpiffeTrustDomain(null);
-        td.setAllowedAlgorithms(null);
+        td.setSpiffe(null);
         UserBindingCriterion criterion = new UserBindingCriterion();
         criterion.setAttribute("emails.value");
         criterion.setExpression("{#token['email']}");
-        td.setIssuer(issuer);
-        td.setScopeMappings(Map.of("read", "domain:read"));
-        td.setUserBindingEnabled(true);
-        td.setUserBindingCriteria(List.of(criterion));
+        td.setDomainIdentifier(issuer);
+        td.setTokenExchange(TokenExchangeTrustSettings.builder()
+                .scopeMappings(Map.of("read", "domain:read"))
+                .userBindingEnabled(true)
+                .userBindingCriteria(List.of(criterion))
+                .build());
         return td;
     }
 
@@ -387,7 +392,7 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         var created = repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
 
         TrustDomain toUpdate = new TrustDomain(created);
-        toUpdate.setIssuer("https://issuer.example/realm-v2");
+        toUpdate.setDomainIdentifier("https://issuer.example/realm-v2");
         toUpdate.setUpdatedAt(new Date());
         repository.update(toUpdate).blockingGet();
 

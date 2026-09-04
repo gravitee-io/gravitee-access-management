@@ -23,6 +23,8 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainM
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
@@ -88,14 +90,16 @@ class TrustDomainManagerImplTest {
     }
 
     private static TrustDomain spiffe(String id, String name) {
-        return TrustDomain.builder().id(id).name(name).spiffeTrustDomain(name).build();
+        return TrustDomain.builder().id(id).name(name)
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(name).build()).build();
     }
 
     private static TrustDomain tokenExchange(String id, String name, String issuer) {
         return TrustDomain.builder()
                 .id(id)
                 .name(name)
-                .issuer(issuer)
+                .domainIdentifier(issuer)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 
@@ -126,8 +130,9 @@ class TrustDomainManagerImplTest {
         TrustDomain both = TrustDomain.builder()
                 .id("td-3")
                 .name("acme-corp")
-                .spiffeTrustDomain("acme.org")
-                .issuer("https://sso.acme.com")
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("acme.org").build())
+                .domainIdentifier("https://sso.acme.com")
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
         preload(both);
 

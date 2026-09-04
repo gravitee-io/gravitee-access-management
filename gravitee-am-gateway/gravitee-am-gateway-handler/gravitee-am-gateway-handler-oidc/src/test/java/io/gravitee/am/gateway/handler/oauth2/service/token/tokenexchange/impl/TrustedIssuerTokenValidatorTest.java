@@ -29,6 +29,7 @@ import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.Client;
@@ -303,7 +304,7 @@ public class TrustedIssuerTokenValidatorTest {
     @Test
     public void testTrustedIssuer_scopeMapping() throws Exception {
         TrustDomain ti = createTrustedDomain();
-        ti.setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
+        ti.getTokenExchange().setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -500,7 +501,8 @@ public class TrustedIssuerTokenValidatorTest {
                         .source(KeyMaterialSource.PEM)
                         .certificate("some-pem")
                         .build())
-                .issuer(EXTERNAL_ISSUER)
+                .domainIdentifier(EXTERNAL_ISSUER)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 

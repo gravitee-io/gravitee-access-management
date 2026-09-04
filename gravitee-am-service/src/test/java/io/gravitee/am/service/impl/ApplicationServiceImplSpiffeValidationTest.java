@@ -23,6 +23,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.repository.management.api.TrustDomainRepository;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
@@ -53,7 +54,8 @@ class ApplicationServiceImplSpiffeValidationTest {
         service = new ApplicationServiceImpl();
         ReflectionTestUtils.setField(service, "trustDomainRepository", trustDomainRepository);
         lenient().when(trustDomainRepository.findBySpiffeTrustDomain(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(TRUST_DOMAIN)))
-                .thenReturn(Maybe.just(TrustDomain.builder().name(TRUST_DOMAIN).spiffeTrustDomain(TRUST_DOMAIN).build()));
+                .thenReturn(Maybe.just(TrustDomain.builder().name(TRUST_DOMAIN)
+                        .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(TRUST_DOMAIN).build()).build()));
     }
 
     @Test
