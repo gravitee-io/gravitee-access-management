@@ -17,6 +17,8 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomain;
@@ -327,6 +329,74 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         observer.assertValue(found -> found.getUserBindingCriteria().size() == 1);
         observer.assertValue(found -> "emails.value".equals(found.getUserBindingCriteria().get(0).getAttribute()));
         observer.assertValue(found -> "{#token['email']}".equals(found.getUserBindingCriteria().get(0).getExpression()));
+    }
+
+    @Test
+    public void shouldRoundTripCrossAppAccessSettings() {
+        String referenceId = randomUUID().toString();
+        TrustDomain td = buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm");
+        td.setCrossAppAccess(CrossAppAccessSettings.builder()
+                .enabled(true)
+                .audience("https://auth.acme.com")
+                .resourceServers(List.of(CrossAppAccessResourceServer.builder()
+                        .id("rs-1")
+                        .name("Calendar")
+                        .resource("https://calendar.acme.com")
+                        .build()))
+                .audSubMapping("{#user.email}")
+                .scopeMappings(Map.of("domain:read", "calendar.read"))
+                .build());
+        var created = repository.create(td).blockingGet();
+
+        var observer = repository.findById(created.getId()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(found -> found.getCrossAppAccess().isEnabled());
+        observer.assertValue(found -> found.getCrossAppAccess().getResourceServers().size() == 1);
+        observer.assertValue(found -> "rs-1".equals(found.getCrossAppAccess().getResourceServers().get(0).getId()));
+        observer.assertValue(found -> "Calendar".equals(found.getCrossAppAccess().getResourceServers().get(0).getName()));
+        observer.assertValue(found -> "https://auth.acme.com".equals(found.getCrossAppAccess().getAudience()));
+        observer.assertValue(found -> "https://calendar.acme.com".equals(found.getCrossAppAccess().getResourceServers().get(0).getResource()));
+        observer.assertValue(found -> "{#user.email}".equals(found.getCrossAppAccess().getAudSubMapping()));
+        observer.assertValue(found -> Map.of("domain:read", "calendar.read").equals(found.getCrossAppAccess().getScopeMappings()));
+    }
+
+    @Test
+    public void shouldNotReadACrossAppAccessOnlyTrustedDomainBackAsSpiffe() {
+        String referenceId = randomUUID().toString();
+        TrustDomain td = buildTrustDomain(referenceId, "acme-corp");
+        td.setSpiffeTrustDomain(null);
+        td.setIssuer(null);
+        td.setKeyMaterial(null);
+        td.setCrossAppAccess(CrossAppAccessSettings.builder()
+                .enabled(true)
+                .audience("https://auth.acme.com")
+                .resourceServers(List.of(CrossAppAccessResourceServer.builder()
+                        .id("rs-1")
+                        .name("Calendar")
+                        .resource("https://calendar.acme.com")
+                        .build()))
+                .build());
+        var created = repository.create(td).blockingGet();
+
+        var observer = repository.findById(created.getId()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(found -> found.getSpiffeTrustDomain() == null);
+        observer.assertValue(found -> found.getIssuer() == null);
+        observer.assertValue(found -> found.trustsCrossAppAccess());
+    }
+
+    @Test
+    public void shouldReadBackAnExistingTrustedDomainWithoutACrossAppAccessBlock() {
+        String referenceId = randomUUID().toString();
+        var created = repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
+
+        var observer = repository.findById(created.getId()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(found -> found.getCrossAppAccess() == null);
+        observer.assertValue(found -> !found.trustsCrossAppAccess());
     }
 
     @Test

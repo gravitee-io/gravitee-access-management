@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,43 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: block;
-}
+package io.gravitee.am.service.exception;
 
-.trust-domain-field {
-  width: 100%;
-  margin-top: 8px;
-}
+import io.gravitee.common.http.HttpStatusCode;
 
-.staging-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
+public class TrustDomainAudienceAlreadyExistsException extends AbstractManagementException {
 
-.staging-field {
-  flex: 1;
-}
+    private final String audience;
 
-.section-hint {
-  display: block;
-  margin-bottom: 12px;
-  font-size: 75%;
-}
+    public TrustDomainAudienceAlreadyExistsException(String audience) {
+        this.audience = audience;
+    }
 
-.usage-children {
-  margin: 4px 0 4px 24px;
-}
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
 
-.sub-section-title {
-  margin-top: 24px;
-  margin-bottom: 4px;
-}
-
-.validation-error {
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-  color: var(--mat-sys-error, #b3261e);
+    @Override
+    public String getMessage() {
+        return "A trusted domain with audience [" + audience + "] already exists for this domain.";
+    }
 }
