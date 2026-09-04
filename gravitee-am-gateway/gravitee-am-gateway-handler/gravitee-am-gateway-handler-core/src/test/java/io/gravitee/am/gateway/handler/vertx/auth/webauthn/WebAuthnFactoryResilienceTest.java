@@ -21,6 +21,8 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,10 +50,13 @@ import static org.mockito.Mockito.when;
  * security domain — including on installations that had never enabled WebAuthn. Six customers lost
  * their gateway in six days in May 2026.
  *
- * <p>The fix swallows the exception at two points, and neither has a test:
+ * <p>The fix swallows the exception at two points, and neither had a test:
  * {@code pushAdditionalRootCertificate} for the roots compiled into the product, and
  * {@code putRootCertificate} for the ones a domain supplies through its WebAuthn settings. The
  * second is reachable by any customer with a malformed certificate in their configuration.
+ *
+ * <p>The two nested groups separate the levels: loading certificates into the options object, and
+ * building the {@code webAuthn} bean through the factory that failed in the incident.
  *
  * <p>AM-7617 covers the other half of this P1 — noticing that a certificate is close to expiry
  * before it lapses.
@@ -82,58 +87,72 @@ class WebAuthnFactoryResilienceTest {
         when(vertx.getDelegate()).thenReturn(Vertx.vertx().getDelegate());
     }
 
-    @Test
-    void shouldBuildOptionsWhenAnEmbeddedCertificateCannotBeLoaded() {
-        assertThatCode(GraviteeWebAuthnOptions::new)
-                .as("Constructing the options must not propagate a certificate failure. If it does, the "
-                        + "webAuthn bean fails, rootProvider cannot be built and no security domain "
-                        + "deploys — the May 2026 outage.")
-                .doesNotThrowAnyException();
-
-        assertThat(new GraviteeWebAuthnOptions().getAdditionalRootCertificate(ANDROID_KEY))
-                .as("Degrading is acceptable, emptying is not: at least one attestation root must survive "
-                        + "or no Android attestation can be validated at all.")
-                .isNotEmpty();
+    private static List<X509Certificate> androidRootsOf(GraviteeWebAuthnOptions options) {
+        return options.getAdditionalRootCertificate(ANDROID_KEY);
     }
 
-    @Test
-    void shouldTolerateAnAdditionalRootCertificateThatCannotBeLoaded() {
-        GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions();
-        List<X509Certificate> before = List.copyOf(options.getAdditionalRootCertificate(ANDROID_KEY));
+    @Nested
+    @DisplayName("Loading certificates into GraviteeWebAuthnOptions")
+    class LoadingCertificates {
 
-        assertThatCode(() -> options.pushAdditionalRootCertificate(ANDROID_KEY, UNLOADABLE_CERTIFICATE))
-                .as("An unloadable additional root must be skipped, not propagated.")
-                .doesNotThrowAnyException();
+        @Test
+        void shouldBuildOptionsWhenAnEmbeddedCertificateCannotBeLoaded() {
+            assertThatCode(GraviteeWebAuthnOptions::new)
+                    .as("Constructing the options must not propagate a certificate failure. If it does, the "
+                            + "webAuthn bean fails, rootProvider cannot be built and no security domain "
+                            + "deploys — the May 2026 outage.")
+                    .doesNotThrowAnyException();
 
-        assertThat(options.getAdditionalRootCertificate(ANDROID_KEY))
-                .as("The certificates that did load must be left intact when a later one is rejected.")
-                .containsExactlyElementsOf(before);
+            assertThat(androidRootsOf(new GraviteeWebAuthnOptions()))
+                    .as("Degrading is acceptable, emptying is not: at least one attestation root must survive "
+                            + "or no Android attestation can be validated at all.")
+                    .isNotEmpty();
+        }
+
+        @Test
+        void shouldTolerateAnAdditionalRootCertificateThatCannotBeLoaded() {
+            GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions();
+            List<X509Certificate> before = List.copyOf(androidRootsOf(options));
+
+            assertThatCode(() -> options.pushAdditionalRootCertificate(ANDROID_KEY, UNLOADABLE_CERTIFICATE))
+                    .as("An unloadable additional root must be skipped, not propagated.")
+                    .doesNotThrowAnyException();
+
+            assertThat(androidRootsOf(options))
+                    .as("The certificates that did load must be left intact when a later one is rejected.")
+                    .containsExactlyElementsOf(before);
+        }
+
+        @Test
+        void shouldKeepEmbeddedRootsWhenTheDomainSuppliesACertificateThatCannotBeLoaded() {
+            GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions();
+            List<X509Certificate> before = List.copyOf(androidRootsOf(options));
+
+            options.putRootCertificate("customer-root", UNLOADABLE_CERTIFICATE);
+
+            assertThat(androidRootsOf(options))
+                    .as("One bad domain-supplied certificate must not cost the roots shipped with the product.")
+                    .containsExactlyElementsOf(before);
+        }
     }
 
-    @Test
-    void shouldBuildWebAuthnWhenTheDomainSuppliesACertificateThatCannotBeLoaded() {
-        WebAuthnSettings settings = new WebAuthnSettings();
-        settings.setCertificates(Map.of("customer-root", UNLOADABLE_CERTIFICATE));
-        when(domain.getWebAuthnSettings()).thenReturn(settings);
+    @Nested
+    @DisplayName("Building the webAuthn bean through WebAuthnFactory")
+    class BuildingTheBean {
 
-        WebAuthn webAuthn = webAuthnFactory.getObject();
+        @Test
+        void shouldBuildWebAuthnWhenTheDomainSuppliesACertificateThatCannotBeLoaded() {
+            WebAuthnSettings settings = new WebAuthnSettings();
+            settings.setCertificates(Map.of("customer-root", UNLOADABLE_CERTIFICATE));
+            when(domain.getWebAuthnSettings()).thenReturn(settings);
 
-        assertThat(webAuthn)
-                .as("A malformed certificate in a domain's WebAuthn settings must not fail the webAuthn "
-                        + "bean. Any customer can put one there, and the blast radius is every security "
-                        + "domain on the gateway, not just theirs.")
-                .isNotNull();
-    }
+            WebAuthn webAuthn = webAuthnFactory.getObject();
 
-    @Test
-    void shouldKeepEmbeddedRootsWhenTheDomainSuppliesACertificateThatCannotBeLoaded() {
-        GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions();
-        List<X509Certificate> before = List.copyOf(options.getAdditionalRootCertificate(ANDROID_KEY));
-
-        options.putRootCertificate("customer-root", UNLOADABLE_CERTIFICATE);
-
-        assertThat(options.getAdditionalRootCertificate(ANDROID_KEY))
-                .as("One bad domain-supplied certificate must not cost the roots shipped with the product.")
-                .containsExactlyElementsOf(before);
+            assertThat(webAuthn)
+                    .as("A malformed certificate in a domain's WebAuthn settings must not fail the webAuthn "
+                            + "bean. Any customer can put one there, and the blast radius is every security "
+                            + "domain on the gateway, not just theirs.")
+                    .isNotNull();
+        }
     }
 }
