@@ -19,6 +19,8 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.Attribute;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import org.junit.Test;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -159,5 +162,116 @@ public class UserMapperTest {
         // Both should be removed from additionalInformation
         assertFalse(user.getAdditionalInformation().containsKey("preRegistration"));
         assertFalse(user.getAdditionalInformation().containsKey("client"));
+    }
+
+    @Test
+    public void shouldConvert_emailWithoutValue_orderedBeforeThePrimaryEmail() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setEmail("real@example.com");
+        user.setEmails(List.of(modelAttribute(null, "home", null), modelAttribute("real@example.com", null, true)));
+
+        User scimUser = UserMapper.convert(user, "/", true);
+
+        assertEquals(1, scimUser.getEmails().size());
+        assertEquals("real@example.com", scimUser.getEmails().get(0).getValue());
+    }
+
+    @Test
+    public void shouldConvert_emailWithoutValue_asTheOnlyEntry() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setEmails(List.of(modelAttribute(null, "home", null)));
+
+        User scimUser = UserMapper.convert(user, "/", false);
+
+        assertTrue(scimUser.getEmails().isEmpty());
+    }
+
+    @Test
+    public void shouldConvert_emailWithoutValue_replacedByThePrimaryEmail() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setEmail("real@example.com");
+        user.setEmails(List.of(modelAttribute(null, "home", null)));
+
+        User scimUser = UserMapper.convert(user, "/", true);
+
+        assertEquals(1, scimUser.getEmails().size());
+        assertEquals("real@example.com", scimUser.getEmails().get(0).getValue());
+        assertTrue(scimUser.getEmails().get(0).isPrimary());
+    }
+
+    @Test
+    public void shouldConvert_multiValuedAttributesWithoutValue() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setPhoneNumbers(List.of(modelAttribute(null, "mobile", null), modelAttribute("+33600000000", "mobile", true)));
+        user.setIms(List.of(modelAttribute("", "skype", null)));
+        user.setPhotos(List.of(modelAttribute(null, "photo", null)));
+
+        User scimUser = UserMapper.convert(user, "/", false);
+
+        assertEquals(1, scimUser.getPhoneNumbers().size());
+        assertEquals("+33600000000", scimUser.getPhoneNumbers().get(0).getValue());
+        assertTrue(scimUser.getIms().isEmpty());
+        assertTrue(scimUser.getPhotos().isEmpty());
+    }
+
+    @Test
+    public void shouldConvert_keepEveryWellFormedEmail() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setEmail("primary@example.com");
+        user.setEmails(List.of(modelAttribute("home@example.com", "home", false), modelAttribute("primary@example.com", "work", true)));
+
+        User scimUser = UserMapper.convert(user, "/", false);
+
+        assertEquals(List.of("home@example.com", "primary@example.com"),
+                scimUser.getEmails().stream().map(Attribute::getValue).collect(Collectors.toList()));
+    }
+
+    @Test(expected = InvalidValueException.class)
+    public void shouldRejectScimUser_whenAnEmailHasNoValue() {
+        User scimUser = new User();
+        scimUser.setUserName("testuser");
+        scimUser.setEmails(List.of(new Attribute(null, "home"), new Attribute("real@example.com", null, true)));
+
+        UserMapper.convert(scimUser);
+    }
+
+    @Test(expected = InvalidValueException.class)
+    public void shouldRejectScimUser_whenAnEmailValueIsBlank() {
+        User scimUser = new User();
+        scimUser.setUserName("testuser");
+        scimUser.setEmails(List.of(new Attribute(" ", "home")));
+
+        UserMapper.convert(scimUser);
+    }
+
+    @Test(expected = InvalidValueException.class)
+    public void shouldRejectScimUser_whenAPhoneNumberHasNoValue() {
+        User scimUser = new User();
+        scimUser.setUserName("testuser");
+        scimUser.setPhoneNumbers(List.of(new Attribute(null, "mobile")));
+
+        UserMapper.convert(scimUser);
+    }
+
+    @Test
+    public void shouldAcceptScimUser_whenEveryMultiValuedAttributeHasAValue() {
+        User scimUser = new User();
+        scimUser.setUserName("testuser");
+        scimUser.setEmails(List.of(new Attribute("home@example.com", "home"), new Attribute("real@example.com", "work", true)));
+        scimUser.setPhoneNumbers(List.of(new Attribute("+33600000000", "mobile")));
+
+        io.gravitee.am.model.User user = UserMapper.convert(scimUser);
+
+        assertEquals("real@example.com", user.getEmail());
+        assertEquals(2, user.getEmails().size());
+        assertEquals(1, user.getPhoneNumbers().size());
+    }
+
+    private static io.gravitee.am.model.scim.Attribute modelAttribute(String value, String type, Boolean primary) {
+        io.gravitee.am.model.scim.Attribute attribute = new io.gravitee.am.model.scim.Attribute();
+        attribute.setValue(value);
+        attribute.setType(type);
+        attribute.setPrimary(primary);
+        return attribute;
     }
 }
