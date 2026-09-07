@@ -1537,6 +1537,7 @@ public class TokenExchangeServiceImplTest {
         domainUser.setAdditionalInformation(new HashMap<>());
 
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(domainUser)).thenReturn(Single.just(domainUser));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1551,6 +1552,7 @@ public class TokenExchangeServiceImplTest {
         assertThat(result.user().getId()).isEqualTo("domain-user-id");
         assertThat(result.user().getUsername()).isEqualTo("john.doe");
         verify(userGatewayService).findByCriteria(any());
+        verify(userGatewayService).enhance(domainUser);
     }
 
     @Test
@@ -1657,6 +1659,7 @@ public class TokenExchangeServiceImplTest {
         domainUser.setAdditionalInformation(new HashMap<>());
 
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(domainUser)).thenReturn(Single.just(domainUser));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -1686,6 +1689,7 @@ public class TokenExchangeServiceImplTest {
         domainUser.setAdditionalInformation(new HashMap<>());
 
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(domainUser)).thenReturn(Single.just(domainUser));
 
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
