@@ -77,9 +77,9 @@
     </modules>
 
     <properties>
-        <bouncycastle-extension.version>1.81</bouncycastle-extension.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>9.0.5</gravitee-bom.version>
+        <gravitee-bom.version>9.0.6</gravitee-bom.version>
         <gravitee-common.version>5.0.0</gravitee-common.version>
         <gravitee-plugin.version>5.0.0</gravitee-plugin.version>
         <gravitee-node.version>9.6.2</gravitee-node.version>
@@ -655,6 +655,16 @@
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
                 <version>${awaitility.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
