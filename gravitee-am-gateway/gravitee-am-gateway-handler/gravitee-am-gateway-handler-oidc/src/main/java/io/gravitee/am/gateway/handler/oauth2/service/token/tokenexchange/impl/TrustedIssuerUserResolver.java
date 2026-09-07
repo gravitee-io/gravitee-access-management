@@ -71,7 +71,7 @@ public class TrustedIssuerUserResolver implements TokenExchangeUserResolver {
                             if (users.size() > 1) {
                                 return Maybe.error(new InvalidRequestException("Multiple domain users match token binding"));
                             }
-                            return Maybe.just(users.getFirst());
+                            return userGatewayService.enhance(users.getFirst()).toMaybe();
                         }));
     }
 
