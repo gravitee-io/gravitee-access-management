@@ -29,6 +29,7 @@
     </div>
     <div class="section">
         <form class="form" role="form" id="register" method="post" th:action="${action}">
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" id="username" name="username" th:value="${user.username}"/>
             <div id="webauthn-error" style="display: none;" class="item error-text">
                 <span>
@@ -46,7 +47,8 @@
         <a th:href="${skipAction}"><span th:text="#{webauthn.register.skip}"/><span class="icons">arrow_forward</span></a>
     </div>
 </div>
+<script th:if="${webauthnClientErrorReportingEnabled}" th:src="@{../assets/js/webauthn-telemetry-v4.js}"></script>
 <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
-<script th:src="@{../assets/js/webauthn-register-v3.js}"></script>
+<script th:src="@{../assets/js/webauthn-register-v4.js}"></script>
 </body>
 </html>
