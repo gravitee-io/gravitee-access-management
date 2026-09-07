@@ -23,3 +23,18 @@ export const createResource = (domainId, accessToken, body) =>
     domain: domainId,
     newServiceResource: body,
   });
+
+export const getResource = (domainId, accessToken, resourceId) =>
+  getResourceApi(accessToken).getResource({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    resource: resourceId,
+  });
+
+export const listResources = (domainId, accessToken) =>
+  getResourceApi(accessToken).listResources({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+  });
