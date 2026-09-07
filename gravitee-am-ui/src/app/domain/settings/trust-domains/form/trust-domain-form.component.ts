@@ -269,7 +269,7 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
       issuer: this.issuerEnabled ? (this.model.issuer ?? '').trim() : undefined,
       keyMaterial: this.model.keyMaterial,
       refreshIntervalSeconds: this.model.refreshIntervalSeconds,
-      allowedAlgorithms: this.model.allowedAlgorithms,
+      allowedAlgorithms: this.spiffeEnabled ? this.model.allowedAlgorithms : [],
       scopeMappings: this.issuerEnabled && Object.keys(scopeMappings).length ? scopeMappings : undefined,
       userBindingEnabled,
       userBindingCriteria: userBindingEnabled && this.userBindingRows.length ? this.userBindingRows : undefined,

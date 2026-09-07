@@ -68,6 +68,7 @@ tags:
 - name: sharding-tags
 - name: theme
 - name: trust-domain
+- name: trusted-domain
 - name: user
 - name: user notifications
 paths:
@@ -8360,6 +8361,7 @@ paths:
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trust-domains:
     get:
+      deprecated: true
       description: "User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the\
         \ specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified\
         \ environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization"
@@ -8396,9 +8398,11 @@ paths:
       - trust-domain
       - domain
     post:
+      deprecated: true
       description: "User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the\
         \ specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified\
-        \ environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization"
+        \ environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization.\
+        \ Deprecated: use POST /trusted-domains instead."
       operationId: createTrustDomain
       parameters:
       - in: path
@@ -8439,6 +8443,7 @@ paths:
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trust-domains/{trustDomainId}:
     delete:
+      deprecated: true
       description: "User must have the DOMAIN_TRUST_DOMAIN[DELETE] permission on the\
         \ specified domain or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified\
         \ environment or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified organization"
@@ -8474,6 +8479,7 @@ paths:
       - trust-domain
       - domain
     get:
+      deprecated: true
       description: "User must have the DOMAIN_TRUST_DOMAIN[READ] permission on the\
         \ specified domain or DOMAIN_TRUST_DOMAIN[READ] permission on the specified\
         \ environment or DOMAIN_TRUST_DOMAIN[READ] permission on the specified organization"
@@ -8513,9 +8519,11 @@ paths:
       - trust-domain
       - domain
     put:
+      deprecated: true
       description: "User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the\
         \ specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified\
-        \ environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization"
+        \ environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization.\
+        \ Deprecated: use PUT /trusted-domains/{trustedDomainId} instead."
       operationId: updateTrustDomain
       parameters:
       - in: path
@@ -8558,6 +8566,207 @@ paths:
       summary: Update a trust domain
       tags:
       - trust-domain
+      - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains:
+    get:
+      description: "User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization"
+      operationId: listTrustedDomains
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrustedDomain"
+          description: List of trusted domains
+        "500":
+          description: Internal server error
+      summary: List trusted domains registered against the security domain
+      tags:
+      - trusted-domain
+      - domain
+    post:
+      description: "User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization"
+      operationId: createTrustedDomain
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTrustedDomain"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustedDomain"
+          description: Trusted domain successfully created
+        "400":
+          description: Invalid trusted domain configuration
+        "500":
+          description: Internal server error
+      summary: Register a trusted domain on the security domain
+      tags:
+      - trusted-domain
+      - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/{trustedDomainId}:
+    delete:
+      description: "User must have the DOMAIN_TRUST_DOMAIN[DELETE] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified organization"
+      operationId: deleteTrustedDomain
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: trustedDomainId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Trusted domain successfully deleted
+        "500":
+          description: Internal server error
+      summary: Delete a trusted domain
+      tags:
+      - trusted-domain
+      - domain
+    get:
+      description: "User must have the DOMAIN_TRUST_DOMAIN[READ] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[READ] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[READ] permission on the specified organization"
+      operationId: getTrustedDomain
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: trustedDomainId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustedDomain"
+          description: Trusted domain
+        "404":
+          description: Trusted domain not found
+      summary: Get a trusted domain
+      tags:
+      - trusted-domain
+      - domain
+    put:
+      description: "User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the\
+        \ specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified\
+        \ environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization"
+      operationId: updateTrustedDomain
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: trustedDomainId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTrustedDomain"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustedDomain"
+          description: Trusted domain successfully updated
+        "404":
+          description: Trusted domain not found
+        "500":
+          description: Internal server error
+      summary: Update a trusted domain
+      tags:
+      - trusted-domain
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users:
     get:
@@ -14900,6 +15109,7 @@ components:
           type: string
     JWKSet:
       type: object
+      description: Inline JWK set. Required when source is JWK_SET.
       properties:
         keys:
           type: array
@@ -15838,8 +16048,12 @@ components:
       properties:
         allowedAlgorithms:
           type: array
+          deprecated: true
+          description: Use spiffe.allowedAlgorithms instead.
           items:
             type: string
+            deprecated: true
+            description: Use spiffe.allowedAlgorithms instead.
         bundleSource:
           type: string
           deprecated: true
@@ -15849,16 +16063,10 @@ components:
           - STATIC_JWKS
         description:
           type: string
-        issuer:
-          type: string
-          maxLength: 512
-          minLength: 0
         jwksUrl:
           type: string
           deprecated: true
           description: Use keyMaterial.jwksUrl instead.
-        keyMaterial:
-          $ref: "#/components/schemas/TrustDomainKeyMaterial"
         name:
           type: string
           maxLength: 255
@@ -15866,22 +16074,35 @@ components:
         refreshIntervalSeconds:
           type: integer
           format: int32
-        scopeMappings:
-          type: object
-          additionalProperties:
-            type: string
-        spiffeTrustDomain:
+          deprecated: true
+          description: Use keyMaterial.refreshIntervalSeconds instead.
+    NewTrustedDomain:
+      type: object
+      properties:
+        description:
           type: string
-          description: SPIFFE trust domain matched against the "sub" of a JWT-SVID.
-            Defaults to the name when no matcher is supplied.
+        domainIdentifier:
+          type: string
+          description: "Issuer identifier of this authority's authorization server.\
+            \ Matched against the \"iss\" of an external JWT inbound, and carried\
+            \ as the \"aud\" of an ID-JAG outbound. Required when tokenExchange is\
+            \ present."
+          example: https://sso.acme.com
+          maxLength: 512
+          minLength: 0
+        keyMaterial:
+          $ref: "#/components/schemas/TrustDomainKeyMaterial"
+        name:
+          type: string
+          description: Label the trusted domain is known by. Unique within the security
+            domain.
+          example: acme-corp
           maxLength: 255
           minLength: 0
-        userBindingCriteria:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserBindingCriterion"
-        userBindingEnabled:
-          type: boolean
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
     NewUser:
       type: object
       properties:
@@ -18050,6 +18271,25 @@ components:
           format: int32
           deprecated: true
           description: "Deprecated: moved to keyRetrievalSettings.maxResponseSizeKb."
+    SpiffeTrustSettings:
+      type: object
+      description: Accepts JWT-SVIDs from this authority as client assertions.
+      properties:
+        allowedAlgorithms:
+          type: array
+          description: Signature algorithms accepted for JWT-SVID validation. Defaults
+            to workloadIdentitySettings.defaultAllowedAlgorithms when absent.
+          items:
+            type: string
+            description: Signature algorithms accepted for JWT-SVID validation. Defaults
+              to workloadIdentitySettings.defaultAllowedAlgorithms when absent.
+        spiffeTrustDomain:
+          type: string
+          description: "SPIFFE trust domain matched against the \"sub\" of a JWT-SVID,\
+            \ without the \"spiffe://\" scheme. Lowercased on write. Unique within\
+            \ the security domain."
+          example: acme.org
+      title: SPIFFE trust settings
     StatusEntity:
       type: object
       properties:
@@ -18282,13 +18522,45 @@ components:
           items:
             $ref: "#/components/schemas/TrustedIssuer"
       title: Token exchange settings
+    TokenExchangeTrustSettings:
+      type: object
+      description: "Accepts this authority's JWTs as subject or actor tokens during\
+        \ an RFC 8693 exchange, matched by domainIdentifier."
+      properties:
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+            description: One-to-one mapping from external scope to domain scope. Unmapped
+              issuer scopes are dropped (fail-closed).
+          description: One-to-one mapping from external scope to domain scope. Unmapped
+            issuer scopes are dropped (fail-closed).
+        userBindingCriteria:
+          type: array
+          description: Criteria used to locate a domain user when user binding is
+            enabled. All criteria are combined with AND.
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+          default: false
+          description: "Whether the external JWT subject is resolved to a single domain\
+            \ user using the user binding criteria. When false, a virtual user is\
+            \ built from the token claims only."
+      title: Token exchange trust settings
     TrustDomain:
       type: object
+      deprecated: true
+      description: "Deprecated: use the /trusted-domains endpoint instead."
       properties:
         allowedAlgorithms:
           type: array
+          deprecated: true
+          description: Use spiffe.allowedAlgorithms instead.
           items:
             type: string
+            deprecated: true
+            description: Use spiffe.allowedAlgorithms instead.
         bundleSource:
           type: string
           deprecated: true
@@ -18303,17 +18575,114 @@ components:
           description: Epoch timestamp in milliseconds.
         description:
           type: string
+        domainIdentifier:
+          type: string
         id:
           type: string
         issuer:
           type: string
-          description: Expected value of the "iss" claim in an external JWT. Required
-            to accept tokens during an RFC 8693 exchange.
-          example: https://sso.acme.com
+          deprecated: true
+          description: Use domainIdentifier instead.
         jwksUrl:
           type: string
           deprecated: true
           description: Use keyMaterial.jwksUrl instead.
+        keyMaterial:
+          $ref: "#/components/schemas/TrustDomainKeyMaterial"
+        name:
+          type: string
+        referenceId:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
+          deprecated: true
+          description: Use keyMaterial.refreshIntervalSeconds instead.
+        scopeMappings:
+          type: object
+          additionalProperties:
+            type: string
+            deprecated: true
+            description: Use tokenExchange.scopeMappings instead.
+          deprecated: true
+          description: Use tokenExchange.scopeMappings instead.
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
+        spiffeTrustDomain:
+          type: string
+          deprecated: true
+          description: Use spiffe.spiffeTrustDomain instead.
+        staticJwks:
+          $ref: "#/components/schemas/JWKSet"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
+        updatedAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        userBindingCriteria:
+          type: array
+          deprecated: true
+          description: Use tokenExchange.userBindingCriteria instead.
+          items:
+            $ref: "#/components/schemas/UserBindingCriterion"
+        userBindingEnabled:
+          type: boolean
+          deprecated: true
+          description: Use tokenExchange.userBindingEnabled instead.
+      title: Trust domain
+    TrustDomainKeyMaterial:
+      type: object
+      description: Where the trusted domain's signing keys come from. Exactly one
+        source applies.
+      properties:
+        certificate:
+          type: string
+          description: PEM-encoded X.509 certificate. Required when source is PEM.
+        jwkSet:
+          $ref: "#/components/schemas/JWKSet"
+        jwksUrl:
+          type: string
+          description: JWKS endpoint URL. Required when source is JWKS_URL.
+          example: https://issuer.example.com/.well-known/jwks.json
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
+          description: "How often the JWKS endpoint is re-polled, clamped by keyRetrievalSettings.cacheTtlSeconds.\
+            \ Applies only when source is JWKS_URL."
+        source:
+          type: string
+          description: Which of the three key sources this trusted domain uses.
+          enum:
+          - JWKS_URL
+          - JWK_SET
+          - PEM
+      title: Trusted domain key material
+    TrustedDomain:
+      type: object
+      properties:
+        createdAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        description:
+          type: string
+        domainIdentifier:
+          type: string
+          description: Issuer identifier of this authority's authorization server.
+            Matched against the "iss" of an external JWT during an RFC 8693 exchange.
+          example: https://sso.acme.com
+        id:
+          type: string
         keyMaterial:
           $ref: "#/components/schemas/TrustDomainKeyMaterial"
         name:
@@ -18332,64 +18701,14 @@ components:
           - ORGANIZATION
           - ENVIRONMENT
           - PROTECTED_RESOURCE
-        refreshIntervalSeconds:
-          type: integer
-          format: int32
-        scopeMappings:
-          type: object
-          additionalProperties:
-            type: string
-            description: One-to-one mapping from external scope to domain scope. Unmapped
-              issuer scopes are dropped (fail-closed). Applies to tokens matched by
-              "issuer".
-          description: One-to-one mapping from external scope to domain scope. Unmapped
-            issuer scopes are dropped (fail-closed). Applies to tokens matched by
-            "issuer".
-        spiffeTrustDomain:
-          type: string
-          description: "SPIFFE trust domain matched against the \"sub\" of a JWT-SVID,\
-            \ without the \"spiffe://\" scheme. Required to accept SPIFFE client assertions."
-          example: acme.org
-        staticJwks:
-          $ref: "#/components/schemas/JWKSet"
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
         updatedAt:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
-        userBindingCriteria:
-          type: array
-          description: Criteria used to locate a domain user when user binding is
-            enabled. All criteria are combined with AND.
-          items:
-            $ref: "#/components/schemas/UserBindingCriterion"
-        userBindingEnabled:
-          type: boolean
-          default: false
-          description: "Whether the external JWT subject is resolved to a single domain\
-            \ user using the user binding criteria. When false, a virtual user is\
-            \ built from the token claims only."
-    TrustDomainKeyMaterial:
-      type: object
-      description: Where the trusted domain's signing keys come from. Exactly one
-        source applies.
-      properties:
-        certificate:
-          type: string
-          description: PEM-encoded X.509 certificate. Required when source is PEM.
-        jwkSet:
-          $ref: "#/components/schemas/JWKSet"
-        jwksUrl:
-          type: string
-          description: JWKS endpoint URL. Required when source is JWKS_URL.
-          example: https://issuer.example.com/.well-known/jwks.json
-        source:
-          type: string
-          description: Which of the three key sources this trusted domain uses.
-          enum:
-          - JWKS_URL
-          - JWK_SET
-          - PEM
-      title: Trusted domain key material
     TrustedIssuer:
       type: object
       deprecated: true
@@ -18855,8 +19174,12 @@ components:
       properties:
         allowedAlgorithms:
           type: array
+          deprecated: true
+          description: Use spiffe.allowedAlgorithms instead.
           items:
             type: string
+            deprecated: true
+            description: Use spiffe.allowedAlgorithms instead.
         bundleSource:
           type: string
           deprecated: true
@@ -18866,41 +19189,40 @@ components:
           - STATIC_JWKS
         description:
           type: string
-        issuer:
-          type: string
-          maxLength: 512
-          minLength: 0
         jwksUrl:
           type: string
           deprecated: true
           description: Use keyMaterial.jwksUrl instead.
+        refreshIntervalSeconds:
+          type: integer
+          format: int32
+          deprecated: true
+          description: Use keyMaterial.refreshIntervalSeconds instead.
+    UpdateTrustedDomain:
+      type: object
+      properties:
+        description:
+          type: string
+        domainIdentifier:
+          type: string
+          description: "Issuer identifier of this authority's authorization server.\
+            \ Matched against the \"iss\" of an external JWT inbound, and carried\
+            \ as the \"aud\" of an ID-JAG outbound. Required when tokenExchange is\
+            \ present."
+          example: https://sso.acme.com
+          maxLength: 512
+          minLength: 0
         keyMaterial:
           $ref: "#/components/schemas/TrustDomainKeyMaterial"
         name:
           type: string
-          description: New label for the trusted domain. Left unchanged when absent.
+          description: New label for the trusted domain. Kept unchanged when absent.
           maxLength: 255
           minLength: 0
-        refreshIntervalSeconds:
-          type: integer
-          format: int32
-        scopeMappings:
-          type: object
-          additionalProperties:
-            type: string
-        spiffeTrustDomain:
-          type: string
-          description: SPIFFE trust domain matched against the "sub" of a JWT-SVID.
-            Supplying either matcher replaces both; supplying neither leaves them
-            unchanged.
-          maxLength: 255
-          minLength: 0
-        userBindingCriteria:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserBindingCriterion"
-        userBindingEnabled:
-          type: boolean
+        spiffe:
+          $ref: "#/components/schemas/SpiffeTrustSettings"
+        tokenExchange:
+          $ref: "#/components/schemas/TokenExchangeTrustSettings"
     UpdateUser:
       type: object
       properties:

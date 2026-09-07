@@ -19,7 +19,8 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -193,8 +194,9 @@ public class TokenValidationUtilsTest {
     public void buildValidatedToken_withTrustedIssuer() {
         Domain domain = mock(Domain.class);
 
-        TrustDomain trustedDomain = TrustDomain.builder()
-                .issuer("https://external.example.com")
+        TrustedDomain trustedDomain = TrustedDomain.builder()
+                .domainIdentifier("https://external.example.com")
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
 
         Map<String, Object> claims = new HashMap<>();

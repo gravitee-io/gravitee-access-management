@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
@@ -53,7 +53,7 @@ public class TrustedIssuerUserResolver implements TokenExchangeUserResolver {
 
     @Override
     public Maybe<User> resolve(ValidatedToken subjectToken) {
-        TrustDomain trustedDomain = subjectToken.getTrustedDomain();
+        TrustedDomain trustedDomain = subjectToken.getTrustedDomain();
         if (trustedDomain == null || !trustedDomain.isUserBindingEnabled()) {
             return Maybe.empty();
         }

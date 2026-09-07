@@ -15,39 +15,40 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.oidc.SpiffeBundleSource;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
+import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
-@Deprecated
 @Getter
 @Setter
-public class NewTrustDomain {
+public class UpdateTrustedDomain {
 
 
+    @Schema(description = "New label for the trusted domain. Kept unchanged when absent.")
     @Size(max = TrustedDomain.NAME_MAX_LENGTH, message = "Name must be at most {max} characters")
     private String name;
 
     private String description;
 
-    @Deprecated
-    @Schema(deprecated = true, description = "Use keyMaterial.source instead.")
-    private SpiffeBundleSource bundleSource;
+    @Schema(description = "Issuer identifier of this authority's authorization server. Matched against "
+            + "the \"iss\" of an external JWT inbound, and carried as the \"aud\" of an ID-JAG outbound. "
+            + "Required when tokenExchange is present.",
+            example = "https://sso.acme.com")
+    @Size(max = TrustedDomain.ISSUER_MAX_LENGTH, message = "Domain identifier must be at most {max} characters")
+    private String domainIdentifier;
 
-    @Deprecated
-    @Schema(deprecated = true, description = "Use keyMaterial.jwksUrl instead.")
-    private String jwksUrl;
+    @Valid
+    private TrustDomainKeyMaterial keyMaterial;
 
-    @Deprecated
-    @Schema(deprecated = true, description = "Use keyMaterial.refreshIntervalSeconds instead.")
-    private Integer refreshIntervalSeconds;
+    @Valid
+    private SpiffeTrustSettings spiffe;
 
-    @Deprecated
-    @Schema(deprecated = true, description = "Use spiffe.allowedAlgorithms instead.")
-    private List<String> allowedAlgorithms;
+    @Valid
+    private TokenExchangeTrustSettings tokenExchange;
 }

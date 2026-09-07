@@ -19,7 +19,9 @@ import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import org.junit.Test;
@@ -33,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.util.UUID.randomUUID;
 
-public class TrustDomainRepositoryTest extends AbstractManagementTest {
+public class TrustedDomainRepositoryTest extends AbstractManagementTest {
 
     private static final String PEM_CERTIFICATE = """
             -----BEGIN CERTIFICATE-----
@@ -41,21 +43,23 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
             -----END CERTIFICATE-----""";
 
     @Autowired
-    protected TrustDomainRepository repository;
+    protected TrustedDomainRepository repository;
 
-    private TrustDomain buildTrustDomain(String referenceId, String name) {
-        TrustDomain td = new TrustDomain();
+    private TrustedDomain buildTrustDomain(String referenceId, String name) {
+        TrustedDomain td = new TrustedDomain();
         td.setReferenceId(referenceId);
         td.setReferenceType(DOMAIN);
         td.setName(name);
-        td.setSpiffeTrustDomain(name);
         td.setDescription("desc-" + name);
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://example.com/" + name + "/keys")
+                .refreshIntervalSeconds(120)
                 .build());
-        td.setRefreshIntervalSeconds(120);
-        td.setAllowedAlgorithms(List.of("RS256", "ES256"));
+        td.setSpiffe(SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(name)
+                .allowedAlgorithms(List.of("RS256", "ES256"))
+                .build());
         Date now = new Date();
         td.setCreatedAt(now);
         td.setUpdatedAt(now);
@@ -177,9 +181,9 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldServeBothUsagesFromOneTrustedDomain() {
         String referenceId = randomUUID().toString();
-        TrustDomain both = buildTrustDomain(referenceId, "acme-corp");
-        both.setSpiffeTrustDomain("acme.org");
-        both.setIssuer("https://sso.acme.com");
+        TrustedDomain both = buildTrustDomain(referenceId, "acme-corp");
+        both.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("acme.org").build());
+        both.setDomainIdentifier("https://sso.acme.com");
         var created = repository.create(both).blockingGet();
 
         var bySpiffe = repository.findBySpiffeTrustDomain(DOMAIN, referenceId, "acme.org").test();
@@ -196,8 +200,8 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         String referenceId = randomUUID().toString();
         repository.create(buildTrustDomain(referenceId, "example.org")).blockingGet();
 
-        TrustDomain duplicate = buildTrustDomain(referenceId, "other-label");
-        duplicate.setSpiffeTrustDomain("example.org");
+        TrustedDomain duplicate = buildTrustDomain(referenceId, "other-label");
+        duplicate.setSpiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("example.org").build());
 
         var observer = repository.create(duplicate).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -225,7 +229,7 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldRoundTripPemKeyMaterial() {
         String referenceId = randomUUID().toString();
-        TrustDomain td = buildTrustDomain(referenceId, "pem.example");
+        TrustedDomain td = buildTrustDomain(referenceId, "pem.example");
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.PEM)
                 .certificate(PEM_CERTIFICATE)
@@ -243,7 +247,7 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldRoundTripInlineJwkSet() {
         String referenceId = randomUUID().toString();
-        TrustDomain td = buildTrustDomain(referenceId, "jwks.example");
+        TrustedDomain td = buildTrustDomain(referenceId, "jwks.example");
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWK_SET)
                 .jwkSet(inlineJwkSet())
@@ -266,11 +270,11 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildTrustDomain(referenceId, "example.org")).blockingGet();
 
-        TrustDomain toUpdate = new TrustDomain(created);
+        TrustedDomain toUpdate = new TrustedDomain(created);
         toUpdate.setDescription("updated-description");
         toUpdate.getKeyMaterial().setJwksUrl("https://example.com/v2/keys");
-        toUpdate.setRefreshIntervalSeconds(600);
-        toUpdate.setAllowedAlgorithms(List.of("RS512"));
+        toUpdate.getKeyMaterial().setRefreshIntervalSeconds(600);
+        toUpdate.getSpiffe().setAllowedAlgorithms(List.of("RS512"));
         toUpdate.setUpdatedAt(new Date());
 
         var observer = repository.update(toUpdate).test();
@@ -298,17 +302,18 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         findObserver.assertNoErrors();
     }
 
-    private TrustDomain buildTokenExchangeTrustDomain(String referenceId, String issuer) {
-        TrustDomain td = buildTrustDomain(referenceId, "issuer.example");
-        td.setSpiffeTrustDomain(null);
-        td.setAllowedAlgorithms(null);
+    private TrustedDomain buildTokenExchangeTrustDomain(String referenceId, String issuer) {
+        TrustedDomain td = buildTrustDomain(referenceId, "issuer.example");
+        td.setSpiffe(null);
         UserBindingCriterion criterion = new UserBindingCriterion();
         criterion.setAttribute("emails.value");
         criterion.setExpression("{#token['email']}");
-        td.setIssuer(issuer);
-        td.setScopeMappings(Map.of("read", "domain:read"));
-        td.setUserBindingEnabled(true);
-        td.setUserBindingCriteria(List.of(criterion));
+        td.setDomainIdentifier(issuer);
+        td.setTokenExchange(TokenExchangeTrustSettings.builder()
+                .scopeMappings(Map.of("read", "domain:read"))
+                .userBindingEnabled(true)
+                .userBindingCriteria(List.of(criterion))
+                .build());
         return td;
     }
 
@@ -321,7 +326,7 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(found -> found.getSpiffeTrustDomain() == null);
-        observer.assertValue(found -> "https://issuer.example/realm".equals(found.getIssuer()));
+        observer.assertValue(found -> "https://issuer.example/realm".equals(found.getDomainIdentifier()));
         observer.assertValue(found -> Map.of("read", "domain:read").equals(found.getScopeMappings()));
         observer.assertValue(found -> found.isUserBindingEnabled());
         observer.assertValue(found -> found.getUserBindingCriteria().size() == 1);
@@ -358,7 +363,7 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         String referenceId = randomUUID().toString();
         repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
 
-        TrustDomain duplicate = buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm");
+        TrustedDomain duplicate = buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm");
         duplicate.setName("other.example");
         var observer = repository.create(duplicate).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -386,8 +391,8 @@ public class TrustDomainRepositoryTest extends AbstractManagementTest {
         String referenceId = randomUUID().toString();
         var created = repository.create(buildTokenExchangeTrustDomain(referenceId, "https://issuer.example/realm")).blockingGet();
 
-        TrustDomain toUpdate = new TrustDomain(created);
-        toUpdate.setIssuer("https://issuer.example/realm-v2");
+        TrustedDomain toUpdate = new TrustedDomain(created);
+        toUpdate.setDomainIdentifier("https://issuer.example/realm-v2");
         toUpdate.setUpdatedAt(new Date());
         repository.update(toUpdate).blockingGet();
 

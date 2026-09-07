@@ -43,6 +43,10 @@ public class TrustDomainKeyMaterial {
             example = "https://issuer.example.com/.well-known/jwks.json")
     private String jwksUrl;
 
+    @Schema(description = "How often the JWKS endpoint is re-polled, clamped by "
+            + "keyRetrievalSettings.cacheTtlSeconds. Applies only when source is JWKS_URL.")
+    private Integer refreshIntervalSeconds;
+
     @Schema(description = "Inline JWK set. Required when source is JWK_SET.")
     private JWKSet jwkSet;
 
@@ -66,6 +70,7 @@ public class TrustDomainKeyMaterial {
     public TrustDomainKeyMaterial(TrustDomainKeyMaterial other) {
         this.source = other.source;
         this.jwksUrl = other.jwksUrl;
+        this.refreshIntervalSeconds = other.refreshIntervalSeconds;
         this.jwkSet = cloneJwkSet(other.jwkSet);
         this.certificate = other.certificate;
     }

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -104,7 +104,7 @@ public class ValidatedToken {
      * external issuer. Null when validated with the domain certificate. Used for scope mapping and
      * user binding (EL context and criteria).
      */
-    private final TrustDomain trustedDomain;
+    private final TrustedDomain trustedDomain;
 
     /**
      * Whether this token was validated via a trusted external issuer (not the domain certificate).

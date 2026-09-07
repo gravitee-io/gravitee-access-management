@@ -22,11 +22,12 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.TrustDomainService;
-import io.gravitee.am.service.model.NewTrustDomain;
-import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.service.model.NewTrustedDomain;
+import io.gravitee.am.service.model.UpdateTrustedDomain;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -86,9 +87,9 @@ public class TrustedIssuerProjection {
                 .flatMapCompletable(existing -> replace(domain, existing, written, principal));
     }
 
-    private Completable replace(Domain domain, List<TrustDomain> existing, List<TrustedIssuer> written, User principal) {
-        Map<String, TrustDomain> byIssuer = new LinkedHashMap<>();
-        existing.forEach(trustDomain -> byIssuer.put(trustDomain.getIssuer(), trustDomain));
+    private Completable replace(Domain domain, List<TrustedDomain> existing, List<TrustedIssuer> written, User principal) {
+        Map<String, TrustedDomain> byIssuer = new LinkedHashMap<>();
+        existing.forEach(trustDomain -> byIssuer.put(trustDomain.getDomainIdentifier(), trustDomain));
 
         List<TrustedIssuer> declared = written.stream()
                 .filter(issuer -> issuer != null && issuer.getIssuer() != null && !issuer.getIssuer().isBlank())
@@ -96,31 +97,31 @@ public class TrustedIssuerProjection {
         Set<String> declaredIssuers = declared.stream().map(TrustedIssuer::getIssuer).collect(toSet());
         Map<String, String> derivedNames = TrustedIssuerNaming.deriveNames(
                 declared.stream().map(TrustedIssuer::getIssuer).filter(issuer -> !byIssuer.containsKey(issuer)).toList(),
-                existing.stream().map(TrustDomain::getName).collect(toSet()));
+                existing.stream().map(TrustedDomain::getName).collect(toSet()));
 
         Completable upserts = Flowable.fromIterable(declared)
                 .concatMapCompletable(issuer -> {
-                    TrustDomain match = byIssuer.get(issuer.getIssuer());
+                    TrustedDomain match = byIssuer.get(issuer.getIssuer());
                     return match != null
                             ? trustDomainService.update(domain, match.getId(), asUpdate(issuer, match), principal).ignoreElement()
                             : trustDomainService.create(domain, asNew(issuer, derivedNames.get(issuer.getIssuer())), principal).ignoreElement();
                 });
         Completable deletions = Flowable.fromIterable(existing)
-                .filter(trustDomain -> !declaredIssuers.contains(trustDomain.getIssuer()))
+                .filter(trustDomain -> !declaredIssuers.contains(trustDomain.getDomainIdentifier()))
                 .concatMapCompletable(trustDomain -> trustDomainService.delete(domain, trustDomain.getId(), principal));
 
         return upserts.andThen(deletions);
     }
 
-    private Single<List<TrustDomain>> tokenExchangeTrustDomains(String domainId) {
+    private Single<List<TrustedDomain>> tokenExchangeTrustDomains(String domainId) {
         return trustDomainService.findByReference(ReferenceType.DOMAIN, domainId)
-                .filter(TrustDomain::trustsTokenExchange)
+                .filter(TrustedDomain::trustsTokenExchange)
                 .toList();
     }
 
-    private static TrustedIssuer asTrustedIssuer(TrustDomain trustDomain) {
+    private static TrustedIssuer asTrustedIssuer(TrustedDomain trustDomain) {
         TrustedIssuer trustedIssuer = new TrustedIssuer();
-        trustedIssuer.setIssuer(trustDomain.getIssuer());
+        trustedIssuer.setIssuer(trustDomain.getDomainIdentifier());
         trustedIssuer.setScopeMappings(trustDomain.getScopeMappings());
         trustedIssuer.setUserBindingEnabled(trustDomain.isUserBindingEnabled());
         trustedIssuer.setUserBindingCriteria(trustDomain.getUserBindingCriteria());
@@ -135,27 +136,31 @@ public class TrustedIssuerProjection {
         return trustedIssuer;
     }
 
-    private static NewTrustDomain asNew(TrustedIssuer issuer, String name) {
-        NewTrustDomain newTrustDomain = new NewTrustDomain();
+    private static NewTrustedDomain asNew(TrustedIssuer issuer, String name) {
+        NewTrustedDomain newTrustDomain = new NewTrustedDomain();
         newTrustDomain.setName(name);
-        newTrustDomain.setIssuer(issuer.getIssuer());
+        newTrustDomain.setDomainIdentifier(issuer.getIssuer());
         newTrustDomain.setKeyMaterial(keyMaterialOf(issuer));
-        newTrustDomain.setScopeMappings(issuer.getScopeMappings());
-        newTrustDomain.setUserBindingEnabled(issuer.isUserBindingEnabled());
-        newTrustDomain.setUserBindingCriteria(issuer.getUserBindingCriteria());
+        newTrustDomain.setTokenExchange(tokenExchangeOf(issuer));
         return newTrustDomain;
     }
 
-    private static UpdateTrustDomain asUpdate(TrustedIssuer issuer, TrustDomain existing) {
-        UpdateTrustDomain updateTrustDomain = new UpdateTrustDomain();
+    private static UpdateTrustedDomain asUpdate(TrustedIssuer issuer, TrustedDomain existing) {
+        UpdateTrustedDomain updateTrustDomain = new UpdateTrustedDomain();
         updateTrustDomain.setDescription(existing.getDescription());
-        updateTrustDomain.setIssuer(issuer.getIssuer());
-        updateTrustDomain.setSpiffeTrustDomain(existing.getSpiffeTrustDomain());
+        updateTrustDomain.setDomainIdentifier(issuer.getIssuer());
+        updateTrustDomain.setSpiffe(existing.getSpiffe());
         updateTrustDomain.setKeyMaterial(keyMaterialOf(issuer));
-        updateTrustDomain.setScopeMappings(issuer.getScopeMappings());
-        updateTrustDomain.setUserBindingEnabled(issuer.isUserBindingEnabled());
-        updateTrustDomain.setUserBindingCriteria(issuer.getUserBindingCriteria());
+        updateTrustDomain.setTokenExchange(tokenExchangeOf(issuer));
         return updateTrustDomain;
+    }
+
+    private static TokenExchangeTrustSettings tokenExchangeOf(TrustedIssuer issuer) {
+        return TokenExchangeTrustSettings.builder()
+                .scopeMappings(issuer.getScopeMappings())
+                .userBindingEnabled(issuer.isUserBindingEnabled())
+                .userBindingCriteria(issuer.getUserBindingCriteria())
+                .build();
     }
 
     private static TrustDomainKeyMaterial keyMaterialOf(TrustedIssuer issuer) {

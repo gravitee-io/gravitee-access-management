@@ -25,9 +25,11 @@ import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainKeyMaterialMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TrustDomainMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserBindingCriterionMongo;
@@ -57,7 +59,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
  */
 @Component
 @CustomLog
-public class MongoTrustDomainRepository extends AbstractManagementMongoRepository implements TrustDomainRepository {
+public class MongoTrustedDomainRepository extends AbstractManagementMongoRepository implements TrustedDomainRepository {
 
     private static final String COLLECTION_NAME = "trust_domains";
     private static final String FIELD_NAME = "name";
@@ -100,7 +102,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Maybe<TrustDomain> findById(String id) {
+    public Maybe<TrustedDomain> findById(String id) {
         return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())
                 .firstElement()
                 .map(this::toEntity)
@@ -108,7 +110,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<TrustDomain> create(TrustDomain item) {
+    public Single<TrustedDomain> create(TrustedDomain item) {
         TrustDomainMongo doc = toMongo(item);
         doc.setId(doc.getId() == null ? RandomString.generate() : doc.getId());
         return Single.fromPublisher(collection.insertOne(doc))
@@ -120,7 +122,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<TrustDomain> update(TrustDomain item) {
+    public Single<TrustedDomain> update(TrustedDomain item) {
         TrustDomainMongo doc = toMongo(item);
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, doc.getId()), doc))
                 .map(updateResult -> item)
@@ -134,7 +136,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId) {
+    public Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(collection.find(and(
                         eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                         eq(FIELD_REFERENCE_ID, referenceId))))
@@ -143,21 +145,21 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
+    public Maybe<TrustedDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
         return findByField(referenceType, referenceId, FIELD_NAME, name);
     }
 
     @Override
-    public Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain) {
+    public Maybe<TrustedDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain) {
         return findByField(referenceType, referenceId, FIELD_SPIFFE_TRUST_DOMAIN, spiffeTrustDomain);
     }
 
     @Override
-    public Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
+    public Maybe<TrustedDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
         return findByField(referenceType, referenceId, FIELD_ISSUER, issuer);
     }
 
-    private Maybe<TrustDomain> findByField(ReferenceType referenceType, String referenceId, String field, String value) {
+    private Maybe<TrustedDomain> findByField(ReferenceType referenceType, String referenceId, String field, String value) {
         return Observable.fromPublisher(collection.find(and(
                         eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                         eq(FIELD_REFERENCE_ID, referenceId),
@@ -167,30 +169,26 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
                 .observeOn(Schedulers.computation());
     }
 
-    private TrustDomain toEntity(TrustDomainMongo doc) {
+    private TrustedDomain toEntity(TrustDomainMongo doc) {
         if (doc == null) {
             return null;
         }
-        TrustDomain td = new TrustDomain();
+        TrustedDomain td = new TrustedDomain();
         td.setId(doc.getId());
         td.setReferenceId(doc.getReferenceId());
         td.setReferenceType(doc.getReferenceType() != null ? ReferenceType.valueOf(doc.getReferenceType()) : null);
         td.setName(doc.getName());
         td.setDescription(doc.getDescription());
-        td.setSpiffeTrustDomain(readSpiffeTrustDomain(doc));
-        td.setIssuer(doc.getIssuer());
+        td.setDomainIdentifier(doc.getIssuer());
         td.setKeyMaterial(readKeyMaterial(doc));
-        td.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
-        td.setAllowedAlgorithms(doc.getAllowedAlgorithms());
-        td.setScopeMappings(doc.getScopeMappings());
-        td.setUserBindingEnabled(Boolean.TRUE.equals(doc.getUserBindingEnabled()));
-        td.setUserBindingCriteria(UserBindingCriterionMongo.toModelList(doc.getUserBindingCriteria()));
+        td.setSpiffe(readSpiffe(doc));
+        td.setTokenExchange(readTokenExchange(doc));
         td.setCreatedAt(doc.getCreatedAt());
         td.setUpdatedAt(doc.getUpdatedAt());
         return td;
     }
 
-    private TrustDomainMongo toMongo(TrustDomain td) {
+    private TrustDomainMongo toMongo(TrustedDomain td) {
         if (td == null) {
             return null;
         }
@@ -201,7 +199,7 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
         doc.setName(td.getName());
         doc.setDescription(td.getDescription());
         doc.setSpiffeTrustDomain(td.getSpiffeTrustDomain());
-        doc.setIssuer(td.getIssuer());
+        doc.setIssuer(td.getDomainIdentifier());
         doc.setKeyMaterial(toMongo(td.getKeyMaterial()));
         doc.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
         doc.setAllowedAlgorithms(td.getAllowedAlgorithms());
@@ -230,17 +228,42 @@ public class MongoTrustDomainRepository extends AbstractManagementMongoRepositor
      */
     static TrustDomainKeyMaterial readKeyMaterial(TrustDomainMongo doc) {
         TrustDomainKeyMaterialMongo keyMaterial = doc.getKeyMaterial();
-        if (keyMaterial != null) {
-            return TrustDomainKeyMaterial.builder()
-                    .source(keyMaterial.getSource() != null ? KeyMaterialSource.valueOf(keyMaterial.getSource()) : null)
-                    .jwksUrl(keyMaterial.getJwksUrl())
-                    .jwkSet(parseJwkSet(keyMaterial.getJwkSet()))
-                    .certificate(keyMaterial.getCertificate())
-                    .build();
+        TrustDomainKeyMaterial model = keyMaterial != null
+                ? TrustDomainKeyMaterial.builder()
+                        .source(keyMaterial.getSource() != null ? KeyMaterialSource.valueOf(keyMaterial.getSource()) : null)
+                        .jwksUrl(keyMaterial.getJwksUrl())
+                        .jwkSet(parseJwkSet(keyMaterial.getJwkSet()))
+                        .certificate(keyMaterial.getCertificate())
+                        .build()
+                : TrustDomainKeyMaterial.fromBundleSource(
+                        doc.getBundleSource() != null ? SpiffeBundleSource.valueOf(doc.getBundleSource()) : null,
+                        doc.getJwksUrl());
+        if (model != null) {
+            model.setRefreshIntervalSeconds(doc.getRefreshIntervalSeconds());
         }
-        return TrustDomainKeyMaterial.fromBundleSource(
-                doc.getBundleSource() != null ? SpiffeBundleSource.valueOf(doc.getBundleSource()) : null,
-                doc.getJwksUrl());
+        return model;
+    }
+
+    static SpiffeTrustSettings readSpiffe(TrustDomainMongo doc) {
+        String spiffeTrustDomain = readSpiffeTrustDomain(doc);
+        if (spiffeTrustDomain == null && doc.getAllowedAlgorithms() == null) {
+            return null;
+        }
+        return SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(spiffeTrustDomain)
+                .allowedAlgorithms(doc.getAllowedAlgorithms())
+                .build();
+    }
+
+    static TokenExchangeTrustSettings readTokenExchange(TrustDomainMongo doc) {
+        if (doc.getIssuer() == null) {
+            return null;
+        }
+        return TokenExchangeTrustSettings.builder()
+                .scopeMappings(doc.getScopeMappings())
+                .userBindingEnabled(Boolean.TRUE.equals(doc.getUserBindingEnabled()))
+                .userBindingCriteria(UserBindingCriterionMongo.toModelList(doc.getUserBindingCriteria()))
+                .build();
     }
 
     private static TrustDomainKeyMaterialMongo toMongo(TrustDomainKeyMaterial keyMaterial) {

@@ -29,7 +29,8 @@ import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
@@ -235,7 +236,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_success() throws Exception {
-        TrustDomain ti = createTrustedDomain();
+        TrustedDomain ti = createTrustedDomain();
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -276,7 +277,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_signatureVerificationFails() throws Exception {
-        TrustDomain ti = createTrustedDomain();
+        TrustedDomain ti = createTrustedDomain();
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -302,8 +303,8 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_scopeMapping() throws Exception {
-        TrustDomain ti = createTrustedDomain();
-        ti.setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
+        TrustedDomain ti = createTrustedDomain();
+        ti.getTokenExchange().setScopeMappings(Map.of("ext:read", "domain:read", "ext:write", "domain:write"));
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -340,7 +341,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_noScopeMapping_passThrough() throws Exception {
-        TrustDomain ti = createTrustedDomain();
+        TrustedDomain ti = createTrustedDomain();
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -375,7 +376,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_allFieldsCopied() throws Exception {
-        TrustDomain ti = createTrustedDomain();
+        TrustedDomain ti = createTrustedDomain();
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -427,7 +428,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_expiredToken() throws Exception {
-        TrustDomain ti = createTrustedDomain();
+        TrustedDomain ti = createTrustedDomain();
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -459,7 +460,7 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Test
     public void testTrustedIssuer_nullTimestamps() throws Exception {
-        TrustDomain ti = createTrustedDomain();
+        TrustedDomain ti = createTrustedDomain();
         when(trustDomainManager.hasTokenExchangeTrust()).thenReturn(true);
         when(trustDomainManager.findByIssuer(EXTERNAL_ISSUER)).thenReturn(Optional.of(ti));
 
@@ -492,15 +493,16 @@ public class TrustedIssuerTokenValidatorTest {
 
     // --- Helpers ---
 
-    private TrustDomain createTrustedDomain() {
-        return TrustDomain.builder()
+    private TrustedDomain createTrustedDomain() {
+        return TrustedDomain.builder()
                 .id("trust-domain-1")
                 .name("external-idp.example.com")
                 .keyMaterial(TrustDomainKeyMaterial.builder()
                         .source(KeyMaterialSource.PEM)
                         .certificate("some-pem")
                         .build())
-                .issuer(EXTERNAL_ISSUER)
+                .domainIdentifier(EXTERNAL_ISSUER)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 

@@ -206,7 +206,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Lazy
     @Autowired
-    private io.gravitee.am.repository.management.api.TrustDomainRepository trustDomainRepository;
+    private io.gravitee.am.repository.management.api.TrustedDomainRepository trustDomainRepository;
 
     private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 

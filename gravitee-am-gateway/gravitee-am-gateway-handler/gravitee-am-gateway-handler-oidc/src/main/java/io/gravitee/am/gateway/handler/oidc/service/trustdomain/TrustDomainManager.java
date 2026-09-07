@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.trustdomain;
 
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.common.service.Service;
 
 import java.util.Optional;
@@ -31,12 +31,12 @@ public interface TrustDomainManager extends Service {
     /**
      * The trusted domain that vouches for this SPIFFE trust domain, if any.
      */
-    Optional<TrustDomain> findBySpiffeTrustDomain(String spiffeTrustDomain);
+    Optional<TrustedDomain> findBySpiffeTrustDomain(String spiffeTrustDomain);
 
     /**
      * The trusted domain that vouches for this issuer, if any.
      */
-    Optional<TrustDomain> findByIssuer(String issuer);
+    Optional<TrustedDomain> findByIssuer(String issuer);
 
     /**
      * Whether the security domain vouches for any external issuer.

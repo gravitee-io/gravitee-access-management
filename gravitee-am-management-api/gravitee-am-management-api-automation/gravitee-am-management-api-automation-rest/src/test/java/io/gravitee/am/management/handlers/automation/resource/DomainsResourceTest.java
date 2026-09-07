@@ -21,8 +21,9 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
-import io.gravitee.am.model.oidc.TrustDomain;
-import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
+import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.reactivex.rxjava3.core.Completable;
@@ -145,8 +146,8 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
         when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(existing));
-        when(trustDomainService.create(eq(existing), any(NewTrustDomain.class), any()))
-                .thenReturn(Single.just(new TrustDomain()));
+        when(trustDomainService.create(eq(existing), any(NewTrustedDomain.class), any()))
+                .thenReturn(Single.just(new TrustedDomain()));
 
         AutomationDomain in = definition("customer-auth");
         TokenExchangeSettings tokenExchange = new TokenExchangeSettings();
@@ -159,9 +160,10 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, put(domainsTarget(), in).getStatus());
 
-        ArgumentCaptor<NewTrustDomain> captor = ArgumentCaptor.forClass(NewTrustDomain.class);
+        ArgumentCaptor<NewTrustedDomain> captor = ArgumentCaptor.forClass(NewTrustedDomain.class);
         verify(trustDomainService).create(eq(existing), captor.capture(), any());
-        assertEquals("https://issuer.example.com", captor.getValue().getIssuer());
+        assertEquals("https://issuer.example.com", captor.getValue().getDomainIdentifier());
+        assertEquals("https://issuer.example.com/keys", captor.getValue().getKeyMaterial().getJwksUrl());
     }
 
     @Test
@@ -172,10 +174,11 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
         when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(existing));
         when(trustDomainService.findByReference(ReferenceType.DOMAIN, domainId)).thenReturn(Flowable.just(
-                TrustDomain.builder()
+                TrustedDomain.builder()
                         .id("td-1")
                         .name("https-issuer.example.com")
-                        .issuer("https://issuer.example.com")
+                        .domainIdentifier("https://issuer.example.com")
+                        .tokenExchange(new TokenExchangeTrustSettings())
                         .build()));
         when(trustDomainService.delete(eq(existing), anyString(), any())).thenReturn(Completable.complete());
 

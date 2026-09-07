@@ -27,7 +27,7 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManage
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -104,7 +104,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                         return Single.error(new InvalidRequestException("JWT missing 'iss' claim"));
                     }
 
-                    TrustDomain trustedDomain = trustDomainManager.findByIssuer(issuer).orElse(null);
+                    TrustedDomain trustedDomain = trustDomainManager.findByIssuer(issuer).orElse(null);
                     if (trustedDomain == null) {
                         return Single.error(untrusted(issuer));
                     }
@@ -127,7 +127,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
     }
 
     private ValidatedToken buildValidatedToken(JWTClaimsSet claimsSet, Domain domain,
-                                               TrustDomain trustedDomain) {
+                                               TrustedDomain trustedDomain) {
         long exp = claimsSet.getExpirationTime() != null ? claimsSet.getExpirationTime().getTime() / 1000 : 0;
         long iat = claimsSet.getIssueTime() != null ? claimsSet.getIssueTime().getTime() / 1000 : 0;
         long nbf = claimsSet.getNotBeforeTime() != null ? claimsSet.getNotBeforeTime().getTime() / 1000 : 0;
@@ -144,7 +144,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                 supportedTokenType, domain, trustedDomain);
     }
 
-    private Set<String> applyScopeMapping(Set<String> originalScopes, TrustDomain trustedDomain) {
+    private Set<String> applyScopeMapping(Set<String> originalScopes, TrustedDomain trustedDomain) {
         Map<String, String> mappings = trustedDomain.getScopeMappings();
         if (mappings == null || mappings.isEmpty()) {
             return originalScopes;

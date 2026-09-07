@@ -353,6 +353,12 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(ThemesResource.class);
     }
 
+    @Path("trusted-domains")
+    public TrustedDomainsResource getTrustedDomainsResource() {
+        return resourceContext.getResource(TrustedDomainsResource.class);
+    }
+
+    @Deprecated
     @Path("trust-domains")
     public TrustDomainsResource getTrustDomainsResource() {
         return resourceContext.getResource(TrustDomainsResource.class);

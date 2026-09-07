@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,24 +24,24 @@ import io.reactivex.rxjava3.core.Maybe;
 /**
  * @author GraviteeSource Team
  */
-public interface TrustDomainRepository extends CrudRepository<TrustDomain, String> {
+public interface TrustedDomainRepository extends CrudRepository<TrustedDomain, String> {
 
-    Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
+    Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId);
 
     /**
      * Finds a trusted domain by the label it is known by. Labels are unique per reference.
      */
-    Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name);
+    Maybe<TrustedDomain> findByName(ReferenceType referenceType, String referenceId, String name);
 
     /**
      * Finds the trusted domain that vouches for a SPIFFE trust domain. Unique per reference, and
      * absent on trusted domains that are not trusted for SPIFFE.
      */
-    Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
+    Maybe<TrustedDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
 
     /**
      * Finds the trusted domain vouching for an issuer. Unique per reference, and absent on trusted
      * domains that are not trusted for token exchange.
      */
-    Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer);
+    Maybe<TrustedDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer);
 }
