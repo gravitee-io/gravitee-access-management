@@ -19,6 +19,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.test.IncompatibleDataTestUtils;
@@ -329,6 +330,54 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
     }
     
+    @Test
+    public void testFilterOutIncompatibleRoles_PagedFindAll() throws Exception {
+        Role readableRole = new Role();
+        readableRole.setName("pagedReadableRole");
+        readableRole.setReferenceType(ReferenceType.DOMAIN);
+        readableRole.setReferenceId(DOMAIN_ID);
+        roleRepository.create(readableRole).blockingGet();
+
+        insertIncompatibleRoleDirectly("pagedIncompatibleRole", ReferenceType.DOMAIN.name(), FUTURE_ASSIGNABLE_TYPE, DOMAIN_ID);
+
+        TestObserver<Page<Role>> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID, 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        Page<Role> result = testObserver.values().get(0);
+        assertEquals("Only the readable role should be returned", 1, result.getData().size());
+        assertTrue("The readable role should be returned",
+                result.getData().stream().anyMatch(r -> "pagedReadableRole".equals(r.getName())));
+        assertFalse("The role with an unreadable assignableType should be filtered out",
+                result.getData().stream().anyMatch(r -> "pagedIncompatibleRole".equals(r.getName())));
+        assertEquals("The total counts the discarded role, by design", 2, result.getTotalCount());
+    }
+
+    @Test
+    public void testFilterOutIncompatibleRoles_Search() throws Exception {
+        Role readableRole = new Role();
+        readableRole.setName("searchReadableRole");
+        readableRole.setReferenceType(ReferenceType.DOMAIN);
+        readableRole.setReferenceId(DOMAIN_ID);
+        roleRepository.create(readableRole).blockingGet();
+
+        insertIncompatibleRoleDirectly("searchIncompatibleRole", ReferenceType.DOMAIN.name(), FUTURE_ASSIGNABLE_TYPE, DOMAIN_ID);
+
+        TestObserver<Page<Role>> testObserver = roleRepository.search(ReferenceType.DOMAIN, DOMAIN_ID, "search*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        Page<Role> result = testObserver.values().get(0);
+        assertEquals("Only the readable role should be returned", 1, result.getData().size());
+        assertTrue("The readable role should be returned",
+                result.getData().stream().anyMatch(r -> "searchReadableRole".equals(r.getName())));
+        assertFalse("The role with an unreadable assignableType should be filtered out",
+                result.getData().stream().anyMatch(r -> "searchIncompatibleRole".equals(r.getName())));
+        assertEquals("The total counts the discarded role, by design", 2, result.getTotalCount());
+    }
+
     private void insertIncompatibleRoleDirectly(String roleName, String referenceType, String assignableType, String referenceId) throws Exception {
         insertIncompatibleRoleDirectlyAndGetId(roleName, referenceType, assignableType, referenceId);
     }
