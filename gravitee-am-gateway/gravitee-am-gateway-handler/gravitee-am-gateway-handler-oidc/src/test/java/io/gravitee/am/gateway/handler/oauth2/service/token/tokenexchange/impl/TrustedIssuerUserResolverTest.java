@@ -114,11 +114,41 @@ class TrustedIssuerUserResolverTest {
         User domainUser = new User();
         domainUser.setId("domain-user-id");
         when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(any())).thenReturn(Single.just(domainUser));
 
         User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo("domain-user-id");
+    }
+
+    @Test
+    void resolve_enhancesUserWithRolesAndGroups_reproducesAM7611() {
+        // trusted-issuer/user-binding match must be enhanced with
+        // roles/groups the same way interactive login and TokenUserResolver are,
+        // so custom claims such as {#context.attributes['user'].roles} are populated.
+        TrustedIssuer trusted = new TrustedIssuer();
+        trusted.setUserBindingEnabled(true);
+        UserBindingCriterion c = new UserBindingCriterion();
+        c.setAttribute("emails.value");
+        c.setExpression("{#token['email']}");
+        trusted.setUserBindingCriteria(List.of(c));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+
+        User enhancedUser = new User();
+        enhancedUser.setId("domain-user-id");
+        enhancedUser.setRolesPermissions(java.util.Set.of(new io.gravitee.am.model.Role()));
+        when(userGatewayService.enhance(any())).thenReturn(Single.just(enhancedUser));
+
+        User result = resolver.resolve(subjectTokenWith(trusted)).blockingGet();
+
+        assertThat(result).isNotNull();
+        assertThat(result.getRolesPermissions())
+                .as("resolved user should be enhanced with roles, like the interactive login path")
+                .isNotEmpty();
     }
 
     @Test
