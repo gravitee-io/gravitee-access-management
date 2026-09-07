@@ -25,7 +25,7 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.KeyRetrievalSettings;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
@@ -78,7 +78,7 @@ public class TrustDomainKeyServiceImpl implements TrustDomainKeyService {
     }
 
     @Override
-    public Maybe<JWKSet> getKeys(TrustDomain trustDomain) {
+    public Maybe<JWKSet> getKeys(TrustedDomain trustDomain) {
         if (trustDomain == null) {
             return Maybe.empty();
         }
@@ -97,7 +97,7 @@ public class TrustDomainKeyServiceImpl implements TrustDomainKeyService {
     }
 
     @Override
-    public Maybe<JWK> getKey(TrustDomain trustDomain, String kid) {
+    public Maybe<JWK> getKey(TrustedDomain trustDomain, String kid) {
         if (trustDomain == null || kid == null || kid.isBlank()) {
             return Maybe.empty();
         }
@@ -122,13 +122,13 @@ public class TrustDomainKeyServiceImpl implements TrustDomainKeyService {
                         })));
     }
 
-    private static KeyMaterialSource sourceOf(TrustDomain trustDomain) {
+    private static KeyMaterialSource sourceOf(TrustedDomain trustDomain) {
         return Optional.ofNullable(trustDomain.getKeyMaterial())
                 .map(TrustDomainKeyMaterial::getSource)
                 .orElse(null);
     }
 
-    private Maybe<JWKSet> inlineKeys(TrustDomain trustDomain, KeyMaterialSource source) {
+    private Maybe<JWKSet> inlineKeys(TrustedDomain trustDomain, KeyMaterialSource source) {
         TrustDomainKeyMaterial keyMaterial = trustDomain.getKeyMaterial();
         return switch (source) {
             case JWK_SET -> keyMaterial.getJwkSet() != null
@@ -139,7 +139,7 @@ public class TrustDomainKeyServiceImpl implements TrustDomainKeyService {
         };
     }
 
-    private Maybe<JWKSet> parseCertificate(TrustDomain trustDomain, String certificate) {
+    private Maybe<JWKSet> parseCertificate(TrustedDomain trustDomain, String certificate) {
         X509Certificate cert = X509CertUtils.parse(certificate);
         if (cert == null) {
             return Maybe.error(new IllegalStateException(
@@ -169,19 +169,19 @@ public class TrustDomainKeyServiceImpl implements TrustDomainKeyService {
         }
     }
 
-    private boolean isStale(CachedBundle entry, TrustDomain trustDomain) {
+    private boolean isStale(CachedBundle entry, TrustedDomain trustDomain) {
         long softTtl = softTtlSeconds(trustDomain);
         return softTtl <= 0 || entry.fetchedAt.plusSeconds(softTtl).isBefore(Instant.now());
     }
 
-    private long softTtlSeconds(TrustDomain trustDomain) {
+    private long softTtlSeconds(TrustedDomain trustDomain) {
         long perDomain = trustDomain.getRefreshIntervalSeconds() > 0
                 ? trustDomain.getRefreshIntervalSeconds()
                 : settings.getCacheTtlSeconds();
         return Math.min(perDomain, settings.getCacheTtlSeconds());
     }
 
-    private Maybe<JWKSet> fetch(TrustDomain trustDomain, CachedBundle existing) {
+    private Maybe<JWKSet> fetch(TrustedDomain trustDomain, CachedBundle existing) {
         String jwksUrl = trustDomain.getKeyMaterial().getJwksUrl();
         if (jwksUrl == null || jwksUrl.isBlank()) {
             return Maybe.empty();

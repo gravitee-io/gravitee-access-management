@@ -39,7 +39,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
@@ -284,7 +284,7 @@ class SpiffeClientAssertionValidatorTest {
         stubDiscovery();
         stubDomainOidc();
         Client client = clientWithSpiffeSettings();
-        TrustDomain td = TrustDomain.builder()
+        TrustedDomain td = TrustedDomain.builder()
                 .name(TRUST_DOMAIN_NAME)
                 .build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
@@ -307,7 +307,7 @@ class SpiffeClientAssertionValidatorTest {
         stubDiscovery();
         stubDomainOidc();
         Client client = clientWithSpiffeSettings();
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
         when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
                 .thenReturn(Optional.of(td));
@@ -326,7 +326,7 @@ class SpiffeClientAssertionValidatorTest {
         stubDiscovery();
         stubDomainOidc();
         Client client = clientWithSpiffeSettings();
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
         when(trustDomainManager.findBySpiffeTrustDomain(TRUST_DOMAIN_NAME))
                 .thenReturn(Optional.of(td));
@@ -342,7 +342,7 @@ class SpiffeClientAssertionValidatorTest {
         stubDiscovery();
         stubDomainOidc();
         Client client = clientWithSpiffeSettings();
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
@@ -362,7 +362,7 @@ class SpiffeClientAssertionValidatorTest {
         // sub is the SPIFFE URI but the form-level client_id should win as lookup id.
         Client client = clientWithSpiffeSettings();
         client.setClientId("hint-client-id");
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
 
@@ -383,7 +383,7 @@ class SpiffeClientAssertionValidatorTest {
         stubDiscovery();
         stubDomainOidc();
         Client client = clientWithSpiffeSettings();
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
@@ -417,7 +417,7 @@ class SpiffeClientAssertionValidatorTest {
         appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
         blueprint.setWorkloadIdentitySettings(appSettings);
 
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(blueprintClientId)).thenReturn(Maybe.just(blueprint));
@@ -454,7 +454,7 @@ class SpiffeClientAssertionValidatorTest {
         appSettings.setSubjectMatchMode(SpiffeApplicationSettings.SubjectMatchMode.PREFIX);
         blueprint.setWorkloadIdentitySettings(appSettings);
 
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(blueprintClientId)).thenReturn(Maybe.just(blueprint));
@@ -473,7 +473,7 @@ class SpiffeClientAssertionValidatorTest {
         stubDiscovery();
         stubDomainOidc();
         Client client = clientWithSpiffeSettings(); // SERVICE-style, no appType=AGENT
-        TrustDomain td = TrustDomain.builder().name(TRUST_DOMAIN_NAME).build();
+        TrustedDomain td = TrustedDomain.builder().name(TRUST_DOMAIN_NAME).build();
         RSAKey jwk = new RSAKey();
         jwk.setKid(KID);
         when(clientLookupService.findByClientId(SUBJECT)).thenReturn(Maybe.just(client));
@@ -498,7 +498,7 @@ class SpiffeClientAssertionValidatorTest {
                 clientLookupService, new JWSServiceImpl(), openIDDiscoveryService, domain,
                 new TrustDomainKeyServiceImpl(mock(JWKSetFetcher.class), realDomain), trustDomainManager);
 
-        TrustDomain td = TrustDomain.builder()
+        TrustedDomain td = TrustedDomain.builder()
                 .id("td-pem")
                 .name(TRUST_DOMAIN_NAME)
                 .keyMaterial(TrustDomainKeyMaterial.builder()
@@ -528,7 +528,7 @@ class SpiffeClientAssertionValidatorTest {
                 clientLookupService, new JWSServiceImpl(), openIDDiscoveryService, domain,
                 new TrustDomainKeyServiceImpl(mock(JWKSetFetcher.class), realDomain), trustDomainManager);
 
-        TrustDomain td = TrustDomain.builder()
+        TrustedDomain td = TrustedDomain.builder()
                 .id("td-pem")
                 .name(TRUST_DOMAIN_NAME)
                 .keyMaterial(TrustDomainKeyMaterial.builder()

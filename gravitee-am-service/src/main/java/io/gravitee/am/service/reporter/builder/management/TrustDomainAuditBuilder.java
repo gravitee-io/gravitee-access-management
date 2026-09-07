@@ -18,11 +18,11 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 
 public class TrustDomainAuditBuilder extends ManagementAuditBuilder<TrustDomainAuditBuilder> {
 
-    public TrustDomainAuditBuilder trustDomain(TrustDomain trustDomain) {
+    public TrustDomainAuditBuilder trustDomain(TrustedDomain trustDomain) {
         if (trustDomain != null) {
             if (EventType.TRUST_DOMAIN_DELETED.equals(getType())
                     || EventType.TRUST_DOMAIN_CREATED.equals(getType())

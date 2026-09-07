@@ -18,9 +18,11 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustedDomain;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -28,23 +30,29 @@ import io.reactivex.rxjava3.core.Single;
 
 public interface TrustDomainService {
 
-    Maybe<TrustDomain> findById(String id);
+    Maybe<TrustedDomain> findById(String id);
 
     /**
      * Looks up a trusted domain by the label it is known by, unique within a reference.
      */
-    Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name);
+    Maybe<TrustedDomain> findByName(ReferenceType referenceType, String referenceId, String name);
 
     /**
      * Looks up the trusted domain that vouches for a SPIFFE trust domain, unique within a reference.
      */
-    Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
+    Maybe<TrustedDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain);
 
-    Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId);
+    Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId);
 
-    Single<TrustDomain> create(Domain domain, NewTrustDomain newTrustDomain, User principal);
+    Single<TrustedDomain> create(Domain domain, NewTrustedDomain newTrustedDomain, User principal);
 
-    Single<TrustDomain> update(Domain domain, String id, UpdateTrustDomain updateTrustDomain, User principal);
+    Single<TrustedDomain> update(Domain domain, String id, UpdateTrustedDomain updateTrustedDomain, User principal);
+
+    @Deprecated
+    Single<TrustedDomain> create(Domain domain, NewTrustDomain newTrustDomain, User principal);
+
+    @Deprecated
+    Single<TrustedDomain> update(Domain domain, String id, UpdateTrustDomain updateTrustDomain, User principal);
 
     Completable delete(Domain domain, String id, User principal);
 }

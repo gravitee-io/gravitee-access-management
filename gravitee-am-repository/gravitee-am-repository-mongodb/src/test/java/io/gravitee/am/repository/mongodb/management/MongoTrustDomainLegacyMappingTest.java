@@ -34,7 +34,7 @@ public class MongoTrustDomainLegacyMappingTest {
         TrustDomainMongo legacy = new TrustDomainMongo();
         legacy.setName("example.org");
 
-        assertEquals("example.org", MongoTrustDomainRepository.readSpiffeTrustDomain(legacy));
+        assertEquals("example.org", MongoTrustedDomainRepository.readSpiffeTrustDomain(legacy));
     }
 
     @Test
@@ -43,7 +43,7 @@ public class MongoTrustDomainLegacyMappingTest {
         migrated.setName("issuer.example");
         migrated.setIssuer("https://issuer.example/realm");
 
-        assertNull(MongoTrustDomainRepository.readSpiffeTrustDomain(migrated));
+        assertNull(MongoTrustedDomainRepository.readSpiffeTrustDomain(migrated));
     }
 
     @Test
@@ -52,7 +52,7 @@ public class MongoTrustDomainLegacyMappingTest {
         doc.setName("acme-corp");
         doc.setSpiffeTrustDomain("acme.org");
 
-        assertEquals("acme.org", MongoTrustDomainRepository.readSpiffeTrustDomain(doc));
+        assertEquals("acme.org", MongoTrustedDomainRepository.readSpiffeTrustDomain(doc));
     }
 
     @Test
@@ -61,7 +61,7 @@ public class MongoTrustDomainLegacyMappingTest {
         legacy.setBundleSource("JWKS_URL");
         legacy.setJwksUrl("https://spire.example.org/keys");
 
-        var keyMaterial = MongoTrustDomainRepository.readKeyMaterial(legacy);
+        var keyMaterial = MongoTrustedDomainRepository.readKeyMaterial(legacy);
 
         assertEquals(KeyMaterialSource.JWKS_URL, keyMaterial.getSource());
         assertEquals("https://spire.example.org/keys", keyMaterial.getJwksUrl());
@@ -77,7 +77,7 @@ public class MongoTrustDomainLegacyMappingTest {
         keyMaterialMongo.setCertificate("cert");
         doc.setKeyMaterial(keyMaterialMongo);
 
-        var keyMaterial = MongoTrustDomainRepository.readKeyMaterial(doc);
+        var keyMaterial = MongoTrustedDomainRepository.readKeyMaterial(doc);
 
         assertEquals(KeyMaterialSource.PEM, keyMaterial.getSource());
         assertEquals("cert", keyMaterial.getCertificate());
@@ -86,6 +86,6 @@ public class MongoTrustDomainLegacyMappingTest {
 
     @Test
     public void shouldReadNoKeyMaterial_whenDocumentHasNeither() {
-        assertNull(MongoTrustDomainRepository.readKeyMaterial(new TrustDomainMongo()));
+        assertNull(MongoTrustedDomainRepository.readKeyMaterial(new TrustDomainMongo()));
     }
 }

@@ -129,7 +129,7 @@
     </mat-form-field>
   </div>
 
-  <div class="gv-form-section" fxLayout="column">
+  <div *ngIf="spiffeEnabled" class="gv-form-section" fxLayout="column">
     <div class="gv-form-section-title">
       <h5>Signing algorithms</h5>
       <mat-divider></mat-divider>

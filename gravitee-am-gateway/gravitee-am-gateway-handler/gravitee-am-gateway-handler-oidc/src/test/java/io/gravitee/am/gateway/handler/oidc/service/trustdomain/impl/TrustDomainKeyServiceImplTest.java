@@ -25,7 +25,7 @@ import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -99,7 +99,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKeys_returnsEmpty_whenKeyMaterialMissing() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.setKeyMaterial(null);
 
         service.getKeys(td).test().assertNoErrors().assertComplete().assertNoValues();
@@ -110,7 +110,7 @@ class TrustDomainKeyServiceImplTest {
     void shouldReturnInlineJwkSet_withoutFetching() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
         JWKSet inline = jwks("kid-1");
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWK_SET)
                 .jwkSet(inline)
@@ -125,7 +125,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void shouldReturnPemKeyRegardlessOfKid() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.PEM)
                 .certificate(PEM_CERTIFICATE)
@@ -140,7 +140,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void shouldErrorOnUnparseablePemCertificate() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.setKeyMaterial(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.PEM)
                 .certificate("not-a-certificate")
@@ -152,7 +152,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKeys_returnsEmpty_whenJwksUrlBlank() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.getKeyMaterial().setJwksUrl("");
 
         service.getKeys(td).test().assertNoErrors().assertComplete().assertNoValues();
@@ -162,7 +162,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKeys_rejectsFetch_whenUrlResolvesToPrivateAddress() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.getKeyMaterial().setJwksUrl("https://10.0.0.5/keys");
 
         service.getKeys(td).test()
@@ -175,7 +175,7 @@ class TrustDomainKeyServiceImplTest {
     void getKeys_allowsPrivateAddress_whenDomainPolicyPermits() {
         settings.setAllowPrivateIpAddress(true);
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.getKeyMaterial().setJwksUrl("https://10.0.0.5/keys");
         JWKSet bundle = jwks("kid-1");
         when(jwkSetFetcher.getKeys("https://10.0.0.5/keys", DEFAULT_MAX_RESPONSE_SIZE_BYTES)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
@@ -194,7 +194,7 @@ class TrustDomainKeyServiceImplTest {
         Domain legacyDomain = new Domain();
         legacyDomain.setOidc(legacyOidc);
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, legacyDomain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.getKeyMaterial().setJwksUrl("https://10.0.0.5/keys");
         JWKSet bundle = jwks("kid-1");
         when(jwkSetFetcher.getKeys("https://10.0.0.5/keys", 8 * 1024L)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
@@ -205,7 +205,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKeys_rejectsHttp_unlessAllowedByPolicy() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         td.getKeyMaterial().setJwksUrl("http://bundle.example.org/keys");
 
         service.getKeys(td).test()
@@ -215,7 +215,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKeys_cachesBundle_betweenCalls() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
         when(jwkSetFetcher.getKeys(JWKS_URL, DEFAULT_MAX_RESPONSE_SIZE_BYTES)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
@@ -230,7 +230,7 @@ class TrustDomainKeyServiceImplTest {
         // Force soft-TTL = 0 so the second call always refreshes.
         settings.setCacheTtlSeconds(0);
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
 
         when(jwkSetFetcher.getKeys(JWKS_URL, DEFAULT_MAX_RESPONSE_SIZE_BYTES))
@@ -248,7 +248,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKeys_propagatesError_whenNoStaleAvailable() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         when(jwkSetFetcher.getKeys(JWKS_URL, DEFAULT_MAX_RESPONSE_SIZE_BYTES)).thenReturn(Maybe.error(new RuntimeException("upstream down")));
 
         service.getKeys(td).test().assertError(RuntimeException.class);
@@ -257,7 +257,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKey_returnsEmpty_forNullOrBlankKid() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
 
         service.getKey(td, null).test().assertNoErrors().assertComplete().assertNoValues();
         service.getKey(td, "  ").test().assertNoErrors().assertComplete().assertNoValues();
@@ -267,7 +267,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKey_returnsMatchingKey() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1", "kid-2");
         when(jwkSetFetcher.getKeys(JWKS_URL, DEFAULT_MAX_RESPONSE_SIZE_BYTES)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
@@ -279,7 +279,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void getKey_refreshesOnMiss_andReturnsNewKid() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         JWKSet first = jwks("kid-1");
         JWKSet second = jwks("kid-1", "kid-2");
 
@@ -302,7 +302,7 @@ class TrustDomainKeyServiceImplTest {
     void shouldBoundResponseSizeWithConfiguredMaximum() {
         settings.setMaxResponseSizeKb(8);
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
         when(jwkSetFetcher.getKeys(JWKS_URL, 8 * 1024L)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
@@ -314,7 +314,7 @@ class TrustDomainKeyServiceImplTest {
     @Test
     void evict_clearsCachedBundle() {
         TrustDomainKeyServiceImpl service = new TrustDomainKeyServiceImpl(jwkSetFetcher, domain);
-        TrustDomain td = trustDomain();
+        TrustedDomain td = trustDomain();
         JWKSet bundle = jwks("kid-1");
         when(jwkSetFetcher.getKeys(JWKS_URL, DEFAULT_MAX_RESPONSE_SIZE_BYTES)).thenReturn(Maybe.just(new JWKSetFetchResponse(bundle, null)));
 
@@ -334,15 +334,15 @@ class TrustDomainKeyServiceImplTest {
 
     // --- helpers -----------------------------------------------------------
 
-    private static TrustDomain trustDomain() {
-        TrustDomain td = TrustDomain.builder()
+    private static TrustedDomain trustDomain() {
+        TrustedDomain td = TrustedDomain.builder()
                 .id("td-1")
                 .name("example.org")
                 .keyMaterial(TrustDomainKeyMaterial.builder()
                         .source(KeyMaterialSource.JWKS_URL)
                         .jwksUrl(JWKS_URL)
+                        .refreshIntervalSeconds(300)
                         .build())
-                .refreshIntervalSeconds(300)
                 .build();
         return td;
     }

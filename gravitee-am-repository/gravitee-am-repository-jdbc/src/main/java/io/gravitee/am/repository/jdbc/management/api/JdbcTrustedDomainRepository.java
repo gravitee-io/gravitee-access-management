@@ -23,12 +23,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcTrustDomain;
-import io.gravitee.am.repository.jdbc.management.api.spring.SpringTrustDomainRepository;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.SpringTrustedDomainRepository;
+import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -43,7 +45,7 @@ import java.util.Map;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 @Repository
-public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements TrustDomainRepository {
+public class JdbcTrustedDomainRepository extends AbstractJdbcRepository implements TrustedDomainRepository {
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
     private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {};
@@ -52,10 +54,10 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     private static final TypeReference<TrustDomainKeyMaterial> KEY_MATERIAL = new TypeReference<>() {};
 
     @Autowired
-    private SpringTrustDomainRepository repository;
+    private SpringTrustedDomainRepository repository;
 
     @Override
-    public Maybe<TrustDomain> findById(String id) {
+    public Maybe<TrustedDomain> findById(String id) {
         LOGGER.debug("findById({})", id);
         return repository.findById(id)
                 .map(this::toEntity)
@@ -63,7 +65,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<TrustDomain> create(TrustDomain item) {
+    public Single<TrustedDomain> create(TrustedDomain item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create trust domain with id {}", item.getId());
         return monoToSingle(getTemplate().insert(toJdbcEntity(item)))
@@ -72,7 +74,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<TrustDomain> update(TrustDomain item) {
+    public Single<TrustedDomain> update(TrustedDomain item) {
         LOGGER.debug("Update trust domain with id {}", item.getId());
         return repository.save(toJdbcEntity(item))
                 .map(this::toEntity)
@@ -87,7 +89,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Flowable<TrustDomain> findByReference(ReferenceType referenceType, String referenceId) {
+    public Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
         return repository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
@@ -95,7 +97,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Maybe<TrustDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
+    public Maybe<TrustedDomain> findByName(ReferenceType referenceType, String referenceId, String name) {
         LOGGER.debug("findByName({}, {}, {})", referenceType, referenceId, name);
         return repository.findByName(referenceType.name(), referenceId, name)
                 .map(this::toEntity)
@@ -103,7 +105,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Maybe<TrustDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain) {
+    public Maybe<TrustedDomain> findBySpiffeTrustDomain(ReferenceType referenceType, String referenceId, String spiffeTrustDomain) {
         LOGGER.debug("findBySpiffeTrustDomain({}, {}, {})", referenceType, referenceId, spiffeTrustDomain);
         return repository.findBySpiffeTrustDomain(referenceType.name(), referenceId, spiffeTrustDomain)
                 .map(this::toEntity)
@@ -111,37 +113,33 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Maybe<TrustDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
+    public Maybe<TrustedDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
         LOGGER.debug("findByIssuer({}, {}, {})", referenceType, referenceId, issuer);
         return repository.findByIssuer(referenceType.name(), referenceId, issuer)
                 .map(this::toEntity)
                 .observeOn(Schedulers.computation());
     }
 
-    private TrustDomain toEntity(JdbcTrustDomain entity) {
+    private TrustedDomain toEntity(JdbcTrustDomain entity) {
         if (entity == null) {
             return null;
         }
-        TrustDomain td = new TrustDomain();
+        TrustedDomain td = new TrustedDomain();
         td.setId(entity.getId());
         td.setReferenceId(entity.getReferenceId());
         td.setReferenceType(entity.getReferenceType() != null ? ReferenceType.valueOf(entity.getReferenceType()) : null);
         td.setName(entity.getName());
         td.setDescription(entity.getDescription());
-        td.setSpiffeTrustDomain(readSpiffeTrustDomain(entity));
-        td.setIssuer(entity.getIssuer());
+        td.setDomainIdentifier(entity.getIssuer());
         td.setKeyMaterial(readKeyMaterial(entity));
-        td.setRefreshIntervalSeconds(entity.getRefreshIntervalSeconds());
-        td.setAllowedAlgorithms(parseJson(entity.getAllowedAlgorithms(), STRING_LIST, "allowed algorithms"));
-        td.setScopeMappings(parseJson(entity.getScopeMappings(), STRING_MAP, "scope mappings"));
-        td.setUserBindingEnabled(Boolean.TRUE.equals(entity.getUserBindingEnabled()));
-        td.setUserBindingCriteria(parseJson(entity.getUserBindingCriteria(), CRITERION_LIST, "user binding criteria"));
+        td.setSpiffe(readSpiffe(entity));
+        td.setTokenExchange(readTokenExchange(entity));
         td.setCreatedAt(toDate(entity.getCreatedAt()));
         td.setUpdatedAt(toDate(entity.getUpdatedAt()));
         return td;
     }
 
-    private JdbcTrustDomain toJdbcEntity(TrustDomain td) {
+    private JdbcTrustDomain toJdbcEntity(TrustedDomain td) {
         if (td == null) {
             return null;
         }
@@ -152,7 +150,7 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
         entity.setName(td.getName());
         entity.setDescription(td.getDescription());
         entity.setSpiffeTrustDomain(td.getSpiffeTrustDomain());
-        entity.setIssuer(td.getIssuer());
+        entity.setIssuer(td.getDomainIdentifier());
         entity.setKeyMaterial(serializeJson(td.getKeyMaterial(), "key material"));
         entity.setRefreshIntervalSeconds(td.getRefreshIntervalSeconds());
         entity.setAllowedAlgorithms(serializeJson(td.getAllowedAlgorithms(), "allowed algorithms"));
@@ -169,12 +167,38 @@ public class JdbcTrustDomainRepository extends AbstractJdbcRepository implements
      * trust domains stored before it existed.
      */
     static TrustDomainKeyMaterial readKeyMaterial(JdbcTrustDomain entity) {
-        if (entity.getKeyMaterial() != null && !entity.getKeyMaterial().isBlank()) {
-            return parseJson(entity.getKeyMaterial(), KEY_MATERIAL, "key material");
+        TrustDomainKeyMaterial model = entity.getKeyMaterial() != null && !entity.getKeyMaterial().isBlank()
+                ? parseJson(entity.getKeyMaterial(), KEY_MATERIAL, "key material")
+                : TrustDomainKeyMaterial.fromBundleSource(
+                        entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null,
+                        entity.getJwksUrl());
+        if (model != null) {
+            model.setRefreshIntervalSeconds(entity.getRefreshIntervalSeconds());
         }
-        return TrustDomainKeyMaterial.fromBundleSource(
-                entity.getBundleSource() != null ? SpiffeBundleSource.valueOf(entity.getBundleSource()) : null,
-                entity.getJwksUrl());
+        return model;
+    }
+
+    static SpiffeTrustSettings readSpiffe(JdbcTrustDomain entity) {
+        String spiffeTrustDomain = readSpiffeTrustDomain(entity);
+        List<String> allowedAlgorithms = parseJson(entity.getAllowedAlgorithms(), STRING_LIST, "allowed algorithms");
+        if (spiffeTrustDomain == null && allowedAlgorithms == null) {
+            return null;
+        }
+        return SpiffeTrustSettings.builder()
+                .spiffeTrustDomain(spiffeTrustDomain)
+                .allowedAlgorithms(allowedAlgorithms)
+                .build();
+    }
+
+    static TokenExchangeTrustSettings readTokenExchange(JdbcTrustDomain entity) {
+        if (entity.getIssuer() == null) {
+            return null;
+        }
+        return TokenExchangeTrustSettings.builder()
+                .scopeMappings(parseJson(entity.getScopeMappings(), STRING_MAP, "scope mappings"))
+                .userBindingEnabled(Boolean.TRUE.equals(entity.getUserBindingEnabled()))
+                .userBindingCriteria(parseJson(entity.getUserBindingCriteria(), CRITERION_LIST, "user binding criteria"))
+                .build();
     }
 
     /**

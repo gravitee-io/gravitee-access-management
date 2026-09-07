@@ -51,6 +51,7 @@ export interface TrustDomainKeyMaterial {
   jwksUrl?: string;
   jwkSet?: JwkSet;
   certificate?: string;
+  refreshIntervalSeconds?: number;
 }
 
 /** One criterion for resolving an external JWT subject to a domain user (attribute + EL expression). */
@@ -73,6 +74,51 @@ export interface TrustDomain {
   scopeMappings?: Record<string, string>;
   userBindingEnabled?: boolean;
   userBindingCriteria?: UserBindingCriterion[];
+}
+
+export interface SpiffeTrustSettings {
+  spiffeTrustDomain?: string;
+  allowedAlgorithms?: string[];
+}
+
+export interface TokenExchangeTrustSettings {
+  scopeMappings?: Record<string, string>;
+  userBindingEnabled?: boolean;
+  userBindingCriteria?: UserBindingCriterion[];
+}
+
+export interface TrustedDomainRequest {
+  name?: string;
+  description?: string;
+  keyMaterial?: TrustDomainKeyMaterial;
+  domainIdentifier: string;
+  spiffe: SpiffeTrustSettings;
+  tokenExchange: TokenExchangeTrustSettings;
+}
+
+function keyMaterialWithInterval(trustDomain: TrustDomain): TrustDomainKeyMaterial | undefined {
+  if (!trustDomain.keyMaterial) {
+    return undefined;
+  }
+  return { ...trustDomain.keyMaterial, refreshIntervalSeconds: trustDomain.refreshIntervalSeconds };
+}
+
+export function toTrustedDomainRequest(trustDomain: TrustDomain): TrustedDomainRequest {
+  return {
+    name: trustDomain.name,
+    description: trustDomain.description,
+    keyMaterial: keyMaterialWithInterval(trustDomain),
+    domainIdentifier: trustDomain.issuer ?? '',
+    spiffe: {
+      spiffeTrustDomain: trustDomain.spiffeTrustDomain ?? '',
+      allowedAlgorithms: trustDomain.allowedAlgorithms ?? [],
+    },
+    tokenExchange: {
+      scopeMappings: trustDomain.scopeMappings ?? {},
+      userBindingEnabled: trustDomain.userBindingEnabled ?? false,
+      userBindingCriteria: trustDomain.userBindingCriteria ?? [],
+    },
+  };
 }
 
 export function trustDomainUsages(trustDomain: TrustDomain | undefined): TrustDomainUsage[] {
@@ -116,20 +162,25 @@ export function keyMaterialSourceLabel(source: KeyMaterialSource | string): stri
   return optionLabel(KEY_MATERIAL_SOURCE_OPTIONS, source);
 }
 
-/**
- * Restores the canonical enum spelling. The management API serializes every enum lowercased
- * (ObjectMapperResolver) and accepts either case back, so responses carry "pem" where the console
- * compares against PEM.
- */
-export function normalizeTrustDomain<T>(trustDomain: T): T {
-  const td = trustDomain as TrustDomain;
-  if (!td) {
-    return trustDomain;
+export function fromTrustedDomain<T>(response: T): T {
+  const trustedDomain = response as unknown as Record<string, any>;
+  if (!trustedDomain) {
+    return response;
   }
+  const keyMaterial = trustedDomain.keyMaterial;
   return {
-    ...td,
-    keyMaterial: td.keyMaterial ? { ...td.keyMaterial, source: td.keyMaterial.source?.toUpperCase() as KeyMaterialSource } : td.keyMaterial,
-  } as T;
+    id: trustedDomain.id,
+    name: trustedDomain.name,
+    description: trustedDomain.description,
+    spiffeTrustDomain: trustedDomain.spiffe?.spiffeTrustDomain,
+    issuer: trustedDomain.domainIdentifier,
+    keyMaterial: keyMaterial ? { ...keyMaterial, source: keyMaterial.source?.toUpperCase() as KeyMaterialSource } : keyMaterial,
+    refreshIntervalSeconds: keyMaterial?.refreshIntervalSeconds ?? DEFAULT_REFRESH_INTERVAL_SECONDS,
+    allowedAlgorithms: trustedDomain.spiffe?.allowedAlgorithms ?? [],
+    scopeMappings: trustedDomain.tokenExchange?.scopeMappings,
+    userBindingEnabled: trustedDomain.tokenExchange?.userBindingEnabled ?? false,
+    userBindingCriteria: trustedDomain.tokenExchange?.userBindingCriteria,
+  } as unknown as T;
 }
 
 const OUTSIDE_LABEL = /[^a-z0-9.-]+/g;

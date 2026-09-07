@@ -17,19 +17,19 @@ package io.gravitee.am.gateway.handler.oidc.service.trustdomain;
 
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Maybe;
 
 /**
- * Resolves the signing keys of a {@link TrustDomain}.
+ * Resolves the signing keys of a {@link TrustedDomain}.
  * Keys are read from the key material configured on the trust domain (JWKS URL or inline),
  * cached with the domain's refresh interval, and re-fetched on a {@code kid} miss.
  */
 public interface TrustDomainKeyService {
 
-    Maybe<JWKSet> getKeys(TrustDomain trustDomain);
+    Maybe<JWKSet> getKeys(TrustedDomain trustDomain);
 
-    Maybe<JWK> getKey(TrustDomain trustDomain, String kid);
+    Maybe<JWK> getKey(TrustedDomain trustDomain, String kid);
 
     /**
      * Drop the cached bundle for {@code trustDomainId}. Called on management events

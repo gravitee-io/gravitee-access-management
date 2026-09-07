@@ -34,7 +34,7 @@ import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Maybe;
 import lombok.CustomLog;
 
@@ -153,7 +153,7 @@ public class SpiffeClientAssertionValidator implements ClientAssertionValidator 
         return client;
     }
 
-    private Maybe<Boolean> verifySpiffeSignature(SignedJWT signedJWT, TrustDomain td) {
+    private Maybe<Boolean> verifySpiffeSignature(SignedJWT signedJWT, TrustedDomain td) {
         String kid = signedJWT.getHeader().getKeyID();
         if (kid == null || kid.isBlank()) {
             return Maybe.error(new InvalidClientException("SVID missing kid"));

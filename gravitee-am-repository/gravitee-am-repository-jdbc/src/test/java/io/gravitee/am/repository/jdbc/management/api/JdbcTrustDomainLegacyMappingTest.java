@@ -33,7 +33,7 @@ public class JdbcTrustDomainLegacyMappingTest {
         JdbcTrustDomain legacy = new JdbcTrustDomain();
         legacy.setName("example.org");
 
-        assertEquals("example.org", JdbcTrustDomainRepository.readSpiffeTrustDomain(legacy));
+        assertEquals("example.org", JdbcTrustedDomainRepository.readSpiffeTrustDomain(legacy));
     }
 
     @Test
@@ -42,7 +42,7 @@ public class JdbcTrustDomainLegacyMappingTest {
         migrated.setName("issuer.example");
         migrated.setIssuer("https://issuer.example/realm");
 
-        assertNull(JdbcTrustDomainRepository.readSpiffeTrustDomain(migrated));
+        assertNull(JdbcTrustedDomainRepository.readSpiffeTrustDomain(migrated));
     }
 
     @Test
@@ -51,7 +51,7 @@ public class JdbcTrustDomainLegacyMappingTest {
         row.setName("acme-corp");
         row.setSpiffeTrustDomain("acme.org");
 
-        assertEquals("acme.org", JdbcTrustDomainRepository.readSpiffeTrustDomain(row));
+        assertEquals("acme.org", JdbcTrustedDomainRepository.readSpiffeTrustDomain(row));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class JdbcTrustDomainLegacyMappingTest {
         legacy.setBundleSource("JWKS_URL");
         legacy.setJwksUrl("https://spire.example.org/keys");
 
-        var keyMaterial = JdbcTrustDomainRepository.readKeyMaterial(legacy);
+        var keyMaterial = JdbcTrustedDomainRepository.readKeyMaterial(legacy);
 
         assertEquals(KeyMaterialSource.JWKS_URL, keyMaterial.getSource());
         assertEquals("https://spire.example.org/keys", keyMaterial.getJwksUrl());
@@ -73,7 +73,7 @@ public class JdbcTrustDomainLegacyMappingTest {
         row.setJwksUrl("https://legacy.example.org/keys");
         row.setKeyMaterial("{\"source\":\"PEM\",\"certificate\":\"cert\"}");
 
-        var keyMaterial = JdbcTrustDomainRepository.readKeyMaterial(row);
+        var keyMaterial = JdbcTrustedDomainRepository.readKeyMaterial(row);
 
         assertEquals(KeyMaterialSource.PEM, keyMaterial.getSource());
         assertEquals("cert", keyMaterial.getCertificate());
@@ -82,6 +82,6 @@ public class JdbcTrustDomainLegacyMappingTest {
 
     @Test
     public void shouldReadNoKeyMaterial_whenRowHasNeither() {
-        assertNull(JdbcTrustDomainRepository.readKeyMaterial(new JdbcTrustDomain()));
+        assertNull(JdbcTrustedDomainRepository.readKeyMaterial(new JdbcTrustDomain()));
     }
 }

@@ -46,15 +46,15 @@ describe('Trusted domain changes reach the gateway', () => {
     const created = await fixture.registerAndSync(body);
 
     expect(created.name).toEqual(body.name);
-    expect(created.spiffeTrustDomain).toEqual(body.spiffeTrustDomain);
+    expect(created.spiffe.spiffeTrustDomain).toEqual(body.spiffe.spiffeTrustDomain);
   });
 
-  it('should synchronise the gateway when a trusted-issuer trusted domain is registered', async () => {
+  it('should synchronize the gateway when a trusted-issuer trusted domain is registered', async () => {
     const body = issuerTrustDomainBody();
 
     const created = await fixture.registerAndSync(body);
 
-    expect(created.issuer).toEqual(body.issuer);
+    expect(created.domainIdentifier).toEqual(body.domainIdentifier);
   });
 
   it('should synchronise the gateway when one trusted domain serves both usages', async () => {
@@ -62,20 +62,23 @@ describe('Trusted domain changes reach the gateway', () => {
 
     const created = await fixture.registerAndSync(body);
 
-    expect(created.spiffeTrustDomain).toEqual(body.spiffeTrustDomain);
-    expect(created.issuer).toEqual(body.issuer);
+    expect(created.spiffe.spiffeTrustDomain).toEqual(body.spiffe.spiffeTrustDomain);
+    expect(created.domainIdentifier).toEqual(body.domainIdentifier);
   });
 
   it('should synchronise the gateway when a trusted domain is amended', async () => {
     const registered = await fixture.registerAndSync(spiffeTrustDomainBody());
 
     const amended = await fixture.amendAndSync(registered.id, {
-      keyMaterial: { source: 'JWKS_URL', jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.SPIFFE_AMENDED_JWKS_URL },
-      refreshIntervalSeconds: TRUSTED_DOMAIN_SYNC_TEST.AMENDED_REFRESH_INTERVAL_SECONDS,
+      keyMaterial: {
+        source: 'JWKS_URL',
+        jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.SPIFFE_AMENDED_JWKS_URL,
+        refreshIntervalSeconds: TRUSTED_DOMAIN_SYNC_TEST.AMENDED_REFRESH_INTERVAL_SECONDS,
+      },
     });
 
     expect(amended.keyMaterial.jwksUrl).toEqual(TRUSTED_DOMAIN_SYNC_TEST.SPIFFE_AMENDED_JWKS_URL);
-    expect(amended.refreshIntervalSeconds).toEqual(TRUSTED_DOMAIN_SYNC_TEST.AMENDED_REFRESH_INTERVAL_SECONDS);
+    expect(amended.keyMaterial.refreshIntervalSeconds).toEqual(TRUSTED_DOMAIN_SYNC_TEST.AMENDED_REFRESH_INTERVAL_SECONDS);
   });
 
   it('should synchronise the gateway when a trusted domain is removed', async () => {

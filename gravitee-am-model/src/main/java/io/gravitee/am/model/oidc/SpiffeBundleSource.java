@@ -16,7 +16,7 @@
 package io.gravitee.am.model.oidc;
 
 /**
- * How AM obtains the JWT-SVID signing keys for a {@link TrustDomain}.
+ * How AM obtains the JWT-SVID signing keys for a {@link TrustedDomain}.
  *
  * @author GraviteeSource Team
  */

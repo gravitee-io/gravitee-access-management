@@ -19,11 +19,11 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.model.NewTrustDomain;
+import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,9 +51,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 
-@Deprecated
-@Tag(name = "trust-domain")
-public class TrustDomainsResource extends AbstractResource {
+@Tag(name = "trusted-domain")
+public class TrustedDomainsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -67,17 +66,15 @@ public class TrustDomainsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "listTrustDomains",
-            deprecated = true,
-            summary = "List trust domains registered against the security domain",
-            hidden = false,
+            operationId = "listTrustedDomains",
+            summary = "List trusted domains registered against the security domain",
             description = "User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain " +
                     "or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment " +
                     "or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of trust domains",
+            @ApiResponse(responseCode = "200", description = "List of trusted domains",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TrustDomain.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = TrustedDomain.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -88,7 +85,6 @@ public class TrustDomainsResource extends AbstractResource {
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
                 .flatMapPublisher(domain -> trustDomainService.findByReference(ReferenceType.DOMAIN, domainId))
-                .map(TrustDomain::from)
                 .toList()
                 .subscribe(response::resume, response::resume);
     }
@@ -97,43 +93,41 @@ public class TrustDomainsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "createTrustDomain",
-            deprecated = true,
-            summary = "Register a trust domain on the security domain",
+            operationId = "createTrustedDomain",
+            summary = "Register a trusted domain on the security domain",
             description = "User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain " +
                     "or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment " +
-                    "or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization. " +
-                    "Deprecated: use POST /trusted-domains instead.")
+                    "or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Trust domain successfully created",
+            @ApiResponse(responseCode = "201", description = "Trusted domain successfully created",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TrustDomain.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid trust domain configuration"),
+                            schema = @Schema(implementation = TrustedDomain.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid trusted domain configuration"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @Parameter(name = "trustDomain", required = true) @Valid @NotNull final NewTrustDomain newTrustDomain,
+            @Parameter(name = "trustedDomain", required = true) @Valid @NotNull final NewTrustedDomain newTrustedDomain,
             @Suspended final AsyncResponse response) {
         final var authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.CREATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMapSingle(domain -> trustDomainService.create(domain, newTrustDomain, authenticatedUser))
+                .flatMapSingle(domain -> trustDomainService.create(domain, newTrustedDomain, authenticatedUser))
                 .map(td -> Response
                         .created(URI.create("/organizations/" + organizationId
                                 + "/environments/" + environmentId
                                 + "/domains/" + domainId
-                                + "/trust-domains/" + td.getId()))
-                        .entity(TrustDomain.from(td))
+                                + "/trusted-domains/" + td.getId()))
+                        .entity(td)
                         .build())
                 .subscribe(response::resume, response::resume);
     }
 
-    @Path("{trustDomainId}")
-    public TrustDomainResource getTrustDomainResource() {
-        return resourceContext.getResource(TrustDomainResource.class);
+    @Path("{trustedDomainId}")
+    public TrustedDomainResource getTrustedDomainResource() {
+        return resourceContext.getResource(TrustedDomainResource.class);
     }
 }

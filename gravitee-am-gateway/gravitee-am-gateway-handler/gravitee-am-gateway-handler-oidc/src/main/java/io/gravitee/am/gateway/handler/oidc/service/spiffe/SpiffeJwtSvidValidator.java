@@ -19,7 +19,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 
 import java.text.ParseException;
 import java.time.Duration;
@@ -52,7 +52,7 @@ public final class SpiffeJwtSvidValidator {
      * @return null on success, or a short, audit-friendly failure reason.
      */
     public String validate(SignedJWT jwt,
-                           TrustDomain trustDomain,
+                           TrustedDomain trustDomain,
                            SpiffeApplicationSettings spiffeApplicationSettings,
                            String tokenEndpoint) {
         if (jwt == null || trustDomain == null) {

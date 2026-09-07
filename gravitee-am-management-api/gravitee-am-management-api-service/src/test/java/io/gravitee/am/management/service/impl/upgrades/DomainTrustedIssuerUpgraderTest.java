@@ -25,10 +25,12 @@ import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -66,7 +68,7 @@ class DomainTrustedIssuerUpgraderTest {
     private DomainService domainService;
 
     @Mock
-    private TrustDomainRepository trustDomainRepository;
+    private TrustedDomainRepository trustDomainRepository;
 
     @InjectMocks
     private DomainTrustedIssuerUpgrader upgrader;
@@ -75,14 +77,14 @@ class DomainTrustedIssuerUpgraderTest {
     void shouldMigrateTrustedIssuerToTokenExchangeTrustedDomain() {
         TrustedIssuer issuer = jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks");
 
-        TrustDomain migrated = migrateOne(domainWith(issuer));
+        TrustedDomain migrated = migrateOne(domainWith(issuer));
 
         assertEquals(ReferenceType.DOMAIN, migrated.getReferenceType());
         assertEquals(DOMAIN_ID, migrated.getReferenceId());
-        assertEquals("https://issuer.example.com", migrated.getIssuer());
+        assertEquals("https://issuer.example.com", migrated.getDomainIdentifier());
         assertEquals(KeyMaterialSource.JWKS_URL, migrated.getKeyMaterial().getSource());
         assertEquals("https://issuer.example.com/jwks", migrated.getKeyMaterial().getJwksUrl());
-        assertEquals(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS, migrated.getRefreshIntervalSeconds());
+        assertEquals(TrustedDomain.DEFAULT_REFRESH_INTERVAL_SECONDS, migrated.getRefreshIntervalSeconds());
         assertNull(migrated.getAllowedAlgorithms());
     }
 
@@ -93,7 +95,7 @@ class DomainTrustedIssuerUpgraderTest {
         issuer.setUserBindingEnabled(true);
         issuer.setUserBindingCriteria(List.of(criterion("email", "{#token.email}")));
 
-        TrustDomain migrated = migrateOne(domainWith(issuer));
+        TrustedDomain migrated = migrateOne(domainWith(issuer));
 
         assertEquals(Map.of("ext:read", "read"), migrated.getScopeMappings());
         assertTrue(migrated.isUserBindingEnabled());
@@ -125,7 +127,7 @@ class DomainTrustedIssuerUpgraderTest {
 
     @Test
     void shouldDeriveDistinctNamesForIssuersSharingHostButDifferentPath() {
-        List<TrustDomain> migrated = migrate(domainWith(
+        List<TrustedDomain> migrated = migrate(domainWith(
                 jwksIssuer("https://issuer.example.com/realms/one", "https://issuer.example.com/one/jwks"),
                 jwksIssuer("https://issuer.example.com/realms/two", "https://issuer.example.com/two/jwks")));
 
@@ -141,14 +143,14 @@ class DomainTrustedIssuerUpgraderTest {
         Domain backward = domainWith(two, one);
         backward.setId("other-domain-id");
 
-        List<TrustDomain> migrated = migrateAll(forward, backward);
+        List<TrustedDomain> migrated = migrateAll(forward, backward);
 
         assertEquals(namesOf(migrated, DOMAIN_ID), namesOf(migrated, "other-domain-id"));
     }
 
     @Test
     void shouldDisambiguateIssuersSlugifyingToTheSameName() {
-        List<TrustDomain> migrated = migrate(domainWith(
+        List<TrustedDomain> migrated = migrate(domainWith(
                 jwksIssuer("https://issuer.example.com/a-b", "https://issuer.example.com/jwks"),
                 jwksIssuer("https://issuer.example.com/a/b", "https://issuer.example.com/jwks")));
 
@@ -169,45 +171,45 @@ class DomainTrustedIssuerUpgraderTest {
         TrustedIssuer blank = jwksIssuer(" ", "https://issuer.example.com/jwks");
         TrustedIssuer valid = jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks");
 
-        List<TrustDomain> migrated = migrate(domainWith(blank, valid));
+        List<TrustedDomain> migrated = migrate(domainWith(blank, valid));
 
         assertEquals(1, migrated.size());
-        assertEquals("https://issuer.example.com", migrated.get(0).getIssuer());
+        assertEquals("https://issuer.example.com", migrated.get(0).getDomainIdentifier());
     }
 
     @Test
     void shouldLeaveIssuerInlineWhenItIsTooLongToStore() {
-        TrustedIssuer tooLong = jwksIssuer("https://issuer.example.com/" + "a".repeat(TrustDomain.ISSUER_MAX_LENGTH), "https://issuer.example.com/jwks");
+        TrustedIssuer tooLong = jwksIssuer("https://issuer.example.com/" + "a".repeat(TrustedDomain.ISSUER_MAX_LENGTH), "https://issuer.example.com/jwks");
         TrustedIssuer valid = jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks");
 
-        List<TrustDomain> migrated = migrate(domainWith(tooLong, valid));
+        List<TrustedDomain> migrated = migrate(domainWith(tooLong, valid));
 
         assertEquals(1, migrated.size());
-        assertEquals("https://issuer.example.com", migrated.get(0).getIssuer());
+        assertEquals("https://issuer.example.com", migrated.get(0).getDomainIdentifier());
     }
 
     @Test
     void shouldMigrateIssuerSittingExactlyOnTheStorageLimit() {
-        String issuer = "https://issuer.example.com/" + "a".repeat(TrustDomain.ISSUER_MAX_LENGTH - "https://issuer.example.com/".length());
+        String issuer = "https://issuer.example.com/" + "a".repeat(TrustedDomain.ISSUER_MAX_LENGTH - "https://issuer.example.com/".length());
 
-        assertEquals(issuer, migrateOne(domainWith(jwksIssuer(issuer, "https://issuer.example.com/jwks"))).getIssuer());
+        assertEquals(issuer, migrateOne(domainWith(jwksIssuer(issuer, "https://issuer.example.com/jwks"))).getDomainIdentifier());
     }
 
     @Test
     void shouldLeaveSpiffeTrustDomainsUntouched() {
         Domain domain = domainWith(jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks"));
-        TrustDomain spiffe = TrustDomain.builder()
+        TrustedDomain spiffe = TrustedDomain.builder()
                 .id("spiffe-id")
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(DOMAIN_ID)
                 .name("spiffe-label")
-                .spiffeTrustDomain("issuer.example.com")
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("issuer.example.com").build())
                 .build();
 
-        List<TrustDomain> migrated = migrate(domain, spiffe);
+        List<TrustedDomain> migrated = migrate(domain, spiffe);
 
         assertEquals(1, migrated.size());
-        assertEquals("https://issuer.example.com", migrated.get(0).getIssuer());
+        assertEquals("https://issuer.example.com", migrated.get(0).getDomainIdentifier());
         verify(trustDomainRepository, never()).update(any());
         verify(trustDomainRepository, never()).delete(any());
     }
@@ -234,17 +236,17 @@ class DomainTrustedIssuerUpgraderTest {
                 jwksIssuer("https://one.example.com", "https://one.example.com/jwks"),
                 jwksIssuer("https://two.example.com", "https://two.example.com/jwks"));
 
-        List<TrustDomain> migrated = migrate(domain, alreadyMigrated("https://one.example.com"));
+        List<TrustedDomain> migrated = migrate(domain, alreadyMigrated("https://one.example.com"));
 
         assertEquals(1, migrated.size());
-        assertEquals("https://two.example.com", migrated.get(0).getIssuer());
+        assertEquals("https://two.example.com", migrated.get(0).getDomainIdentifier());
     }
 
     @Test
     void shouldDisambiguateWhenTheDerivedNameIsAlreadyHeld() {
         Domain domain = domainWith(jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks"));
 
-        TrustDomain migrated = migrateOne(domain, squatter("https-issuer.example.com"));
+        TrustedDomain migrated = migrateOne(domain, squatter("https-issuer.example.com"));
 
         assertEquals("https-issuer.example.com-605ec2f1", migrated.getName());
     }
@@ -283,9 +285,9 @@ class DomainTrustedIssuerUpgraderTest {
         TrustedIssuer issuer = new TrustedIssuer();
         issuer.setIssuer("https://issuer.example.com");
 
-        TrustDomain migrated = migrateOne(domainWith(issuer));
+        TrustedDomain migrated = migrateOne(domainWith(issuer));
 
-        assertEquals("https://issuer.example.com", migrated.getIssuer());
+        assertEquals("https://issuer.example.com", migrated.getDomainIdentifier());
         assertNull(migrated.getKeyMaterial());
     }
 
@@ -327,13 +329,13 @@ class DomainTrustedIssuerUpgraderTest {
         verify(trustDomainRepository, never()).create(any());
     }
 
-    private TrustDomain migrateOne(Domain domain, TrustDomain... existing) {
-        List<TrustDomain> migrated = migrate(domain, existing);
+    private TrustedDomain migrateOne(Domain domain, TrustedDomain... existing) {
+        List<TrustedDomain> migrated = migrate(domain, existing);
         assertEquals(1, migrated.size());
         return migrated.get(0);
     }
 
-    private List<TrustDomain> migrateAll(Domain... domains) {
+    private List<TrustedDomain> migrateAll(Domain... domains) {
         initializeSystemTask();
         stubDomainUpdate();
         when(domainService.listAll()).thenReturn(Flowable.fromArray(domains));
@@ -341,7 +343,7 @@ class DomainTrustedIssuerUpgraderTest {
         return captureCreated();
     }
 
-    private List<TrustDomain> migrate(Domain domain, TrustDomain... existing) {
+    private List<TrustedDomain> migrate(Domain domain, TrustedDomain... existing) {
         initializeSystemTask();
         stubDomainUpdate();
         when(domainService.listAll()).thenReturn(Flowable.just(domain));
@@ -350,8 +352,8 @@ class DomainTrustedIssuerUpgraderTest {
         return captureCreated();
     }
 
-    private List<TrustDomain> captureCreated() {
-        ArgumentCaptor<TrustDomain> captor = ArgumentCaptor.forClass(TrustDomain.class);
+    private List<TrustedDomain> captureCreated() {
+        ArgumentCaptor<TrustedDomain> captor = ArgumentCaptor.forClass(TrustedDomain.class);
         when(trustDomainRepository.create(captor.capture())).thenAnswer(i -> Single.just(i.getArgument(0)));
 
         assertTrue(upgrader.upgrade());
@@ -375,31 +377,33 @@ class DomainTrustedIssuerUpgraderTest {
         });
     }
 
-    private static List<String> namesOf(List<TrustDomain> migrated, String referenceId) {
+    private static List<String> namesOf(List<TrustedDomain> migrated, String referenceId) {
         return migrated.stream()
                 .filter(trustDomain -> referenceId.equals(trustDomain.getReferenceId()))
-                .map(TrustDomain::getName)
+                .map(TrustedDomain::getName)
                 .sorted()
                 .toList();
     }
 
-    private static TrustDomain squatter(String name) {
-        return TrustDomain.builder()
+    private static TrustedDomain squatter(String name) {
+        return TrustedDomain.builder()
                 .id("squatter-" + name)
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(DOMAIN_ID)
                 .name(name)
-                .issuer("https://other.example.com")
+                .domainIdentifier("https://other.example.com")
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 
-    private static TrustDomain alreadyMigrated(String issuer) {
-        return TrustDomain.builder()
+    private static TrustedDomain alreadyMigrated(String issuer) {
+        return TrustedDomain.builder()
                 .id("existing-" + issuer)
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(DOMAIN_ID)
                 .name("already-migrated")
-                .issuer(issuer)
+                .domainIdentifier(issuer)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 
