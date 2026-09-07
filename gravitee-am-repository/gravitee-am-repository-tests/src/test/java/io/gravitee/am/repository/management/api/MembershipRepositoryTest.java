@@ -291,21 +291,37 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
                 memberships.stream().anyMatch(m -> "testFutureMember".equals(m.getMemberId())));
     }
     
+    @Test
+    public void testFilterOutProtectedResourceMembership_FindById() throws Exception {
+        String incompatibleMembershipId =
+                insertIncompatibleMembershipDirectlyAndGetId("futureMemberFindById", FUTURE_REFERENCE_TYPE, MemberType.USER.name(), ORGANIZATION_ID);
+
+        TestObserver<Membership> testObserver = membershipRepository.findById(incompatibleMembershipId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
+    }
+
     private void insertIncompatibleMembershipDirectly(String memberId, String referenceType, String memberType, String referenceId) throws Exception {
+        insertIncompatibleMembershipDirectlyAndGetId(memberId, referenceType, memberType, referenceId);
+    }
+
+    private String insertIncompatibleMembershipDirectlyAndGetId(String memberId, String referenceType, String memberType, String referenceId) throws Exception {
         String repoClassName = membershipRepository.getClass().getSimpleName();
         String repoFullName = membershipRepository.getClass().getName();
         
         if (repoClassName.contains("Mongo") || repoFullName.contains("mongodb")) {
-            insertIncompatibleMembershipMongoDB(memberId, referenceType, memberType, referenceId);
+            return insertIncompatibleMembershipMongoDB(memberId, referenceType, memberType, referenceId);
         } else if (repoClassName.contains("Jdbc") || repoFullName.contains("jdbc")) {
-            insertIncompatibleMembershipJDBC(memberId, referenceType, memberType, referenceId);
+            return insertIncompatibleMembershipJDBC(memberId, referenceType, memberType, referenceId);
         } else {
             throw new UnsupportedOperationException("Unknown repository type: " + repoClassName + " (" + repoFullName + ")");
         }
     }
     
-    private void insertIncompatibleMembershipMongoDB(String memberId, String referenceType, String memberType, String referenceId) throws Exception {
-        IncompatibleDataTestUtils.insertIncompatibleEntityMongoDB(
+    private String insertIncompatibleMembershipMongoDB(String memberId, String referenceType, String memberType, String referenceId) throws Exception {
+        return IncompatibleDataTestUtils.insertIncompatibleEntityMongoDB(
             membershipRepository,
             "memberships",
             "io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo",
@@ -320,8 +336,8 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
         );
     }
     
-    private void insertIncompatibleMembershipJDBC(String memberId, String referenceType, String memberType, String referenceId) throws Exception {
-        IncompatibleDataTestUtils.insertIncompatibleEntityJDBC(
+    private String insertIncompatibleMembershipJDBC(String memberId, String referenceType, String memberType, String referenceId) throws Exception {
+        return IncompatibleDataTestUtils.insertIncompatibleEntityJDBC(
             membershipRepository,
             "io.gravitee.am.repository.jdbc.management.api.model.JdbcMembership",
             jdbcMembership -> {
