@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
 import com.nimbusds.jwt.JWTClaimsSet;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -36,5 +36,5 @@ public interface TrustedIssuerResolver {
      *         exception when its key material is unusable or its JWKS URL is refused by the
      *         security domain's retrieval policy
      */
-    Single<JWTClaimsSet> resolve(String rawToken, TrustDomain trustedDomain);
+    Single<JWTClaimsSet> resolve(String rawToken, TrustedDomain trustedDomain);
 }

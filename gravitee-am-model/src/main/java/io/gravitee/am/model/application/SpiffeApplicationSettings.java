@@ -29,7 +29,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SpiffeApplicationSettings {
 
-    /** Name of the {@code TrustDomain} this application authenticates against. */
+    /** Name of the {@code TrustedDomain} this application authenticates against. */
     private String trustDomain;
 
     /** SPIFFE ID expected in the SVID's {@code sub} claim. Interpreted per {@link #subjectMatchMode}. */

@@ -23,7 +23,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -58,7 +58,7 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
     }
 
     @Override
-    public Single<JWTClaimsSet> resolve(String rawToken, TrustDomain trustedDomain) {
+    public Single<JWTClaimsSet> resolve(String rawToken, TrustedDomain trustedDomain) {
         final SignedJWT signedJWT;
         try {
             signedJWT = SignedJWT.parse(rawToken);
@@ -68,23 +68,23 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
         JWSAlgorithm algorithm = signedJWT.getHeader().getAlgorithm();
         if (!SUPPORTED_ALGORITHMS.contains(algorithm)) {
             return Single.error(new SecurityException(
-                    "Unsupported signature algorithm " + algorithm + " for trusted issuer: " + trustedDomain.getIssuer()));
+                    "Unsupported signature algorithm " + algorithm + " for trusted issuer: " + trustedDomain.getDomainIdentifier()));
         }
         return verify(signedJWT, trustedDomain);
     }
 
-    private Single<JWTClaimsSet> verify(SignedJWT signedJWT, TrustDomain trustedDomain) {
+    private Single<JWTClaimsSet> verify(SignedJWT signedJWT, TrustedDomain trustedDomain) {
         String kid = signedJWT.getHeader().getKeyID();
         Maybe<Boolean> verified = kid == null || kid.isBlank()
                 ? trustDomainKeyService.getKeys(trustedDomain).map(jwks -> anyKeyVerifies(signedJWT, jwks))
                 : trustDomainKeyService.getKey(trustedDomain, kid).map(jwk -> isValidSignature(signedJWT, jwk));
         return verified
                 .switchIfEmpty(Single.error(() -> new SecurityException(
-                        "No signing key available for trusted issuer: " + trustedDomain.getIssuer())))
+                        "No signing key available for trusted issuer: " + trustedDomain.getDomainIdentifier())))
                 .flatMap(valid -> valid
                         ? claimsOf(signedJWT, trustedDomain)
                         : Single.error(new SecurityException(
-                                "JWT signature verification failed for trusted issuer: " + trustedDomain.getIssuer())));
+                                "JWT signature verification failed for trusted issuer: " + trustedDomain.getDomainIdentifier())));
     }
 
     private boolean anyKeyVerifies(SignedJWT signedJWT, JWKSet jwks) {
@@ -106,7 +106,7 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
         }
     }
 
-    private static Single<JWTClaimsSet> claimsOf(SignedJWT signedJWT, TrustDomain trustedDomain) {
+    private static Single<JWTClaimsSet> claimsOf(SignedJWT signedJWT, TrustedDomain trustedDomain) {
         try {
             return Single.just(signedJWT.getJWTClaimsSet());
         } catch (ParseException e) {
@@ -114,7 +114,7 @@ public class TrustedIssuerResolverImpl implements TrustedIssuerResolver {
         }
     }
 
-    private static SecurityException malformed(TrustDomain trustedDomain) {
-        return new SecurityException("Malformed JWT from trusted issuer: " + trustedDomain.getIssuer());
+    private static SecurityException malformed(TrustedDomain trustedDomain) {
+        return new SecurityException("Malformed JWT from trusted issuer: " + trustedDomain.getDomainIdentifier());
     }
 }

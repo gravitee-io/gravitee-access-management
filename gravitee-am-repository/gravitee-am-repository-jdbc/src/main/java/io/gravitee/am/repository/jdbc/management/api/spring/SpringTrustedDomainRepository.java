@@ -22,7 +22,7 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 
-public interface SpringTrustDomainRepository extends RxJava3CrudRepository<JdbcTrustDomain, String> {
+public interface SpringTrustedDomainRepository extends RxJava3CrudRepository<JdbcTrustDomain, String> {
 
     @Query("select * from trust_domains where reference_type = :refType and reference_id = :refId")
     Flowable<JdbcTrustDomain> findByReference(@Param("refType") String refType, @Param("refId") String refId);

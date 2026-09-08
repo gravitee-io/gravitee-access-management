@@ -24,7 +24,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.model.application.SpiffeApplicationSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +47,7 @@ class SpiffeJwtSvidValidatorTest {
     private static RSAPrivateKey rsaPrivateKey;
 
     private SpiffeDomainSettings domainSettings;
-    private TrustDomain trustDomain;
+    private TrustedDomain trustDomain;
     private SpiffeApplicationSettings appSettings;
     private SpiffeJwtSvidValidator validator;
 
@@ -58,7 +59,7 @@ class SpiffeJwtSvidValidatorTest {
         rsaPrivateKey = (RSAPrivateKey) pair.getPrivate();
 
         domainSettings = new SpiffeDomainSettings();
-        trustDomain = TrustDomain.builder().name(TRUST_DOMAIN).build();
+        trustDomain = TrustedDomain.builder().name(TRUST_DOMAIN).build();
         appSettings = new SpiffeApplicationSettings();
         appSettings.setTrustDomain(TRUST_DOMAIN);
         appSettings.setSubject(SUBJECT);
@@ -99,7 +100,7 @@ class SpiffeJwtSvidValidatorTest {
 
     @Test
     void validate_rejectsAlgorithm_notInAllowList() throws Exception {
-        trustDomain.setAllowedAlgorithms(List.of("ES256"));
+        spiffeOf(trustDomain).setAllowedAlgorithms(List.of("ES256"));
         SignedJWT jwt = signedJwt(defaultClaims().build(), JWSAlgorithm.RS256);
 
         assertThat(validator.validate(jwt, trustDomain, appSettings, TOKEN_ENDPOINT))
@@ -108,7 +109,7 @@ class SpiffeJwtSvidValidatorTest {
 
     @Test
     void validate_usesDomainDefaults_whenTrustDomainAllowListEmpty() throws Exception {
-        trustDomain.setAllowedAlgorithms(List.of());
+        spiffeOf(trustDomain).setAllowedAlgorithms(List.of());
         SignedJWT jwt = signedJwt(defaultClaims().build(), JWSAlgorithm.RS256);
 
         assertThat(validator.validate(jwt, trustDomain, appSettings, TOKEN_ENDPOINT)).isNull();
@@ -331,4 +332,12 @@ class SpiffeJwtSvidValidatorTest {
         jwt.sign(new RSASSASigner(rsaPrivateKey));
         return jwt;
     }
+
+    private static SpiffeTrustSettings spiffeOf(TrustedDomain trustDomain) {
+        if (trustDomain.getSpiffe() == null) {
+            trustDomain.setSpiffe(new SpiffeTrustSettings());
+        }
+        return trustDomain.getSpiffe();
+    }
+
 }

@@ -26,10 +26,11 @@ import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -78,11 +79,11 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
             "Trusted issuers can't be migrated to trusted domains, other instance may process them or an upgrader has failed previously";
 
     private final DomainService domainService;
-    private final TrustDomainRepository trustDomainRepository;
+    private final TrustedDomainRepository trustDomainRepository;
 
     public DomainTrustedIssuerUpgrader(@Lazy SystemTaskRepository systemTaskRepository,
                                        DomainService domainService,
-                                       @Lazy TrustDomainRepository trustDomainRepository) {
+                                       @Lazy TrustedDomainRepository trustDomainRepository) {
         super(systemTaskRepository);
         this.domainService = domainService;
         this.trustDomainRepository = trustDomainRepository;
@@ -121,14 +122,14 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
                 .flatMapCompletable(existing -> migrateIssuers(domain, issuers, existing));
     }
 
-    private Completable migrateIssuers(Domain domain, List<TrustedIssuer> issuers, List<TrustDomain> existing) {
+    private Completable migrateIssuers(Domain domain, List<TrustedIssuer> issuers, List<TrustedDomain> existing) {
         Set<String> alreadyVouchedFor = existing.stream()
-                .map(TrustDomain::getIssuer)
+                .map(TrustedDomain::getDomainIdentifier)
                 .filter(Objects::nonNull)
                 .collect(toSet());
         // names are unique across every trusted domain, so a derived name may not collide with a
         // trusted domain that only serves SPIFFE either
-        Set<String> takenNames = existing.stream().map(TrustDomain::getName).collect(toSet());
+        Set<String> takenNames = existing.stream().map(TrustedDomain::getName).collect(toSet());
         Map<String, String> derivedNames = TrustedIssuerNaming.deriveNames(
                 issuers.stream().map(TrustedIssuer::getIssuer).filter(issuer -> !alreadyVouchedFor.contains(issuer)).toList(),
                 takenNames);
@@ -142,9 +143,9 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> migrateIssuer(Domain domain, TrustedIssuer issuer, String name, Set<String> takenNames) {
-        if (issuer.getIssuer().length() > TrustDomain.ISSUER_MAX_LENGTH) {
+        if (issuer.getIssuer().length() > TrustedDomain.ISSUER_MAX_LENGTH) {
             log.warn("Trusted issuer {} of domain {} is left inline: a trusted domain bounds its issuer at {} characters",
-                    issuer.getIssuer(), domain.getId(), TrustDomain.ISSUER_MAX_LENGTH);
+                    issuer.getIssuer(), domain.getId(), TrustedDomain.ISSUER_MAX_LENGTH);
             return Single.just(false);
         }
         if (takenNames.contains(name)) {
@@ -164,18 +165,19 @@ public class DomainTrustedIssuerUpgrader extends SystemTaskUpgrader {
         return domainService.update(domain.getId(), domain).ignoreElement();
     }
 
-    private static TrustDomain asTrustDomain(Domain domain, TrustedIssuer issuer, String name) {
+    private static TrustedDomain asTrustDomain(Domain domain, TrustedIssuer issuer, String name) {
         Date now = Date.from(Instant.now());
-        return TrustDomain.builder()
+        return TrustedDomain.builder()
                 .referenceType(ReferenceType.DOMAIN)
                 .referenceId(domain.getId())
                 .name(name)
-                .issuer(issuer.getIssuer())
+                .domainIdentifier(issuer.getIssuer())
                 .keyMaterial(keyMaterialOf(issuer))
-                .refreshIntervalSeconds(TrustDomain.DEFAULT_REFRESH_INTERVAL_SECONDS)
-                .scopeMappings(issuer.getScopeMappings())
-                .userBindingEnabled(issuer.isUserBindingEnabled())
-                .userBindingCriteria(issuer.getUserBindingCriteria())
+                .tokenExchange(TokenExchangeTrustSettings.builder()
+                        .scopeMappings(issuer.getScopeMappings())
+                        .userBindingEnabled(issuer.isUserBindingEnabled())
+                        .userBindingCriteria(issuer.getUserBindingCriteria())
+                        .build())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

@@ -18,12 +18,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TrustDomainNotFoundException;
-import io.gravitee.am.service.model.UpdateTrustDomain;
+import io.gravitee.am.service.model.UpdateTrustedDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,9 +46,8 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Deprecated
-@Tag(name = "trust-domain")
-public class TrustDomainResource extends AbstractResource {
+@Tag(name = "trusted-domain")
+public class TrustedDomainResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
@@ -59,30 +58,28 @@ public class TrustDomainResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "getTrustDomain",
-            deprecated = true,
-            summary = "Get a trust domain",
+            operationId = "getTrustedDomain",
+            summary = "Get a trusted domain",
             description = "User must have the DOMAIN_TRUST_DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN_TRUST_DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN_TRUST_DOMAIN[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Trust domain",
+            @ApiResponse(responseCode = "200", description = "Trusted domain",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TrustDomain.class))),
-            @ApiResponse(responseCode = "404", description = "Trust domain not found")})
+                            schema = @Schema(implementation = TrustedDomain.class))),
+            @ApiResponse(responseCode = "404", description = "Trusted domain not found")})
     public void read(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @PathParam("trustDomainId") String trustDomainId,
+            @PathParam("trustedDomainId") String trustedDomainId,
             @Suspended final AsyncResponse response) {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMap(domain -> trustDomainService.findById(trustDomainId)
+                .flatMap(domain -> trustDomainService.findById(trustedDomainId)
                         .filter(td -> domainId.equals(td.getReferenceId())))
-                .switchIfEmpty(Maybe.error(new TrustDomainNotFoundException(trustDomainId)))
-                .map(TrustDomain::from)
+                .switchIfEmpty(Maybe.error(new TrustDomainNotFoundException(trustedDomainId)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -90,60 +87,56 @@ public class TrustDomainResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "updateTrustDomain",
-            deprecated = true,
-            summary = "Update a trust domain",
+            operationId = "updateTrustedDomain",
+            summary = "Update a trusted domain",
             description = "User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain " +
                     "or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization. " +
-                    "Deprecated: use PUT /trusted-domains/{trustedDomainId} instead.")
+                    "or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Trust domain successfully updated",
+            @ApiResponse(responseCode = "200", description = "Trusted domain successfully updated",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TrustDomain.class))),
-            @ApiResponse(responseCode = "404", description = "Trust domain not found"),
+                            schema = @Schema(implementation = TrustedDomain.class))),
+            @ApiResponse(responseCode = "404", description = "Trusted domain not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @PathParam("trustDomainId") String trustDomainId,
-            @Parameter(name = "trustDomain", required = true) @Valid @NotNull final UpdateTrustDomain updateTrustDomain,
+            @PathParam("trustedDomainId") String trustedDomainId,
+            @Parameter(name = "trustedDomain", required = true) @Valid @NotNull final UpdateTrustedDomain updateTrustedDomain,
             @Suspended final AsyncResponse response) {
         final var authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMapSingle(domain -> trustDomainService.update(domain, trustDomainId, updateTrustDomain, authenticatedUser))
-                .map(TrustDomain::from)
+                .flatMapSingle(domain -> trustDomainService.update(domain, trustedDomainId, updateTrustedDomain, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "deleteTrustDomain",
-            deprecated = true,
-            summary = "Delete a trust domain",
+            operationId = "deleteTrustedDomain",
+            summary = "Delete a trusted domain",
             description = "User must have the DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified domain " +
                     "or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified environment " +
                     "or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Trust domain successfully deleted"),
+            @ApiResponse(responseCode = "204", description = "Trusted domain successfully deleted"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @PathParam("trustDomainId") String trustDomainId,
+            @PathParam("trustedDomainId") String trustedDomainId,
             @Suspended final AsyncResponse response) {
         final var authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.DELETE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMapCompletable(domain -> trustDomainService.delete(domain, trustDomainId, authenticatedUser))
+                .flatMapCompletable(domain -> trustDomainService.delete(domain, trustedDomainId, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

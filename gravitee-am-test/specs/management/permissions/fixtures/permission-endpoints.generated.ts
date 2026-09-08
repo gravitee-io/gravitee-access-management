@@ -311,6 +311,12 @@ export const PERMISSION_ENDPOINTS: PermissionEndpoint[] = [
   },
   {
     method: 'GET',
+    route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains',
+    permission: 'domain_trust_domain_list',
+    summary: 'List trusted domains registered against the security domain',
+  },
+  {
+    method: 'GET',
     route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users',
     permission: 'domain_user_list',
     summary: 'List users for a security domain',

@@ -16,8 +16,8 @@
 package io.gravitee.am.model.oidc;
 
 /**
- * Where the signing keys of a {@link TrustDomain} come from. All sources are legal for every
- * {@link TrustDomain}.
+ * Where the signing keys of a {@link TrustedDomain} come from. All sources are legal for every
+ * {@link TrustedDomain}.
  *
  * @author GraviteeSource Team
  */

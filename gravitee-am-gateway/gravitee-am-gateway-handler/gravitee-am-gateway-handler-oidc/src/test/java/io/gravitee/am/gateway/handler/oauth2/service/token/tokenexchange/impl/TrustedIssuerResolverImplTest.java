@@ -31,7 +31,8 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.KeyRetrievalSettings;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.service.jwk.JWKSetFetcher;
 import io.gravitee.am.service.jwk.JWKSetFetcher.JWKSetFetchResponse;
@@ -233,7 +234,7 @@ class TrustedIssuerResolverImplTest {
         when(jwkSetFetcher.getKeys(JWKS_URL, DEFAULT_MAX_RESPONSE_SIZE_BYTES))
                 .thenReturn(Maybe.just(new JWKSetFetchResponse(jwks("kid-1"), null)));
         TrustedIssuerResolverImpl resolver = resolver();
-        TrustDomain issuer = jwksIssuer(JWKS_URL);
+        TrustedDomain issuer = jwksIssuer(JWKS_URL);
 
         resolver.resolve(signJwt(trustedPrivateKey, "user-1", "kid-1"), issuer).test().assertNoErrors();
         resolver.resolve(signJwt(trustedPrivateKey, "user-2", "kid-1"), issuer).test().assertNoErrors();
@@ -248,7 +249,7 @@ class TrustedIssuerResolverImplTest {
                 .thenReturn(Maybe.just(new JWKSetFetchResponse(jwks("kid-1"), null)))
                 .thenReturn(Maybe.error(new RuntimeException("upstream down")));
         TrustedIssuerResolverImpl resolver = resolver();
-        TrustDomain issuer = jwksIssuer(JWKS_URL);
+        TrustedDomain issuer = jwksIssuer(JWKS_URL);
 
         resolver.resolve(signJwt(trustedPrivateKey, "user-1", "kid-1"), issuer).test().assertNoErrors();
         resolver.resolve(signJwt(trustedPrivateKey, "user-2", "kid-1"), issuer).test()
@@ -264,7 +265,7 @@ class TrustedIssuerResolverImplTest {
                 .thenReturn(Maybe.just(new JWKSetFetchResponse(jwks("kid-1"), null)))
                 .thenReturn(Maybe.just(new JWKSetFetchResponse(jwks("kid-2"), null)));
         TrustedIssuerResolverImpl resolver = resolver();
-        TrustDomain issuer = jwksIssuer(JWKS_URL);
+        TrustedDomain issuer = jwksIssuer(JWKS_URL);
 
         resolver.resolve(signJwt(trustedPrivateKey, "user-1", "kid-1"), issuer).test().assertNoErrors();
         resolver.resolve(signJwt(trustedPrivateKey, "user-2", "kid-2"), issuer).test()
@@ -313,26 +314,27 @@ class TrustedIssuerResolverImplTest {
         return new TrustedIssuerResolverImpl(new TrustDomainKeyServiceImpl(jwkSetFetcher, domain), new JWSServiceImpl());
     }
 
-    private static TrustDomain pemIssuer(String certificate) {
+    private static TrustedDomain pemIssuer(String certificate) {
         return trustedDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.PEM)
                 .certificate(certificate)
                 .build());
     }
 
-    private static TrustDomain jwksIssuer(String jwksUri) {
+    private static TrustedDomain jwksIssuer(String jwksUri) {
         return trustedDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl(jwksUri)
                 .build());
     }
 
-    private static TrustDomain trustedDomain(TrustDomainKeyMaterial keyMaterial) {
-        return TrustDomain.builder()
+    private static TrustedDomain trustedDomain(TrustDomainKeyMaterial keyMaterial) {
+        return TrustedDomain.builder()
                 .id("trust-domain-1")
                 .name("trusted.example.com")
                 .keyMaterial(keyMaterial)
-                .issuer(ISSUER)
+                .domainIdentifier(ISSUER)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 

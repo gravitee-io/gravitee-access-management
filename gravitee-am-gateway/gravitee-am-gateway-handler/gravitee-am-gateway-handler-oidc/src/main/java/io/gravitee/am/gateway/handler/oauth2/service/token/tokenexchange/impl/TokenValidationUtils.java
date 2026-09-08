@@ -19,7 +19,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,7 +74,7 @@ final class TokenValidationUtils {
                                                long exp, long iat, long nbf,
                                                Set<String> scopes, List<String> audience,
                                                String tokenType, Domain domain,
-                                               TrustDomain trustedDomain) {
+                                               TrustedDomain trustedDomain) {
         return ValidatedToken.builder()
                 .subject(Objects.toString(claims.get(Claims.SUB), null))
                 .issuer(Objects.toString(claims.get(Claims.ISS), null))

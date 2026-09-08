@@ -23,9 +23,9 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManage
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -50,7 +50,7 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     private EventManager eventManager;
 
     @Autowired
-    private TrustDomainRepository trustDomainRepository;
+    private TrustedDomainRepository trustDomainRepository;
 
     @Autowired
     private TrustDomainKeyService trustDomainKeyService;
@@ -58,9 +58,9 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     @Autowired
     private DomainReadinessService domainReadinessService;
 
-    private final ConcurrentMap<String, TrustDomain> byId = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, TrustDomain> bySpiffeTrustDomain = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, TrustDomain> byIssuer = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TrustedDomain> byId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TrustedDomain> bySpiffeTrustDomain = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TrustedDomain> byIssuer = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() {
@@ -111,12 +111,12 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     }
 
     @Override
-    public Optional<TrustDomain> findBySpiffeTrustDomain(String spiffeTrustDomain) {
+    public Optional<TrustedDomain> findBySpiffeTrustDomain(String spiffeTrustDomain) {
         return spiffeTrustDomain == null ? Optional.empty() : Optional.ofNullable(bySpiffeTrustDomain.get(spiffeTrustDomain));
     }
 
     @Override
-    public Optional<TrustDomain> findByIssuer(String issuer) {
+    public Optional<TrustedDomain> findByIssuer(String issuer) {
         return issuer == null ? Optional.empty() : Optional.ofNullable(byIssuer.get(issuer));
     }
 
@@ -148,7 +148,7 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     }
 
     private void unload(String trustDomainId) {
-        TrustDomain removed = byId.remove(trustDomainId);
+        TrustedDomain removed = byId.remove(trustDomainId);
         if (removed != null) {
             unindex(removed);
             log.info("Trusted domain {} has been removed for domain {}", removed.getName(), domain.getName());
@@ -157,21 +157,21 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
         domainReadinessService.pluginRemoved(domain.getId(), trustDomainId);
     }
 
-    private void index(TrustDomain trustDomain) {
-        TrustDomain previous = byId.put(trustDomain.getId(), trustDomain);
+    private void index(TrustedDomain trustDomain) {
+        TrustedDomain previous = byId.put(trustDomain.getId(), trustDomain);
         if (previous != null) {
             unindex(previous);
         }
         Optional.ofNullable(trustDomain.getSpiffeTrustDomain())
                 .ifPresent(spiffeTrustDomain -> bySpiffeTrustDomain.put(spiffeTrustDomain, trustDomain));
-        Optional.ofNullable(trustDomain.getIssuer())
+        Optional.ofNullable(trustDomain.getDomainIdentifier())
                 .ifPresent(issuer -> byIssuer.put(issuer, trustDomain));
     }
 
-    private void unindex(TrustDomain trustDomain) {
+    private void unindex(TrustedDomain trustDomain) {
         Optional.ofNullable(trustDomain.getSpiffeTrustDomain())
                 .ifPresent(spiffeTrustDomain -> bySpiffeTrustDomain.remove(spiffeTrustDomain, trustDomain));
-        Optional.ofNullable(trustDomain.getIssuer())
+        Optional.ofNullable(trustDomain.getDomainIdentifier())
                 .ifPresent(issuer -> byIssuer.remove(issuer, trustDomain));
     }
 }

@@ -15,100 +15,32 @@
  */
 package io.gravitee.am.model.oidc;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * External authority an AM domain trusts, and the key material used to verify what it vouches for.
- *
- * <p>A trusted domain declares how tokens are recognised as coming from it: {@code spiffeTrustDomain}
- * matches the trust domain of a JWT-SVID presented as a client assertion, {@code issuer} matches the
- * {@code iss} claim of an external token presented during an RFC 8693 exchange. At least one is
- * required, and setting both lets one authority serve both usages on shared key material.
- *
- * @author GraviteeSource Team
- */
+@Deprecated
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder(toBuilder = true)
+@Schema(deprecated = true, title = "Trust domain",
+        description = "Deprecated: use the /trusted-domains endpoint instead.")
 public class TrustDomain {
-
-    public static final int DEFAULT_REFRESH_INTERVAL_SECONDS = 300;
-
-    public static final int NAME_MAX_LENGTH = 255;
-
-    public static final int SPIFFE_TRUST_DOMAIN_MAX_LENGTH = 255;
-
-    public static final int ISSUER_MAX_LENGTH = 512;
 
     private String id;
     private String referenceId;
     private ReferenceType referenceType;
-
-    /**
-     * Label this trusted domain is known by in the Console and in audit entries. Unique within an AM
-     * domain, and carries no matching semantics.
-     */
-    @Schema(description = "Label the trusted domain is known by. Unique within the security domain.",
-            example = "acme-corp")
     private String name;
-
     private String description;
-
-    /**
-     * Trust domain as it appears in the SPIFFE IDs this authority issues, matched against the
-     * {@code sub} of a JWT-SVID. Null when this authority is not trusted for SPIFFE.
-     */
-    @Schema(description = "SPIFFE trust domain matched against the \"sub\" of a JWT-SVID, without the "
-            + "\"spiffe://\" scheme. Required to accept SPIFFE client assertions.",
-            example = "acme.org")
-    private String spiffeTrustDomain;
-
-    /**
-     * Value of the {@code iss} claim this authority vouches for, matched against external subject and
-     * actor tokens. Null when this authority is not trusted for token exchange.
-     */
-    @Schema(description = "Expected value of the \"iss\" claim in an external JWT. Required to accept "
-            + "tokens during an RFC 8693 exchange.",
-            example = "https://sso.acme.com")
-    private String issuer;
-
+    private String domainIdentifier;
     private TrustDomainKeyMaterial keyMaterial;
-
-    private int refreshIntervalSeconds = DEFAULT_REFRESH_INTERVAL_SECONDS;
-
-    /**
-     * Optional override of {@link SpiffeDomainSettings#getDefaultAllowedAlgorithms()}.
-     */
-    private List<String> allowedAlgorithms;
-
-    @Schema(description = "One-to-one mapping from external scope to domain scope. Unmapped issuer scopes "
-            + "are dropped (fail-closed). Applies to tokens matched by \"issuer\".")
-    private Map<String, String> scopeMappings;
-
-    @Schema(description = "Whether the external JWT subject is resolved to a single domain user using the "
-            + "user binding criteria. When false, a virtual user is built from the token claims only.",
-            defaultValue = "false")
-    private boolean userBindingEnabled;
-
-    @Schema(description = "Criteria used to locate a domain user when user binding is enabled. All criteria "
-            + "are combined with AND.")
-    private List<UserBindingCriterion> userBindingCriteria;
+    private SpiffeTrustSettings spiffe;
+    private TokenExchangeTrustSettings tokenExchange;
 
     @Schema(type = "java.lang.Long")
     private Date createdAt;
@@ -116,71 +48,73 @@ public class TrustDomain {
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
 
-    public TrustDomain(TrustDomain other) {
-        this.id = other.id;
-        this.referenceId = other.referenceId;
-        this.referenceType = other.referenceType;
-        this.name = other.name;
-        this.description = other.description;
-        this.spiffeTrustDomain = other.spiffeTrustDomain;
-        this.issuer = other.issuer;
-        this.keyMaterial = other.keyMaterial != null ? new TrustDomainKeyMaterial(other.keyMaterial) : null;
-        this.refreshIntervalSeconds = other.refreshIntervalSeconds;
-        this.allowedAlgorithms = other.allowedAlgorithms;
-        this.scopeMappings = other.scopeMappings != null ? new LinkedHashMap<>(other.scopeMappings) : null;
-        this.userBindingEnabled = other.userBindingEnabled;
-        this.userBindingCriteria = other.userBindingCriteria != null ? new ArrayList<>(other.userBindingCriteria) : null;
-        this.createdAt = other.createdAt;
-        this.updatedAt = other.updatedAt;
-    }
+    @Schema(deprecated = true, description = "Use spiffe.spiffeTrustDomain instead.")
+    private String spiffeTrustDomain;
 
-    /**
-     * Whether this authority is trusted for SPIFFE client assertions.
-     */
-    public boolean trustsSpiffe() {
-        return spiffeTrustDomain != null;
-    }
+    @Schema(deprecated = true, description = "Use domainIdentifier instead.")
+    private String issuer;
 
-    /**
-     * Whether this authority is trusted for RFC 8693 token exchange.
-     */
-    public boolean trustsTokenExchange() {
-        return issuer != null;
-    }
+    @Schema(deprecated = true, description = "Use keyMaterial.refreshIntervalSeconds instead.")
+    private int refreshIntervalSeconds;
 
-    /**
-     * @deprecated superseded by {@link #getKeyMaterial()}; PEM key material has no representation here.
-     */
-    @Deprecated
-    @JsonProperty
+    @Schema(deprecated = true, description = "Use spiffe.allowedAlgorithms instead.")
+    private List<String> allowedAlgorithms;
+
+    @Schema(deprecated = true, description = "Use tokenExchange.scopeMappings instead.")
+    private Map<String, String> scopeMappings;
+
+    @Schema(deprecated = true, description = "Use tokenExchange.userBindingEnabled instead.")
+    private boolean userBindingEnabled;
+
+    @Schema(deprecated = true, description = "Use tokenExchange.userBindingCriteria instead.")
+    private List<UserBindingCriterion> userBindingCriteria;
+
     @Schema(deprecated = true, description = "Use keyMaterial.source instead. Null when the key material is a PEM certificate.")
-    public SpiffeBundleSource getBundleSource() {
-        if (keyMaterial == null || keyMaterial.getSource() == null) {
+    private SpiffeBundleSource bundleSource;
+
+    @Schema(deprecated = true, description = "Use keyMaterial.jwksUrl instead.")
+    private String jwksUrl;
+
+    @Schema(deprecated = true, description = "Use keyMaterial.jwkSet instead.")
+    private JWKSet staticJwks;
+
+    public static TrustDomain from(TrustedDomain trustedDomain) {
+        if (trustedDomain == null) {
             return null;
         }
-        return switch (keyMaterial.getSource()) {
-            case JWKS_URL -> SpiffeBundleSource.JWKS_URL;
-            case JWK_SET -> SpiffeBundleSource.STATIC_JWKS;
-            case PEM -> null;
-        };
-    }
+        TrustDomain td = new TrustDomain();
+        td.setId(trustedDomain.getId());
+        td.setReferenceId(trustedDomain.getReferenceId());
+        td.setReferenceType(trustedDomain.getReferenceType());
+        td.setName(trustedDomain.getName());
+        td.setDescription(trustedDomain.getDescription());
+        td.setDomainIdentifier(trustedDomain.getDomainIdentifier());
+        td.setKeyMaterial(trustedDomain.getKeyMaterial());
+        td.setSpiffe(trustedDomain.getSpiffe());
+        td.setTokenExchange(trustedDomain.getTokenExchange());
+        td.setCreatedAt(trustedDomain.getCreatedAt());
+        td.setUpdatedAt(trustedDomain.getUpdatedAt());
 
-    /**
-     * @deprecated superseded by {@link #getKeyMaterial()}.
-     */
-    @Deprecated
-    @JsonProperty
-    @Schema(deprecated = true, description = "Use keyMaterial.jwksUrl instead.")
-    public String getJwksUrl() {
-        return keyMaterial != null ? keyMaterial.getJwksUrl() : null;
-    }
+        td.setSpiffeTrustDomain(trustedDomain.getSpiffeTrustDomain());
+        td.setIssuer(trustedDomain.getDomainIdentifier());
+        td.setRefreshIntervalSeconds(trustedDomain.getRefreshIntervalSeconds());
+        td.setAllowedAlgorithms(trustedDomain.getAllowedAlgorithms());
+        td.setScopeMappings(trustedDomain.getScopeMappings());
+        td.setUserBindingEnabled(trustedDomain.isUserBindingEnabled());
+        td.setUserBindingCriteria(trustedDomain.getUserBindingCriteria());
 
-    /**
-     * @deprecated superseded by {@link #getKeyMaterial()}.
-     */
-    @Deprecated
-    @JsonProperty
-    public JWKSet getStaticJwks() {
-        return keyMaterial != null ? keyMaterial.getJwkSet() : null;
+        TrustDomainKeyMaterial keyMaterial = trustedDomain.getKeyMaterial();
+        if (keyMaterial != null) {
+            td.setJwksUrl(keyMaterial.getJwksUrl());
+            td.setStaticJwks(keyMaterial.getJwkSet());
+            if (keyMaterial.getSource() != null) {
+                td.setBundleSource(switch (keyMaterial.getSource()) {
+                    case JWKS_URL -> SpiffeBundleSource.JWKS_URL;
+                    case JWK_SET -> SpiffeBundleSource.STATIC_JWKS;
+                    case PEM -> null;
+                });
+            }
+        }
+        return td;
     }
 }

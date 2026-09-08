@@ -17,9 +17,7 @@
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { patchDomain, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { Domain } from '@management-models/Domain';
-import { TrustDomain } from '@management-models/TrustDomain';
 import { uniqueName } from '@utils-commands/misc';
-import { createTrustDomain, deleteTrustDomain, updateTrustDomain } from '@management-commands/trust-domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { Fixture } from '../../../test-fixture';
 
@@ -34,12 +32,37 @@ export const TRUSTED_DOMAIN_SYNC_TEST = {
 
 const distinctLabel = (prefix: string) => uniqueName(prefix, true).toLowerCase();
 
+const trustDomainsUrl = (domainId: string, trustDomainId?: string) =>
+  `${process.env.AM_MANAGEMENT_URL}/management/organizations/${process.env.AM_DEF_ORG_ID}` +
+  `/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainId}/trusted-domains${trustDomainId ? `/${trustDomainId}` : ''}`;
+
+export interface TrustedDomainResponse {
+  id: string;
+  name: string;
+  domainIdentifier?: string;
+  keyMaterial?: { source: string; jwksUrl?: string; refreshIntervalSeconds?: number };
+  spiffe?: { spiffeTrustDomain?: string; allowedAlgorithms?: string[] };
+  tokenExchange?: Record<string, unknown>;
+}
+
+const writeTrustDomain = async (url: string, method: 'POST' | 'PUT', token: string, body: object): Promise<TrustedDomainResponse> => {
+  const response = await fetch(url, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`${method} ${url} failed: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+};
+
 /** Body of a trusted domain matching SPIFFE only, named so it collides with no other test's. */
 export const spiffeTrustDomainBody = () => {
   const label = distinctLabel('spiffe-sync');
   return {
     name: label,
-    spiffeTrustDomain: `${label}.local`,
+    spiffe: { spiffeTrustDomain: `${label}.local` },
     keyMaterial: { source: 'JWKS_URL', jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.SPIFFE_JWKS_URL },
   };
 };
@@ -49,7 +72,8 @@ export const issuerTrustDomainBody = () => {
   const label = distinctLabel('issuer-sync');
   return {
     name: label,
-    issuer: `https://${label}.example.com`,
+    domainIdentifier: `https://${label}.example.com`,
+    tokenExchange: {},
     keyMaterial: { source: 'JWKS_URL', jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.TOKEN_EXCHANGE_JWKS_URL },
   };
 };
@@ -59,8 +83,9 @@ export const bothUsagesTrustDomainBody = () => {
   const label = distinctLabel('both-sync');
   return {
     name: label,
-    spiffeTrustDomain: `${label}.local`,
-    issuer: `https://${label}.example.com`,
+    spiffe: { spiffeTrustDomain: `${label}.local` },
+    domainIdentifier: `https://${label}.example.com`,
+    tokenExchange: {},
     keyMaterial: { source: 'JWKS_URL', jwksUrl: TRUSTED_DOMAIN_SYNC_TEST.BOTH_JWKS_URL },
   };
 };
@@ -69,9 +94,9 @@ export interface TrustedDomainSyncFixture extends Fixture {
   domain: Domain;
   accessToken: string;
   /** Registers a trusted domain and waits for the gateway to apply the change. */
-  registerAndSync: (body: object) => Promise<TrustDomain>;
+  registerAndSync: (body: object) => Promise<TrustedDomainResponse>;
   /** Amends a trusted domain and waits for the gateway to apply the change. */
-  amendAndSync: (trustDomainId: string, body: object) => Promise<TrustDomain>;
+  amendAndSync: (trustDomainId: string, body: object) => Promise<TrustedDomainResponse>;
   /** Removes a trusted domain and waits for the gateway to apply the change. */
   removeAndSync: (trustDomainId: string) => Promise<void>;
 }
@@ -101,9 +126,19 @@ export const setupTrustedDomainSyncFixture = async (): Promise<TrustedDomainSync
     return {
       domain,
       accessToken,
-      registerAndSync: (body) => waitForSyncAfter(domainId, () => createTrustDomain(domainId, token, body)),
-      amendAndSync: (trustDomainId, body) => waitForSyncAfter(domainId, () => updateTrustDomain(domainId, token, trustDomainId, body)),
-      removeAndSync: (trustDomainId) => waitForSyncAfter(domainId, () => deleteTrustDomain(domainId, token, trustDomainId)),
+      registerAndSync: (body) => waitForSyncAfter(domainId, () => writeTrustDomain(trustDomainsUrl(domainId), 'POST', token, body)),
+      amendAndSync: (trustDomainId, body) =>
+        waitForSyncAfter(domainId, () => writeTrustDomain(trustDomainsUrl(domainId, trustDomainId), 'PUT', token, body)),
+      removeAndSync: (trustDomainId) =>
+        waitForSyncAfter(domainId, async () => {
+          const response = await fetch(trustDomainsUrl(domainId, trustDomainId), {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!response.ok) {
+            throw new Error(`DELETE trusted domain failed: ${response.status} ${await response.text()}`);
+          }
+        }),
       cleanUp: async () => {
         await safeDeleteDomain(domainId, token);
       },

@@ -23,9 +23,11 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainM
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.oidc.TrustDomain;
+import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.monitoring.DomainReadinessService;
-import io.gravitee.am.repository.management.api.TrustDomainRepository;
+import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -57,7 +59,7 @@ class TrustDomainManagerImplTest {
     @Mock
     private Domain domain;
     @Mock
-    private TrustDomainRepository trustDomainRepository;
+    private TrustedDomainRepository trustDomainRepository;
     @Mock
     private TrustDomainKeyService trustDomainKeyService;
     @Mock
@@ -87,19 +89,21 @@ class TrustDomainManagerImplTest {
         when(payload.getReferenceId()).thenReturn(referenceId);
     }
 
-    private static TrustDomain spiffe(String id, String name) {
-        return TrustDomain.builder().id(id).name(name).spiffeTrustDomain(name).build();
+    private static TrustedDomain spiffe(String id, String name) {
+        return TrustedDomain.builder().id(id).name(name)
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(name).build()).build();
     }
 
-    private static TrustDomain tokenExchange(String id, String name, String issuer) {
-        return TrustDomain.builder()
+    private static TrustedDomain tokenExchange(String id, String name, String issuer) {
+        return TrustedDomain.builder()
                 .id(id)
                 .name(name)
-                .issuer(issuer)
+                .domainIdentifier(issuer)
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
     }
 
-    private void preload(TrustDomain... trustDomains) {
+    private void preload(TrustedDomain... trustDomains) {
         when(trustDomainRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.fromArray(trustDomains));
         manager.afterPropertiesSet();
         await().atMost(5, TimeUnit.SECONDS)
@@ -123,11 +127,12 @@ class TrustDomainManagerImplTest {
 
     @Test
     void shouldIndexATrustedDomainThatServesBothUsagesUnderBothMatchers() {
-        TrustDomain both = TrustDomain.builder()
+        TrustedDomain both = TrustedDomain.builder()
                 .id("td-3")
                 .name("acme-corp")
-                .spiffeTrustDomain("acme.org")
-                .issuer("https://sso.acme.com")
+                .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain("acme.org").build())
+                .domainIdentifier("https://sso.acme.com")
+                .tokenExchange(new TokenExchangeTrustSettings())
                 .build();
         preload(both);
 

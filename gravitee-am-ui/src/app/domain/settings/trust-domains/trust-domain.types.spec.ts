@@ -15,13 +15,14 @@
  */
 import {
   deriveNameFromIssuer,
-  normalizeTrustDomain,
+  fromTrustedDomain,
   isValidSpiffeTrustDomain,
   keyMaterialErrors,
   keyMaterialSourceLabel,
   trustDomainUsageLabel,
   trustDomainUsages,
   trustDomainUsagesLabel,
+  toTrustedDomainRequest,
 } from './trust-domain.types';
 
 describe('trust domain types', () => {
@@ -74,35 +75,48 @@ describe('trust domain types', () => {
     expect(isValidSpiffeTrustDomain('prod.example')).toBe(true);
   });
 
-  describe('normalizeTrustDomain', () => {
-    it('shouldUppercaseTheEnumsTheApiLowercases', () => {
-      const fromApi = {
+  describe('fromTrustedDomain', () => {
+    it('shouldFlattenTheNestedBlocksOntoTheFormModel', () => {
+      const response = {
         id: 'td-1',
-        name: 'issuer.example',
-        issuer: 'https://issuer.example',
-        keyMaterial: { source: 'pem', certificate: '-----BEGIN CERTIFICATE-----' },
-      } as any;
+        name: 'acme-corp',
+        domainIdentifier: 'https://sso.acme.com',
+        keyMaterial: { source: 'jwks_url', jwksUrl: 'https://sso.acme.com/keys', refreshIntervalSeconds: 600 },
+        spiffe: { spiffeTrustDomain: 'acme.org', allowedAlgorithms: ['RS256'] },
+        tokenExchange: {
+          scopeMappings: { 'external:read': 'openid' },
+          userBindingEnabled: true,
+          userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
+        },
+      };
 
-      expect(normalizeTrustDomain(fromApi)).toEqual({
+      expect(fromTrustedDomain(response)).toEqual({
         id: 'td-1',
-        name: 'issuer.example',
-        issuer: 'https://issuer.example',
-        keyMaterial: { source: 'PEM', certificate: '-----BEGIN CERTIFICATE-----' },
+        name: 'acme-corp',
+        description: undefined,
+        spiffeTrustDomain: 'acme.org',
+        issuer: 'https://sso.acme.com',
+        keyMaterial: { source: 'JWKS_URL', jwksUrl: 'https://sso.acme.com/keys', refreshIntervalSeconds: 600 },
+        refreshIntervalSeconds: 600,
+        allowedAlgorithms: ['RS256'],
+        scopeMappings: { 'external:read': 'openid' },
+        userBindingEnabled: true,
+        userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
       });
     });
 
-    it('shouldLeaveCanonicalValuesAlone', () => {
-      const canonical = {
-        name: 'am.local',
-        spiffeTrustDomain: 'am.local',
-        keyMaterial: { source: 'JWKS_URL', jwksUrl: 'https://x/keys' },
-      } as any;
-      expect(normalizeTrustDomain(canonical)).toEqual(canonical);
+    it('shouldDefaultTheAbsentBlocks', () => {
+      const flat = fromTrustedDomain({ id: 'td-1', name: 'spire-prod' }) as any;
+
+      expect(flat.spiffeTrustDomain).toBeUndefined();
+      expect(flat.issuer).toBeUndefined();
+      expect(flat.allowedAlgorithms).toEqual([]);
+      expect(flat.userBindingEnabled).toBe(false);
+      expect(flat.refreshIntervalSeconds).toBe(300);
     });
 
-    it('shouldTolerateMissingKeyMaterial', () => {
-      expect(normalizeTrustDomain({ name: 'am.local' } as any)).toEqual({ name: 'am.local', keyMaterial: undefined });
-      expect(normalizeTrustDomain(undefined)).toBeUndefined();
+    it('shouldPassThroughNothing', () => {
+      expect(fromTrustedDomain(undefined)).toBeUndefined();
     });
   });
 
@@ -124,6 +138,67 @@ describe('trust domain types', () => {
     it('shouldRequireCertificateWhenSourceIsPem', () => {
       expect(keyMaterialErrors({ source: 'PEM' })).toHaveLength(1);
       expect(keyMaterialErrors({ source: 'PEM', certificate: '-----BEGIN CERTIFICATE-----' })).toHaveLength(0);
+    });
+  });
+
+  describe('toTrustedDomainRequest', () => {
+    it('shouldFoldTheRefreshIntervalOntoTheKeyMaterial', () => {
+      const request = toTrustedDomainRequest({
+        name: 'acme',
+        issuer: 'https://sso.acme.com',
+        keyMaterial: { source: 'JWKS_URL', jwksUrl: 'https://sso.acme.com/keys' },
+        refreshIntervalSeconds: 600,
+      });
+
+      expect(request.keyMaterial).toEqual({
+        source: 'JWKS_URL',
+        jwksUrl: 'https://sso.acme.com/keys',
+        refreshIntervalSeconds: 600,
+      });
+    });
+
+    it('shouldCarryScopeMappingsAndUserBindingUnderTokenExchange', () => {
+      const request = toTrustedDomainRequest({
+        name: 'acme',
+        issuer: 'https://sso.acme.com',
+        scopeMappings: { 'external:read': 'openid' },
+        userBindingEnabled: true,
+        userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
+      });
+
+      expect(request.tokenExchange).toEqual({
+        scopeMappings: { 'external:read': 'openid' },
+        userBindingEnabled: true,
+        userBindingCriteria: [{ attribute: 'email', expression: 'email' }],
+      });
+    });
+
+    it('shouldPutTheSpiffeMatcherAndAlgorithmsUnderSpiffe', () => {
+      const request = toTrustedDomainRequest({ name: 'spire-prod', spiffeTrustDomain: 'spire.example', allowedAlgorithms: ['RS256'] });
+
+      expect(request.spiffe).toEqual({ spiffeTrustDomain: 'spire.example', allowedAlgorithms: ['RS256'] });
+    });
+
+    it('shouldDeclareBothBlocksWhenOneAuthorityServesBothUsages', () => {
+      const request = toTrustedDomainRequest({ name: 'acme-corp', spiffeTrustDomain: 'acme.org', issuer: 'https://sso.acme.com' });
+
+      expect(request.spiffe.spiffeTrustDomain).toBe('acme.org');
+      expect(request.domainIdentifier).toBe('https://sso.acme.com');
+    });
+
+    it('shouldBlankTheIssuerWhenTheUsageIsNotDeclared', () => {
+      const request = toTrustedDomainRequest({ name: 'acme', spiffeTrustDomain: 'acme.org' });
+
+      expect(request.domainIdentifier).toBe('');
+      expect(request.tokenExchange).toEqual({ scopeMappings: {}, userBindingEnabled: false, userBindingCriteria: [] });
+      expect(request.spiffe.spiffeTrustDomain).toBe('acme.org');
+    });
+
+    it('shouldBlankTheSpiffeMatcherWhenTheUsageIsNotDeclared', () => {
+      const request = toTrustedDomainRequest({ name: 'acme', issuer: 'https://sso.acme.com' });
+
+      expect(request.spiffe.spiffeTrustDomain).toBe('');
+      expect(request.domainIdentifier).toBe('https://sso.acme.com');
     });
   });
 });
