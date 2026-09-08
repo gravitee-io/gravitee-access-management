@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.service.validators.reporter;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.service.validators.Validator;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -31,7 +34,7 @@ import java.util.regex.Pattern;
  * @author GraviteeSource Team
  */
 @Component
-public class ReporterAttributeMappingsValidator implements Validator<List<ReporterAttributeMapping>, ReporterAttributeMappingsValidator.ValidationResult> {
+public class ReporterAttributeMappingsValidator implements Validator<ReporterAttributeMappingsValidator.Input, ReporterAttributeMappingsValidator.ValidationResult> {
 
     static final int MAX_COUNT = 20;
     static final int MAX_EXPRESSION_LENGTH = 512;
@@ -42,20 +45,31 @@ public class ReporterAttributeMappingsValidator implements Validator<List<Report
 
     private static final Pattern EXPORTED_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
+    public record Input(List<ReporterAttributeMapping> mappings, Set<String> eventTypes) {
+
+        public static Input of(List<ReporterAttributeMapping> mappings) {
+            return new Input(mappings, null);
+        }
+    }
+
     public record ValidationResult(List<String> invalidExpressions,
                                    List<String> invalidExportedNames,
                                    List<String> duplicateExportedNames,
+                                   List<String> unknownEventTypes,
+                                   boolean eventTypesWithoutMappings,
                                    Integer exceededMaxCount) {
 
         public boolean isInvalid() {
             return !invalidExpressions.isEmpty()
                     || !invalidExportedNames.isEmpty()
                     || !duplicateExportedNames.isEmpty()
+                    || !unknownEventTypes.isEmpty()
+                    || eventTypesWithoutMappings
                     || exceededMaxCount != null;
         }
 
         public static ValidationResult valid() {
-            return new ValidationResult(List.of(), List.of(), List.of(), null);
+            return new ValidationResult(List.of(), List.of(), List.of(), List.of(), false, null);
         }
 
         public String describe() {
@@ -68,17 +82,28 @@ public class ReporterAttributeMappingsValidator implements Validator<List<Report
             if (!invalidExportedNames.isEmpty()) {
                 return "Invalid reporter attribute mapping exported names: " + invalidExportedNames;
             }
-            return "Duplicate reporter attribute mapping exported names: " + duplicateExportedNames;
+            if (!duplicateExportedNames.isEmpty()) {
+                return "Duplicate reporter attribute mapping exported names: " + duplicateExportedNames;
+            }
+            if (eventTypesWithoutMappings) {
+                return "Reporter attribute mapping event types require at least one attribute mapping";
+            }
+            return "Unknown reporter attribute mapping event types: " + unknownEventTypes;
         }
     }
 
     @Override
-    public ValidationResult validate(List<ReporterAttributeMapping> mappings) {
-        if (mappings == null || mappings.isEmpty()) {
-            return ValidationResult.valid();
+    public ValidationResult validate(Input input) {
+        List<ReporterAttributeMapping> mappings = input == null ? null : input.mappings();
+        Set<String> eventTypes = input == null ? null : input.eventTypes();
+
+        if (isEmpty(mappings)) {
+            return isEmpty(eventTypes)
+                    ? ValidationResult.valid()
+                    : new ValidationResult(List.of(), List.of(), List.of(), List.of(), true, null);
         }
         if (mappings.size() > MAX_COUNT) {
-            return new ValidationResult(List.of(), List.of(), List.of(), MAX_COUNT);
+            return new ValidationResult(List.of(), List.of(), List.of(), List.of(), false, MAX_COUNT);
         }
 
         List<String> invalidExpressions = new ArrayList<>();
@@ -96,6 +121,7 @@ public class ReporterAttributeMappingsValidator implements Validator<List<Report
             if (!isValidExpression(expression)) {
                 invalidExpressions.add(describeValue(expression));
             }
+
             if (isValidExportedName(exportedName)) {
                 exportedNames.add(exportedName);
             } else {
@@ -108,11 +134,24 @@ public class ReporterAttributeMappingsValidator implements Validator<List<Report
                 .distinct()
                 .toList();
 
+        Collection<String> known = EventType.types();
+        List<String> unknownEventTypes = isEmpty(eventTypes) ? List.of() : eventTypes.stream()
+                .filter(type -> type == null || !known.contains(type))
+                .map(ReporterAttributeMappingsValidator::describeValue)
+                .distinct()
+                .toList();
+
         return new ValidationResult(
                 invalidExpressions.stream().distinct().toList(),
                 invalidExportedNames.stream().distinct().toList(),
                 duplicateExportedNames,
+                unknownEventTypes,
+                false,
                 null);
+    }
+
+    private static boolean isEmpty(Collection<?> values) {
+        return values == null || values.isEmpty();
     }
 
     private static boolean isValidExpression(String expression) {

@@ -32,6 +32,7 @@ import io.reactivex.rxjava3.core.Single;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Applies one reporter's configured attribute mappings to each audit on its way to that reporter.
@@ -46,29 +47,27 @@ public class AttributeMappingReporter<R extends Reportable, C extends Reportable
 
     private final Reporter<R, C> delegate;
     private final List<ReporterAttributeMapping> mappings;
+    private final Set<String> eventTypes;
     private final ReporterAttributeResolver resolver;
 
     public static <R extends Reportable, C extends ReportableCriteria> Reporter<R, C> decorate(
-            Reporter<R, C> delegate, List<ReporterAttributeMapping> mappings) {
-        if (mappings == null || mappings.isEmpty()) {
+            Reporter<R, C> delegate, io.gravitee.am.model.Reporter config, ReporterAttributeResolver resolver) {
+        if (config == null || config.getAttributeMappings() == null || config.getAttributeMappings().isEmpty()) {
             return delegate;
         }
-        return new AttributeMappingReporter<>(delegate, mappings);
+        return new AttributeMappingReporter<>(delegate, config.getAttributeMappings(), config.getAttributeMappingEventTypes(), resolver);
     }
 
-    public AttributeMappingReporter(Reporter<R, C> delegate, List<ReporterAttributeMapping> mappings) {
-        this(delegate, mappings, new ReporterAttributeResolver());
-    }
-
-    AttributeMappingReporter(Reporter<R, C> delegate, List<ReporterAttributeMapping> mappings, ReporterAttributeResolver resolver) {
+    AttributeMappingReporter(Reporter<R, C> delegate, List<ReporterAttributeMapping> mappings, Set<String> eventTypes, ReporterAttributeResolver resolver) {
         this.delegate = delegate;
-        this.mappings = mappings;
+        this.mappings = List.copyOf(mappings);
+        this.eventTypes = eventTypes == null ? Set.of() : Set.copyOf(eventTypes);
         this.resolver = resolver;
     }
 
     @Override
     public void report(io.gravitee.reporter.api.Reportable reportable) {
-        if (reportable instanceof Audit audit) {
+        if (reportable instanceof Audit audit && appliesTo(audit)) {
             Map<String, Object> resolved;
             // Enrichment must never cost the event.
             try {
@@ -87,6 +86,10 @@ public class AttributeMappingReporter<R extends Reportable, C extends Reportable
             }
         }
         delegate.report(reportable);
+    }
+
+    private boolean appliesTo(Audit audit) {
+        return eventTypes.isEmpty() || eventTypes.contains(audit.getType());
     }
 
     @Override

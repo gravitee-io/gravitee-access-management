@@ -59,6 +59,9 @@ public class JdbcReporter  {
     private boolean inherited;
     @Column("attribute_mappings")
     private String attributeMappings;
+
+    @Column("attribute_mapping_event_types")
+    private String attributeMappingEventTypes;
     @Column("managed_by")
     private String managedBy;
 

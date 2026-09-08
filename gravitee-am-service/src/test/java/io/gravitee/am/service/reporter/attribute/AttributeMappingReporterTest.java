@@ -33,9 +33,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * @author GraviteeSource Team
@@ -97,6 +99,22 @@ class AttributeMappingReporterTest {
         }
     }
 
+    private static final ReporterAttributeResolver RESOLVER = new ReporterAttributeResolver(new SensitiveAttributeDenylist());
+
+    private static Reporter<Audit, ReportableCriteria> decorate(Reporter<Audit, ReportableCriteria> delegate,
+                                                                List<ReporterAttributeMapping> mappings) {
+        return decorate(delegate, mappings, null);
+    }
+
+    private static Reporter<Audit, ReportableCriteria> decorate(Reporter<Audit, ReportableCriteria> delegate,
+                                                                List<ReporterAttributeMapping> mappings,
+                                                                Set<String> eventTypes) {
+        var config = new io.gravitee.am.model.Reporter();
+        config.setAttributeMappings(mappings);
+        config.setAttributeMappingEventTypes(eventTypes);
+        return AttributeMappingReporter.decorate(delegate, config, RESOLVER);
+    }
+
     private static ReporterAttributeMapping mapping(String expression, String exportedName) {
         return new ReporterAttributeMapping(expression, exportedName);
     }
@@ -124,7 +142,7 @@ class AttributeMappingReporterTest {
         void decorateReturnsTheDelegateItself(List<ReporterAttributeMapping> mappings) {
             var delegate = new CapturingReporter();
 
-            assertThat(AttributeMappingReporter.decorate(delegate, mappings)).isSameAs(delegate);
+            assertThat(decorate(delegate, mappings)).isSameAs(delegate);
         }
     }
 
@@ -134,7 +152,7 @@ class AttributeMappingReporterTest {
         @Test
         void theReporterReceivesTheResolvedAttributes() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate,
+            var reporter = decorate(delegate,
                     List.of(mapping(EMAIL_EXPRESSION, "user_email"), mapping(CLIENT_EXPRESSION, "application_id")));
 
             reporter.report(auditWithContext());
@@ -147,7 +165,7 @@ class AttributeMappingReporterTest {
         @Test
         void theRestOfTheAuditIsCarriedThrough() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
+            var reporter = decorate(delegate, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
             var original = auditWithContext();
 
             reporter.report(original);
@@ -160,7 +178,7 @@ class AttributeMappingReporterTest {
         @Test
         void anAuditWithNothingResolvableIsPassedStraightThrough() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate,
+            var reporter = decorate(delegate,
                     List.of(mapping("{#context.attributes['user'].additionalInformation['absent']}", "nope")));
             var original = auditWithContext();
 
@@ -173,7 +191,7 @@ class AttributeMappingReporterTest {
         @Test
         void somethingThatIsNotAnAuditIsPassedStraightThrough() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
+            var reporter = decorate(delegate, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
             var other = mock(Reportable.class);
 
             reporter.report(other);
@@ -206,7 +224,7 @@ class AttributeMappingReporterTest {
         @Test
         void theEventStillReachesTheReporter() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate, List.of(mapping(CLIENT_EXPRESSION, "application_id")));
+            var reporter = decorate(delegate, List.of(mapping(CLIENT_EXPRESSION, "application_id")));
 
             reporter.report(auditWithUnprojectableUser());
 
@@ -216,7 +234,7 @@ class AttributeMappingReporterTest {
         @Test
         void mappingsThatDoNotTouchTheUserStillResolve() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate, List.of(mapping(CLIENT_EXPRESSION, "application_id")));
+            var reporter = decorate(delegate, List.of(mapping(CLIENT_EXPRESSION, "application_id")));
 
             reporter.report(auditWithUnprojectableUser());
 
@@ -231,8 +249,8 @@ class AttributeMappingReporterTest {
         void twoReportersOverOneAuditEachSeeOnlyTheirOwnAttributes() {
             var first = new CapturingReporter();
             var second = new CapturingReporter();
-            var firstReporter = AttributeMappingReporter.decorate(first, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
-            var secondReporter = AttributeMappingReporter.decorate(second, List.of(mapping(CLIENT_EXPRESSION, "application_id")));
+            var firstReporter = decorate(first, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
+            var secondReporter = decorate(second, List.of(mapping(CLIENT_EXPRESSION, "application_id")));
 
             var shared = auditWithContext();
             firstReporter.report(shared);
@@ -245,7 +263,7 @@ class AttributeMappingReporterTest {
         @Test
         void theSharedAuditIsNeverMutated() {
             var delegate = new CapturingReporter();
-            var reporter = AttributeMappingReporter.decorate(delegate, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
+            var reporter = decorate(delegate, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
             var shared = auditWithContext();
 
             reporter.report(shared);
@@ -258,8 +276,8 @@ class AttributeMappingReporterTest {
         void aReporterWithoutMappingsIsUnaffectedByOneWithThem() {
             var enriched = new CapturingReporter();
             var plain = new CapturingReporter();
-            var enrichedReporter = AttributeMappingReporter.decorate(enriched, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
-            var plainReporter = AttributeMappingReporter.decorate(plain, List.of());
+            var enrichedReporter = decorate(enriched, List.of(mapping(EMAIL_EXPRESSION, "user_email")));
+            var plainReporter = decorate(plain, List.of());
 
             var shared = auditWithContext();
             enrichedReporter.report(shared);
@@ -267,6 +285,66 @@ class AttributeMappingReporterTest {
 
             assertThat(enriched.onlyAudit().getCustomAttributes()).containsOnlyKeys("user_email");
             assertThat(plain.onlyAudit().getCustomAttributes()).isNull();
+        }
+    }
+
+    @Nested
+    class EventTypeScope {
+
+        private final List<ReporterAttributeMapping> mappings = List.of(mapping(EMAIL_EXPRESSION, "user_email"));
+
+        @Test
+        void anEventOfAConfiguredTypeIsEnriched() {
+            var delegate = new CapturingReporter();
+            var reporter = decorate(delegate, mappings, Set.of("USER_LOGIN", "USER_LOGOUT"));
+
+            reporter.report(auditWithContext());
+
+            assertThat(delegate.onlyAudit().getCustomAttributes()).containsOnlyKeys("user_email");
+        }
+
+        @Test
+        void anEventOfAnotherTypeIsStillReported() {
+            var delegate = new CapturingReporter();
+            var reporter = decorate(delegate, mappings, Set.of("TOKEN_CREATED"));
+            var original = auditWithContext();
+
+            reporter.report(original);
+
+            assertThat(delegate.onlyAudit()).isSameAs(original);
+            assertThat(original.getCustomAttributes()).isNull();
+        }
+
+        @Test
+        void anEventOfAnotherTypeIsNotEvaluatedAtAll() {
+            var resolver = mock(ReporterAttributeResolver.class);
+            var config = new io.gravitee.am.model.Reporter();
+            config.setAttributeMappings(mappings);
+            config.setAttributeMappingEventTypes(Set.of("TOKEN_CREATED"));
+            var delegate = new CapturingReporter();
+
+            AttributeMappingReporter.decorate(delegate, config, resolver).report(auditWithContext());
+
+            verifyNoInteractions(resolver);
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        void noConfiguredTypesKeepsTheUnscopedBehavior(Set<String> eventTypes) {
+            var delegate = new CapturingReporter();
+            var reporter = decorate(delegate, mappings, eventTypes);
+
+            reporter.report(auditWithContext());
+
+            assertThat(delegate.onlyAudit().getCustomAttributes()).containsOnlyKeys("user_email");
+        }
+
+        @Test
+        void scopeDoesNotChangeWhatTheDelegateHandles() {
+            var delegate = new CapturingReporter();
+            var reporter = decorate(delegate, mappings, Set.of("TOKEN_CREATED"));
+
+            assertThat(reporter.canHandle(auditWithContext())).isEqualTo(delegate.canHandle(auditWithContext()));
         }
     }
 }

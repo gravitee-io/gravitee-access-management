@@ -268,4 +268,59 @@ describe('Reporter attribute mappings - Domain Level Gateway', () => {
       expect(fromPlainTopic.customAttributes).toBeUndefined();
     });
   });
+
+  describe('Sensitive attributes', () => {
+    it('should never export a denied attribute, however the expression spells it', async () => {
+      const topic = uniqueName('mapping-denied-attribute', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [
+          { expression: "{#context.attributes['user'].claims['azure_b2c_refresh_token']}", exportedName: 'denied_top_level' },
+          { expression: "{#context.attributes['user'].claims['azure_b2c_'+'refresh_token']}", exportedName: 'denied_concatenated' },
+          { expression: "{#context.attributes['user']['claims']['idp']['access_token']}", exportedName: 'denied_nested' },
+          { expression: "{#context.attributes['user'].claims['idp']['name']}", exportedName: 'idp_name' },
+          { expression: "{#context.attributes['user'].claims['employeeId']}", exportedName: 'employee_id' },
+        ],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.type).toEqual('USER_LOGIN');
+      expect(received.customAttributes).toEqual({ idp_name: 'Acme IdP', employee_id: 'E-4471' });
+      expect(JSON.stringify(received)).not.toContain('RT-XYZ');
+      expect(JSON.stringify(received)).not.toContain('SECRET-AT');
+    });
+  });
+
+  describe('Event type scope', () => {
+    it('should enrich an event of a configured type', async () => {
+      const topic = uniqueName('mapping-scope-in', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [{ expression: "{#context.attributes['user'].email}", exportedName: 'user_email' }],
+        ['USER_LOGIN'],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.customAttributes).toEqual({ user_email: fixture.user.email });
+    });
+
+    it('should still deliver an event of another type, without the extra attributes', async () => {
+      const topic = uniqueName('mapping-scope-out', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [{ expression: "{#context.attributes['user'].email}", exportedName: 'user_email' }],
+        ['USER_LOGOUT'],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.type).toEqual('USER_LOGIN');
+      expect(received.customAttributes).toBeUndefined();
+    });
+  });
 });

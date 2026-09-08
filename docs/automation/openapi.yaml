@@ -1968,6 +1968,15 @@ components:
         \ persist audit events to a backend. The key field is the stable, immutable\
         \ identity used for idempotent create-or-update."
       properties:
+        attributeMappingEventTypes:
+          type: array
+          description: Audit event types the attribute mappings apply to. Empty means
+            every event type. Ignored when system is true.
+          items:
+            type: string
+            description: Audit event types the attribute mappings apply to. Empty
+              means every event type. Ignored when system is true.
+          uniqueItems: true
         attributeMappings:
           type: array
           description: Additional attributes exported alongside the regular audit
@@ -2016,7 +2025,8 @@ components:
           description: "Whether this is the domain's system reporter. Immutable after\
             \ creation. When true, only key is required; the reporter is built from\
             \ the domains.reporters.default.* and repository system settings and the\
-            \ name, type, configuration, and attributeMappings fields are ignored."
+            \ name, type, configuration, attributeMappings and attributeMappingEventTypes\
+            \ fields are ignored."
         type:
           type: string
           description: Reporter plugin type identifier. Immutable after creation.

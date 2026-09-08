@@ -23,7 +23,9 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,6 +71,11 @@ public class Reporter implements Managed {
     private List<ReporterAttributeMapping> attributeMappings;
 
     /**
+     * Audit event types the attribute mappings apply to. Null or empty means every event type.
+     */
+    private Set<String> attributeMappingEventTypes;
+
+    /**
      * Indicates the source of truth for this reporter.
      */
     private ManagedBy managedBy;
@@ -90,6 +97,7 @@ public class Reporter implements Managed {
         this.updatedAt = other.updatedAt;
         this.inherited = other.inherited;
         this.attributeMappings = other.attributeMappings == null ? null : new ArrayList<>(other.attributeMappings);
+        this.attributeMappingEventTypes = other.attributeMappingEventTypes == null ? null : new LinkedHashSet<>(other.attributeMappingEventTypes);
         this.managedBy = other.managedBy;
     }
 

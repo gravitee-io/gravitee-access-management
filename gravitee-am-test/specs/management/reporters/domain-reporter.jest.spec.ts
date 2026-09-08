@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { afterAll, beforeAll, expect } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { Reporter } from '@management-models/Reporter';
 import {
   deleteDomainReporter,
@@ -61,6 +61,14 @@ describe('Domain Kafka Reporter CRUD', () => {
       expect(config.topic).toEqual(topic);
       expect(config.acks).toEqual('1');
       expect(config.auditTypes).toEqual([]);
+    });
+
+    it('should create a reporter that scopes its mappings to event types', async () => {
+      const reporter: Reporter = await fixture.createReporter({
+        attributeMappingEventTypes: ['USER_LOGIN', 'USER_LOGOUT'],
+      });
+
+      expect([...reporter.attributeMappingEventTypes].sort()).toEqual(['USER_LOGIN', 'USER_LOGOUT']);
     });
 
     it('should create a reporter that exports no additional attributes', async () => {
@@ -217,6 +225,18 @@ describe('Domain Reporter Attribute Mapping Validation', () => {
 
   it('should reject an invalid exported name (too long)', async () => {
     await expect(invalid([{ expression: "{#context.attributes['user'].id}", exportedName: 'a'.repeat(65) }])).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+  });
+
+  it('should reject an unknown event type', async () => {
+    await expect(fixture.createReporter({ attributeMappingEventTypes: ['NOT_AN_EVENT'] })).rejects.toMatchObject({
+      response: { status: 400 },
+    });
+  });
+
+  it('should reject event types declared without any mapping', async () => {
+    await expect(fixture.createReporter({ attributeMappings: null, attributeMappingEventTypes: ['USER_LOGIN'] })).rejects.toMatchObject({
       response: { status: 400 },
     });
   });

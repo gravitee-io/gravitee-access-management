@@ -132,6 +132,11 @@
 #    - CLIENT_AUTHENTICATION
 #    - TOKEN_CREATED
 #    - TOKEN_REVOKED
+#    # Additional attribute names a reporter attribute mapping never exports. The built-in list of
+#    # credentials and tokens always applies.
+#    attribute_mappings:
+#      denied_attributes:
+#      - legacy_session_key
 #  file:
 #    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV

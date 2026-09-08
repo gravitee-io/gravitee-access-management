@@ -18,7 +18,6 @@ package io.gravitee.am.model.safe;
 import io.gravitee.am.common.el.ELFunction;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -138,10 +137,11 @@ public class UserProperties {
                 .orElse(List.of());
     }
 
-    private void removeSensitiveClaims(Map claimsToClean) {
+    private void removeSensitiveClaims(Map<String, Object> claimsToClean) {
         // remove technical information that shouldn't be used in templates
-        claimsToClean.remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
-        claimsToClean.remove(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
+        if (claimsToClean != null) {
+            User.SENSITIVE_ADDITIONAL_PROPERTIES.forEach(claimsToClean::remove);
+        }
     }
 
     @ELFunction

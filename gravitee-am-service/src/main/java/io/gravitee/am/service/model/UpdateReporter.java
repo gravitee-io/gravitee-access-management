@@ -21,6 +21,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,6 +47,8 @@ public class UpdateReporter {
      * Additional attributes to export alongside the regular payload.
      */
     private List<ReporterAttributeMapping> attributeMappings;
+
+    private Set<String> attributeMappingEventTypes;
 
     @Override
     public String toString() {

@@ -38,6 +38,8 @@ export interface CreateReporterOptions {
   configuration?: string;
   /** Mappings to declare. Omit for {@link DEFAULT_ATTRIBUTE_MAPPINGS}; pass `[]` or `null` to declare none. */
   attributeMappings?: ReporterAttributeMapping[] | null;
+  /** Audit event types the mappings apply to. Omit to declare none. */
+  attributeMappingEventTypes?: string[];
 }
 
 export interface DomainReporterFixture {
@@ -63,9 +65,9 @@ export const setupDomainReporterFixture = async (): Promise<DomainReporterFixtur
   const { domain } = await setupDomainForTest(uniqueName('reporter-domain', true), { accessToken, waitForStart: false });
   const createdReporterIds: string[] = [];
   const kafkaConfig = buildKafkaReporterConfigJson;
-  
+
   const mappingsOf = (options: CreateReporterOptions) =>
-    options.attributeMappings === null ? undefined : (options.attributeMappings ?? DEFAULT_ATTRIBUTE_MAPPINGS);
+    options.attributeMappings === null ? undefined : options.attributeMappings ?? DEFAULT_ATTRIBUTE_MAPPINGS;
 
   const createReporter = async (options: CreateReporterOptions = {}): Promise<Reporter> => {
     const reporter = await createDomainReporter(domain.id, accessToken, {
@@ -74,6 +76,7 @@ export const setupDomainReporterFixture = async (): Promise<DomainReporterFixtur
       enabled: options.enabled ?? true,
       configuration: options.configuration ?? kafkaConfig(),
       attributeMappings: mappingsOf(options),
+      attributeMappingEventTypes: options.attributeMappingEventTypes,
     });
     createdReporterIds.push(reporter.id);
     return reporter;
@@ -86,6 +89,7 @@ export const setupDomainReporterFixture = async (): Promise<DomainReporterFixtur
       enabled: options.enabled ?? reporter.enabled,
       configuration: options.configuration ?? kafkaConfig(),
       attributeMappings: mappingsOf(options),
+      attributeMappingEventTypes: options.attributeMappingEventTypes,
     });
 
   const systemReporter = async (): Promise<Reporter> => {

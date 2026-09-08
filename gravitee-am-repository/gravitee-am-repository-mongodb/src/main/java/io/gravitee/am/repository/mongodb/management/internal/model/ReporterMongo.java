@@ -75,6 +75,8 @@ public class ReporterMongo extends Auditable {
 
     private List<ReporterAttributeMappingMongo> attributeMappings;
 
+    private List<String> attributeMappingEventTypes;
+
     private String managedBy;
 
 }

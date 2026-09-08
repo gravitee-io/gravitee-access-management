@@ -26,6 +26,7 @@ import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The Automation API representation of a reporter.
@@ -71,17 +72,22 @@ public class AutomationReporter {
             "under. Ignored when system is true; a system reporter exports no additional attributes.")
     private List<ReporterAttributeMapping> attributeMappings;
 
+    @Schema(description = "Audit event types the attribute mappings apply to. Empty means every event type. " +
+            "Ignored when system is true.")
+    private Set<String> attributeMappingEventTypes;
+
     /**
      * Whether this is the domain's system reporter. Immutable: fixed at creation. When {@code true},
      * only {@code key} is required; the reporter is built from {@code domains.reporters.default.*}
      * settings (and the repository backend) in {@code gravitee.yaml} and the {@code name}, {@code type},
-     * {@code configuration} and {@code attributeMappings} fields of this payload are ignored.
+     * {@code configuration}, {@code attributeMappings} and {@code attributeMappingEventTypes} fields of this
+     * payload are ignored.
      */
     @JsonProperty("system")
     @Schema(name = "system",
             description = "Whether this is the domain's system reporter. Immutable after creation. When true, " +
                     "only key is required; the reporter is built from the domains.reporters.default.* and " +
-                    "repository system settings and the name, type, configuration, and attributeMappings " +
+                    "repository system settings and the name, type, configuration, attributeMappings and attributeMappingEventTypes " +
                     "fields are ignored.",
             defaultValue = "false")
     private boolean system;

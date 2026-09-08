@@ -39,6 +39,7 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -145,6 +146,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporterMongo.setUpdatedAt(reporter.getUpdatedAt());
         reporterMongo.setInherited(reporter.isInherited());
         reporterMongo.setAttributeMappings(toMongoAttributeMappings(reporter.getAttributeMappings()));
+        reporterMongo.setAttributeMappingEventTypes(reporter.getAttributeMappingEventTypes() == null ? null : List.copyOf(reporter.getAttributeMappingEventTypes()));
         reporterMongo.setManagedBy(reporter.getManagedBy() != null ? reporter.getManagedBy().name() : null);
         return reporterMongo;
     }
@@ -174,6 +176,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporter.setUpdatedAt(reporterMongo.getUpdatedAt());
         reporter.setInherited(reporterMongo.isInherited());
         reporter.setAttributeMappings(toModelAttributeMappings(reporterMongo.getAttributeMappings()));
+        reporter.setAttributeMappingEventTypes(reporterMongo.getAttributeMappingEventTypes() == null ? null : new LinkedHashSet<>(reporterMongo.getAttributeMappingEventTypes()));
         reporter.setManagedBy(reporterMongo.getManagedBy() != null ? ManagedBy.valueOf(reporterMongo.getManagedBy()) : null);
         return reporter;
     }

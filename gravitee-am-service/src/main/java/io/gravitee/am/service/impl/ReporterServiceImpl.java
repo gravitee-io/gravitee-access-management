@@ -196,6 +196,7 @@ public class ReporterServiceImpl implements ReporterService {
                 .dataType("AUDIT")
                 .configuration(newReporter.getConfiguration())
                 .attributeMappings(isEmpty(newReporter.getAttributeMappings()) ? null : newReporter.getAttributeMappings())
+                .attributeMappingEventTypes(isEmpty(newReporter.getAttributeMappingEventTypes()) ? null : newReporter.getAttributeMappingEventTypes())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -211,7 +212,7 @@ public class ReporterServiceImpl implements ReporterService {
                 : pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_REPORTER, newReporter.getType());
         return licenseCheck
                 .andThen(validateConfiguration(newReporter, system))
-                .andThen(validateAttributeMappings(newReporter.getAttributeMappings()))
+                .andThen(validateAttributeMappings(newReporter.getAttributeMappings(), newReporter.getAttributeMappingEventTypes()))
                 .andThen(Single.defer(() -> checkReporterConfiguration(reporter)
                         .flatMap(ignore -> reporterRepository.create(reporter))
                         .flatMap(createdReporter -> {
@@ -229,9 +230,10 @@ public class ReporterServiceImpl implements ReporterService {
                         })));
     }
 
-    private Completable validateAttributeMappings(List<ReporterAttributeMapping> attributeMappings) {
+    private Completable validateAttributeMappings(List<ReporterAttributeMapping> attributeMappings, Set<String> eventTypes) {
         return Completable.fromAction(() -> {
-            var result = attributeMappingsValidator.validate(attributeMappings);
+            var result = attributeMappingsValidator.validate(
+                    new ReporterAttributeMappingsValidator.Input(attributeMappings, eventTypes));
             if (result.isInvalid()) {
                 throw new ReporterConfigurationException(result.describe());
             }
@@ -291,15 +293,17 @@ public class ReporterServiceImpl implements ReporterService {
 
         // A system reporter can never apply attribute mappings.
         if (oldReporter.isSystem()) {
-            if (!isEmpty(updateReporter.getAttributeMappings())) {
+            if (!isEmpty(updateReporter.getAttributeMappings()) || !isEmpty(updateReporter.getAttributeMappingEventTypes())) {
                 return Single.error(new InvalidParameterException("Attribute mappings are not supported on a system reporter"));
             }
         } else {
-            var mappingsValidation = attributeMappingsValidator.validate(updateReporter.getAttributeMappings());
+            var mappingsValidation = attributeMappingsValidator.validate(new ReporterAttributeMappingsValidator.Input(
+                    updateReporter.getAttributeMappings(), updateReporter.getAttributeMappingEventTypes()));
             if (mappingsValidation.isInvalid()) {
                 return Single.error(new ReporterConfigurationException(mappingsValidation.describe()));
             }
             reporterToUpdate.setAttributeMappings(isEmpty(updateReporter.getAttributeMappings()) ? null : updateReporter.getAttributeMappings());
+            reporterToUpdate.setAttributeMappingEventTypes(isEmpty(updateReporter.getAttributeMappingEventTypes()) ? null : updateReporter.getAttributeMappingEventTypes());
         }
 
         reporterToUpdate.setInherited(updateReporter.isInherited());

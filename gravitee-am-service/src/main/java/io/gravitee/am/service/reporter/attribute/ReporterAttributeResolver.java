@@ -16,16 +16,20 @@
 package io.gravitee.am.service.reporter.attribute;
 
 import io.gravitee.am.model.ReporterAttributeMapping;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEnrichmentContext;
 import io.gravitee.el.TemplateEngine;
 import lombok.CustomLog;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -36,6 +40,7 @@ import java.util.function.Supplier;
  *
  * @author GraviteeSource Team
  */
+@Component
 @CustomLog
 public class ReporterAttributeResolver {
 
@@ -46,6 +51,12 @@ public class ReporterAttributeResolver {
     static final String REQUEST_KEY = "request";
     static final String AUDIT_KEY = "audit";
 
+    private final SensitiveAttributeDenylist denylist;
+
+    public ReporterAttributeResolver(SensitiveAttributeDenylist denylist) {
+        this.denylist = denylist;
+    }
+
     /**
      * @return the resolved attributes keyed by the operator's chosen export name, in declaration order
      */
@@ -54,25 +65,40 @@ public class ReporterAttributeResolver {
             return Map.of();
         }
 
-        TemplateEngine engine = TemplateEngine.templateEngine();
-        engine.getTemplateContext().setVariable(CONTEXT_VARIABLE, new EvaluableAuditContext(attributesOf(audit)));
+        TemplateEngine engine = engineFor(audit);
 
         Map<String, Object> resolved = new LinkedHashMap<>();
         for (ReporterAttributeMapping mapping : mappings) {
             if (mapping == null || mapping.expression() == null || mapping.exportedName() == null) {
                 continue;
             }
-            try {
-                Object value = engine.getValue(mapping.expression(), Object.class);
-                if (value != null) {
-                    resolved.put(mapping.exportedName(), value);
-                }
-            } catch (Exception ex) {
-                log.debug("Unable to resolve reporter attribute mapping '{}' for audit {}",
-                        mapping.expression(), audit.getId(), ex);
-            }
+            evaluate(engine, mapping.expression(), audit)
+                    .filter(value -> {
+                        if (ExportableValue.isExportable(value)) {
+                            return true;
+                        }
+                        log.debug("Reporter attribute mapping '{}' resolves to something other than a single value, skipping it for audit {}",
+                                mapping.expression(), audit.getId());
+                        return false;
+                    })
+                    .ifPresent(value -> resolved.put(mapping.exportedName(), value));
         }
         return resolved;
+    }
+
+    private Optional<Object> evaluate(TemplateEngine engine, String expression, Audit audit) {
+        try {
+            return Optional.ofNullable(engine.getValue(expression, Object.class));
+        } catch (Exception ex) {
+            log.debug("Unable to resolve reporter attribute mapping '{}' for audit {}", expression, audit.getId(), ex);
+            return Optional.empty();
+        }
+    }
+
+    private TemplateEngine engineFor(Audit audit) {
+        TemplateEngine engine = TemplateEngine.templateEngine();
+        engine.getTemplateContext().setVariable(CONTEXT_VARIABLE, new EvaluableAuditContext(attributesOf(audit)));
+        return engine;
     }
 
     /**
@@ -83,8 +109,8 @@ public class ReporterAttributeResolver {
 
         AuditEnrichmentContext context = audit.getEnrichmentContext();
         if (context != null) {
-            attributes.put(USER_KEY, project(context::user, audit));
-            attributes.put(CLIENT_KEY, project(context::client, audit));
+            attributes.put(USER_KEY, scrub(project(context::user, audit)));
+            attributes.put(CLIENT_KEY, scrub(project(context::client, audit)));
         }
 
         AuditAccessPoint accessPoint = audit.getAccessPoint();
@@ -105,6 +131,31 @@ public class ReporterAttributeResolver {
         attributes.put(AUDIT_KEY, auditAttributes);
 
         return attributes;
+    }
+
+    /**
+     * @return the projection with its free-form maps filtered, or null if it could not be filtered
+     */
+    private Object scrub(Object projection) {
+        try {
+            if (projection instanceof UserProperties user) {
+                // the nested maps here belong to the audited User
+                // claims and additionalInformation are one instance in UserProperties
+                Map<String, Object> claims = denylist.scrubbedCopyOf(user.getClaims());
+                user.setClaims(claims);
+                user.setAdditionalInformation(claims);
+                Optional.ofNullable(user.getIdentities())
+                        .ifPresent(identities -> identities.forEach(identity ->
+                                identity.setAdditionalInformation(denylist.scrubbedCopyOf(identity.getAdditionalInformation()))));
+            } else if (projection instanceof ClientProperties client) {
+                client.setMetadata(denylist.scrubbedCopyOf(client.getMetadata()));
+            }
+            return projection;
+        } catch (Exception ex) {
+            log.warn("Unable to filter sensitive attributes out of {}, withholding it from attribute mappings",
+                    projection.getClass().getSimpleName(), ex);
+            return null;
+        }
     }
 
     /**
