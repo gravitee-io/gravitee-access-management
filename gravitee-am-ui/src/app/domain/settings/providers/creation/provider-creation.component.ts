@@ -17,6 +17,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { OrganizationService } from '../../../../services/organization.service';
 import { ProviderService } from '../../../../services/provider.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { MONGO_IDP_TYPE } from '../provider/provider.form.enricher';
@@ -32,10 +33,12 @@ export class ProviderCreationComponent implements OnInit {
   private domainId: string;
   private organizationContext: boolean;
   configurationIsValid = false;
+  providerDescription: string;
   @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(
     private providerService: ProviderService,
+    private organizationService: OrganizationService,
     private snackbarService: SnackbarService,
     private router: Router,
     private route: ActivatedRoute,
@@ -50,6 +53,15 @@ export class ProviderCreationComponent implements OnInit {
 
   get showMongoStorageGuidance(): boolean {
     return this.provider?.type === MONGO_IDP_TYPE;
+  }
+
+  onTypeSelected(type: string): void {
+    this.providerDescription = null;
+    this.organizationService.identitySchema(type).subscribe((schema) => {
+      if (this.provider?.type === type) {
+        this.providerDescription = schema?.description;
+      }
+    });
   }
 
   create() {
