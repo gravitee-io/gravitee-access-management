@@ -46,6 +46,12 @@ import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceTo
 export interface Reporter {
   /**
    *
+   * @type {Array<string>}
+   * @memberof Reporter
+   */
+  attributeMappingEventTypes?: Array<string>;
+  /**
+   *
    * @type {Array<ReporterAttributeMapping>}
    * @memberof Reporter
    */
@@ -146,6 +152,7 @@ export function ReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return json;
   }
   return {
+    attributeMappingEventTypes: json['attributeMappingEventTypes'] == null ? undefined : json['attributeMappingEventTypes'],
     attributeMappings:
       json['attributeMappings'] == null ? undefined : (json['attributeMappings'] as Array<any>).map(ReporterAttributeMappingFromJSON),
     configuration: json['configuration'] == null ? undefined : json['configuration'],
@@ -174,6 +181,7 @@ export function ReporterToJSONTyped(value?: Omit<Reporter, 'key'> | null, ignore
   }
 
   return {
+    attributeMappingEventTypes: value['attributeMappingEventTypes'],
     attributeMappings:
       value['attributeMappings'] == null ? undefined : (value['attributeMappings'] as Array<any>).map(ReporterAttributeMappingToJSON),
     configuration: value['configuration'],

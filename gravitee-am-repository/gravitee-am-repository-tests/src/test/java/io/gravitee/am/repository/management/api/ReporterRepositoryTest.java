@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -165,6 +167,37 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(p -> p.getAttributeMappings().size() == 1);
         testObserver.assertValue(p -> p.getAttributeMappings().get(0).exportedName().equals("user_id"));
         testObserver.assertValue(p -> p.getAttributeMappings().get(0).expression().equals("{#context.attributes['user'].id}"));
+    }
+
+    @Test
+    public void shouldUpdateAttributeMappingEventTypes() {
+        Reporter reporter = buildReporter();
+        Reporter createdReporter = repository.create(reporter).blockingGet();
+
+        Reporter updatable = buildReporter();
+        updatable.setId(createdReporter.getId());
+        updatable.setAttributeMappings(List.of(
+                new ReporterAttributeMapping("{#context.attributes['user'].id}", "user_id")));
+        updatable.setAttributeMappingEventTypes(Set.of(EventType.USER_LOGIN, EventType.USER_LOGOUT));
+        repository.update(updatable).blockingGet();
+
+        TestObserver<Reporter> testObserver = repository.findById(createdReporter.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertValue(p -> p.getAttributeMappingEventTypes().size() == 2);
+        testObserver.assertValue(p -> p.getAttributeMappingEventTypes().contains(EventType.USER_LOGIN));
+        testObserver.assertValue(p -> p.getAttributeMappingEventTypes().contains(EventType.USER_LOGOUT));
+    }
+
+    @Test
+    public void shouldCreateWithoutAttributeMappingEventTypes() {
+        Reporter reporter = buildReporter();
+        reporter.setAttributeMappingEventTypes(null);
+
+        TestObserver<Reporter> testObserver = repository.create(reporter).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertValue(p -> p.getAttributeMappingEventTypes() == null || p.getAttributeMappingEventTypes().isEmpty());
     }
 
     @Test

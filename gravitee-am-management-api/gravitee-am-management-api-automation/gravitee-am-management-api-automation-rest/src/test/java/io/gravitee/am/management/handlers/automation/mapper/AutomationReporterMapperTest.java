@@ -17,10 +17,12 @@ package io.gravitee.am.management.handlers.automation.mapper;
 
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author GraviteeSource Team
  */
 class AutomationReporterMapperTest {
+
+    private static final Set<String> EVENT_TYPES = Set.of(EventType.USER_LOGIN, EventType.TOKEN_CREATED);
 
     private static final List<ReporterAttributeMapping> MAPPINGS = List.of(
             new ReporterAttributeMapping("{#context.attributes['user'].additionalInformation['sub']}", "user_sub"),
@@ -72,11 +76,29 @@ class AutomationReporterMapperTest {
     }
 
     @Test
+    void carriesAttributeMappingEventTypesInEveryDirection() {
+        var reporter = Reporter.builder()
+                .name("Audit events to Kafka")
+                .type("reporter-am-kafka")
+                .configuration("{}")
+                .attributeMappings(MAPPINGS)
+                .attributeMappingEventTypes(EVENT_TYPES)
+                .build();
+        var definition = definition(MAPPINGS);
+        definition.setAttributeMappingEventTypes(EVENT_TYPES);
+
+        assertThat(AutomationReporterMapper.toAutomationReporter(reporter).getAttributeMappingEventTypes()).isEqualTo(EVENT_TYPES);
+        assertThat(AutomationReporterMapper.toNewReporter(definition).getAttributeMappingEventTypes()).isEqualTo(EVENT_TYPES);
+        assertThat(AutomationReporterMapper.toUpdateReporter(definition).getAttributeMappingEventTypes()).isEqualTo(EVENT_TYPES);
+    }
+
+    @Test
     void roundTripsAReporterThatDeclaresNoMappings() {
         var reporter = Reporter.builder().name("r").type("reporter-am-kafka").configuration("{}").build();
 
         assertThat(AutomationReporterMapper.toAutomationReporter(reporter).getAttributeMappings()).isNull();
         assertThat(AutomationReporterMapper.toNewReporter(definition(null)).getAttributeMappings()).isNull();
         assertThat(AutomationReporterMapper.toUpdateReporter(definition(null)).getAttributeMappings()).isNull();
+        assertThat(AutomationReporterMapper.toAutomationReporter(reporter).getAttributeMappingEventTypes()).isNull();
     }
 }

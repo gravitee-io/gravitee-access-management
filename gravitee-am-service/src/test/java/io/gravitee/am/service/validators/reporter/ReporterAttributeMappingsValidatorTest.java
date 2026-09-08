@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.validators.reporter;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +42,14 @@ class ReporterAttributeMappingsValidatorTest {
     private static final String VALID_EXPRESSION = "{#context.attributes['user'].additionalInformation['sub']}";
 
     private final ReporterAttributeMappingsValidator validator = new ReporterAttributeMappingsValidator();
+
+    private ReporterAttributeMappingsValidator.ValidationResult validate(List<ReporterAttributeMapping> mappings) {
+        return validator.validate(ReporterAttributeMappingsValidator.Input.of(mappings));
+    }
+
+    private ReporterAttributeMappingsValidator.ValidationResult validate(List<ReporterAttributeMapping> mappings, Set<String> eventTypes) {
+        return validator.validate(new ReporterAttributeMappingsValidator.Input(mappings, eventTypes));
+    }
 
     private static ReporterAttributeMapping mapping(String expression, String exportedName) {
         return new ReporterAttributeMapping(expression, exportedName);
@@ -58,12 +69,12 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void nullListIsValid() {
-            assertThat(validator.validate(null).isInvalid()).isFalse();
+            assertThat(validate(null).isInvalid()).isFalse();
         }
 
         @Test
         void emptyListIsValid() {
-            assertThat(validator.validate(List.of()).isInvalid()).isFalse();
+            assertThat(validate(List.of()).isInvalid()).isFalse();
         }
     }
 
@@ -78,12 +89,12 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void atTheMaximumIsValid() {
-            assertThat(validator.validate(mappings(MAX_COUNT)).isInvalid()).isFalse();
+            assertThat(validate(mappings(MAX_COUNT)).isInvalid()).isFalse();
         }
 
         @Test
         void oneOverTheMaximumIsRejected() {
-            var result = validator.validate(mappings(MAX_COUNT + 1));
+            var result = validate(mappings(MAX_COUNT + 1));
 
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.exceededMaxCount()).isEqualTo(MAX_COUNT);
@@ -97,7 +108,7 @@ class ReporterAttributeMappingsValidatorTest {
                     .mapToObj(i -> mapping("no braces", "not a name"))
                     .toList();
 
-            var result = validator.validate(tooMany);
+            var result = validate(tooMany);
 
             assertThat(result.exceededMaxCount()).isEqualTo(MAX_COUNT);
             assertThat(result.invalidExpressions()).isEmpty();
@@ -110,7 +121,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void aBracedExpressionIsValid() {
-            assertThat(validator.validate(List.of(mapping(VALID_EXPRESSION, "user_sub"))).isInvalid()).isFalse();
+            assertThat(validate(List.of(mapping(VALID_EXPRESSION, "user_sub"))).isInvalid()).isFalse();
         }
 
         @ParameterizedTest
@@ -123,14 +134,14 @@ class ReporterAttributeMappingsValidatorTest {
                 "{"                                             // template text, exported as-is
         })
         void acceptsAnythingTheEngineWillTake(String expression) {
-            assertThat(validator.validate(List.of(mapping(expression, "user_sub"))).isInvalid()).isFalse();
+            assertThat(validate(List.of(mapping(expression, "user_sub"))).isInvalid()).isFalse();
         }
 
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = {"   ", "\t", "\n"})
         void rejectsAnExpressionWithNothingInIt(String expression) {
-            var result = validator.validate(List.of(mapping(expression, "user_sub")));
+            var result = validate(List.of(mapping(expression, "user_sub")));
 
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.invalidExpressions()).hasSize(1);
@@ -142,14 +153,14 @@ class ReporterAttributeMappingsValidatorTest {
             var atLimit = expressionOfLength(ReporterAttributeMappingsValidator.MAX_EXPRESSION_LENGTH);
 
             assertThat(atLimit).hasSize(ReporterAttributeMappingsValidator.MAX_EXPRESSION_LENGTH);
-            assertThat(validator.validate(List.of(mapping(atLimit, "user_sub"))).isInvalid()).isFalse();
+            assertThat(validate(List.of(mapping(atLimit, "user_sub"))).isInvalid()).isFalse();
         }
 
         @Test
         void rejectsAnExpressionOneOverTheLengthLimit() {
             var overLimit = expressionOfLength(ReporterAttributeMappingsValidator.MAX_EXPRESSION_LENGTH + 1);
 
-            var result = validator.validate(List.of(mapping(overLimit, "user_sub")));
+            var result = validate(List.of(mapping(overLimit, "user_sub")));
 
             assertThat(result.isInvalid()).isTrue();
             // abbreviated so a rejected 513-character expression does not become a 513-character message
@@ -159,7 +170,7 @@ class ReporterAttributeMappingsValidatorTest {
         @Test
         void reportsEveryDistinctInvalidExpressionOnce() {
             var tooLong = expressionOfLength(MAX_EXPRESSION_LENGTH + 1);
-            var result = validator.validate(List.of(
+            var result = validate(List.of(
                     mapping("   ", "first"),
                     mapping("   ", "second"),
                     mapping(tooLong, "third")));
@@ -175,7 +186,7 @@ class ReporterAttributeMappingsValidatorTest {
         @ParameterizedTest
         @ValueSource(strings = {"user_sub", "USER_SUB", "sub", "field0", "_leading", "trailing_", "0"})
         void acceptsWordCharacters(String exportedName) {
-            assertThat(validator.validate(List.of(mapping(VALID_EXPRESSION, exportedName))).isInvalid()).isFalse();
+            assertThat(validate(List.of(mapping(VALID_EXPRESSION, exportedName))).isInvalid()).isFalse();
         }
 
         @ParameterizedTest
@@ -192,7 +203,7 @@ class ReporterAttributeMappingsValidatorTest {
                 "utilisateur_é"     // non-ascii
         })
         void rejectsAnythingElse(String exportedName) {
-            var result = validator.validate(List.of(mapping(VALID_EXPRESSION, exportedName)));
+            var result = validate(List.of(mapping(VALID_EXPRESSION, exportedName)));
 
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.invalidExportedNames()).hasSize(1);
@@ -203,14 +214,14 @@ class ReporterAttributeMappingsValidatorTest {
         void acceptsANameAtTheLengthLimit() {
             var atLimit = repeat('a', ReporterAttributeMappingsValidator.MAX_EXPORTED_NAME_LENGTH);
 
-            assertThat(validator.validate(List.of(mapping(VALID_EXPRESSION, atLimit))).isInvalid()).isFalse();
+            assertThat(validate(List.of(mapping(VALID_EXPRESSION, atLimit))).isInvalid()).isFalse();
         }
 
         @Test
         void rejectsANameOneOverTheLengthLimit() {
             var overLimit = repeat('a', ReporterAttributeMappingsValidator.MAX_EXPORTED_NAME_LENGTH + 1);
 
-            var result = validator.validate(List.of(mapping(VALID_EXPRESSION, overLimit)));
+            var result = validate(List.of(mapping(VALID_EXPRESSION, overLimit)));
 
             assertThat(result.isInvalid()).isTrue();
             // 65 characters is under the abbreviation threshold, so it is named in full
@@ -219,7 +230,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void describesAnEmptyNameReadably() {
-            var result = validator.validate(List.of(mapping(VALID_EXPRESSION, null)));
+            var result = validate(List.of(mapping(VALID_EXPRESSION, null)));
 
             assertThat(result.invalidExportedNames()).containsExactly("<empty>");
         }
@@ -230,7 +241,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void rejectsTwoMappingsExportingTheSameName() {
-            var result = validator.validate(List.of(
+            var result = validate(List.of(
                     mapping(VALID_EXPRESSION, "user_sub"),
                     mapping("{#context.attributes['user'].id}", "user_sub")));
 
@@ -241,7 +252,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void reportsEachDuplicatedNameOnceRegardlessOfHowOftenItRepeats() {
-            var result = validator.validate(List.of(
+            var result = validate(List.of(
                     mapping(VALID_EXPRESSION, "a"),
                     mapping(VALID_EXPRESSION, "a"),
                     mapping(VALID_EXPRESSION, "a"),
@@ -254,14 +265,14 @@ class ReporterAttributeMappingsValidatorTest {
         @Test
         void namesDifferingOnlyByCaseAreNotDuplicates() {
             // exported names reach backends that treat case as significant, so they are distinct fields
-            assertThat(validator.validate(List.of(
+            assertThat(validate(List.of(
                     mapping(VALID_EXPRESSION, "user_sub"),
                     mapping(VALID_EXPRESSION, "USER_SUB"))).isInvalid()).isFalse();
         }
 
         @Test
         void repeatingTheSameExpressionUnderDifferentNamesIsAllowed() {
-            assertThat(validator.validate(List.of(
+            assertThat(validate(List.of(
                     mapping(VALID_EXPRESSION, "user_sub"),
                     mapping(VALID_EXPRESSION, "subject"))).isInvalid()).isFalse();
         }
@@ -275,7 +286,7 @@ class ReporterAttributeMappingsValidatorTest {
             var mappings = new ArrayList<ReporterAttributeMapping>();
             mappings.add(null);
 
-            var result = validator.validate(mappings);
+            var result = validate(mappings);
 
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.invalidExpressions()).containsExactly("<empty>");
@@ -284,7 +295,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void expressionsAreDescribedBeforeNamesWhenBothAreInvalid() {
-            var result = validator.validate(List.of(mapping("   ", "not a name")));
+            var result = validate(List.of(mapping("   ", "not a name")));
 
             assertThat(result.invalidExpressions()).isNotEmpty();
             assertThat(result.invalidExportedNames()).isNotEmpty();
@@ -293,7 +304,7 @@ class ReporterAttributeMappingsValidatorTest {
 
         @Test
         void anInvalidNameIsNotAlsoCountedAsADuplicate() {
-            var result = validator.validate(List.of(
+            var result = validate(List.of(
                     mapping(VALID_EXPRESSION, "bad name"),
                     mapping(VALID_EXPRESSION, "bad name")));
 
@@ -319,7 +330,59 @@ class ReporterAttributeMappingsValidatorTest {
                     mapping("{#context.attributes['client']}", "b")));
             Collections.reverse(mappings);
 
-            assertThat(validator.validate(mappings).isInvalid()).isFalse();
+            assertThat(validate(mappings).isInvalid()).isFalse();
+        }
+    }
+
+    @Nested
+    class EventTypes {
+
+        private final List<ReporterAttributeMapping> mappings = List.of(mapping(VALID_EXPRESSION, "user_sub"));
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        void noneDeclaredIsValid(Set<String> eventTypes) {
+            assertThat(validate(mappings, eventTypes).isInvalid()).isFalse();
+        }
+
+        @Test
+        void aDeclaredTypeIsAccepted() {
+            assertThat(validate(mappings, Set.of(EventType.USER_LOGIN, EventType.TOKEN_CREATED)).isInvalid()).isFalse();
+        }
+
+        @Test
+        void everyDeclaredTypeIsAccepted() {
+            assertThat(validate(mappings, Set.copyOf(EventType.types())).isInvalid()).isFalse();
+        }
+
+        @Test
+        void aNullTypeIsRejectedRatherThanThrown() {
+            var declared = new HashSet<String>();
+            declared.add(EventType.USER_LOGIN);
+            declared.add(null);
+
+            var result = validate(mappings, declared);
+
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.unknownEventTypes()).containsExactly("<empty>");
+        }
+
+        @Test
+        void anUnknownTypeIsRejected() {
+            var result = validate(mappings, Set.of("NOT_AN_EVENT"));
+
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.unknownEventTypes()).containsExactly("NOT_AN_EVENT");
+            assertThat(result.describe()).contains("NOT_AN_EVENT");
+        }
+
+        @Test
+        void typesWithoutAnyMappingAreRejected() {
+            var result = validate(List.of(), Set.of(EventType.USER_LOGIN));
+
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.eventTypesWithoutMappings()).isTrue();
+            assertThat(result.describe()).contains("require at least one attribute mapping");
         }
     }
 }

@@ -37,6 +37,7 @@ import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.PluginLicenseGate;
 import io.gravitee.am.service.reporter.attribute.AttributeMappingReporter;
+import io.gravitee.am.service.reporter.attribute.ReporterAttributeResolver;
 import io.gravitee.am.service.reporter.SystemReporterConfigResolver;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
@@ -90,6 +91,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Autowired
     private SystemReporterConfigResolver systemReporterConfigResolver;
+
+    @Autowired
+    private ReporterAttributeResolver reporterAttributeResolver;
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
@@ -270,7 +274,7 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         if (reporterProvider != null) {
             try {
                 log.info("Starting reporter: {}", reporter.getName());
-                var mappedReporter = AttributeMappingReporter.decorate(reporterProvider, resolved.getAttributeMappings());
+                var mappedReporter = AttributeMappingReporter.decorate(reporterProvider, resolved, reporterAttributeResolver);
                 io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, mappedReporter, Reference.domain(domain.getId()));
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);

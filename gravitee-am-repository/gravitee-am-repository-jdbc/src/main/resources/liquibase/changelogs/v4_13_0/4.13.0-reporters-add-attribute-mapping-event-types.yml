@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-add-attribute-mapping-event-types-to-reporters
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: reporters
+              columnName: attribute_mapping_event_types
+      changes:
+        #############################
+        # reporters #
+        ############################
+        - addColumn:
+            tableName: reporters
+            columns:
+              - column: { name: attribute_mapping_event_types, type: clob, constraints: { nullable: true } }

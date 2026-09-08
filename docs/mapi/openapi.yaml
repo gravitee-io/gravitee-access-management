@@ -15939,6 +15939,11 @@ components:
     NewReporter:
       type: object
       properties:
+        attributeMappingEventTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         attributeMappings:
           type: array
           items:
@@ -17716,6 +17721,11 @@ components:
     Reporter:
       type: object
       properties:
+        attributeMappingEventTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         attributeMappings:
           type: array
           items:
@@ -19091,6 +19101,11 @@ components:
     UpdateReporter:
       type: object
       properties:
+        attributeMappingEventTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         attributeMappings:
           type: array
           items:

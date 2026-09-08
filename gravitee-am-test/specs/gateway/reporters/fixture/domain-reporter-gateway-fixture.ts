@@ -33,7 +33,12 @@ export interface DomainReporterGatewayFixture extends Fixture {
   application: Application;
   user: any & { password: string };
   openIdConfiguration: DomainOidcConfig;
-  addReporter(topicName: string, auditTypes?: string[], attributeMappings?: ReporterAttributeMapping[]): Promise<Reporter>;
+  addReporter(
+    topicName: string,
+    auditTypes?: string[],
+    attributeMappings?: ReporterAttributeMapping[],
+    attributeMappingEventTypes?: string[],
+  ): Promise<Reporter>;
   addOAuthReporter(topicName: string, auditTypes?: string[]): Promise<Reporter>;
   cleanUp(): Promise<void>;
 }
@@ -83,10 +88,16 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
     lastName: 'User',
     email: `${username}@test.com`,
     preRegistration: false,
-    // Nested source for attribute-mapping tests.
+    // Nested source for attribute-mapping tests. azure_b2c_refresh_token and idp.access_token are
+    // covered by the denylist alone; UserProperties strips op_* before it runs.
     additionalInformation: {
       employeeId: 'E-4471',
       department: 'Platform',
+      azure_b2c_refresh_token: 'RT-XYZ',
+      idp: {
+        name: 'Acme IdP',
+        access_token: 'SECRET-AT',
+      },
     },
   };
   await waitForSyncAfter(domain.id, () => createUser(domain.id, accessToken, user));
@@ -97,6 +108,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
     topicName: string,
     auditTypes: string[] = [],
     attributeMappings?: ReporterAttributeMapping[],
+    attributeMappingEventTypes?: string[],
   ): Promise<Reporter> => {
     const reporter = await waitForSyncAfter(domain.id, () =>
       createDomainReporter(domain.id, accessToken, {
@@ -110,6 +122,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
           auditTypes,
         }),
         ...(attributeMappings ? { attributeMappings } : {}),
+        ...(attributeMappingEventTypes ? { attributeMappingEventTypes } : {}),
       }),
     );
     reporterIds.push(reporter.id);

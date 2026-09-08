@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.ManagedBy;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.ReporterAttributeMapping;
@@ -46,6 +47,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -213,6 +215,35 @@ class ReporterServiceImplTest {
             ArgumentCaptor<Reporter> captor = ArgumentCaptor.forClass(Reporter.class);
             verify(reporterRepository).create(captor.capture());
             assertThat(captor.getValue().getAttributeMappings()).containsExactly(USER_SUB, CLIENT_ID);
+        }
+
+        @Test
+        void persists_declared_event_types() {
+            stubSuccessfulCreate();
+            NewReporter newReporter = newReporterWith(List.of(USER_SUB));
+            newReporter.setAttributeMappingEventTypes(Set.of(EventType.USER_LOGIN));
+
+            TestObserver<Reporter> observer = service.create(reference, newReporter, new DefaultUser(), false).test();
+            observer.awaitDone(5, TimeUnit.SECONDS);
+            observer.assertComplete();
+
+            ArgumentCaptor<Reporter> captor = ArgumentCaptor.forClass(Reporter.class);
+            verify(reporterRepository).create(captor.capture());
+            assertThat(captor.getValue().getAttributeMappingEventTypes()).containsExactly(EventType.USER_LOGIN);
+        }
+
+        @Test
+        void rejects_an_unknown_event_type_as_a_bad_request() {
+            when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+            NewReporter newReporter = newReporterWith(List.of(USER_SUB));
+            newReporter.setAttributeMappingEventTypes(Set.of("NOT_AN_EVENT"));
+
+            TestObserver<Reporter> observer = service.create(reference, newReporter, new DefaultUser(), false).test();
+            observer.awaitDone(5, TimeUnit.SECONDS);
+
+            observer.assertError(error -> error instanceof ReporterConfigurationException
+                    && error.getMessage().contains("NOT_AN_EVENT"));
+            verify(reporterRepository, never()).create(any());
         }
 
         @Test

@@ -39,7 +39,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -71,6 +73,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .type(entity.getType())
                 .inherited(entity.isInherited())
                 .attributeMappings(readAttributeMappings(entity.getAttributeMappings()))
+                .attributeMappingEventTypes(readAttributeMappingEventTypes(entity.getAttributeMappingEventTypes()))
                 .managedBy(entity.getManagedBy() != null ? ManagedBy.valueOf(entity.getManagedBy()) : null)
                 .build();
     }
@@ -91,9 +94,18 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .type(entity.getType())
                 .inherited(entity.isInherited())
                 .attributeMappings(entity.getAttributeMappings() == null ? null : JSONMapper.toJson(entity.getAttributeMappings()))
+                .attributeMappingEventTypes(entity.getAttributeMappingEventTypes() == null ? null : JSONMapper.toJson(entity.getAttributeMappingEventTypes()))
                 .managedBy(entity.getManagedBy() != null ? entity.getManagedBy().name() : null)
                 .build();
 
+    }
+
+    private static Set<String> readAttributeMappingEventTypes(String eventTypes) {
+        if (eventTypes == null) {
+            return null;
+        }
+        return JSONMapper.toCollectionOfBean(eventTypes, new TypeReference<LinkedHashSet<String>>() {
+        });
     }
 
     private static List<ReporterAttributeMapping> readAttributeMappings(String attributeMappings) {
@@ -117,6 +129,7 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
             new FieldSpec<>("system", JdbcReporter::isSystem, boolean.class),
             new FieldSpec<>("inherited", JdbcReporter::isInherited, boolean.class),
             new FieldSpec<>("attribute_mappings", JdbcReporter::getAttributeMappings, String.class),
+            new FieldSpec<>("attribute_mapping_event_types", JdbcReporter::getAttributeMappingEventTypes, String.class),
             new FieldSpec<>("managed_by", JdbcReporter::getManagedBy, String.class),
             new FieldSpec<>("created_at", JdbcReporter::getCreatedAt, LocalDateTime.class),
             new FieldSpec<>("updated_at", JdbcReporter::getUpdatedAt, LocalDateTime.class)

@@ -42,6 +42,12 @@ import {
 export interface NewReporter {
   /**
    *
+   * @type {Array<string>}
+   * @memberof NewReporter
+   */
+  attributeMappingEventTypes?: Array<string>;
+  /**
+   *
    * @type {Array<ReporterAttributeMapping>}
    * @memberof NewReporter
    */
@@ -103,6 +109,7 @@ export function NewReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return json;
   }
   return {
+    attributeMappingEventTypes: json['attributeMappingEventTypes'] == null ? undefined : json['attributeMappingEventTypes'],
     attributeMappings:
       json['attributeMappings'] == null ? undefined : (json['attributeMappings'] as Array<any>).map(ReporterAttributeMappingFromJSON),
     configuration: json['configuration'],
@@ -124,6 +131,7 @@ export function NewReporterToJSONTyped(value?: NewReporter | null, ignoreDiscrim
   }
 
   return {
+    attributeMappingEventTypes: value['attributeMappingEventTypes'],
     attributeMappings:
       value['attributeMappings'] == null ? undefined : (value['attributeMappings'] as Array<any>).map(ReporterAttributeMappingToJSON),
     configuration: value['configuration'],
