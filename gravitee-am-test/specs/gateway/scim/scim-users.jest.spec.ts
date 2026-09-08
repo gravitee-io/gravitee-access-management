@@ -267,6 +267,111 @@ describe('SCIM Users', () => {
     });
   });
 
+  describe('Multi-valued attribute validation', () => {
+    const valuelessEmails = [
+      { primary: false, type: 'work' },
+      { value: 'real@example.com', primary: true, type: 'home' },
+    ];
+
+    const expectRejected = (response, field: string) => {
+      expect(response.status).toEqual(400);
+      const resBody = response.body;
+      expect(resBody.status).toEqual('400');
+      expect(resBody.scimType).toEqual('invalidValue');
+      expect(resBody.detail).toEqual(`Field [${field}] contains an entry without a value`);
+      expect(resBody.schemas).toEqual(['urn:ietf:params:scim:api:messages:2.0:Error']);
+    };
+
+    it('should return 400 when creating a user with an email entry that has no value', async () => {
+      const userName = uniqueName('user-valueless-email', true);
+      const body = { ...baseCreateUserRequest, userName: userName, externalId: userName, emails: valuelessEmails };
+
+      const response = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
+        Authorization: `Bearer ${fixture.scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+
+      expectRejected(response, 'emails');
+    });
+
+    it('should return 400 when creating a user with a phone number entry that has no value', async () => {
+      const userName = uniqueName('user-valueless-phone', true);
+      const body = {
+        ...baseCreateUserRequest,
+        userName: userName,
+        externalId: userName,
+        phoneNumbers: [{ type: 'work' }, { value: '+33600000000', primary: true }],
+      };
+
+      const response = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
+        Authorization: `Bearer ${fixture.scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+
+      expectRejected(response, 'phoneNumbers');
+    });
+
+    it('should return 400 when updating a user with an email entry that has no value', async () => {
+      const userName = uniqueName('user-valueless-put', true);
+      const createdUser = await fixture.createUser(createScimUserBody(`${userName}@example.com`, 'Barbara', 'Jensen', userName));
+
+      const body = {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: userName,
+        externalId: userName,
+        name: { familyName: 'Jensen', givenName: 'Barbara' },
+        emails: valuelessEmails,
+      };
+
+      const response = await performPut(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
+        Authorization: `Bearer ${fixture.scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+
+      expectRejected(response, 'emails');
+    });
+
+    it('should return 400 when patching a user with an email entry that has no value', async () => {
+      const userName = uniqueName('user-valueless-patch', true);
+      const createdUser = await fixture.createUser(createScimUserBody(`${userName}@example.com`, 'Barbara', 'Jensen', userName));
+
+      const body = {
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+        Operations: [{ op: 'Replace', path: 'emails', value: valuelessEmails }],
+      };
+
+      const response = await performPatch(fixture.scimEndpoint, `/Users/${createdUser.id}`, JSON.stringify(body), {
+        Authorization: `Bearer ${fixture.scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+
+      expectRejected(response, 'emails');
+    });
+
+    it('should create the user when every multi-valued entry has a value', async () => {
+      const userName = uniqueName('user-valued-entries', true);
+      const body = {
+        ...baseCreateUserRequest,
+        userName: userName,
+        externalId: userName,
+        emails: [
+          { value: 'work@example.com', type: 'work' },
+          { value: 'real@example.com', primary: true, type: 'home' },
+        ],
+        phoneNumbers: [{ value: '+33600000000', primary: true }],
+      };
+
+      const response = await performPost(fixture.scimEndpoint, '/Users', JSON.stringify(body), {
+        Authorization: `Bearer ${fixture.scimAccessToken}`,
+        'Content-Type': 'application/json',
+      });
+
+      expect(response.status).toEqual(201);
+      expect(response.body.emails).toHaveLength(2);
+      expect(response.body.phoneNumbers).toHaveLength(1);
+    });
+  });
+
   describe('CRUD', () => {
     it('should create a user', async () => {
       const email = `${uniqueName('user-crud', true)}@example.com`;
@@ -577,6 +682,5 @@ describe('SCIM Users', () => {
       });
       expect(response.status).toEqual(404);
     });
-
   });
 });
