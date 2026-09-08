@@ -59,13 +59,16 @@ public class ConnectionFactoryProvider {
     public static final String TAG_DRIVER = "r2dbc_driver";
     public static final String TAG_DATABASE = "r2dbc_db";
     public static final String TAG_SERVER = "r2dbc_server";
+    public static final String TAG_TCP_KEEP_ALIVE = "tcpKeepAlive";
     public static final int DEFAULT_SETTINGS_ACQUIRE_RETRY = 1;
     public static final int DEFAULT_SETTINGS_INITIAL_SIZE = 1;
     public static final int DEFAULT_SETTINGS_MAX_SIZE = 50;
     public static final long DEFAULT_SETTINGS_MAX_IDLE_TIME = 30000;
-    public static final long DEFAULT_SETTINGS_MAX_LIFE_TIME = -1;
+    public static final long DEFAULT_SETTINGS_MAX_LIFE_TIME = 1_800_000; // 30 minutes
     public static final long DEFAULT_SETTINGS_MAX_ACQUIRE_TIME = 3000;
+    public static final long DEFAULT_SETTINGS_MAX_VALIDATION_TIME = 5000;
     public static final long DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME = 5000;
+    public static final boolean DEFAULT_SETTINGS_TCP_KEEP_ALIVE = true;
 
 
 
@@ -135,68 +138,7 @@ public class ConnectionFactoryProvider {
         if (uri != null) {
             connectionPool = ConnectionFactories.get(uri);
         } else {
-
-            String driver = getJdbcDriver();
-            String host = getJdbcHostname();
-            String port = getJdbcPort();
-            String user = getJdbcUsername();
-            String pwd = getJdbcPassword();
-            String db = getJdbcDatabase();
-            var jdbcSchema = getJdbcSchema();
-
-            if (driver == null || host == null) {
-                log.error("Missing one of connection parameters 'driver', 'host' or 'port' for {} database", prefix);
-                throw new IllegalArgumentException("Missing properties for '" + prefix + "' database");
-            }
-
-            ConnectionFactoryOptions.Builder builder = ConnectionFactoryOptions.builder()
-                    .option(DRIVER, "pool") // force connection pool (https://github.com/r2dbc/r2dbc-pool#getting-started)
-                    .option(PROTOCOL, driver) // set driver as protocol  (https://github.com/r2dbc/r2dbc-pool#getting-started)
-                    .option(HOST, host)
-                    .option(USER, user)
-                    .option(DATABASE, db)
-                    .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Integer.parseInt(environment.getProperty(prefix+"acquireRetry", ""+DEFAULT_SETTINGS_ACQUIRE_RETRY)))
-                    .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Integer.parseInt(environment.getProperty(prefix+"initialSize", ""+DEFAULT_SETTINGS_INITIAL_SIZE)))
-                    .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", ""+DEFAULT_SETTINGS_MAX_SIZE)))
-                    .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", ""+DEFAULT_SETTINGS_MAX_IDLE_TIME)), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", ""+DEFAULT_SETTINGS_MAX_LIFE_TIME)), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", ""+DEFAULT_SETTINGS_MAX_ACQUIRE_TIME)), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", ""+DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME)), ChronoUnit.MILLIS));
-
-            if (port != null) {
-                builder.option(PORT, Integer.parseInt(port));
-            }
-
-            final String validationQuery = environment.getProperty(prefix + "validationQuery");
-            if (validationQuery != null) {
-                builder.option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery)
-                        .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.REMOTE);
-            } else {
-                builder.option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
-            }
-
-            if (pwd != null) {
-                builder.option(PASSWORD, pwd);
-            }
-
-            builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
-
-            // Add schema support for postgres
-            if(jdbcSchema.isPresent()){
-                String currentSchema = jdbcSchema.get();
-                if(SchemaSupport.supportsSchema(driver)){
-                    builder.option(Option.valueOf(TAG_CURRENT_SCHEMA), currentSchema);
-                } else {
-                    log.warn("Schema parameter '{}' detected for {} driver. Note: {} does not support schemas. This parameter will be ignored.", currentSchema, driver, driver);
-                }
-            }
-
-            final String preferCursorExecution = environment.getProperty(prefix + TAG_PREFER_CURSORED_EXECUTION);
-            if (StringUtils.hasLength(preferCursorExecution)) {
-                builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), preferCursorExecution);
-            }
-
-            connectionPool = ConnectionFactories.get(builder.build());
+            connectionPool = ConnectionFactories.get(buildConnectionFactoryOptions());
         }
 
         log.info("Connection pool created for {} database", prefix);
@@ -211,6 +153,75 @@ public class ConnectionFactoryProvider {
                     .register(connection);
         }
         return connectionPool;
+    }
+
+    ConnectionFactoryOptions buildConnectionFactoryOptions() {
+        String driver = getJdbcDriver();
+        String host = getJdbcHostname();
+        String port = getJdbcPort();
+        String user = getJdbcUsername();
+        String pwd = getJdbcPassword();
+        String db = getJdbcDatabase();
+        var jdbcSchema = getJdbcSchema();
+
+        if (driver == null || host == null) {
+            log.error("Missing one of connection parameters 'driver', 'host' or 'port' for {} database", prefix);
+            throw new IllegalArgumentException("Missing properties for '" + prefix + "' database");
+        }
+
+        ConnectionFactoryOptions.Builder builder = ConnectionFactoryOptions.builder()
+                .option(DRIVER, "pool") // force connection pool (https://github.com/r2dbc/r2dbc-pool#getting-started)
+                .option(PROTOCOL, driver) // set driver as protocol  (https://github.com/r2dbc/r2dbc-pool#getting-started)
+                .option(HOST, host)
+                .option(USER, user)
+                .option(DATABASE, db)
+                .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Integer.parseInt(environment.getProperty(prefix+"acquireRetry", ""+DEFAULT_SETTINGS_ACQUIRE_RETRY)))
+                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Integer.parseInt(environment.getProperty(prefix+"initialSize", ""+DEFAULT_SETTINGS_INITIAL_SIZE)))
+                .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", ""+DEFAULT_SETTINGS_MAX_SIZE)))
+                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", ""+DEFAULT_SETTINGS_MAX_IDLE_TIME)), ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", ""+DEFAULT_SETTINGS_MAX_LIFE_TIME)), ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", ""+DEFAULT_SETTINGS_MAX_ACQUIRE_TIME)), ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", ""+DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME)), ChronoUnit.MILLIS));
+
+        if (port != null) {
+            builder.option(PORT, Integer.parseInt(port));
+        }
+
+        final String validationQuery = environment.getProperty(prefix + "validationQuery");
+        if (validationQuery != null) {
+            builder.option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery)
+                    .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.REMOTE)
+                    .option(PoolingConnectionFactoryProvider.MAX_VALIDATION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix + "maxValidationTime", "" + DEFAULT_SETTINGS_MAX_VALIDATION_TIME)), ChronoUnit.MILLIS));
+        } else {
+            builder.option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
+        }
+
+        if (pwd != null) {
+            builder.option(PASSWORD, pwd);
+        }
+
+        // TCP keepalive detects a half-open socket (e.g. after a DB failover) that LOCAL validation
+        // (channel.isOpen()) cannot see, since the OS never signals the application on such a socket
+        builder.option(Option.valueOf(TAG_TCP_KEEP_ALIVE), Boolean.parseBoolean(environment.getProperty(prefix + "tcpKeepAlive", "" + DEFAULT_SETTINGS_TCP_KEEP_ALIVE)));
+
+        builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
+
+        // Add schema support for postgres
+        if (jdbcSchema.isPresent()) {
+            String currentSchema = jdbcSchema.get();
+            if (SchemaSupport.supportsSchema(driver)) {
+                builder.option(Option.valueOf(TAG_CURRENT_SCHEMA), currentSchema);
+            } else {
+                log.warn("Schema parameter '{}' detected for {} driver. Note: {} does not support schemas. This parameter will be ignored.", currentSchema, driver, driver);
+            }
+        }
+
+        final String preferCursorExecution = environment.getProperty(prefix + TAG_PREFER_CURSORED_EXECUTION);
+        if (StringUtils.hasLength(preferCursorExecution)) {
+            builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), preferCursorExecution);
+        }
+
+        return builder.build();
     }
 
     public String getJdbcDriver() {
