@@ -1688,10 +1688,8 @@ public class ProvisioningUserServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        // The stored valueless entry must be dropped while reading, not carried into the patch
-        // and not raised as an error. Reading it is what returned 500 for the whole domain.
         List<Attribute> emailsHandedToThePatch = convertedScimUser.getValue().getEmails();
-        assertEquals(1, emailsHandedToThePatch.size());
+        assertEquals("the valueless entry should be dropped before the patch is applied", 1, emailsHandedToThePatch.size());
         assertEquals("real@example.com", emailsHandedToThePatch.get(0).getValue());
     }
 
