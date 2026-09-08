@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { OrganizationService } from '../../../../../../services/organization.service';
@@ -29,6 +29,7 @@ import { LicensedPlugin, PluginFeatureService } from '../../../../../../services
 export class ProviderCreationStep1Component implements OnInit {
   identities: (IdentityProvider & LicensedPlugin)[];
   @Input() provider;
+  @Output() typeSelected = new EventEmitter<string>();
   filter: string;
   filteredIdentities: (IdentityProvider & LicensedPlugin)[];
 
@@ -62,6 +63,7 @@ export class ProviderCreationStep1Component implements OnInit {
     this.provider.external = idp.external === true;
     this.provider.type = idp.id;
     this.initDomainWhitelist(idp.id);
+    this.typeSelected.emit(idp.id);
   }
 
   displayName(identityProvider) {
