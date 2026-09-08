@@ -55,8 +55,8 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
             escapeUsernameParam(queryParams, LOGIN_HINT);
             escapeUsernameParam(queryParams, USERNAME);
 
-            if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) != null) {
-                queryParams.add(ConstantKeys.TOKEN_CONTEXT_KEY, (String) context.get(ConstantKeys.TOKEN_CONTEXT_KEY));
+            if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) instanceof String token) {
+                queryParams.add(ConstantKeys.TOKEN_CONTEXT_KEY, token);
             }
 
             // client_id can be added dynamically via external protocol
