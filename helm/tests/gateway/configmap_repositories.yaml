@@ -34,7 +34,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
               oauth2:
@@ -48,7 +48,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
               gateway:
@@ -62,7 +62,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
               ratelimit:
@@ -76,7 +76,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
 
@@ -114,7 +114,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
                   schema: haha
@@ -129,7 +129,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
                   schema: haha
@@ -144,7 +144,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
                   schema: haha
@@ -159,7 +159,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
                   schema: haha
