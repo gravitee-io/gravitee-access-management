@@ -28,7 +28,7 @@ tests:
                   maxAcquireTime: 5000
                   maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
-                  maxLifeTime: -1
+                  maxLifeTime: 1800000
                   maxSize: 50
                   port: 3306
   - it: Test custom dataPlanes

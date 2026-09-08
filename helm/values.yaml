@@ -189,7 +189,7 @@ jdbc:
     initialSize: 1
     maxSize: 50
     maxIdleTime: 30000
-    maxLifeTime: -1
+    maxLifeTime: 1800000
     maxAcquireTime: 5000
     maxCreateConnectionTime: 3000
 #  sslEnabled: false
