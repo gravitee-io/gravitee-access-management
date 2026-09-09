@@ -1647,6 +1647,52 @@ public class ProvisioningUserServiceTest {
         verify(userRepository, never()).update(any(), any());
     }
 
+    @Test
+    public void shouldPatchUser_whenTheStoredUserHasAnEmailWithoutValue() throws Exception {
+        final String userId = "user-id";
+
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId(userId);
+        existingUser.setUsername("nullmail2");
+        existingUser.setSource("user-idp");
+        existingUser.setEmail("real@example.com");
+        existingUser.setReferenceId(DOMAIN_ID);
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setEmails(List.of(modelAttribute(null), modelAttribute("real@example.com")));
+
+        User patchedScimUser = new User();
+        patchedScimUser.setUserName("nullmail2");
+        patchedScimUser.setDisplayName("patched");
+
+        ObjectNode userNode = mock(ObjectNode.class);
+        PatchOp patchOp = mock(PatchOp.class);
+        when(patchOp.getOperations()).thenReturn(Collections.emptyList());
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        ArgumentCaptor<User> convertedScimUser = ArgumentCaptor.forClass(User.class);
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(existingUser));
+        when(groupService.findByMember(userId)).thenReturn(Flowable.empty());
+        when(objectMapper.convertValue(convertedScimUser.capture(), eq(ObjectNode.class))).thenReturn(userNode);
+        when(objectMapper.treeToValue(userNode, User.class)).thenReturn(patchedScimUser);
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(userRepository.update(any(), any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<User> testObserver = userService.patch(userId, patchOp, null, "/", null, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        List<Attribute> emailsHandedToThePatch = convertedScimUser.getValue().getEmails();
+        assertEquals("the valueless entry should be dropped before the patch is applied", 1, emailsHandedToThePatch.size());
+        assertEquals("real@example.com", emailsHandedToThePatch.get(0).getValue());
+    }
+
     /** Unrelated failures in these flows also surface as {@link InvalidValueException}. */
     private static Predicate<Throwable> rejectedEmails() {
         return throwable -> throwable instanceof InvalidValueException
