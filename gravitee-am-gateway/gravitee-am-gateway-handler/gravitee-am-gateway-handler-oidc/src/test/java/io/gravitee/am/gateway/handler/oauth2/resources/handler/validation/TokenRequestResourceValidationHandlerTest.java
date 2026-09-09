@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.reactivex.rxjava3.core.Completable;
@@ -94,6 +96,20 @@ public class TokenRequestResourceValidationHandlerTest {
         // Then
         verify(routingContext).next();
         verify(routingContext, never()).fail(any());
+    }
+
+    @Test
+    public void shouldSkipValidationForIdJagTokenRequest() {
+        // Given
+        when(httpRequest.params().get(Parameters.REQUESTED_TOKEN_TYPE)).thenReturn(TokenType.ID_JAG);
+
+        // When
+        handler.handle(routingContext);
+
+        // Then
+        verify(routingContext).next();
+        verify(routingContext, never()).fail(any());
+        verify(resourceValidationService, never()).validate(any());
     }
 
     @Test

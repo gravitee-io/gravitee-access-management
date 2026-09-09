@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.impl.TrustDomainM
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
@@ -39,6 +40,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,6 +95,22 @@ class TrustDomainManagerImplTest {
     private static TrustedDomain spiffe(String id, String name) {
         return TrustedDomain.builder().id(id).name(name)
                 .spiffe(SpiffeTrustSettings.builder().spiffeTrustDomain(name).build()).build();
+    }
+
+    private static TrustedDomain crossAppAccess(String id, String name, String audience, boolean enabled) {
+        return TrustedDomain.builder()
+                .id(id)
+                .name(name)
+                .domainIdentifier(audience)
+                .crossAppAccess(CrossAppAccessSettings.builder()
+                        .enabled(enabled)
+                        .resourceServers(List.of(CrossAppAccessResourceServer.builder()
+                                .id("rs-1")
+                                .name("Calendar")
+                                .resource("https://calendar.acme.com")
+                                .build()))
+                        .build())
+                .build();
     }
 
     private static TrustedDomain tokenExchange(String id, String name, String issuer) {
@@ -249,6 +267,55 @@ class TrustDomainManagerImplTest {
         assertThat(manager.findBySpiffeTrustDomain("am.local")).isPresent();
         verify(trustDomainKeyService).evict("td-2");
         verify(domainReadinessService).pluginRemoved(DOMAIN_ID, "td-2");
+    }
+
+    @Test
+    void shouldResolveCrossAppAccessOnlyTrustedDomainByAudience() {
+        preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", true));
+
+        assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com").orElseThrow().getId()).isEqualTo("td-4");
+        assertThat(manager.findBySpiffeTrustDomain("acme-corp")).isEmpty();
+        assertThat(manager.findByIssuer("https://auth.acme.com")).isEmpty();
+    }
+
+    @Test
+    void shouldIndexCrossAppAccessAudienceEvenWhenDisabled() {
+        preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", false));
+
+        assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com").orElseThrow().trustsCrossAppAccess()).isFalse();
+    }
+
+    @Test
+    void shouldReindexCrossAppAccessAudienceWhenItChanges() {
+        preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", true));
+        stubEvent(TrustDomainEvent.UPDATE, "td-4");
+        when(trustDomainRepository.findById("td-4")).thenReturn(Maybe.just(crossAppAccess("td-4", "acme-corp", "https://auth.acme.io", true)));
+
+        manager.onEvent(event);
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.io")).isPresent());
+        assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com")).isEmpty();
+    }
+
+    @Test
+    void shouldDropCrossAppAccessAudienceOnUndeploy() {
+        preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", true));
+        stubEvent(TrustDomainEvent.UNDEPLOY, "td-4");
+
+        manager.onEvent(event);
+
+        assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com")).isEmpty();
+    }
+
+    @Test
+    void shouldResolveCrossAppAccessResourceServerByTrustDomainAndId() {
+        preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", true));
+
+        assertThat(manager.findCrossAppAccessResourceServer("td-4", "rs-1").orElseThrow().getResource())
+                .isEqualTo("https://calendar.acme.com");
+        assertThat(manager.findCrossAppAccessResourceServer("td-4", "rs-unknown")).isEmpty();
+        assertThat(manager.findCrossAppAccessResourceServer("td-unknown", "rs-1")).isEmpty();
     }
 
     @Test

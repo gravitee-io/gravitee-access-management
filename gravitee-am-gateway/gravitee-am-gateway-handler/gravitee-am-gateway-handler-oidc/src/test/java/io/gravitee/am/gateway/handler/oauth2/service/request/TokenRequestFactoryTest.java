@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
@@ -28,6 +29,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.Mockito.mock;
@@ -109,6 +111,63 @@ public class TokenRequestFactoryTest {
 
         Assert.assertNotNull(tokenRequest);
         Assert.assertEquals(java.util.Set.of("offline_access"), tokenRequest.getScopes());
+    }
+
+    @Test
+    public void shouldParseResourceAsAnRfc8707ResourceIndicator() {
+        TokenRequest tokenRequest = tokenRequestFactory.create(
+                requestWith(Parameters.RESOURCE, "https://api.example.com/photos", null));
+
+        Assert.assertEquals(Set.of("https://api.example.com/photos"), tokenRequest.getResources());
+    }
+
+    @Test
+    public void shouldParseAnIdJagResourceIntoTheSameResourceSet() {
+        TokenRequest tokenRequest = tokenRequestFactory.create(
+                requestWith(Parameters.RESOURCE, "https://calendar.acme.com", TokenType.ID_JAG));
+
+        Assert.assertEquals(Set.of("https://calendar.acme.com"), tokenRequest.getResources());
+    }
+
+    @Test
+    public void shouldNotTreatAudienceAsAnAdditionalParameter() {
+        TokenRequest tokenRequest = tokenRequestFactory.create(
+                requestWith(Parameters.AUDIENCE, "https://auth.acme.com", TokenType.ID_JAG));
+
+        Assert.assertFalse(tokenRequest.getAdditionalParameters().containsKey(Parameters.AUDIENCE));
+        Assert.assertEquals("https://auth.acme.com", tokenRequest.parameters().getFirst(Parameters.AUDIENCE));
+    }
+
+    private RoutingContext requestWith(String name, String value, String requestedTokenType) {
+        List<Map.Entry<String, String>> entries = new ArrayList<>();
+        entries.add(new Parameter<>(Parameters.CLIENT_ID, "client-id"));
+        entries.add(new Parameter<>(Parameters.GRANT_TYPE, "urn:ietf:params:oauth:grant-type:token-exchange"));
+        entries.add(new Parameter<>(name, value));
+        if (requestedTokenType != null) {
+            entries.add(new Parameter<>(Parameters.REQUESTED_TOKEN_TYPE, requestedTokenType));
+        }
+
+        MultiMap multiMap = mock(MultiMap.class);
+        when(multiMap.entries()).thenReturn(entries);
+
+        io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
+
+        HttpServerResponse httpServerResponse = mock(HttpServerResponse.class);
+
+        HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
+        when(rxHttpServerRequest.params()).thenReturn(multiMap);
+        when(multiMap.get(Parameters.CLIENT_ID)).thenReturn("client-id");
+        when(multiMap.get(Parameters.GRANT_TYPE)).thenReturn("urn:ietf:params:oauth:grant-type:token-exchange");
+        when(multiMap.get(Parameters.REQUESTED_TOKEN_TYPE)).thenReturn(requestedTokenType);
+        when(multiMap.getAll(Parameters.RESOURCE)).thenReturn(Parameters.RESOURCE.equals(name) ? List.of(value) : List.of());
+        when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
+        when(rxHttpServerRequest.getDelegate().response()).thenReturn(httpServerResponse);
+
+        RoutingContext routingContext = mock(RoutingContext.class);
+        when(routingContext.request()).thenReturn(rxHttpServerRequest);
+        when(routingContext.get(CONTEXT_PATH)).thenReturn("/test");
+        return routingContext;
     }
 
     private class Parameter<K, V> implements Map.Entry<K, V> {

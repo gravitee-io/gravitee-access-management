@@ -36,6 +36,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.PasswordStrategy
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.RefreshTokenStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.TokenExchangeStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.UmaStrategy;
+import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2RequestParams;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -137,14 +138,21 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return findGranter(tokenRequest, client)
                 .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+                .doOnError(error -> auditService.report(denialAudit(tokenRequest, client, error)));
     }
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
         return findGranter(tokenRequest, client)
                 .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, response, client))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+                .doOnError(error -> auditService.report(denialAudit(tokenRequest, client, error)));
+    }
+
+    private ClientTokenAuditBuilder denialAudit(TokenRequest tokenRequest, Client client, Throwable error) {
+        return AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .tokenActor(client)
+                .withParams(() -> OAuth2RequestParams.of(tokenRequest))
+                .throwable(error);
     }
 
     private Single<TokenGranter> findGranter(TokenRequest tokenRequest, Client client) {

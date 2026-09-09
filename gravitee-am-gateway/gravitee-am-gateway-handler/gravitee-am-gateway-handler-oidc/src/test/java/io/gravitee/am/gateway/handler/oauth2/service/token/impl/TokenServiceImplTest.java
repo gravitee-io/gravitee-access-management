@@ -16,12 +16,16 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJag;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJagService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
@@ -36,6 +40,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -103,6 +108,9 @@ public class TokenServiceImplTest {
 
     @Mock
     private IDTokenService idTokenService;
+
+    @Mock
+    private IdJagService idJagService;
 
     @InjectMocks
     TokenServiceImpl tokenService;
@@ -1213,5 +1221,185 @@ public class TokenServiceImplTest {
             assertThat(token.getAdditionalInformation()).doesNotContainKey("authorization_details");
             return true;
         });
+    }
+
+
+    @Test
+    public void shouldRecordRequestContextWhenTokenCreationFails() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("test-client");
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("read"));
+        request.setResources(Set.of("https://mcp.example.com/api"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("test-client");
+        client.setDomain("test-domain");
+        User user = createUser("user-1");
+
+        when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+        when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.error(new IllegalStateException("signature failed")));
+
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertError(IllegalStateException.class);
+
+        Audit audit = captureTokenAudit();
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+        assertThat(audit.getOutcome().getMessage())
+                .contains("signature failed",
+                        "\"GRANT_TYPE\":\"" + GrantType.CLIENT_CREDENTIALS + "\"",
+                        "\"SCOPE\":\"read\"",
+                        "\"RESOURCE\":\"https://mcp.example.com/api\"");
+        assertThat(audit.getTarget().getId()).isEqualTo("user-1");
+        assertThat(audit.getAccessPoint().getAlternativeId()).isEqualTo("test-client");
+    }
+
+    @Test
+    public void shouldRecordRequestContextWhenIdTokenOnlyExchangeFails() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("exchange-client");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ID_TOKEN);
+        request.setSubjectTokenId("subject-jti-789");
+        request.setScopes(Set.of("openid"));
+        request.setOrigin("https://auth.example.com");
+
+        Client client = createClient("exchange-client");
+        client.setDomain("test-domain");
+        User user = createUser("user-321");
+
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+        when(idTokenService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.error(new IllegalStateException("id token refused")));
+
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertError(IllegalStateException.class);
+
+        Audit audit = captureTokenAudit();
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+        assertThat(audit.getOutcome().getMessage())
+                .contains("id token refused",
+                        "\"GRANT_TYPE\":\"" + GrantType.TOKEN_EXCHANGE + "\"",
+                        "\"REQUESTED_TOKEN_TYPE\":\"" + TokenType.ID_TOKEN + "\"",
+                        "\"SUBJECT_TOKEN\":\"subject-jti-789\"",
+                        "\"SCOPE\":\"openid\"");
+        assertThat(audit.getTarget().getId()).isEqualTo("user-321");
+    }
+
+    private OAuth2Request idJagRequest() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("agent-at-am");
+        request.setGrantType(GrantType.TOKEN_EXCHANGE);
+        request.setSupportRefreshToken(false);
+        request.setIssuedTokenType(TokenType.ID_JAG);
+        request.setSubjectTokenId("subject-jti-1");
+        request.setSubjectTokenType(TokenType.ACCESS_TOKEN);
+        request.setOrigin("https://auth.example.com");
+        request.setIdJagTarget(new IdJagTarget("https://auth.acme.com", "https://calendar.acme.com", "agent-at-acme"));
+        return request;
+    }
+
+    @Test
+    public void shouldReturnTheAssertionAsAnIdJagResponse() {
+        OAuth2Request request = idJagRequest();
+        Client client = createClient("agent-at-am");
+        User user = createUser("user-123");
+
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+                .thenReturn(Single.just(new IdJag("eyJ0eXAiOiJvYXV0aC1pZC1qYWcrand0In0.payload.signature", "assertion-jti", 300)));
+
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        observer.assertValue(token -> {
+            assertThat(token.getTokenType()).isEqualTo("N_A");
+            assertThat(token.getIssuedTokenType()).isEqualTo(TokenType.ID_JAG);
+            assertThat(token.getValue()).startsWith("eyJ");
+            assertThat(token.getExpiresIn()).isEqualTo(300);
+            assertThat(token.getRefreshToken()).isNull();
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldNotStoreOrSignAnAssertionOutsideTheIdJagService() {
+        OAuth2Request request = idJagRequest();
+
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300)));
+
+        tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(tokenManager, Mockito.never()).storeTokens(any(), any());
+        verify(jwtService, Mockito.never()).encodeJwt(any(JWT.class), any(Client.class));
+        verify(idTokenService, Mockito.never()).create(any(OAuth2Request.class), any(Client.class), any(User.class), any());
+    }
+
+    @Test
+    public void shouldAuditIssuanceWithTheAudienceAndResolvedResource() {
+        OAuth2Request request = idJagRequest();
+        Client client = createClient("agent-at-am");
+        client.setDomain("test-domain");
+
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300)));
+
+        tokenService.create(request, client, createUser("user-123")).test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete();
+
+        Audit audit = captureTokenAudit();
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+        assertThat(audit.getOutcome().getMessage())
+                .contains(TokenTypeHint.ID_JAG.name(),
+                        "assertion-jti",
+                        "https://auth.acme.com",
+                        "https://calendar.acme.com",
+                        TokenType.ID_JAG);
+        assertThat(audit.getTarget().getId()).isEqualTo("user-123");
+    }
+
+    @Test
+    public void shouldAuditADeniedIssuanceWithTheSameContext() {
+        OAuth2Request request = idJagRequest();
+        Client client = createClient("agent-at-am");
+        client.setDomain("test-domain");
+
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+                .thenReturn(Single.error(new IllegalStateException("assertion refused")));
+
+        tokenService.create(request, client, createUser("user-123")).test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertError(IllegalStateException.class);
+
+        Audit audit = captureTokenAudit();
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+        assertThat(audit.getOutcome().getMessage())
+                .contains("assertion refused",
+                        "\"REQUESTED_TOKEN_TYPE\":\"" + TokenType.ID_JAG + "\"",
+                        "\"AUDIENCE\":\"https://auth.acme.com\"",
+                        "\"RESOURCE\":\"https://calendar.acme.com\"",
+                        "\"SUBJECT_TOKEN\":\"subject-jti-1\"");
+    }
+
+    private Audit captureTokenAudit() {
+        ArgumentCaptor<AuditBuilder> auditCaptor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, Mockito.atLeastOnce()).report(auditCaptor.capture());
+        return auditCaptor.getAllValues().stream()
+                .filter(ClientTokenAuditBuilder.class::isInstance)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Expected ClientTokenAuditBuilder in audit reports"))
+                .build(new ObjectMapper());
     }
 }

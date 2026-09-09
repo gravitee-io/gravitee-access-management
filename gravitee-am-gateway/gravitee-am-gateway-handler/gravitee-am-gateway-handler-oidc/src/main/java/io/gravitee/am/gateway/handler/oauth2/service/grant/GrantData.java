@@ -16,7 +16,9 @@
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.model.uma.PermissionRequest;
+import lombok.Builder;
 
 import java.util.Date;
 import java.util.List;
@@ -50,7 +52,10 @@ public sealed interface GrantData permits
      * @param actorTokenId the ID of the actor token (only for delegation)
      * @param actorTokenType the type of the actor token (only for delegation)
      * @param actorInfo actor information for delegation scenarios (null for impersonation)
+     * @param allParentJtis the jti of every token in the exchange chain, propagated to the issued token
+     * @param idJagTarget the audience, resource and client id an ID-JAG is addressed to (null for any other issued token type)
      */
+    @Builder
     record TokenExchangeData(
             String issuedTokenType,
             Date expiration,
@@ -59,7 +64,8 @@ public sealed interface GrantData permits
             String actorTokenId,
             String actorTokenType,
             ActorTokenInfo actorInfo,
-            Set<String> allParentJtis
+            Set<String> allParentJtis,
+            IdJagTarget idJagTarget
     ) implements GrantData {
         public boolean isDelegation() {
             return actorInfo != null;
