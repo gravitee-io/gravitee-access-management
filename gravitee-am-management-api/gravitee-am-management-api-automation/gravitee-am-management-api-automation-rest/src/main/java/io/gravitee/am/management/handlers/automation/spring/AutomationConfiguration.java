@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.automation.resource.AutomationResource
 import io.gravitee.am.management.handlers.automation.spring.security.AutomationSecurityConfiguration;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +49,9 @@ public class AutomationConfiguration {
     public AutomationResourceResolver automationResourceResolver(DomainService domainService,
             IdentityProviderService identityProviderService,
             CertificateService certificateService,
-            ReporterService reporterService) {
-        return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService);
+            ReporterService reporterService,
+            DataPlaneDefinitionService dataPlaneDefinitionService) {
+        return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
+                dataPlaneDefinitionService);
     }
 }

@@ -21,8 +21,10 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -58,6 +60,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -108,7 +111,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     }
 
     @Override
-    public Single<DataPlaneDefinitionSummary> create(NewDataPlaneDefinition newDataPlaneDefinition) {
+    public Single<DataPlaneDefinitionSummary> create(NewDataPlaneDefinition newDataPlaneDefinition, ManagedBy managedBy, User principal) {
         log.debug("Create data plane definition {}", newDataPlaneDefinition);
 
         return Single.fromCallable(() -> validate(newDataPlaneDefinition))
@@ -116,16 +119,55 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                         .flatMap(resolved -> checkIdIsFree(resolved)
                                 .andThen(Single.defer(() -> {
                                     var now = new Date();
+                                    resolved.setManagedBy(managedBy);
                                     resolved.setCreatedAt(now);
                                     resolved.setUpdatedAt(now);
                                     return dataPlaneDefinitionRepository.create(resolved)
                                             .onErrorResumeNext(throwable -> conflictThatLostTheRace(resolved, throwable));
                                 }))
                                 .map(this::toSummary))
-                        .doOnError(throwable -> reportCreated(toSummary(definition), throwable)))
-                .doOnSuccess(summary -> reportCreated(summary, null))
+                        .doOnError(throwable -> reportCreated(toSummary(definition), principal, throwable)))
+                .doOnSuccess(summary -> reportCreated(summary, principal, null))
                 // after the audit: a failed event must not report the creation itself as failed
                 .flatMap(summary -> publishEvent(summary, Action.CREATE).toSingleDefault(summary));
+    }
+
+    @Override
+    public Single<DataPlaneDefinitionSummary> update(String id, NewDataPlaneDefinition newDataPlaneDefinition, User principal) {
+        log.debug("Update data plane definition {}", id);
+
+        return dataPlaneDefinitionRepository.findById(id)
+                .switchIfEmpty(Single.error(() -> new DataPlaneDefinitionNotFoundException(id)))
+                .flatMap(existing -> {
+                    // applyTo mutates the stored definition, so the audit's old value is taken first
+                    var before = toSummary(existing);
+                    return Single.fromCallable(() -> validate(newDataPlaneDefinition))
+                            .flatMap(candidate -> resolveReferences(newDataPlaneDefinition, candidate))
+                            .map(resolved -> applyTo(existing, resolved))
+                            .flatMap(dataPlaneDefinitionRepository::update)
+                            .map(this::toSummary)
+                            .doOnSuccess(updated -> reportUpdated(before, updated, principal, null))
+                            .doOnError(throwable -> reportUpdated(before, before, principal, throwable));
+                })
+                .flatMap(summary -> publishEvent(summary, Action.UPDATE).toSingleDefault(summary));
+    }
+
+    private DataPlaneDefinition applyTo(DataPlaneDefinition existing, DataPlaneDefinition resolved) {
+        rejectChange("type", existing.getType(), resolved.getType(), existing.getId());
+        rejectChange("organizationId", existing.getOrganizationId(), resolved.getOrganizationId(), existing.getId());
+        rejectChange("environmentId", existing.getEnvironmentId(), resolved.getEnvironmentId(), existing.getId());
+
+        existing.setName(resolved.getName());
+        existing.setGatewayUrl(resolved.getGatewayUrl());
+        existing.setConfiguration(resolved.getConfiguration());
+        existing.setUpdatedAt(new Date());
+        return existing;
+    }
+
+    private static void rejectChange(String field, String current, String candidate, String id) {
+        if (!Objects.equals(current, candidate)) {
+            throw new InvalidParameterException("Once a data plane is created, '" + field + "' cannot be changed [" + id + "]");
+        }
     }
 
     private Completable publishEvent(DataPlaneDefinitionSummary summary, Action action) {
@@ -135,10 +177,20 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         });
     }
 
-    private void reportCreated(DataPlaneDefinitionSummary summary, Throwable throwable) {
+    private void reportCreated(DataPlaneDefinitionSummary summary, User principal, Throwable throwable) {
         auditService.report(AuditBuilder.builder(DataPlaneDefinitionAuditBuilder.class)
                 .type(EventType.DATA_PLANE_CREATED)
                 .dataPlane(summary)
+                .principal(principal)
+                .throwable(throwable));
+    }
+
+    private void reportUpdated(DataPlaneDefinitionSummary before, DataPlaneDefinitionSummary after, User principal, Throwable throwable) {
+        auditService.report(AuditBuilder.builder(DataPlaneDefinitionAuditBuilder.class)
+                .type(EventType.DATA_PLANE_UPDATED)
+                .dataPlane(after)
+                .oldValue(before)
+                .principal(principal)
                 .throwable(throwable));
     }
 
@@ -163,15 +215,15 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     }
 
     @Override
-    public Completable delete(String id) {
+    public Completable delete(String id, User principal) {
         log.debug("Delete data plane definition {}", id);
         return dataPlaneDefinitionRepository.findById(id)
                 .map(this::toSummary)
                 .switchIfEmpty(Single.error(() -> new DataPlaneDefinitionNotFoundException(id)))
                 .flatMapCompletable(summary -> checkNoDomainUsesIt(id)
                         .andThen(Completable.defer(() -> dataPlaneDefinitionRepository.delete(id)))
-                        .doOnComplete(() -> reportDeleted(summary, null))
-                        .doOnError(throwable -> reportDeleted(summary, throwable))
+                        .doOnComplete(() -> reportDeleted(summary, principal, null))
+                        .doOnError(throwable -> reportDeleted(summary, principal, throwable))
                         .andThen(publishEvent(summary, Action.DELETE)));
     }
 
@@ -182,10 +234,11 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                         : Completable.complete());
     }
 
-    private void reportDeleted(DataPlaneDefinitionSummary summary, Throwable throwable) {
+    private void reportDeleted(DataPlaneDefinitionSummary summary, User principal, Throwable throwable) {
         auditService.report(AuditBuilder.builder(DataPlaneDefinitionAuditBuilder.class)
                 .type(EventType.DATA_PLANE_DELETED)
                 .dataPlane(summary)
+                .principal(principal)
                 .throwable(throwable));
     }
 

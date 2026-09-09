@@ -58,7 +58,7 @@ public class DeleteDataPlaneEndpoint extends AbstractInternalApiEndpoint {
     public void handle(RoutingContext context) {
         String id = context.pathParam(PARAM_ID);
 
-        dataPlaneDefinitionService.delete(id)
+        dataPlaneDefinitionService.delete(id, null)
                 .subscribe(
                         () -> {
                             dataPlaneRegistry.unregister(id);

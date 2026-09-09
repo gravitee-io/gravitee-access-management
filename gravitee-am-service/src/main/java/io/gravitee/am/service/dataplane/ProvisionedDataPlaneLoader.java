@@ -103,6 +103,21 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 .onErrorComplete();
     }
 
+    /**
+     * Re-registers a definition whose stored configuration changed.
+     */
+    public Completable reload(String dataPlaneId) {
+        if (storageRef.get() == null) {
+            return Completable.complete();
+        }
+        var registry = registryRef.get();
+        if (registry != null) {
+            registry.unregister(dataPlaneId);
+        }
+        forget(dataPlaneId);
+        return register(dataPlaneId);
+    }
+
     private void activate(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
         // only the provisioned definitions reach here, which is what keeps the gravitee.yml ones exempt
         var registry = registryRef.get();

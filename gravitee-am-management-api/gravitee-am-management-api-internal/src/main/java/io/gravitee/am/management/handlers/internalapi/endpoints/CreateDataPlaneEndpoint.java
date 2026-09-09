@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.internalapi.endpoints;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
@@ -73,7 +74,7 @@ public class CreateDataPlaneEndpoint extends AbstractInternalApiEndpoint {
             return;
         }
 
-        dataPlaneDefinitionService.create(payload)
+         dataPlaneDefinitionService.create(payload, ManagedBy.NONE, null)
                 .flatMap(summary -> provisionedDataPlaneLoader.register(summary.id()).andThen(Single.just(summary)))
                 .subscribe(
                         summary -> respond(context, HttpStatusCode.CREATED_201, summary),

@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.internalapi.endpoints;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
@@ -43,6 +44,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -107,7 +110,7 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldReturn201WithTheCreatedDefinition() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any())).thenReturn(Single.just(summary()));
+        when(dataPlaneDefinitionService.create(any(), any(), any())).thenReturn(Single.just(summary()));
 
         endpoint.handle(routingContext);
 
@@ -118,7 +121,7 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldNotEchoTheSubmittedCredentialsBack() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any())).thenReturn(Single.just(summary()));
+        when(dataPlaneDefinitionService.create(any(), any(), any())).thenReturn(Single.just(summary()));
 
         endpoint.handle(routingContext);
 
@@ -132,12 +135,12 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldPassTheDeserialisedPayloadToTheService() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any())).thenReturn(Single.just(summary()));
+        when(dataPlaneDefinitionService.create(any(), any(), any())).thenReturn(Single.just(summary()));
 
         endpoint.handle(routingContext);
 
         ArgumentCaptor<NewDataPlaneDefinition> captor = ArgumentCaptor.forClass(NewDataPlaneDefinition.class);
-        verify(dataPlaneDefinitionService).create(captor.capture());
+        verify(dataPlaneDefinitionService).create(captor.capture(), eq(ManagedBy.NONE), isNull());
 
         NewDataPlaneDefinition payload = captor.getValue();
         assertThat(payload.getId()).isEqualTo("dp-acme");
@@ -149,7 +152,7 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldRegisterTheProvisionedDataPlaneSoItIsUsableWithoutARestart() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any())).thenReturn(Single.just(summary()));
+        when(dataPlaneDefinitionService.create(any(), any(), any())).thenReturn(Single.just(summary()));
 
         endpoint.handle(routingContext);
 
@@ -160,7 +163,7 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldNotRegisterADefinitionThatWasNotPersisted() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any()))
+        when(dataPlaneDefinitionService.create(any(), any(), any()))
                 .thenReturn(Single.error(new DataPlaneDefinitionAlreadyExistsException("dp-acme")));
 
         endpoint.handle(routingContext);
@@ -175,7 +178,7 @@ class CreateDataPlaneEndpointTest {
         endpoint.handle(routingContext);
 
         verify(response).setStatusCode(400);
-        verify(dataPlaneDefinitionService, never()).create(any());
+        verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
     }
 
     @Test
@@ -187,7 +190,7 @@ class CreateDataPlaneEndpointTest {
         endpoint.handle(routingContext);
 
         verify(response).setStatusCode(400);
-        verify(dataPlaneDefinitionService, never()).create(any());
+        verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
         assertThat(responseBody()).contains("unknown field [gatewayURL]");
     }
 
@@ -210,13 +213,13 @@ class CreateDataPlaneEndpointTest {
         endpoint.handle(routingContext);
 
         verify(response).setStatusCode(400);
-        verify(dataPlaneDefinitionService, never()).create(any());
+        verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
     }
 
     @Test
     void shouldReturn400WhenTheServiceRejectsTheDefinition() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any()))
+        when(dataPlaneDefinitionService.create(any(), any(), any()))
                 .thenReturn(Single.error(new InvalidParameterException("configuration.mongodb requires either 'uri' or 'dbname'")));
 
         endpoint.handle(routingContext);
@@ -228,7 +231,7 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldReturn409OnADuplicateId() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any()))
+        when(dataPlaneDefinitionService.create(any(), any(), any()))
                 .thenReturn(Single.error(new DataPlaneDefinitionAlreadyExistsException("dp-acme")));
 
         endpoint.handle(routingContext);
@@ -240,7 +243,7 @@ class CreateDataPlaneEndpointTest {
     @Test
     void shouldReturn500OnAnUnexpectedFailure() {
         when(requestBody.asString()).thenReturn(PAYLOAD);
-        when(dataPlaneDefinitionService.create(any())).thenReturn(Single.error(new IllegalStateException("boom")));
+        when(dataPlaneDefinitionService.create(any(), any(), any())).thenReturn(Single.error(new IllegalStateException("boom")));
 
         endpoint.handle(routingContext);
 
@@ -264,6 +267,7 @@ class CreateDataPlaneEndpointTest {
                 "DEFAULT",
                 "gravitee-am-acme",
                 List.of("mongo:27017"),
+                ManagedBy.NONE,
                 new Date(),
                 new Date());
     }

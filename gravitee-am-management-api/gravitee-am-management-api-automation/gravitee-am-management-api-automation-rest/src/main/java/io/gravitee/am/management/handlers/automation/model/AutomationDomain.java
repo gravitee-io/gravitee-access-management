@@ -113,15 +113,10 @@ public class AutomationDomain {
     @Schema(description = "Virtual hosts the domain is exposed on, overriding the default context path.")
     private List<VirtualHost> vhosts;
 
-    /**
-     * Immutable after creation. Optional on create: when omitted the data plane is resolved from the
-     * ones linked to the environment, the same way the Management API does it. It is part of the full
-     * desired-state document but is never re-applied on update.
-     */
     @Size(max = 255)
-    @Schema(description = "Identifier of the data plane this domain is connected to. Optional at creation, " +
-            "resolved from the environment's data planes when omitted, and immutable afterwards; included in the " +
-            "desired-state document but never re-applied on update.",
+    @Schema(description = "Identifier of the data plane this domain is connected to. Optional at creation and " +
+            "resolved from the environment's data planes when omitted. Immutable afterwards: an apply that names " +
+            "a different one is rejected.",
             example = "default")
     private String dataPlaneId;
 

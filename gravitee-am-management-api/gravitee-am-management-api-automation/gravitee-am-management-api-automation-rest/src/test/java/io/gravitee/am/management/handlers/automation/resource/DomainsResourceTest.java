@@ -42,6 +42,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.when;
 
 /**
@@ -105,6 +107,36 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals("customer-auth", readEntity(response, AutomationDomain.class).getAutomationKey());
+    }
+
+    @Test
+    void put_carries_a_named_data_plane_through_to_the_service() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(existing));
+        AutomationDomain definition = definition("customer-auth");
+        definition.setDataPlaneId("somewhere-else");
+
+        put(domainsTarget(), definition);
+
+        verify(domainService).update(eq(domainId), argThat(d -> "somewhere-else".equals(d.getDataPlaneId())), eq(false));
+    }
+
+    @Test
+    void put_leaves_the_resolved_data_plane_alone_when_the_payload_omits_it() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(existing));
+        AutomationDomain definition = definition("customer-auth");
+        definition.setDataPlaneId(null);
+
+        put(domainsTarget(), definition);
+
+        verify(domainService).update(eq(domainId), argThat(d -> "default".equals(d.getDataPlaneId())), eq(false));
     }
 
     @Test

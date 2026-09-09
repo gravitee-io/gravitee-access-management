@@ -38,6 +38,8 @@ public class DataPlaneDefinitionMongo extends Auditable {
 
     private String configuration;
 
+    private String managedBy;
+
     public String getId() {
         return id;
     }
@@ -84,6 +86,14 @@ public class DataPlaneDefinitionMongo extends Auditable {
 
     public void setEnvironmentId(String environmentId) {
         this.environmentId = environmentId;
+    }
+
+    public String getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(String managedBy) {
+        this.managedBy = managedBy;
     }
 
     public String getConfiguration() {

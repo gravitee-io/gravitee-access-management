@@ -16549,6 +16549,7 @@ components:
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
             - DATA_PLANE
+            - DATA_PLANE_MANAGED
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -16867,6 +16868,7 @@ components:
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
             - DATA_PLANE
+            - DATA_PLANE_MANAGED
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -17101,6 +17103,7 @@ components:
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
             - DATA_PLANE
+            - DATA_PLANE_MANAGED
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -17338,6 +17341,7 @@ components:
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
             - DATA_PLANE
+            - DATA_PLANE_MANAGED
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -17505,6 +17509,7 @@ components:
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
             - DATA_PLANE
+            - DATA_PLANE_MANAGED
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM

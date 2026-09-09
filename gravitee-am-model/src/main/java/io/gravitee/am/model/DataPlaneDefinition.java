@@ -27,7 +27,7 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 @Data
-public class DataPlaneDefinition {
+public class DataPlaneDefinition implements Managed {
 
     private String id;
 
@@ -45,6 +45,8 @@ public class DataPlaneDefinition {
     /** Stored verbatim, can hold credentials, hence excluded from {@code toString()}. */
     @ToString.Exclude
     private String configuration;
+
+    private ManagedBy managedBy;
 
     private Date createdAt;
 
