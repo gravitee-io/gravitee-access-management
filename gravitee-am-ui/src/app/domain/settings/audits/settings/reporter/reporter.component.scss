@@ -2,3 +2,13 @@
   display: flex;
   align-items: center;
 }
+
+/* A flex item defaults to min-width:auto, so the column has to be told it may shrink. */
+.gv-page-description {
+  min-width: 0;
+}
+
+.gv-page-description-content pre {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

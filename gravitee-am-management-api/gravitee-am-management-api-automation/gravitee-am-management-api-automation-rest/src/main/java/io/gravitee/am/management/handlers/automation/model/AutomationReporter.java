@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -25,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -74,6 +76,7 @@ public class AutomationReporter {
 
     @Schema(description = "Audit event types the attribute mappings apply to. Empty means every event type. " +
             "Ignored when system is true.")
+    @JsonDeserialize(as = LinkedHashSet.class)
     private Set<String> attributeMappingEventTypes;
 
     /**

@@ -25,6 +25,12 @@ import { ReporterService } from '../../../../../services/reporter.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { PluginFeatureService } from '../../../../../services/plugin-feature.service';
 
+import {
+  AttributeMappingsChange,
+  AttributeMappingsSeed,
+  supportsAttributeMappings,
+} from './attribute-mappings/reporter-attribute-mappings.types';
+
 @Component({
   selector: 'app-reporter',
   templateUrl: './reporter.component.html',
@@ -48,6 +54,8 @@ export class ReporterComponent implements OnInit {
   hasName = false;
   licenseOptions: LicenseOptions = {};
   isMissingFeature$: Observable<boolean>;
+  attributeMappingsSeed: AttributeMappingsSeed = { mappings: [], eventTypes: [] };
+  attributeMappingsValid = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -88,6 +96,7 @@ export class ReporterComponent implements OnInit {
       this.reporterConfiguration = this.reporter.configuration ? JSON.parse(this.reporter.configuration) : {};
       this.updateReporterConfiguration = this.reporterConfiguration;
     }
+    this.seedAttributeMappings(this.reporter);
     this.validateName();
     this.getSchemaFor(this.reporter.type);
     this.updateLicenseOptions(this.reporter.type);
@@ -118,6 +127,11 @@ export class ReporterComponent implements OnInit {
   }
 
   onReporterTypeChanged(event) {
+    if (this.createMode && !supportsAttributeMappings({ type: event.value })) {
+      this.reporter.attributeMappings = [];
+      this.reporter.attributeMappingEventTypes = [];
+      this.seedAttributeMappings(this.reporter);
+    }
     this.getSchemaFor(event.value);
     this.updateLicenseOptions(event.value);
   }
@@ -152,6 +166,7 @@ export class ReporterComponent implements OnInit {
         this.reporter = data;
         this.reporterConfiguration = JSON.parse(this.reporter.configuration);
         this.updateReporterConfiguration = this.reporterConfiguration;
+        this.seedAttributeMappings(this.reporter);
         this.formChanged = false;
         this.form.reset(this.reporter);
         this.snackbarService.open('Reporter updated');
@@ -182,6 +197,17 @@ export class ReporterComponent implements OnInit {
     });
   }
 
+  supportsAttributeMappings(): boolean {
+    return supportsAttributeMappings(this.reporter);
+  }
+
+  onAttributeMappingsChanged(change: AttributeMappingsChange) {
+    this.reporter.attributeMappings = change.mappings;
+    this.reporter.attributeMappingEventTypes = change.eventTypes;
+    this.attributeMappingsValid = change.isValid;
+    this.formChanged = true;
+  }
+
   enableReporter(event) {
     this.reporter.enabled = event.checked;
     this.formChanged = true;
@@ -206,6 +232,14 @@ export class ReporterComponent implements OnInit {
 
   readyToSave() {
     const anyChanged = !this.form.pristine || !this.configurationPristine || this.formChanged;
-    return this.form.valid && anyChanged && this.configurationIsValid && this.hasName;
+    return this.form.valid && anyChanged && this.configurationIsValid && this.hasName && this.attributeMappingsValid;
+  }
+
+  private seedAttributeMappings(reporter) {
+    this.attributeMappingsSeed = {
+      mappings: reporter.attributeMappings ?? [],
+      eventTypes: reporter.attributeMappingEventTypes ?? [],
+    };
+    this.attributeMappingsValid = true;
   }
 }
