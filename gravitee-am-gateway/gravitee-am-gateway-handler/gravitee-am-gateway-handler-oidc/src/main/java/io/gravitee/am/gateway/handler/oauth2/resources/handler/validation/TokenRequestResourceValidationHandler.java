@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
@@ -40,6 +42,12 @@ public class TokenRequestResourceValidationHandler implements Handler<RoutingCon
 
 	@Override
 	public void handle(RoutingContext context) {
+		if (TokenType.ID_JAG.equals(context.request().params().get(Parameters.REQUESTED_TOKEN_TYPE))) {
+			log.debug("Resource validation skipped for an ID-JAG token request");
+			context.next();
+			return;
+		}
+
 		// Build a normalized TokenRequest using the factory (consistent with codebase patterns)
 		final TokenRequest tokenRequest = tokenRequestFactory.create(context);
 

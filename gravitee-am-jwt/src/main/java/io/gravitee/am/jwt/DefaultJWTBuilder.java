@@ -32,6 +32,7 @@ import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.JwtType;
 
 import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
@@ -97,7 +98,7 @@ public class DefaultJWTBuilder implements JWTBuilder {
             if (issuer != null && !payload.containsKey(Claims.ISS)) {
                 payload.setIss(issuer);
             }
-            SignedJWT signedJWT = new SignedJWT(header, JWTClaimsSet.parse(payload));
+            SignedJWT signedJWT = new SignedJWT(headerFor(payload.getType()), JWTClaimsSet.parse(payload));
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (ParseException ex) {
@@ -110,5 +111,9 @@ public class DefaultJWTBuilder implements JWTBuilder {
             log.error("An error occurs while signing JWT token : {}", payload, ex);
             throw ex;
         }
+    }
+
+    private JWSHeader headerFor(JwtType type) {
+        return type == null ? header : new JWSHeader.Builder(header).type(new JOSEObjectType(type.getValue())).build();
     }
 }

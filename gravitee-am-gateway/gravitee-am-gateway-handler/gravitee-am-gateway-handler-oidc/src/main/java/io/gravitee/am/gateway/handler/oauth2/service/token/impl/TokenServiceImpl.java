@@ -23,7 +23,6 @@ import io.gravitee.am.common.jwt.ClientProfile;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
-import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
@@ -37,12 +36,14 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.el.ExecutionContextTokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2RequestParams;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJagService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
@@ -75,12 +76,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.gravitee.am.common.oauth2.Parameters.DPOP_JKT;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.utils.ConstantKeys.DPOP_AUTH_SCHEME;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
-import static org.springframework.util.ObjectUtils.isEmpty;
 import lombok.CustomLog;
 
 /**
@@ -93,9 +92,6 @@ public class TokenServiceImpl implements TokenService {
 
     private static final String PERMISSIONS = "permissions";
     private static final String AUTHORIZATION_DETAILS = "authorization_details";
-
-    public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
-    public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
@@ -126,6 +122,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private IDTokenService idTokenService;
+
+    @Autowired
+    private IdJagService idJagService;
 
     @Setter
     @Value("${handlers.oauth2.response.strict:false}")
@@ -219,6 +218,10 @@ public class TokenServiceImpl implements TokenService {
             return createIdTokenOnlyResponse(oAuth2Request, client, endUser);
         }
 
+        if (TokenType.ID_JAG.equals(oAuth2Request.getIssuedTokenType())) {
+            return createIdJagResponse(oAuth2Request, client, endUser);
+        }
+
         // create execution context
         return Single.fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
                 .flatMap(executionContext -> {
@@ -238,7 +241,11 @@ public class TokenServiceImpl implements TokenService {
                             .doOnSuccess(tokenWithCertInfo -> auditService.report(buildTokenCreatedAudit(oAuth2Request, client, endUser, accessToken, refreshToken, tokenWithCertInfo)));
                 })
                 .map(tokenWithCertificateInfo -> tokenWithCertificateInfo.token)
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                        .tokenActor(client)
+                        .withParams(() -> OAuth2RequestParams.of(oAuth2Request))
+                        .tokenTarget(endUser)
+                        .throwable(error)));
     }
 
     /**
@@ -275,11 +282,34 @@ public class TokenServiceImpl implements TokenService {
                         AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                 .idTokenFor(endUser)
                                 .tokenActor(client)
-                                .withParams(() -> buildAuditParams(oAuth2Request, null))
+                                .withParams(() -> OAuth2RequestParams.of(oAuth2Request))
                                 .tokenTarget(endUser)))
                 .doOnError(error -> auditService.report(
                         AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                 .tokenActor(client)
+                                .withParams(() -> OAuth2RequestParams.of(oAuth2Request))
+                                .tokenTarget(endUser)
+                                .throwable(error)));
+    }
+
+    private Single<Token> createIdJagResponse(OAuth2Request oAuth2Request, Client client, User endUser) {
+        return idJagService.create(oAuth2Request, client, endUser)
+                .doOnSuccess(idJag -> auditService.report(
+                        AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .idJag(idJag.tokenId())
+                                .tokenActor(client)
+                                .agentApplication(client)
+                                .withParams(() -> OAuth2RequestParams.of(oAuth2Request))
+                                .tokenTarget(endUser)))
+                .map(idJag -> {
+                    ExchangedIdJag token = new ExchangedIdJag(idJag.value());
+                    token.setExpiresIn(idJag.expiresIn());
+                    return (Token) token;
+                })
+                .doOnError(error -> auditService.report(
+                        AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .tokenActor(client)
+                                .withParams(() -> OAuth2RequestParams.of(oAuth2Request))
                                 .tokenTarget(endUser)
                                 .throwable(error)));
     }
@@ -717,64 +747,8 @@ public class TokenServiceImpl implements TokenService {
                 .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
                 .tokenActor(client)
                 .agentApplication(client)
-                .withParams(() -> buildAuditParams(oAuth2Request, tokenWithCertInfo.certificateInfo))
+                .withParams(() -> OAuth2RequestParams.of(oAuth2Request, tokenWithCertInfo.certificateInfo))
                 .tokenTarget(endUser)
                 .accessTokenSubject(enhancedToken.getSubject());
-    }
-
-    private Map<String, Object> buildAuditParams(OAuth2Request oAuth2Request, CertificateInfo certificateInfo) {
-        var params = new HashMap<String, Object>();
-        params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE.toUpperCase(), oAuth2Request.getGrantType());
-        params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE.toUpperCase(), oAuth2Request.getResponseType());
-
-        if (!isEmpty(oAuth2Request.getScopes())) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE.toUpperCase(), String.join(" ", oAuth2Request.getScopes()));
-        }
-
-        if (!isEmpty(oAuth2Request.getResources())) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE.toUpperCase(), String.join(" ", oAuth2Request.getResources()));
-        }
-
-        if (certificateInfo != null) {
-            params.put(SIGNING_CERTIFICATE_ID, certificateInfo.certificateId());
-            params.put(SIGNING_CERTIFICATE_NAME, certificateInfo.certificateAlias());
-        }
-
-        if (oAuth2Request.getConfirmationMethodJkt() != null) {
-            params.put(DPOP_JKT.toUpperCase(), oAuth2Request.getConfirmationMethodJkt());
-        }
-
-        if (GrantType.TOKEN_EXCHANGE.equals(oAuth2Request.getGrantType())) {
-            addTokenExchangeAuditParams(params, oAuth2Request);
-        }
-
-        return params;
-    }
-
-    /**
-     * Adds token exchange (RFC 8693) specific parameters to the audit event.
-     */
-    private void addTokenExchangeAuditParams(Map<String, Object> params, OAuth2Request oAuth2Request) {
-        if (oAuth2Request.getIssuedTokenType() != null) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.REQUESTED_TOKEN_TYPE.toUpperCase(), oAuth2Request.getIssuedTokenType());
-        }
-
-        if (oAuth2Request.getSubjectTokenId() != null) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.SUBJECT_TOKEN.toUpperCase(), oAuth2Request.getSubjectTokenId());
-        }
-
-        if (oAuth2Request.getSubjectTokenType() != null) {
-            params.put(io.gravitee.am.common.oauth2.Parameters.SUBJECT_TOKEN_TYPE.toUpperCase(), oAuth2Request.getSubjectTokenType());
-        }
-
-        if (oAuth2Request.isDelegation()) {
-            if (oAuth2Request.getActorTokenId() != null) {
-                params.put(io.gravitee.am.common.oauth2.Parameters.ACTOR_TOKEN.toUpperCase(), oAuth2Request.getActorTokenId());
-            }
-
-            if (oAuth2Request.getActorTokenType() != null) {
-                params.put(io.gravitee.am.common.oauth2.Parameters.ACTOR_TOKEN_TYPE.toUpperCase(), oAuth2Request.getActorTokenType());
-            }
-        }
     }
 }

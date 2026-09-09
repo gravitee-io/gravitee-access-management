@@ -30,4 +30,6 @@ public interface TokenType {
     String JWT = "urn:ietf:params:oauth:token-type:jwt";
     String SAML_1 = "urn:ietf:params:oauth:token-type:saml1";
     String SAML_2 = "urn:ietf:params:oauth:token-type:saml2";
+
+    String ID_JAG = "urn:ietf:params:oauth:token-type:id-jag";
 }
