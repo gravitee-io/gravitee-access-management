@@ -36,7 +36,13 @@
         <div *ngIf="createMode">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Reporter Type</mat-label>
-            <mat-select [(value)]="reporter.type" name="type" (selectionChange)="onReporterTypeChanged($event)" [(ngModel)]="reporter.type">
+            <mat-select
+              [(value)]="reporter.type"
+              name="type"
+              data-testid="reporterTypeSelect"
+              (selectionChange)="onReporterTypeChanged($event)"
+              [(ngModel)]="reporter.type"
+            >
               <mat-option *ngFor="let plugin of plugins" [value]="plugin.id" required>
                 {{ labelFor(plugin.id) }}
               </mat-option>
@@ -47,7 +53,16 @@
         <div>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" (input)="validateName()" required />
+            <input
+              matInput
+              type="text"
+              placeholder="Name"
+              name="name"
+              data-testid="reporterNameInput"
+              [(ngModel)]="reporter.name"
+              (input)="validateName()"
+              required
+            />
             <mat-hint>A name for your reporter.</mat-hint>
           </mat-form-field>
           <mat-slide-toggle
@@ -74,8 +89,20 @@
           ></reporter-form>
         </div>
       </div>
+      <app-reporter-attribute-mappings
+        *ngIf="supportsAttributeMappings()"
+        [seed]="attributeMappingsSeed"
+        (attributeMappingsChanged)="onAttributeMappingsChanged($event)"
+      ></app-reporter-attribute-mappings>
+
       <div fxLayout="row">
-        <button mat-raised-button [licenseGuard]="licenseOptions" [disabled]="!readyToSave()" (click)="save()">
+        <button
+          mat-raised-button
+          data-testid="reporterSaveButton"
+          [licenseGuard]="licenseOptions"
+          [disabled]="!readyToSave()"
+          (click)="save()"
+        >
           <mat-icon *ngIf="isMissingFeature$ | async" svgIcon="gio:lock"></mat-icon>
           SAVE
         </button>
@@ -97,6 +124,30 @@
       <div class="gv-page-description-content">
         <p>A reporter is used by the platform to report many types of event (e.g Audit logs).</p>
       </div>
+
+      <ng-container *ngIf="supportsAttributeMappings()">
+        <h3>Attribute mapping</h3>
+        <div class="gv-page-description-content">
+          <p>An attribute mapping exports one extra field on every audit record this reporter writes.</p>
+          <p>
+            The expression is evaluated against the audit context, which carries <code>user</code>, <code>client</code>,
+            <code>request</code> (ip, userAgent) and <code>audit</code> (id, type, transactionId, status).
+          </p>
+          <small>For example:</small>
+          <small>
+            <pre fxLayout="column">
+        <code>&#123;#context.attributes['user'].id&#125;</code>
+        <code>&#123;#context.attributes['user'].additionalInformation['sub']&#125;</code>
+        <code>&#123;#context.attributes['client'].clientId&#125;</code>
+        <code>&#123;#context.attributes['request']['ip']&#125;</code>
+      </pre
+            >
+          </small>
+          <p>A plain value such as <code>production</code> is exported as it is written.</p>
+          <p>Only single values are exported, and attributes holding credentials or tokens never are.</p>
+          <p>Leaving the event types empty exports the attributes on every audit record.</p>
+        </div>
+      </ng-container>
     </div>
   </div>
 </div>

@@ -1,0 +1,88 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-form-section" data-testid="attributeMappingsSection">
+  <div class="gv-form-section-title">
+    <h5>Attribute mapping</h5>
+    <mat-divider></mat-divider>
+  </div>
+
+  <mat-hint class="section-hint">
+    Export additional attributes alongside each audit record. Attributes holding credentials or tokens are never exported.
+  </mat-hint>
+
+  <div class="mapping-row" *ngFor="let row of rows; let i = index" data-testid="attributeMappingRow">
+    <mat-form-field appearance="outline" class="mapping-name">
+      <mat-label>Exported name</mat-label>
+      <input
+        matInput
+        data-testid="attributeMappingNameInput"
+        [ngModelOptions]="{ standalone: true }"
+        [(ngModel)]="row.exportedName"
+        (ngModelChange)="onRowInput()"
+        required
+        [maxlength]="maxExportedNameLength"
+        [pattern]="exportedNamePattern"
+        placeholder="user_sub"
+        #exportedName="ngModel"
+      />
+      <mat-error *ngIf="exportedName.errors?.pattern">Letters, digits and underscore only.</mat-error>
+      <mat-error *ngIf="exportedName.errors?.required">An exported name is required.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="mapping-expression">
+      <mat-label>Expression</mat-label>
+      <input
+        matInput
+        data-testid="attributeMappingExpressionInput"
+        [ngModelOptions]="{ standalone: true }"
+        [(ngModel)]="row.expression"
+        (ngModelChange)="onRowInput()"
+        required
+        [maxlength]="maxExpressionLength"
+        placeholder="{{ '{#context.attributes[\'user\'].additionalInformation[\'sub\']}' }}"
+        #expression="ngModel"
+      />
+      <mat-error *ngIf="expression.errors?.required">An expression is required.</mat-error>
+    </mat-form-field>
+
+    <button mat-icon-button type="button" data-testid="removeAttributeMappingButton" (click)="removeMapping(i)">
+      <mat-icon>clear</mat-icon>
+    </button>
+  </div>
+
+  <button mat-stroked-button type="button" data-testid="addAttributeMappingButton" (click)="addMapping()" [disabled]="!canAdd">
+    <mat-icon>add</mat-icon> ADD ATTRIBUTE
+  </button>
+
+  <gv-multiselect-list
+    class="event-types"
+    label="Limit to event types"
+    hint="This does not change which events are reported, only which reported events carry the exported attributes."
+    emptySelectionMessage="Attributes are exported for all event types"
+    testIdPrefix="attributeMappingEventTypes"
+    [items]="allEventTypes"
+    [selected]="eventTypes"
+    (selectedChange)="onEventTypesChange($event)"
+  >
+  </gv-multiselect-list>
+
+  <div *ngFor="let error of errors" class="validation-error" data-testid="attributeMappingValidationError">
+    <mat-icon>warning</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+</div>

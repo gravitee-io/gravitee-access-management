@@ -54,6 +54,8 @@ export class ReporterService {
       type: reporter.type,
       enabled: reporter.enabled,
       configuration: reporter.configuration,
+      attributeMappings: reporter.attributeMappings,
+      attributeMappingEventTypes: reporter.attributeMappingEventTypes,
     });
   }
 
@@ -66,6 +68,8 @@ export class ReporterService {
       type: reporter.type,
       enabled: reporter.enabled,
       configuration: reporter.configuration,
+      attributeMappings: reporter.attributeMappings,
+      attributeMappingEventTypes: reporter.attributeMappingEventTypes,
     });
   }
 }

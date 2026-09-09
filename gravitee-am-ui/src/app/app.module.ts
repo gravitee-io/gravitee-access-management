@@ -505,6 +505,8 @@ import {
 import { DomainMcpServerToolEditDialogComponent } from './domain/mcp-servers/mcp-server/tools/tool-edit-dialog/tool-edit-dialog.component';
 import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-tools-table.component';
 import { MaterialMultiselectComponent } from './components/json-schema-form/material-multiselect.component';
+import { MultiselectListComponent } from './components/multiselect/multiselect-list.component';
+import { ReporterAttributeMappingsComponent } from './domain/settings/audits/settings/reporter/attribute-mappings/reporter-attribute-mappings.component';
 import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-flows/grant-flows.component';
 import { ScopesComponent } from './domain/components/oauth2-settings/scopes/scopes.component';
 import { AddScopeComponent } from './domain/components/oauth2-settings/add/add-scope.component';
@@ -644,6 +646,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopeComponent,
     MaterialFileComponent,
     MaterialMultiselectComponent,
+    MultiselectListComponent,
+    ReporterAttributeMappingsComponent,
     MaterialCertificateComponent,
     ManagementComponent,
     ManagementGeneralComponent,

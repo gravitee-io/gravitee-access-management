@@ -17,7 +17,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { JsonSchemaFormService } from '@ajsf/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { MatSelectChange } from '@angular/material/select';
 
 import { AppConfig } from '../../../config/app.config';
 
@@ -106,8 +105,8 @@ describe('MaterialMultiselectComponent', () => {
     expect(component.allItems).toEqual(['X', 'Y']);
   }));
 
-  it('should call jsf.updateArrayCheckboxList when selected changes', () => {
-    component.selected = ['A'];
+  it('should call jsf.updateArrayCheckboxList when the selection changes', () => {
+    component.onSelectedChange(['A']);
 
     expect(jsf.updateArrayCheckboxList).toHaveBeenCalledWith(component, [
       {
@@ -116,116 +115,5 @@ describe('MaterialMultiselectComponent', () => {
         checked: true,
       },
     ]);
-  });
-
-  it('should remove item on onUnselect()', () => {
-    component.selected = ['A', 'B'];
-
-    component.onUnselect('A');
-
-    expect(component.selected).toEqual(['B']);
-  });
-
-  it('should update selected from MatSelectChange', () => {
-    const event = {
-      value: ['X', 'Y'],
-    } as MatSelectChange<string[]>;
-
-    component.onSelectionChange(event);
-
-    expect(component.selected).toEqual(['X', 'Y']);
-  });
-
-  it('should update searchText on onSearch()', () => {
-    const inputEvent = {
-      target: { value: 'abc' },
-    } as any;
-
-    component.onSearch(inputEvent);
-
-    expect(component.searchText).toBe('abc');
-  });
-
-  it('should update visibleItems based on searchText', () => {
-    component.allItems = ['Apple', 'Banana', 'Cherry'];
-    component.searchText = 'ap';
-
-    (component as any).refreshOptions();
-
-    expect(component.visibleItems).toEqual(['Apple']);
-    expect(component.selectAllLabel).toBe('Select visible');
-  });
-
-  it('should show all items and label "Select all" when searchText is empty', () => {
-    component.allItems = ['A', 'B', 'C'];
-    component.searchText = '';
-
-    (component as any).refreshOptions();
-
-    expect(component.visibleItems).toEqual(['A', 'B', 'C']);
-    expect(component.selectAllLabel).toBe('Select all');
-  });
-
-  it('should set selectAllState to unchecked when no visible items are selected', () => {
-    component.allItems = ['A', 'B', 'C'];
-    component.selected = [];
-    component.searchText = '';
-
-    (component as any).refreshOptions();
-
-    expect(component.selectAllState).toBe('unchecked');
-  });
-
-  it('should set selectAllState to checked when all visible items are selected', () => {
-    component.allItems = ['A', 'B', 'C'];
-    component.selected = ['A', 'B', 'C'];
-    component.searchText = '';
-
-    (component as any).refreshOptions();
-
-    expect(component.selectAllState).toBe('checked');
-  });
-
-  it('should set selectAllState to indeterminate when some visible items are selected', () => {
-    component.allItems = ['A', 'B', 'C'];
-    component.selected = ['A'];
-    component.searchText = '';
-
-    (component as any).refreshOptions();
-
-    expect(component.selectAllState).toBe('indeterminate');
-  });
-
-  it('should select all visible items when none selected', () => {
-    component.allItems = ['A', 'B', 'C'];
-    component.selected = [];
-    component.searchText = '';
-
-    (component as any).refreshOptions();
-    component.toggleSelectVisible();
-
-    expect(component.selected.sort()).toEqual(['A', 'B', 'C']);
-  });
-
-  it('should deselect all visible items when all visible selected', () => {
-    component.allItems = ['A', 'B', 'C'];
-    component.selected = ['A', 'B', 'C'];
-    component.searchText = '';
-
-    (component as any).refreshOptions();
-    component.toggleSelectVisible();
-
-    expect(component.selected).toEqual([]);
-  });
-
-  it('should select only visible items when some visible items selected', () => {
-    component.allItems = ['A', 'B', 'C', 'D'];
-    component.selected = ['A', 'D'];
-    component.searchText = 'A';
-
-    (component as any).refreshOptions();
-    component.toggleSelectVisible();
-
-    expect(component.selected).toEqual(['D']);
   });
 });

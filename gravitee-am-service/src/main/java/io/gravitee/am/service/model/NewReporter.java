@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,6 +51,7 @@ public class NewReporter {
      */
     private List<ReporterAttributeMapping> attributeMappings;
 
+    @JsonDeserialize(as = LinkedHashSet.class)
     private Set<String> attributeMappingEventTypes;
 
     @Override

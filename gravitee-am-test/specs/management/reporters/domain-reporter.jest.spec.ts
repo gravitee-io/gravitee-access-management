@@ -64,11 +64,12 @@ describe('Domain Kafka Reporter CRUD', () => {
     });
 
     it('should create a reporter that scopes its mappings to event types', async () => {
-      const reporter: Reporter = await fixture.createReporter({
-        attributeMappingEventTypes: ['USER_LOGIN', 'USER_LOGOUT'],
-      });
+      // Deliberately not alphabetical: the order the caller sent has to survive the round trip.
+      const eventTypes = ['USER_LOGOUT', 'USER_ENABLED', 'USER_LOGIN'];
 
-      expect([...reporter.attributeMappingEventTypes].sort()).toEqual(['USER_LOGIN', 'USER_LOGOUT']);
+      const reporter: Reporter = await fixture.createReporter({ attributeMappingEventTypes: eventTypes });
+
+      expect([...reporter.attributeMappingEventTypes]).toEqual(eventTypes);
     });
 
     it('should create a reporter that exports no additional attributes', async () => {

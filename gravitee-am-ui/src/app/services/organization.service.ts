@@ -364,6 +364,8 @@ export class OrganizationService {
       enabled: reporter.enabled,
       inherited: reporter.inherited,
       configuration: reporter.configuration,
+      attributeMappings: reporter.attributeMappings,
+      attributeMappingEventTypes: reporter.attributeMappingEventTypes,
     });
   }
 
@@ -378,6 +380,8 @@ export class OrganizationService {
       enabled: reporter.enabled,
       configuration: reporter.configuration,
       inherited: reporter.inherited,
+      attributeMappings: reporter.attributeMappings,
+      attributeMappingEventTypes: reporter.attributeMappingEventTypes,
     });
   }
 
