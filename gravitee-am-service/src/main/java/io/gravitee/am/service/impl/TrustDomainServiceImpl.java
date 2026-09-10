@@ -31,7 +31,6 @@ import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
-import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
@@ -433,9 +432,6 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     }
 
     private Completable validate(Domain domain, TrustedDomain td) {
-        SpiffeDomainSettings spiffeSettings = Optional.ofNullable(domain.getOidc())
-                .map(o -> o.getWorkloadIdentitySettings())
-                .orElseGet(SpiffeDomainSettings::defaultSettings);
         KeyRetrievalSettings settings = Optional.ofNullable(domain.getKeyRetrievalSettings())
                 .orElseGet(KeyRetrievalSettings::defaultSettings);
 
@@ -445,7 +441,7 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         if (td.getName().length() > TrustedDomain.NAME_MAX_LENGTH) {
             return Completable.error(new InvalidTrustDomainException("name must be at most " + TrustedDomain.NAME_MAX_LENGTH + " characters"));
         }
-        Optional<String> matcherError = validateMatchers(td, spiffeSettings);
+        Optional<String> matcherError = validateMatchers(td);
         if (matcherError.isPresent()) {
             return Completable.error(new InvalidTrustDomainException(matcherError.get()));
         }
@@ -478,7 +474,7 @@ public class TrustDomainServiceImpl implements TrustDomainService {
         return Completable.complete();
     }
 
-    private Optional<String> validateMatchers(TrustedDomain td, SpiffeDomainSettings spiffeSettings) {
+    private Optional<String> validateMatchers(TrustedDomain td) {
         if (td.getTokenExchange() != null && td.getTokenExchange().isEnabled() && td.getDomainIdentifier() == null) {
             return Optional.of("domainIdentifier is required when token exchange is enabled");
         }
@@ -486,9 +482,6 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             return Optional.of("a trusted domain must declare spiffe, tokenExchange, or crossAppAccess");
         }
         if (td.trustsSpiffe()) {
-            if (!spiffeSettings.isEnabled()) {
-                return Optional.of("SPIFFE workload identity is disabled for this domain. Enable it in domain settings before registering a SPIFFE trust domain.");
-            }
             if (!SPIFFE_TRUST_DOMAIN_PATTERN.matcher(td.getSpiffeTrustDomain()).matches()) {
                 return Optional.of("spiffeTrustDomain must be a DNS-style label (lowercase letters, digits, '.' or '-')");
             }
