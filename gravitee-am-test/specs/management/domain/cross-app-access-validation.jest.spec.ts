@@ -47,7 +47,7 @@ describe('Cross App Access - the block round-trips through the management API', 
 
     expect(reloaded.crossAppAccess.enabled).toBe(true);
     expect(reloaded.domainIdentifier).toBe('https://issuer.example.com/roundtrip');
-    expect(reloaded.crossAppAccess.audSubMapping).toBe('{#user.email}');
+    expect(reloaded.crossAppAccess.audSubMapping).toBe("{#context.attributes['user'].email}");
     expect(reloaded.crossAppAccess.scopeMappings).toEqual({ 'domain:read': 'calendar.read' });
     expect(reloaded.crossAppAccess.resourceServers).toHaveLength(1);
     expect(reloaded.crossAppAccess.resourceServers[0].name).toBe('Calendar');

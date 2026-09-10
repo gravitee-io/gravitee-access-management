@@ -37,14 +37,7 @@ const calendarWith = (scope?: string) =>
 
 const scopesOf = (scope: string) => scope.split(' ').sort();
 
-const bothResourceServers = () =>
-  fixture.setCrossAppAccess({
-    enabled: true,
-    resourceServers: [
-      { trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' },
-      { trustDomainId: fixture.trustDomainId, resourceServerId: fixture.mail.id, clientId: 'agent-at-acme-mail' },
-    ],
-  });
+const bothResourceServers = () => fixture.setCrossAppAccess(fixture.bothResourceServerSettings());
 
 beforeAll(async () => {
   fixture = await setupIdJagFixture();

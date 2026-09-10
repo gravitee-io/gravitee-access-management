@@ -21,7 +21,7 @@ import { safeDeleteDomain, startDomain, waitForOidcReady } from '@management-com
 import { createDomain } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
-import { createTrustedDomain } from '../../../management/domain/fixtures/cross-app-access-fixture';
+import { createTrustedDomain, updateTrustedDomain } from '../../../management/domain/fixtures/cross-app-access-fixture';
 import { getAllCertificates } from '@management-commands/certificate-management-commands';
 import { updateApplication } from '@management-commands/application-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
@@ -59,7 +59,13 @@ export interface IdJagFixture {
   trustDomainId: string;
   subjectTokens: (scope?: string) => Promise<{ accessToken: string; idToken?: string; expiresIn: number }>;
   requestIdJag: (subjectToken: string, extraParams?: string, subjectTokenType?: string) => request.Test;
-  setCrossAppAccess: (crossAppAccessSettings: Record<string, unknown>, idJagValiditySeconds?: number) => Promise<void>;
+  setCrossAppAccess: (
+    crossAppAccessSettings: Record<string, unknown>,
+    idJagValiditySeconds?: number,
+    tokenCustomClaims?: Record<string, unknown>[],
+  ) => Promise<void>;
+  setAudSubMapping: (audSubMapping: string) => Promise<void>;
+  bothResourceServerSettings: () => Record<string, unknown>;
   setDomainAllowsIdJag: (allowed: boolean) => Promise<void>;
   awaitTokenAudit: (status: 'SUCCESS' | 'FAILURE', matches: (detail: any) => boolean) => Promise<any>;
   cleanUp: () => Promise<void>;
@@ -94,20 +100,35 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
 
   const audience = 'https://auth.acme.com/id-jag';
   const trustedKey = createTrustedIssuerKeyMaterial();
-  const trustDomain: any = await createTrustedDomain(domain.id, accessToken, {
-    name: uniqueName('acme-authority'),
+  const trustDomainName = uniqueName('acme-authority');
+  const scopeMappings = { profile: 'read:profile', email: 'read:email' };
+  const trustDomainBody = (crossAppAccess: Record<string, unknown>) => ({
+    name: trustDomainName,
     domainIdentifier: audience,
     keyMaterial: { source: 'PEM', certificate: trustedKey.certificatePem },
-    crossAppAccess: {
+    crossAppAccess,
+  });
+  const trustDomain: any = await createTrustedDomain(
+    domain.id,
+    accessToken,
+    trustDomainBody({
       enabled: true,
       resourceServers: [
         { name: 'Calendar', resource: 'https://calendar.acme.com' },
         { name: 'Mail', resource: 'https://mail.acme.com' },
       ],
-      scopeMappings: { profile: 'read:profile', email: 'read:email' },
-    },
-  });
+      scopeMappings,
+    }),
+  );
   const [calendar, mail] = trustDomain.crossAppAccess.resourceServers as IdJagResourceServer[];
+
+  const bothResourceServerSettings = () => ({
+    enabled: true,
+    resourceServers: [
+      { trustDomainId: trustDomain.id, resourceServerId: calendar.id, clientId: 'agent-at-acme-calendar' },
+      { trustDomainId: trustDomain.id, resourceServerId: mail.id, clientId: 'agent-at-acme-mail' },
+    ],
+  });
 
   const idpSet = await getAllIdps(domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
@@ -123,13 +144,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
         grantTypes: ['password', 'refresh_token', 'urn:ietf:params:oauth:grant-type:token-exchange'],
         scopeSettings: DOMAIN_SCOPES,
         idJagValiditySeconds: 300,
-        crossAppAccessSettings: {
-          enabled: true,
-          resourceServers: [
-            { trustDomainId: trustDomain.id, resourceServerId: calendar.id, clientId: 'agent-at-acme-calendar' },
-            { trustDomainId: trustDomain.id, resourceServerId: mail.id, clientId: 'agent-at-acme-mail' },
-          ],
-        },
+        crossAppAccessSettings: bothResourceServerSettings(),
       },
     },
     identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
@@ -169,7 +184,11 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
       { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${basicAuth}` },
     );
 
-  const setCrossAppAccess = async (crossAppAccessSettings: Record<string, unknown>, idJagValiditySeconds = 300) => {
+  const setCrossAppAccess = async (
+    crossAppAccessSettings: Record<string, unknown>,
+    idJagValiditySeconds = 300,
+    tokenCustomClaims: Record<string, unknown>[] = [],
+  ) => {
     await waitForSyncAfter(domain.id, () =>
       updateApplication(domain.id, accessToken, {
         certificate,
@@ -180,9 +199,21 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
             scopeSettings: DOMAIN_SCOPES,
             idJagValiditySeconds,
             crossAppAccessSettings,
+            tokenCustomClaims,
           },
         },
       } as any, application.id),
+    );
+  };
+
+  const setAudSubMapping = async (audSubMapping: string) => {
+    await waitForSyncAfter(domain.id, () =>
+      updateTrustedDomain(
+        domain.id,
+        accessToken,
+        trustDomain.id,
+        trustDomainBody({ enabled: true, resourceServers: [calendar, mail], scopeMappings, audSubMapping }),
+      ),
     );
   };
 
@@ -229,6 +260,8 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     subjectTokens,
     requestIdJag,
     setCrossAppAccess,
+    setAudSubMapping,
+    bothResourceServerSettings,
     setDomainAllowsIdJag,
     awaitTokenAudit,
     cleanUp: () => safeDeleteDomain(domain.id, accessToken),

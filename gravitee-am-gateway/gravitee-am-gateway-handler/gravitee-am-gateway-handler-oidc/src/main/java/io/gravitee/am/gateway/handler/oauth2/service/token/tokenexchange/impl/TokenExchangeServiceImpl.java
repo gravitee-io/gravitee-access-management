@@ -46,6 +46,7 @@ import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Builder;
@@ -240,11 +241,13 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         }
 
         ResolvedResourceServer resolved = selectResourceServer(byResourceServer, singleIdJagResource(tokenRequest), audience);
+        CrossAppAccessSettings crossAppAccessSettings = trustDomain.getCrossAppAccess();
         return new IdJagTarget(
                 trustDomain.getDomainIdentifier(),
                 resolved.resourceServer().getResource(),
                 resolved.row().getClientId(),
-                trustDomain.getCrossAppAccess().getScopeMappings());
+                crossAppAccessSettings.getScopeMappings(),
+                crossAppAccessSettings.getAudSubMapping());
     }
 
     private Map<String, ResolvedResourceServer> survivingRows(ApplicationCrossAppAccessSettings crossAppAccess, TrustedDomain trustDomain) {

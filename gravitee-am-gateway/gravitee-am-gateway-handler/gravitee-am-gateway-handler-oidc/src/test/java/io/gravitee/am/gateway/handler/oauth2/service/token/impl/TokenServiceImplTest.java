@@ -46,6 +46,8 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -1303,8 +1305,24 @@ public class TokenServiceImplTest {
         request.setSubjectTokenId("subject-jti-1");
         request.setSubjectTokenType(TokenType.ACCESS_TOKEN);
         request.setOrigin("https://auth.example.com");
-        request.setIdJagTarget(new IdJagTarget("https://auth.acme.com", "https://calendar.acme.com", "agent-at-acme", Map.of()));
+        request.setIdJagTarget(new IdJagTarget("https://auth.acme.com", "https://calendar.acme.com", "agent-at-acme", Map.of(), null));
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
         return request;
+    }
+
+    @Test
+    public void shouldHandTheIssuanceExecutionContextToTheIdJagService() {
+        OAuth2Request request = idJagRequest();
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, null)));
+
+        tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete();
+
+        ArgumentCaptor<ExecutionContext> executionContext = ArgumentCaptor.forClass(ExecutionContext.class);
+        verify(idJagService).create(any(OAuth2Request.class), any(Client.class), any(User.class), executionContext.capture());
+        assertThat(executionContext.getValue().getAttribute(ConstantKeys.USER_CONTEXT_KEY)).extracting("id").isEqualTo("user-123");
     }
 
     @Test
@@ -1313,7 +1331,7 @@ public class TokenServiceImplTest {
         Client client = createClient("agent-at-am");
         User user = createUser("user-123");
 
-        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
                 .thenReturn(Single.just(new IdJag("eyJ0eXAiOiJvYXV0aC1pZC1qYWcrand0In0.payload.signature", "assertion-jti", 300, null)));
 
         TestObserver<Token> observer = tokenService.create(request, client, user).test();
@@ -1335,7 +1353,7 @@ public class TokenServiceImplTest {
         OAuth2Request request = idJagRequest();
         request.setScopes(Set.of("calendar.read"));
 
-        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
                 .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, "read:calendar")));
 
         TestObserver<Token> observer = tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test();
@@ -1352,7 +1370,7 @@ public class TokenServiceImplTest {
         Client client = createClient("agent-at-am");
         client.setDomain("test-domain");
 
-        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
                 .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, "read:calendar")));
 
         tokenService.create(request, client, createUser("user-123")).test()
@@ -1368,7 +1386,7 @@ public class TokenServiceImplTest {
     public void shouldNotStoreOrSignAnAssertionOutsideTheIdJagService() {
         OAuth2Request request = idJagRequest();
 
-        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
                 .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, null)));
 
         tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test()
@@ -1386,7 +1404,7 @@ public class TokenServiceImplTest {
         Client client = createClient("agent-at-am");
         client.setDomain("test-domain");
 
-        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
                 .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, null)));
 
         tokenService.create(request, client, createUser("user-123")).test()
@@ -1410,7 +1428,7 @@ public class TokenServiceImplTest {
         Client client = createClient("agent-at-am");
         client.setDomain("test-domain");
 
-        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
                 .thenReturn(Single.error(new IllegalStateException("assertion refused")));
 
         tokenService.create(request, client, createUser("user-123")).test()

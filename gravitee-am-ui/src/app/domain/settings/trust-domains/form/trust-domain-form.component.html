@@ -432,11 +432,11 @@
           [(ngModel)]="audSubMapping"
           (ngModelChange)="onFieldChange()"
           [disabled]="!editMode"
-          placeholder="{#user.email}"
+          placeholder="{#context.attributes['user'].email}"
         />
         <mat-hint>
-          Evaluated over the user profile to produce the "aud_sub" claim, for every resource server of this authority. The claim is omitted
-          when the expression yields nothing.
+          Produces the "aud_sub" claim for every resource server of this authority, with the user profile at context.attributes['user']. The
+          claim is omitted when the expression yields nothing, and issuance is refused when the expression fails.
         </mat-hint>
       </mat-form-field>
 
