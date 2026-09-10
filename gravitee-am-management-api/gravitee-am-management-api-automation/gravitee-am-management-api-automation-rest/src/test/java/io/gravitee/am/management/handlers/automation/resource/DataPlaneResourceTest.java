@@ -116,8 +116,7 @@ class DataPlaneResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(204, response.getStatus());
         verify(dataPlaneDefinitionService).delete(eq(DATA_PLANE_ID), any());
-        verify(dataPlaneRegistry).unregister(DATA_PLANE_ID);
-        verify(provisionedDataPlaneLoader).forget(DATA_PLANE_ID);
+        verify(provisionedDataPlaneLoader).deactivate(DATA_PLANE_ID);
     }
 
     @Test
@@ -145,8 +144,7 @@ class DataPlaneResourceTest extends AutomationJerseySpringTest {
         Response response = deleteRequest(DATA_PLANE_ID);
 
         assertEquals(409, response.getStatus());
-        verify(dataPlaneRegistry, never()).unregister(anyString());
-        verify(provisionedDataPlaneLoader, never()).forget(anyString());
+        verify(provisionedDataPlaneLoader, never()).deactivate(anyString());
     }
 
     @Test
@@ -158,6 +156,6 @@ class DataPlaneResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(403, response.getStatus());
         verify(dataPlaneDefinitionService, never()).delete(anyString(), any());
-        verify(dataPlaneRegistry, never()).unregister(anyString());
+        verify(provisionedDataPlaneLoader, never()).deactivate(anyString());
     }
 }

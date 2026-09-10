@@ -16,8 +16,8 @@
 package io.gravitee.am.management.handlers.internalapi.endpoints;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
@@ -53,9 +53,6 @@ class DeleteDataPlaneEndpointTest {
     private DataPlaneDefinitionService dataPlaneDefinitionService;
 
     @Mock
-    private DataPlaneRegistry dataPlaneRegistry;
-
-    @Mock
     private ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
 
     @Mock
@@ -69,7 +66,8 @@ class DeleteDataPlaneEndpointTest {
     void setUp() {
         response = mock(HttpServerResponse.class, RETURNS_SELF);
         when(routingContext.response()).thenReturn(response);
-        endpoint = new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, dataPlaneRegistry, provisionedDataPlaneLoader, new ObjectMapper());
+        endpoint = new DeleteDataPlaneEndpoint(
+                new DataPlaneProvisioningService(dataPlaneDefinitionService, provisionedDataPlaneLoader), new ObjectMapper());
     }
 
     @Test
@@ -96,8 +94,7 @@ class DeleteDataPlaneEndpointTest {
 
         endpoint.handle(routingContext);
 
-        verify(dataPlaneRegistry).unregister("dp-acme");
-        verify(provisionedDataPlaneLoader).forget("dp-acme");
+        verify(provisionedDataPlaneLoader).deactivate("dp-acme");
     }
 
     @Test
@@ -108,8 +105,7 @@ class DeleteDataPlaneEndpointTest {
 
         endpoint.handle(routingContext);
 
-        verify(dataPlaneRegistry, never()).unregister(any());
-        verify(provisionedDataPlaneLoader, never()).forget(any());
+        verify(provisionedDataPlaneLoader, never()).deactivate(any());
     }
 
     @Test

@@ -19,10 +19,7 @@ import io.gravitee.am.management.handlers.automation.mapper.AutomationDataPlaneM
 import io.gravitee.am.management.handlers.automation.model.AutomationDataPlane;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.DataPlaneDefinitionService;
-import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
-import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -48,13 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class DataPlaneResource extends AbstractAutomationResource {
 
     @Autowired
-    private DataPlaneDefinitionService dataPlaneDefinitionService;
-
-    @Autowired
-    private ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
-
-    @Autowired
-    private DataPlaneRegistry dataPlaneRegistry;
+    private DataPlaneProvisioningService dataPlaneProvisioningService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -94,11 +85,7 @@ public class DataPlaneResource extends AbstractAutomationResource {
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE, Acl.DELETE)
                 .andThen(resolver.resolveDataPlaneMaybe(environmentId, AutomationRef.parse(dataPlaneId)))
-                .flatMapCompletable(dataPlane -> dataPlaneDefinitionService.delete(dataPlane.id(), principal)
-                        .andThen(Completable.fromAction(() -> {
-                            dataPlaneRegistry.unregister(dataPlane.id());
-                            provisionedDataPlaneLoader.forget(dataPlane.id());
-                        })))
+                .flatMapCompletable(dataPlane -> dataPlaneProvisioningService.deprovision(dataPlane.id(), principal))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

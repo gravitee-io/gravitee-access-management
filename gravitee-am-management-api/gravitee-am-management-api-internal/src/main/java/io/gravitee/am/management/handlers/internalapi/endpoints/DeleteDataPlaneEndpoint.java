@@ -16,9 +16,7 @@
 package io.gravitee.am.management.handlers.internalapi.endpoints;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.DataPlaneDefinitionService;
-import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.ext.web.RoutingContext;
@@ -30,18 +28,12 @@ public class DeleteDataPlaneEndpoint extends AbstractInternalApiEndpoint {
 
     static final String PARAM_ID = "id";
 
-    private final DataPlaneDefinitionService dataPlaneDefinitionService;
-    private final DataPlaneRegistry dataPlaneRegistry;
-    private final ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
+    private final DataPlaneProvisioningService dataPlaneProvisioningService;
 
-    public DeleteDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
-                                   DataPlaneRegistry dataPlaneRegistry,
-                                   ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+    public DeleteDataPlaneEndpoint(DataPlaneProvisioningService dataPlaneProvisioningService,
                                    ObjectMapper objectMapper) {
         super(objectMapper);
-        this.dataPlaneDefinitionService = dataPlaneDefinitionService;
-        this.dataPlaneRegistry = dataPlaneRegistry;
-        this.provisionedDataPlaneLoader = provisionedDataPlaneLoader;
+        this.dataPlaneProvisioningService = dataPlaneProvisioningService;
     }
 
     @Override
@@ -58,15 +50,11 @@ public class DeleteDataPlaneEndpoint extends AbstractInternalApiEndpoint {
     public void handle(RoutingContext context) {
         String id = context.pathParam(PARAM_ID);
 
-        dataPlaneDefinitionService.delete(id, null)
+        dataPlaneProvisioningService.deprovision(id, null)
                 .subscribe(
-                        () -> {
-                            dataPlaneRegistry.unregister(id);
-                            provisionedDataPlaneLoader.forget(id);
-                            context.response()
-                                    .setStatusCode(HttpStatusCode.NO_CONTENT_204)
-                                    .end();
-                        },
+                        () -> context.response()
+                                .setStatusCode(HttpStatusCode.NO_CONTENT_204)
+                                .end(),
                         throwable -> respondFailure(context, throwable, "Unable to delete the data plane definition"));
     }
 }

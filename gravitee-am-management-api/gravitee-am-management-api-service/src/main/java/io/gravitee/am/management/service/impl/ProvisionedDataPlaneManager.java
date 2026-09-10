@@ -101,7 +101,6 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
     }
 
     private void undeploy(String dataPlaneId) {
-        dataPlaneRegistry.unregister(dataPlaneId);
-        provisionedDataPlaneLoader.forget(dataPlaneId);
+        provisionedDataPlaneLoader.deactivate(dataPlaneId);
     }
 }

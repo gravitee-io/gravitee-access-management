@@ -38,6 +38,7 @@ import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.reactivex.rxjava3.core.Completable;
@@ -141,10 +142,10 @@ public abstract class AutomationJerseySpringTest {
         // (e.g. "delete was never called") scoped to the test at hand.
         clearInvocations(permissionService, domainService, certificateService, identityProviderService,
                 defaultIdentityProviderService, reporterService, dataPlaneRegistry);
-        // Fully reset: data plane tests stub findByEnvironmentId per case. Every write path calls the
-        // loader's reload, so it is re-stubbed here.
+        // Fully reset: data plane tests stub findByEnvironmentId per case. Every write path activates
+        // the data plane on the loader, so that is re-stubbed here.
         reset(dataPlaneDefinitionService, provisionedDataPlaneLoader);
-        when(provisionedDataPlaneLoader.reload(anyString())).thenReturn(Completable.complete());
+        when(provisionedDataPlaneLoader.activate(anyString())).thenReturn(Completable.complete());
         reset(trustDomainService);
         when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
         // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
@@ -244,6 +245,12 @@ public abstract class AutomationJerseySpringTest {
         @Bean
         public DataPlaneRegistry dataPlaneRegistry() {
             return mock(DataPlaneRegistry.class);
+        }
+
+        @Bean
+        public DataPlaneProvisioningService dataPlaneProvisioningService(DataPlaneDefinitionService dataPlaneDefinitionService,
+                ProvisionedDataPlaneLoader provisionedDataPlaneLoader) {
+            return new DataPlaneProvisioningService(dataPlaneDefinitionService, provisionedDataPlaneLoader);
         }
 
         @Bean

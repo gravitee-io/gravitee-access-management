@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.exception.DataPlaneDefinitionAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -97,8 +98,9 @@ class CreateDataPlaneEndpointTest {
         response = mock(HttpServerResponse.class, RETURNS_SELF);
         when(routingContext.body()).thenReturn(requestBody);
         when(routingContext.response()).thenReturn(response);
-        when(provisionedDataPlaneLoader.register(any())).thenReturn(Completable.complete());
-        endpoint = new CreateDataPlaneEndpoint(dataPlaneDefinitionService, provisionedDataPlaneLoader, new ObjectMapper());
+        when(provisionedDataPlaneLoader.activate(any())).thenReturn(Completable.complete());
+        endpoint = new CreateDataPlaneEndpoint(
+                new DataPlaneProvisioningService(dataPlaneDefinitionService, provisionedDataPlaneLoader), new ObjectMapper());
     }
 
     @Test
@@ -156,7 +158,7 @@ class CreateDataPlaneEndpointTest {
 
         endpoint.handle(routingContext);
 
-        verify(provisionedDataPlaneLoader).register("dp-acme");
+        verify(provisionedDataPlaneLoader).activate("dp-acme");
         verify(response).setStatusCode(201);
     }
 
@@ -168,7 +170,7 @@ class CreateDataPlaneEndpointTest {
 
         endpoint.handle(routingContext);
 
-        verify(provisionedDataPlaneLoader, never()).register(any());
+        verify(provisionedDataPlaneLoader, never()).activate(any());
     }
 
     @Test

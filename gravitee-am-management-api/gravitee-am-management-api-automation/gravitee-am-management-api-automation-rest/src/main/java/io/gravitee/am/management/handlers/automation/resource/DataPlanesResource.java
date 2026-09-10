@@ -22,7 +22,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DataPlaneDefinitionService;
-import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.reactivex.rxjava3.core.Single;
@@ -70,7 +70,7 @@ public class DataPlanesResource extends AbstractAutomationResource {
     private DataPlaneDefinitionService dataPlaneDefinitionService;
 
     @Autowired
-    private ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
+    private DataPlaneProvisioningService dataPlaneProvisioningService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -149,14 +149,12 @@ public class DataPlanesResource extends AbstractAutomationResource {
                                     .map(existing -> updateExisting(existing, definition, organizationId, environmentId, principal))
                                     .orElseGet(() -> createNew(ref, definition, organizationId, environmentId, principal))));
                 })
-                // this node registers the change itself; the others pick it up from the sync event
-                .flatMap(dataPlane -> provisionedDataPlaneLoader.reload(dataPlane.getId()).toSingleDefault(dataPlane))
                 .subscribe(response::resume, response::resume);
     }
 
     private Single<AutomationDataPlane> updateExisting(DataPlaneDefinitionSummary existing, AutomationDataPlane definition,
             String organizationId, String environmentId, User principal) {
-        return dataPlaneDefinitionService.update(existing.id(),
+        return dataPlaneProvisioningService.reprovision(existing.id(),
                         AutomationDataPlaneMapper.toNewDataPlaneDefinition(definition, existing.id(), organizationId, environmentId),
                         principal)
                 .map(AutomationDataPlaneMapper::toAutomationDataPlane);
@@ -167,7 +165,7 @@ public class DataPlanesResource extends AbstractAutomationResource {
         if (ref.isId()) {
             return Single.error(new DataPlaneDefinitionNotFoundException(ref.raw()));
         }
-        return dataPlaneDefinitionService.create(
+        return dataPlaneProvisioningService.provision(
                         AutomationDataPlaneMapper.toNewDataPlaneDefinition(definition, ref.raw(), organizationId, environmentId),
                         ManagedBy.AUTOMATION_API, principal)
                 .map(AutomationDataPlaneMapper::toAutomationDataPlane);

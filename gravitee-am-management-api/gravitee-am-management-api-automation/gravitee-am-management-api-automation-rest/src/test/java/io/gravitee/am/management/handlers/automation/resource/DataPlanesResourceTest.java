@@ -135,7 +135,7 @@ class DataPlanesResourceTest extends AutomationJerseySpringTest {
 
         put(dataPlanesTarget(), definition(DATA_PLANE_ID));
 
-        verify(provisionedDataPlaneLoader).reload(DATA_PLANE_ID);
+        verify(provisionedDataPlaneLoader).activate(DATA_PLANE_ID);
     }
 
     @Test
@@ -217,7 +217,7 @@ class DataPlanesResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(403, response.getStatus());
         verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
-        verify(provisionedDataPlaneLoader, never()).reload(anyString());
+        verify(provisionedDataPlaneLoader, never()).activate(anyString());
     }
 
     @Test
