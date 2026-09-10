@@ -285,4 +285,35 @@ describe('GrantFlowsComponent', () => {
       expect(emitted[0]).not.toBe(component.spiffeSettings);
     });
   });
+
+  describe('SPIFFE trust domain options', () => {
+    it('should list only SPIFFE trusted domains, valued by their SPIFFE trust domain', () => {
+      mockDomainStoreService.current = {
+        ...defaultDomainCurrent(),
+        oidc: { cibaSettings: { enabled: false }, workloadIdentitySettings: { enabled: true } },
+      };
+      jest.spyOn(TestBed.inject(TrustDomainService), 'list').mockReturnValue(
+        of([
+          { name: 'xaa-only', issuer: 'https://idp.example', crossAppAccess: { enabled: true } },
+          { name: 'acme', spiffeTrustDomain: 'acme' },
+          { name: 'billing', spiffeTrustDomain: 'prod.example' },
+        ]),
+      );
+      fixture = TestBed.createComponent(GrantFlowsComponent);
+      component = fixture.componentInstance;
+      component.domainId = 'domain-id';
+      component.oauthSettings = { grantTypes: [], tokenEndpointAuthMethod: 'spiffe_jwt' };
+      component.customGrantTypes = [];
+      component.secretSettings = [];
+      fixture.detectChanges();
+
+      const options = Array.from(
+        fixture.nativeElement.querySelectorAll('mat-select[name="spiffeTrustDomain"] mat-option'),
+      ) as (HTMLElement & {
+        value: string;
+      })[];
+      expect(options.map((o) => o.value)).toEqual(['acme', 'prod.example']);
+      expect(options.map((o) => o.textContent.trim())).toEqual(['acme', 'prod.example (billing)']);
+    });
+  });
 });
