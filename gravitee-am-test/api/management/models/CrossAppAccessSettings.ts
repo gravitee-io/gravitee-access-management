@@ -59,7 +59,7 @@ export interface CrossAppAccessSettings {
    */
   resourceServers?: Array<CrossAppAccessResourceServer>;
   /**
-   * One-to-one mapping from domain scope to the name this authority knows it by. Unmapped domain scopes are dropped (fail-closed).
+   * One-to-one mapping from domain scope to the name this authority knows it by. A requested domain scope with no mapping is refused.
    * @type {{ [key: string]: string; }}
    * @memberof CrossAppAccessSettings
    */

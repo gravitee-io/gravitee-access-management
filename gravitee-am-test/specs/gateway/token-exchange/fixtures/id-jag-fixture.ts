@@ -104,6 +104,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
         { name: 'Calendar', resource: 'https://calendar.acme.com' },
         { name: 'Mail', resource: 'https://mail.acme.com' },
       ],
+      scopeMappings: { profile: 'read:profile', email: 'read:email' },
     },
   });
   const [calendar, mail] = trustDomain.crossAppAccess.resourceServers as IdJagResourceServer[];

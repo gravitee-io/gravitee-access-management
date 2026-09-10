@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.JwtType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -38,11 +39,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,7 +90,14 @@ class IdJagServiceImplTest {
     private static OAuth2Request request() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("agent-at-am");
-        oAuth2Request.setIdJagTarget(new IdJagTarget(AUDIENCE, RESOURCE, "agent-at-acme"));
+        oAuth2Request.setIdJagTarget(new IdJagTarget(AUDIENCE, RESOURCE, "agent-at-acme",
+                Map.of("calendar.read", "read:calendar", "calendar.write", "write:calendar")));
+        return oAuth2Request;
+    }
+
+    private static OAuth2Request requestGranting(String... domainScopes) {
+        OAuth2Request oAuth2Request = request();
+        oAuth2Request.setScopes(Set.of(domainScopes));
         return oAuth2Request;
     }
 
@@ -130,8 +140,29 @@ class IdJagServiceImplTest {
     }
 
     @Test
-    void shouldNotCarryAScopeClaim() {
-        assertThat(mintedAssertion()).doesNotContainKey(Claims.SCOPE);
+    void shouldOmitTheScopeClaimWhenNoScopeIsGranted() {
+        IdJag idJag = service.create(request(), client(300), user()).blockingGet();
+
+        assertThat(capturedAssertion()).doesNotContainKey(Claims.SCOPE);
+        assertThat(idJag.scope()).isNull();
+    }
+
+    @Test
+    void shouldCarryTheGrantedScopesInThePartnersVocabulary() {
+        IdJag idJag = service.create(requestGranting("calendar.read", "calendar.write"), client(300), user()).blockingGet();
+        Object scopeClaim = capturedAssertion().get(Claims.SCOPE);
+
+        assertThat(((String) scopeClaim).split(" ")).containsExactlyInAnyOrder("read:calendar", "write:calendar");
+        assertThat(idJag.scope()).isEqualTo(scopeClaim);
+    }
+
+    @Test
+    void shouldRefuseToMintAGrantedScopeWithNoMapping() {
+        service.create(requestGranting("calendar.read", "calendar.delete"), client(300), user())
+                .test()
+                .assertError(error -> error instanceof InvalidScopeException && error.getMessage().contains("calendar.delete"));
+
+        verify(jwtService, never()).encode(any(JWT.class), any(Client.class));
     }
 
     @Test

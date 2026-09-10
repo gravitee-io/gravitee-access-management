@@ -1303,7 +1303,7 @@ public class TokenServiceImplTest {
         request.setSubjectTokenId("subject-jti-1");
         request.setSubjectTokenType(TokenType.ACCESS_TOKEN);
         request.setOrigin("https://auth.example.com");
-        request.setIdJagTarget(new IdJagTarget("https://auth.acme.com", "https://calendar.acme.com", "agent-at-acme"));
+        request.setIdJagTarget(new IdJagTarget("https://auth.acme.com", "https://calendar.acme.com", "agent-at-acme", Map.of()));
         return request;
     }
 
@@ -1314,7 +1314,7 @@ public class TokenServiceImplTest {
         User user = createUser("user-123");
 
         when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
-                .thenReturn(Single.just(new IdJag("eyJ0eXAiOiJvYXV0aC1pZC1qYWcrand0In0.payload.signature", "assertion-jti", 300)));
+                .thenReturn(Single.just(new IdJag("eyJ0eXAiOiJvYXV0aC1pZC1qYWcrand0In0.payload.signature", "assertion-jti", 300, null)));
 
         TestObserver<Token> observer = tokenService.create(request, client, user).test();
         observer.awaitDone(5, TimeUnit.SECONDS);
@@ -1331,11 +1331,45 @@ public class TokenServiceImplTest {
     }
 
     @Test
+    public void shouldReturnTheAssertionsScopeInThePartnersVocabulary() {
+        OAuth2Request request = idJagRequest();
+        request.setScopes(Set.of("calendar.read"));
+
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, "read:calendar")));
+
+        TestObserver<Token> observer = tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete();
+        observer.assertValue(token -> "read:calendar".equals(token.getScope()));
+    }
+
+    @Test
+    public void shouldAuditTheSecurityDomainsOwnScopeNames() {
+        OAuth2Request request = idJagRequest();
+        request.setScopes(Set.of("calendar.read"));
+        Client client = createClient("agent-at-am");
+        client.setDomain("test-domain");
+
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, "read:calendar")));
+
+        tokenService.create(request, client, createUser("user-123")).test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete();
+
+        assertThat(captureTokenAudit().getOutcome().getMessage())
+                .contains("calendar.read")
+                .doesNotContain("read:calendar");
+    }
+
+    @Test
     public void shouldNotStoreOrSignAnAssertionOutsideTheIdJagService() {
         OAuth2Request request = idJagRequest();
 
         when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
-                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300)));
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, null)));
 
         tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test()
                 .awaitDone(5, TimeUnit.SECONDS)
@@ -1353,7 +1387,7 @@ public class TokenServiceImplTest {
         client.setDomain("test-domain");
 
         when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class)))
-                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300)));
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, null)));
 
         tokenService.create(request, client, createUser("user-123")).test()
                 .awaitDone(5, TimeUnit.SECONDS)

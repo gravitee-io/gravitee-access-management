@@ -60,7 +60,7 @@ public class CrossAppAccessSettings {
     private String audSubMapping;
 
     @Schema(description = "One-to-one mapping from domain scope to the name this authority knows it by. "
-            + "Unmapped domain scopes are dropped (fail-closed).")
+            + "A requested domain scope with no mapping is refused.")
     private Map<String, String> scopeMappings;
 
     public CrossAppAccessSettings(CrossAppAccessSettings other) {
