@@ -102,6 +102,13 @@ const callTrustedDomains = async (
 export const createTrustedDomain = (domainId: string, accessToken: string, body: Record<string, unknown>): Promise<TrustedDomainResponse> =>
   callTrustedDomains(trustedDomainsUrl(domainId), 'POST', accessToken, body);
 
+export const updateTrustedDomain = (
+  domainId: string,
+  accessToken: string,
+  trustDomainId: string,
+  body: Record<string, unknown>,
+): Promise<TrustedDomainResponse> => callTrustedDomains(trustedDomainsUrl(domainId, trustDomainId), 'PUT', accessToken, body);
+
 export const setupCrossAppAccessFixture = async (): Promise<CrossAppAccessFixture> => {
   const accessToken = await requestAdminAccessToken();
   const trustedKey = createTrustedIssuerKeyMaterial();
@@ -118,7 +125,7 @@ export const setupCrossAppAccessFixture = async (): Promise<CrossAppAccessFixtur
     crossAppAccess: (resource: string, overrides: Record<string, unknown> = {}) => ({
       enabled: true,
       resourceServers: [{ name: 'Calendar', resource }],
-      audSubMapping: '{#user.email}',
+      audSubMapping: "{#context.attributes['user'].email}",
       scopeMappings: { 'domain:read': 'calendar.read' },
       ...overrides,
     }),

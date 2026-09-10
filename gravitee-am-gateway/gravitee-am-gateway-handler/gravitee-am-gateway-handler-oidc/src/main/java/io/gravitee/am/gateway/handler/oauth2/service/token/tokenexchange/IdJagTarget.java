@@ -29,7 +29,8 @@ public record IdJagTarget(
         String audience,
         String resource,
         String clientId,
-        Map<String, String> scopeMappings
+        Map<String, String> scopeMappings,
+        String audSubMapping
 ) {
 
     public IdJagTarget {

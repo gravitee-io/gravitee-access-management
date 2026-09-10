@@ -41,7 +41,7 @@ import {
  */
 export interface CrossAppAccessSettings {
   /**
-   * Expression evaluated against the user profile (variable "user") to produce the optional "aud_sub" claim. The claim is omitted when the expression yields nothing.
+   * Expression producing the optional "aud_sub" claim, with the user profile available as context.attributes['user']. The claim is omitted when the expression yields nothing, and issuance is refused when the expression fails.
    * @type {string}
    * @memberof CrossAppAccessSettings
    */

@@ -2697,6 +2697,10 @@ public class TokenExchangeServiceImplTest {
         }
 
         private void trustDomainWith(Map<String, String> scopeMappings, CrossAppAccessResourceServer... resourceServers) {
+            trustDomainWith(scopeMappings, null, resourceServers);
+        }
+
+        private void trustDomainWith(Map<String, String> scopeMappings, String audSubMapping, CrossAppAccessResourceServer... resourceServers) {
             TrustedDomain trustDomain = TrustedDomain.builder()
                     .id("td-1")
                     .name("acme")
@@ -2705,6 +2709,7 @@ public class TokenExchangeServiceImplTest {
                             .enabled(true)
                             .resourceServers(List.of(resourceServers))
                             .scopeMappings(scopeMappings)
+                            .audSubMapping(audSubMapping)
                             .build())
                     .build();
             lenient().when(trustDomainManager.findByCrossAppAccessAudience(AUDIENCE)).thenReturn(java.util.Optional.of(trustDomain));
@@ -2909,6 +2914,16 @@ public class TokenExchangeServiceImplTest {
             service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
 
             assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("calendar.read", "calendar.write");
+        }
+
+        @Test
+        void shouldCarryTheTrustedDomainsAudSubMappingToMinting() {
+            trustDomainWith(Map.of(), "{#context.attributes['user'].email}", resourceServer("rs-calendar", CALENDAR));
+
+            var result = service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(result.idJagTarget().audSubMapping()).isEqualTo("{#context.attributes['user'].email}");
         }
 
         @Test

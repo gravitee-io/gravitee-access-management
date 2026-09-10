@@ -18,9 +18,10 @@ package io.gravitee.am.gateway.handler.oidc.service.idjag;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 
 public interface IdJagService {
 
-    Single<IdJag> create(OAuth2Request oAuth2Request, Client client, User user);
+    Single<IdJag> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext);
 }

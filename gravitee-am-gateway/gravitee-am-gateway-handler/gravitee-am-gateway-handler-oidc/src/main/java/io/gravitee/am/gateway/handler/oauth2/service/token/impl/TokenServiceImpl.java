@@ -293,7 +293,8 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private Single<Token> createIdJagResponse(OAuth2Request oAuth2Request, Client client, User endUser) {
-        return idJagService.create(oAuth2Request, client, endUser)
+        return Single.fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
+                .flatMap(executionContext -> idJagService.create(oAuth2Request, client, endUser, executionContext))
                 .doOnSuccess(idJag -> auditService.report(
                         AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                 .idJag(idJag.tokenId())
