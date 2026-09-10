@@ -19,7 +19,7 @@ import { performGet, performPatch, performPost } from '@gateway-commands/oauth-o
 import { createUser } from '@management-commands/user-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
-import { SelfAccountFixture, setupFixture } from './fixture/self-account-fixture';
+import { SelfAccountFixture, setupFixture, accountApiUrl, createUserWithToken } from './fixture/self-account-fixture';
 import { setup } from '../../test-fixture';
 
 setup(300000);
@@ -35,33 +35,9 @@ const SETTINGS = {
 
 let fixture: SelfAccountFixture;
 
-const accountUrl = (path: string) => `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api${path}`;
+const accountUrl = (path: string) => accountApiUrl(fixture, path);
 
-const newUser = () => ({
-  username: uniqueName('usernameUser', true),
-  password: 'Password123!',
-  firstName: 'Username',
-  lastName: 'User',
-  email: 'usernameuser@acme.fr',
-  preRegistration: false,
-});
-
-/** Creates a user and returns them along with an access token of their own. */
-const userWithToken = async () => {
-  const user = newUser();
-  await createUser(fixture.domain.id, fixture.accessToken, user);
-  const response = await performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=password&username=${user.username}&password=${user.password}`,
-    {
-      'Content-type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + applicationBase64Token(fixture.application),
-    },
-  );
-  expect(response.status).toBe(200);
-  return { user, token: response.body.access_token };
-};
+const userWithToken = () => createUserWithToken(fixture, 'usernameUser');
 
 const patchUsername = (token: string, body: any) =>
   performPatch(accountUrl('/profile/username'), '', body === null ? undefined : JSON.stringify(body), {
@@ -78,7 +54,7 @@ afterAll(async () => {
 });
 
 describe('SelfAccount - Update username - accepted', () => {
-  it(jira`a username of digits only is accepted ${'AM-7652'}`, async () => {
+  it(jira`a username of digits only is accepted ${'AM-3941'}`, async () => {
     const { token } = await userWithToken();
     const digits = `${Date.now()}`.slice(-10);
 
@@ -88,7 +64,7 @@ describe('SelfAccount - Update username - accepted', () => {
     expect(response.body.status).toBe('OK');
   });
 
-  it(jira`the user can sign in with their new username ${'AM-7652'}`, async () => {
+  it(jira`the user can sign in with their new username ${'AM-3936'}`, async () => {
     const { user, token } = await userWithToken();
     const changed = uniqueName('renamed', true);
 
@@ -121,7 +97,7 @@ describe('SelfAccount - Update username - accepted', () => {
 });
 
 describe('SelfAccount - Update username - rejected', () => {
-  it(jira`a request with no body is rejected ${'AM-7652'}`, async () => {
+  it(jira`a request with no body is rejected ${'AM-3937'}`, async () => {
     const { token } = await userWithToken();
 
     const response = await patchUsername(token, null);
@@ -131,7 +107,7 @@ describe('SelfAccount - Update username - rejected', () => {
     expect(response.body.errorMessage).toContain('Username is required');
   });
 
-  it(jira`a body with no username value is rejected ${'AM-7652'}`, async () => {
+  it(jira`a body with no username value is rejected ${'AM-3938'}`, async () => {
     const { token } = await userWithToken();
 
     const response = await patchUsername(token, {});
@@ -141,7 +117,7 @@ describe('SelfAccount - Update username - rejected', () => {
     expect(response.body.errorMessage).toContain('Username is required');
   });
 
-  it(jira`a username of spaces only is rejected ${'AM-7652'}`, async () => {
+  it(jira`a username of spaces only is rejected ${'AM-3946'}`, async () => {
     const { token } = await userWithToken();
 
     const response = await patchUsername(token, { username: '   ' });
@@ -149,7 +125,7 @@ describe('SelfAccount - Update username - rejected', () => {
     expect(response.status).toBe(400);
   });
 
-  it(jira`a username mixing valid and invalid characters is rejected ${'AM-7652'}`, async () => {
+  it(jira`a username mixing valid and invalid characters is rejected ${'AM-3939'}`, async () => {
     const { token } = await userWithToken();
     const mixed = 'updatedusername1?^';
 
@@ -160,7 +136,7 @@ describe('SelfAccount - Update username - rejected', () => {
     expect(response.body.errorMessage).toContain(`Username [${mixed}] is not a valid value`);
   });
 
-  it(jira`a username of only special characters is rejected ${'AM-7652'}`, async () => {
+  it(jira`a username of only special characters is rejected ${'AM-3940'}`, async () => {
     const { token } = await userWithToken();
     const special = '!%^%!&^%';
 
@@ -171,7 +147,7 @@ describe('SelfAccount - Update username - rejected', () => {
     expect(response.body.errorMessage).toContain(`Username [${special}] is not a valid value`);
   });
 
-  it(jira`a username already held by another user is rejected ${'AM-7652'}`, async () => {
+  it(jira`a username already held by another user is rejected ${'AM-3942'}`, async () => {
     const { user: existing } = await userWithToken();
     const { token } = await userWithToken();
 
@@ -183,7 +159,7 @@ describe('SelfAccount - Update username - rejected', () => {
     expect(response.body.errorMessage).toContain('already exists');
   });
 
-  it(jira`the user's own current username is rejected as already taken ${'AM-7652'}`, async () => {
+  it("the user's own current username is rejected as already taken", async () => {
     // The edge of the case above: the clash is with themselves rather than somebody else.
     const { user, token } = await userWithToken();
 
@@ -195,7 +171,7 @@ describe('SelfAccount - Update username - rejected', () => {
 });
 
 describe('SelfAccount - Update username - authentication', () => {
-  it(jira`a request with no token is refused ${'AM-7652'}`, async () => {
+  it('a request with no token is refused', async () => {
     const response = await performPatch(accountUrl('/profile/username'), '', JSON.stringify({ username: uniqueName('nope', true) }), {
       'Content-Type': 'application/json',
     });
@@ -203,7 +179,7 @@ describe('SelfAccount - Update username - authentication', () => {
     expect(response.status).toBe(401);
   });
 
-  it(jira`a request with a malformed token is refused ${'AM-7652'}`, async () => {
+  it(jira`a request with a malformed token is refused ${'AM-3947'}`, async () => {
     const response = await patchUsername('not-a-real-token', { username: uniqueName('nope', true) });
 
     expect(response.status).toBe(401);

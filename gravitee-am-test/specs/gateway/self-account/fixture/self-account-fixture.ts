@@ -70,8 +70,47 @@ export async function getEndUserAccessToken(fixture: SelfAccountFixture, passwor
   return response.body.access_token;
 }
 
-// Each spec file passes its own domain name prefix: two files sharing one can generate the same
-// name in parallel workers, and the second domain then fails to start.
+/** Base URL of the self-account API for a fixture's domain. */
+export const accountApiUrl = (fixture: SelfAccountFixture, path: string) =>
+  `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api${path}`;
+
+/** Obtains an access token for a user other than the one the fixture created. */
+export async function tokenFor(fixture: SelfAccountFixture, user: { username: string; password: string }): Promise<string> {
+  const response = await performPost(
+    fixture.oidc.token_endpoint,
+    '',
+    `grant_type=password&username=${user.username}&password=${user.password}`,
+    {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(fixture.application),
+    },
+  );
+  expect(response.status).toBe(200);
+  expect(response.body.access_token).toBeDefined();
+  return response.body.access_token;
+}
+
+/**
+ * Creates a user in the fixture's domain and returns them with an access token of their own. Tests
+ * that change a user's state take one of these so they do not depend on each other.
+ */
+export async function createUserWithToken(
+  fixture: SelfAccountFixture,
+  namePrefix = 'selfAccountUser',
+): Promise<{ user: any; token: string }> {
+  const user: any = {
+    username: uniqueName(namePrefix, true),
+    password: 'Password123!',
+    firstName: 'SelfAccount',
+    lastName: 'User',
+    email: `${uniqueName(namePrefix, true)}@acme.fr`,
+    preRegistration: false,
+  };
+  const created = await createUser(fixture.domain.id, fixture.accessToken, user);
+  user.id = created.id;
+  return { user, token: await tokenFor(fixture, user) };
+}
+
 export const setupFixture = async (domainSettings: any, domainNamePrefix = 'self-account-change-password'): Promise<SelfAccountFixture> => {
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName(domainNamePrefix, true), 'Description');
@@ -282,17 +321,22 @@ export const setupRecoveryCodeFixture = async (): Promise<SelfAccountRecoveryCod
   );
 
   await waitForSyncAfter(domain.id, () =>
-    patchApplication(domain.id, accessToken, {
-      factors: new Set([recoveryCodeFactor.id]),
-      settings: {
-        mfa: {
-          factor: {
-            applicationFactors: [{ id: recoveryCodeFactor.id }],
-            defaultFactorId: recoveryCodeFactor.id,
+    patchApplication(
+      domain.id,
+      accessToken,
+      {
+        factors: new Set([recoveryCodeFactor.id]),
+        settings: {
+          mfa: {
+            factor: {
+              applicationFactors: [{ id: recoveryCodeFactor.id }],
+              defaultFactorId: recoveryCodeFactor.id,
+            },
           },
         },
       },
-    }, application.id),
+      application.id,
+    ),
   );
 
   return {

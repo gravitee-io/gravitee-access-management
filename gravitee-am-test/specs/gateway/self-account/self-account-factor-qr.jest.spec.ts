@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { jira } from '@specs-utils/jira';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
-import { SelfAccountFactorFixture, setupFactorFixture, getEndUserAccessToken } from './fixture/self-account-fixture';
+import { SelfAccountFactorFixture, setupFactorFixture, getEndUserAccessToken, accountApiUrl } from './fixture/self-account-fixture';
 import { setup } from '../../test-fixture';
 
 setup(300000);
@@ -25,7 +24,7 @@ setup(300000);
 let fixture: SelfAccountFactorFixture;
 let token: string;
 
-const accountUrl = (path: string) => `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api${path}`;
+const accountUrl = (path: string) => accountApiUrl(fixture, path);
 const auth = () => ({ Authorization: `Bearer ${token}` });
 
 beforeAll(async () => {
@@ -38,13 +37,13 @@ afterAll(async () => {
 });
 
 describe('SelfAccount - Factor QR code', () => {
-  it(jira`an unknown factor has no QR code ${'AM-7652'}`, async () => {
+  it('an unknown factor has no QR code', async () => {
     const response = await performGet(accountUrl('/factors/does-not-exist/qr'), '', auth());
 
     expect(response.status).toBe(404);
   });
 
-  it(jira`a factor the user has not enrolled has no QR code ${'AM-7652'}`, async () => {
+  it('a factor the user has not enrolled has no QR code', async () => {
     // The factor exists on the application, but this user holds nothing yet — a different branch
     // from the unknown factor above, and the reason this test runs before the enrolment.
     const response = await performGet(accountUrl(`/factors/${fixture.mockFactor.id}/qr`), '', auth());
@@ -52,7 +51,7 @@ describe('SelfAccount - Factor QR code', () => {
     expect(response.status).toBe(404);
   });
 
-  it(jira`an enrolled factor returns a QR code ${'AM-7652'}`, async () => {
+  it('an enrolled factor returns a QR code', async () => {
     await performPost(accountUrl('/factors'), '', JSON.stringify({ factorId: fixture.mockFactor.id }), {
       'Content-Type': 'application/json',
       ...auth(),
@@ -64,7 +63,7 @@ describe('SelfAccount - Factor QR code', () => {
     expect(response.body.qrCode).toContain('data:image');
   });
 
-  it(jira`the QR code is refused without a token ${'AM-7652'}`, async () => {
+  it('the QR code is refused without a token', async () => {
     const response = await performGet(accountUrl(`/factors/${fixture.mockFactor.id}/qr`), '');
 
     expect(response.status).toBe(401);

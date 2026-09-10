@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { jira } from '@specs-utils/jira';
 import {
   performDelete,
   performFormPost,
@@ -25,7 +24,7 @@ import {
 import { createUser, listUserConsents } from '@management-commands/user-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
-import { SelfAccountFixture, setupFixture } from './fixture/self-account-fixture';
+import { SelfAccountFixture, setupFixture, accountApiUrl, createUserWithToken, tokenFor } from './fixture/self-account-fixture';
 import { setup } from '../../test-fixture';
 
 setup(300000);
@@ -41,35 +40,9 @@ const SETTINGS = {
 
 let fixture: SelfAccountFixture;
 
-const accountUrl = (path: string) => `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/account/api${path}`;
+const accountUrl = (path: string) => accountApiUrl(fixture, path);
 
-const tokenFor = async (user: { username: string; password: string }) => {
-  const response = await performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=password&username=${user.username}&password=${user.password}`,
-    {
-      'Content-type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + applicationBase64Token(fixture.application),
-    },
-  );
-  expect(response.status).toBe(200);
-  return response.body.access_token;
-};
-
-const newUser = async () => {
-  const user: any = {
-    username: uniqueName('consentUser', true),
-    password: 'Password123!',
-    firstName: 'Consent',
-    lastName: 'User',
-    email: 'consentuser@acme.fr',
-    preRegistration: false,
-  };
-  const created = await createUser(fixture.domain.id, fixture.accessToken, user);
-  user.id = created.id;
-  return user;
-};
+const newUser = async () => (await createUserWithToken(fixture, 'consentUser')).user;
 
 /** Signs in and approves the consent screen — the only way a consent record is created. */
 const approveConsent = async (user: { username: string; password: string }) => {
@@ -109,10 +82,10 @@ afterAll(async () => {
 });
 
 describe('SelfAccount - Consent', () => {
-  it(jira`a user who has approved nothing has an empty consent list ${'AM-7652'}`, async () => {
+  it('a user who has approved nothing has an empty consent list', async () => {
     // The control for every test below: the list is not simply returning everything it can find.
     const user = await newUser();
-    const token = await tokenFor(user);
+    const token = await tokenFor(fixture, user);
 
     const response = await listConsent(token);
 
@@ -120,10 +93,10 @@ describe('SelfAccount - Consent', () => {
     expect(response.body).toEqual([]);
   });
 
-  it(jira`approving scopes puts a consent on the user's list ${'AM-7652'}`, async () => {
+  it("approving scopes puts a consent on the user's list", async () => {
     const user = await newUser();
     await approveConsent(user);
-    const token = await tokenFor(user);
+    const token = await tokenFor(fixture, user);
 
     const response = await listConsent(token);
 
@@ -134,22 +107,22 @@ describe('SelfAccount - Consent', () => {
     expect(response.body[0].clientId).toBe(fixture.application.settings.oauth.clientId);
   });
 
-  it(jira`the list holds only the caller's own consents ${'AM-7652'}`, async () => {
+  it("the list holds only the caller's own consents", async () => {
     const owner = await newUser();
     const other = await newUser();
     await approveConsent(owner);
 
-    const ownerList = await listConsent(await tokenFor(owner));
-    const otherList = await listConsent(await tokenFor(other));
+    const ownerList = await listConsent(await tokenFor(fixture, owner));
+    const otherList = await listConsent(await tokenFor(fixture, other));
 
     expect(ownerList.body.length).toBeGreaterThan(0);
     expect(otherList.body).toEqual([]);
   });
 
-  it(jira`a user can read one of their own consents by id ${'AM-7652'}`, async () => {
+  it('a user can read one of their own consents by id', async () => {
     const user = await newUser();
     await approveConsent(user);
-    const token = await tokenFor(user);
+    const token = await tokenFor(fixture, user);
     const consentId = (await listConsent(token)).body[0].id;
 
     const response = await performGet(accountUrl(`/consent/${consentId}`), '', { Authorization: `Bearer ${token}` });
@@ -158,19 +131,19 @@ describe('SelfAccount - Consent', () => {
     expect(response.body.id).toBe(consentId);
   });
 
-  it(jira`an unknown consent id is not found ${'AM-7652'}`, async () => {
+  it('an unknown consent id is not found', async () => {
     const user = await newUser();
-    const token = await tokenFor(user);
+    const token = await tokenFor(fixture, user);
 
     const response = await performGet(accountUrl('/consent/does-not-exist'), '', { Authorization: `Bearer ${token}` });
 
     expect(response.status).toBe(404);
   });
 
-  it(jira`a user can revoke their own consent, and it leaves the list ${'AM-7652'}`, async () => {
+  it('a user can revoke their own consent, and it leaves the list', async () => {
     const user = await newUser();
     await approveConsent(user);
-    const token = await tokenFor(user);
+    const token = await tokenFor(fixture, user);
     const before = await listConsent(token);
     const consentId = before.body[0].id;
 
@@ -178,20 +151,22 @@ describe('SelfAccount - Consent', () => {
     expect(removed.status).toBe(204);
 
     // Revoking a consent revokes the tokens issued under it, so the check needs a fresh one.
-    const after = await listConsent(await tokenFor(user));
+    const after = await listConsent(await tokenFor(fixture, user));
     expect(after.body.map((c: any) => c.id)).not.toContain(consentId);
   });
 
   // Un-skip once AM-7654 is fixed. A delete is not scoped to the caller either: the consent is
   // found by id alone, and the caller's id is used only to build the audit record.
-  it.skip(jira`revoking another user's consent is refused (AM-7654) ${'AM-7652'}`, async () => {
+  it.skip("revoking another user's consent is refused (AM-7654)", async () => {
     const owner = await newUser();
     const other = await newUser();
     await approveConsent(owner);
-    const ownerToken = await tokenFor(owner);
+    const ownerToken = await tokenFor(fixture, owner);
     const consentId = (await listConsent(ownerToken)).body[0].id;
 
-    const response = await performDelete(accountUrl(`/consent/${consentId}`), '', { Authorization: `Bearer ${await tokenFor(other)}` });
+    const response = await performDelete(accountUrl(`/consent/${consentId}`), '', {
+      Authorization: `Bearer ${await tokenFor(fixture, other)}`,
+    });
     expect(response.status).not.toBe(204);
 
     // Checked through the management API rather than by signing the owner in again: a fresh
@@ -200,7 +175,7 @@ describe('SelfAccount - Consent', () => {
     expect(ownerConsents.map((c: any) => c.id)).toContain(consentId);
   });
 
-  it(jira`consent endpoints refuse a request with no token ${'AM-7652'}`, async () => {
+  it('consent endpoints refuse a request with no token', async () => {
     const response = await performGet(accountUrl('/consent'), '');
 
     expect(response.status).toBe(401);
@@ -208,13 +183,15 @@ describe('SelfAccount - Consent', () => {
 
   // Un-skip once AM-7654 is fixed. Reading a consent by id is currently not scoped to the caller,
   // so another user's record comes back with 200 — verified against a running gateway.
-  it.skip(jira`reading another user's consent by id is refused (AM-7654) ${'AM-7652'}`, async () => {
+  it.skip("reading another user's consent by id is refused (AM-7654)", async () => {
     const owner = await newUser();
     const other = await newUser();
     await approveConsent(owner);
-    const consentId = (await listConsent(await tokenFor(owner))).body[0].id;
+    const consentId = (await listConsent(await tokenFor(fixture, owner))).body[0].id;
 
-    const response = await performGet(accountUrl(`/consent/${consentId}`), '', { Authorization: `Bearer ${await tokenFor(other)}` });
+    const response = await performGet(accountUrl(`/consent/${consentId}`), '', {
+      Authorization: `Bearer ${await tokenFor(fixture, other)}`,
+    });
 
     expect(response.status).not.toBe(200);
   });
