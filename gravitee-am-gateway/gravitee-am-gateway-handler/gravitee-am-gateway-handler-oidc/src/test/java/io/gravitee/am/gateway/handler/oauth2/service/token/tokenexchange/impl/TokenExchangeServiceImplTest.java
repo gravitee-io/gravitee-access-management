@@ -2693,6 +2693,10 @@ public class TokenExchangeServiceImplTest {
         }
 
         private void trustDomainWith(CrossAppAccessResourceServer... resourceServers) {
+            trustDomainWith(Map.of(), resourceServers);
+        }
+
+        private void trustDomainWith(Map<String, String> scopeMappings, CrossAppAccessResourceServer... resourceServers) {
             TrustedDomain trustDomain = TrustedDomain.builder()
                     .id("td-1")
                     .name("acme")
@@ -2700,6 +2704,7 @@ public class TokenExchangeServiceImplTest {
                     .crossAppAccess(CrossAppAccessSettings.builder()
                             .enabled(true)
                             .resourceServers(List.of(resourceServers))
+                            .scopeMappings(scopeMappings)
                             .build())
                     .build();
             lenient().when(trustDomainManager.findByCrossAppAccessAudience(AUDIENCE)).thenReturn(java.util.Optional.of(trustDomain));
@@ -2859,15 +2864,51 @@ public class TokenExchangeServiceImplTest {
         }
 
         @Test
-        void shouldDenyAScopedRequestUntilScopesAreTranslated() {
-            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+        void shouldGrantARequestedScopeTheTrustedDomainMapsWhateverTheSubjectTokenCarries() {
+            trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
             MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
-            params.add(Parameters.SCOPE, "openid");
+            params.add(Parameters.SCOPE, "calendar.read");
+            TokenRequest tokenRequest = idJagRequest(params);
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactly("calendar.read");
+        }
+
+        @Test
+        void shouldGrantAMappedScopeToASubjectTokenCarryingNoScopeClaim() {
+            service = createService(List.of(scopeValidator(Set.of())));
+            trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
+            MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
+            params.add(Parameters.SCOPE, "calendar.read");
+            TokenRequest tokenRequest = idJagRequest(params);
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactly("calendar.read");
+        }
+
+        @Test
+        void shouldRefuseARequestedScopeWithNoMappingRatherThanNarrowTheGrant() {
+            trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
+            MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
+            params.add(Parameters.SCOPE, "calendar.read calendar.write");
 
             assertThatThrownBy(() -> service.exchange(idJagRequest(params),
                     clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
-                    .isInstanceOf(InvalidRequestException.class)
-                    .hasMessageContaining("scope is not supported");
+                    .isInstanceOf(InvalidScopeException.class)
+                    .hasMessageContaining("calendar.write");
+        }
+
+        @Test
+        void shouldGrantTheFullMappedSetWhenTheRequestNamesNoScope() {
+            trustDomainWith(Map.of("calendar.read", "read:calendar", "calendar.write", "write:calendar"),
+                    resourceServer("rs-calendar", CALENDAR));
+            TokenRequest tokenRequest = idJagRequest(idJagParameters(AUDIENCE));
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("calendar.read", "calendar.write");
         }
 
         @Test

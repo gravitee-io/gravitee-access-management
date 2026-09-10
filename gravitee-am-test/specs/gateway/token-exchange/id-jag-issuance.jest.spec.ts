@@ -18,6 +18,7 @@ import jwt from 'jsonwebtoken';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { setup } from '../../test-fixture';
 import { ID_JAG_JOSE_TYPE, ID_JAG_TOKEN_TYPE, IdJagFixture, setupIdJagFixture } from './fixtures/id-jag-fixture';
+import { ID_TOKEN_TYPE } from './fixtures/token-exchange-fixture';
 
 setup(300000);
 
@@ -30,6 +31,11 @@ const audienceParam = () => `&audience=${encodeURIComponent(fixture.audience)}`;
 const resourceParam = (resource: string) => `&resource=${encodeURIComponent(resource)}`;
 
 const errorOf = (response: any) => response.body.error;
+
+const calendarWith = (scope?: string) =>
+  audienceParam() + resourceParam(fixture.calendar.resource) + (scope ? `&scope=${encodeURIComponent(scope)}` : '');
+
+const scopesOf = (scope: string) => scope.split(' ').sort();
 
 const bothResourceServers = () =>
   fixture.setCrossAppAccess({
@@ -100,19 +106,10 @@ describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
     const { idToken } = await fixture.subjectTokens();
 
     const response = await fixture
-      .requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource), 'urn:ietf:params:oauth:token-type:id_token')
+      .requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource), ID_TOKEN_TYPE)
       .expect(200);
 
     expect(decode(response.body.access_token).payload.resource).toBe(fixture.calendar.resource);
-  });
-
-  it('should carry no scope claim while scopes are untranslated', async () => {
-    const { accessToken } = await fixture.subjectTokens();
-
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
-
-    expect(decode(response.body.access_token).payload.scope).toBeUndefined();
-    expect(response.body.scope).toBeUndefined();
   });
 
   it('should select the named resource server among those behind the audience', async () => {
@@ -201,16 +198,6 @@ describe('ID-JAG issuance - every check fails closed', () => {
     expect(errorOf(response)).toBe('invalid_target');
   });
 
-  it('should refuse a request naming scope while scopes are untranslated', async () => {
-    const { accessToken } = await fixture.subjectTokens();
-
-    const response = await fixture
-      .requestIdJag(accessToken, `${audienceParam()}${resourceParam(fixture.calendar.resource)}&scope=openid`)
-      .expect(400);
-
-    expect(errorOf(response)).toBe('invalid_request');
-  });
-
   it('should refuse an application whose Cross App Access block is disabled', async () => {
     await fixture.setCrossAppAccess({
       enabled: false,
@@ -221,6 +208,68 @@ describe('ID-JAG issuance - every check fails closed', () => {
     const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(400);
 
     expect(errorOf(response)).toBe('unauthorized_client');
+  });
+});
+
+describe("ID-JAG issuance - scopes travel in the partner's vocabulary", () => {
+  beforeAll(bothResourceServers);
+
+  it('should carry a requested domain scope under the name the trusted domain maps it to', async () => {
+    const { accessToken } = await fixture.subjectTokens();
+
+    const response = await fixture.requestIdJag(accessToken, calendarWith('profile')).expect(200);
+
+    expect(decode(response.body.access_token).payload.scope).toBe('read:profile');
+    expect(response.body.scope).toBe('read:profile');
+  });
+
+  it('should grant the full mapped set when the request names no scope', async () => {
+    const { accessToken } = await fixture.subjectTokens();
+
+    const response = await fixture.requestIdJag(accessToken, calendarWith()).expect(200);
+
+    expect(scopesOf(decode(response.body.access_token).payload.scope)).toEqual(['read:email', 'read:profile']);
+    expect(scopesOf(response.body.scope)).toEqual(['read:email', 'read:profile']);
+  });
+
+  it('should refuse a requested scope with no mapping rather than narrow the assertion', async () => {
+    const { accessToken } = await fixture.subjectTokens();
+
+    const response = await fixture.requestIdJag(accessToken, calendarWith('profile openid')).expect(400);
+
+    expect(errorOf(response)).toBe('invalid_scope');
+  });
+
+  it('should audit a refused scope under the name the agent asked for', async () => {
+    const { accessToken } = await fixture.subjectTokens();
+    const unmappedScope = `unmapped-${Date.now()}`;
+    await fixture.requestIdJag(accessToken, calendarWith(unmappedScope)).expect(400);
+
+    const audit = await fixture.awaitTokenAudit('FAILURE', (detail) => JSON.stringify(detail).includes(unmappedScope));
+
+    expect(audit.outcome.message).toContain(`"SCOPE":"${unmappedScope}"`);
+    expect(audit.outcome.message).toContain(ID_JAG_TOKEN_TYPE);
+  });
+
+  it('should grant the same scopes whether the subject token is an ID token or an access token', async () => {
+    const { accessToken, idToken } = await fixture.subjectTokens('openid');
+
+    const fromAccessToken = await fixture.requestIdJag(accessToken, calendarWith('email')).expect(200);
+    const fromIdToken = await fixture.requestIdJag(idToken, calendarWith('email'), ID_TOKEN_TYPE).expect(200);
+
+    expect(decode(fromAccessToken.body.access_token).payload.scope).toBe('read:email');
+    expect(decode(fromIdToken.body.access_token).payload.scope).toBe('read:email');
+  });
+
+  it("should audit the security domain's own scope names, not the partner's", async () => {
+    const { accessToken } = await fixture.subjectTokens();
+    const response = await fixture.requestIdJag(accessToken, calendarWith('profile')).expect(200);
+    const assertionId = decode(response.body.access_token).payload.jti;
+
+    const audit = await fixture.awaitTokenAudit('SUCCESS', (detail) => JSON.stringify(detail).includes(assertionId));
+
+    expect(audit.outcome.message).toContain('"path":"/SCOPE","value":"profile"');
+    expect(JSON.stringify(audit)).not.toContain('read:profile');
   });
 });
 

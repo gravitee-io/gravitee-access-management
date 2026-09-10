@@ -56,6 +56,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -242,7 +243,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return new IdJagTarget(
                 trustDomain.getDomainIdentifier(),
                 resolved.resourceServer().getResource(),
-                resolved.row().getClientId());
+                resolved.row().getClientId(),
+                trustDomain.getCrossAppAccess().getScopeMappings());
     }
 
     private Map<String, ResolvedResourceServer> survivingRows(ApplicationCrossAppAccessSettings crossAppAccess, TrustedDomain trustDomain) {
@@ -532,10 +534,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                      TokenRequest tokenRequest, Client client, Domain domain,
                                                      IdJagTarget idJagTarget) {
         if (idJagTarget != null) {
-            if (requestedScopes != null && !requestedScopes.isEmpty()) {
-                return Single.error(new InvalidRequestException("scope is not supported for requested_token_type: " + TokenType.ID_JAG));
-            }
-            return Single.just(Collections.emptySet());
+            return grantIdJagScopes(requestedScopes, idJagTarget);
         }
         boolean noRequestedScopes = requestedScopes == null || requestedScopes.isEmpty();
         Set<String> clientScopes = noRequestedScopes ? getClientDefaultScopes(client) : getClientScopes(client);
@@ -556,6 +555,16 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             return Single.just(requestedScopes);
         }
         return Single.error(new InvalidScopeException("Requested scope is not allowed"));
+    }
+
+    private static Single<Set<String>> grantIdJagScopes(Set<String> requestedScopes, IdJagTarget idJagTarget) {
+        if (requestedScopes.isEmpty()) {
+            return Single.just(new LinkedHashSet<>(idJagTarget.scopeMappings().keySet()));
+        }
+        return Single.fromCallable(() -> {
+            idJagTarget.requireMapped(requestedScopes);
+            return requestedScopes;
+        });
     }
 
     private Single<TokenExchangeResult> buildImpersonationResult(TokenRequest tokenRequest,

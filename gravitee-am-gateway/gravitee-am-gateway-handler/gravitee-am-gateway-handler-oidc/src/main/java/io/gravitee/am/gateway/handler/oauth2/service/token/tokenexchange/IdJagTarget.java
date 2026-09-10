@@ -15,9 +15,41 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange;
 
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 public record IdJagTarget(
         String audience,
         String resource,
-        String clientId
+        String clientId,
+        Map<String, String> scopeMappings
 ) {
+
+    public IdJagTarget {
+        scopeMappings = scopeMappings == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(scopeMappings));
+    }
+
+    public void requireMapped(Collection<String> domainScopes) {
+        Set<String> unmapped = domainScopes.stream()
+                .filter(scope -> !scopeMappings.containsKey(scope))
+                .collect(Collectors.toCollection(TreeSet::new));
+        if (!unmapped.isEmpty()) {
+            throw new InvalidScopeException("Scope has no mapping at audience " + audience + ": " + String.join(" ", unmapped));
+        }
+    }
+
+    public String partnerScope(Collection<String> domainScopes) {
+        return scopeMappings.entrySet().stream()
+                .filter(mapping -> domainScopes.contains(mapping.getKey()))
+                .map(Map.Entry::getValue)
+                .distinct()
+                .collect(Collectors.joining(" "));
+    }
 }

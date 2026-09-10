@@ -32,6 +32,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
+import java.util.Set;
 
 public class IdJagServiceImpl implements IdJagService {
 
@@ -45,7 +46,8 @@ public class IdJagServiceImpl implements IdJagService {
     public Single<IdJag> create(OAuth2Request oAuth2Request, Client client, User user) {
         return Single.fromCallable(() -> createAssertion(oAuth2Request, client, user))
                 .flatMap(assertion -> jwtService.encode(assertion, client)
-                        .map(value -> new IdJag(value, assertion.getJti(), assertion.getExp() - assertion.getIat())));
+                        .map(value -> new IdJag(value, assertion.getJti(), assertion.getExp() - assertion.getIat(),
+                                (String) assertion.get(Claims.SCOPE))));
     }
 
     private JWT createAssertion(OAuth2Request oAuth2Request, Client client, User user) {
@@ -59,6 +61,11 @@ public class IdJagServiceImpl implements IdJagService {
         assertion.setAud(target.audience());
         assertion.put(Claims.CLIENT_ID, target.clientId());
         assertion.put(Parameters.RESOURCE, target.resource());
+        Set<String> grantedScopes = oAuth2Request.getScopes();
+        if (grantedScopes != null && !grantedScopes.isEmpty()) {
+            target.requireMapped(grantedScopes);
+            assertion.put(Claims.SCOPE, target.partnerScope(grantedScopes));
+        }
         assertion.setJti(SecureRandomString.generate());
         assertion.setIat(issuedAt);
         assertion.setExp(expiration(oAuth2Request, client, issuedAt));

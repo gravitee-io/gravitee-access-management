@@ -304,6 +304,7 @@ public class TokenServiceImpl implements TokenService {
                 .map(idJag -> {
                     ExchangedIdJag token = new ExchangedIdJag(idJag.value());
                     token.setExpiresIn(idJag.expiresIn());
+                    token.setScope(idJag.scope());
                     return (Token) token;
                 })
                 .doOnError(error -> auditService.report(

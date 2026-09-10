@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.idjag;
 public record IdJag(
         String value,
         String tokenId,
-        long expiresIn
+        long expiresIn,
+        String scope
 ) {
 }

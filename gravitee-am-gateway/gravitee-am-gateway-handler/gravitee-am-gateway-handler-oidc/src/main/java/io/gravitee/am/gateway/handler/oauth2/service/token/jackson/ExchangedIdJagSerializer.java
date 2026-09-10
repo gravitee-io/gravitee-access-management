@@ -36,6 +36,9 @@ public class ExchangedIdJagSerializer extends StdSerializer<ExchangedIdJag> {
         jsonGenerator.writeStringField(Token.TOKEN_TYPE, token.getTokenType());
         jsonGenerator.writeNumberField(Token.EXPIRES_IN, token.getExpiresIn());
         jsonGenerator.writeStringField(Token.ISSUED_TOKEN_TYPE, token.getIssuedTokenType());
+        if (token.getScope() != null) {
+            jsonGenerator.writeStringField(Token.SCOPE, token.getScope());
+        }
         jsonGenerator.writeEndObject();
     }
 }
