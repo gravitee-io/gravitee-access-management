@@ -30,6 +30,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.dataplane.api.DataPlane;
 import io.gravitee.am.model.DataPlaneDefinition;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
@@ -84,6 +85,7 @@ import static org.mockito.Mockito.when;
 class DataPlaneDefinitionServiceTest {
 
     private static final String MONGO_CONFIGURATION = "{\"mongodb\": {\"dbname\": \"gravitee-am-acme\", \"host\": \"mongo\", \"port\": 27017}}";
+    private static final String JDBC_CONFIGURATION = "{\"jdbc\": {\"uri\": \"r2dbc:postgresql://pg:5432/gravitee-am-acme\"}}";
     private static final String MONGO_CONFIGURATION_WITH_SECRETS =
             "{\"mongodb\": {\"dbname\": \"gravitee-am-acme\", \"host\": \"mongo\", \"port\": 27017, \"username\": \"am-user\", \"password\": \"sup3r-s3cret\"}}";
 
@@ -144,7 +146,7 @@ class DataPlaneDefinitionServiceTest {
 
     @Test
     void shouldCreateWithDefaultOrganizationAndEnvironment() {
-        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload()).test();
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload(), ManagedBy.NONE, null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -169,7 +171,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setConfiguration(readTree(MONGO_CONFIGURATION_WITH_SECRETS));
 
-        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload).test();
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload, ManagedBy.NONE, null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertValue(summary -> "dp-acme".equals(summary.id()));
@@ -183,7 +185,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setOrganizationId("org-1");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         Audit audit = capturedAudit();
         assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_CREATED);
@@ -199,7 +201,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setConfiguration(readTree(MONGO_CONFIGURATION_WITH_SECRETS));
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
     }
@@ -208,7 +210,7 @@ class DataPlaneDefinitionServiceTest {
     void shouldReportAFailedAuditWhenThePersistFails() {
         doReturn(Single.error(new TechnicalManagementException("boom"))).when(dataPlaneDefinitionRepository).create(any());
 
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS)
+        service.create(payload(), ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertError(TechnicalManagementException.class);
 
         Audit audit = capturedAudit();
@@ -222,7 +224,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setId(null);
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS)
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertError(InvalidParameterException.class);
 
         verify(auditService, never()).report(any());
@@ -240,7 +242,7 @@ class DataPlaneDefinitionServiceTest {
         payload.setOrganizationId("org-1");
         payload.setEnvironmentId("env-1");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
         verify(dataPlaneDefinitionRepository).create(captor.capture());
@@ -251,7 +253,7 @@ class DataPlaneDefinitionServiceTest {
 
     @Test
     void shouldStoreTheConfigurationVerbatim() {
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS);
+        service.create(payload(), ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS);
 
         ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
         verify(dataPlaneDefinitionRepository).create(captor.capture());
@@ -323,7 +325,7 @@ class DataPlaneDefinitionServiceTest {
     void shouldAcceptAConfigurationThatMatchesThePluginSchema() {
         registerMongoSchema();
 
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload(), ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
     }
 
     @Test
@@ -340,7 +342,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setConfiguration(readTree("{\"mongodb\": {\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": \"twenty-seven-thousand\"}}"));
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
     }
 
     private void registerMongoSchema() {
@@ -406,7 +408,7 @@ class DataPlaneDefinitionServiceTest {
         payload.setOrganizationHrid("acme");
         payload.setEnvironmentHrid("prod");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
         verify(dataPlaneDefinitionRepository).create(captor.capture());
@@ -422,7 +424,7 @@ class DataPlaneDefinitionServiceTest {
         payload.setEnvironmentId("env-1");
         payload.setEnvironmentHrid("ignored-env");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
         verify(dataPlaneDefinitionRepository).create(captor.capture());
@@ -439,7 +441,7 @@ class DataPlaneDefinitionServiceTest {
         payload.setOrganizationId("org-1");
         payload.setEnvironmentHrid("prod");
 
-        service.create(payload).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
         verify(dataPlaneDefinitionRepository).create(captor.capture());
@@ -495,7 +497,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition second = payload();
         second.setId("dp-acme-2");
 
-        TestObserver<DataPlaneDefinitionSummary> observer = service.create(second).test();
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(second, ManagedBy.NONE, null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -583,7 +585,7 @@ class DataPlaneDefinitionServiceTest {
         doReturn(Single.error(new TechnicalManagementException("duplicate key")))
                 .when(dataPlaneDefinitionRepository).create(any());
 
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS)
+        service.create(payload(), ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertError(DataPlaneDefinitionAlreadyExistsException.class);
     }
 
@@ -591,7 +593,7 @@ class DataPlaneDefinitionServiceTest {
     void shouldDeleteAndReportAnAudit() {
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
 
-        TestObserver<Void> observer = service.delete("dp-acme").test();
+        TestObserver<Void> observer = service.delete("dp-acme", null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertComplete();
@@ -607,7 +609,7 @@ class DataPlaneDefinitionServiceTest {
 
     @Test
     void shouldFailDeletingAnUnknownDefinition() {
-        TestObserver<Void> observer = service.delete("dp-missing").test();
+        TestObserver<Void> observer = service.delete("dp-missing", null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertError(DataPlaneDefinitionNotFoundException.class);
@@ -620,7 +622,7 @@ class DataPlaneDefinitionServiceTest {
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
         when(domainRepository.existsByDataPlaneId("dp-acme")).thenReturn(Single.just(true));
 
-        TestObserver<Void> observer = service.delete("dp-acme").test();
+        TestObserver<Void> observer = service.delete("dp-acme", null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertError(DataPlaneInUseByDomainsException.class);
@@ -637,14 +639,14 @@ class DataPlaneDefinitionServiceTest {
         withSecrets.setConfiguration(MONGO_CONFIGURATION_WITH_SECRETS);
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(withSecrets));
 
-        service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS);
+        service.delete("dp-acme", null).test().awaitDone(10, TimeUnit.SECONDS);
 
         assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
     }
 
     @Test
     void shouldPublishADeployEventOnCreate() {
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+        service.create(payload(), ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
 
         Payload payload = capturedEvent(Type.DATA_PLANE).getPayload();
         assertThat(payload.getId()).isEqualTo("dp-acme");
@@ -657,7 +659,7 @@ class DataPlaneDefinitionServiceTest {
     void shouldPublishAnUndeployEventOnDelete() {
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
 
-        service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+        service.delete("dp-acme", null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
 
         Payload payload = capturedEvent(Type.DATA_PLANE).getPayload();
         assertThat(payload.getId()).isEqualTo("dp-acme");
@@ -668,7 +670,7 @@ class DataPlaneDefinitionServiceTest {
 
     @Test
     void shouldNotScopeTheEventToASingleDataPlane() {
-        service.create(payload()).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+        service.create(payload(), ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
 
         Event event = capturedEvent(Type.DATA_PLANE);
         assertThat(event.getDataPlaneId()).isNull();
@@ -679,7 +681,7 @@ class DataPlaneDefinitionServiceTest {
     void shouldFailTheCreationWhenTheEventCannotBeWritten() {
         doReturn(Single.error(new TechnicalManagementException("events are down"))).when(eventService).create(any());
 
-        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload()).test();
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload(), ManagedBy.NONE, null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertError(TechnicalManagementException.class);
@@ -692,7 +694,7 @@ class DataPlaneDefinitionServiceTest {
         when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(definition("dp-acme", "env-1")));
         when(domainRepository.existsByDataPlaneId("dp-acme")).thenReturn(Single.just(true));
 
-        service.delete("dp-acme").test().awaitDone(10, TimeUnit.SECONDS)
+        service.delete("dp-acme", null).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertError(DataPlaneInUseByDomainsException.class);
 
         verify(eventService, never()).create(any());
@@ -707,7 +709,7 @@ class DataPlaneDefinitionServiceTest {
     }
 
     private void assertRejected(NewDataPlaneDefinition payload, Class<? extends Throwable> type, String messageFragment) {
-        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload).test();
+        TestObserver<DataPlaneDefinitionSummary> observer = service.create(payload, ManagedBy.NONE, null).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertError(type);
@@ -735,6 +737,191 @@ class DataPlaneDefinitionServiceTest {
         Environment environment = new Environment();
         environment.setId(id);
         return environment;
+    }
+
+    @Test
+    void shouldStampTheOwnerItIsCreatedWith() {
+        service.create(payload(), ManagedBy.AUTOMATION_API, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        assertThat(capturedCreate().getManagedBy()).isEqualTo(ManagedBy.AUTOMATION_API);
+    }
+
+    @Test
+    void shouldUpdateTheMutableFields() {
+        DataPlaneDefinition stored = storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setName("Renamed");
+        payload.setGatewayUrl("https://gw-renamed.example.com");
+        payload.setConfiguration(readTree(MONGO_CONFIGURATION_WITH_SECRETS));
+
+        TestObserver<DataPlaneDefinitionSummary> observer = service.update("dp-acme", payload, null).test();
+        observer.awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+
+        observer.assertValue(summary -> "Renamed".equals(summary.name())
+                && "https://gw-renamed.example.com".equals(summary.gatewayUrl()));
+        assertThat(readTree(stored.getConfiguration())).isEqualTo(readTree(MONGO_CONFIGURATION_WITH_SECRETS));
+    }
+
+    @Test
+    void shouldLeaveOwnershipAloneOnUpdate() {
+        DataPlaneDefinition stored = storedDefinition();
+        stored.setManagedBy(ManagedBy.NONE);
+
+        service.update("dp-acme", payload(), null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        assertThat(stored.getManagedBy()).isEqualTo(ManagedBy.NONE);
+    }
+
+    @Test
+    void shouldKeepTheCreationTimestampAndMoveTheUpdateOne() {
+        DataPlaneDefinition stored = storedDefinition();
+        Date createdAt = new Date(1_000_000L);
+        stored.setCreatedAt(createdAt);
+        stored.setUpdatedAt(createdAt);
+
+        service.update("dp-acme", payload(), null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        assertThat(stored.getCreatedAt()).isEqualTo(createdAt);
+        assertThat(stored.getUpdatedAt()).isAfter(createdAt);
+    }
+
+    @Test
+    void shouldRejectAnUnknownIdOnUpdate() {
+        service.update("dp-missing", payload(), null).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(DataPlaneDefinitionNotFoundException.class);
+    }
+
+    @Test
+    void shouldRejectATypeChange() {
+        storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setType("jdbc");
+        payload.setConfiguration(readTree(JDBC_CONFIGURATION));
+
+        assertUpdateRejected(payload, "'type' cannot be changed");
+    }
+
+    @Test
+    void shouldRejectAnEnvironmentChange() {
+        storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setEnvironmentId("env-other");
+
+        assertUpdateRejected(payload, "'environmentId' cannot be changed");
+    }
+
+    @Test
+    void shouldRejectAnOrganizationChange() {
+        storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setOrganizationId("org-other");
+
+        assertUpdateRejected(payload, "'organizationId' cannot be changed");
+    }
+
+    @Test
+    void shouldRejectAnIdReservedByTheConfigurationOnUpdate() {
+        storedDefinition();
+        when(configurationLoader.isDeclared("dp-acme")).thenReturn(true);
+
+        assertUpdateRejected(payload(), "reserved for a data plane declared in the gravitee.yml");
+    }
+
+    @Test
+    void shouldRejectAConfigurationTheTypeDoesNotAcceptOnUpdate() {
+        storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setConfiguration(readTree("{\"mongodb\": {\"host\": \"mongo\"}}"));
+
+        assertUpdateRejected(payload, "dbname");
+    }
+
+    @Test
+    void shouldReportAnUpdateAudit() {
+        storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setName("Renamed");
+
+        service.update("dp-acme", payload, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        Audit audit = capturedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_UPDATED);
+        assertThat(audit.getTarget().getId()).isEqualTo("dp-acme");
+        assertThat(audit.getTarget().getType()).isEqualTo(EntityType.DATA_PLANE);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+    }
+
+    @Test
+    void shouldKeepCredentialsOutOfTheUpdateAudit() {
+        storedDefinition();
+        NewDataPlaneDefinition payload = payload();
+        payload.setConfiguration(readTree(MONGO_CONFIGURATION_WITH_SECRETS));
+
+        service.update("dp-acme", payload, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        assertThat(capturedAudit().toString()).doesNotContain("sup3r-s3cret", "am-user", "configuration");
+    }
+
+    @Test
+    void shouldReportAFailedUpdateAudit() {
+        storedDefinition();
+        doReturn(Single.error(new TechnicalManagementException("boom"))).when(dataPlaneDefinitionRepository).update(any());
+
+        service.update("dp-acme", payload(), null).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+
+        Audit audit = capturedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.DATA_PLANE_UPDATED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+    }
+
+    @Test
+    void shouldPublishAnUpdateEvent() {
+        storedDefinition();
+
+        service.update("dp-acme", payload(), null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        Payload eventPayload = capturedEvent(Type.DATA_PLANE).getPayload();
+        assertThat(eventPayload.getAction()).isEqualTo(Action.UPDATE);
+        assertThat(eventPayload.getId()).isEqualTo("dp-acme");
+        assertThat(eventPayload.getReferenceType()).isEqualTo(ReferenceType.ENVIRONMENT);
+        assertThat(eventPayload.getReferenceId()).isEqualTo(Environment.DEFAULT);
+    }
+
+    @Test
+    void shouldNotFailTheUpdateWhenTheEventCannotBePublished() {
+        storedDefinition();
+        doReturn(Single.error(new TechnicalManagementException("events are down"))).when(eventService).create(any());
+
+        service.update("dp-acme", payload(), null).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+
+        // the audit still records the update: only the propagation failed
+        assertThat(capturedAudit().getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+    }
+
+    /** Puts a definition in the repository under the id {@link #payload()} uses, and returns it. */
+    private DataPlaneDefinition storedDefinition() {
+        DataPlaneDefinition stored = definition("dp-acme", Environment.DEFAULT);
+        stored.setManagedBy(ManagedBy.AUTOMATION_API);
+        when(dataPlaneDefinitionRepository.findById("dp-acme")).thenReturn(Maybe.just(stored));
+        when(dataPlaneDefinitionRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        return stored;
+    }
+
+    private DataPlaneDefinition capturedCreate() {
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        return captor.getValue();
+    }
+
+    private void assertUpdateRejected(NewDataPlaneDefinition payload, String messageFragment) {
+        TestObserver<DataPlaneDefinitionSummary> observer = service.update("dp-acme", payload, null).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertError(InvalidParameterException.class);
+        observer.assertError(error -> error.getMessage().contains(messageFragment));
+        verify(dataPlaneDefinitionRepository, never()).update(any());
     }
 
     private DataPlaneDefinition definition(String id, String environmentId) {

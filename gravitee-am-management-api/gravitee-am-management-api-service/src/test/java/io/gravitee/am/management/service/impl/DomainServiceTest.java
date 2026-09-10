@@ -114,6 +114,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.AutomationNewDomain;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
@@ -748,7 +749,7 @@ public class DomainServiceTest {
 
     private DataPlaneDefinitionSummary dpSummary(String id) {
         return new DataPlaneDefinitionSummary(
-                id, id, "mongodb", null, ORGANIZATION_ID, ENVIRONMENT_ID, null, List.of(), null, null);
+                id, id, "mongodb", null, ORGANIZATION_ID, ENVIRONMENT_ID, null, List.of(), ManagedBy.NONE, null, null);
     }
 
     @Test

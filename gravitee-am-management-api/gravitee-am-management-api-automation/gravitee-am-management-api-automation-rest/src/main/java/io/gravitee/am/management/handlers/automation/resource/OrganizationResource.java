@@ -35,4 +35,9 @@ public class OrganizationResource {
     public DomainsResource getDomainsResource() {
         return resourceContext.getResource(DomainsResource.class);
     }
+
+    @Path("/environments/{envId}/dataplanes")
+    public DataPlanesResource getDataPlanesResource() {
+        return resourceContext.getResource(DataPlanesResource.class);
+    }
 }

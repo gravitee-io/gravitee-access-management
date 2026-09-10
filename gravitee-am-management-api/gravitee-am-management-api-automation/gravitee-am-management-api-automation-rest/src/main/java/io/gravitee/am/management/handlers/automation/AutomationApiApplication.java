@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.automation;
 
 import io.gravitee.am.management.handlers.automation.resource.CertificateResource;
 import io.gravitee.am.management.handlers.automation.resource.CertificatesResource;
+import io.gravitee.am.management.handlers.automation.resource.DataPlaneResource;
+import io.gravitee.am.management.handlers.automation.resource.DataPlanesResource;
 import io.gravitee.am.management.handlers.automation.resource.DomainResource;
 import io.gravitee.am.management.handlers.automation.resource.DomainsResource;
 import io.gravitee.am.management.handlers.automation.resource.IdentityProviderResource;
@@ -53,6 +55,8 @@ public class AutomationApiApplication extends ResourceConfig {
         register(CertificateResource.class);
         register(ReportersResource.class);
         register(ReporterResource.class);
+        register(DataPlanesResource.class);
+        register(DataPlaneResource.class);
 
         register(ObjectMapperResolver.class);
         register(ManagementExceptionMapper.class);

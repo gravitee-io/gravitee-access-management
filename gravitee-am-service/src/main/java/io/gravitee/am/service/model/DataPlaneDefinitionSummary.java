@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.DataPlaneDefinition;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.dataplane.config.DataPlaneConnectionSummary;
 
 import java.util.Date;
@@ -37,6 +38,7 @@ public record DataPlaneDefinitionSummary(
         String environmentId,
         String database,
         List<String> hosts,
+        ManagedBy managedBy,
         Date createdAt,
         Date updatedAt) {
 
@@ -50,6 +52,7 @@ public record DataPlaneDefinitionSummary(
                 definition.getEnvironmentId(),
                 connection.database(),
                 connection.hosts(),
+                definition.getManagedBy(),
                 definition.getCreatedAt(),
                 definition.getUpdatedAt());
     }

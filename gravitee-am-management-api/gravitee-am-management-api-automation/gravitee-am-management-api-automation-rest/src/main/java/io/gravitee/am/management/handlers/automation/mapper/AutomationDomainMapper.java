@@ -182,6 +182,10 @@ public final class AutomationDomainMapper {
      * id — is honoured) and its parallel {@code *Key} field.
      */
     public static void applyTo(AutomationDomain in, Domain target, List<IdentityProvider> idps) {
+        // omitted -> keep the plane the service resolved; named -> DomainService.update refuses a move
+        if (in.getDataPlaneId() != null && !in.getDataPlaneId().isBlank()) {
+            target.setDataPlaneId(in.getDataPlaneId());
+        }
         target.setName(in.getName());
         target.setDescription(in.getDescription());
         target.setEnabled(in.isEnabled());

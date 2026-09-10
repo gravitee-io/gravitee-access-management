@@ -52,6 +52,8 @@ import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.am.repository.ManagementRepositoryScopeProvider;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
+import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
@@ -177,6 +179,12 @@ public class StandaloneConfiguration {
                                                                 @Lazy DataPlaneDefinitionRepository dataPlaneDefinitionRepository,
                                                                 ConfigurableEnvironment environment) {
         return new ProvisionedDataPlaneLoader(configurationLoader, dataPlaneDefinitionRepository, environment);
+    }
+
+    @Bean
+    public DataPlaneProvisioningService dataPlaneProvisioningService(DataPlaneDefinitionService dataPlaneDefinitionService,
+                                                                    ProvisionedDataPlaneLoader provisionedDataPlaneLoader) {
+        return new DataPlaneProvisioningService(dataPlaneDefinitionService, provisionedDataPlaneLoader);
     }
 
     @Bean

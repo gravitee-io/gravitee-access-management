@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.DataPlaneDefinition;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DataPlaneDefinitionMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -107,6 +108,7 @@ public class MongoDataPlaneDefinitionRepository extends AbstractManagementMongoR
         definition.setOrganizationId(entity.getOrganizationId());
         definition.setEnvironmentId(entity.getEnvironmentId());
         definition.setConfiguration(entity.getConfiguration());
+        definition.setManagedBy(entity.getManagedBy() != null ? ManagedBy.valueOf(entity.getManagedBy()) : null);
         definition.setCreatedAt(entity.getCreatedAt());
         definition.setUpdatedAt(entity.getUpdatedAt());
         return definition;
@@ -124,6 +126,7 @@ public class MongoDataPlaneDefinitionRepository extends AbstractManagementMongoR
         entity.setOrganizationId(definition.getOrganizationId());
         entity.setEnvironmentId(definition.getEnvironmentId());
         entity.setConfiguration(definition.getConfiguration());
+        entity.setManagedBy(definition.getManagedBy() != null ? definition.getManagedBy().name() : null);
         entity.setCreatedAt(definition.getCreatedAt());
         entity.setUpdatedAt(definition.getUpdatedAt());
         return entity;

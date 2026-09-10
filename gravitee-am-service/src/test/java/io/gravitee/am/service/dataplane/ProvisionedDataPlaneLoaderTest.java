@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -36,8 +37,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -454,5 +458,81 @@ class ProvisionedDataPlaneLoaderTest {
         loader.forget("dp-1");
 
         assertThat(loader.isServing(definition)).isFalse();
+    }
+
+    @Test
+    void should_swap_the_provider_of_a_definition_this_node_already_serves() {
+        var registry = mock(DataPlaneRegistry.class);
+        var original = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://old:27017/db\"}}");
+        original.setUpdatedAt(new Date(1_000L));
+        var changed = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://new:27017/db\"}}");
+        changed.setUpdatedAt(new Date(2_000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(original));
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(changed));
+        var loader = loader();
+        loader.setRegistry(registry);
+        loader.load(loaded::add);
+        clearInvocations(registry);
+
+        loader.activate("dp-1").test().assertComplete();
+
+        InOrder inOrder = inOrder(registry);
+        inOrder.verify(registry).unregister("dp-1");
+        inOrder.verify(registry).registerProvisioned(argThat(description -> "dp-1".equals(description.id())));
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://new:27017/db");
+        assertThat(loader.isServing(changed)).isTrue();
+    }
+
+    @Test
+    void should_register_a_definition_this_node_does_not_serve_yet() {
+        var registry = mock(DataPlaneRegistry.class);
+        var definition = definition("dp-2", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}");
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        when(dataPlaneDefinitionRepository.findById("dp-2")).thenReturn(Maybe.just(definition));
+        var loader = loader();
+        loader.setRegistry(registry);
+        loader.load(loaded::add);
+
+        loader.activate("dp-2").test().assertComplete();
+
+        verify(registry).registerProvisioned(argThat(description -> "dp-2".equals(description.id())));
+    }
+
+    @Test
+    void should_ignore_an_activation_that_arrives_before_the_registry_has_started() {
+        var loader = loader();
+
+        loader.activate("dp-1").test().assertComplete();
+
+        verify(dataPlaneDefinitionRepository, never()).findById(anyString());
+    }
+
+    @Test
+    void should_stop_serving_a_deactivated_definition() {
+        var registry = mock(DataPlaneRegistry.class);
+        var definition = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://gone:27017/db\"}}");
+        definition.setUpdatedAt(new Date(1_000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(definition));
+        var loader = loader();
+        loader.setRegistry(registry);
+        loader.load(loaded::add);
+
+        loader.deactivate("dp-1");
+
+        verify(registry).unregister("dp-1");
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isNull();
+        assertThat(loader.isServing(definition)).isFalse();
+    }
+
+    @Test
+    void should_deactivate_a_definition_before_the_registry_has_been_wired_in() {
+        when(dataPlaneDefinitionRepository.findAll())
+                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://gone:27017/db\"}}")));
+        var loader = loader();
+        loader.load(loaded::add);
+
+        loader.deactivate("dp-1");
+
+        assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isNull();
     }
 }

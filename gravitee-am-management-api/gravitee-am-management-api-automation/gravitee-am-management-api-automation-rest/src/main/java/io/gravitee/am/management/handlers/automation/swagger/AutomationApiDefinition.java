@@ -72,7 +72,7 @@ public class AutomationApiDefinition implements ReaderListener {
      */
     public static final String DEFAULT_AUTOMATION_ENTRYPOINT = "/automation";
 
-    private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters");
+    private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters", "Data Planes");
 
     private static final String ERROR_SCHEMA = "Error";
 
@@ -84,7 +84,8 @@ public class AutomationApiDefinition implements ReaderListener {
                     "configuration. Create, read, update, and delete domains, and reach their sub-resources.",
             "Identity Providers", "Identity providers configured under a domain to authenticate users.",
             "Certificates", "Certificates configured under a domain to sign and verify tokens.",
-            "Reporters", "Reporters configured under a domain to persist audit events to a backend.");
+            "Reporters", "Reporters configured under a domain to persist audit events to a backend.",
+            "Data Planes", "Data planes configured under an environment to store the runtime data of its domains.");
 
     /**
      * Descriptions and examples for the shared path parameters, keyed by parameter name. Injected onto every
@@ -92,12 +93,13 @@ public class AutomationApiDefinition implements ReaderListener {
      */
     private static final Map<String, String[]> PATH_PARAM_DOCS = Map.of(
             "orgId", new String[]{"Identifier of the organization that owns the environment.", "DEFAULT"},
-            "envId", new String[]{"Identifier of the environment the domain belongs to.", "DEFAULT"},
+            "envId", new String[]{"Identifier of the environment the resource belongs to.", "DEFAULT"},
             "domainKey", new String[]{"Key of the domain: its stable, immutable Automation identifier within the " +
                     "environment.", "example-domain"},
             "certKey", new String[]{"Key of the certificate within the domain.", "signing-cert"},
             "identityKey", new String[]{"Key of the identity within the domain.", "corporate-ldap"},
-            "reporterKey", new String[]{"Key of the reporter within the domain.", "audit-kafka"});
+            "reporterKey", new String[]{"Key of the reporter within the domain.", "audit-kafka"},
+            "dataPlaneId", new String[]{"Id of the data plane within the environment.", "acme-eu"});
 
     @Override
     public void beforeScan(OpenApiReader openApiReader, OpenAPI openAPI) {
