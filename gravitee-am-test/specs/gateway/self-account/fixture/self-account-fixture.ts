@@ -70,9 +70,11 @@ export async function getEndUserAccessToken(fixture: SelfAccountFixture, passwor
   return response.body.access_token;
 }
 
-export const setupFixture = async (domainSettings: any): Promise<SelfAccountFixture> => {
+// Each spec file passes its own domain name prefix: two files sharing one can generate the same
+// name in parallel workers, and the second domain then fails to start.
+export const setupFixture = async (domainSettings: any, domainNamePrefix = 'self-account-change-password'): Promise<SelfAccountFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('self-account-change-password', true), 'Description');
+  const domain = await createDomain(accessToken, uniqueName(domainNamePrefix, true), 'Description');
   await patchDomain(domain.id, accessToken, domainSettings);
   const idpSet = await getAllIdps(domain.id, accessToken);
 
@@ -154,9 +156,9 @@ const SELF_ACCOUNT_ENABLED_SETTINGS = {
   },
 };
 
-export const setupFactorFixture = async (): Promise<SelfAccountFactorFixture> => {
+export const setupFactorFixture = async (domainNamePrefix = 'self-account-factors'): Promise<SelfAccountFactorFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('self-account-factors', true), 'Description');
+  const domain = await createDomain(accessToken, uniqueName(domainNamePrefix, true), 'Description');
   await patchDomain(domain.id, accessToken, SELF_ACCOUNT_ENABLED_SETTINGS);
   const idpSet = await getAllIdps(domain.id, accessToken);
 
