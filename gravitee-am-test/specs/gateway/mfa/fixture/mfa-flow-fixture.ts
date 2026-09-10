@@ -30,10 +30,11 @@ export async function get(uri: string, expectedStatus: number, headers: any = nu
   return response;
 }
 
-export async function followUpGet(response, expectedStatus: number, expectedLocation: string = null) {
+export async function followUpGet(response, expectedStatus: number, expectedLocation: string = null, extraHeaders: any = {}) {
   const headers = {
     ...response.headers,
     Cookie: response.headers['set-cookie'],
+    ...extraHeaders,
   };
   return get(response.headers['location'], expectedStatus, headers, expectedLocation);
 }
@@ -168,9 +169,14 @@ export async function processMfaEndToEnd(ctx: TestSuiteContext, rememberDevice: 
   };
 }
 
-export async function processLoginFromContext(ctx: TestSuiteContext, rememberDevice: boolean = false, devId?) {
-  const authResponse = await get(ctx.clientAuthUrl, 302, ctx.session ? { Cookies: ctx.session } : {});
-  const loginPage = await followUpGet(authResponse, 200);
+/**
+ * @param extraHeaders sent on every request in the flow. Risk assessment reads the client address
+ *   from `X-Forwarded-For`, so a test driving IP reputation has to set it on the whole round-trip
+ *   rather than on one call.
+ */
+export async function processLoginFromContext(ctx: TestSuiteContext, rememberDevice: boolean = false, devId?, extraHeaders: any = {}) {
+  const authResponse = await get(ctx.clientAuthUrl, 302, { ...(ctx.session ? { Cookies: ctx.session } : {}), ...extraHeaders });
+  const loginPage = await followUpGet(authResponse, 200, null, extraHeaders);
 
   let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
   let action = extractDomAttr(loginPage, 'form', 'action');
@@ -194,10 +200,11 @@ export async function processLoginFromContext(ctx: TestSuiteContext, rememberDev
     {
       Cookie: cookies,
       'Content-type': 'application/x-www-form-urlencoded',
+      ...extraHeaders,
     },
     302,
   );
-  return await followUpGet(loginPostResponse, 302);
+  return await followUpGet(loginPostResponse, 302, null, extraHeaders);
 }
 
 export async function postMfaChallenge(ctx: TestSuiteContext, challengeResponse: any, code: any) {
