@@ -32,10 +32,14 @@ import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
+import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -122,13 +126,26 @@ public abstract class AutomationJerseySpringTest {
     @Autowired
     protected TrustDomainService trustDomainService;
 
+    @Autowired
+    protected DataPlaneDefinitionService dataPlaneDefinitionService;
+
+    @Autowired
+    protected ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
+
+    @Autowired
+    protected DataPlaneRegistry dataPlaneRegistry;
+
     @BeforeEach
     public void init() {
         // The service mocks are Spring singletons shared across the cached context, so clear any
         // invocations recorded by a previous test before each one runs — this keeps verify(...) checks
         // (e.g. "delete was never called") scoped to the test at hand.
         clearInvocations(permissionService, domainService, certificateService, identityProviderService,
-                defaultIdentityProviderService, reporterService);
+                defaultIdentityProviderService, reporterService, dataPlaneRegistry);
+        // Fully reset: data plane tests stub findByEnvironmentId per case. Every write path activates
+        // the data plane on the loader, so that is re-stubbed here.
+        reset(dataPlaneDefinitionService, provisionedDataPlaneLoader);
+        when(provisionedDataPlaneLoader.activate(anyString())).thenReturn(Completable.complete());
         reset(trustDomainService);
         when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
         // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
@@ -216,11 +233,34 @@ public abstract class AutomationJerseySpringTest {
         }
 
         @Bean
+        public DataPlaneDefinitionService dataPlaneDefinitionService() {
+            return mock(DataPlaneDefinitionService.class);
+        }
+
+        @Bean
+        public ProvisionedDataPlaneLoader provisionedDataPlaneLoader() {
+            return mock(ProvisionedDataPlaneLoader.class);
+        }
+
+        @Bean
+        public DataPlaneRegistry dataPlaneRegistry() {
+            return mock(DataPlaneRegistry.class);
+        }
+
+        @Bean
+        public DataPlaneProvisioningService dataPlaneProvisioningService(DataPlaneDefinitionService dataPlaneDefinitionService,
+                ProvisionedDataPlaneLoader provisionedDataPlaneLoader) {
+            return new DataPlaneProvisioningService(dataPlaneDefinitionService, provisionedDataPlaneLoader);
+        }
+
+        @Bean
         public AutomationResourceResolver automationResourceResolver(DomainService domainService,
                 IdentityProviderService identityProviderService,
                 CertificateService certificateService,
-                ReporterService reporterService) {
-            return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService);
+                ReporterService reporterService,
+                DataPlaneDefinitionService dataPlaneDefinitionService) {
+            return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
+                    dataPlaneDefinitionService);
         }
     }
 
@@ -244,6 +284,11 @@ public abstract class AutomationJerseySpringTest {
     /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates}. */
     protected final WebTarget certificatesTarget(String domainKey) {
         return domainsTarget().path(domainKey).path("certificates");
+    }
+
+    /** {@code /organizations/{orgId}/environments/{envId}/dataplanes}. */
+    protected final WebTarget dataPlanesTarget() {
+        return orgTarget().path("environments").path(ENV_ID).path("dataplanes");
     }
 
     /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/reporters}. */

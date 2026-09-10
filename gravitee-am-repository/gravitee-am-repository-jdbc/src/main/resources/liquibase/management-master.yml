@@ -245,3 +245,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_13_0/4.13.0-reporters-add-attribute-mapping-event-types.yml
   - include:
       - file: liquibase/changelogs/v4_13_0/4.13.0-trusted-domains-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_13_0/4.13.0-dataplanes-add-managed-by.yml

@@ -41,22 +41,28 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -466,4 +472,47 @@ public class RoleServiceTest {
 
         verify(roleRepository, times(1)).delete("my-role");
     }
+
+    @Test
+    public void shouldGrantEveryDataPlaneAclToTheOwnerRoles() {
+        List<Role> roles = new ArrayList<>(seededRoles(roleService::createOrUpdateSystemRoles));
+        roles.addAll(seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)));
+
+        List<Role> owners = roles.stream()
+                .filter(role -> role.getName().endsWith("_OWNER"))
+                .filter(role -> role.getPermissionAcls().containsKey(Permission.DATA_PLANE))
+                .toList();
+
+        assertFalse("no owner role was seeded with the DATA_PLANE permission", owners.isEmpty());
+        owners.forEach(role ->
+                assertEquals("unexpected DATA_PLANE acls on " + role.getName(),
+                        Acl.all(), role.getPermissionAcls().get(Permission.DATA_PLANE)));
+    }
+
+    @Test
+    public void shouldKeepDataPlaneReadOnlyForTheUserRoles() {
+        List<Role> users = seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)).stream()
+                .filter(role -> role.getName().endsWith("_USER"))
+                .filter(role -> role.getPermissionAcls().containsKey(Permission.DATA_PLANE))
+                .toList();
+
+        assertFalse("no user role was seeded with the DATA_PLANE permission", users.isEmpty());
+        users.forEach(role ->
+                assertEquals("unexpected DATA_PLANE acls on " + role.getName(),
+                        Set.of(Acl.READ, Acl.LIST), role.getPermissionAcls().get(Permission.DATA_PLANE)));
+    }
+
+    /** Runs a seeding call against an empty repository and returns the roles it created. */
+    private List<Role> seededRoles(Supplier<Completable> seeding) {
+        when(roleRepository.findByNameAndAssignableType(any(), any(), anyString(), any())).thenReturn(Maybe.empty());
+        when(roleRepository.create(any(Role.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
+
+        seeding.get().test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        ArgumentCaptor<Role> created = ArgumentCaptor.forClass(Role.class);
+        verify(roleRepository, atLeastOnce()).create(created.capture());
+        return created.getAllValues();
+    }
+
 }

@@ -17,8 +17,7 @@ import { performDelete, performGet, performPut } from '@gateway-commands/oauth-o
 
 export const automationUrl = (): string => `${process.env.AM_MANAGEMENT_URL}/automation`;
 
-export const envPath = (): string =>
-  `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}`;
+export const envPath = (): string => `/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}`;
 
 export const jsonHeaders = (extra: Record<string, string> = {}): Record<string, string> => ({
   'Content-Type': 'application/json',
@@ -110,6 +109,24 @@ export class AutomationClient {
 
   deleteReporter(domainKey: string, reporterKey: string) {
     return performDelete(automationUrl(), `${envPath()}/domains/${domainKey}/reporters/${reporterKey}`, this.headers());
+  }
+
+  // ---- Data planes (under an environment) --------------------------------
+
+  listDataPlanes() {
+    return performGet(automationUrl(), `${envPath()}/dataplanes`, this.headers());
+  }
+
+  putDataPlane(definition: object) {
+    return performPut(automationUrl(), `${envPath()}/dataplanes`, definition, this.headers());
+  }
+
+  getDataPlane(reference: string) {
+    return performGet(automationUrl(), `${envPath()}/dataplanes/${reference}`, this.headers());
+  }
+
+  deleteDataPlane(reference: string) {
+    return performDelete(automationUrl(), `${envPath()}/dataplanes/${reference}`, this.headers());
   }
 
   // ---- Generic escape hatches (auth + path) -----------------------------

@@ -33,6 +33,7 @@ export type DataPlaneSummary = {
   environmentId: string;
   database?: string;
   hosts: string[];
+  managedBy?: string;
   createdAt: number;
   updatedAt: number;
 };

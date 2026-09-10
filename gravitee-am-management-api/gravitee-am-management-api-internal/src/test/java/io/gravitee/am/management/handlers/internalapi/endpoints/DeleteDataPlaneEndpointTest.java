@@ -16,8 +16,8 @@
 package io.gravitee.am.management.handlers.internalapi.endpoints;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneInUseByDomainsException;
@@ -53,9 +53,6 @@ class DeleteDataPlaneEndpointTest {
     private DataPlaneDefinitionService dataPlaneDefinitionService;
 
     @Mock
-    private DataPlaneRegistry dataPlaneRegistry;
-
-    @Mock
     private ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
 
     @Mock
@@ -69,7 +66,8 @@ class DeleteDataPlaneEndpointTest {
     void setUp() {
         response = mock(HttpServerResponse.class, RETURNS_SELF);
         when(routingContext.response()).thenReturn(response);
-        endpoint = new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, dataPlaneRegistry, provisionedDataPlaneLoader, new ObjectMapper());
+        endpoint = new DeleteDataPlaneEndpoint(
+                new DataPlaneProvisioningService(dataPlaneDefinitionService, provisionedDataPlaneLoader), new ObjectMapper());
     }
 
     @Test
@@ -81,7 +79,7 @@ class DeleteDataPlaneEndpointTest {
     @Test
     void shouldReturn204OnDeletion() {
         when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
-        when(dataPlaneDefinitionService.delete("dp-acme")).thenReturn(Completable.complete());
+        when(dataPlaneDefinitionService.delete("dp-acme", null)).thenReturn(Completable.complete());
 
         endpoint.handle(routingContext);
 
@@ -92,30 +90,28 @@ class DeleteDataPlaneEndpointTest {
     @Test
     void shouldStopServingTheDataPlaneOnThisNode() {
         when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
-        when(dataPlaneDefinitionService.delete("dp-acme")).thenReturn(Completable.complete());
+        when(dataPlaneDefinitionService.delete("dp-acme", null)).thenReturn(Completable.complete());
 
         endpoint.handle(routingContext);
 
-        verify(dataPlaneRegistry).unregister("dp-acme");
-        verify(provisionedDataPlaneLoader).forget("dp-acme");
+        verify(provisionedDataPlaneLoader).deactivate("dp-acme");
     }
 
     @Test
     void shouldKeepServingTheDataPlaneWhenTheDeletionIsRefused() {
         when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
-        when(dataPlaneDefinitionService.delete("dp-acme"))
+        when(dataPlaneDefinitionService.delete("dp-acme", null))
                 .thenReturn(Completable.error(new DataPlaneInUseByDomainsException("dp-acme")));
 
         endpoint.handle(routingContext);
 
-        verify(dataPlaneRegistry, never()).unregister(any());
-        verify(provisionedDataPlaneLoader, never()).forget(any());
+        verify(provisionedDataPlaneLoader, never()).deactivate(any());
     }
 
     @Test
     void shouldReturn404WhenTheDefinitionDoesNotExist() {
         when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-missing");
-        when(dataPlaneDefinitionService.delete("dp-missing"))
+        when(dataPlaneDefinitionService.delete("dp-missing", null))
                 .thenReturn(Completable.error(new DataPlaneDefinitionNotFoundException("dp-missing")));
 
         endpoint.handle(routingContext);
@@ -127,7 +123,7 @@ class DeleteDataPlaneEndpointTest {
     @Test
     void shouldReturn409WhenADomainStillUsesTheDataPlane() {
         when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
-        when(dataPlaneDefinitionService.delete("dp-acme"))
+        when(dataPlaneDefinitionService.delete("dp-acme", null))
                 .thenReturn(Completable.error(new DataPlaneInUseByDomainsException("dp-acme")));
 
         endpoint.handle(routingContext);
@@ -139,7 +135,7 @@ class DeleteDataPlaneEndpointTest {
     @Test
     void shouldReturn500OnAnUnexpectedFailure() {
         when(routingContext.pathParam(DeleteDataPlaneEndpoint.PARAM_ID)).thenReturn("dp-acme");
-        when(dataPlaneDefinitionService.delete("dp-acme")).thenReturn(Completable.error(new IllegalStateException("boom")));
+        when(dataPlaneDefinitionService.delete("dp-acme", null)).thenReturn(Completable.error(new IllegalStateException("boom")));
 
         endpoint.handle(routingContext);
 

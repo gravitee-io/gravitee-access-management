@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.model.DataPlaneDefinition;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDataPlaneDefinition;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
@@ -53,6 +54,7 @@ public class JdbcDataPlaneDefinitionRepository extends AbstractJdbcRepository im
     private static final String COL_ORGANIZATION_ID = "organization_id";
     private static final String COL_ENVIRONMENT_ID = "environment_id";
     private static final String COL_CONFIGURATION = "configuration";
+    private static final String COL_MANAGED_BY = "managed_by";
     private static final String COL_CREATED_AT = "created_at";
     private static final String COL_UPDATED_AT = "updated_at";
 
@@ -64,6 +66,7 @@ public class JdbcDataPlaneDefinitionRepository extends AbstractJdbcRepository im
             COL_ORGANIZATION_ID,
             COL_ENVIRONMENT_ID,
             COL_CONFIGURATION,
+            COL_MANAGED_BY,
             COL_CREATED_AT,
             COL_UPDATED_AT);
 
@@ -144,6 +147,7 @@ public class JdbcDataPlaneDefinitionRepository extends AbstractJdbcRepository im
         spec = addQuotedField(spec, COL_ORGANIZATION_ID, item.getOrganizationId(), String.class);
         spec = addQuotedField(spec, COL_ENVIRONMENT_ID, item.getEnvironmentId(), String.class);
         spec = addQuotedField(spec, COL_CONFIGURATION, item.getConfiguration(), String.class);
+        spec = addQuotedField(spec, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
         spec = addQuotedField(spec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         spec = addQuotedField(spec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         return spec;
@@ -161,6 +165,7 @@ public class JdbcDataPlaneDefinitionRepository extends AbstractJdbcRepository im
         definition.setOrganizationId(entity.getOrganizationId());
         definition.setEnvironmentId(entity.getEnvironmentId());
         definition.setConfiguration(entity.getConfiguration());
+        definition.setManagedBy(entity.getManagedBy() != null ? ManagedBy.valueOf(entity.getManagedBy()) : null);
         definition.setCreatedAt(dateConverter.convertFrom(entity.getCreatedAt(), null));
         definition.setUpdatedAt(dateConverter.convertFrom(entity.getUpdatedAt(), null));
         return definition;

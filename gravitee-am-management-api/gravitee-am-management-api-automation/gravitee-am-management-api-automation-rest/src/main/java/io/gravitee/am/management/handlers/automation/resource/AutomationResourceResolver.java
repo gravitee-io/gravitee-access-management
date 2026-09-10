@@ -23,10 +23,13 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
+import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
@@ -44,15 +47,18 @@ public class AutomationResourceResolver {
     private final IdentityProviderService identityProviderService;
     private final CertificateService certificateService;
     private final ReporterService reporterService;
+    private final DataPlaneDefinitionService dataPlaneDefinitionService;
 
     public AutomationResourceResolver(DomainService domainService,
             IdentityProviderService identityProviderService,
             CertificateService certificateService,
-            ReporterService reporterService) {
+            ReporterService reporterService,
+            DataPlaneDefinitionService dataPlaneDefinitionService) {
         this.domainService = domainService;
         this.identityProviderService = identityProviderService;
         this.certificateService = certificateService;
         this.reporterService = reporterService;
+        this.dataPlaneDefinitionService = dataPlaneDefinitionService;
     }
 
     // --- domains ------------------------------------------------------------
@@ -69,6 +75,24 @@ public class AutomationResourceResolver {
             case AutomationRef.KeyRef(String key) -> domainService.findById(AutomationIds.domainId(environmentId, key))
                     .filter(domain -> domain.isManagedBy(ManagedBy.AUTOMATION_API));
         };
+    }
+
+    // --- data planes --------------------------------------------------------
+
+    public Single<DataPlaneDefinitionSummary> resolveDataPlane(String environmentId, AutomationRef ref) {
+        return resolveDataPlaneMaybe(environmentId, ref)
+                .switchIfEmpty(Maybe.error(() -> new DataPlaneDefinitionNotFoundException(ref.raw())))
+                .toSingle();
+    }
+
+    public Maybe<DataPlaneDefinitionSummary> resolveDataPlaneMaybe(String environmentId, AutomationRef ref) {
+        return dataPlaneDefinitionService.findByEnvironmentId(environmentId)
+                .filter(dataPlane -> switch (ref) {
+                    case AutomationRef.IdRef(String id) -> id.equals(dataPlane.id());
+                    case AutomationRef.KeyRef(String key) -> key.equals(dataPlane.id())
+                            && ManagedBy.AUTOMATION_API == dataPlane.managedBy();
+                })
+                .firstElement();
     }
 
     // --- identity providers -------------------------------------------------

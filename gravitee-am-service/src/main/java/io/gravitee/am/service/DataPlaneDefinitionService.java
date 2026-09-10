@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.reactivex.rxjava3.core.Completable;
@@ -29,7 +31,13 @@ import io.reactivex.rxjava3.core.Single;
  */
 public interface DataPlaneDefinitionService {
 
-    Single<DataPlaneDefinitionSummary> create(NewDataPlaneDefinition newDataPlaneDefinition);
+    Single<DataPlaneDefinitionSummary> create(NewDataPlaneDefinition newDataPlaneDefinition, ManagedBy managedBy, User principal);
+
+    /**
+     * Replaces the mutable fields of an existing definition. A change to type, organization or
+     * environment is refused; ownership is left as it was.
+     */
+    Single<DataPlaneDefinitionSummary> update(String id, NewDataPlaneDefinition newDataPlaneDefinition, User principal);
 
     Flowable<DataPlaneDefinitionSummary> findAll();
 
@@ -40,5 +48,5 @@ public interface DataPlaneDefinitionService {
     /**
      * Deletes a definition, refused while any domain still points at it.
      */
-    Completable delete(String id);
+    Completable delete(String id, User principal);
 }

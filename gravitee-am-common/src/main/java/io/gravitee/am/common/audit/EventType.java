@@ -301,6 +301,7 @@ public interface EventType {
      * ----------
      */
     String DATA_PLANE_CREATED = "DATA_PLANE_CREATED";
+    String DATA_PLANE_UPDATED = "DATA_PLANE_UPDATED";
     String DATA_PLANE_DELETED = "DATA_PLANE_DELETED";
 
     /**

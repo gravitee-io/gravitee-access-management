@@ -42,6 +42,9 @@ security:
 tags:
 - description: Certificates configured under a domain to sign and verify tokens.
   name: Certificates
+- description: Data planes configured under an environment to store the runtime data
+    of its domains.
+  name: Data Planes
 - description: "Security domains: the top-level container for an authentication and\
     \ authorization configuration. Create, read, update, and delete domains, and reach\
     \ their sub-resources."
@@ -51,6 +54,317 @@ tags:
 - description: Reporters configured under a domain to persist audit events to a backend.
   name: Reporters
 paths:
+  /organizations/{orgId}/environments/{envId}/dataplanes:
+    get:
+      description: Returns all data planes managed by the Automation API in the environment.
+        Data planes provisioned outside the Automation API are not returned.
+      operationId: automationListDataPlanes
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                DataPlaneList:
+                  description: DataPlaneList
+                  value:
+                  - id: acme-eu
+                    name: ACME EU data plane
+                    type: mongodb
+                    gatewayUrl: https://gateway-eu.example.com
+                    database: gravitee-am-acme
+                    hosts:
+                    - mongo:27017
+                    organizationId: DEFAULT
+                    environmentId: DEFAULT
+                    createdAt: 2026-01-15T09:30:00.000Z
+                    updatedAt: 2026-01-15T09:30:00.000Z
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationDataPlane"
+          description: List of data planes
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        default:
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 500
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Unexpected error
+      summary: List an environment's data planes
+      tags:
+      - Data Planes
+    put:
+      description: "Idempotent create-or-update. Uses the id field in the body to\
+        \ identify the data plane within the environment. The type is immutable, and\
+        \ the organization and environment come from the path. An id: reference updates\
+        \ a data plane the Automation API does not manage, and cannot create one."
+      operationId: automationCreateOrUpdateDataPlane
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            examples:
+              DataPlane:
+                description: A MongoDB data plane
+                value:
+                  id: acme-eu
+                  name: ACME EU data plane
+                  type: mongodb
+                  gatewayUrl: https://gateway-eu.example.com
+                  configuration:
+                    mongodb:
+                      dbname: gravitee-am-acme
+                      host: mongo
+                      port: 27017
+            schema:
+              $ref: "#/components/schemas/AutomationDataPlane"
+        description: Desired state of the data plane.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                DataPlane:
+                  description: DataPlane
+                  value:
+                    id: acme-eu
+                    name: ACME EU data plane
+                    type: mongodb
+                    gatewayUrl: https://gateway-eu.example.com
+                    database: gravitee-am-acme
+                    hosts:
+                    - mongo:27017
+                    organizationId: DEFAULT
+                    environmentId: DEFAULT
+                    createdAt: 2026-01-15T09:30:00.000Z
+                    updatedAt: 2026-01-15T09:30:00.000Z
+              schema:
+                $ref: "#/components/schemas/AutomationDataPlane"
+          description: The created or updated data plane
+        "400":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 400
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "Invalid request: a missing required field, an unknown data\
+            \ plane type, a configuration the type's plugin rejects, an id reserved\
+            \ by the node's gravitee.yml, or an attempt to change an immutable field"
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        "404":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 404
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "An id: reference naming a data plane that does not exist in\
+            \ this environment"
+        "409":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 409
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: The id is already taken by a data plane the Automation API
+            does not manage
+      summary: Create or update a data plane
+      tags:
+      - Data Planes
+  /organizations/{orgId}/environments/{envId}/dataplanes/{dataPlaneId}:
+    delete:
+      description: Deletes an Automation-managed data plane by its id. Deleting a
+        data plane that does not exist also returns 204.
+      operationId: automationDeleteDataPlane
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      - description: Id of the data plane within the environment.
+        example: acme-eu
+        in: path
+        name: dataPlaneId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Data plane successfully deleted
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        "409":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 409
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: At least one domain still references the data plane
+      summary: Delete a data plane
+      tags:
+      - Data Planes
+    get:
+      description: Retrieves a single Automation-managed data plane by its id.
+      operationId: automationGetDataPlane
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      - description: Id of the data plane within the environment.
+        example: acme-eu
+        in: path
+        name: dataPlaneId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                DataPlane:
+                  description: DataPlane
+                  value:
+                    id: acme-eu
+                    name: ACME EU data plane
+                    type: mongodb
+                    gatewayUrl: https://gateway-eu.example.com
+                    database: gravitee-am-acme
+                    hosts:
+                    - mongo:27017
+                    organizationId: DEFAULT
+                    environmentId: DEFAULT
+                    createdAt: 2026-01-15T09:30:00.000Z
+                    updatedAt: 2026-01-15T09:30:00.000Z
+              schema:
+                $ref: "#/components/schemas/AutomationDataPlane"
+          description: The data plane
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        "404":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 404
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "Data plane not found in this environment, or not managed by\
+            \ the Automation API"
+      summary: Get a data plane
+      tags:
+      - Data Planes
   /organizations/{orgId}/environments/{envId}/domains:
     get:
       description: Returns all security domains within the specified environment.
@@ -63,7 +377,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -137,7 +451,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -239,7 +553,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -293,7 +607,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -373,7 +687,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -448,7 +762,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -562,7 +876,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -624,7 +938,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -710,7 +1024,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -795,7 +1109,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -930,7 +1244,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -993,7 +1307,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -1088,7 +1402,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -1163,7 +1477,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -1278,7 +1592,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -1340,7 +1654,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: Identifier of the environment the domain belongs to.
+      - description: Identifier of the environment the resource belongs to.
         example: DEFAULT
         in: path
         name: envId
@@ -1702,6 +2016,85 @@ components:
           description: Whether open (unauthenticated) Dynamic Client Registration
             is enabled for the domain.
       title: Client registration settings
+    AutomationDataPlane:
+      type: object
+      description: "A data plane managed by the Automation API. Data planes store\
+        \ the runtime data of the domains bound to them. The id field is the stable,\
+        \ immutable identity used for idempotent create-or-update."
+      properties:
+        configuration:
+          type: object
+          description: "Connection settings. Write-only: it can hold credentials."
+          example:
+            mongodb:
+              dbname: gravitee-am-acme
+              host: mongo
+              port: 27017
+          writeOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
+          readOnly: true
+        database:
+          type: string
+          description: Name of the database the configuration points at. Read-only.
+          example: gravitee-am-acme
+          readOnly: true
+        environmentId:
+          type: string
+          description: Identifier of the environment the data plane belongs to. Read-only.
+          example: DEFAULT
+          readOnly: true
+        gatewayUrl:
+          type: string
+          description: Base URL of the gateway serving the domains bound to this data
+            plane.
+          example: https://gateway-eu.example.com
+        hosts:
+          type: array
+          description: "Hosts the configuration points at, as host:port. Read-only."
+          example:
+          - mongo:27017
+          items:
+            type: string
+            description: "Hosts the configuration points at, as host:port. Read-only."
+            example: "[\"mongo:27017\"]"
+            readOnly: true
+          readOnly: true
+        id:
+          type: string
+          description: "Stable, immutable identifier for the data plane within its\
+            \ environment. Lowercase alphanumeric and hyphens, starting and ending\
+            \ with an alphanumeric character. This is the value a domain's dataPlaneId\
+            \ refers to."
+          example: acme-eu
+          maxLength: 255
+          minLength: 1
+        name:
+          type: string
+          description: Human-readable name of the data plane.
+          example: ACME EU data plane
+          maxLength: 255
+          minLength: 1
+        organizationId:
+          type: string
+          description: Identifier of the organization the data plane belongs to. Read-only.
+          example: DEFAULT
+          readOnly: true
+        type:
+          type: string
+          description: "Data plane plugin type identifier, matching the dataplane-am-<type>\
+            \ plugin. Immutable after creation."
+          example: mongodb
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
+          readOnly: true
+      required:
+      - id
+      title: Data plane
     AutomationDomain:
       type: object
       description: "A security domain managed by the Automation API. The key field\
@@ -1726,9 +2119,9 @@ components:
         dataPlaneId:
           type: string
           description: "Identifier of the data plane this domain is connected to.\
-            \ Optional at creation, resolved from the environment's data planes when\
-            \ omitted, and immutable afterwards; included in the desired-state document\
-            \ but never re-applied on update."
+            \ Optional at creation and resolved from the environment's data planes\
+            \ when omitted. Immutable afterwards: an apply that names a different\
+            \ one is rejected."
           example: default
           maxLength: 255
           minLength: 0

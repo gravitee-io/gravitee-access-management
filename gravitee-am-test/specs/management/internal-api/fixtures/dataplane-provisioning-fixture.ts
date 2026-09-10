@@ -305,6 +305,7 @@ export const ALLOWED_SUMMARY_FIELDS = [
   'environmentId',
   'database',
   'hosts',
+  'managedBy',
   'createdAt',
   'updatedAt',
 ];

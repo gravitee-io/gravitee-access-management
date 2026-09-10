@@ -24,6 +24,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
@@ -56,6 +57,7 @@ class AutomationResourceResolverTest {
     private IdentityProviderService identityProviderService;
     private CertificateService certificateService;
     private ReporterService reporterService;
+    private DataPlaneDefinitionService dataPlaneDefinitionService;
     private AutomationResourceResolver resolver;
 
     private Domain domain() {
@@ -70,7 +72,9 @@ class AutomationResourceResolverTest {
         identityProviderService = mock(IdentityProviderService.class);
         certificateService = mock(CertificateService.class);
         reporterService = mock(ReporterService.class);
-        resolver = new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService);
+        dataPlaneDefinitionService = mock(DataPlaneDefinitionService.class);
+        resolver = new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
+                dataPlaneDefinitionService);
     }
 
     // --- domains (scoped by environment) ------------------------------------
