@@ -92,7 +92,7 @@ public class DataPlaneResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE_MANAGED, Acl.DELETE)
+        checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE, Acl.DELETE)
                 .andThen(resolver.resolveDataPlaneMaybe(environmentId, AutomationRef.parse(dataPlaneId)))
                 .flatMapCompletable(dataPlane -> dataPlaneDefinitionService.delete(dataPlane.id(), principal)
                         .andThen(Completable.fromAction(() -> {

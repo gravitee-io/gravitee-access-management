@@ -50,45 +50,6 @@ const expectNoCredentials = (response: { text?: string; body: unknown }) => {
   expect(raw).not.toContain('configuration');
 };
 
-describe('Automation API data planes - the permission is granted to no built-in role', () => {
-  it('should refuse a write from the admin, who is ORGANIZATION_PRIMARY_OWNER', async () => {
-    const id = fixture.reserveId('dp-denied');
-
-    const response = await fixture.adminClient.putDataPlane(dataPlanePayload(id));
-
-    // the Automation API answers a denied permission with a bare 403 and no body
-    expect(response.status).toBe(403);
-  });
-
-  it('should refuse a delete from the admin', async () => {
-    const id = fixture.reserveId('dp-admin-del');
-    expect((await fixture.client.putDataPlane(dataPlanePayload(id))).status).toBe(200);
-
-    const response = await fixture.adminClient.deleteDataPlane(id);
-
-    expect(response.status).toBe(403);
-    expect((await fixture.client.getDataPlane(id)).status).toBe(200);
-  });
-
-  it('should still let the admin read data planes', async () => {
-    const id = fixture.reserveId('dp-admin-read');
-    expect((await fixture.client.putDataPlane(dataPlanePayload(id))).status).toBe(200);
-
-    // reads use the pre-existing data_plane permission, which the built-in roles do have
-    expect((await fixture.adminClient.listDataPlanes()).status).toBe(200);
-    expect((await fixture.adminClient.getDataPlane(id)).status).toBe(200);
-  });
-
-  it('should accept a write from a custom role carrying the permission', async () => {
-    const id = fixture.reserveId('dp-granted');
-
-    const response = await fixture.client.putDataPlane(dataPlanePayload(id));
-
-    expect(response.status).toBe(200);
-    expect(response.body.id).toEqual(id);
-  });
-});
-
 describe('Automation API data planes - create, read and replay', () => {
   it('should return the connection summary and never the settings', async () => {
     const id = fixture.reserveId('dp-summary');
@@ -180,16 +141,16 @@ describe('Automation API data planes - a domain keeps the plane it was created o
 
     const domainKey = uniqueName(`dp-pinned-domain-${process.pid}`, true).toLowerCase();
     const domain = { key: domainKey, name: domainKey, path: `/${domainKey}`, dataPlaneId: id };
-    expect((await fixture.adminClient.putDomain(domain)).status).toBe(200);
+    expect((await fixture.client.putDomain(domain)).status).toBe(200);
 
     try {
-      const moved = await fixture.adminClient.putDomain({ ...domain, dataPlaneId: 'default' });
+      const moved = await fixture.client.putDomain({ ...domain, dataPlaneId: 'default' });
 
       expect(moved.status).toBe(400);
       expect(moved.body.message).toContain('[dataPlaneId] cannot be changed');
-      expect((await fixture.adminClient.putDomain(domain)).status).toBe(200);
+      expect((await fixture.client.putDomain(domain)).status).toBe(200);
     } finally {
-      await fixture.adminClient.deleteDomain(domainKey);
+      await fixture.client.deleteDomain(domainKey);
     }
   });
 });

@@ -31,12 +31,6 @@ compact **per-resource reference**. New resource types follow the same conventio
 > `/organizations/{orgId}/environments/{envId}/…`; provision the organization and environment via the
 > standard Management API beforehand. The default install ships both with the id `DEFAULT`.
 
-> **Data planes need a permission no built-in role has.** Reading them uses the ordinary
-> `data_plane` read/list permission, but creating, updating and deleting them requires
-> `data_plane_managed_{create,update,delete}`, which is granted by **no** default role — not even
-> Organization Admin. Create a custom organization role carrying those permissions and assign it to the
-> account the automation runs as. Every other resource in this guide works with the usual admin roles.
-
 Base URL: `http://localhost:8093/automation`
 
 ---

@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
-import { requestAccessToken, requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createOrganisationUser, deleteOrganisationUser } from '@management-commands/organisation-user-commands';
-import { createCustomOrganizationRole, deleteOrganizationRole } from '@management-commands/role-management-commands';
-import { addOrganizationMembership, userMembership } from '@management-commands/membership-management-commands';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { Fixture } from '../../../test-fixture';
@@ -110,25 +107,11 @@ export const connectablePayload = (id: string) =>
       };
 
 export interface AutomationDataPlaneFixture extends Fixture {
-  /** Admin JWT. The admin is ORGANIZATION_PRIMARY_OWNER. */
   adminToken: string;
-  adminClient: AutomationClient;
-  /** Client acting as a user holding the custom data-plane role. */
   client: AutomationClient;
   /** Mints a unique id and registers it for cleanup. */
   reserveId: (prefix?: string) => string;
 }
-
-/** Flattened permissions the Automation API's data plane endpoints require. */
-export const DATA_PLANE_PERMISSIONS = [
-  'data_plane_managed_create',
-  'data_plane_managed_update',
-  'data_plane_managed_delete',
-  'data_plane_read',
-  'data_plane_list',
-];
-
-const PASSWORD = 'DataPl@neP@ssw0rd1!';
 
 /**
  * Ids are tracked per fixture instance, never swept from the environment: jest runs spec files on
@@ -138,64 +121,21 @@ export const setupAutomationDataPlaneFixture = async (): Promise<AutomationDataP
   const adminToken = await requestAdminAccessToken();
   expect(adminToken).toMatch(JWT_FORMAT);
 
+  const client = new AutomationClient(adminToken);
   const reserved: string[] = [];
-  let roleId: string | undefined;
-  let userId: string | undefined;
 
-  try {
-    const role = await createCustomOrganizationRole(
-      adminToken,
-      uniqueName('dataplane-operator', true),
-      'ORGANIZATION',
-      DATA_PLANE_PERMISSIONS,
-    );
-    roleId = role.id;
-
-    const username = uniqueName(`dpop-${process.pid}`, true).toLowerCase();
-    const user = await createOrganisationUser(adminToken, {
-      firstName: 'DataPlane',
-      lastName: 'Operator',
-      email: `${username}@test.com`,
-      username,
-      password: PASSWORD,
-      preRegistration: false,
-    });
-    userId = user.id;
-    await addOrganizationMembership(adminToken, userMembership(user.id, role.id));
-
-    const operatorToken = await requestAccessToken(username, PASSWORD);
-    expect(operatorToken).toMatch(JWT_FORMAT);
-
-    const client = new AutomationClient(operatorToken);
-
-    return {
-      adminToken,
-      adminClient: new AutomationClient(adminToken),
-      client,
-      reserveId: (prefix = 'dp-auto') => {
-        const id = uniqueName(`${prefix}-${process.pid}`, true).toLowerCase();
-        reserved.push(id);
-        return id;
-      },
-      cleanUp: async () => {
-        for (const id of reserved) {
-          await client.deleteDataPlane(id).catch(() => undefined);
-        }
-        if (userId) {
-          await deleteOrganisationUser(adminToken, userId).catch(() => undefined);
-        }
-        if (roleId) {
-          await deleteOrganizationRole(adminToken, roleId).catch(() => undefined);
-        }
-      },
-    };
-  } catch (error) {
-    if (userId) {
-      await deleteOrganisationUser(adminToken, userId).catch(() => undefined);
-    }
-    if (roleId) {
-      await deleteOrganizationRole(adminToken, roleId).catch(() => undefined);
-    }
-    throw error;
-  }
+  return {
+    adminToken,
+    client,
+    reserveId: (prefix = 'dp-auto') => {
+      const id = uniqueName(`${prefix}-${process.pid}`, true).toLowerCase();
+      reserved.push(id);
+      return id;
+    },
+    cleanUp: async () => {
+      for (const id of reserved) {
+        await client.deleteDataPlane(id).catch(() => undefined);
+      }
+    },
+  };
 };

@@ -442,13 +442,9 @@ public class RoleServiceImpl implements RoleService {
         organizationPrimaryOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
         organizationPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ, LIST));
         organizationPrimaryOwnerPermissions.put(Permission.LICENSE_NOTIFICATION, Acl.of(READ));
-        organizationPrimaryOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
-        organizationPrimaryOwnerPermissions.remove(Permission.DATA_PLANE_MANAGED);
 
 
         environmentPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
-        environmentPrimaryOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
-        environmentPrimaryOwnerPermissions.remove(Permission.DATA_PLANE_MANAGED);
 
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE, DELETE));
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE, DELETE));
@@ -485,12 +481,8 @@ public class RoleServiceImpl implements RoleService {
         organizationOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
         organizationOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ, LIST));
         organizationOwnerPermissions.put(Permission.LICENSE_NOTIFICATION, Acl.of(READ));
-        organizationOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
-        organizationOwnerPermissions.remove(Permission.DATA_PLANE_MANAGED);
 
         environmentOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
-        environmentOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
-        environmentOwnerPermissions.remove(Permission.DATA_PLANE_MANAGED);
 
         domainOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE));
         domainOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));

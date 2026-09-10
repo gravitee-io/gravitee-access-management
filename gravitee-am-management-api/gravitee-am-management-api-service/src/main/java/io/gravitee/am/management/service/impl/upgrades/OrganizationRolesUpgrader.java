@@ -40,7 +40,7 @@ public class OrganizationRolesUpgrader implements Upgrader {
 
     // Bump this VERSION every time the default-role permission sets are modified in RoleServiceImpl#buildDefaultRoles
     // so existing installations pick up newly added permissions.
-    private static final String VERSION = "4_13_0_a";
+    private static final String VERSION = "4_13_0_b";
 
     @Override
     public boolean upgrade() {

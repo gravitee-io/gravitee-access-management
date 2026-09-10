@@ -144,7 +144,7 @@ public class DataPlanesResource extends AbstractAutomationResource {
                 .defaultIfEmpty(Optional.empty())
                 .flatMap(match -> {
                     Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
-                    return checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE_MANAGED, requiredAcl)
+                    return checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE, requiredAcl)
                             .andThen(Single.defer(() -> match
                                     .map(existing -> updateExisting(existing, definition, organizationId, environmentId, principal))
                                     .orElseGet(() -> createNew(ref, definition, organizationId, environmentId, principal))));

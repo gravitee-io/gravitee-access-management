@@ -474,26 +474,30 @@ public class RoleServiceTest {
     }
 
     @Test
-    public void shouldNotGrantDataPlaneManagedToAnySystemRole() {
-        assertNoRoleGrantsDataPlaneManaged(seededRoles(roleService::createOrUpdateSystemRoles));
-    }
-
-    @Test
-    public void shouldNotGrantDataPlaneManagedToAnyDefaultRole() {
-        assertNoRoleGrantsDataPlaneManaged(seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)));
-    }
-
-    @Test
-    public void shouldStillGrantReadOnlyDataPlaneToTheOwnerRoles() {
+    public void shouldGrantEveryDataPlaneAclToTheOwnerRoles() {
         List<Role> roles = new ArrayList<>(seededRoles(roleService::createOrUpdateSystemRoles));
         roles.addAll(seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)));
 
-        List<Role> withDataPlane = roles.stream()
+        List<Role> owners = roles.stream()
+                .filter(role -> role.getName().endsWith("_OWNER"))
                 .filter(role -> role.getPermissionAcls().containsKey(Permission.DATA_PLANE))
                 .toList();
 
-        assertFalse("no role was seeded with the DATA_PLANE permission", withDataPlane.isEmpty());
-        withDataPlane.forEach(role ->
+        assertFalse("no owner role was seeded with the DATA_PLANE permission", owners.isEmpty());
+        owners.forEach(role ->
+                assertEquals("unexpected DATA_PLANE acls on " + role.getName(),
+                        Acl.all(), role.getPermissionAcls().get(Permission.DATA_PLANE)));
+    }
+
+    @Test
+    public void shouldKeepDataPlaneReadOnlyForTheUserRoles() {
+        List<Role> users = seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)).stream()
+                .filter(role -> role.getName().endsWith("_USER"))
+                .filter(role -> role.getPermissionAcls().containsKey(Permission.DATA_PLANE))
+                .toList();
+
+        assertFalse("no user role was seeded with the DATA_PLANE permission", users.isEmpty());
+        users.forEach(role ->
                 assertEquals("unexpected DATA_PLANE acls on " + role.getName(),
                         Set.of(Acl.READ, Acl.LIST), role.getPermissionAcls().get(Permission.DATA_PLANE)));
     }
@@ -511,10 +515,4 @@ public class RoleServiceTest {
         return created.getAllValues();
     }
 
-    private static void assertNoRoleGrantsDataPlaneManaged(List<Role> roles) {
-        assertFalse("no role was seeded", roles.isEmpty());
-        roles.forEach(role -> assertFalse(
-                role.getName() + " must not carry DATA_PLANE_MANAGED",
-                role.getPermissionAcls().containsKey(Permission.DATA_PLANE_MANAGED)));
-    }
 }
