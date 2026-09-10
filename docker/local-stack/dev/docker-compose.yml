@@ -38,6 +38,10 @@ services:
       - GRAVITEE_EMAIL_ENABLED=true
       - GRAVITEE_EMAIL_HOST=smtp
       - GRAVITEE_EMAIL_PORT=5025
+      # SCIM pre-registration emails are staged and sent by a background processor rather than
+      # inline. PERIOD is that processor's tick, 5s by default.
+      - GRAVITEE_EMAIL_BULK_ENABLED=true
+      - GRAVITEE_EMAIL_BULK_PERIOD=1
       - GRAVITEE_MFA_RATE_ENABLED=true
       - GRAVITEE_MFA_RATE_LIMIT=2
       - GRAVITEE_MFA_RATE_TIMEPERIOD=1

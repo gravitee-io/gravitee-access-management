@@ -30,7 +30,7 @@ import { Application } from '@management-models/Application';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { extractXsrfToken, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
-import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
+import { clearEmails, waitForEmail } from '@utils-commands/email-commands';
 
 export interface ScimFixture {
   domain: Domain;
@@ -48,9 +48,11 @@ export interface ScimFixture {
   createGroup: (body: any) => Promise<any>;
 }
 
-export const setupFixture = async (): Promise<ScimFixture> => {
+// Each spec file passes its own domain name prefix: two files sharing one can generate the same
+// name in parallel workers, and the second domain then fails to start.
+export const setupFixture = async (domainNamePrefix = 'scim'): Promise<ScimFixture> => {
   const accessToken = await requestAdminAccessToken();
-  const domain = await createDomain(accessToken, uniqueName('scim', true), 'Description');
+  const domain = await createDomain(accessToken, uniqueName(domainNamePrefix, true), 'Description');
 
   // Configure SCIM and create app BEFORE starting domain so the initial sync picks up everything
   await patchDomain(domain.id, accessToken, {
@@ -80,7 +82,7 @@ export const setupFixture = async (): Promise<ScimFixture> => {
     },
 
     extractConfirmRegistrationLink: async (email: string) => {
-      return (await getLastEmail(1000, email)).extractLink();
+      return (await waitForEmail(email)).extractLink();
     },
 
     confirmRegistrationLink: async (link: string) => {

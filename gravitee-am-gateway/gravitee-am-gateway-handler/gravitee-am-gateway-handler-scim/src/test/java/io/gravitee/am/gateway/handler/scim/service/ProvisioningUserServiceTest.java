@@ -102,6 +102,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -1293,6 +1294,168 @@ public class ProvisioningUserServiceTest {
         assertTrue(newUserDefinition.getValue().isEnabled());
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailStagingService, times(1)).push(any(),any()));
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(emailService, times(1)).traceEmailEviction(any(),any(),any()));
+    }
+
+    /**
+     * The synchronous counterpart of the test below. Integration tests run with bulk mode on, so
+     * this is the only place several pre-registered users are created with it off.
+     */
+    @Test
+    public void shouldCreateUsers_with_preRegistration_syncMode_sendsOneEmailPerUser() {
+        ReflectionTestUtils.setField(userService, "bulkEnabled", false);
+        int userCount = 3;
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        for (int i = 0; i < userCount; i++) {
+            Map<String, Object> ai = new HashMap<>();
+            ai.put("preRegistration", true);
+            GraviteeUser newUser = mock(GraviteeUser.class);
+            when(newUser.getSource()).thenReturn("unknown-idp");
+            when(newUser.getUserName()).thenReturn("username-" + i);
+            when(newUser.getPassword()).thenReturn(null);
+            when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+            io.gravitee.am.model.User created = new io.gravitee.am.model.User();
+            created.setReferenceType(ReferenceType.DOMAIN);
+            created.setReferenceId(DOMAIN_ID);
+            created.setAdditionalInformation(ai);
+            created.setPreRegistration(true);
+            created.setEmail("user" + i + "@acme.fr");
+            when(userRepository.create(any())).thenReturn(Single.just(created));
+
+            TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+        }
+
+        // Sent inline, one per user, and nothing is handed to the staging processor.
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(emailService, times(userCount)).send(any(), any(), any()));
+        verify(emailStagingService, never()).push(any(), any());
+    }
+
+    /**
+     * A bulk request creates each user in turn, so N pre-registered users must produce N staged
+     * emails. The other bulk-mode tests create a single user and so cannot show this.
+     */
+    @Test
+    public void shouldCreateUsers_with_preRegistration_bulkMode_stagesOneEmailPerUser() {
+        ReflectionTestUtils.setField(userService, "bulkEnabled", true);
+        int userCount = 3;
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(emailStagingService.push(any(), any())).thenReturn(Completable.complete());
+
+        for (int i = 0; i < userCount; i++) {
+            Map<String, Object> ai = new HashMap<>();
+            ai.put("preRegistration", true);
+            GraviteeUser newUser = mock(GraviteeUser.class);
+            when(newUser.getSource()).thenReturn("unknown-idp");
+            when(newUser.getUserName()).thenReturn("username-" + i);
+            when(newUser.getPassword()).thenReturn(null);
+            when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+            io.gravitee.am.model.User created = new io.gravitee.am.model.User();
+            created.setReferenceType(ReferenceType.DOMAIN);
+            created.setReferenceId(DOMAIN_ID);
+            created.setAdditionalInformation(ai);
+            created.setPreRegistration(true);
+            created.setEmail("user" + i + "@acme.fr");
+            when(userRepository.create(any())).thenReturn(Single.just(created));
+
+            TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+            testObserver.assertNoErrors();
+            testObserver.assertComplete();
+        }
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(emailStagingService, times(userCount)).push(any(), any()));
+    }
+
+    /**
+     * `pushStagingEmail` wraps the push in RetryWithDelay with maxRetries(2), so a push that keeps
+     * failing is attempted three times before the email is dropped.
+     */
+    @Test
+    public void shouldRetryStagingPush_beforeDroppingTheEmail() {
+        ReflectionTestUtils.setField(userService, "bulkEnabled", true);
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("preRegistration", true);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        user.setPreRegistration(true);
+        user.setEmail("user@acme.fr");
+        when(userRepository.create(any())).thenReturn(Single.just(user));
+
+        // The retry resubscribes to the Completable rather than calling push() again, so counting
+        // invocations of the mock would always give one. Counting subscriptions is what shows it.
+        AtomicInteger attempts = new AtomicInteger();
+        when(emailStagingService.push(any(), any())).thenReturn(Completable.defer(() -> {
+            attempts.incrementAndGet();
+            return Completable.error(new RuntimeException());
+        }));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        // One initial attempt plus two retries. The eviction only happens once the retries are spent.
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(3, attempts.get()));
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(emailService, times(1)).traceEmailEviction(any(), any(), any()));
+    }
+
+    /** A dropped email is counted, not only audited. */
+    @Test
+    public void shouldCountDroppedEmail_whenStagingKeepsFailing() {
+        ReflectionTestUtils.setField(userService, "bulkEnabled", true);
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("preRegistration", true);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        user.setPreRegistration(true);
+        user.setEmail("user@acme.fr");
+        when(userRepository.create(any())).thenReturn(Single.just(user));
+
+        when(emailStagingService.push(any(), any())).thenReturn(Completable.error(new RuntimeException()));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(metricProvider, times(1)).incrementDroppedEmails());
     }
 
     @Test
