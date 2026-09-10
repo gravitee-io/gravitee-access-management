@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.discovery.impl;
 
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -173,6 +174,11 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         openIDProviderMetadata.setDpopSigningAlgValuesSupported(
                 JWAlgorithmUtils.resolveDpopSigningAlg(domain.getOidc() != null && domain.getOidc().getDpopSettings() != null
                         ? domain.getOidc().getDpopSettings().getDpopSigningAlgorithms() : null));
+
+        List<String> requestedTokenTypes = domain.useTokenExchange() ? domain.getTokenExchangeSettings().getAllowedRequestedTokenTypes() : null;
+        if (requestedTokenTypes != null && requestedTokenTypes.contains(TokenType.ID_JAG)) {
+            openIDProviderMetadata.setIdentityChainingRequestedTokenTypesSupported(List.of(TokenType.ID_JAG));
+        }
 
         if (domain.useFapiBrazilProfile()) {
             openIDProviderMetadata.setAcrValuesSupported(Stream.concat(AcrValues.values().stream(), BrazilAcrValues.values().stream()).collect(Collectors.toList()));
