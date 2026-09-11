@@ -1418,44 +1418,13 @@ public class ProvisioningUserServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        // One initial attempt plus two retries. The eviction only happens once the retries are spent.
+        // One initial attempt plus two retries. Only once the retries are spent is the email
+        // dropped, which is both audited and counted.
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(3, attempts.get()));
-        Awaitility.await()
-                .atMost(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> verify(emailService, times(1)).traceEmailEviction(any(), any(), any()));
-    }
-
-    /** A dropped email is counted, not only audited. */
-    @Test
-    public void shouldCountDroppedEmail_whenStagingKeepsFailing() {
-        ReflectionTestUtils.setField(userService, "bulkEnabled", true);
-        GraviteeUser newUser = mock(GraviteeUser.class);
-        when(newUser.getSource()).thenReturn("unknown-idp");
-        when(newUser.getUserName()).thenReturn("username");
-        when(newUser.getPassword()).thenReturn(null);
-        Map<String, Object> ai = new HashMap<>();
-        ai.put("preRegistration", true);
-        when(newUser.getAdditionalInformation()).thenReturn(ai);
-
-        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
-
-        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setReferenceId(DOMAIN_ID);
-        user.setAdditionalInformation(ai);
-        user.setPreRegistration(true);
-        user.setEmail("user@acme.fr");
-        when(userRepository.create(any())).thenReturn(Single.just(user));
-
-        when(emailStagingService.push(any(), any())).thenReturn(Completable.error(new RuntimeException()));
-
-        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
-        testObserver.assertNoErrors();
-        testObserver.assertComplete();
-
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> verify(metricProvider, times(1)).incrementDroppedEmails());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(emailService, times(1)).traceEmailEviction(any(), any(), any());
+            verify(metricProvider, times(1)).incrementDroppedEmails();
+        });
     }
 
     @Test
