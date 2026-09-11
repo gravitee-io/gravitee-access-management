@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import * as jose from 'jose';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
@@ -28,7 +26,7 @@ import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { buildCertificate } from '@api-fixtures/certificates';
-import { createPKCS12CertificateRequest } from '../../../management/certificates/fixtures/certificates-fixture';
+import { createBundledPKCS12CertificateRequest } from '../../../management/certificates/fixtures/certificates-fixture';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
@@ -80,7 +78,12 @@ export const setupAppCertificateFixture = async (): Promise<AppCertificateFixtur
     });
 
     const jks = await createSigningCertificate(domain, accessToken, buildCertificate(0), APP_CERTIFICATE.JKS_ALIAS);
-    const pkcs12 = await createSigningCertificate(domain, accessToken, pkcs12Request(), APP_CERTIFICATE.PKCS12_ALIAS);
+    const pkcs12 = await createSigningCertificate(
+      domain,
+      accessToken,
+      createBundledPKCS12CertificateRequest(),
+      APP_CERTIFICATE.PKCS12_ALIAS,
+    );
     // Two distinct key pairs, otherwise a token could not tell the tests which certificate signed it
     expect(pkcs12.jwk.n).not.toEqual(jks.jwk.n);
 
@@ -113,17 +116,6 @@ export const setupAppCertificateFixture = async (): Promise<AppCertificateFixtur
     }
     throw error;
   }
-};
-
-const pkcs12Request = () => {
-  const p12 = join(__dirname, '../../../management/certificates/fixtures/test.p12');
-  return createPKCS12CertificateRequest({
-    password: 'changeit',
-    alias: APP_CERTIFICATE.PKCS12_ALIAS,
-    content: readFileSync(p12).toString('base64'),
-    type: 'pkcs12-am-certificate',
-    contentType: 'application/x-pkcs12',
-  });
 };
 
 async function createSigningCertificate(domain: Domain, accessToken: string, request, alias: string): Promise<SigningCertificate> {
