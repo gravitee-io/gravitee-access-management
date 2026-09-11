@@ -20,8 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.jose.JWKModule;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
@@ -40,13 +42,27 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import static com.mongodb.client.model.Aggregates.limit;
+import static com.mongodb.client.model.Aggregates.match;
+import static com.mongodb.client.model.Aggregates.project;
+import static com.mongodb.client.model.Aggregates.sort;
+import static com.mongodb.client.model.Aggregates.unwind;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.regex;
+import static com.mongodb.client.model.Projections.computed;
+import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Sorts.ascending;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
@@ -62,6 +78,15 @@ public class MongoTrustedDomainRepository extends AbstractManagementMongoReposit
     private static final String FIELD_NAME = "name";
     private static final String FIELD_DOMAIN_IDENTIFIER = "domainIdentifier";
     private static final String FIELD_SPIFFE_TRUST_DOMAIN = "spiffe.spiffeTrustDomain";
+    private static final String FIELD_CROSS_APP_ACCESS = "crossAppAccess";
+    private static final String FIELD_XAA_ENABLED = FIELD_CROSS_APP_ACCESS + ".enabled";
+    private static final String FIELD_RESOURCE_SERVERS = FIELD_CROSS_APP_ACCESS + ".resourceServers";
+    private static final String FIELD_RESOURCE_SERVER_ID = FIELD_RESOURCE_SERVERS + "." + FIELD_ID;
+    private static final String FIELD_RESOURCE_SERVER_NAME = FIELD_RESOURCE_SERVERS + ".name";
+    private static final String FIELD_RESOURCE_SERVER_RESOURCE = FIELD_RESOURCE_SERVERS + ".resource";
+    private static final String FIELD_TRUSTED_DOMAIN_NAME = "trustedDomainName";
+    private static final String PROJECTED_RESOURCE_SERVER_ID = "resourceServerId";
+    private static final String FIELD_RESOURCE = "resource";
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JWKModule());
 
@@ -140,6 +165,40 @@ public class MongoTrustedDomainRepository extends AbstractManagementMongoReposit
     @Override
     public Maybe<TrustedDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer) {
         return findByField(referenceType, referenceId, FIELD_DOMAIN_IDENTIFIER, issuer);
+    }
+
+    @Override
+    public Flowable<CrossAppAccessResourceServerView> searchCrossAppAccessResourceServers(Reference reference, String query, int limit) {
+        List<Bson> pipeline = new ArrayList<>(List.of(
+                match(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()),
+                        eq(FIELD_REFERENCE_ID, reference.id()),
+                        eq(FIELD_XAA_ENABLED, true))),
+                unwind("$" + FIELD_RESOURCE_SERVERS)));
+        if (query != null && !query.isBlank()) {
+            Pattern term = Pattern.compile(Pattern.quote(query.trim()), Pattern.CASE_INSENSITIVE);
+            pipeline.add(match(or(regex(FIELD_RESOURCE_SERVER_NAME, term),
+                    regex(FIELD_RESOURCE_SERVER_RESOURCE, term),
+                    regex(FIELD_NAME, term))));
+        }
+        pipeline.add(sort(ascending(FIELD_NAME, FIELD_RESOURCE_SERVER_NAME)));
+        pipeline.add(limit(limit));
+        pipeline.add(project(fields(
+                computed(FIELD_TRUSTED_DOMAIN_NAME, "$" + FIELD_NAME),
+                computed(PROJECTED_RESOURCE_SERVER_ID, "$" + FIELD_RESOURCE_SERVER_ID),
+                computed(FIELD_NAME, "$" + FIELD_RESOURCE_SERVER_NAME),
+                computed(FIELD_RESOURCE, "$" + FIELD_RESOURCE_SERVER_RESOURCE))));
+        return Flowable.fromPublisher(collection.aggregate(pipeline, Document.class))
+                .map(MongoTrustedDomainRepository::toResourceServerView)
+                .observeOn(Schedulers.computation());
+    }
+
+    private static CrossAppAccessResourceServerView toResourceServerView(Document document) {
+        return new CrossAppAccessResourceServerView(
+                document.getString(FIELD_ID),
+                document.getString(FIELD_TRUSTED_DOMAIN_NAME),
+                document.getString(PROJECTED_RESOURCE_SERVER_ID),
+                document.getString(FIELD_NAME),
+                document.getString(FIELD_RESOURCE));
     }
 
     private Maybe<TrustedDomain> findByField(ReferenceType referenceType, String referenceId, String field, String value) {

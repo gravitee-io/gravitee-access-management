@@ -322,6 +322,18 @@ ngx-datatable {
       color: map.get(gio.$mat-space-palette, contrast[ 'default']);
     }
   }
+
+  .gv-form-section-title-with-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 8px;
+
+    small,
+    mat-divider {
+      flex-basis: 100%;
+    }
+  }
 }
 
 .gv-form-hint {

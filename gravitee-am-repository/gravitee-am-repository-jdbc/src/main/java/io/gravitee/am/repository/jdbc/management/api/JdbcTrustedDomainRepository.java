@@ -19,10 +19,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.JWKModule;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
@@ -43,17 +45,20 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcTrustedDomain.FIELD_TRUSTED_DOMAIN_ID;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -145,6 +150,29 @@ public class JdbcTrustedDomainRepository extends AbstractJdbcRepository implemen
         return repository.findByDomainIdentifier(referenceType.name(), referenceId, issuer)
                 .map(this::toEntity)
                 .flatMap(td -> complete(td).toMaybe())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<CrossAppAccessResourceServerView> searchCrossAppAccessResourceServers(Reference reference, String query, int limit) {
+        LOGGER.debug("searchCrossAppAccessResourceServers({}, {}, {})", reference, query, limit);
+        boolean filtered = query != null && !query.isBlank();
+        String sql = databaseDialectHelper.buildSearchCrossAppAccessResourceServersQuery(filtered, limit);
+        DatabaseClient.GenericExecuteSpec spec = getTemplate().getDatabaseClient().sql(sql)
+                .bind("referenceType", reference.type().name())
+                .bind("referenceId", reference.id())
+                .bind("enabled", true);
+        if (filtered) {
+            String term = databaseDialectHelper.escapeLikePatternValue(query.trim()).toUpperCase(Locale.ROOT);
+            spec = spec.bind("value", "%" + term + "%");
+        }
+        return fluxToFlowable(spec.map((row, metadata) -> new CrossAppAccessResourceServerView(
+                        row.get("trusted_domain_id", String.class),
+                        row.get("trusted_domain_name", String.class),
+                        row.get("resource_server_id", String.class),
+                        row.get("resource_server_name", String.class),
+                        row.get("resource_server_resource", String.class)))
+                .all())
                 .observeOn(Schedulers.computation());
     }
 

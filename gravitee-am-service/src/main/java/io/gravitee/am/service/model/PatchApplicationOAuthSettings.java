@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
@@ -77,6 +78,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<Integer> accessTokenValiditySeconds;
     private Optional<Integer> refreshTokenValiditySeconds;
     private Optional<Integer> idTokenValiditySeconds;
+    private Optional<Integer> idJagValiditySeconds;
     private Optional<List<TokenClaim>> tokenCustomClaims;
     private Optional<List<UserInfoClaim>> userinfoCustomClaims;
     private Optional<String> tlsClientAuthSubjectDn;
@@ -101,6 +103,8 @@ public class PatchApplicationOAuthSettings {
     private Optional<Boolean> optInScopeSelection;
 
     private Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings;
+
+    private Optional<ApplicationCrossAppAccessSettings> crossAppAccessSettings;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -438,6 +442,14 @@ public class PatchApplicationOAuthSettings {
         this.idTokenValiditySeconds = idTokenValiditySeconds;
     }
 
+    public Optional<Integer> getIdJagValiditySeconds() {
+        return idJagValiditySeconds;
+    }
+
+    public void setIdJagValiditySeconds(Optional<Integer> idJagValiditySeconds) {
+        this.idJagValiditySeconds = idJagValiditySeconds;
+    }
+
     public Optional<List<TokenClaim>> getTokenCustomClaims() {
         return tokenCustomClaims;
     }
@@ -598,6 +610,14 @@ public class PatchApplicationOAuthSettings {
         this.tokenExchangeOAuthSettings = tokenExchangeOAuthSettings;
     }
 
+    public Optional<ApplicationCrossAppAccessSettings> getCrossAppAccessSettings() {
+        return crossAppAccessSettings;
+    }
+
+    public void setCrossAppAccessSettings(Optional<ApplicationCrossAppAccessSettings> crossAppAccessSettings) {
+        this.crossAppAccessSettings = crossAppAccessSettings;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -645,6 +665,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setAccessTokenValiditySeconds, this.getAccessTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setRefreshTokenValiditySeconds, this.getRefreshTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setIdTokenValiditySeconds, this.getIdTokenValiditySeconds());
+        SetterUtils.safeSet(toPatch::setIdJagValiditySeconds, this.getIdJagValiditySeconds());
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
         SetterUtils.safeSet(toPatch::setUserinfoCustomClaims, this.getUserinfoCustomClaims());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSubjectDn, this.getTlsClientAuthSubjectDn());
@@ -665,6 +686,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setDisableRefreshTokenRotation, this.getDisableRefreshTokenRotation());
         SetterUtils.safeSet(toPatch::setOptInScopeSelection, this.getOptInScopeSelection());
         SetterUtils.safeSet(toPatch::setTokenExchangeOAuthSettings, this.getTokenExchangeOAuthSettings());
+        SetterUtils.safeSet(toPatch::setCrossAppAccessSettings, this.getCrossAppAccessSettings());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

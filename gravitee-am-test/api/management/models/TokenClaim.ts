@@ -59,6 +59,7 @@ export const TokenClaimTokenTypeEnum = {
   AccessToken: 'ACCESS_TOKEN',
   RefreshToken: 'REFRESH_TOKEN',
   IdToken: 'ID_TOKEN',
+  IdJag: 'ID_JAG',
 } as const;
 export type TokenClaimTokenTypeEnum = typeof TokenClaimTokenTypeEnum[keyof typeof TokenClaimTokenTypeEnum];
 
