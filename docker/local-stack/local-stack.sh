@@ -19,6 +19,7 @@
 #   ./local-stack.sh up                       # build from current code, start (lean, mongo)
 #   ./local-stack.sh up --full                # everything the e2e/jest suites need + Console
 #   ./local-stack.sh up --version 4.12.x-latest --ui   # pull a released/nightly image instead
+#   ./local-stack.sh up --chaos               # + fault injection on AM's db/smtp links
 #   ./local-stack.sh down                      # tear everything down
 #
 # Run `./local-stack.sh help` for the full reference.
@@ -103,6 +104,7 @@ DETACH=1
 LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
 WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0; WANT_LDAP=0
+WANT_CHAOS=0             # --chaos: interpose toxiproxy on AM's outbound connections
 
 want_set() { # want_set <name> <value>
   case "$1" in
@@ -129,6 +131,7 @@ COMMANDS
   logs      Follow logs (optionally for one service: logs gateway)
   status    Show container status (docker compose ps)
   pull      Pull the AM images for --version without starting
+  chaos     Disrupt/resume AM's proxied connections (needs --chaos; see below)
   help      Show this help
 
 MODE
@@ -153,6 +156,21 @@ SERVICES
                        management API at it (console/cloud command path, e.g.
                        Cockpit access points -> entrypoints)
 
+FAULT INJECTION
+  --chaos              route AM's outbound connections through toxiproxy so they can
+                       be broken on demand. Covers the database (per --db), SMTP, and
+                       the Cockpit link when combined with --cloud. Proxy listeners
+                       stay on the compose network, so a test run on the host keeps
+                       its direct route to the database.
+
+                       ./local-stack.sh chaos status
+                       ./local-stack.sh chaos cut postgres      # black hole; callers hang
+                       ./local-stack.sh chaos reject postgres   # refused; immediate reset
+                       ./local-stack.sh chaos heal postgres     # or: heal --all
+
+                       Latency, bandwidth and the rest of toxiproxy stay on its own API
+                       at localhost:8474 — see README.md. `chaos heal` resets those too.
+
 DATABASE
   --db mongo|psql      backend database (default: mongo)
 
@@ -171,6 +189,7 @@ EXAMPLES
   ./local-stack.sh up --db psql --ui
   ./local-stack.sh up --with ui,openfga
   ./local-stack.sh up --version 4.12.x-latest --ui
+  ./local-stack.sh up --db psql --chaos
   ./local-stack.sh down
 
 URLs / credentials once up:
@@ -187,13 +206,14 @@ EOF
 # ---------------------------------------------------------------------------
 COMMAND="up"
 case "${1:-}" in
-  up|down|logs|status|pull|help) COMMAND="$1"; shift ;;
+  up|down|logs|status|pull|chaos|help) COMMAND="$1"; shift ;;
   -h|--help|"") : ;;                      # default to `up`, help handled below
   -*) : ;;                                # leading flag => `up`
   *) COMMAND="$1"; shift ;;
 esac
 
 LOGS_SVC=""
+CHAOS_ARGS=()          # verb + target for the `chaos` command
 while [ $# -gt 0 ]; do
   case "$1" in
     --version)   VERSION="${2:?--version needs a tag}"; shift 2 ;;
@@ -207,13 +227,18 @@ while [ $# -gt 0 ]; do
                    want_set "$s" 1 || die "unknown --with service: $s"
                  done; shift 2 ;;
     --cloud)     WANT_CLOUD=1; shift ;;
+    --chaos)     WANT_CHAOS=1; shift ;;
     --keycloak)  WANT_KEYCLOAK=1; shift ;;
     --build)     BUILD_MODE="force"; shift ;;
     --quick|--no-build) BUILD_MODE="skip"; shift ;;
     --license)   LICENSE_FILE="${2:?--license needs a path}"; shift 2 ;;
     --no-detach) DETACH=0; shift ;;
-    -h|--help)   usage; exit 0 ;;
+    -h|--help)   if [ "$COMMAND" = "chaos" ]; then CHAOS_ARGS+=("$1"); shift
+                 else usage; exit 0; fi ;;
+    --all)       [ "$COMMAND" = "chaos" ] || die "--all is only valid as: chaos heal --all"
+                 CHAOS_ARGS+=("$1"); shift ;;
     *)           if [ "$COMMAND" = "logs" ] && [ -z "$LOGS_SVC" ]; then LOGS_SVC="$1"; shift
+                 elif [ "$COMMAND" = "chaos" ]; then CHAOS_ARGS+=("$1"); shift
                  else die "unknown argument: $1 (see ./local-stack.sh help)"; fi ;;
   esac
 done
@@ -245,6 +270,10 @@ ALL_FILES=(
   -f "$DEV/docker-compose.spire.yml"
   -f "$DEV/docker-compose.cloud.yml"
   -f "$DEV/docker-compose.images.yml"
+  -f "$DEV/docker-compose.chaos.yml"
+  -f "$DEV/docker-compose.chaos.mongo.yml"
+  -f "$DEV/docker-compose.chaos.postgres.yml"
+  -f "$DEV/docker-compose.chaos.cloud.yml"
 )
 
 # Optional, gitignored per-dev override (custom env vars, volume-mounted gravitee.yml,
@@ -262,6 +291,13 @@ build_compose_files() {
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
   if [ "$WANT_KEYCLOAK" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.keycloak.yml"); fi
+  # Chaos must follow the db/cloud overlays it redirects — compose applies files in order.
+  if [ "$WANT_CHAOS" -eq 1 ]; then
+    COMPOSE_FILES+=(-f "$DEV/docker-compose.chaos.yml")
+    if [ "$DB" = "mongo" ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.chaos.mongo.yml")
+    else COMPOSE_FILES+=(-f "$DEV/docker-compose.chaos.postgres.yml"); fi
+    if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.chaos.cloud.yml"); fi
+  fi
   if [ "$PULLED" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.images.yml"); fi
   if [ -f "$LOCAL_OVERRIDE" ]; then COMPOSE_FILES+=(-f "$LOCAL_OVERRIDE"); fi   # per-dev overrides win
 }
@@ -281,6 +317,7 @@ build_service_list() {
   [ "$WANT_LDAP" -eq 1 ]     && SERVICES+=(openldap openldap-init)
   [ "$WANT_CLOUD" -eq 1 ]    && SERVICES+=(cockpit-mock)
   [ "$WANT_KEYCLOAK" -eq 1 ] && SERVICES+=(keycloak)
+  [ "$WANT_CHAOS" -eq 1 ]    && SERVICES+=(toxiproxy)
   if [ "$WANT_SPIRE" -eq 1 ]; then
     SERVICES+=(spire-perms-init spire-server spire-bootstrap spire-agent spire-oidc)
   fi
@@ -505,6 +542,7 @@ print_ready() {
   printf '  Management API http://localhost:8093/management\n'
   [ "$WANT_UI" -eq 1 ] && printf '  Console UI     http://localhost:4200\n'
   [ "$WANT_KEYCLOAK" -eq 1 ] && printf '  Keycloak       http://localhost:8180  (admin/admin)\n'
+  [ "$WANT_CHAOS" -eq 1 ] && printf '  Toxiproxy API  http://localhost:8474  (./local-stack.sh chaos status)\n'
   printf '  Mailbox        http://localhost:5080\n'
   printf '  Admin login    admin / adminadmin   (org/env: DEFAULT)\n'
   printf '%s  Stop with: ./local-stack.sh down%s\n\n' "$C_DIM" "$C_RST"
@@ -517,6 +555,147 @@ start_stack() { # start_stack <compose up args...>
   printf '     To retry a clean rebuild:\n' >&2
   printf '         ./local-stack.sh up --build\n' >&2
   exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Chaos (toxiproxy) — disrupt and resume AM's outbound connections
+# ---------------------------------------------------------------------------
+
+TOXIPROXY_API="http://localhost:8474"
+CHAOS_TOXIC="local_stack_cut"
+
+# chaos_api dies on any non-2xx; chaos_curl returns non-zero, for probes that handle it.
+chaos_curl() { curl -fsS --max-time 5 "$@"; }
+
+chaos_api() { # chaos_api <curl args...>
+  local out status
+  out="$(curl -sS --max-time 5 -w '\n%{http_code}' "$@" 2>&1)" || die "toxiproxy API unreachable: $out"
+  status="${out##*$'\n'}"
+  case "$status" in
+    2*) printf '%s' "${out%$'\n'*}" ;;
+    *)  die "toxiproxy API returned HTTP $status: ${out%$'\n'*}" ;;
+  esac
+}
+
+chaos_targets() { sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$DEV/toxiproxy.json"; }
+
+# Split on commas first — a greedy sed would otherwise match only the last name.
+chaos_toxic_names() { # chaos_toxic_names <target>
+  chaos_curl "$TOXIPROXY_API/proxies/$1/toxics" 2>/dev/null \
+    | tr ',' '\n' | sed -n 's/.*"name":"\([^"]*\)".*/\1/p' || true
+}
+
+chaos_require_up() {
+  if chaos_curl "$TOXIPROXY_API/version" >/dev/null 2>&1; then return 0; fi
+  die "toxiproxy is not reachable on $TOXIPROXY_API
+     Start the stack with fault injection enabled:  ./local-stack.sh up --chaos"
+}
+
+chaos_check_target() { # chaos_check_target <name>
+  local t
+  for t in $(chaos_targets); do
+    if [ "$t" = "$1" ]; then return 0; fi
+  done
+  die "unknown chaos target: $1
+     Known targets: $(chaos_targets | tr '\n' ' ')"
+}
+
+chaos_check_live() { # chaos_check_live <target>
+  if chaos_curl "$TOXIPROXY_API/proxies/$1" >/dev/null 2>&1; then return 0; fi
+  die "toxiproxy is up but has no proxy named '$1'.
+     Proxies are seeded from dev/toxiproxy.json when the container starts, so a target
+     added since then needs a restart:  ./local-stack.sh up --chaos"
+}
+
+chaos_clear_toxics() { # chaos_clear_toxics <target>
+  local t
+  for t in $(chaos_toxic_names "$1"); do
+    chaos_curl -X DELETE "$TOXIPROXY_API/proxies/$1/toxics/$t" >/dev/null 2>&1 || true
+  done
+}
+
+chaos_cut() { # chaos_cut <target>
+  chaos_clear_toxics "$1"      # re-cutting an already-cut target must not 409
+  chaos_api -X POST "$TOXIPROXY_API/proxies/$1/toxics" \
+    -H 'Content-Type: application/json' \
+    -d "{\"name\":\"$CHAOS_TOXIC\",\"type\":\"timeout\",\"stream\":\"downstream\",\"toxicity\":1.0,\"attributes\":{\"timeout\":0}}" \
+    >/dev/null
+  ok "$1 cut — responses black-holed, callers hang until they time out"
+}
+
+chaos_reject() { # chaos_reject <target>
+  chaos_api -X POST "$TOXIPROXY_API/proxies/$1" \
+    -H 'Content-Type: application/json' -d '{"enabled":false}' >/dev/null
+  ok "$1 rejecting — connections refused"
+}
+
+chaos_heal() { # chaos_heal <target>
+  chaos_clear_toxics "$1"
+  chaos_api -X POST "$TOXIPROXY_API/proxies/$1" \
+    -H 'Content-Type: application/json' -d '{"enabled":true}' >/dev/null
+  ok "$1 healed — toxics cleared, listener enabled"
+}
+
+chaos_status() {
+  local p body upstream state toxics
+  printf '%-10s %-20s %-11s %s\n' "TARGET" "UPSTREAM" "STATE" "TOXICS"
+  for p in $(chaos_targets); do
+    if ! body="$(chaos_curl "$TOXIPROXY_API/proxies/$p" 2>/dev/null)"; then
+      printf '%-10s %-20s %-11s %s\n' "$p" "-" "absent" "-"
+      continue
+    fi
+    upstream="$(printf '%s' "$body" | tr ',' '\n' | sed -n 's/.*"upstream":"\([^"]*\)".*/\1/p')"
+    case "$body" in *'"enabled":false'*) state="rejecting" ;; *) state="listening" ;; esac
+    toxics="$(chaos_toxic_names "$p" | tr '\n' ' ' | sed 's/ *$//')"
+    [ -n "$toxics" ] || toxics="-"
+    printf '%-10s %-20s %-11s %s\n' "$p" "$upstream" "$state" "$toxics"
+  done
+}
+
+chaos_usage() {
+  cat <<'EOF'
+./local-stack.sh chaos <verb> [target]
+
+  status                what is proxied, and what is currently disrupting it
+  cut <target>          black-hole it: responses stop, callers hang until their own
+                        timeout fires (a silent failover / network partition)
+  reject <target>       refuse connections outright: immediate reset (the service
+                        went away — a restart, a closed port)
+  heal <target>|--all   clear every toxic and re-enable the listener
+
+Targets are the proxies declared in dev/toxiproxy.json, and need a stack started with
+--chaos. Anything beyond cut/reject — latency, bandwidth, slicer, partial reads — lives on
+the toxiproxy API at localhost:8474; see docker/local-stack/README.md. `heal` also clears
+toxics you added there by hand.
+EOF
+}
+
+cmd_chaos() {
+  local verb="${CHAOS_ARGS[0]:-}" target="${CHAOS_ARGS[1]:-}"
+  case "$verb" in ""|help|-h|--help) chaos_usage; return 0 ;; esac
+  chaos_require_up
+  case "$verb" in
+    status) chaos_status ;;
+    cut|reject|heal)
+      if [ "$verb" = "heal" ] && [ "$target" = "--all" ]; then
+        local p
+        for p in $(chaos_targets); do
+          if chaos_curl "$TOXIPROXY_API/proxies/$p" >/dev/null 2>&1; then chaos_heal "$p"; fi
+        done
+        return 0
+      fi
+      [ -n "$target" ] || die "chaos $verb needs a target (or: chaos heal --all)
+     Known targets: $(chaos_targets | tr '\n' ' ')"
+      chaos_check_target "$target"
+      chaos_check_live "$target"
+      case "$verb" in
+        cut)    chaos_cut "$target" ;;
+        reject) chaos_reject "$target" ;;
+        heal)   chaos_heal "$target" ;;
+      esac
+      ;;
+    *) die "unknown chaos verb: $verb (try: ./local-stack.sh chaos help)" ;;
+  esac
 }
 
 # ---------------------------------------------------------------------------
@@ -571,5 +750,6 @@ case "$COMMAND" in
   logs)   cmd_logs ;;
   status) cmd_status ;;
   pull)   cmd_pull ;;
+  chaos)  cmd_chaos ;;
   *)      usage; exit 1 ;;
 esac
