@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
-import { waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { get, processLoginFromContext, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
 import { setup } from '../../test-fixture';
@@ -155,6 +155,7 @@ beforeAll(async () => {
   noAssessmentClient = await initClient(domain, 'risk-none', noAssessmentSettings(domain));
   lenientClient = await initClient(domain, 'risk-lenient', lenientSettings(domain));
   await enableDomain(domain);
+  await waitForDomainSync(domain.domain.domainId);
   const oidc = await waitForOidcReady(domain.domain.domainHrid);
   authorizationEndpoint = oidc.body.authorization_endpoint;
 

@@ -16,7 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
 import { performDelete, performGet } from '@gateway-commands/oauth-oidc-commands';
-import { waitFor, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitFor, waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { processLoginFromContext, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
@@ -116,6 +116,7 @@ beforeAll(async () => {
   await initDomain(domain, 3);
   client = await initClient(domain, 'remember-device', rememberDeviceSettings(domain));
   await enableDomain(domain);
+  await waitForDomainSync(domain.domain.domainId);
   const oidc = await waitForOidcReady(domain.domain.domainHrid);
   authorizationEndpoint = oidc.body.authorization_endpoint;
 });

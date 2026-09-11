@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
-import { waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { get, processLoginFromContext, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
 import { setup } from '../../test-fixture';
@@ -78,6 +78,7 @@ beforeAll(async () => {
   const stepUpOff = await initClient(domain, 'step-up-off', stepUpSettings(domain, '', false));
   const ruleApplies = await initClient(domain, 'step-up-rule-true', stepUpSettings(domain, '{{ true }}', true));
   await enableDomain(domain);
+  await waitForDomainSync(domain.domain.domainId);
 
   const oidc = await waitForOidcReady(domain.domain.domainHrid);
   const endpoint = oidc.body.authorization_endpoint;
