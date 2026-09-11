@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.management.handlers.automation.resource;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -25,6 +27,7 @@ import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.service.model.NewTrustDomain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -36,10 +39,12 @@ import org.mockito.ArgumentCaptor;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -251,5 +256,95 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         Response response = put(domainsTarget(), invalid);
 
         assertEquals(400, response.getStatus());
+    }
+
+    // --- dry-run tests ---
+
+    @Test
+    void dryRun_valid_body_returns_200_with_empty_errors() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        List<DryRunError> errors = readEntity(response, new TypeReference<>() {});
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void dryRun_invalid_body_returns_200_with_errors() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.error(new InvalidParameterException("path must start with /")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        List<DryRunError> errors = readEntity(response, new TypeReference<>() {});
+        assertEquals(1, errors.size());
+        assertEquals(DryRunError.Severity.ERROR, errors.get(0).severity());
+        assertEquals("path must start with /", errors.get(0).message());
+    }
+
+    @Test
+    void dryRun_does_not_persist() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+
+        put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
+        verify(domainService, never()).update(anyString(), any(Domain.class), eq(false));
+    }
+
+    @Test
+    void dryRun_update_existing_domain() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.validateUpdate(eq(domainId), any(Domain.class), eq(false)))
+                .thenReturn(Single.just(existing));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        List<DryRunError> errors = readEntity(response, new TypeReference<>() {});
+        assertTrue(errors.isEmpty());
+        verify(domainService).validateUpdate(eq(domainId), any(Domain.class), eq(false));
+    }
+
+    @Test
+    void dryRun_create_new_domain() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        verify(domainService).validateCreate(eq(ORG_ID), eq(ENV_ID), any());
+    }
+
+    @Test
+    void dryRun_non_automation_domain_returns_error() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId)))
+                .thenReturn(Maybe.just(managementDomain(domainId, "customer-auth")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        List<DryRunError> errors = readEntity(response, new TypeReference<>() {});
+        assertEquals(1, errors.size());
+        assertEquals(DryRunError.Severity.ERROR, errors.get(0).severity());
+        assertTrue(errors.get(0).message().contains("not managed by the Automation API"));
     }
 }
