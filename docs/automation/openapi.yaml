@@ -127,7 +127,9 @@ paths:
       description: "Idempotent create-or-update. Uses the key field in the body to\
         \ identify the domain. On first apply the domain is created; subsequent applies\
         \ update it. dataPlaneId is optional at creation, resolved from the environment's\
-        \ data planes when omitted, and immutable afterwards."
+        \ data planes when omitted, and immutable afterwards. When dryRun is true,\
+        \ the endpoint validates the payload without persisting and returns a list\
+        \ of DryRunError (empty on success)."
       operationId: automationCreateOrUpdateDomain
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -144,6 +146,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: "When true, validates the payload without persisting. Returns\
+          \ a list of DryRunError."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           application/json:
@@ -175,29 +184,12 @@ paths:
         "200":
           content:
             application/json:
-              examples:
-                Domain:
-                  description: A domain with common settings
-                  value:
-                    key: example-domain
-                    name: Example domain
-                    description: An example authentication domain
-                    enabled: true
-                    path: /example-domain
-                    dataPlaneId: default
-                    tags:
-                    - eu
-                    - production
-                    accountSettings:
-                      inherited: false
-                      loginAttemptsDetectionEnabled: true
-                      maxLoginAttempts: 10
-                      accountBlockedDuration: 7200
-                    oidc:
-                      redirectUriStrictMatching: true
               schema:
-                $ref: "#/components/schemas/AutomationDomain"
-          description: The created or updated domain
+                type: array
+                items:
+                  $ref: "#/components/schemas/DryRunError"
+          description: "The created or updated domain, or when dryRun is true a list\
+            \ of validation errors"
         "400":
           content:
             application/json:
@@ -2159,6 +2151,13 @@ components:
           default: true
           description: Whether inline scripts are allowed via a per-request nonce.
       title: CSP settings
+    DryRunError:
+      type: object
+      properties:
+        message:
+          type: string
+        severity:
+          $ref: "#/components/schemas/Severity"
     Error:
       type: object
       description: Error response body returned for failed requests.
@@ -2441,6 +2440,11 @@ components:
         resetPassword:
           $ref: "#/components/schemas/ResetPasswordSettings"
       title: Self-service account management settings
+    Severity:
+      type: string
+      enum:
+      - error
+      - warning
     SpiffeDomainSettings:
       type: object
       description: Workload identity (SPIFFE) settings for the domain.
