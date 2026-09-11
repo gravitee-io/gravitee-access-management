@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.certificate.api.Key;
 import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
+import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
@@ -36,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import io.gravitee.am.certificate.api.Key;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STATE;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -53,7 +54,7 @@ import static org.mockito.Mockito.when;
 public class LoginCallbackParseHandlerTest extends RxWebTestBase {
 
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -69,7 +70,7 @@ public class LoginCallbackParseHandlerTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        handler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
+        handler = new LoginCallbackParseHandler(clientLookupService, identityProviderManager, jwtService, certificateManager);
     }
 
     /**
@@ -101,7 +102,7 @@ public class LoginCallbackParseHandlerTest extends RxWebTestBase {
     @Test
     public void should_failWithLoginCallbackFailedException_whenExternalIdpReturnsErrorInQueryParams() throws Exception {
         givenValidStateJwt("my-client", "my-provider");
-        when(clientSyncService.findByClientId("my-client")).thenReturn(Maybe.just(new Client()));
+        when(clientLookupService.findByClientId("my-client")).thenReturn(Maybe.just(new Client()));
 
         router.route().order(-1).handler(rc -> {
             RoutingContextHelper.setSession(rc, new DummySession().getDelegate());
@@ -134,7 +135,7 @@ public class LoginCallbackParseHandlerTest extends RxWebTestBase {
     @Test
     public void should_failWithLoginCallbackFailedException_whenErrorAlreadyInContext() throws Exception {
         givenValidStateJwt("my-client", "my-provider");
-        when(clientSyncService.findByClientId("my-client")).thenReturn(Maybe.just(new Client()));
+        when(clientLookupService.findByClientId("my-client")).thenReturn(Maybe.just(new Client()));
 
         router.route().order(-1).handler(rc -> {
             RoutingContextHelper.setSession(rc, new DummySession().getDelegate());
@@ -167,7 +168,7 @@ public class LoginCallbackParseHandlerTest extends RxWebTestBase {
     public void should_continueToNextHandler_whenNoError() throws Exception {
         var authProvider = mock(AuthenticationProvider.class);
         givenValidStateJwt("my-client", "my-provider");
-        when(clientSyncService.findByClientId("my-client")).thenReturn(Maybe.just(new Client()));
+        when(clientLookupService.findByClientId("my-client")).thenReturn(Maybe.just(new Client()));
         when(identityProviderManager.get("my-provider")).thenReturn(Maybe.just(authProvider));
 
         router.route().order(-1).handler(rc -> {
@@ -184,5 +185,76 @@ public class LoginCallbackParseHandlerTest extends RxWebTestBase {
                 null,
                 null,
                 200, "OK", "ok");
+    }
+
+    /**
+     * AM-7658 — a CIMD client_id (URL shaped) is not a registered application, it has to be
+     * re-synthesized from its metadata document when coming back from the external IdP.
+     * The handler must rely on the CIMD aware ClientLookupService and resume the flow.
+     */
+    @Test
+    public void should_continueToNextHandler_whenClientIsResolvedFromCimdMetadataDocument() throws Exception {
+        final String cimdClientId = "https://app.example.com/cimd.json";
+        var authProvider = mock(AuthenticationProvider.class);
+        var cimdClient = new Client();
+        cimdClient.setClientId(cimdClientId);
+
+        givenValidStateJwt(cimdClientId, "my-provider");
+        when(clientLookupService.findByClientId(cimdClientId)).thenReturn(Maybe.just(cimdClient));
+        when(identityProviderManager.get("my-provider")).thenReturn(Maybe.just(authProvider));
+
+        router.route().order(-1).handler(rc -> {
+            RoutingContextHelper.setSession(rc, new DummySession().getDelegate());
+            rc.next();
+        });
+
+        AtomicReference<Client> resolvedClient = new AtomicReference<>();
+        router.get("/login/callback")
+                .handler(handler)
+                .handler(rc -> {
+                    resolvedClient.set(rc.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+                    rc.response().setStatusCode(200).end("ok");
+                });
+
+        testRequest(
+                HttpMethod.GET, "/login/callback?code=auth-code&state=state-token",
+                null,
+                null,
+                200, "OK", "ok");
+
+        assertEquals(cimdClientId, resolvedClient.get().getClientId());
+    }
+
+    /**
+     * AM-7658 — an unknown client_id must keep reporting Bad client credentials.
+     */
+    @Test
+    public void should_failWithBadClientCredentials_whenClientIsUnknown() throws Exception {
+        givenValidStateJwt("my-client", "my-provider");
+        when(clientLookupService.findByClientId("my-client")).thenReturn(Maybe.empty());
+
+        AtomicReference<Throwable> failure = givenFailureCapturingRoute();
+
+        testRequest(HttpMethod.GET, "/login/callback?code=auth-code&state=state-token", 500, "Internal Server Error");
+
+        assertTrue(failure.get() instanceof BadClientCredentialsException);
+        verify(identityProviderManager, never()).get(anyString());
+    }
+
+    private AtomicReference<Throwable> givenFailureCapturingRoute() {
+        router.route().order(-1).handler(rc -> {
+            RoutingContextHelper.setSession(rc, new DummySession().getDelegate());
+            rc.next();
+        });
+
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        router.get("/login/callback")
+                .handler(handler)
+                .handler(rc -> rc.response().setStatusCode(200).end("ok"))
+                .failureHandler(rc -> {
+                    failure.set(rc.failure());
+                    rc.response().setStatusCode(500).end();
+                });
+        return failure;
     }
 }

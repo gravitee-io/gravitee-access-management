@@ -484,13 +484,13 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(PATH_LOGOUT)
                 .handler(new ClientRequestParseHandler(clientLookupService).setRequired(false).setContinueOnError(true))
                 .handler(new UserRememberMeResponseHandler(rememberMeCookieName))
-                .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
+                .handler(new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
         rootRouter.route(PATH_LOGOUT_CALLBACK)
-                .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager));
+                .handler(new LogoutCallbackEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, certificateManager));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain, gatewayMetricProvider, certificateManager));
-        Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
+        Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientLookupService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> loginCallbackDeviceIdHandler = new LoginCallbackDeviceIdHandler(thymeleafTemplateEngine, deviceIdentifierManager);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService, identityProviderManager, jwtService, certificateManager);

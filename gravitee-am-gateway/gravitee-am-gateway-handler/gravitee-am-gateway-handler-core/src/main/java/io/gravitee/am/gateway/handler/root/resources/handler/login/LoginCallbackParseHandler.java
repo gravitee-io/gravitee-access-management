@@ -26,7 +26,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.oidc.Client;
@@ -65,13 +65,13 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackParseHandler.class);
     private static final String RELAY_STATE_PARAM_KEY = "RelayState";
 
-    private final ClientSyncService clientSyncService;
+    private final ClientLookupService clientLookupService;
     private final IdentityProviderManager identityProviderManager;
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
 
-    public LoginCallbackParseHandler(ClientSyncService clientSyncService, IdentityProviderManager identityProviderManager, JWTService jwtService, CertificateManager certificateManager) {
-        this.clientSyncService = clientSyncService;
+    public LoginCallbackParseHandler(ClientLookupService clientLookupService, IdentityProviderManager identityProviderManager, JWTService jwtService, CertificateManager certificateManager) {
+        this.clientLookupService = clientLookupService;
         this.identityProviderManager = identityProviderManager;
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
@@ -208,7 +208,7 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
         }
 
         final String clientId = ((MultiMap) context.get(ConstantKeys.PARAM_CONTEXT_KEY)).get(Parameters.CLIENT_ID);
-        clientSyncService.findByClientId(clientId)
+        clientLookupService.findByClientId(clientId)
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(client)),
                         ex -> {
