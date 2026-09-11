@@ -15,6 +15,7 @@
  */
 
 import fetch from 'cross-fetch';
+import { retryUntil } from './retry';
 
 const cheerio = require('cheerio');
 
@@ -73,6 +74,62 @@ export async function getLastEmail(delay = 1000, toAddress?: string) {
   });
 
   return email;
+}
+
+async function fetchEmails(): Promise<any[]> {
+  const response = await fetch(process.env.FAKE_SMTP + '/api/email');
+  const array = await response.json();
+  return array ?? [];
+}
+
+function toEmail(jsonEmail: any): Email {
+  const email = new Email();
+  email.id = jsonEmail['id'];
+  email.fromAddress = jsonEmail['fromAddress'];
+  email.toAddress = jsonEmail['toAddress'];
+  email.subject = jsonEmail['subject'];
+  email.contents = (jsonEmail['contents'] ?? []).map((c) => {
+    const content = new Content();
+    content.data = c['data'];
+    content.contentType = c['contentType'];
+    return content;
+  });
+  return email;
+}
+
+/**
+ * Polls the mailbox until an email for `toAddress` arrives. Prefer this over `getLastEmail`, which
+ * reads once after a fixed delay: sending is asynchronous to the HTTP response in every mode, and
+ * when `email.bulk.enabled` is on a message is staged and picked up by a background processor
+ * whose tick is `email.bulk.period`.
+ */
+export async function waitForEmail(toAddress: string, timeoutMillis = 15000): Promise<Email> {
+  const found = await retryUntil(
+    async () => (await fetchEmails()).find((e: any) => e['toAddress'] === toAddress),
+    (email) => !!email,
+    { timeoutMillis, intervalMillis: 250 },
+  ).catch(() => {
+    throw new Error(`No email for ${toAddress} within ${timeoutMillis}ms`);
+  });
+  return toEmail(found);
+}
+
+/** Waits until every address has an email, and returns them in the order requested. */
+export async function waitForEmails(toAddresses: string[], timeoutMillis = 20000): Promise<Email[]> {
+  const all = await retryUntil(fetchEmails, (emails) => toAddresses.every((a) => emails.some((e: any) => e['toAddress'] === a)), {
+    timeoutMillis,
+    intervalMillis: 250,
+  }).catch(async () => {
+    const delivered = (await fetchEmails()).map((e: any) => e['toAddress']);
+    const missing = toAddresses.filter((a) => !delivered.includes(a));
+    throw new Error(`No email within ${timeoutMillis}ms for: ${missing.join(', ')}`);
+  });
+  return toAddresses.map((a) => toEmail(all.find((e: any) => e['toAddress'] === a)));
+}
+
+/** Number of emails currently held for an address. */
+export async function countEmailsFor(toAddress: string): Promise<number> {
+  return (await fetchEmails()).filter((e: any) => e['toAddress'] === toAddress).length;
 }
 
 export async function clearEmails(toAddress?: string) {
