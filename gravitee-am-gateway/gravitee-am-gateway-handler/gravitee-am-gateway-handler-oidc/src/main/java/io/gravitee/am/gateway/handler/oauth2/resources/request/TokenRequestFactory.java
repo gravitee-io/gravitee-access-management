@@ -80,8 +80,8 @@ public final class TokenRequestFactory {
         tokenRequest.setScopes(splitScopes(scope));
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
 
-        Set<String> resources = ResourceParameterUtils.parseResourceParameters(request);
-        tokenRequest.setResources(resources);
+        // set RFC 8707 resource indicators
+        tokenRequest.setResources(ResourceParameterUtils.parseResourceParameters(request));
         tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
 
         return tokenRequest;
