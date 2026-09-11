@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-add-managed-by-to-dataplanes
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: dataplanes
+              columnName: managed_by
+      changes:
+        #############################
+        # dataplanes #
+        ############################
+        - addColumn:
+            tableName: dataplanes
+            columns:
+              - column:
+                  name: managed_by
+                  type: varchar(64)
+                  constraints:
+                    nullable: true

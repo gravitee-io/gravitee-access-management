@@ -39,8 +39,8 @@ Base URL: `http://localhost:8093/automation`
 
 ## 1. The API pattern
 
-Every resource type (Domain, Identity Provider, Certificate, Reporter) is managed individually and
-follows the same convention:
+Every resource type (Domain, Identity Provider, Certificate, Reporter, Data Plane) is managed
+individually and follows the same convention:
 
 | Operation | Method | Path | Identifier |
 |-----------|--------|------|------------|
@@ -51,6 +51,9 @@ follows the same convention:
 
 PUT is always on the **collection** endpoint; the `key` field in the body identifies which resource to
 create or update. Each PUT manages a single resource and never touches siblings you didn't mention.
+
+> **Data planes spell the identity field `id`, not `key`.** It behaves exactly like a `key` everywhere
+> else in this guide, including `id:` addressing.
 
 ## 2. Addressing a resource
 
@@ -121,6 +124,19 @@ The **`id:` exception:** addressing by internal id bypasses this gate so you *ca
 resource — but only if you already know its id. `id:`-reachable resources never appear in `list`
 responses (which stay automation-only), so there is no enumeration leak.
 
+**Data planes declared in `gravitee.yml`** are outside this API entirely: their ids are reserved, and a
+PUT naming one is rejected. Data planes provisioned through the node's internal API are not
+automation-managed, so they are reachable only by `id:` — which updates them in place without adopting
+them.
+
+**Deleting a data plane is refused while any domain still references it** (`409`). Move or delete those
+domains first. This is the one delete in the API that is not unconditional.
+
+**A domain's `dataPlaneId` is not eventually consistent** the way the references in §6 are: the data
+plane has to exist before a domain can name it, so apply it first. A control plane running more than
+one node picks up a new data plane on its next sync poll, so a create routed to a node that is still
+behind is refused until it catches up.
+
 > **Automation domains start empty.** Unlike domains created via the UI, an automation-managed domain is
 > **not** seeded with a system identity provider, reporter, or certificate. Declare what you need
 > explicitly — including the built-in defaults via the `system` flag.
@@ -158,6 +174,7 @@ All paths are prefixed with
 | Identity Provider | `…/domains/{ref}/identities` | `…/identities/{ref}` | `…/identities` | `…/identities/{ref}` |
 | Certificate | `…/domains/{ref}/certificates` | `…/certificates/{ref}` | `…/certificates` | `…/certificates/{ref}` |
 | Reporter | `…/domains/{ref}/reporters` | `…/reporters/{ref}` | `…/reporters` | `…/reporters/{ref}` |
+| Data Plane | `…/dataplanes` | `…/dataplanes/{ref}` | `…/dataplanes` | `…/dataplanes/{ref}` |
 
 `{ref}` is either an automation `key` or an `id:<internalUuid>` (§2). Resource-specific fields:
 
@@ -167,12 +184,45 @@ All paths are prefixed with
   `groupMapper`, `domainWhitelist`; or `key` + `system: true`.
 - **Certificate** — `key`, `name`, `type`, `configuration`; or `key` + `system: true`.
 - **Reporter** — `key`, `name`, `type`, `configuration`, `enabled`; or `key` + `system: true`.
+- **Data Plane** — `id`, `name`, `type` (`mongodb` or `jdbc`), `configuration`; optional `gatewayUrl`.
+  `configuration` is write-only; reads return `database` and `hosts` instead. `type` is immutable, and
+  so are the organization and environment, which come from the path.
 
 See [`openapi.yaml`](openapi.yaml) for the full field-level contract.
 
 ---
 
 # Worked examples
+
+### Register a data plane, then put a domain on it
+
+```bash
+BASE="http://localhost:8093/automation/organizations/DEFAULT/environments/DEFAULT"
+
+curl -s -X PUT "$BASE/dataplanes" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "id": "acme-eu",
+    "name": "ACME EU data plane",
+    "type": "mongodb",
+    "gatewayUrl": "https://gateway-eu.example.com",
+    "configuration": {
+      "mongodb": { "dbname": "gravitee-am-acme", "host": "mongo", "port": 27017 }
+    }
+  }' | jq '{id, database, hosts}'
+```
+
+A domain's `dataPlaneId` is fixed at creation, so deleting the data plane is refused until that domain
+is gone:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/dataplanes/acme-eu" \
+  -H "Authorization: Bearer $TOKEN"      # 409 while acme-auth exists
+
+curl -s -X DELETE "$BASE/domains/acme-auth" -H "Authorization: Bearer $TOKEN"
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/dataplanes/acme-eu" \
+  -H "Authorization: Bearer $TOKEN"      # 204
+```
 
 ### Create / update a domain
 

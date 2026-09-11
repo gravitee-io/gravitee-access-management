@@ -85,7 +85,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 .blockingForEach(definition -> activate(definition, storage));
     }
 
-    public Completable register(String dataPlaneId) {
+    Completable register(String dataPlaneId) {
         var storage = storageRef.get();
 
         // nothing is lost when the registry has not started yet: load publishes its consumer before
@@ -101,6 +101,29 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 .ignoreElement()
                 .doOnError(e -> log.error("Data plane [{}] could not be read back after being provisioned and will be unavailable until restart", dataPlaneId, e))
                 .onErrorComplete();
+    }
+
+    /**
+     * Makes this node serve the stored definition, dropping whatever it served under that id first.
+     */
+    public Completable activate(String dataPlaneId) {
+        if (storageRef.get() == null) {
+            return Completable.complete();
+        }
+        deactivate(dataPlaneId);
+        return register(dataPlaneId);
+    }
+
+    /**
+     * Stops this node serving the data plane: its provider is closed and the id is left free for
+     * whatever claims it next.
+     */
+    public void deactivate(String dataPlaneId) {
+        var registry = registryRef.get();
+        if (registry != null) {
+            registry.unregister(dataPlaneId);
+        }
+        forget(dataPlaneId);
     }
 
     private void activate(DataPlaneDefinition definition, Consumer<DataPlaneDescription> storage) {
@@ -130,7 +153,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
         }
     }
 
-    public void forget(String dataPlaneId) {
+    void forget(String dataPlaneId) {
         registered.remove(dataPlaneId);
         properties.keySet().removeIf(key -> key.startsWith(PROPERTIES_BASE + "." + dataPlaneId + "."));
     }

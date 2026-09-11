@@ -18,12 +18,11 @@ package io.gravitee.am.management.handlers.internalapi.endpoints;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import io.gravitee.am.service.DataPlaneDefinitionService;
-import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
+import io.gravitee.am.model.ManagedBy;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.rxjava3.core.Single;
 import io.vertx.ext.web.RoutingContext;
 import lombok.CustomLog;
 
@@ -36,15 +35,12 @@ import lombok.CustomLog;
 @CustomLog
 public class CreateDataPlaneEndpoint extends AbstractInternalApiEndpoint {
 
-    private final DataPlaneDefinitionService dataPlaneDefinitionService;
-    private final ProvisionedDataPlaneLoader provisionedDataPlaneLoader;
+    private final DataPlaneProvisioningService dataPlaneProvisioningService;
 
-    public CreateDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
-                                   ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+    public CreateDataPlaneEndpoint(DataPlaneProvisioningService dataPlaneProvisioningService,
                                    ObjectMapper objectMapper) {
         super(objectMapper);
-        this.dataPlaneDefinitionService = dataPlaneDefinitionService;
-        this.provisionedDataPlaneLoader = provisionedDataPlaneLoader;
+        this.dataPlaneProvisioningService = dataPlaneProvisioningService;
     }
 
     @Override
@@ -73,8 +69,7 @@ public class CreateDataPlaneEndpoint extends AbstractInternalApiEndpoint {
             return;
         }
 
-        dataPlaneDefinitionService.create(payload)
-                .flatMap(summary -> provisionedDataPlaneLoader.register(summary.id()).andThen(Single.just(summary)))
+        dataPlaneProvisioningService.provision(payload, ManagedBy.NONE, null)
                 .subscribe(
                         summary -> respond(context, HttpStatusCode.CREATED_201, summary),
                         throwable -> respondFailure(context, throwable, "Unable to create the data plane definition"));

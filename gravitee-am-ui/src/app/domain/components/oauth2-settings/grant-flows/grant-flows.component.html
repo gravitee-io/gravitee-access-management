@@ -271,10 +271,12 @@
               [disabled]="readonly"
               required
             >
-              <mat-option *ngFor="let td of trustDomains" [value]="td.name">{{ td.name }}</mat-option>
+              <mat-option *ngFor="let td of trustDomains" [value]="td.spiffeTrustDomain"
+                >{{ td.spiffeTrustDomain }}<span *ngIf="td.name !== td.spiffeTrustDomain"> ({{ td.name }})</span></mat-option
+              >
             </mat-select>
             <mat-hint *ngIf="trustDomains.length === 0"
-              >No trust domains registered. Add one under Security &raquo; Trust Domains.</mat-hint
+              >No trusted domain carries the SPIFFE usage. Add one under Security &raquo; Trusted Domains.</mat-hint
             >
           </mat-form-field>
 

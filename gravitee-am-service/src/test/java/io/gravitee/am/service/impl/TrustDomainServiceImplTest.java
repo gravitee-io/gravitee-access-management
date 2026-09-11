@@ -141,13 +141,28 @@ public class TrustDomainServiceImplTest {
     }
 
     @Test
-    public void create_rejects_whenSpiffeDisabled() {
+    public void shouldCreateSpiffeTrustedDomain_whenSpiffeDisabled() {
         spiffeSettings.setEnabled(false);
+        stubRepoForCreate();
 
         service.create(domain, validInput(), null).test()
-                .assertError(InvalidTrustDomainException.class)
-                .assertError(err -> err.getMessage().contains("SPIFFE workload identity is disabled"));
-        verify(repository, never()).create(any());
+                .assertNoErrors()
+                .assertValue(created -> "example.org".equals(created.getSpiffeTrustDomain()));
+        verify(repository).create(any());
+    }
+
+    @Test
+    public void shouldUpdateSpiffeTrustedDomain_whenSpiffeDisabled() {
+        spiffeSettings.setEnabled(false);
+        stubExistingSpiffeTrustDomainForUpdate();
+        UpdateTrustedDomain input = new UpdateTrustedDomain();
+        input.setDescription("edited");
+
+        service.update(domain, "td-1", input, null).test()
+                .assertNoErrors()
+                .assertValue(saved -> "edited".equals(saved.getDescription()))
+                .assertValue(saved -> "example.org".equals(saved.getSpiffeTrustDomain()));
+        verify(repository).update(any());
     }
 
     @Test
@@ -643,9 +658,10 @@ public class TrustDomainServiceImplTest {
 
     @Test
     public void create_audits_whenValidationFails() {
-        spiffeSettings.setEnabled(false);
+        NewTrustedDomain input = validInput();
+        input.setKeyMaterial(null);
 
-        service.create(domain, validInput(), null).test().assertError(InvalidTrustDomainException.class);
+        service.create(domain, input, null).test().assertError(InvalidTrustDomainException.class);
 
         verify(auditService).report(any(TrustDomainAuditBuilder.class));
     }

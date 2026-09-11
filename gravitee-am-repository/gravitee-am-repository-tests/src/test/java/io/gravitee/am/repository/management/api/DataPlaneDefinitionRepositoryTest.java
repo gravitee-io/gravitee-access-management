@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.DataPlaneDefinition;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -50,6 +51,7 @@ public class DataPlaneDefinitionRepositoryTest extends AbstractManagementTest {
         definition.setOrganizationId("DEFAULT");
         definition.setEnvironmentId(environmentId);
         definition.setConfiguration(MONGO_CONFIGURATION);
+        definition.setManagedBy(ManagedBy.AUTOMATION_API);
         definition.setCreatedAt(new Date());
         definition.setUpdatedAt(new Date());
         return definition;
@@ -194,5 +196,21 @@ public class DataPlaneDefinitionRepositoryTest extends AbstractManagementTest {
         obs.assertNoErrors();
 
         assertNull(dataPlaneDefinitionRepository.findById("dp-delete").blockingGet());
+    }
+
+    @Test
+    public void testManagedByRoundTrip() {
+        dataPlaneDefinitionRepository.create(build("dp-managed", "env-managed")).blockingGet();
+
+        DataPlaneDefinition stored = dataPlaneDefinitionRepository.findById("dp-managed").blockingGet();
+        assertEquals(ManagedBy.AUTOMATION_API, stored.getManagedBy());
+
+        stored.setManagedBy(ManagedBy.NONE);
+        TestObserver<DataPlaneDefinition> obs = dataPlaneDefinitionRepository.update(stored).test();
+        obs.awaitDone(10, TimeUnit.SECONDS);
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(d -> ManagedBy.NONE == d.getManagedBy());
     }
 }

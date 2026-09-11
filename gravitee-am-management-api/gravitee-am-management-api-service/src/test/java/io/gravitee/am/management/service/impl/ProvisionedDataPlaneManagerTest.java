@@ -167,8 +167,7 @@ class ProvisionedDataPlaneManagerTest {
     void shouldStopServingTheDataPlaneOnUndeploy() {
         manager.onEvent(event(DataPlaneEvent.UNDEPLOY, "dp-1"));
 
-        verify(dataPlaneRegistry).unregister("dp-1");
-        verify(provisionedDataPlaneLoader).forget("dp-1");
+        verify(provisionedDataPlaneLoader).deactivate("dp-1");
         verify(dataPlaneDefinitionRepository, never()).findById(any());
     }
 
@@ -178,8 +177,7 @@ class ProvisionedDataPlaneManagerTest {
 
         manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
 
-        verify(dataPlaneRegistry).unregister("dp-1");
-        verify(provisionedDataPlaneLoader).forget("dp-1");
+        verify(provisionedDataPlaneLoader).deactivate("dp-1");
         verify(dataPlaneRegistry, never()).registerProvisioned(any());
     }
 

@@ -21,9 +21,8 @@ import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneE
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.DataPlaneDefinitionService;
-import io.gravitee.am.service.dataplane.ProvisionedDataPlaneLoader;
+import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,10 +36,9 @@ import org.springframework.context.annotation.Configuration;
 public class InternalApiConfiguration {
 
     @Bean
-    public CreateDataPlaneEndpoint createDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
-                                                           ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+    public CreateDataPlaneEndpoint createDataPlaneEndpoint(DataPlaneProvisioningService dataPlaneProvisioningService,
                                                            ObjectMapper objectMapper) {
-        return new CreateDataPlaneEndpoint(dataPlaneDefinitionService, provisionedDataPlaneLoader, objectMapper);
+        return new CreateDataPlaneEndpoint(dataPlaneProvisioningService, objectMapper);
     }
 
     @Bean
@@ -54,11 +52,9 @@ public class InternalApiConfiguration {
     }
 
     @Bean
-    public DeleteDataPlaneEndpoint deleteDataPlaneEndpoint(DataPlaneDefinitionService dataPlaneDefinitionService,
-                                                           DataPlaneRegistry dataPlaneRegistry,
-                                                           ProvisionedDataPlaneLoader provisionedDataPlaneLoader,
+    public DeleteDataPlaneEndpoint deleteDataPlaneEndpoint(DataPlaneProvisioningService dataPlaneProvisioningService,
                                                            ObjectMapper objectMapper) {
-        return new DeleteDataPlaneEndpoint(dataPlaneDefinitionService, dataPlaneRegistry, provisionedDataPlaneLoader, objectMapper);
+        return new DeleteDataPlaneEndpoint(dataPlaneProvisioningService, objectMapper);
     }
 
     @Bean

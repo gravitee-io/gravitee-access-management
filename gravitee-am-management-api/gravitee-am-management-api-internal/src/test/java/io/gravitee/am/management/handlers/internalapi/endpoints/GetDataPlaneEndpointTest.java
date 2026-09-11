@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.common.http.HttpMethod;
 import io.reactivex.rxjava3.core.Single;
@@ -138,6 +139,7 @@ class GetDataPlaneEndpointTest {
                 "DEFAULT",
                 "gravitee-am-acme",
                 List.of("mongo:27017"),
+                ManagedBy.NONE,
                 new Date(),
                 new Date());
     }

@@ -45,6 +45,9 @@ public class JdbcDataPlaneDefinition {
 
     private String configuration;
 
+    @Column("managed_by")
+    private String managedBy;
+
     @Column("created_at")
     private LocalDateTime createdAt;
 
@@ -97,6 +100,14 @@ public class JdbcDataPlaneDefinition {
 
     public void setEnvironmentId(String environmentId) {
         this.environmentId = environmentId;
+    }
+
+    public String getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(String managedBy) {
+        this.managedBy = managedBy;
     }
 
     public String getConfiguration() {
