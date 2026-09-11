@@ -41,11 +41,12 @@ cd docker/local-stack
 | `--full` | UI + wiremock + ciba + openfga + kafka + mtls (jest-gateway + playwright union). Does **not** include cloud. |
 | `--cloud` | Overlay: cockpit mock + management API in managed-cloud mode. |
 | `--with a,b,…` | Opt-in extras: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud`. |
+| `--chaos` | Route AM's outbound connections through toxiproxy so they can be broken on demand. Off by default. |
 | `--build` | Full clean rebuild: wipes stale source-tree plugin caches, `mvn clean install`, `make plugins`. Use when a container crashes on boot. |
 | `--quick` / `--no-build` | Skip Maven; reuse existing zips, just rebuild images. |
 | `--license <path>` | EE license file (default `dev/license/gravitee-universe-v4.key`). |
 
-Other commands: `down`, `logs [svc]`, `status`, `pull --version <tag>`, `help`.
+Other commands: `down`, `logs [svc]`, `status`, `pull --version <tag>`, `chaos <verb>`, `help`.
 
 ## Service set (what to start for which tests)
 
@@ -55,6 +56,40 @@ Other commands: `down`, `logs [svc]`, `status`, `pull --version <tag>`, `help`.
 - **`--full`** — the union the **jest gateway** and **playwright** suites need (not cloud).
 - **`--cloud`** — managed-cloud overlay (Cockpit mock) for the **cloud** jest suite.
 - **`--with spire`** — only for the env-guarded gateway specs (`RUN_SPIRE_TESTS=true`).
+
+## Fault injection (`--chaos`)
+
+Starts toxiproxy between AM and the infrastructure it dials out to, so connections can be
+broken and restored while the stack keeps running. Omitted unless asked for, and inert until
+something is injected.
+
+```bash
+./local-stack.sh up --db psql --chaos
+
+./local-stack.sh chaos status            # what is proxied, and what is disrupting it
+./local-stack.sh chaos cut postgres      # black hole — callers hang until they time out
+./local-stack.sh chaos reject postgres   # refused — immediate connection reset
+./local-stack.sh chaos heal postgres     # or: chaos heal --all
+```
+
+Targets: `postgres` / `mongo` (per `--db`), `smtp` (always), `cockpit` (with `--cloud`).
+
+- `cut` vs `reject` are different failures: `cut` stops data without closing anything, so a
+  pool connection looks healthy and blocks until some timeout fires (silent failover);
+  `reject` disables the listener, so connections are refused immediately (service restarted).
+- `cut` is **one-way** — it blocks responses, not requests, so a query sent during a cut still
+  reaches the database and commits. Add a matching `upstream` toxic for a two-way stall.
+- `docker stop <db>` is not an equivalent test: a stopped container loses its DNS alias, so AM
+  sees name resolution fail rather than a refused, reset, or hung socket.
+- **Only the admin API (`:8474`) is published.** Proxy listeners stay on the compose network,
+  so a jest/playwright run on the host keeps its direct route to the database and can assert
+  against the data while AM's connection is cut.
+- **LDAP and external HTTP IdPs are not covered** — their addresses are per-domain config in
+  the database (`ldap://openldap:1389`, `http://wiremock:8080`), not compose env, so there is
+  nothing central to redirect.
+- Anything beyond `cut`/`reject` (latency, bandwidth, slicer, …) is deliberately not wrapped:
+  use the toxiproxy API on `localhost:8474`. `chaos heal` clears those toxics too.
+- A toxic survives until removed — `chaos heal --all` before concluding AM is broken.
 
 ## URLs & credentials (once up)
 

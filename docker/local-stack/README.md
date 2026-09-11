@@ -106,9 +106,112 @@ docker login graviteeio.azurecr.io
 | `--cloud` | cockpit mock; management API in managed-cloud mode (Cockpit command path) |
 | `--with a,b,…` | opt-in individually: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud` |
 | `--db mongo\|psql` | choose the backend database (default `mongo`) |
+| `--chaos` | + toxiproxy, interposed on AM's outbound connections — see [Fault injection](#fault-injection) |
 
 SPIRE is only needed by the env-guarded gateway tests (`RUN_SPIRE_TESTS=true`); start it with
 `--with spire`.
+
+## Fault injection
+
+`--chaos` starts [toxiproxy](https://github.com/Shopify/toxiproxy) and routes AM's outbound
+connections through it, so they can be broken and restored while the stack keeps running.
+It is off unless you ask for it, and changes nothing about how the stack behaves until you
+inject something.
+
+```bash
+./local-stack.sh up --db psql --chaos
+
+./local-stack.sh chaos status            # what is proxied, and what is disrupting it
+./local-stack.sh chaos cut postgres      # black hole: callers hang until they time out
+./local-stack.sh chaos reject postgres   # refused: immediate connection reset
+./local-stack.sh chaos heal postgres     # or: chaos heal --all
+```
+
+`cut` and `reject` are different failures and tend to expose different bugs. `cut` stops data
+flowing without closing anything, so an open pool connection looks healthy and blocks until
+some timeout fires — a silent failover, or a partition. `reject` disables the listener, so
+connections are refused straight away — the service restarted, or its port closed.
+
+`cut` is one-way: it blocks responses, not requests. A query sent during a cut still reaches
+the database and commits — the caller just never learns the outcome, which is what a real
+partition looks like and where retry bugs live. For a two-way stall, add the upstream half:
+
+```bash
+curl -s -X POST http://localhost:8474/proxies/mongo/toxics \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"cut_up","type":"timeout","stream":"upstream","attributes":{"timeout":0}}'
+```
+
+Note also that `docker stop <db>` is **not** an equivalent test: a stopped container loses its
+DNS alias, so AM sees a name-resolution failure rather than a refused, reset, or hung socket —
+a different code path, reached before any pool or retry logic.
+
+### What gets proxied
+
+| Target | Fronts | Present when |
+|--------|--------|--------------|
+| `postgres` | PostgreSQL, for every AM JDBC scope | `--db psql` |
+| `mongo` | MongoDB, for every AM repository scope | `--db mongo` (default) |
+| `smtp` | the fake SMTP server | always |
+| `cockpit` | the Cockpit mock the management API dials out to | `--cloud` |
+
+Each proxy listens on the **same port as the service it fronts**, so redirecting AM is a pure
+host substitution (`postgres` → `toxiproxy`) and the connection strings stay readable.
+
+Two exclusions:
+
+- **The host.** Only the admin API is published; the proxy listeners stay on the compose
+  network. A jest or playwright run on your machine keeps its *direct* route to the database,
+  so it can still assert against the data while AM's own connection is cut.
+- **`gateway-migrator`.** It is a one-shot liquibase run that has to finish before the gateway
+  starts, so putting it behind the proxy would only add a way for the stack to fail at boot.
+
+Not covered: **LDAP and external HTTP identity providers**. Those addresses live in per-domain
+configuration in the database (`ldap://openldap:1389`, `http://wiremock:8080`), written by the
+test or the Console rather than by compose, so there is nothing central to redirect. Breaking
+one means pointing that identity provider at a proxy you add yourself.
+
+### Everything else toxiproxy can do
+
+The script wraps disrupt-and-resume and stops there. Its other toxics are available on the
+API directly:
+
+```bash
+# 800ms ± 100ms on every response
+curl -s -X POST http://localhost:8474/proxies/postgres/toxics \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"slow","type":"latency","attributes":{"latency":800,"jitter":100}}'
+
+# throttle to 10 KB/s
+curl -s -X POST http://localhost:8474/proxies/postgres/toxics \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"thin","type":"bandwidth","attributes":{"rate":10}}'
+```
+
+`chaos heal` clears toxics it did not create, so anything you add by hand still has a one-word
+undo. The full toxic reference — `latency`, `bandwidth`, `slow_close`, `timeout`, `reset_peer`,
+`slicer`, `limit_data`, plus `toxicity` and `stream` on all of them — is in the
+[toxiproxy README](https://github.com/Shopify/toxiproxy#toxics).
+
+### Making recovery observable
+
+Connection-pool defaults are tuned for production, not for a manual test window: with
+`maxLifeTime` at default you may wait a long time to watch a pool recover. Shorten the
+timings in your gitignored `dev/docker-compose.local.yml` (merged last, so it wins) for as
+long as you need them:
+
+```yaml
+services:
+  gateway:
+    environment:
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_VALIDATIONQUERY=SELECT 1
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_MAXVALIDATIONTIME=3000
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_MAXLIFETIME=20000
+      - GRAVITEE_REPOSITORIES_GATEWAY_JDBC_TCPKEEPALIVE=true
+```
+
+Repeat per scope (`OAUTH2`, `MANAGEMENT`, `DATAPLANES_0`) as needed. With these applied you
+are no longer observing production timings.
 
 ## Customising configuration (gravitee.yml settings)
 
@@ -139,6 +242,7 @@ for source-built and `--version` images.
 | Mailbox (fake SMTP) | http://localhost:5080 | SMTP on `:5025` |
 | WireMock | http://localhost:8181 | SFR/CIMD mocks |
 | MongoDB / PostgreSQL | `:27017` / `:5432` | per `--db` |
+| Toxiproxy admin API | http://localhost:8474 | with `--chaos` |
 
 Admin login: **`admin` / `adminadmin`** — organization & environment: **`DEFAULT`**.
 
@@ -185,6 +289,9 @@ npm --prefix gravitee-am-test run pw:ci         # CI mode
 | Stale code, or a service crashes on boot | `./local-stack.sh up --build` (full clean rebuild — see Build above). |
 | Port already in use | Stop the conflicting process or run `./local-stack.sh down` first. |
 | A container won't become healthy | `./local-stack.sh logs management` (or `gateway`) to inspect the boot error. |
+| `toxiproxy is not reachable` | The stack was started without `--chaos`. Restart it with the flag. |
+| `toxiproxy is up but has no proxy named …` | Proxies are seeded from `dev/toxiproxy.json` at container start; restart the stack after editing it. |
+| AM still failing after you finished testing | `./local-stack.sh chaos heal --all` — a toxic survives until you remove it. |
 
 ## Advanced
 
