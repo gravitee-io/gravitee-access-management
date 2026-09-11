@@ -56,7 +56,11 @@ public interface DomainService extends DomainReadService {
 
     Single<Domain> create(String organizationId, String environmentId, NewDomain domain, User principal);
 
+    Single<Domain> validateCreate(String organizationId, String environmentId, NewDomain newDomain);
+
     Single<Domain> update(String domainId, Domain domain, boolean validateReferences);
+
+    Single<Domain> validateUpdate(String domainId, Domain domain, boolean validateReferences);
 
     /**
      * Update a domain, validating that the certificate/identity-provider references it carries point to

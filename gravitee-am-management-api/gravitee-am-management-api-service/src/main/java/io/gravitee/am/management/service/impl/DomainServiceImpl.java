@@ -379,8 +379,7 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
-        log.debug("Create a new domain: {}", newDomain);
+    public Single<Domain> validateCreate(String organizationId, String environmentId, NewDomain newDomain) {
         var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
         String hrid = IdGenerator.generate(newDomain.getName());
 
@@ -392,7 +391,76 @@ public class DomainServiceImpl implements DomainService {
                                     "An error occurred while trying to create a domain. Data Plane [" + resolvedId
                                             + "] did not answer with the settings it was provisioned with."));
                         })
-                        .andThen(createDomain(organizationId, environmentId, newDomain, resolvedId, principal, automationDomain, hrid)));
+                        .andThen(buildAndValidateNewDomain(environmentId, newDomain, resolvedId, automationDomain, hrid)));
+    }
+
+    @Override
+    public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
+        log.debug("Create a new domain: {}", newDomain);
+        var automationDomain = newDomain instanceof AutomationNewDomain auto ? auto : null;
+
+        return validateCreate(organizationId, environmentId, newDomain)
+                .flatMap(domain -> domainRepository.create(domain))
+                .flatMap(this::createSystemScopes)
+                .flatMap(domain -> {
+                    if (automationDomain != null) {
+                        return Single.just(domain);
+                    }
+                    return createDefaultCertificate(domain);
+                })
+                .flatMap(domain -> {
+                    if (principal == null) {
+                        return Single.just(domain);
+                    }
+                    return roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)
+                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist")))
+                            .flatMap(role -> {
+                                Membership membership = new Membership();
+                                membership.setDomain(domain.getId());
+                                membership.setMemberId(principal.getId());
+                                membership.setMemberType(MemberType.USER);
+                                membership.setReferenceId(domain.getId());
+                                membership.setReferenceType(DOMAIN);
+                                membership.setRoleId(role.getId());
+                                return membershipService.addOrUpdate(organizationId, membership)
+                                        .map(__ -> domain);
+                            });
+                })
+                .flatMap(domain -> {
+                    if (!createDefaultIdentityProvider || automationDomain != null) {
+                        return Single.just(domain);
+                    }
+                    return defaultIdentityProviderService.create(domain).map(__ -> domain);
+                })
+                .flatMap(domain -> {
+                    if (!createDefaultReporters || automationDomain != null) {
+                        return Single.just(domain);
+                    }
+                    return reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain);
+                })
+                .flatMap(domain -> {
+                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
+                    return eventService.create(event, domain).flatMap(e -> Single.just(domain));
+                })
+                .flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
+                        .andThen(Single.just(domain)))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    log.error("An error occurred while trying to create a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
+                })
+                .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.DOMAIN_CREATED)
+                        .domain(domain)
+                        .reference(Reference.organization(organizationId))))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.DOMAIN_CREATED)
+                        .reference(Reference.organization(organizationId))
+                        .throwable(throwable)));
     }
 
     /**
@@ -471,114 +539,44 @@ public class DomainServiceImpl implements DomainService {
                 .anyMatch(dataPlaneId::equals);
     }
 
-    private Single<Domain> createDomain(String organizationId, String environmentId, NewDomain newDomain, String dataPlaneId, User principal, AutomationNewDomain automationDomain, String hrid) {
+    private Single<Domain> buildAndValidateNewDomain(String environmentId, NewDomain newDomain, String dataPlaneId, AutomationNewDomain automationDomain, String hrid) {
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()
                 .flatMap(empty -> {
                     if (!empty) {
                         throw new DomainAlreadyExistsException(newDomain.getName());
-                    } else {
-                        Domain domain = new Domain();
-                        domain.setVersion(DomainVersion.V2_0);
-                        domain.setId(automationDomain != null && automationDomain.getId() != null
-                                ? automationDomain.getId() : RandomString.generate());
-                        domain.setHrid(hrid);
-                        domain.setPath(automationDomain != null && automationDomain.getPath() != null
-                                ? automationDomain.getPath() : generateContextPath(newDomain.getName()));
-                        domain.setName(newDomain.getName());
-                        domain.setDescription(newDomain.getDescription());
-                        domain.setEnabled(false);
-                        domain.setAlertEnabled(false);
-                        domain.setOidc(OIDCSettings.defaultSettings());
-                        domain.setReferenceType(ReferenceType.ENVIRONMENT);
-                        domain.setReferenceId(environmentId);
-                        domain.setCreatedAt(new Date());
-                        domain.setUpdatedAt(domain.getCreatedAt());
-                        domain.setDataPlaneId(dataPlaneId);
-                        if (automationDomain != null) {
-                            domain.setManagedBy(ManagedBy.AUTOMATION_API);
-                            domain.setAutomationKey(automationDomain.getAutomationKey());
-                        }
-
-                        return environmentService.findById(domain.getReferenceId())
-                                .doOnSuccess(environment -> setDeployMode(domain, environment))
-                                .flatMapCompletable(environment -> validateDomain(domain, environment))
-                                .andThen(Single.defer(() -> domainRepository.create(domain)));
                     }
-                })
-                // create default system scopes
-                .flatMap(this::createSystemScopes)
-                // create default certificate (skipped for automation domains)
-                .flatMap(domain -> {
+                    Domain domain = new Domain();
+                    domain.setVersion(DomainVersion.V2_0);
+                    domain.setId(automationDomain != null && automationDomain.getId() != null
+                            ? automationDomain.getId() : RandomString.generate());
+                    domain.setHrid(hrid);
+                    domain.setPath(automationDomain != null && automationDomain.getPath() != null
+                            ? automationDomain.getPath() : generateContextPath(newDomain.getName()));
+                    domain.setName(newDomain.getName());
+                    domain.setDescription(newDomain.getDescription());
+                    domain.setEnabled(false);
+                    domain.setAlertEnabled(false);
+                    domain.setOidc(OIDCSettings.defaultSettings());
+                    domain.setReferenceType(ReferenceType.ENVIRONMENT);
+                    domain.setReferenceId(environmentId);
+                    domain.setCreatedAt(new Date());
+                    domain.setUpdatedAt(domain.getCreatedAt());
+                    domain.setDataPlaneId(dataPlaneId);
                     if (automationDomain != null) {
-                        return Single.just(domain);
-                    }
-                    return createDefaultCertificate(domain);
-                })
-                // create owner
-                .flatMap(domain -> {
-                    if (principal == null) {
-                        return Single.just(domain);
-                    }
-                    return roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)
-                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist")))
-                            .flatMap(role -> {
-                                Membership membership = new Membership();
-                                membership.setDomain(domain.getId());
-                                membership.setMemberId(principal.getId());
-                                membership.setMemberType(MemberType.USER);
-                                membership.setReferenceId(domain.getId());
-                                membership.setReferenceType(DOMAIN);
-                                membership.setRoleId(role.getId());
-                                return membershipService.addOrUpdate(organizationId, membership)
-                                        .map(__ -> domain);
-                            });
-                })
-                // create default IdP (always skipped for automation domains)
-                .flatMap(domain -> {
-                    if (!createDefaultIdentityProvider || automationDomain != null) {
-                        return Single.just(domain);
-                    }
-                    return defaultIdentityProviderService.create(domain).map(__ -> domain);
-                })
-                // create default reporter (always skipped for automation domains)
-                .flatMap(domain -> {
-                    if (!createDefaultReporters || automationDomain != null) {
-                        return Single.just(domain);
-                    }
-                    //default behaviour
-                    return reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain);
-                })
-                // create event for sync process
-                .flatMap(domain -> {
-                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event, domain).flatMap(e -> Single.just(domain));
-                })
-                .flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
-                        .andThen(Single.just(domain)))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        domain.setManagedBy(ManagedBy.AUTOMATION_API);
+                        domain.setAutomationKey(automationDomain.getAutomationKey());
                     }
 
-                    log.error("An error occurred while trying to create a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
-                })
-                .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.DOMAIN_CREATED)
-                        .domain(domain)
-                        .reference(Reference.organization(organizationId))))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.DOMAIN_CREATED)
-                        .reference(Reference.organization(organizationId))
-                        .throwable(throwable)));
+                    return environmentService.findById(domain.getReferenceId())
+                            .doOnSuccess(environment -> setDeployMode(domain, environment))
+                            .flatMapCompletable(environment -> validateDomain(domain, environment))
+                            .andThen(Single.just(domain));
+                });
     }
 
     @Override
-    public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
-        log.debug("Update an existing domain: {}", domain);
+    public Single<Domain> validateUpdate(String domainId, Domain domain, boolean validateReferences) {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(existingDomain -> {
@@ -592,15 +590,20 @@ public class DomainServiceImpl implements DomainService {
                     domain.setReferenceType(existingDomain.getReferenceType());
                     domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
-                    // The Automation API references certificates / identity providers that may not exist yet
-                    // (eventual consistency), so reference validation is skipped for it.
                     Completable referenceValidation = validateReferences
                             ? validateCertificateSettings(domain)
                             : Completable.complete();
                     return validateDomain(domain)
                             .andThen(referenceValidation)
-                            .andThen(Single.defer(() -> domainRepository.update(domain)));
-                })
+                            .andThen(Single.just(domain));
+                });
+    }
+
+    @Override
+    public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
+        log.debug("Update an existing domain: {}", domain);
+        return validateUpdate(domainId, domain, validateReferences)
+                .flatMap(validatedDomain -> domainRepository.update(validatedDomain))
                 // create event for sync process
                 .flatMap(domain1 -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
