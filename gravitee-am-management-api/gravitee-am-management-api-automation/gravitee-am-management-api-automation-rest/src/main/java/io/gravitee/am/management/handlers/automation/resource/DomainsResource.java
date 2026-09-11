@@ -28,12 +28,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewDomain;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -43,11 +45,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -107,10 +111,12 @@ public class DomainsResource extends AbstractAutomationResource {
             summary = "Create or update a domain",
             description = "Idempotent create-or-update. Uses the key field in the body to identify the domain. " +
                     "On first apply the domain is created; subsequent applies update it. dataPlaneId is optional " +
-                    "at creation, resolved from the environment's data planes when omitted, and immutable afterwards.")
-    @ApiResponse(responseCode = "200", description = "The created or updated domain",
-            content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = AutomationDomain.class)))
+                    "at creation, resolved from the environment's data planes when omitted, and immutable afterwards. " +
+                    "When dryRun is true, the endpoint validates the payload without persisting; the returned domain " +
+                    "carries a dryRunErrors list (empty on success, populated with validation errors otherwise).")
+    @ApiResponse(responseCode = "200", description = "The created or updated domain. When dryRun is true the domain " +
+            "includes a dryRunErrors field with any validation errors.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AutomationDomain.class)))
     @ApiResponse(responseCode = "400", description = "Invalid request: validation failure, an immutable field " +
             "change, a key that already exists for a domain not managed by the Automation API, or an unknown " +
             "defaultIdentityProviderForRegistration reference")
@@ -131,10 +137,18 @@ public class DomainsResource extends AbstractAutomationResource {
                                             "\"accountSettings\":{\"inherited\":false,\"loginAttemptsDetectionEnabled\":true,\"maxLoginAttempts\":10,\"accountBlockedDuration\":7200}," +
                                             "\"oidc\":{\"redirectUriStrictMatching\":true}}")))
             @Valid @NotNull AutomationDomain definition,
+            @Parameter(description = "When true, validates the payload without persisting. The returned domain includes a dryRunErrors field.")
+            @QueryParam("dryRun") @DefaultValue("false") boolean dryRun,
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
         final AutomationRef domainRef = AutomationRef.parse(definition.getAutomationKey());
+
+        if (dryRun) {
+            dryRunCreateOrUpdate(organizationId, environmentId, definition, domainRef, principal)
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
 
         // An 'id:' body addresses a preexisting domain directly (update-only)
         if (domainRef instanceof AutomationRef.IdRef(String id)) {
@@ -172,6 +186,65 @@ public class DomainsResource extends AbstractAutomationResource {
                                         }))))
                         .flatMap(domain -> applyAndRespond(domain, definition, principal)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<AutomationDomain> dryRunCreateOrUpdate(
+            String organizationId, String environmentId,
+            AutomationDomain definition, AutomationRef domainRef, User principal) {
+
+        if (domainRef instanceof AutomationRef.IdRef) {
+            return resolver.resolveDomain(environmentId, domainRef)
+                    .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.UPDATE)
+                            .andThen(dryRunUpdate(environmentId, definition, domain)))
+                    .onErrorReturn(ex -> withErrors(definition, ex));
+        }
+
+        final String key = domainRef.raw();
+        final String domainId = AutomationIds.domainId(environmentId, key);
+
+        return domainService.findById(domainId)
+                .flatMap(existing ->
+                        checkAnyPermission(principal, organizationId, environmentId, existing.getId(), Permission.DOMAIN, Acl.UPDATE)
+                                .andThen(existing.isManagedBy(ManagedBy.AUTOMATION_API)
+                                        ? Maybe.just(existing)
+                                        : Maybe.<Domain>error(new InvalidParameterException(
+                                                "Domain with key '" + key + "' already exists in this environment and is not managed by the Automation API"))))
+                .flatMapSingle(existing -> dryRunUpdate(environmentId, definition, existing))
+                .switchIfEmpty(Single.defer(() ->
+                        checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
+                                .andThen(dryRunCreate(organizationId, environmentId, definition, domainId, key))))
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    private Single<AutomationDomain> dryRunCreate(
+            String organizationId, String environmentId,
+            AutomationDomain definition, String domainId, String key) {
+        AutomationNewDomain newDomain = new AutomationNewDomain();
+        newDomain.setId(domainId);
+        newDomain.setAutomationKey(key);
+        newDomain.setName(definition.getName());
+        newDomain.setPath(definition.getPath());
+        newDomain.setDescription(definition.getDescription());
+        newDomain.setDataPlaneId(definition.getDataPlaneId());
+        return domainService.validateCreate(organizationId, environmentId, newDomain)
+                .map(AutomationDomainMapper::toAutomationDomain)
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    private Single<AutomationDomain> dryRunUpdate(
+            String environmentId, AutomationDomain definition, Domain existing) {
+        return automationIdentityProviders(existing.getId())
+                .flatMap(idps -> {
+                    AutomationDomainMapper.applyTo(definition, existing, idps);
+                    return domainService.validateUpdate(existing.getId(), existing, false);
+                })
+                .map(AutomationDomainMapper::toAutomationDomain)
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    private static AutomationDomain withErrors(AutomationDomain definition, Throwable ex) {
+        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
+        return definition;
     }
 
     @Path("/{domainKey}")
