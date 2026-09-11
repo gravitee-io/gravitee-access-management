@@ -18,7 +18,7 @@ import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { delay } from '@utils-commands/misc';
-import { setup } from '../test-fixture';
+import { setup } from '../../test-fixture';
 import {
   createBotDetection,
   deleteBotDetection,
