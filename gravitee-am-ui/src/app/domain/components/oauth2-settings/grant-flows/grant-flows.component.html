@@ -54,8 +54,12 @@
       </div>
 
       <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT">
-        <div class="gv-form-section-title">
+        <div class="gv-form-section-title gv-form-section-title-with-status">
           <h5>Refresh Token</h5>
+          <div *ngIf="!isRefreshTokenFlowSelected()" class="grant-flow-required">
+            <mat-icon svgIcon="gio:alert-circle"></mat-icon>
+            Refresh Token grant flow required
+          </div>
           <small>Configure how refresh tokens will be used.</small>
           <mat-divider></mat-divider>
         </div>
@@ -75,8 +79,12 @@
       </div>
 
       <div class="gv-form-section">
-        <div class="gv-form-section-title">
+        <div class="gv-form-section-title gv-form-section-title-with-status">
           <h5>Token Exchange</h5>
+          <div *ngIf="!isTokenExchangeFlowSelected() || !isTokenExchangeEnabledAtDomain()" class="grant-flow-required">
+            <mat-icon svgIcon="gio:alert-circle"></mat-icon>
+            Token Exchange grant flow required
+          </div>
           <small>Configure settings for the Token Exchange grant flow.</small>
           <mat-divider></mat-divider>
         </div>
@@ -106,6 +114,20 @@
           </mat-form-field>
         </div>
       </div>
+
+      <app-cross-app-access-settings
+        *ngIf="context !== MCP_SERVER_CONTEXT"
+        [oauthSettings]="oauthSettings"
+        [domainId]="domainId"
+        [readonly]="readonly"
+        [disabled]="!isTokenExchangeFlowSelected() || !isTokenExchangeEnabledAtDomain()"
+        (settingsChange)="modelChanged()"
+      >
+        <div *ngIf="!isTokenExchangeFlowSelected() || !isTokenExchangeEnabledAtDomain()" class="grant-flow-required">
+          <mat-icon svgIcon="gio:alert-circle"></mat-icon>
+          Token Exchange grant flow required
+        </div>
+      </app-cross-app-access-settings>
 
       <div class="gv-form-section" *ngIf="context !== MCP_SERVER_CONTEXT">
         <div class="gv-form-section-title">

@@ -421,6 +421,30 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
+    public String buildSearchCrossAppAccessResourceServersQuery(boolean filtered, int limit) {
+        StringBuilder builder = new StringBuilder("SELECT rs.id AS resource_server_id,")
+                .append(" rs.name AS resource_server_name,")
+                .append(" rs.resource AS resource_server_resource,")
+                .append(" td.id AS trusted_domain_id,")
+                .append(" td.name AS trusted_domain_name")
+                .append(" FROM trusted_domains_xaa_resource_servers rs")
+                .append(" JOIN trusted_domains td ON rs.trusted_domain_id = td.id")
+                .append(" JOIN trusted_domains_xaa xaa ON xaa.trusted_domain_id = td.id")
+                .append(" WHERE td.reference_type = :referenceType")
+                .append(" AND td.reference_id = :referenceId")
+                .append(" AND xaa.enabled = :enabled");
+        if (filtered) {
+            String escapeSuffix = getLikeEscapeClause();
+            builder.append(" AND (")
+                    .append(" upper(rs.name) ").append(LIKE).append(VALUE).append(escapeSuffix)
+                    .append(" OR upper(rs.resource) ").append(LIKE).append(VALUE).append(escapeSuffix)
+                    .append(" OR upper(td.name) ").append(LIKE).append(VALUE).append(escapeSuffix)
+                    .append(" )");
+        }
+        return builder.append(buildPagingClauseUsingOffset("td.name, rs.name", 0, limit)).toString();
+    }
+
+    @Override
     public String buildPagingClauseUsingOffset(String orderByClause, int offset, int size) {
         throw new UnsupportedOperationException("Dialect must implement cursor paging clause generation");
     }

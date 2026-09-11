@@ -32,6 +32,7 @@ import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
 import io.gravitee.am.repository.management.api.TrustedDomainRepository;
@@ -117,6 +118,11 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     @Override
     public Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId) {
         return repository.findByReference(referenceType, referenceId);
+    }
+
+    @Override
+    public Flowable<CrossAppAccessResourceServerView> searchCrossAppAccessResourceServers(Reference reference, String query, int limit) {
+        return repository.searchCrossAppAccessResourceServers(reference, query, limit);
     }
 
     @Override

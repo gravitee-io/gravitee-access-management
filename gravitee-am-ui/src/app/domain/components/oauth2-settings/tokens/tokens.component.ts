@@ -19,6 +19,7 @@ import { find, findIndex, remove } from 'lodash';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { ClaimsInfoDialogComponent } from '../dialog/claims-info.component';
+import { MIN_ID_JAG_VALIDITY_SECONDS } from '../cross-app-access/cross-app-access.types';
 
 @Component({
   selector: 'app-tokens-settings',
@@ -38,7 +39,13 @@ export class TokensComponent implements OnInit {
   @ViewChild('userinfoClaimsTable') userinfoTable: any;
   editing: any = {};
 
+  readonly MIN_ID_JAG_VALIDITY_SECONDS = MIN_ID_JAG_VALIDITY_SECONDS;
+
   claimTokenTypes: string[] = [];
+
+  get validityFieldFlex(): number {
+    return this.context === 'McpServer' ? 32 : 24;
+  }
 
   constructor(
     public dialog: MatDialog,
@@ -49,12 +56,7 @@ export class TokensComponent implements OnInit {
     this.oauthSettings = this.oauthSettings || {};
     this.oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims || [];
     this.oauthSettings.userinfoCustomClaims = this.oauthSettings.userinfoCustomClaims || [];
-
-    if (this.context === 'McpServer') {
-      this.claimTokenTypes = ['access_token'];
-    } else {
-      this.claimTokenTypes = ['id_token', 'access_token'];
-    }
+    this.claimTokenTypes = this.context === 'McpServer' ? ['access_token'] : ['id_token', 'access_token', 'id_jag'];
 
     this.initCustomClaims();
     this.initUserInfoCustomClaims();
