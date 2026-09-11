@@ -85,6 +85,8 @@ public interface DatabaseDialectHelper {
 
     String buildSearchRoleQuery(boolean wildcard, int page, int size);
 
+    String buildSearchCrossAppAccessResourceServersQuery(boolean filtered, int limit);
+
     String buildCountRoleQuery(boolean wildcard);
 
     default String buildPagingClause(String field, boolean asc, int page, int size) {
