@@ -279,10 +279,10 @@ class TrustDomainManagerImplTest {
     }
 
     @Test
-    void shouldIndexCrossAppAccessAudienceEvenWhenDisabled() {
+    void shouldNotIndexCrossAppAccessAudienceWhenDisabled() {
         preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", false));
 
-        assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com").orElseThrow().trustsCrossAppAccess()).isFalse();
+        assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com")).isEmpty();
     }
 
     @Test
@@ -296,6 +296,18 @@ class TrustDomainManagerImplTest {
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.io")).isPresent());
         assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com")).isEmpty();
+    }
+
+    @Test
+    void shouldDropCrossAppAccessAudienceWhenDisabled() {
+        preload(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", true));
+        stubEvent(TrustDomainEvent.UPDATE, "td-4");
+        when(trustDomainRepository.findById("td-4")).thenReturn(Maybe.just(crossAppAccess("td-4", "acme-corp", "https://auth.acme.com", false)));
+
+        manager.onEvent(event);
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(manager.findByCrossAppAccessAudience("https://auth.acme.com")).isEmpty());
     }
 
     @Test

@@ -199,7 +199,7 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     }
 
     private static Optional<String> crossAppAccessAudience(TrustedDomain trustDomain) {
-        return trustDomain.getCrossAppAccess() != null
+        return trustDomain.trustsCrossAppAccess()
                 ? Optional.ofNullable(trustDomain.getDomainIdentifier())
                 : Optional.empty();
     }
