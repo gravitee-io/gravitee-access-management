@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
@@ -55,7 +55,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
     @Mock
     private JWTService jwtService;
     @Mock
@@ -70,7 +70,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         router.route(HttpMethod.GET, "/logout/callback")
-                .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager))
+                .handler(new LogoutCallbackEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, certificateManager))
                 .failureHandler(new ErrorHandler("/error"));
     }
 
@@ -82,7 +82,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         state.put("c", "client-id");
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
         when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class), any())).thenReturn(Single.just(state));
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(new Client()));
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(new Client()));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -116,7 +116,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         state.put("c", "client-id");
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
         when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class), any())).thenReturn(Single.just(state));
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
