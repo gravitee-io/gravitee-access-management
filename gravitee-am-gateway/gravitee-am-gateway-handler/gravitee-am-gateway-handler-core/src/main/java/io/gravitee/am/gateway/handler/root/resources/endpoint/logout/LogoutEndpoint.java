@@ -22,7 +22,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -67,12 +67,12 @@ import static java.util.Objects.isNull;
 public class LogoutEndpoint extends AbstractLogoutEndpoint {
     private final IdentityProviderManager identityProviderManager;
     private final CertificateManager certificateManager;
-    private final ClientSyncService clientSyncService;
+    private final ClientLookupService clientLookupService;
     private final JWTService jwtService;
     private final WebClient webClient;
 
     public LogoutEndpoint(Domain domain,
-                          ClientSyncService clientSyncService,
+                          ClientLookupService clientLookupService,
                           JWTService jwtService,
                           UserService userService,
                           AuthenticationFlowContextService authenticationFlowContextService,
@@ -81,7 +81,7 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
                           WebClient webClient) {
         super(domain, userService, authenticationFlowContextService);
         this.jwtService = jwtService;
-        this.clientSyncService = clientSyncService;
+        this.clientLookupService = clientLookupService;
         this.certificateManager = certificateManager;
         this.identityProviderManager = identityProviderManager;
         this.webClient = webClient;
@@ -184,8 +184,8 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
         final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         // whatever is the client search result, we have to return a UserToken with
         // at least the user to manage properly the user's logout information
-        clientSyncService.findById(endUser.getClient())
-                .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(endUser.getClient())))
+        clientLookupService.findById(endUser.getClient())
+                .switchIfEmpty(Maybe.defer(() -> clientLookupService.findByClientId(endUser.getClient())))
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(new UserToken(endUser, client, null))),
                         error -> handler.handle(Future.succeededFuture(new UserToken(endUser, null, null))),

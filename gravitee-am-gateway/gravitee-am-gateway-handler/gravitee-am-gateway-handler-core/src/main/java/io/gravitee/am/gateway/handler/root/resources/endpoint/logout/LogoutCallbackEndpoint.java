@@ -20,7 +20,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
@@ -47,18 +47,18 @@ import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.STA
 @Slf4j
 public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
     private final CertificateManager certificateManager;
-    private final ClientSyncService clientSyncService;
+    private final ClientLookupService clientLookupService;
     private final JWTService jwtService;
 
     public LogoutCallbackEndpoint(Domain domain,
-                                  ClientSyncService clientSyncService,
+                                  ClientLookupService clientLookupService,
                                   JWTService jwtService,
                                   UserService userService,
                                   AuthenticationFlowContextService authenticationFlowContextService,
                                   CertificateManager certificateManager) {
         super(domain, userService, authenticationFlowContextService);
         this.jwtService = jwtService;
-        this.clientSyncService = clientSyncService;
+        this.clientLookupService = clientLookupService;
         this.certificateManager = certificateManager;
     }
 
@@ -168,7 +168,7 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
 
         final User endUser = routingContext.user() != null ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null;
         final String clientId = routingContext.get(Parameters.CLIENT_ID);
-        clientSyncService.findByClientId(clientId)
+        clientLookupService.findByClientId(clientId)
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(new UserToken(endUser, client))),
                         ex -> {

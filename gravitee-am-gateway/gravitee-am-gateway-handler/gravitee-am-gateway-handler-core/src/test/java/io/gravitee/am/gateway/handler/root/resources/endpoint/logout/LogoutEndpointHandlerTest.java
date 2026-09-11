@@ -20,7 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -73,7 +73,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
-    private ClientSyncService clientSyncService;
+    private ClientLookupService clientLookupService;
     @Mock
     private JWTService jwtService;
     @Mock
@@ -92,7 +92,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         router.route(HttpMethod.GET, "/logout")
-                .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient))
+                .handler(new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient))
                 .failureHandler(new ErrorHandler("/error"));
     }
 
@@ -155,7 +155,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         client.setClientId("123");
         // no redirectUris registered for logout at App Level
         client.setPostLogoutRedirectUris(null);
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         final OIDCSettings oidcSettings = new OIDCSettings();
@@ -187,7 +187,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         client.setClientId("123");
         // no redirectUris registered for logout at App Level
         client.setPostLogoutRedirectUris(Collections.emptyList());
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         final OIDCSettings oidcSettings = new OIDCSettings();
@@ -219,7 +219,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         client.setClientId("123");
         // no redirectUris registered for logout at App Level
         client.setPostLogoutRedirectUris(null);
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         final OIDCSettings oidcSettings = new OIDCSettings();
@@ -250,7 +250,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLogoutEndpoint_targetUrl_client_noRestriction() throws Exception {
         Client client = new Client();
         client.setPostLogoutRedirectUris(null);
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -275,7 +275,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLogoutEndpoint_targetUrl_client_restriction() throws Exception {
         Client client = new Client();
         client.setPostLogoutRedirectUris(Arrays.asList("https://test"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -300,7 +300,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLogoutEndpoint_targetUrl_client_with_param_wildcard_restriction() throws Exception {
         Client client = new Client();
         client.setPostLogoutRedirectUris(Arrays.asList("https://test/*"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -325,7 +325,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLogoutEndpoint_targetUrl_with_param_client_wildcard_not_allowed() throws Exception {
         Client client = new Client();
         client.setPostLogoutRedirectUris(Arrays.asList("https://test.com"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -351,7 +351,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         Client client = new Client();
         client.setClientId("123");
         client.setPostLogoutRedirectUris(Arrays.asList("https://test.com"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
         when(domain.isRedirectUriStrictMatching()).thenReturn(true);
 
@@ -378,7 +378,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         Client client = new Client();
         client.setClientId("123");
         client.setPostLogoutRedirectUris(Arrays.asList("https://test.com"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
         when(domain.isRedirectUriStrictMatching()).thenReturn(false);
 
@@ -404,7 +404,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLogoutEndpoint_targetUrl_client_restriction_2() throws Exception {
         Client client = new Client();
         client.setPostLogoutRedirectUris(Arrays.asList("https://test", "https://dev"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -430,7 +430,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         Client client = new Client();
         client.setClientId("client-id");
         client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
@@ -547,8 +547,8 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
         when(jwtService.encode(any(JWT.class), any(CertificateProvider.class))).thenReturn(Single.just("jwtstatevalue"));
 
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         final SocialAuthenticationProvider authProvider = mock(SocialAuthenticationProvider.class);
         final Request req = new Request();
@@ -592,8 +592,8 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
         when(jwtService.encode(any(JWT.class), any(CertificateProvider.class))).thenReturn(Single.just("jwtstatevalue"));
 
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         final SocialAuthenticationProvider authProvider = mock(SocialAuthenticationProvider.class);
         final Request req = new Request();
@@ -636,8 +636,8 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
         client.setSingleSignOut(true);
 
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(client));
         when(userService.logout(any(), anyBoolean(), any())).thenReturn(Completable.complete());
 
         final SocialAuthenticationProvider authProvider = mock(SocialAuthenticationProvider.class);
@@ -679,8 +679,8 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
         when(jwtService.encode(any(JWT.class), any(CertificateProvider.class))).thenReturn(Single.just("jwtstatevalue"));
 
-        when(clientSyncService.findById("client-id")).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.empty());
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         final SocialAuthenticationProvider authProvider = mock(SocialAuthenticationProvider.class);
         final Request req = new Request();
