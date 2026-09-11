@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
@@ -101,6 +102,7 @@ public class TokenRequestResourceValidationHandlerTest {
     @Test
     public void shouldSkipValidationForIdJagTokenRequest() {
         // Given
+        when(httpRequest.params().get(Parameters.GRANT_TYPE)).thenReturn(GrantType.TOKEN_EXCHANGE);
         when(httpRequest.params().get(Parameters.REQUESTED_TOKEN_TYPE)).thenReturn(TokenType.ID_JAG);
 
         // When
@@ -110,6 +112,28 @@ public class TokenRequestResourceValidationHandlerTest {
         verify(routingContext).next();
         verify(routingContext, never()).fail(any());
         verify(resourceValidationService, never()).validate(any());
+    }
+
+    @Test
+    public void shouldValidateResourcesWhenIdJagRequestedOnClientCredentials() {
+        shouldValidateResourcesWhenIdJagRequestedOn(GrantType.CLIENT_CREDENTIALS);
+    }
+
+    @Test
+    public void shouldValidateResourcesWhenIdJagRequestedOnAuthorizationCode() {
+        shouldValidateResourcesWhenIdJagRequestedOn(GrantType.AUTHORIZATION_CODE);
+    }
+
+    private void shouldValidateResourcesWhenIdJagRequestedOn(String grantType) {
+        when(httpRequest.params().get(Parameters.GRANT_TYPE)).thenReturn(grantType);
+        when(httpRequest.params().get(Parameters.REQUESTED_TOKEN_TYPE)).thenReturn(TokenType.ID_JAG);
+        InvalidResourceException exception = new InvalidResourceException("Invalid resource");
+        when(resourceValidationService.validate(any())).thenReturn(Completable.error(exception));
+
+        handler.handle(routingContext);
+
+        verify(routingContext).fail(exception);
+        verify(routingContext, never()).next();
     }
 
     @Test
