@@ -37,6 +37,8 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscover
 import io.gravitee.am.gateway.handler.oidc.service.flow.CompositeFlow;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJagService;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.impl.IdJagServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
@@ -94,6 +96,11 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public IDTokenService idTokenService() {
         return new IDTokenServiceImpl();
+    }
+
+    @Bean
+    public IdJagService idJagService() {
+        return new IdJagServiceImpl();
     }
 
     @Bean

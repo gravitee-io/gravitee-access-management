@@ -19,10 +19,13 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.SubjectTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -31,21 +34,30 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenEx
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
+import io.gravitee.am.model.oidc.TrustedDomain;
 import io.reactivex.rxjava3.core.Single;
+import lombok.Builder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,20 +74,23 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
     private final ProtectedResourceManager protectedResourceManager;
     private final TokenExchangeUserResolver userResolver;
     private final ScopeManager scopeManager;
+    private final TrustDomainManager trustDomainManager;
 
     public TokenExchangeServiceImpl(List<TokenValidator> validators,
                                     ProtectedResourceManager protectedResourceManager,
                                     TokenExchangeUserResolver userResolver,
-                                    ScopeManager scopeManager) {
+                                    ScopeManager scopeManager,
+                                    TrustDomainManager trustDomainManager) {
         this.validators = validators;
         this.protectedResourceManager = protectedResourceManager;
         this.userResolver = userResolver;
         this.scopeManager = scopeManager;
+        this.trustDomainManager = trustDomainManager;
     }
 
     @Override
     public Single<TokenExchangeResult> exchange(TokenRequest tokenRequest, Client client, Domain domain) {
-        return Single.fromCallable(() -> parseRequest(tokenRequest, domain))
+        return Single.fromCallable(() -> parseRequest(tokenRequest, client, domain))
                 .flatMap(request -> {
                     if (request.isDelegation()) {
                         return processDelegation(tokenRequest, request, client, domain);
@@ -127,7 +142,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 });
     }
 
-    private ParsedRequest parseRequest(TokenRequest tokenRequest, Domain domain) {
+    private ParsedRequest parseRequest(TokenRequest tokenRequest, Client client, Domain domain) {
         Map<String, String> params = tokenRequest.parameters().toSingleValueMap();
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
 
@@ -166,16 +181,21 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             validateImpersonationAllowed(settings);
         }
 
-        return new ParsedRequest(
-                subjectToken,
-                subjectTokenType,
-                actorToken,
-                actorTokenType,
-                scope,
-                requestedTokenType,
-                tokenRequest.getClientId(),
-                isDelegation
-        );
+        var builder = ParsedRequest.builder()
+                .subjectToken(subjectToken)
+                .subjectTokenType(subjectTokenType)
+                .actorToken(actorToken)
+                .actorTokenType(actorTokenType)
+                .scope(scope)
+                .requestedTokenType(requestedTokenType)
+                .clientId(tokenRequest.getClientId())
+                .isDelegation(isDelegation);
+
+        if (TokenType.ID_JAG.equals(requestedTokenType)) {
+            builder.idJagTarget(resolveIdJagTarget(tokenRequest, client));
+        }
+
+        return builder.build();
     }
 
     private void validateSubjectParameters(String subjectToken, String subjectTokenType,
@@ -192,8 +212,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             throw new InvalidRequestException("Unsupported subject_token_type: " + subjectTokenType);
         }
 
-        // Validate requested_token_type is a supported type (ACCESS_TOKEN or ID_TOKEN)
-        Set<String> supportedTypes = Set.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN);
+        Set<String> supportedTypes = Set.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN, TokenType.ID_JAG);
         if (!supportedTypes.contains(requestedTokenType)) {
             throw new InvalidRequestException("Unsupported requested_token_type: " + requestedTokenType);
         }
@@ -203,6 +222,87 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 !settings.getAllowedRequestedTokenTypes().contains(requestedTokenType)) {
             throw new InvalidRequestException("requested_token_type not allowed: " + requestedTokenType);
         }
+    }
+
+    private IdJagTarget resolveIdJagTarget(TokenRequest tokenRequest, Client client) {
+        ApplicationCrossAppAccessSettings crossAppAccess = client.getCrossAppAccessSettings();
+        if (crossAppAccess == null || !crossAppAccess.isEnabled()) {
+            throw new UnauthorizedClientException("Cross App Access is not enabled for this application");
+        }
+
+        String audience = requiredSingleAudience(tokenRequest);
+        TrustedDomain trustDomain = trustDomainManager.findByCrossAppAccessAudience(audience)
+                .filter(TrustedDomain::trustsCrossAppAccess)
+                .orElseThrow(() -> new InvalidResourceException("No resource authorization server is configured for audience: " + audience));
+
+        Map<String, ResolvedResourceServer> byResourceServer = survivingRows(crossAppAccess, trustDomain);
+        if (byResourceServer.isEmpty()) {
+            throw new InvalidResourceException("This application is not configured for audience: " + audience);
+        }
+
+        ResolvedResourceServer resolved = selectResourceServer(byResourceServer, singleIdJagResource(tokenRequest), audience);
+        CrossAppAccessSettings crossAppAccessSettings = trustDomain.getCrossAppAccess();
+        return new IdJagTarget(
+                trustDomain.getDomainIdentifier(),
+                resolved.resourceServer().getResource(),
+                resolved.row().getClientId(),
+                crossAppAccessSettings.getScopeMappings(),
+                crossAppAccessSettings.getAudSubMapping());
+    }
+
+    private Map<String, ResolvedResourceServer> survivingRows(ApplicationCrossAppAccessSettings crossAppAccess, TrustedDomain trustDomain) {
+        List<ApplicationCrossAppAccessResourceServer> rows = crossAppAccess.getResourceServers() == null
+                ? List.of() : crossAppAccess.getResourceServers();
+        Map<String, ResolvedResourceServer> byResourceServer = new LinkedHashMap<>();
+        for (ApplicationCrossAppAccessResourceServer row : rows) {
+            if (row == null) {
+                continue;
+            }
+            trustDomainManager.findCrossAppAccessResourceServer(trustDomain.getId(), row.getResourceServerId())
+                    .filter(resourceServer -> resourceServer.getResource() != null)
+                    .ifPresent(resourceServer -> byResourceServer
+                            .putIfAbsent(resourceServer.getId(), new ResolvedResourceServer(resourceServer, row)));
+        }
+        return byResourceServer;
+    }
+
+    private static ResolvedResourceServer selectResourceServer(Map<String, ResolvedResourceServer> byResourceServer,
+                                                               String requestedResource, String audience) {
+        if (requestedResource == null) {
+            if (byResourceServer.size() > 1) {
+                throw new InvalidRequestException("Missing required parameter: resource (several resource servers are configured for audience: "
+                        + audience + ")");
+            }
+            return byResourceServer.values().iterator().next();
+        }
+        return byResourceServer.values().stream()
+                .filter(resolved -> requestedResource.equals(resolved.resourceServer().getResource()))
+                .findFirst()
+                .orElseThrow(() -> new InvalidResourceException("Resource " + requestedResource
+                        + " is not reachable behind audience: " + audience));
+    }
+
+    private static String requiredSingleAudience(TokenRequest tokenRequest) {
+        List<String> audiences = tokenRequest.parameters() == null ? null : tokenRequest.parameters().get(Parameters.AUDIENCE);
+        if (audiences != null && audiences.size() > 1) {
+            throw new InvalidRequestException("audience must not be provided more than once");
+        }
+        String audience = audiences == null || audiences.isEmpty() ? null : audiences.getFirst();
+        if (StringUtils.isBlank(audience)) {
+            throw new InvalidRequestException("Missing required parameter: audience");
+        }
+        return audience;
+    }
+
+    private static String singleIdJagResource(TokenRequest tokenRequest) {
+        Set<String> resources = tokenRequest.getResources();
+        if (resources == null || resources.isEmpty()) {
+            return null;
+        }
+        if (resources.size() > 1) {
+            throw new InvalidRequestException("resource must not be provided more than once");
+        }
+        return resources.iterator().next();
     }
 
     private void validateDelegationAllowed(TokenExchangeSettings settings) {
@@ -434,7 +534,11 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
      * Requested ⊆ allowed; if omitted grant full allowed. Throws InvalidScopeException if not a subset.
      */
     private Single<Set<String>> computeGrantedScopes(Set<String> requestedScopes, Set<String> baseAllowedScopes,
-                                                     TokenRequest tokenRequest, Client client, Domain domain) {
+                                                     TokenRequest tokenRequest, Client client, Domain domain,
+                                                     IdJagTarget idJagTarget) {
+        if (idJagTarget != null) {
+            return grantIdJagScopes(requestedScopes, idJagTarget);
+        }
         boolean noRequestedScopes = requestedScopes == null || requestedScopes.isEmpty();
         Set<String> clientScopes = noRequestedScopes ? getClientDefaultScopes(client) : getClientScopes(client);
         TokenExchangeOAuthSettings teSettings = TokenExchangeOAuthSettings.getInstance(domain, client);
@@ -456,6 +560,16 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return Single.error(new InvalidScopeException("Requested scope is not allowed"));
     }
 
+    private static Single<Set<String>> grantIdJagScopes(Set<String> requestedScopes, IdJagTarget idJagTarget) {
+        if (requestedScopes.isEmpty()) {
+            return Single.just(new LinkedHashSet<>(idJagTarget.scopeMappings().keySet()));
+        }
+        return Single.fromCallable(() -> {
+            idJagTarget.requireMapped(requestedScopes);
+            return requestedScopes;
+        });
+    }
+
     private Single<TokenExchangeResult> buildImpersonationResult(TokenRequest tokenRequest,
                                                                   ValidatedToken subjectToken,
                                                                   ParsedRequest parsedRequest,
@@ -463,7 +577,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                                   Domain domain) {
         Set<String> requestedScopes = Optional.ofNullable(ParamUtils.splitScopes(parsedRequest.scope())).orElse(Collections.emptySet());
         Set<String> baseAllowed = Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet());
-        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain)
+        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain, parsedRequest.idJagTarget())
                 .flatMap(grantedScopes -> userResolver.resolve(subjectToken)
                         .switchIfEmpty(Single.error(() -> new IllegalStateException("could not resolve subject token")))
                         .map(user -> enrichUser(user, client, grantedScopes, false, subjectToken.getTokenId()))
@@ -477,7 +591,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     subjectToken.getTokenId(),
                                     parsedRequest.subjectTokenType(),
                                     extractSubjectInfo(subjectToken),
-                                    subjectToken.getDomainParentJtis());
+                                    subjectToken.getDomainParentJtis(),
+                                    parsedRequest.idJagTarget());
                         })
                 );
     }
@@ -493,7 +608,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         Set<String> baseAllowed = parameterizedAwareIntersection(
                 Optional.ofNullable(subjectToken.getScopes()).orElse(Collections.emptySet()),
                 Optional.ofNullable(actorToken.getScopes()).orElse(Collections.emptySet()));
-        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain)
+        return computeGrantedScopes(requestedScopes, baseAllowed, tokenRequest, client, domain, parsedRequest.idJagTarget())
                 .flatMap(grantedScopes -> userResolver.resolve(subjectToken)
                         .switchIfEmpty(Single.error(() -> new IllegalStateException("could not resolve subject token")))
                         .map(user -> enrichUser(user, client, grantedScopes, true, subjectToken.getTokenId()))
@@ -511,7 +626,8 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                     actorInfo,
                                     extractSubjectInfo(subjectToken),
                                     subjectToken.getDomainParentJtis(),
-                                    actorToken.getDomainParentJtis());
+                                    actorToken.getDomainParentJtis(),
+                                    parsedRequest.idJagTarget());
                         }));
     }
 
@@ -531,9 +647,15 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return user;
     }
 
+    private record ResolvedResourceServer(
+            CrossAppAccessResourceServer resourceServer,
+            ApplicationCrossAppAccessResourceServer row
+    ) {}
+
     /**
      * Internal record for parsed token exchange request parameters.
      */
+    @Builder
     private record ParsedRequest(
             String subjectToken,
             String subjectTokenType,
@@ -542,6 +664,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
             String scope,
             String requestedTokenType,
             String clientId,
-            boolean isDelegation
+            boolean isDelegation,
+            IdJagTarget idJagTarget
     ) {}
 }

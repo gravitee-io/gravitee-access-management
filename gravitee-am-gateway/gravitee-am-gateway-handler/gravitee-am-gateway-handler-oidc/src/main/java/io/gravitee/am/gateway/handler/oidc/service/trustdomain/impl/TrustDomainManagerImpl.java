@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManage
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.repository.management.api.TrustedDomainRepository;
@@ -61,6 +62,7 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     private final ConcurrentMap<String, TrustedDomain> byId = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TrustedDomain> bySpiffeTrustDomain = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TrustedDomain> byIssuer = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TrustedDomain> byCrossAppAccessAudience = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() {
@@ -121,6 +123,23 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
     }
 
     @Override
+    public Optional<TrustedDomain> findByCrossAppAccessAudience(String audience) {
+        return audience == null ? Optional.empty() : Optional.ofNullable(byCrossAppAccessAudience.get(audience));
+    }
+
+    @Override
+    public Optional<CrossAppAccessResourceServer> findCrossAppAccessResourceServer(String trustDomainId, String resourceServerId) {
+        if (trustDomainId == null || resourceServerId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(byId.get(trustDomainId))
+                .stream()
+                .flatMap(trustDomain -> trustDomain.crossAppAccessResourceServers().stream())
+                .filter(resourceServer -> resourceServerId.equals(resourceServer.getId()))
+                .findFirst();
+    }
+
+    @Override
     public boolean hasTokenExchangeTrust() {
         return !byIssuer.isEmpty();
     }
@@ -166,6 +185,8 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
                 .ifPresent(spiffeTrustDomain -> bySpiffeTrustDomain.put(spiffeTrustDomain, trustDomain));
         tokenExchangeIssuer(trustDomain)
                 .ifPresent(issuer -> byIssuer.put(issuer, trustDomain));
+        crossAppAccessAudience(trustDomain)
+                .ifPresent(audience -> byCrossAppAccessAudience.put(audience, trustDomain));
     }
 
     private void unindex(TrustedDomain trustDomain) {
@@ -173,6 +194,14 @@ public class TrustDomainManagerImpl extends AbstractService implements TrustDoma
                 .ifPresent(spiffeTrustDomain -> bySpiffeTrustDomain.remove(spiffeTrustDomain, trustDomain));
         tokenExchangeIssuer(trustDomain)
                 .ifPresent(issuer -> byIssuer.remove(issuer, trustDomain));
+        crossAppAccessAudience(trustDomain)
+                .ifPresent(audience -> byCrossAppAccessAudience.remove(audience, trustDomain));
+    }
+
+    private static Optional<String> crossAppAccessAudience(TrustedDomain trustDomain) {
+        return trustDomain.trustsCrossAppAccess()
+                ? Optional.ofNullable(trustDomain.getDomainIdentifier())
+                : Optional.empty();
     }
 
     /**

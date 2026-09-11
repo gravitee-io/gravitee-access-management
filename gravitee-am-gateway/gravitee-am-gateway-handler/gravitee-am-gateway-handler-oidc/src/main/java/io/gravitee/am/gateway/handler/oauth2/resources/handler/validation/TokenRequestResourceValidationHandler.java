@@ -22,6 +22,11 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.CustomLog;
 
+import static io.gravitee.am.common.oauth2.GrantType.TOKEN_EXCHANGE;
+import static io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE;
+import static io.gravitee.am.common.oauth2.Parameters.REQUESTED_TOKEN_TYPE;
+import static io.gravitee.am.common.oauth2.TokenType.ID_JAG;
+
 /**
  * Handler for validating resource parameters in OAuth2 token requests according to RFC 8707.
  * This handler validates that requested resources are recognized by the authorization server.
@@ -40,6 +45,12 @@ public class TokenRequestResourceValidationHandler implements Handler<RoutingCon
 
 	@Override
 	public void handle(RoutingContext context) {
+		if (isTokenExchangeForIdJag(context)) {
+			log.debug("Resource validation skipped for an ID-JAG token exchange request");
+			context.next();
+			return;
+		}
+
 		// Build a normalized TokenRequest using the factory (consistent with codebase patterns)
 		final TokenRequest tokenRequest = tokenRequestFactory.create(context);
 
@@ -55,5 +66,11 @@ public class TokenRequestResourceValidationHandler implements Handler<RoutingCon
 							context.fail(error);
 						}
 				);
+	}
+
+	private boolean isTokenExchangeForIdJag(RoutingContext context){
+		String grantType = context.request().params().get(GRANT_TYPE);
+		String requestedTokenType = context.request().params().get(REQUESTED_TOKEN_TYPE);
+		return TOKEN_EXCHANGE.equals(grantType) && ID_JAG.equals(requestedTokenType);
 	}
 }

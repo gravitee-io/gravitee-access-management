@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.grant;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.MultiValueMap;
@@ -105,6 +106,7 @@ public record TokenCreationRequest(
             String actorTokenType,
             ActorTokenInfo actorInfo,
             Set<String> allParentJtis,
+            IdJagTarget idJagTarget,
             Map<String, Object> tokenExchangeExecutionContext) {
 
         return new TokenCreationRequest(
@@ -112,7 +114,17 @@ public record TokenCreationRequest(
                 GrantType.TOKEN_EXCHANGE,
                 original.getScopes(),
                 user,
-                new GrantData.TokenExchangeData(issuedTokenType, expiration, subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, allParentJtis),
+                GrantData.TokenExchangeData.builder()
+                        .issuedTokenType(issuedTokenType)
+                        .expiration(expiration)
+                        .subjectTokenId(subjectTokenId)
+                        .subjectTokenType(subjectTokenType)
+                        .actorTokenId(actorTokenId)
+                        .actorTokenType(actorTokenType)
+                        .actorInfo(actorInfo)
+                        .allParentJtis(allParentJtis)
+                        .idJagTarget(idJagTarget)
+                        .build(),
                 false, // token exchange doesn't support refresh
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

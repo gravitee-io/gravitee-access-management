@@ -20,11 +20,14 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeResult;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -32,10 +35,14 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
@@ -70,6 +77,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 public class TokenExchangeServiceImplTest {
@@ -86,6 +94,9 @@ public class TokenExchangeServiceImplTest {
     @Mock
     private ScopeManager scopeManager;
 
+    @Mock
+    private TrustDomainManager trustDomainManager;
+
     private TokenExchangeServiceImpl service;
 
     @BeforeEach
@@ -99,7 +110,7 @@ public class TokenExchangeServiceImplTest {
         TokenUserResolver subjectResolver = new TokenUserResolver(subjectManager, userGatewayService);
         TrustedIssuerUserResolver trustedResolver = new TrustedIssuerUserResolver(userGatewayService);
         TokenExchangeUserResolver userResolver = new TokenExchangeUserResolverFacade(subjectResolver, trustedResolver);
-        return new TokenExchangeServiceImpl(validators, protectedResourceManager, userResolver, scopeManager);
+        return new TokenExchangeServiceImpl(validators, protectedResourceManager, userResolver, scopeManager, trustDomainManager);
     }
 
     @Test
@@ -2635,6 +2646,296 @@ public class TokenExchangeServiceImplTest {
         domain.setId("domain-id");
         domain.setTokenExchangeSettings(settings);
         return domain;
+    }
+
+
+    @Nested
+    class IdJagResolution {
+
+        private static final String AUDIENCE = "https://auth.acme.com";
+        private static final String CALENDAR = "https://calendar.acme.com";
+        private static final String MAIL = "https://mail.acme.com";
+
+        private Domain domainAllowingIdJag() {
+            return domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ACCESS_TOKEN, TokenType.ID_JAG));
+        }
+
+        private MultiValueMap<String, String> idJagParameters(String... audiences) {
+            MultiValueMap<String, String> params = buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_JAG);
+            Stream.of(audiences).forEach(audience -> params.add(Parameters.AUDIENCE, audience));
+            return params;
+        }
+
+        private TokenRequest idJagRequest(MultiValueMap<String, String> params, String... resources) {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setClientId("client-id");
+            tokenRequest.setParameters(params);
+            tokenRequest.setResources(Set.of(resources));
+            return tokenRequest;
+        }
+
+        private Client clientWithRows(ApplicationCrossAppAccessResourceServer... rows) {
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setCrossAppAccessSettings(ApplicationCrossAppAccessSettings.builder()
+                    .enabled(true)
+                    .resourceServers(List.of(rows))
+                    .build());
+            return client;
+        }
+
+        private ApplicationCrossAppAccessResourceServer row(String resourceServerId, String clientIdAtPartner) {
+            return ApplicationCrossAppAccessResourceServer.builder()
+                    .trustDomainId("td-1")
+                    .resourceServerId(resourceServerId)
+                    .clientId(clientIdAtPartner)
+                    .build();
+        }
+
+        private void trustDomainWith(CrossAppAccessResourceServer... resourceServers) {
+            trustDomainWith(Map.of(), resourceServers);
+        }
+
+        private void trustDomainWith(Map<String, String> scopeMappings, CrossAppAccessResourceServer... resourceServers) {
+            trustDomainWith(scopeMappings, null, resourceServers);
+        }
+
+        private void trustDomainWith(Map<String, String> scopeMappings, String audSubMapping, CrossAppAccessResourceServer... resourceServers) {
+            TrustedDomain trustDomain = TrustedDomain.builder()
+                    .id("td-1")
+                    .name("acme")
+                    .domainIdentifier(AUDIENCE)
+                    .crossAppAccess(CrossAppAccessSettings.builder()
+                            .enabled(true)
+                            .resourceServers(List.of(resourceServers))
+                            .scopeMappings(scopeMappings)
+                            .audSubMapping(audSubMapping)
+                            .build())
+                    .build();
+            lenient().when(trustDomainManager.findByCrossAppAccessAudience(AUDIENCE)).thenReturn(java.util.Optional.of(trustDomain));
+            Stream.of(resourceServers).forEach(resourceServer ->
+                    lenient().when(trustDomainManager.findCrossAppAccessResourceServer("td-1", resourceServer.getId()))
+                            .thenReturn(java.util.Optional.of(resourceServer)));
+        }
+
+        private CrossAppAccessResourceServer resourceServer(String id, String resource) {
+            return CrossAppAccessResourceServer.builder().id(id).name(id).resource(resource).build();
+        }
+
+        @Test
+        void shouldResolveTheOnlySurvivingResourceServerWhenResourceIsOmitted() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            var result = service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(result.issuedTokenType()).isEqualTo(TokenType.ID_JAG);
+            assertThat(result.idJagTarget().audience()).isEqualTo(AUDIENCE);
+            assertThat(result.idJagTarget().resource()).isEqualTo(CALENDAR);
+            assertThat(result.idJagTarget().clientId()).isEqualTo("acme-calendar-client");
+        }
+
+        @Test
+        void shouldSkipARowWhoseResourceServerWasDeletedAtDomainLevel() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+            lenient().when(trustDomainManager.findCrossAppAccessResourceServer("td-1", "rs-gone")).thenReturn(java.util.Optional.empty());
+
+            var result = service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-gone", "stale-client"), row("rs-calendar", "acme-calendar-client")),
+                    domainAllowingIdJag()).blockingGet();
+
+            assertThat(result.idJagTarget().resource()).isEqualTo(CALENDAR);
+            assertThat(result.idJagTarget().clientId()).isEqualTo("acme-calendar-client");
+        }
+
+        @Test
+        void shouldDenyWhenEveryConfiguredResourceServerWasDeletedAtDomainLevel() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+            lenient().when(trustDomainManager.findCrossAppAccessResourceServer("td-1", "rs-gone")).thenReturn(java.util.Optional.empty());
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-gone", "stale-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidResourceException.class)
+                    .hasMessageContaining("not configured for audience");
+        }
+
+        @Test
+        void shouldDenyWhenResourceIsOmittedAndSeveralResourceServersSurvive() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR), resourceServer("rs-mail", MAIL));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client"), row("rs-mail", "acme-mail-client")),
+                    domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("Missing required parameter: resource");
+        }
+
+        @Test
+        void shouldSelectTheNamedResourceServerAmongSeveral() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR), resourceServer("rs-mail", MAIL));
+
+            var result = service.exchange(idJagRequest(idJagParameters(AUDIENCE), MAIL),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client"), row("rs-mail", "acme-mail-client")),
+                    domainAllowingIdJag()).blockingGet();
+
+            assertThat(result.idJagTarget().resource()).isEqualTo(MAIL);
+            assertThat(result.idJagTarget().clientId()).isEqualTo("acme-mail-client");
+        }
+
+        @Test
+        void shouldDenyAResourceThatDoesNotSitBehindTheRequestedAudience() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE), "https://elsewhere.example.com"),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidResourceException.class)
+                    .hasMessageContaining("is not reachable behind audience");
+        }
+
+        @Test
+        void shouldDenyWhenApplicationHasNoCrossAppAccessBlock() {
+            Client client = new Client();
+            client.setClientId("client-id");
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)), client, domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(UnauthorizedClientException.class)
+                    .hasMessageContaining("Cross App Access is not enabled");
+        }
+
+        @Test
+        void shouldDenyWhenApplicationCrossAppAccessIsDisabled() {
+            Client client = new Client();
+            client.setClientId("client-id");
+            client.setCrossAppAccessSettings(ApplicationCrossAppAccessSettings.builder()
+                    .enabled(false)
+                    .resourceServers(List.of(row("rs-calendar", "acme-calendar-client")))
+                    .build());
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)), client, domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(UnauthorizedClientException.class)
+                    .hasMessageContaining("Cross App Access is not enabled");
+        }
+
+        @Test
+        void shouldDenyWhenAudienceIsMissing() {
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters()),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("Missing required parameter: audience");
+        }
+
+        @Test
+        void shouldDenyWhenAudienceIsRepeatedRatherThanTakingTheFirst() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE, "https://auth.other.com")),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("audience must not be provided more than once");
+        }
+
+        @Test
+        void shouldDenyAnAudienceMatchingNoTrustedDomain() {
+            when(trustDomainManager.findByCrossAppAccessAudience("https://auth.unknown.com")).thenReturn(java.util.Optional.empty());
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters("https://auth.unknown.com")),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidResourceException.class)
+                    .hasMessageContaining("No resource authorization server is configured");
+        }
+
+        @Test
+        void shouldDenyAnAudienceWhoseCrossAppAccessIsDisabled() {
+            TrustedDomain disabled = TrustedDomain.builder()
+                    .id("td-1")
+                    .domainIdentifier(AUDIENCE)
+                    .crossAppAccess(CrossAppAccessSettings.builder().enabled(false).build())
+                    .build();
+            when(trustDomainManager.findByCrossAppAccessAudience(AUDIENCE)).thenReturn(java.util.Optional.of(disabled));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidResourceException.class)
+                    .hasMessageContaining("No resource authorization server is configured");
+        }
+
+        @Test
+        void shouldDenyWhenTheDomainDoesNotPermitIdJag() {
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")),
+                    domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ACCESS_TOKEN))).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("requested_token_type not allowed");
+        }
+
+        @Test
+        void shouldGrantARequestedScopeTheTrustedDomainMapsWhateverTheSubjectTokenCarries() {
+            trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
+            MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
+            params.add(Parameters.SCOPE, "calendar.read");
+            TokenRequest tokenRequest = idJagRequest(params);
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactly("calendar.read");
+        }
+
+        @Test
+        void shouldGrantAMappedScopeToASubjectTokenCarryingNoScopeClaim() {
+            service = createService(List.of(scopeValidator(Set.of())));
+            trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
+            MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
+            params.add(Parameters.SCOPE, "calendar.read");
+            TokenRequest tokenRequest = idJagRequest(params);
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactly("calendar.read");
+        }
+
+        @Test
+        void shouldRefuseARequestedScopeWithNoMappingRatherThanNarrowTheGrant() {
+            trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
+            MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
+            params.add(Parameters.SCOPE, "calendar.read calendar.write");
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(params),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidScopeException.class)
+                    .hasMessageContaining("calendar.write");
+        }
+
+        @Test
+        void shouldGrantTheFullMappedSetWhenTheRequestNamesNoScope() {
+            trustDomainWith(Map.of("calendar.read", "read:calendar", "calendar.write", "write:calendar"),
+                    resourceServer("rs-calendar", CALENDAR));
+            TokenRequest tokenRequest = idJagRequest(idJagParameters(AUDIENCE));
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).containsExactlyInAnyOrder("calendar.read", "calendar.write");
+        }
+
+        @Test
+        void shouldCarryTheTrustedDomainsAudSubMappingToMinting() {
+            trustDomainWith(Map.of(), "{#context.attributes['user'].email}", resourceServer("rs-calendar", CALENDAR));
+
+            var result = service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(result.idJagTarget().audSubMapping()).isEqualTo("{#context.attributes['user'].email}");
+        }
+
+        @Test
+        void shouldNotResolveScopesFromTheIdJagResource() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+            TokenRequest tokenRequest = idJagRequest(idJagParameters(AUDIENCE), CALENDAR);
+
+            service.exchange(tokenRequest, clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(tokenRequest.getScopes()).isEmpty();
+            verifyNoInteractions(protectedResourceManager);
+        }
     }
 
     private static class FixedSubjectTokenValidator implements TokenValidator {

@@ -432,17 +432,17 @@
           [(ngModel)]="audSubMapping"
           (ngModelChange)="onFieldChange()"
           [disabled]="!editMode"
-          placeholder="{#user.email}"
+          placeholder="{#context.attributes['user'].email}"
         />
         <mat-hint>
-          Evaluated over the user profile to produce the "aud_sub" claim, for every resource server of this authority. The claim is omitted
-          when the expression yields nothing.
+          Produces the "aud_sub" claim for every resource server of this authority, with the user profile at context.attributes['user']. The
+          claim is omitted when the expression yields nothing, and issuance is refused when the expression fails.
         </mat-hint>
       </mat-form-field>
 
       <h5 class="sub-section-title">Scope mappings</h5>
       <mat-hint class="section-hint">
-        Map domain scopes to the names this authority knows them by. Unmapped domain scopes are dropped.
+        Map domain scopes to the names this authority knows them by. A requested domain scope with no mapping is refused.
       </mat-hint>
       <div class="staging-row">
         <mat-form-field *ngIf="domainScopes?.length" appearance="outline" class="staging-field">
