@@ -1,0 +1,13 @@
+.gv-page-description {
+  display: flex;
+  flex-direction: column;
+
+  .gv-page-description-content {
+    flex: 1 1 auto;
+  }
+}
+
+.plugin-description.is-sticky {
+  position: sticky;
+  top: 20px;
+}

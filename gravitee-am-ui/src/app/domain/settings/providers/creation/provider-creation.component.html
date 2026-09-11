@@ -28,7 +28,7 @@
           <h5>Platform</h5>
           <small>Identity Provider type</small>
         </ng-template>
-        <provider-creation-step1 [provider]="provider"></provider-creation-step1>
+        <provider-creation-step1 [provider]="provider" (typeSelected)="onTypeSelected($event)"></provider-creation-step1>
         <div class="stepper-button-zone" fxLayout="row" fxLayoutAlign="end end">
           <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!provider.type">Next</button>
         </div>
@@ -53,7 +53,13 @@
     <div class="gv-page-description" fxFlex>
       <h3>Identity Provider</h3>
       <div class="gv-page-description-content">
-        <p>Identity providers offer user authentication as a service.</p>
+        <p *ngIf="stepper.selectedIndex === 0">Identity providers offer user authentication as a service.</p>
+        <pre
+          *ngIf="providerDescription"
+          class="plugin-description"
+          [class.is-sticky]="stepper.selectedIndex === 0"
+          [innerHTML]="providerDescription"
+        ></pre>
         <ng-container *ngIf="showMongoStorageGuidance && stepper.selectedIndex === 1">
           <h5>User storage</h5>
           <small>

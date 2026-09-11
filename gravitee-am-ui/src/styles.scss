@@ -281,6 +281,15 @@ ngx-datatable {
       color: rgb(0 0 0 / 38%);
       font-size: 12px;
     }
+
+    .plugin-description {
+      margin: 20px 0 0;
+      color: rgb(0 0 0 / 38%);
+      font-family: inherit;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
   }
 }
 
