@@ -28,6 +28,7 @@ import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.model.PasswordSettings;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -178,4 +179,14 @@ public class AutomationDomain {
     @Schema(description = "Domain-level certificate settings.")
     @Valid
     private AutomationCertificateSettings certificateSettings;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY,
+            description = "Validation errors returned when dryRun is true. Absent when validation succeeds.")
+    @Setter(lombok.AccessLevel.NONE)
+    private List<DryRunError> dryRunErrors;
+
+    public void setDryRunErrors(List<DryRunError> dryRunErrors) {
+        this.dryRunErrors = dryRunErrors != null && !dryRunErrors.isEmpty() ? dryRunErrors : null;
+    }
 }
