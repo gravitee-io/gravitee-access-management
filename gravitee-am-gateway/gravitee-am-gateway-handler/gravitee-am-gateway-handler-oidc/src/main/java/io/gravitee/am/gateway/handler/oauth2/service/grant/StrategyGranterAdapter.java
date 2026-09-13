@@ -96,6 +96,11 @@ public class StrategyGranterAdapter implements TokenGranter {
     }
 
     @Override
+    public boolean handle(TokenRequest tokenRequest, Client client) {
+        return strategy.supports(tokenRequest, client, domain);
+    }
+
+    @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return grant(tokenRequest, null, client);
     }

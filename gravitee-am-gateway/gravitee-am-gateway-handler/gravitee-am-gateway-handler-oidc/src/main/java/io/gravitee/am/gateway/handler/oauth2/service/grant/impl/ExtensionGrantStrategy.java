@@ -15,9 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
+import com.nimbusds.jose.Header;
+import com.nimbusds.jose.JOSEObject;
+import com.nimbusds.jose.JOSEObjectType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.JwtType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -43,6 +48,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +68,7 @@ import lombok.CustomLog;
 public class ExtensionGrantStrategy implements GrantStrategy {
 
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
+    private static final JOSEObjectType ID_JAG_TYPE = new JOSEObjectType(JwtType.ID_JAG.getValue());
 
     private final ExtensionGrantProvider extensionGrantProvider;
     private final ExtensionGrant extensionGrant;
@@ -116,6 +123,26 @@ public class ExtensionGrantStrategy implements GrantStrategy {
             return false;
         }
         return canHandle(client);
+    }
+
+    @Override
+    public boolean supports(TokenRequest request, Client client, Domain domain) {
+        return supports(request.getGrantType(), client, domain) && !isIdJagAssertion(request);
+    }
+
+    private static boolean isIdJagAssertion(TokenRequest request) {
+        if (!GrantType.JWT_BEARER.equals(request.getGrantType()) || request.parameters() == null) {
+            return false;
+        }
+        String assertion = request.parameters().getFirst(Parameters.ASSERTION);
+        if (assertion == null) {
+            return false;
+        }
+        try {
+            return ID_JAG_TYPE.equals(Header.parse(JOSEObject.split(assertion)[0]).getType());
+        } catch (ParseException e) {
+            return false;
+        }
     }
 
     private boolean canHandle(Client client) {

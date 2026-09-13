@@ -45,6 +45,10 @@ public interface TokenGranter {
      */
     boolean handle(String grantType, Client client);
 
+    default boolean handle(TokenRequest tokenRequest, Client client) {
+        return handle(tokenRequest.getGrantType(), client);
+    }
+
     /**
      * The client requests an access token by authenticating with the authorization server and presenting the authorization grant.
      * @param tokenRequest Access Token Request

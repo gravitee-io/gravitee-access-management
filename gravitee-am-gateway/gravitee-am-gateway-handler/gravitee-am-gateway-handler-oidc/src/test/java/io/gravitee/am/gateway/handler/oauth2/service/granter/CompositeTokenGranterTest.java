@@ -20,10 +20,16 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ExtensionGrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -31,6 +37,7 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,9 +46,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertion;
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -62,7 +74,7 @@ public class CompositeTokenGranterTest {
         TokenRequest tokenRequest = tokenRequest(GrantType.CLIENT_CREDENTIALS);
         Client client = client();
         TokenGranter granter = mock(TokenGranter.class);
-        when(granter.handle(GrantType.CLIENT_CREDENTIALS, client)).thenReturn(true);
+        when(granter.handle(tokenRequest, client)).thenReturn(true);
         when(granter.grant(tokenRequest, client)).thenReturn(Single.error(new InvalidScopeException("Invalid scope")));
         compositeTokenGranter.addTokenGranter(GrantType.CLIENT_CREDENTIALS, granter);
 
@@ -86,7 +98,7 @@ public class CompositeTokenGranterTest {
         TokenRequest tokenRequest = tokenRequest(GrantType.TOKEN_EXCHANGE);
         Client client = client();
         TokenGranter granter = mock(TokenGranter.class);
-        when(granter.handle(GrantType.TOKEN_EXCHANGE, client)).thenReturn(true);
+        when(granter.handle(tokenRequest, client)).thenReturn(true);
         when(granter.grant(any(TokenRequest.class), any(), any(Client.class)))
                 .thenReturn(Single.error(new InvalidScopeException("Invalid scope")));
         compositeTokenGranter.addTokenGranter(GrantType.TOKEN_EXCHANGE, granter);
@@ -127,7 +139,7 @@ public class CompositeTokenGranterTest {
 
         Client client = client();
         TokenGranter granter = mock(TokenGranter.class);
-        when(granter.handle(GrantType.TOKEN_EXCHANGE, client)).thenReturn(true);
+        when(granter.handle(tokenRequest, client)).thenReturn(true);
         when(granter.grant(tokenRequest, client))
                 .thenReturn(Single.error(new InvalidResourceException("This application is not configured for audience")));
         compositeTokenGranter.addTokenGranter(GrantType.TOKEN_EXCHANGE, granter);
@@ -146,6 +158,31 @@ public class CompositeTokenGranterTest {
                         "\"RESOURCE\":\"https://calendar.acme.com\"");
     }
 
+    @Test
+    public void shouldRefuseIdJagWhenOnlyJwtBearerGrantIsDeployed() {
+        Client client = jwtBearerClient();
+        compositeTokenGranter.addTokenGranter("jwt-bearer-grant", jwtBearerGranter(mock(ExtensionGrantProvider.class)));
+
+        compositeTokenGranter.grant(jwtBearerRequest(idJagAssertion()), client)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertError(UnsupportedGrantTypeException.class);
+    }
+
+    @Test
+    public void shouldStillRoutePlainJwtToJwtBearerGrant() {
+        Client client = jwtBearerClient();
+        ExtensionGrantProvider provider = mock(ExtensionGrantProvider.class);
+        when(provider.grant(any())).thenReturn(Maybe.error(new InvalidGrantException("reached jwt-bearer grant")));
+        compositeTokenGranter.addTokenGranter("jwt-bearer-grant", jwtBearerGranter(provider));
+
+        compositeTokenGranter.grant(jwtBearerRequest(plainJwtAssertion()), client)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertError(InvalidGrantException.class)
+                .assertError(error -> error.getMessage().equals("reached jwt-bearer grant"));
+    }
+
     private TokenRequest tokenRequest(String grantType) {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
@@ -153,6 +190,24 @@ public class CompositeTokenGranterTest {
         tokenRequest.setScopes(Set.of("read"));
         tokenRequest.setResources(Set.of("https://mcp.example.com/api"));
         return tokenRequest;
+    }
+
+    private Client jwtBearerClient() {
+        Client client = client();
+        client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
+        return client;
+    }
+
+    private TokenGranter jwtBearerGranter(ExtensionGrantProvider provider) {
+        Domain domain = new Domain();
+        domain.setId("domain-id");
+        ExtensionGrant extensionGrant = new ExtensionGrant();
+        extensionGrant.setId("jwt-bearer-grant");
+        extensionGrant.setGrantType(GrantType.JWT_BEARER);
+        extensionGrant.setCreatedAt(new Date());
+        ExtensionGrantStrategy strategy = new ExtensionGrantStrategy(provider, extensionGrant, null, null, null, domain);
+        strategy.setMinDate(extensionGrant.getCreatedAt());
+        return new StrategyGranterAdapter(strategy, domain, null, null, null, null);
     }
 
     private Client client() {

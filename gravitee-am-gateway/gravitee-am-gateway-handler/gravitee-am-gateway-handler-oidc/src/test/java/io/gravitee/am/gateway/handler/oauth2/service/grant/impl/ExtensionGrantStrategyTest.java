@@ -47,6 +47,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertion;
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.untypedAssertion;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -131,6 +135,45 @@ class ExtensionGrantStrategyTest {
         // Client uses old style (grant type without ID)
         client.setAuthorizedGrantTypes(List.of("urn:ietf:params:oauth:grant-type:jwt-bearer"));
         assertTrue(strategy.supports("urn:ietf:params:oauth:grant-type:jwt-bearer", client, domain));
+    }
+
+    @Test
+    void shouldDeclineJwtBearerRequestCarryingIdJagAssertion() {
+        assertFalse(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
+    }
+
+    @Test
+    void shouldDeclineIdJagAssertionWhenClientAuthorizesBareGrantType() {
+        client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
+        assertFalse(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
+    }
+
+    @Test
+    void shouldAcceptJwtBearerRequestWhoseAssertionIsTypedJwt() {
+        assertTrue(strategy.supports(jwtBearerRequest(plainJwtAssertion()), client, domain));
+    }
+
+    @Test
+    void shouldAcceptJwtBearerRequestWhoseAssertionHasNoType() {
+        assertTrue(strategy.supports(jwtBearerRequest(untypedAssertion()), client, domain));
+    }
+
+    @Test
+    void shouldAcceptJwtBearerRequestWhoseAssertionHeaderIsUnparsable() {
+        assertTrue(strategy.supports(jwtBearerRequest("not-a-jwt"), client, domain));
+        assertTrue(strategy.supports(jwtBearerRequest("@@@.e30.c2ln"), client, domain));
+    }
+
+    @Test
+    void shouldAcceptJwtBearerRequestWithoutAssertion() {
+        assertTrue(strategy.supports(jwtBearerRequest(null), client, domain));
+    }
+
+    @Test
+    void shouldStillRejectOtherGrantTypesOnRequestAwareSupports() {
+        TokenRequest request = jwtBearerRequest(null);
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        assertFalse(strategy.supports(request, client, domain));
     }
 
     @Test

@@ -122,6 +122,16 @@ class StrategyGranterAdapterTest {
     }
 
     @Test
+    void shouldDelegateRequestAwareHandleToStrategy() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setGrantType(GrantType.JWT_BEARER);
+        when(strategy.supports(eq(tokenRequest), eq(client), eq(domain))).thenReturn(true);
+
+        assertTrue(adapter.handle(tokenRequest, client));
+        verify(strategy, never()).supports(eq(GrantType.JWT_BEARER), eq(client), eq(domain));
+    }
+
+    @Test
     void shouldProcessGrantSuccessfully() {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");

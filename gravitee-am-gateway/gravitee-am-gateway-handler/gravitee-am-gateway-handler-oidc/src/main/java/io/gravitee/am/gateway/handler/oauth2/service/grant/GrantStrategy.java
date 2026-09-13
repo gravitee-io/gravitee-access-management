@@ -39,6 +39,10 @@ public interface GrantStrategy {
      */
     boolean supports(String grantType, Client client, Domain domain);
 
+    default boolean supports(TokenRequest request, Client client, Domain domain) {
+        return supports(request.getGrantType(), client, domain);
+    }
+
     /**
      * Process the token request and return a TokenCreationRequest ready for token generation.
      *
