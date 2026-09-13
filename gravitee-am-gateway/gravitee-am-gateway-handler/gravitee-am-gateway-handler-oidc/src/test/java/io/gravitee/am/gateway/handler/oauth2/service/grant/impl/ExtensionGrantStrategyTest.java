@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
@@ -54,6 +55,10 @@ import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtu
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -508,5 +513,122 @@ class ExtensionGrantStrategyTest {
 
         // Should not support because this is not the oldest extension grant
         assertFalse(strategy.supports("urn:ietf:params:oauth:grant-type:jwt-bearer", client, domain));
+    }
+
+    @Test
+    void shouldCheckUserAgainstResolvedIdentityProviderWhenNoneConfigured() {
+        extensionGrant.setUserExists(true);
+        extensionGrant.setIdentityProvider(null);
+
+        DefaultUser endUser = new DefaultUser("testuser");
+        endUser.setId("user-id");
+        DefaultUser idpUser = new DefaultUser("testuser");
+        idpUser.setId("idp-user-id");
+        idpUser.setAdditionalInformation(new HashMap<>());
+        AuthenticationProvider authProvider = mock(AuthenticationProvider.class);
+
+        when(identityProviderManager.get("resolved-idp")).thenReturn(Maybe.just(authProvider));
+        when(authProvider.loadPreAuthenticatedUser(any())).thenReturn(Maybe.just(idpUser));
+
+        TokenCreationRequest result = strategyResolving(endUser, "resolved-idp", null)
+                .process(tokenRequest, client, domain)
+                .blockingGet();
+
+        assertEquals("testuser", result.resourceOwner().getUsername());
+        assertEquals("idp-user-id", result.resourceOwner().getExternalId());
+        verifyNoInteractions(extensionGrantProvider);
+    }
+
+    @Test
+    void shouldUseResolvedIdentityProviderAsUserSourceOverConfiguredOne() {
+        extensionGrant.setCreateUser(true);
+        extensionGrant.setIdentityProvider("configured-idp-id");
+
+        DefaultUser endUser = new DefaultUser("testuser");
+        endUser.setId("user-id");
+        endUser.setAdditionalInformation(new HashMap<>());
+        User connectedUser = new User();
+        connectedUser.setId("connected-user-id");
+
+        when(userAuthenticationManager.connect(any(), any(), eq(false))).thenReturn(Single.just(connectedUser));
+
+        TokenCreationRequest result = strategyResolving(endUser, "resolved-idp", subjectManager)
+                .process(tokenRequest, client, domain)
+                .blockingGet();
+
+        assertEquals("resolved-idp", result.resourceOwner().getSource());
+        assertEquals("resolved-idp", ((GrantData.ExtensionGrantData) result.grantData()).userSource());
+        assertEquals("resolved-idp", endUser.getAdditionalInformation().get("source"));
+        verifyNoInteractions(extensionGrantProvider);
+    }
+
+    @Test
+    void shouldPreferResolvedIdentityProviderOverConfiguredOneInCheckUserMode() {
+        extensionGrant.setUserExists(true);
+        extensionGrant.setIdentityProvider("idp-id");
+
+        DefaultUser endUser = new DefaultUser("testuser");
+        endUser.setId("user-id");
+        DefaultUser idpUser = new DefaultUser("testuser");
+        idpUser.setId("idp-user-id");
+        idpUser.setAdditionalInformation(new HashMap<>());
+        AuthenticationProvider authProvider = mock(AuthenticationProvider.class);
+
+        when(identityProviderManager.get("resolved-idp")).thenReturn(Maybe.just(authProvider));
+        when(authProvider.loadPreAuthenticatedUser(any())).thenReturn(Maybe.just(idpUser));
+
+        TokenCreationRequest result = strategyResolving(endUser, "resolved-idp", subjectManager)
+                .process(tokenRequest, client, domain)
+                .blockingGet();
+
+        assertEquals("resolved-idp", result.resourceOwner().getSource());
+        assertEquals("resolved-idp", ((GrantData.ExtensionGrantData) result.grantData()).userSource());
+        verify(identityProviderManager, never()).get("idp-id");
+    }
+
+    @Test
+    void shouldLookUpUserByExternalIdAndResolvedIdentityProviderInV2CheckUserMode() {
+        extensionGrant.setUserExists(true);
+        extensionGrant.setIdentityProvider(null);
+
+        DefaultUser endUser = new DefaultUser("testuser");
+        endUser.setId("user-id");
+        DefaultUser idpUser = new DefaultUser("testuser");
+        idpUser.setId("idp-user-id");
+        idpUser.setAdditionalInformation(new HashMap<>());
+        User storedUser = new User();
+        storedUser.setUsername("testuser");
+        AuthenticationProvider authProvider = mock(AuthenticationProvider.class);
+
+        when(identityProviderManager.get("resolved-idp")).thenReturn(Maybe.just(authProvider));
+        when(authProvider.loadPreAuthenticatedUser(any())).thenReturn(Maybe.empty(), Maybe.just(idpUser));
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.empty());
+        when(userService.findById("testuser")).thenReturn(Maybe.empty());
+        when(userService.findByExternalIdAndSource("testuser", "resolved-idp")).thenReturn(Maybe.just(storedUser));
+
+        TokenCreationRequest result = strategyResolving(endUser, "resolved-idp", subjectManager)
+                .process(tokenRequest, client, domain)
+                .blockingGet();
+
+        assertEquals("idp-user-id", result.resourceOwner().getExternalId());
+        assertEquals("resolved-idp", result.resourceOwner().getSource());
+    }
+
+    private ExtensionGrantStrategy strategyResolving(io.gravitee.am.identityprovider.api.User endUser, String identityProvider, SubjectManager subjectManager) {
+        ExtensionGrantStrategy resolving = new ExtensionGrantStrategy(
+                extensionGrantProvider,
+                extensionGrant,
+                userAuthenticationManager,
+                identityProviderManager,
+                userService,
+                subjectManager,
+                domain) {
+            @Override
+            protected Maybe<ResolvedEndUser> resolveEndUser(TokenRequest request, Client client) {
+                return Maybe.just(new ResolvedEndUser(endUser, identityProvider));
+            }
+        };
+        resolving.setMinDate(extensionGrant.getCreatedAt());
+        return resolving;
     }
 }

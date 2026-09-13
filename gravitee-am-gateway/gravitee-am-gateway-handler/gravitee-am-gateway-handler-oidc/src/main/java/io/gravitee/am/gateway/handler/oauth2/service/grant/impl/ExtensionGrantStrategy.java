@@ -25,6 +25,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -53,7 +54,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.CustomLog;
 
 /**
@@ -167,11 +167,10 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         log.debug("Processing extension grant request for client: {}, grant type: {}",
                 client.getClientId(), extensionGrant.getGrantType());
 
-        return resolveResourceOwner(request, client)
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMap(optUser -> Single.just(
-                        createTokenCreationRequest(request, client, optUser.orElse(null))))
+        return resolveEndUser(request, client)
+                .flatMap(endUser -> resolveResourceOwner(request, client, endUser)
+                        .map(user -> createTokenCreationRequest(request, client, user, resolveSource(endUser.identityProvider()))))
+                .switchIfEmpty(Single.fromCallable(() -> createTokenCreationRequest(request, client, null, resolveSource(null))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof InvalidGrantException || ex instanceof UnauthorizedClientException) {
                         return Single.error(ex);
@@ -181,24 +180,37 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 });
     }
 
-    private Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
+    private Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client, ResolvedEndUser endUser) {
+        var idpUser = endUser.endUser();
+        if (extensionGrant.isCreateUser()) {
+            return manageUserConnect(client, idpUser, tokenRequest, resolveSource(endUser.identityProvider()));
+        } else if (extensionGrant.isUserExists()) {
+            String identityProvider = resolveIdentityProvider(endUser.identityProvider());
+            if (identityProvider == null) {
+                return Maybe.error(new InvalidGrantException("No identity_provider provided"));
+            }
+            return manageUserValidation(tokenRequest, idpUser, identityProvider);
+        } else {
+            return forgeUserProfile(idpUser);
+        }
+    }
+
+    protected Maybe<ResolvedEndUser> resolveEndUser(TokenRequest tokenRequest, Client client) {
         return extensionGrantProvider.grant(convertToPluginRequest(tokenRequest))
-                .flatMap(endUser -> {
-                    if (extensionGrant.isCreateUser()) {
-                        return manageUserConnect(client, endUser, tokenRequest);
-                    } else if (extensionGrant.isUserExists()) {
-                        if (extensionGrant.getIdentityProvider() == null) {
-                            return Maybe.error(new InvalidGrantException("No identity_provider provided"));
-                        }
-                        return manageUserValidation(tokenRequest, endUser);
-                    } else {
-                        return forgeUserProfile(endUser);
-                    }
-                });
+                .map(ResolvedEndUser::endUser);
+    }
+
+    private String resolveIdentityProvider(String resolvedIdentityProvider) {
+        return resolvedIdentityProvider != null ? resolvedIdentityProvider : extensionGrant.getIdentityProvider();
+    }
+
+    private String resolveSource(String resolvedIdentityProvider) {
+        String identityProvider = resolveIdentityProvider(resolvedIdentityProvider);
+        return identityProvider != null ? identityProvider : extensionGrant.getId();
     }
 
     private TokenCreationRequest createTokenCreationRequest(
-            TokenRequest request, Client client, User user) {
+            TokenRequest request, Client client, User user, String source) {
 
         // Extension grants support refresh token if they create or validate users
         boolean supportRefresh = (extensionGrant.isCreateUser() || extensionGrant.isUserExists()) &&
@@ -214,7 +226,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 extensionGrant.getId(),
                 extensionGrant.getGrantType(),
                 additionalClaims,
-                retrieveSourceFrom(extensionGrant),
+                source,
                 supportRefresh
         );
     }
@@ -239,14 +251,15 @@ public class ExtensionGrantStrategy implements GrantStrategy {
 
     private Maybe<User> manageUserValidation(
             TokenRequest tokenRequest,
-            io.gravitee.am.identityprovider.api.User endUser) {
+            io.gravitee.am.identityprovider.api.User endUser,
+            String identityProvider) {
 
-        return identityProviderManager.get(extensionGrant.getIdentityProvider())
+        return identityProviderManager.get(identityProvider)
                 .flatMap(provider -> retrieveUserByUsernameFromIdp(provider, tokenRequest, convertToAmUser(endUser))
                         .switchIfEmpty(Maybe.defer(() -> {
                             log.debug("User name '{}' not found, try as the userId", endUser.getUsername());
                             if (endUser.getId() != null) {
-                                return findUserByIdFromIdp(endUser, tokenRequest, provider);
+                                return findUserByIdFromIdp(endUser, tokenRequest, provider, identityProvider);
                             }
                             return Maybe.empty();
                         }))
@@ -254,7 +267,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                             User user = createUser(idpUser, endUser);
                             // V2 mode: set source
                             if (subjectManager != null) {
-                                user.setSource(retrieveSourceFrom(extensionGrant));
+                                user.setSource(identityProvider);
                             }
                             return user;
                         }))
@@ -264,7 +277,8 @@ public class ExtensionGrantStrategy implements GrantStrategy {
     private Maybe<io.gravitee.am.identityprovider.api.User> findUserByIdFromIdp(
             io.gravitee.am.identityprovider.api.User endUser,
             TokenRequest tokenRequest,
-            AuthenticationProvider provider) {
+            AuthenticationProvider provider,
+            String identityProvider) {
 
         if (subjectManager != null) {
             // V2 mode: use SubjectManager for lookup
@@ -284,7 +298,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                         }
                     })
                     .switchIfEmpty(Maybe.defer(() -> userService.findById(endUser.getUsername())
-                            .switchIfEmpty(userService.findByExternalIdAndSource(endUser.getUsername(), retrieveSourceFrom(extensionGrant)))))
+                            .switchIfEmpty(userService.findByExternalIdAndSource(endUser.getUsername(), identityProvider))))
                     .flatMap(user -> retrieveUserByUsernameFromIdp(provider, tokenRequest, user));
         }
         return userService.findById(endUser.getUsername())
@@ -294,7 +308,8 @@ public class ExtensionGrantStrategy implements GrantStrategy {
     private Maybe<User> manageUserConnect(
             Client client,
             io.gravitee.am.identityprovider.api.User endUser,
-            Request request) {
+            Request request,
+            String source) {
 
         // V2 mode: extract user ID from internal subject
         if (subjectManager != null && endUser.getAdditionalInformation() != null) {
@@ -308,7 +323,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 ? new HashMap<>()
                 : new HashMap<>(endUser.getAdditionalInformation());
 
-        additionalInformation.put("source", retrieveSourceFrom(extensionGrant));
+        additionalInformation.put("source", source);
         additionalInformation.put("client_id", client.getId());
         ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
 
@@ -316,17 +331,11 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 .map(connectedUser -> {
                     // V2 mode: set source on connected user
                     if (subjectManager != null) {
-                        connectedUser.setSource(retrieveSourceFrom(extensionGrant));
+                        connectedUser.setSource(source);
                     }
                     return connectedUser;
                 })
                 .toMaybe();
-    }
-
-    private String retrieveSourceFrom(ExtensionGrant extGrant) {
-        return extGrant.getIdentityProvider() != null
-                ? extGrant.getIdentityProvider()
-                : extGrant.getId();
     }
 
     private Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(
