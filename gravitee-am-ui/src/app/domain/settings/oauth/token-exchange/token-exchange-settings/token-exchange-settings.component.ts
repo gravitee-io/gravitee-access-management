@@ -71,7 +71,10 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
   readonly REQUESTED_TOKEN_TYPES = [
     { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
     { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
+    { value: 'urn:ietf:params:oauth:token-type:id-jag', label: 'ID-JAG (Cross App Access)' },
   ];
+
+  readonly DEFAULT_REQUESTED_TOKEN_TYPES = ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:id_token'];
 
   constructor(
     private domainService: DomainService,
@@ -102,7 +105,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
     const normalizedSettings: TokenExchangeSettings = {
       enabled: tokenExchangeSettings.enabled ?? false,
       allowedSubjectTokenTypes: tokenExchangeSettings.allowedSubjectTokenTypes ?? this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
-      allowedRequestedTokenTypes: tokenExchangeSettings.allowedRequestedTokenTypes ?? this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
+      allowedRequestedTokenTypes: tokenExchangeSettings.allowedRequestedTokenTypes ?? [...this.DEFAULT_REQUESTED_TOKEN_TYPES],
       allowImpersonation: tokenExchangeSettings.allowImpersonation ?? true,
       allowedActorTokenTypes: tokenExchangeSettings.allowedActorTokenTypes ?? this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: tokenExchangeSettings.allowDelegation ?? false,
@@ -124,7 +127,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
     return {
       enabled: false,
       allowedSubjectTokenTypes: this.SUBJECT_TOKEN_TYPES.map((t) => t.value),
-      allowedRequestedTokenTypes: this.REQUESTED_TOKEN_TYPES.map((t) => t.value),
+      allowedRequestedTokenTypes: [...this.DEFAULT_REQUESTED_TOKEN_TYPES],
       allowImpersonation: true,
       allowedActorTokenTypes: this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: false,

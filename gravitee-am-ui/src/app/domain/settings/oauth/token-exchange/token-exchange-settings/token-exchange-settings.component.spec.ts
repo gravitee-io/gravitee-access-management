@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
 
@@ -30,7 +30,6 @@ import { TokenExchangeSettingsComponent } from './token-exchange-settings.compon
 
 describe('TokenExchangeSettingsComponent', () => {
   let component: TokenExchangeSettingsComponent;
-  let fixture: ComponentFixture<TokenExchangeSettingsComponent>;
   let domainServiceStub: DomainService;
 
   const domain = {
@@ -41,28 +40,32 @@ describe('TokenExchangeSettingsComponent', () => {
     },
   };
 
-  beforeEach(waitForAsync(() => {
-    domainServiceStub = {
-      patchTokenExchangeSettings: jest.fn().mockReturnValue(of(domain)),
-    } as Partial<DomainService> as DomainService;
-
+  const componentFor = (storedDomain: unknown): TokenExchangeSettingsComponent => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       declarations: [TokenExchangeSettingsComponent],
       providers: [
         { provide: DomainService, useValue: domainServiceStub },
         { provide: SnackbarService, useValue: { open: jest.fn() } },
         { provide: AuthService, useValue: { hasPermissions: () => true } },
-        { provide: DomainStoreService, useValue: { domain$: of(domain), set: jest.fn() } },
+        { provide: DomainStoreService, useValue: { domain$: of(storedDomain), set: jest.fn() } },
       ],
       schemas: [NO_ERRORS_SCHEMA],
       teardown: { destroyAfterEach: false },
-    }).compileComponents();
+    });
+    const created = TestBed.createComponent(TokenExchangeSettingsComponent);
+    created.detectChanges();
+    return created.componentInstance;
+  };
+
+  beforeEach(waitForAsync(() => {
+    domainServiceStub = {
+      patchTokenExchangeSettings: jest.fn().mockReturnValue(of(domain)),
+    } as Partial<DomainService> as DomainService;
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(TokenExchangeSettingsComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    component = componentFor(domain);
   });
 
   it('shouldNotWriteTrustedIssuersWhenSavingSettings', () => {
@@ -70,5 +73,34 @@ describe('TokenExchangeSettingsComponent', () => {
 
     const [, payload] = (domainServiceStub.patchTokenExchangeSettings as jest.Mock).mock.calls[0];
     expect(payload.tokenExchangeSettings).not.toHaveProperty('trustedIssuers');
+  });
+
+  it('shouldOfferIdJagAsARequestedTokenType', () => {
+    expect(component.REQUESTED_TOKEN_TYPES.map((t) => t.value)).toContain('urn:ietf:params:oauth:token-type:id-jag');
+  });
+
+  it('shouldNotSelectIdJagOnADomainThatHasNotChosenIt', () => {
+    expect(component.domain.tokenExchangeSettings.allowedRequestedTokenTypes).toEqual([
+      'urn:ietf:params:oauth:token-type:access_token',
+      'urn:ietf:params:oauth:token-type:id_token',
+    ]);
+  });
+
+  it('shouldNotSelectIdJagOnADomainWithNoTokenExchangeSettingsAtAll', () => {
+    const fresh = componentFor({ id: 'domain-2' });
+
+    expect(fresh.domain.tokenExchangeSettings.allowedRequestedTokenTypes).not.toContain('urn:ietf:params:oauth:token-type:id-jag');
+  });
+
+  it('shouldKeepIdJagSelectedOnADomainThatHasChosenIt', () => {
+    const chosen = componentFor({
+      id: 'domain-3',
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:id-jag'],
+      },
+    });
+
+    expect(chosen.domain.tokenExchangeSettings.allowedRequestedTokenTypes).toContain('urn:ietf:params:oauth:token-type:id-jag');
   });
 });

@@ -32,6 +32,7 @@ import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
 import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
@@ -43,13 +44,16 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAuditBuilder> {
     private static final String REVOKE_MSG_KEY = "revokedMessage";
     private static final String ACCESS_TOKEN_SUB_ATTRIBUTE_KEY = "accessTokenSubject";
+    private static final String REQUEST_CONTEXT_SEPARATOR = ". Request: ";
     private final Map<String, Object> tokenNewValue;
+    private final Map<String, Object> requestParams;
     private String accessTokenSubject;
     private String metadataDocumentHash;
 
     public ClientTokenAuditBuilder() {
         super();
         tokenNewValue = new HashMap<>();
+        requestParams = new HashMap<>();
         type(TOKEN_CREATED);
     }
 
@@ -103,6 +107,13 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
     public ClientTokenAuditBuilder refreshToken(String tokenId) {
         if (tokenId != null) {
             tokenNewValue.put(TokenTypeHint.REFRESH_TOKEN.name(), tokenId);
+        }
+        return this;
+    }
+
+    public ClientTokenAuditBuilder idJag(String tokenId) {
+        if (tokenId != null) {
+            tokenNewValue.put(TokenTypeHint.ID_JAG.name(), tokenId);
         }
         return this;
     }
@@ -162,6 +173,7 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         final var params = supplier.get();
         if (!isEmpty(params)) {
             this.tokenNewValue.putAll(params);
+            this.requestParams.putAll(params);
         }
         return this;
     }
@@ -181,7 +193,20 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         if (!tokenNewValue.isEmpty()) {
             setNewValue(tokenNewValue);
         }
-        return super.build(mapper);
+        Audit audit = super.build(mapper);
+        if (isFailure()) {
+            var requestContext = new TreeMap<String, Object>();
+            requestParams.forEach((key, value) -> {
+                if (value != null) {
+                    requestContext.put(key, value);
+                }
+            });
+            if (!requestContext.isEmpty()) {
+                var outcome = audit.getOutcome();
+                outcome.setMessage(outcome.getMessage() + REQUEST_CONTEXT_SEPARATOR + mapper.valueToTree(requestContext));
+            }
+        }
+        return audit;
     }
 
     @Override

@@ -120,6 +120,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("dpop_signing_alg_values_supported")
     private List<String> dpopSigningAlgValuesSupported;
 
+    @JsonProperty("identity_chaining_requested_token_types_supported")
+    private List<String> identityChainingRequestedTokenTypesSupported;
+
     @JsonProperty("display_values_supported")
     private List<String> displayValuesSupported;
 
@@ -432,6 +435,14 @@ public class OpenIDProviderMetadata {
 
     public void setDpopSigningAlgValuesSupported(List<String> dpopSigningAlgValuesSupported) {
         this.dpopSigningAlgValuesSupported = dpopSigningAlgValuesSupported;
+    }
+
+    public List<String> getIdentityChainingRequestedTokenTypesSupported() {
+        return identityChainingRequestedTokenTypesSupported;
+    }
+
+    public void setIdentityChainingRequestedTokenTypesSupported(List<String> identityChainingRequestedTokenTypesSupported) {
+        this.identityChainingRequestedTokenTypesSupported = identityChainingRequestedTokenTypesSupported;
     }
 
     public List<String> getDisplayValuesSupported() {
