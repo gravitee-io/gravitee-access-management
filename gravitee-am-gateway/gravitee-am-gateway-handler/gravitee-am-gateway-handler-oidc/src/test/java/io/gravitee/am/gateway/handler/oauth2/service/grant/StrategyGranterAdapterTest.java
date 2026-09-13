@@ -323,8 +323,8 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
-                Set.of()
-        );
+                Set.of(),
+                null);
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",
@@ -390,8 +390,8 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
-                Set.of()
-        );
+                Set.of(),
+                null);
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",
@@ -462,8 +462,8 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
-                Set.of()
-        );
+                Set.of(),
+                null);
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",
@@ -534,8 +534,8 @@ class StrategyGranterAdapterTest {
                 "actor-token-id",
                 "urn:ietf:params:oauth:token-type:access_token",
                 actorInfo,
-                Set.of()
-        );
+                Set.of(),
+                null);
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",

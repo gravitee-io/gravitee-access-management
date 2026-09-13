@@ -42,7 +42,8 @@ public record TokenExchangeResult(
         String actorTokenType,
         ActorTokenInfo actorInfo,
         SubjectTokenInfo subjectInfo,
-        Set<String> jtisOfParents
+        Set<String> jtisOfParents,
+        IdJagTarget idJagTarget
 ) {
 
     public boolean isDelegation() {
@@ -77,10 +78,11 @@ public record TokenExchangeResult(
             String subjectTokenId,
             String subjectTokenType,
             SubjectTokenInfo subjectInfo,
-            Set<String> parentJtisOfSubjectToken) {
+            Set<String> parentJtisOfSubjectToken,
+            IdJagTarget idJagTarget) {
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
                 subjectTokenId, subjectTokenType, null, null, null, subjectInfo,
-                parentJtisOfSubjectToken == null ? Set.of() : Set.copyOf(parentJtisOfSubjectToken));
+                parentJtisOfSubjectToken == null ? Set.of() : Set.copyOf(parentJtisOfSubjectToken), idJagTarget);
     }
 
     /**
@@ -97,12 +99,13 @@ public record TokenExchangeResult(
             ActorTokenInfo actorInfo,
             SubjectTokenInfo subjectInfo,
             Set<String> parentJtisOfSubjectToken,
-            Set<String> parentJtisOfActorToken) {
+            Set<String> parentJtisOfActorToken,
+            IdJagTarget idJagTarget) {
         Set<String> allParents = parentJtisOfSubjectToken == null ? new HashSet<>() : new HashSet<>(parentJtisOfSubjectToken);
         if(parentJtisOfActorToken != null){
             allParents.addAll(parentJtisOfActorToken);
         }
         return new TokenExchangeResult(user, issuedTokenType, exchangeExpiration,
-                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, subjectInfo, allParents);
+                subjectTokenId, subjectTokenType, actorTokenId, actorTokenType, actorInfo, subjectInfo, allParents, idJagTarget);
     }
 }

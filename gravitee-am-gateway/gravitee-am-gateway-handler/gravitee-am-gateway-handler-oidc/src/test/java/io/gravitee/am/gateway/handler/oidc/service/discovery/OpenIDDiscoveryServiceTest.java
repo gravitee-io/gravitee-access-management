@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.discovery;
 
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.AcrValues;
 import io.gravitee.am.common.oidc.BrazilAcrValues;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
@@ -24,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.DPoPSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import org.junit.Before;
@@ -84,6 +86,45 @@ public class OpenIDDiscoveryServiceTest {
 
     private void filterPromptValues() {
         when(environment.getProperty("legacy.openid.filterCustomPrompt", Boolean.class, false)).thenReturn(true);
+    }
+
+    private static TokenExchangeSettings tokenExchangeAllowing(String... requestedTokenTypes) {
+        TokenExchangeSettings settings = new TokenExchangeSettings();
+        settings.setEnabled(true);
+        settings.setAllowedRequestedTokenTypes(List.of(requestedTokenTypes));
+        return settings;
+    }
+
+    @Test
+    public void shouldAdvertiseIdJagIssuanceWhenTheDomainPermitsIt() {
+        when(domain.useTokenExchange()).thenReturn(true);
+        when(domain.getTokenExchangeSettings()).thenReturn(tokenExchangeAllowing(TokenType.ACCESS_TOKEN, TokenType.ID_JAG));
+
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertEquals(List.of(TokenType.ID_JAG), openIDProviderMetadata.getIdentityChainingRequestedTokenTypesSupported());
+    }
+
+    @Test
+    public void shouldNotAdvertiseIdJagIssuanceWhenTheDomainDoesNotPermitIt() {
+        when(domain.useTokenExchange()).thenReturn(true);
+        when(domain.getTokenExchangeSettings()).thenReturn(tokenExchangeAllowing(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN));
+
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertNull(openIDProviderMetadata.getIdentityChainingRequestedTokenTypesSupported());
+    }
+
+    @Test
+    public void shouldNotAdvertiseIdJagIssuanceWhenTokenExchangeIsDisabled() {
+        TokenExchangeSettings disabled = tokenExchangeAllowing(TokenType.ID_JAG);
+        disabled.setEnabled(false);
+        when(domain.useTokenExchange()).thenReturn(false);
+        Mockito.lenient().when(domain.getTokenExchangeSettings()).thenReturn(disabled);
+
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertNull(openIDProviderMetadata.getIdentityChainingRequestedTokenTypesSupported());
     }
 
     @Test

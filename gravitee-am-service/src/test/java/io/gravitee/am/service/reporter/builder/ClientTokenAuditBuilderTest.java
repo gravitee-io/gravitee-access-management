@@ -22,6 +22,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static io.gravitee.am.common.audit.EventType.TOKEN_CREATED;
 import static io.gravitee.am.common.audit.EventType.TOKEN_REVOKED;
 import static io.gravitee.am.common.audit.Status.FAILURE;
@@ -244,5 +246,44 @@ class ClientTokenAuditBuilderTest {
         assertTrue(audit.getOutcome().getMessage().contains(resources));
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
+    }
+
+    @Test
+    void shouldRecordRequestParametersOnFailure() {
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .withParams(() -> Map.of("GRANT_TYPE", "client_credentials"))
+                .throwable(new Exception("invalid_scope"))
+                .build(objectMapper);
+
+        assertEquals(FAILURE, audit.getOutcome().getStatus());
+        assertEquals(TOKEN_CREATED, audit.getType());
+        assertTrue(audit.getOutcome().getMessage().contains("invalid_scope"));
+        assertTrue(audit.getOutcome().getMessage().contains("GRANT_TYPE"));
+        assertTrue(audit.getOutcome().getMessage().contains("client_credentials"));
+    }
+
+    @Test
+    void shouldOmitUnsetRequestParametersOnFailure() {
+        var params = new java.util.HashMap<String, Object>();
+        params.put("GRANT_TYPE", "client_credentials");
+        params.put("RESPONSE_TYPE", null);
+
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .withParams(() -> params)
+                .throwable(new Exception("invalid_scope"))
+                .build(objectMapper);
+
+        assertEquals("invalid_scope. Request: {\"GRANT_TYPE\":\"client_credentials\"}", audit.getOutcome().getMessage());
+    }
+
+    @Test
+    void shouldNotRecordTokenDetailsOnFailure() {
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .revoked("Refresh token used to generate new token")
+                .throwable(new Exception("Refresh token is invalid"))
+                .build(objectMapper);
+
+        assertEquals(FAILURE, audit.getOutcome().getStatus());
+        assertEquals("Refresh token is invalid", audit.getOutcome().getMessage());
     }
 }
