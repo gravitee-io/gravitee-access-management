@@ -77,7 +77,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
 
     private Disposable initializationDisposable;
 
-    private OAuthTrustedIssuer trustedIssuer;
+    private volatile OAuthTrustedIssuer trustedIssuer;
 
     @Override
     public OpenIDConnectIdentityProviderConfiguration getConfiguration() {
