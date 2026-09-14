@@ -26,6 +26,7 @@ import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerIdp;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.HMACKeyProcessor;
 import io.gravitee.am.identityprovider.google.GoogleIdentityProviderConfiguration;
@@ -57,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -321,6 +323,13 @@ public class GoogleAuthenticationProviderTest {
 
         verify(authenticationContext, times(1)).set("id_token", badJwt);
         verify(client, times(1)).postAbs(GoogleIdentityProviderConfiguration.TOKEN_URL);
+    }
+
+    @Test
+    public void shouldNotBeATrustedIssuer() throws Exception {
+        forceProviderInfoForTest();
+
+        assertFalse(provider instanceof TrustedIssuerIdp);
     }
 
     // this method is call inside each test method to avoid override of init value by mock/spy
