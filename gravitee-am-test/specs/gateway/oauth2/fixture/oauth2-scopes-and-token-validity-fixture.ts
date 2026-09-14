@@ -27,8 +27,8 @@ import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
-export const APP_OAUTH_SETTINGS = {
-  DOMAIN_PREFIX: 'app-oauth-settings',
+export const OAUTH2_SCOPES_VALIDITY = {
+  DOMAIN_PREFIX: 'oauth2-scopes-validity',
   REDIRECT_URI: 'https://example.com/callback',
   // Domain scopes with no expiry of their own, so only the application setting drives consent duration
   CONSENT_SCOPE: 'orders',
@@ -45,7 +45,7 @@ export interface TestUser {
   password: string;
 }
 
-export interface AppOAuthSettingsFixture extends Fixture {
+export interface OAuth2ScopesAndValidityFixture extends Fixture {
   domain: Domain;
   oidc: DomainOidcConfig;
   // authorization_code app whose consent scope carries an application-level approval duration
@@ -57,17 +57,17 @@ export interface AppOAuthSettingsFixture extends Fixture {
   users: TestUser[];
 }
 
-export const setupAppOAuthSettingsFixture = async (): Promise<AppOAuthSettingsFixture> => {
+export const setupOAuth2ScopesAndValidityFixture = async (): Promise<OAuth2ScopesAndValidityFixture> => {
   const accessToken = await requestAdminAccessToken();
   let domain: Domain | null = null;
   try {
-    const started = await setupDomainForTest(uniqueName(APP_OAUTH_SETTINGS.DOMAIN_PREFIX, true), { accessToken, waitForStart: true });
+    const started = await setupDomainForTest(uniqueName(OAUTH2_SCOPES_VALIDITY.DOMAIN_PREFIX, true), { accessToken, waitForStart: true });
     domain = started.domain;
 
     await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
     const users: TestUser[] = [0, 1].map((i) => ({
       username: uniqueName(`oauth-settings-user-${i}`, true),
-      password: APP_OAUTH_SETTINGS.USER_PASSWORD,
+      password: OAUTH2_SCOPES_VALIDITY.USER_PASSWORD,
     }));
     const idp = await createIdp(domain.id, accessToken, {
       external: false,
@@ -76,11 +76,11 @@ export const setupAppOAuthSettingsFixture = async (): Promise<AppOAuthSettingsFi
       configuration: JSON.stringify({
         users: users.map((u) => ({ firstname: 'OAuth', lastname: 'Settings', username: u.username, password: u.password })),
       }),
-      name: 'app-oauth-settings-idp',
+      name: 'oauth2-scopes-idp',
     });
     const identityProviders = [{ identity: idp.id, priority: 0 }];
 
-    for (const key of [APP_OAUTH_SETTINGS.CONSENT_SCOPE, APP_OAUTH_SETTINGS.TOGGLE_SCOPE]) {
+    for (const key of [OAUTH2_SCOPES_VALIDITY.CONSENT_SCOPE, OAUTH2_SCOPES_VALIDITY.TOGGLE_SCOPE]) {
       const scope = await createScope(domain.id, accessToken, { key, name: key, description: key });
       expect(scope.key).toEqual(key);
     }
@@ -88,7 +88,7 @@ export const setupAppOAuthSettingsFixture = async (): Promise<AppOAuthSettingsFi
     const consentApp = await createTestApp(domain, accessToken, 'consent-app', {
       grantTypes: ['authorization_code'],
       scopeSettings: [
-        { scope: APP_OAUTH_SETTINGS.CONSENT_SCOPE, defaultScope: true, scopeApproval: APP_OAUTH_SETTINGS.SHORT_CONSENT_SECONDS },
+        { scope: OAUTH2_SCOPES_VALIDITY.CONSENT_SCOPE, defaultScope: true, scopeApproval: OAUTH2_SCOPES_VALIDITY.SHORT_CONSENT_SECONDS },
       ],
       identityProviders,
     });
@@ -102,7 +102,7 @@ export const setupAppOAuthSettingsFixture = async (): Promise<AppOAuthSettingsFi
       createTestApp(domain, accessToken, 'refresh-app', {
         grantTypes: ['password', 'refresh_token'],
         scopeSettings: [{ scope: 'openid', defaultScope: true }],
-        refreshTokenValiditySeconds: APP_OAUTH_SETTINGS.REFRESH_VALIDITY_SECONDS,
+        refreshTokenValiditySeconds: OAUTH2_SCOPES_VALIDITY.REFRESH_VALIDITY_SECONDS,
         identityProviders,
       }),
     );
@@ -140,10 +140,10 @@ async function createTestApp(domain: Domain, accessToken: string, name: string, 
   const created = await createApplication(domain.id, accessToken, {
     name: uniqueName(name, true),
     type: 'WEB',
-    redirectUris: [APP_OAUTH_SETTINGS.REDIRECT_URI],
+    redirectUris: [OAUTH2_SCOPES_VALIDITY.REDIRECT_URI],
   });
   const oauth: Record<string, unknown> = {
-    redirectUris: [APP_OAUTH_SETTINGS.REDIRECT_URI],
+    redirectUris: [OAUTH2_SCOPES_VALIDITY.REDIRECT_URI],
     grantTypes: options.grantTypes,
     scopeSettings: options.scopeSettings,
   };
@@ -163,7 +163,7 @@ async function createTestApp(domain: Domain, accessToken: string, name: string, 
 
 /** Replaces the application's scope list and waits for the gateway to pick it up. */
 export const setScopeSettings = (
-  fixture: AppOAuthSettingsFixture,
+  fixture: OAuth2ScopesAndValidityFixture,
   app: Application,
   scopeSettings: Array<{ scope: string; defaultScope: boolean; scopeApproval?: number }>,
 ) =>
@@ -171,7 +171,7 @@ export const setScopeSettings = (
     patchApplication(fixture.domain.id, fixture.accessToken, { settings: { oauth: { scopeSettings } } }, app.id),
   );
 
-export const requestPasswordToken = (fixture: AppOAuthSettingsFixture, app: Application, user: TestUser, scope?: string) =>
+export const requestPasswordToken = (fixture: OAuth2ScopesAndValidityFixture, app: Application, user: TestUser, scope?: string) =>
   performPost(
     fixture.oidc.token_endpoint,
     '',
@@ -179,7 +179,7 @@ export const requestPasswordToken = (fixture: AppOAuthSettingsFixture, app: Appl
     { 'Content-type': 'application/x-www-form-urlencoded', Authorization: 'Basic ' + applicationBase64Token(app) },
   );
 
-export const requestRefreshedToken = (fixture: AppOAuthSettingsFixture, app: Application, refreshToken: string) =>
+export const requestRefreshedToken = (fixture: OAuth2ScopesAndValidityFixture, app: Application, refreshToken: string) =>
   performPost(fixture.oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${refreshToken}`, {
     'Content-type': 'application/x-www-form-urlencoded',
     Authorization: 'Basic ' + applicationBase64Token(app),
@@ -191,19 +191,20 @@ export interface AuthorizedSession {
 }
 
 /** Starts an authorization_code request; with a session cookie the login step is skipped. */
-export const authorize = (fixture: AppOAuthSettingsFixture, app: Application, session?: AuthorizedSession) => {
+export const authorize = (fixture: OAuth2ScopesAndValidityFixture, app: Application, session?: AuthorizedSession) => {
   const clientId = app.settings.oauth.clientId;
-  const params = `?response_type=code&client_id=${clientId}&redirect_uri=${APP_OAUTH_SETTINGS.REDIRECT_URI}`;
+  const params = `?response_type=code&client_id=${clientId}&redirect_uri=${OAUTH2_SCOPES_VALIDITY.REDIRECT_URI}`;
   return performGet(fixture.oidc.authorization_endpoint, params, session ? { Cookie: session.cookie } : null).expect(302);
 };
 
-export const consentPageUrl = (fixture: AppOAuthSettingsFixture) => `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/oauth/consent`;
+export const consentPageUrl = (fixture: OAuth2ScopesAndValidityFixture) =>
+  `${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/oauth/consent`;
 
 /**
  * Signs the user in, approves the requested scopes on the consent page and returns the session
  * along with the final redirect back to the application (which must carry an authorization code).
  */
-export const signInAndConsent = async (fixture: AppOAuthSettingsFixture, app: Application, user: TestUser, scopes: string[]) => {
+export const signInAndConsent = async (fixture: OAuth2ScopesAndValidityFixture, app: Application, user: TestUser, scopes: string[]) => {
   const authResponse = await authorize(fixture, app);
   expect(authResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${fixture.domain.hrid}/login`);
 
@@ -233,6 +234,6 @@ export const signInAndConsent = async (fixture: AppOAuthSettingsFixture, app: Ap
 };
 
 export const expectAuthorizationCodeRedirect = (response) => {
-  expect(response.headers['location']).toContain(`${APP_OAUTH_SETTINGS.REDIRECT_URI}?`);
+  expect(response.headers['location']).toContain(`${OAUTH2_SCOPES_VALIDITY.REDIRECT_URI}?`);
   expect(response.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+/);
 };

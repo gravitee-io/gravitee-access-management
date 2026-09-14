@@ -18,17 +18,17 @@ import { waitFor } from '@management-commands/domain-management-commands';
 import { decodeJwt } from '@utils-commands/jwt';
 import { setup } from '../../test-fixture';
 import {
-  APP_OAUTH_SETTINGS,
-  AppOAuthSettingsFixture,
+  OAUTH2_SCOPES_VALIDITY,
+  OAuth2ScopesAndValidityFixture,
   authorize,
   consentPageUrl,
   expectAuthorizationCodeRedirect,
   requestPasswordToken,
   requestRefreshedToken,
   setScopeSettings,
-  setupAppOAuthSettingsFixture,
+  setupOAuth2ScopesAndValidityFixture,
   signInAndConsent,
-} from './fixtures/app-oauth-settings-fixture';
+} from './fixture/oauth2-scopes-and-token-validity-fixture';
 
 setup(200000);
 
@@ -38,21 +38,21 @@ setup(200000);
  * Access/ID token validity and the refresh grant itself are covered by the token-claims and
  * refresh-token specs.
  */
-const { CONSENT_SCOPE, TOGGLE_SCOPE, SHORT_CONSENT_SECONDS, LONG_CONSENT_SECONDS, REFRESH_VALIDITY_SECONDS } = APP_OAUTH_SETTINGS;
+const { CONSENT_SCOPE, TOGGLE_SCOPE, SHORT_CONSENT_SECONDS, LONG_CONSENT_SECONDS, REFRESH_VALIDITY_SECONDS } = OAUTH2_SCOPES_VALIDITY;
 const PAST_SHORT_CONSENT_MS = (SHORT_CONSENT_SECONDS + 1) * 1000;
 const PAST_REFRESH_VALIDITY_MS = (REFRESH_VALIDITY_SECONDS + 1) * 1000;
 
-let fixture: AppOAuthSettingsFixture;
+let fixture: OAuth2ScopesAndValidityFixture;
 
 beforeAll(async () => {
-  fixture = await setupAppOAuthSettingsFixture();
+  fixture = await setupOAuth2ScopesAndValidityFixture();
 });
 
 afterAll(async () => {
   await fixture?.cleanUp();
 });
 
-describe('Application OAuth settings - consent duration on a scope', () => {
+describe('OAuth2 - consent duration on a scope', () => {
   it('should ask for consent again once the application-level approval duration has elapsed', async () => {
     const user = fixture.users[0];
     await setScopeSettings(fixture, fixture.consentApp, [
@@ -89,7 +89,7 @@ describe('Application OAuth settings - consent duration on a scope', () => {
   });
 });
 
-describe('Application OAuth settings - adding and removing a scope', () => {
+describe('OAuth2 - adding and removing a scope', () => {
   const user = () => fixture.users[0];
 
   it('should issue a token carrying a scope once it is added to the application', async () => {
@@ -114,7 +114,7 @@ describe('Application OAuth settings - adding and removing a scope', () => {
   });
 });
 
-describe('Application OAuth settings - refresh token validity', () => {
+describe('OAuth2 - refresh token validity', () => {
   const user = () => fixture.users[1];
 
   it('should refresh while the refresh token is still within its validity', async () => {
@@ -122,7 +122,7 @@ describe('Application OAuth settings - refresh token validity', () => {
     expect(issued.body.refresh_token).toEqual(expect.any(String));
     // The setting is specific to the refresh token: the access token keeps its own default
     const accessToken = decodeJwt(issued.body.access_token);
-    expect(accessToken.exp - accessToken.iat).toEqual(APP_OAUTH_SETTINGS.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
+    expect(accessToken.exp - accessToken.iat).toEqual(OAUTH2_SCOPES_VALIDITY.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
     const refreshToken = decodeJwt(issued.body.refresh_token);
     expect(refreshToken.exp - refreshToken.iat).toEqual(REFRESH_VALIDITY_SECONDS);
 
