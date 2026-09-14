@@ -401,13 +401,16 @@ public class DomainServiceImpl implements DomainService {
 
         return validateCreate(organizationId, environmentId, newDomain)
                 .flatMap(domain -> domainRepository.create(domain))
+                // create default system scopes
                 .flatMap(this::createSystemScopes)
+                // create default certificate (skipped for automation domains)
                 .flatMap(domain -> {
                     if (automationDomain != null) {
                         return Single.just(domain);
                     }
                     return createDefaultCertificate(domain);
                 })
+                // create owner
                 .flatMap(domain -> {
                     if (principal == null) {
                         return Single.just(domain);
@@ -426,18 +429,21 @@ public class DomainServiceImpl implements DomainService {
                                         .map(__ -> domain);
                             });
                 })
+                // create default IdP (always skipped for automation domains)
                 .flatMap(domain -> {
                     if (!createDefaultIdentityProvider || automationDomain != null) {
                         return Single.just(domain);
                     }
                     return defaultIdentityProviderService.create(domain).map(__ -> domain);
                 })
+                // create default reporter (always skipped for automation domains)
                 .flatMap(domain -> {
                     if (!createDefaultReporters || automationDomain != null) {
                         return Single.just(domain);
                     }
                     return reporterService.createDefault(Reference.domain(domain.getId())).map(__ -> domain);
                 })
+                // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
                     return eventService.create(event, domain).flatMap(e -> Single.just(domain));
@@ -590,6 +596,8 @@ public class DomainServiceImpl implements DomainService {
                     domain.setReferenceType(existingDomain.getReferenceType());
                     domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
+                    // The Automation API references certificates / identity providers that may not exist yet
+                    // (eventual consistency), so reference validation is skipped for it.
                     Completable referenceValidation = validateReferences
                             ? validateCertificateSettings(domain)
                             : Completable.complete();
