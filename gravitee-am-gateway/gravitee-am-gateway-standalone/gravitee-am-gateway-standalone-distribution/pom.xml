@@ -192,6 +192,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.extensiongrant</groupId>
+            <artifactId>gravitee-am-extensiongrant-cross-app-access</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
@@ -649,6 +656,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.extensiongrant</groupId>
                                     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.extensiongrant</groupId>
+                                    <artifactId>gravitee-am-extensiongrant-cross-app-access</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

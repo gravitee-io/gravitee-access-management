@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
@@ -124,7 +125,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
                         extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
                         extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
-                        extensionGrant.setUserExists(newExtensionGrant.isUserExists());
+                        extensionGrant.setUserExists(isCheckUserForced(newExtensionGrant.getType()) || newExtensionGrant.isUserExists());
                         extensionGrant.setType(newExtensionGrant.getType());
                         extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
                         extensionGrant.setCreatedAt(new Date());
@@ -149,6 +150,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 })
                 .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_CREATED).extensionGrant(extensionGrant)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.EXTENSION_GRANT_CREATED).throwable(throwable)));
+    }
+
+    private static boolean isCheckUserForced(String type) {
+        return ExtensionGrantPluginType.CROSS_APP_ACCESS.equals(type);
     }
 
     @Override

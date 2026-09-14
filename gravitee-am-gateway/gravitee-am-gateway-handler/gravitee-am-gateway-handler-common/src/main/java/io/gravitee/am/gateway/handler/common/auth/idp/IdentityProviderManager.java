@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.auth.idp;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Maybe;
@@ -26,13 +27,11 @@ import io.reactivex.rxjava3.core.Maybe;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProviderManager extends Service, IdentityProviderCertificateReloader {
+public interface IdentityProviderManager extends Service, IdentityProviderCertificateReloader, TrustedIssuerResolver {
 
     Maybe<AuthenticationProvider> get(String id);
 
     IdentityProvider getIdentityProvider(String id);
 
     Maybe<UserProvider> getUserProvider(String id);
-
-    Maybe<TrustedIssuerProvider> findByIssuer(String issuer);
 }

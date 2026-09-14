@@ -20,11 +20,13 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.NoAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
+import io.reactivex.rxjava3.core.Maybe;
 
 import java.util.List;
 import java.util.Optional;
@@ -61,13 +63,18 @@ public class ExtensionGrantPluginManager
         var extensionGrantConfiguration = configurationFactory.create(extensionGrant.configuration(), providerConfig.getConfiguration());
         return createProvider(extensionGrant, List.of(
                         new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration),
-                        new ExtensionGrantIdentityProviderFactoryPostProcessor(getAuthenticationProvider(providerConfig))
+                        new ExtensionGrantIdentityProviderFactoryPostProcessor(getAuthenticationProvider(providerConfig)),
+                        new ExtensionGrantTrustedIssuerResolverFactoryPostProcessor(getTrustedIssuerResolver(providerConfig))
                 )
         );
     }
 
     private static AuthenticationProvider getAuthenticationProvider(ExtensionGrantProviderConfiguration providerConfig) {
         return ofNullable(providerConfig.getAuthenticationProvider()).orElse(new NoAuthenticationProvider());
+    }
+
+    private static TrustedIssuerResolver getTrustedIssuerResolver(ExtensionGrantProviderConfiguration providerConfig) {
+        return ofNullable(providerConfig.getTrustedIssuerResolver()).orElse(issuer -> Maybe.empty());
     }
 
     private static class ExtensionGrantConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ExtensionGrantConfiguration> {
@@ -79,6 +86,12 @@ public class ExtensionGrantPluginManager
     private static class ExtensionGrantIdentityProviderFactoryPostProcessor extends NamedBeanFactoryPostProcessor<AuthenticationProvider> {
         private ExtensionGrantIdentityProviderFactoryPostProcessor(AuthenticationProvider authenticationProvider) {
             super("authenticationProvider", authenticationProvider);
+        }
+    }
+
+    private static class ExtensionGrantTrustedIssuerResolverFactoryPostProcessor extends NamedBeanFactoryPostProcessor<TrustedIssuerResolver> {
+        private ExtensionGrantTrustedIssuerResolverFactoryPostProcessor(TrustedIssuerResolver trustedIssuerResolver) {
+            super("trustedIssuerResolver", trustedIssuerResolver);
         }
     }
 }

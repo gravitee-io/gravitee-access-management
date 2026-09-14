@@ -20,11 +20,11 @@ import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.handler.common.auth.idp.AmbiguousTrustedIssuerException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.auth.idp.TrustedIssuerProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.api.trustedissuer.ResolvedTrustedIssuer;
 import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerIdp;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -116,23 +116,26 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     @Override
-    public Maybe<TrustedIssuerProvider> findByIssuer(String issuer) {
-        List<TrustedIssuerProvider> matches = identities.values().stream()
-                .flatMap(identityProvider -> trustedIssuerProvider(identityProvider, issuer).stream())
+    public Maybe<ResolvedTrustedIssuer> resolve(String issuer) {
+        List<ResolvedTrustedIssuer> matches = identities.values().stream()
+                .flatMap(identityProvider -> resolvedTrustedIssuer(identityProvider, issuer).stream())
                 .toList();
         return switch (matches.size()) {
             case 0 -> Maybe.empty();
             case 1 -> Maybe.just(matches.get(0));
-            default -> Maybe.error(new AmbiguousTrustedIssuerException(issuer));
+            default -> {
+                log.warn("Several identity providers claim issuer={} identityProviders={}", issuer, matches.stream().map(ResolvedTrustedIssuer::identityProvider).toList());
+                yield Maybe.error(new AmbiguousTrustedIssuerException());
+            }
         };
     }
 
-    private Optional<TrustedIssuerProvider> trustedIssuerProvider(IdentityProvider identityProvider, String issuer) {
+    private Optional<ResolvedTrustedIssuer> resolvedTrustedIssuer(IdentityProvider identityProvider, String issuer) {
         AuthenticationProvider provider = providers.get(identityProvider.getId());
         if (provider instanceof TrustedIssuerIdp trustedIssuerIdp) {
             return trustedIssuerIdp.trustedIssuer()
                     .filter(trustedIssuer -> issuer.equals(trustedIssuer.issuer()))
-                    .map(trustedIssuer -> new TrustedIssuerProvider(provider, identityProvider, trustedIssuer));
+                    .map(trustedIssuer -> new ResolvedTrustedIssuer(identityProvider.getId(), trustedIssuer));
         } else {
             return Optional.empty();
         }

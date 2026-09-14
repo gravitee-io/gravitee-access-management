@@ -18,12 +18,12 @@ package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.auth.idp.AmbiguousTrustedIssuerException;
-import io.gravitee.am.gateway.handler.common.auth.idp.TrustedIssuerProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.trustedissuer.AssertionVerifier;
 import io.gravitee.am.identityprovider.api.trustedissuer.OAuthTrustedIssuer;
+import io.gravitee.am.identityprovider.api.trustedissuer.ResolvedTrustedIssuer;
 import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerIdp;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -163,18 +163,16 @@ public class IdentityProviderManagerImplTest {
     }
 
     @Test
-    public void shouldFindTrustedIssuerProviderByIssuer() throws Exception {
-        IdentityProvider oidc = identityProvider("oidc-idp");
+    public void shouldResolveTrustedIssuerToItsIdentityProvider() throws Exception {
         AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
-        load(oidc);
+        load(identityProvider("oidc-idp"));
         when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(trusted);
 
         identityProviderManager.afterPropertiesSet();
 
-        TrustedIssuerProvider found = identityProviderManager.findByIssuer("https://issuer.example.com").blockingGet();
-        assertSame(trusted, found.authenticationProvider());
-        assertSame(oidc, found.identityProvider());
-        assertEquals("https://issuer.example.com", found.trustedIssuer().issuer());
+        ResolvedTrustedIssuer resolved = identityProviderManager.resolve("https://issuer.example.com").blockingGet();
+        assertEquals("oidc-idp", resolved.identityProvider());
+        assertSame(((TrustedIssuerIdp) trusted).trustedIssuer().orElseThrow(), resolved.trustedIssuer());
     }
 
     @Test
@@ -186,10 +184,11 @@ public class IdentityProviderManagerImplTest {
 
         identityProviderManager.afterPropertiesSet();
 
-        identityProviderManager.findByIssuer("https://issuer.example.com").test()
+        identityProviderManager.resolve("https://issuer.example.com").test()
                 .assertNoValues()
                 .assertError(AmbiguousTrustedIssuerException.class)
-                .assertError(error -> "invalid_grant".equals(((OAuth2Exception) error).getOAuth2ErrorCode()));
+                .assertError(error -> "invalid_grant".equals(((OAuth2Exception) error).getOAuth2ErrorCode()))
+                .assertError(error -> "Assertion issuer is claimed by several identity providers".equals(error.getMessage()));
     }
 
     @Test
@@ -200,7 +199,7 @@ public class IdentityProviderManagerImplTest {
 
         identityProviderManager.afterPropertiesSet();
 
-        identityProviderManager.findByIssuer("https://other.example.com").test()
+        identityProviderManager.resolve("https://other.example.com").test()
                 .assertNoValues()
                 .assertComplete();
     }
@@ -213,7 +212,7 @@ public class IdentityProviderManagerImplTest {
 
         identityProviderManager.afterPropertiesSet();
 
-        identityProviderManager.findByIssuer("https://issuer.example.com").test()
+        identityProviderManager.resolve("https://issuer.example.com").test()
                 .assertNoValues()
                 .assertComplete();
     }
@@ -227,7 +226,7 @@ public class IdentityProviderManagerImplTest {
 
         identityProviderManager.afterPropertiesSet();
 
-        assertSame(trusted, identityProviderManager.findByIssuer("https://issuer.example.com").blockingGet().authenticationProvider());
+        assertEquals("oidc-idp", identityProviderManager.resolve("https://issuer.example.com").blockingGet().identityProvider());
     }
 
     private void load(IdentityProvider... identityProviders) throws Exception {

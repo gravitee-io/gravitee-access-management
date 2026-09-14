@@ -28,6 +28,7 @@ import { LicensedPlugin, PluginFeatureService } from '../../../../../../services
 export class ExtensionGrantCreationStep1Component implements OnInit {
   private extensionGrantTypes: any = {
     'jwtbearer-am-extension-grant': 'Extension Grant JWT Bearer',
+    'cross-app-access-am-extension-grant': 'Extension Grant Cross App Access',
   };
   @Input() extensionGrant: any;
   extensionGrants: (any & LicensedPlugin)[];

@@ -115,7 +115,7 @@ class ExtensionGrantStrategyTest {
                 userService,
                 domain
         );
-        strategy.setMinDate(extensionGrant.getCreatedAt());
+        strategy.setOldestExtensionGrantId(extensionGrant.getId());
     }
 
     @Test
@@ -136,7 +136,7 @@ class ExtensionGrantStrategyTest {
     }
 
     @Test
-    void shouldSupportWithMinDateFallback() {
+    void shouldSupportBareGrantTypeWhenOldestExtensionGrant() {
         // Client uses old style (grant type without ID)
         client.setAuthorizedGrantTypes(List.of("urn:ietf:params:oauth:grant-type:jwt-bearer"));
         assertTrue(strategy.supports("urn:ietf:params:oauth:grant-type:jwt-bearer", client, domain));
@@ -275,7 +275,7 @@ class ExtensionGrantStrategyTest {
                 subjectManager,
                 domain
         );
-        v2Strategy.setMinDate(extensionGrant.getCreatedAt());
+        v2Strategy.setOldestExtensionGrantId(extensionGrant.getId());
 
         DefaultUser endUser = new DefaultUser("testuser");
         endUser.setId("user-id");
@@ -327,7 +327,7 @@ class ExtensionGrantStrategyTest {
                 subjectManager,
                 domain
         );
-        v2Strategy.setMinDate(extensionGrant.getCreatedAt());
+        v2Strategy.setOldestExtensionGrantId(extensionGrant.getId());
 
         DefaultUser endUser = new DefaultUser("testuser");
         endUser.setId("user-id");
@@ -367,7 +367,7 @@ class ExtensionGrantStrategyTest {
                 subjectManager,
                 domain
         );
-        v2Strategy.setMinDate(extensionGrant.getCreatedAt());
+        v2Strategy.setOldestExtensionGrantId(extensionGrant.getId());
 
         DefaultUser endUser = new DefaultUser("testuser");
         endUser.setId("user-id");
@@ -424,7 +424,7 @@ class ExtensionGrantStrategyTest {
                 subjectManager,
                 domain
         );
-        v2Strategy.setMinDate(extensionGrant.getCreatedAt());
+        v2Strategy.setOldestExtensionGrantId(extensionGrant.getId());
 
         DefaultUser endUser = new DefaultUser("testuser");
         endUser.setId("user-id");
@@ -460,7 +460,7 @@ class ExtensionGrantStrategyTest {
                 subjectManager,
                 domain
         );
-        v2Strategy.setMinDate(extensionGrant.getCreatedAt());
+        v2Strategy.setOldestExtensionGrantId(extensionGrant.getId());
 
         DefaultUser endUser = new DefaultUser("testuser");
         endUser.setId("user-id");
@@ -504,9 +504,8 @@ class ExtensionGrantStrategyTest {
     }
 
     @Test
-    void shouldNotSupportMinDateFallbackWhenNotOldest() {
-        // Set a later minDate so this extension grant is not the oldest
-        strategy.setMinDate(new Date(extensionGrant.getCreatedAt().getTime() - 1000));
+    void shouldNotSupportBareGrantTypeWhenNotOldestExtensionGrant() {
+        strategy.setOldestExtensionGrantId("older-ext-grant-id");
 
         // Client uses old style (grant type without ID)
         client.setAuthorizedGrantTypes(List.of("urn:ietf:params:oauth:grant-type:jwt-bearer"));
@@ -628,7 +627,7 @@ class ExtensionGrantStrategyTest {
                 return Maybe.just(new ResolvedEndUser(endUser, identityProvider));
             }
         };
-        resolving.setMinDate(extensionGrant.getCreatedAt());
+        resolving.setOldestExtensionGrantId(extensionGrant.getId());
         return resolving;
     }
 }

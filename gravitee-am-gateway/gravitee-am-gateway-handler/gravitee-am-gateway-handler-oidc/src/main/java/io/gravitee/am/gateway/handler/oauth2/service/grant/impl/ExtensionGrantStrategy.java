@@ -50,7 +50,6 @@ import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +76,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
     private final UserGatewayService userService;
     private final SubjectManager subjectManager; // nullable for V1 mode
     private final Domain domain;
-    private Date minDate;
+    private volatile String oldestExtensionGrantId;
 
     /**
      * Constructor for V1 mode (without SubjectManager).
@@ -113,8 +112,8 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         this.domain = domain;
     }
 
-    public void setMinDate(Date minDate) {
-        this.minDate = minDate;
+    public void setOldestExtensionGrantId(String oldestExtensionGrantId) {
+        this.oldestExtensionGrantId = oldestExtensionGrantId;
     }
 
     @Override
@@ -130,7 +129,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         return supports(request.getGrantType(), client, domain) && !isIdJagAssertion(request);
     }
 
-    private static boolean isIdJagAssertion(TokenRequest request) {
+    protected static boolean isIdJagAssertion(TokenRequest request) {
         if (!GrantType.JWT_BEARER.equals(request.getGrantType()) || request.parameters() == null) {
             return false;
         }
@@ -159,7 +158,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
 
         // Check for grant type match when this is the oldest extension grant
         return authorizedGrantTypes.contains(extensionGrant.getGrantType()) &&
-                extensionGrant.getCreatedAt().equals(minDate);
+                extensionGrant.getId().equals(oldestExtensionGrantId);
     }
 
     @Override
@@ -360,7 +359,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         return newUser;
     }
 
-    private io.gravitee.am.repository.oauth2.model.request.TokenRequest convertToPluginRequest(TokenRequest tokenRequest) {
+    protected io.gravitee.am.repository.oauth2.model.request.TokenRequest convertToPluginRequest(TokenRequest tokenRequest) {
         io.gravitee.am.repository.oauth2.model.request.TokenRequest pluginRequest =
                 new io.gravitee.am.repository.oauth2.model.request.TokenRequest();
         pluginRequest.setClientId(tokenRequest.getClientId());

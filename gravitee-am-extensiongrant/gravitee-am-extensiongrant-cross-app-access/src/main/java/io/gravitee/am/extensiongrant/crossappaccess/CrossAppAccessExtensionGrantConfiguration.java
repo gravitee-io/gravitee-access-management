@@ -13,19 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.auth.idp;
+package io.gravitee.am.extensiongrant.crossappaccess;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-import io.gravitee.am.common.oauth2.ErrorCode;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 
-public class AmbiguousTrustedIssuerException extends OAuth2Exception {
-
-    public AmbiguousTrustedIssuerException() {
-        super("Assertion issuer is claimed by several identity providers");
-    }
-
-    @Override
-    public String getOAuth2ErrorCode() {
-        return ErrorCode.INVALID_GRANT;
-    }
+public class CrossAppAccessExtensionGrantConfiguration implements ExtensionGrantConfiguration {
 }

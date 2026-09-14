@@ -32,4 +32,8 @@ public interface ExtensionGrantProvider extends AmPluginProvider {
      * @return User representation of the assertion or empty if no user is involved
      */
     Maybe<User> grant(TokenRequest tokenRequest);
+
+    default Maybe<ResolvedEndUser> resolveEndUser(TokenRequest tokenRequest) {
+        return grant(tokenRequest).map(ResolvedEndUser::endUser);
+    }
 }

@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.auth.idp;
+package io.gravitee.am.identityprovider.api.trustedissuer;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.trustedissuer.OAuthTrustedIssuer;
-import io.gravitee.am.model.IdentityProvider;
-
-public record TrustedIssuerProvider(
-        AuthenticationProvider authenticationProvider,
-        IdentityProvider identityProvider,
-        OAuthTrustedIssuer trustedIssuer) {
+public record ResolvedTrustedIssuer(String identityProvider, OAuthTrustedIssuer trustedIssuer) {
 }

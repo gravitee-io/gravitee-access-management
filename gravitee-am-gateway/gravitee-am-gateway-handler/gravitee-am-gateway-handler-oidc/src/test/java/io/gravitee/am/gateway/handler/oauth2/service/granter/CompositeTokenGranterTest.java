@@ -206,7 +206,7 @@ public class CompositeTokenGranterTest {
         extensionGrant.setGrantType(GrantType.JWT_BEARER);
         extensionGrant.setCreatedAt(new Date());
         ExtensionGrantStrategy strategy = new ExtensionGrantStrategy(provider, extensionGrant, null, null, null, domain);
-        strategy.setMinDate(extensionGrant.getCreatedAt());
+        strategy.setOldestExtensionGrantId(extensionGrant.getId());
         return new StrategyGranterAdapter(strategy, domain, null, null, null, null);
     }
 

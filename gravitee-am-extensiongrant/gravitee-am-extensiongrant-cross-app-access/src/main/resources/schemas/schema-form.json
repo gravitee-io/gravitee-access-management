@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:extensiongrant:crossappaccess:CrossAppAccessExtensionGrantConfiguration",
+  "description": "Cross App Access (draft-ietf-oauth-identity-assertion-authz-grant). An agent presents an identity assertion authorization grant (ID-JAG) minted by a trusted identity provider through the jwt-bearer grant type :\n\nPOST /token HTTP/1.1\ngrant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=|ID-JAG|",
+  "properties": {
+    "grantType": {
+      "title": "Grant Type",
+      "description": "OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the \"grant_type\" parameter of the token endpoint.",
+      "default": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      "readOnly": true
+    }
+  }
+}
