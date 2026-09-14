@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
-import { waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
+import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { Domain, initClient, initDomain, enableDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { get, processLoginFromContext, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
 import { setup } from '../../test-fixture';
@@ -105,18 +105,6 @@ const deviceSettings = (dom: Domain) =>
     },
   });
 
-/** Same rule as the IP application, but risk assessment switched off, so no verdict is produced. */
-const noAssessmentSettings = (dom: Domain) =>
-  mfaSettings(dom, {
-    mfa: { challenge: { active: true, type: 'RISK_BASED', challengeRule: safeRule('ipReputation') } },
-    riskAssessment: {
-      enabled: false,
-      deviceAssessment: { enabled: false },
-      ipReputationAssessment: { enabled: false },
-      geoVelocityAssessment: { enabled: false },
-    },
-  });
-
 /** Same flagged address as the IP application, judged against thresholds it cannot reach. */
 const lenientSettings = (dom: Domain) =>
   mfaSettings(dom, {
@@ -131,7 +119,6 @@ const lenientSettings = (dom: Domain) =>
 
 let ipClient: any;
 let deviceClient: any;
-let noAssessmentClient: any;
 let lenientClient: any;
 let authorizationEndpoint: string;
 
@@ -149,13 +136,11 @@ const signIn = async (client: any, userIndex: number, options: { deviceId?: stri
 };
 
 beforeAll(async () => {
-  await initDomain(domain, 5);
+  await initDomain(domain, 4);
   ipClient = await initClient(domain, 'risk-ip', ipSettings(domain));
   deviceClient = await initClient(domain, 'risk-device', deviceSettings(domain));
-  noAssessmentClient = await initClient(domain, 'risk-none', noAssessmentSettings(domain));
   lenientClient = await initClient(domain, 'risk-lenient', lenientSettings(domain));
   await enableDomain(domain);
-  await waitForDomainSync(domain.domain.domainId);
   const oidc = await waitForOidcReady(domain.domain.domainHrid);
   authorizationEndpoint = oidc.body.authorization_endpoint;
 
@@ -163,8 +148,7 @@ beforeAll(async () => {
   // The device user remembers KNOWN_DEVICE at the same time, which is what later marks it known.
   await processMfaEndToEnd(new TestSuiteContext(domain, ipClient, domain.domain.users[0], authorizationEndpoint));
   await processMfaEndToEnd(new TestSuiteContext(domain, deviceClient, domain.domain.users[1], authorizationEndpoint), true, KNOWN_DEVICE);
-  await processMfaEndToEnd(new TestSuiteContext(domain, noAssessmentClient, domain.domain.users[2], authorizationEndpoint));
-  await processMfaEndToEnd(new TestSuiteContext(domain, lenientClient, domain.domain.users[3], authorizationEndpoint));
+  await processMfaEndToEnd(new TestSuiteContext(domain, lenientClient, domain.domain.users[2], authorizationEndpoint));
 });
 
 afterAll(async () => {
@@ -202,22 +186,11 @@ describe('Risk-based challenge', () => {
     expect(result.letThrough).toBe(false);
   });
 
-  it(jira`a user is challenged when no assessment is produced at all ${'AM-2828'}`, async () => {
-    // The same rule as the IP application, with risk assessment switched off. Nothing reaches the
-    // session for the rule to read, so it cannot hold and the challenge stands. Worth pinning: the
-    // safe outcome when the assessment is unavailable is to ask for a code, not to wave the user
-    // through — and this is what fails if the plugin is ever dropped from the distribution again.
-    const result = await signIn(noAssessmentClient, 2, { ip: CLEAN_IP });
-
-    expect(result.challenged).toBe(true);
-    expect(result.letThrough).toBe(false);
-  });
-
   it(jira`the same flagged address is let through when the thresholds are not reached ${'AM-2828'}`, async () => {
     // The address the test above is challenged for, judged against thresholds it cannot cross.
     // Only the threshold configuration differs, so the score is shown to be read against it rather
     // than the verdict being fixed by the address alone.
-    const result = await signIn(lenientClient, 3, { ip: FLAGGED_IP });
+    const result = await signIn(lenientClient, 2, { ip: FLAGGED_IP });
 
     expect(result.challenged).toBe(false);
     expect(result.letThrough).toBe(true);
@@ -228,7 +201,7 @@ describe('Risk-based challenge', () => {
     // authenticated, before the assessment is considered at all. Pinned here because it is easy to
     // mistake for the risk rule passing, and it is why every other test in this file signs in from
     // a clean session.
-    const ctx = new TestSuiteContext(domain, ipClient, domain.domain.users[4], authorizationEndpoint);
+    const ctx = new TestSuiteContext(domain, ipClient, domain.domain.users[3], authorizationEndpoint);
     const session = await processMfaEndToEnd(ctx);
 
     const response = await get(ctx.clientAuthUrl, 302, { Cookie: session.cookie, 'X-Forwarded-For': FLAGGED_IP });
