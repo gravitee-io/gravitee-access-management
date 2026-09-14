@@ -16,13 +16,11 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
-import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,9 +28,11 @@ import org.springframework.context.annotation.Lazy;
  */
 public class TokenManagerImpl extends AbstractService implements TokenManager {
 
-    @Lazy
-    @Autowired
-    private BackwardCompatibleTokenRepository tokenRepository;
+    private final TokenRepository tokenRepository;
+
+    public TokenManagerImpl(TokenRepository tokenRepository) {
+        this.tokenRepository = tokenRepository;
+    }
 
     @Override
     protected void doStart() throws Exception {
