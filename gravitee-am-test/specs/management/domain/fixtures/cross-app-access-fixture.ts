@@ -98,6 +98,17 @@ const callTrustedDomains = async (
   return JSON.parse(payload);
 };
 
+/** Creates a trusted domain through the v2 contract, for a suite that does not need the whole fixture. */
+export const createTrustedDomain = (domainId: string, accessToken: string, body: Record<string, unknown>): Promise<TrustedDomainResponse> =>
+  callTrustedDomains(trustedDomainsUrl(domainId), 'POST', accessToken, body);
+
+export const updateTrustedDomain = (
+  domainId: string,
+  accessToken: string,
+  trustDomainId: string,
+  body: Record<string, unknown>,
+): Promise<TrustedDomainResponse> => callTrustedDomains(trustedDomainsUrl(domainId, trustDomainId), 'PUT', accessToken, body);
+
 export const setupCrossAppAccessFixture = async (): Promise<CrossAppAccessFixture> => {
   const accessToken = await requestAdminAccessToken();
   const trustedKey = createTrustedIssuerKeyMaterial();
@@ -114,7 +125,7 @@ export const setupCrossAppAccessFixture = async (): Promise<CrossAppAccessFixtur
     crossAppAccess: (resource: string, overrides: Record<string, unknown> = {}) => ({
       enabled: true,
       resourceServers: [{ name: 'Calendar', resource }],
-      audSubMapping: '{#user.email}',
+      audSubMapping: "{#context.attributes['user'].email}",
       scopeMappings: { 'domain:read': 'calendar.read' },
       ...overrides,
     }),
@@ -122,7 +133,7 @@ export const setupCrossAppAccessFixture = async (): Promise<CrossAppAccessFixtur
     authorityIssuer: () => `https://auth.example.com/as-${++issuerSequence}`,
 
     createTrustDomain: (body: Record<string, unknown>, targetDomainId: string = domain.id) =>
-      callTrustedDomains(trustedDomainsUrl(targetDomainId), 'POST', accessToken, body),
+      createTrustedDomain(targetDomainId, accessToken, body),
 
     getTrustDomain: (trustDomainId: string, targetDomainId: string = domain.id) =>
       callTrustedDomains(trustedDomainsUrl(targetDomainId, trustDomainId), 'GET', accessToken),

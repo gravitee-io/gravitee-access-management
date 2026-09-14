@@ -1,0 +1,26 @@
+[
+  {
+    "name": "mongo",
+    "listen": "0.0.0.0:27017",
+    "upstream": "mongodb:27017",
+    "enabled": true
+  },
+  {
+    "name": "postgres",
+    "listen": "0.0.0.0:5432",
+    "upstream": "postgres:5432",
+    "enabled": true
+  },
+  {
+    "name": "smtp",
+    "listen": "0.0.0.0:5025",
+    "upstream": "smtp:5025",
+    "enabled": true
+  },
+  {
+    "name": "cockpit",
+    "listen": "0.0.0.0:8085",
+    "upstream": "cockpit-mock:8085",
+    "enabled": true
+  }
+]

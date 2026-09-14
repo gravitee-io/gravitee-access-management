@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
@@ -44,4 +46,6 @@ public interface TrustedDomainRepository extends CrudRepository<TrustedDomain, S
      * domains that are not trusted for token exchange.
      */
     Maybe<TrustedDomain> findByIssuer(ReferenceType referenceType, String referenceId, String issuer);
+
+    Flowable<CrossAppAccessResourceServerView> searchCrossAppAccessResourceServers(Reference reference, String query, int limit);
 }

@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.jwt;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.PlainHeader;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.JwtType;
 
 import java.text.ParseException;
 import lombok.CustomLog;
@@ -34,10 +37,16 @@ public class NoJWTBuilder implements JWTBuilder {
     @Override
     public String sign(JWT payload) {
         try {
-            return new PlainJWT(JWTClaimsSet.parse(payload)).serialize();
+            return new PlainJWT(headerFor(payload.getType()), JWTClaimsSet.parse(payload)).serialize();
         } catch (ParseException e) {
             log.debug("Signing JWT token: {} has failed", payload);
             throw new MalformedJWTException("Failed to encode JWT token", e);
         }
+    }
+
+    private PlainHeader headerFor(JwtType type) {
+        return new PlainHeader.Builder()
+                .type(type == null ? null : new JOSEObjectType(type.getValue()))
+                .build();
     }
 }

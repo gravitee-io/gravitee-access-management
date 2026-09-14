@@ -225,6 +225,60 @@ describe('GrantFlowsComponent', () => {
     });
   });
 
+  describe('grant flow required warning', () => {
+    function warnings(text: string): Element[] {
+      fixture.detectChanges();
+      const elements: Element[] = Array.from(fixture.nativeElement.querySelectorAll('.grant-flow-required'));
+      return elements.filter((e) => e.textContent.includes(text));
+    }
+
+    function select(grantType: string): void {
+      component.grantTypes.find((g) => g.value === grantType)!.checked = true;
+    }
+
+    describe('token exchange', () => {
+      const TEXT = 'Token Exchange grant flow required';
+
+      it('should warn on token exchange and cross app access sections when token exchange grant is not selected', () => {
+        expect(warnings(TEXT)).toHaveLength(2);
+      });
+
+      it('should warn when token exchange is disabled at domain level', () => {
+        mockDomainStoreService.current = { ...defaultDomainCurrent(), tokenExchangeSettings: { enabled: false } };
+        select(TOKEN_EXCHANGE_GRANT_TYPE);
+        expect(warnings(TEXT)).toHaveLength(2);
+      });
+
+      it('should not warn when token exchange grant is selected and enabled at domain level', () => {
+        select(TOKEN_EXCHANGE_GRANT_TYPE);
+        expect(warnings(TEXT)).toHaveLength(0);
+      });
+
+      it('should warn only on token exchange section in MCP server context', () => {
+        createFixtureWithMcpContext([]);
+        expect(warnings(TEXT)).toHaveLength(1);
+      });
+    });
+
+    describe('refresh token', () => {
+      const TEXT = 'Refresh Token grant flow required';
+
+      it('should warn on refresh token section when refresh token grant is not selected', () => {
+        expect(warnings(TEXT)).toHaveLength(1);
+      });
+
+      it('should not warn when refresh token grant is selected', () => {
+        select('refresh_token');
+        expect(warnings(TEXT)).toHaveLength(0);
+      });
+
+      it('should not warn in MCP server context', () => {
+        createFixtureWithMcpContext([]);
+        expect(warnings(TEXT)).toHaveLength(0);
+      });
+    });
+  });
+
   describe('isAgentPrefixCapable', () => {
     it('returns true for AGENT application with HOSTED_DELEGATED kind', () => {
       component.applicationType = 'AGENT';

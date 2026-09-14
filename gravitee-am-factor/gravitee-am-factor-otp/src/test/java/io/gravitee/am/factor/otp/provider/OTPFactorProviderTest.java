@@ -94,7 +94,7 @@ public class OTPFactorProviderTest {
     @Test
     public void must_verify_correctly_otp_window_three_attempts() {
         var data = Map.of(
-                "code", generateCode(enrolledFactor.getSecurity().getValue(), (currentTimeMillis() - TOTP.TIME_STEP * 2) + 1000),
+                "code", generateCode(enrolledFactor.getSecurity().getValue(), (currentTimeMillis() - TOTP.TIME_STEP * 2) + 2000),
                 KEY_ENROLLED_FACTOR, enrolledFactor
         );
         var factorContext = new FactorContext(null, data);

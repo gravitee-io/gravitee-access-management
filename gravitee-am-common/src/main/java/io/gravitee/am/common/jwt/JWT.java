@@ -33,10 +33,23 @@ public class JWT extends HashMap<String, Object> {
 
     public static final String CONFIRMATION_METHOD_JWK_THUMBPRINT = "jkt";
 
+    private JwtType type;
+
     public JWT() { }
 
     public JWT(Map<? extends String, ?> claims) {
         super(claims);
+        if (claims instanceof JWT jwt) {
+            this.type = jwt.type;
+        }
+    }
+
+    public JwtType getType() {
+        return type;
+    }
+
+    public void setType(JwtType type) {
+        this.type = type;
     }
 
     public String getIss() {

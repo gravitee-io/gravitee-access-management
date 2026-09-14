@@ -323,6 +323,12 @@ export const PERMISSION_ENDPOINTS: PermissionEndpoint[] = [
   },
   {
     method: 'GET',
+    route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/xaa-resource-servers',
+    permission: 'domain_settings_read',
+    summary: 'List the resource servers an application of this security domain may be mapped to',
+  },
+  {
+    method: 'GET',
     route: '/organizations/{organizationId}/environments/{environmentId}/members/permissions',
     permission: 'environment_read',
     summary: "List environment member's permissions",

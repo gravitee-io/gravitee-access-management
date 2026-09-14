@@ -118,8 +118,8 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 subjectInfo(Map.of()),
-                Set.of()
-        );
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));
@@ -179,8 +179,8 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 subjectInfo(Map.of()),
-                Set.of()
-        );
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));
@@ -227,7 +227,8 @@ class TokenExchangeStrategyTest {
                 actorInfo,
                 subjectInfo(Map.of()),
                 Set.of(),
-                Set.of());
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));
@@ -276,7 +277,8 @@ class TokenExchangeStrategyTest {
                 actorInfo,
                 subjectInfo(Map.of()),
                 Set.of(),
-                Set.of());
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));
@@ -310,7 +312,8 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 new SubjectTokenInfo("subject-sub", "source:subject-id", subjectClaims),
-                Set.of());
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));
@@ -352,7 +355,8 @@ class TokenExchangeStrategyTest {
                 actorInfo,
                 new SubjectTokenInfo("subject-sub", null, subjectClaims),
                 Set.of(),
-                Set.of());
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));
@@ -384,7 +388,8 @@ class TokenExchangeStrategyTest {
                 "subject-token-id",
                 TokenTypeHint.ACCESS_TOKEN.name(),
                 new SubjectTokenInfo("subject-sub", null, Map.of()),
-                Set.of());
+                Set.of(),
+                null);
 
         when(tokenExchangeService.exchange(any(), eq(client), eq(domain)))
                 .thenReturn(Single.just(exchangeResult));

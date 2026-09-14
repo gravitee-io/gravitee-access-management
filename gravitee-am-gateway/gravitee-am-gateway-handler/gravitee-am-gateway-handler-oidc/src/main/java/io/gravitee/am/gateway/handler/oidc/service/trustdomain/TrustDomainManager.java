@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.trustdomain;
 
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.common.service.Service;
 
@@ -37,6 +38,10 @@ public interface TrustDomainManager extends Service {
      * The trusted domain that vouches for this issuer, if any.
      */
     Optional<TrustedDomain> findByIssuer(String issuer);
+
+    Optional<TrustedDomain> findByCrossAppAccessAudience(String audience);
+
+    Optional<CrossAppAccessResourceServer> findCrossAppAccessResourceServer(String trustDomainId, String resourceServerId);
 
     /**
      * Whether the security domain vouches for any external issuer.

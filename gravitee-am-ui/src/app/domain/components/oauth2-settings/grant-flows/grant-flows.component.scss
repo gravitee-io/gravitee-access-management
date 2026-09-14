@@ -7,6 +7,20 @@
   line-height: 34px;
 }
 
+.grant-flow-required {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  color: orange;
+  font-size: 12px;
+  gap: 4px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 .override-form-section {
   margin-top: 5px;
 

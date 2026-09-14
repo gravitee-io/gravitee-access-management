@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
+import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
@@ -35,6 +37,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static java.util.UUID.randomUUID;
 
 public class TrustedDomainRepositoryTest extends AbstractManagementTest {
@@ -552,5 +556,105 @@ public class TrustedDomainRepositoryTest extends AbstractManagementTest {
         var stale = repository.findByIssuer(DOMAIN, referenceId, "https://issuer.example/realm").test();
         stale.awaitDone(5, TimeUnit.SECONDS);
         stale.assertNoValues();
+    }
+
+    private TrustedDomain buildCrossAppAccessTrustDomain(String referenceId, String name, boolean enabled,
+                                                         CrossAppAccessResourceServer... resourceServers) {
+        TrustedDomain td = buildTrustDomain(referenceId, name);
+        td.setSpiffe(null);
+        td.setDomainIdentifier("https://" + name + "/");
+        td.setCrossAppAccess(CrossAppAccessSettings.builder()
+                .enabled(enabled)
+                .resourceServers(List.of(resourceServers))
+                .build());
+        return td;
+    }
+
+    private static CrossAppAccessResourceServer resourceServer(String name, String resource) {
+        return CrossAppAccessResourceServer.builder()
+                .id(randomUUID().toString())
+                .name(name)
+                .resource(resource)
+                .build();
+    }
+
+    private String seedCrossAppAccessResourceServers(String referenceId) {
+        repository.create(buildCrossAppAccessTrustDomain(referenceId, "acme", true,
+                resourceServer("Calendar", "https://calendar.acme.com"),
+                resourceServer("Files", "https://files.acme.com"))).blockingGet();
+        repository.create(buildCrossAppAccessTrustDomain(referenceId, "globex", true,
+                resourceServer("Mail", "https://mail.globex.com"))).blockingGet();
+        return referenceId;
+    }
+
+    private List<String> searchResourceServerNames(String referenceId, String query, int limit) {
+        var observer = repository.searchCrossAppAccessResourceServers(Reference.domain(referenceId), query, limit).toList().test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        return observer.values().get(0).stream().map(CrossAppAccessResourceServerView::name).toList();
+    }
+
+    @Test
+    public void shouldSearchResourceServersAcrossTrustedDomainsOrderedByName() {
+        String referenceId = seedCrossAppAccessResourceServers(randomUUID().toString());
+
+        assertEquals(List.of("Calendar", "Files", "Mail"), searchResourceServerNames(referenceId, "", 10));
+    }
+
+    @Test
+    public void shouldFlattenTheTrustedDomainOntoEveryResourceServer() {
+        String referenceId = seedCrossAppAccessResourceServers(randomUUID().toString());
+
+        var observer = repository.searchCrossAppAccessResourceServers(Reference.domain(referenceId), "Mail", 10).toList().test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        CrossAppAccessResourceServerView found = observer.values().get(0).get(0);
+        assertEquals("globex", found.trustedDomainName());
+        assertEquals("https://mail.globex.com", found.resource());
+        assertNotNull(found.trustedDomainId());
+        assertNotNull(found.id());
+    }
+
+    @Test
+    public void shouldMatchTheSearchTermAnywhereAndIgnoreCase() {
+        String referenceId = seedCrossAppAccessResourceServers(randomUUID().toString());
+
+        assertEquals(List.of("Mail"), searchResourceServerNames(referenceId, "mAiL", 10));
+        assertEquals(List.of("Files"), searchResourceServerNames(referenceId, "//FILES", 10));
+        assertEquals(List.of("Calendar", "Files"), searchResourceServerNames(referenceId, "ACME", 10));
+    }
+
+    @Test
+    public void shouldSkipResourceServersOfTrustedDomainsWithCrossAppAccessDisabled() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildCrossAppAccessTrustDomain(referenceId, "acme", false,
+                resourceServer("Calendar", "https://calendar.acme.com"))).blockingGet();
+        repository.create(buildCrossAppAccessTrustDomain(referenceId, "globex", true,
+                resourceServer("Mail", "https://mail.globex.com"))).blockingGet();
+
+        assertEquals(List.of("Mail"), searchResourceServerNames(referenceId, "", 10));
+    }
+
+    @Test
+    public void shouldSkipTrustedDomainsWithoutCrossAppAccess() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "acme")).blockingGet();
+
+        assertEquals(List.of(), searchResourceServerNames(referenceId, "", 10));
+    }
+
+    @Test
+    public void shouldReturnAtMostTheRequestedLimit() {
+        String referenceId = seedCrossAppAccessResourceServers(randomUUID().toString());
+
+        assertEquals(List.of("Calendar", "Files"), searchResourceServerNames(referenceId, "", 2));
+    }
+
+    @Test
+    public void shouldIgnoreResourceServersOfAnotherReference() {
+        String referenceId = seedCrossAppAccessResourceServers(randomUUID().toString());
+        seedCrossAppAccessResourceServers(randomUUID().toString());
+
+        assertEquals(3, searchResourceServerNames(referenceId, "", 10).size());
     }
 }

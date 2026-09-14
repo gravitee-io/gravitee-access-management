@@ -82,6 +82,16 @@ export const createJksCertificateRequest = (payload: CertificatePayload): any =>
   return createBaseCertificateRequest(payload, content);
 };
 
+/** Request for the test.p12 keystore shipped next to this fixture (alias `test`). */
+export const createBundledPKCS12CertificateRequest = (): any =>
+  createPKCS12CertificateRequest({
+    password: 'changeit',
+    alias: 'test',
+    content: read('test.p12'),
+    type: 'pkcs12-am-certificate',
+    contentType: 'application/x-pkcs12',
+  });
+
 export const createPKCS12CertificateRequest = (payload: CertificatePayload): any => {
   const size = new TextEncoder().encode(payload.content).length;
   const content = {
