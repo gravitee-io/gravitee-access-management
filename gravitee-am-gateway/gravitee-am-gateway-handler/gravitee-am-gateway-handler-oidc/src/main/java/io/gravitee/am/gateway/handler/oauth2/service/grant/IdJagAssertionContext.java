@@ -13,19 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.extensiongrant.api;
+package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
-import io.gravitee.am.identityprovider.api.User;
-
-import java.util.Map;
-
-public record ResolvedEndUser(User endUser, String identityProvider, Map<String, Object> verifiedClaims) {
-
-    public ResolvedEndUser {
-        verifiedClaims = verifiedClaims == null ? Map.of() : verifiedClaims;
-    }
-
-    public static ResolvedEndUser endUser(User endUser){
-        return new ResolvedEndUser(endUser, null, Map.of());
-    }
+public record IdJagAssertionContext(String issuer, String identityProvider, String jti, String clientId) {
 }

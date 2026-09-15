@@ -69,7 +69,7 @@ public class CrossAppAccessExtensionGrantProvider implements ExtensionGrantProvi
                     log.debug("Assertion verification failed identityProvider={} reason={}", resolved.identityProvider(), error.getMessage());
                     return Single.error(new InvalidGrantException("Assertion verification failed", error));
                 })
-                .map(claims -> new ResolvedEndUser(endUser(claims), resolved.identityProvider()));
+                .map(claims -> new ResolvedEndUser(endUser(claims), resolved.identityProvider(), claims.getClaims()));
     }
 
     private static String assertion(TokenRequest tokenRequest) {

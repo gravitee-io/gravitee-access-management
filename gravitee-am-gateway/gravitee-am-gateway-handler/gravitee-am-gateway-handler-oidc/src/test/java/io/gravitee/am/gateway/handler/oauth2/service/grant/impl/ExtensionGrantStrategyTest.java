@@ -620,7 +620,7 @@ class ExtensionGrantStrategyTest {
                 domain) {
             @Override
             protected Maybe<ResolvedEndUser> resolveEndUser(TokenRequest request, Client client) {
-                return Maybe.just(new ResolvedEndUser(endUser, identityProvider));
+                return Maybe.just(new ResolvedEndUser(endUser, identityProvider, Map.of()));
             }
         };
         resolving.setOldestExtensionGrantId(extensionGrant.getId());

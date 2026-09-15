@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.extensiongrant.crossappaccess.provider;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -31,13 +35,16 @@ import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,6 +68,18 @@ class CrossAppAccessExtensionGrantProviderTest {
 
     @InjectMocks
     private CrossAppAccessExtensionGrantProvider provider;
+
+    private final Logger providerLogger = (Logger) LoggerFactory.getLogger(CrossAppAccessExtensionGrantProvider.class);
+
+    private ListAppender<ILoggingEvent> capturedLogs;
+
+    @AfterEach
+    void stopCapturingLogs() {
+        if (capturedLogs != null) {
+            providerLogger.detachAppender(capturedLogs);
+            providerLogger.setLevel(null);
+        }
+    }
 
     @Test
     void shouldSupportIdJagTypedAssertion() {
@@ -115,6 +134,27 @@ class CrossAppAccessExtensionGrantProviderTest {
         User endUser = provider.resolveEndUser(request(assertion)).blockingGet().endUser();
 
         assertEquals(Map.of("sub", "alice", "email", "alice@example.com"), endUser.getAdditionalInformation());
+    }
+
+    @Test
+    void shouldCarryVerifiedClaimSetBesideTheProjectedEndUser() {
+        String assertion = assertion(new JWTClaimsSet.Builder().issuer(ISSUER).subject("mallory").build());
+        givenTrustedIssuer();
+        when(assertionVerifier.verify(assertion)).thenReturn(Single.just(new JWTClaimsSet.Builder()
+                .issuer(ISSUER)
+                .subject("alice")
+                .audience("https://as.example.com")
+                .jwtID("jti-1")
+                .claim("client_id", "agent")
+                .build()));
+
+        Map<String, Object> verifiedClaims = provider.resolveEndUser(request(assertion)).blockingGet().verifiedClaims();
+
+        assertEquals("alice", verifiedClaims.get("sub"));
+        assertEquals(ISSUER, verifiedClaims.get("iss"));
+        assertEquals("jti-1", verifiedClaims.get("jti"));
+        assertEquals("agent", verifiedClaims.get("client_id"));
+        assertEquals(List.of("https://as.example.com"), verifiedClaims.get("aud"));
     }
 
     @Test
@@ -198,6 +238,19 @@ class CrossAppAccessExtensionGrantProviderTest {
     }
 
     @Test
+    void shouldNotLogTheRawAssertionWhenVerificationFails() {
+        String assertion = assertion(new JWTClaimsSet.Builder().issuer(ISSUER).subject("alice").build());
+        givenTrustedIssuer();
+        when(assertionVerifier.verify(assertion)).thenReturn(Single.error(new BadJOSEException("Signed JWT rejected: Invalid signature")));
+        ListAppender<ILoggingEvent> logs = captureLogs();
+
+        provider.resolveEndUser(request(assertion)).test().assertError(InvalidGrantException.class);
+
+        assertFalse(logs.list.isEmpty());
+        assertTrue(logs.list.stream().noneMatch(event -> event.getFormattedMessage().contains(assertion)));
+    }
+
+    @Test
     void shouldRefuseWithFixedDescriptionWhenVerifierThrows() {
         String assertion = assertion(new JWTClaimsSet.Builder().issuer(ISSUER).subject("alice").build());
         givenTrustedIssuer();
@@ -218,6 +271,14 @@ class CrossAppAccessExtensionGrantProviderTest {
                 .assertError(error -> error instanceof InvalidGrantException && "Assertion cannot be parsed".equals(error.getMessage()));
 
         verifyNoInteractions(trustedIssuerResolver);
+    }
+
+    private ListAppender<ILoggingEvent> captureLogs() {
+        capturedLogs = new ListAppender<>();
+        capturedLogs.start();
+        providerLogger.setLevel(Level.TRACE);
+        providerLogger.addAppender(capturedLogs);
+        return capturedLogs;
     }
 
     private void givenTrustedIssuer() {

@@ -163,14 +163,18 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         if (extensionGrant.isCreateUser()) {
             return manageUserConnect(client, idpUser, tokenRequest, resolveSource(endUser.identityProvider()));
         } else if (extensionGrant.isUserExists()) {
-            String identityProvider = resolveIdentityProvider(endUser.identityProvider());
-            if (identityProvider == null) {
-                return Maybe.error(new InvalidGrantException("No identity_provider provided"));
-            }
-            return manageUserValidation(tokenRequest, idpUser, identityProvider);
+            return resolveExistingResourceOwner(tokenRequest, endUser);
         } else {
             return forgeUserProfile(idpUser);
         }
+    }
+
+    protected Maybe<User> resolveExistingResourceOwner(TokenRequest tokenRequest, ResolvedEndUser endUser) {
+        String identityProvider = resolveIdentityProvider(endUser.identityProvider());
+        if (identityProvider == null) {
+            return Maybe.error(new InvalidGrantException("No identity_provider provided"));
+        }
+        return manageUserValidation(tokenRequest, endUser.endUser(), identityProvider);
     }
 
     protected Maybe<ResolvedEndUser> resolveEndUser(TokenRequest tokenRequest, Client client) {
@@ -190,9 +194,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
     private TokenCreationRequest createTokenCreationRequest(
             TokenRequest request, Client client, User user, String source) {
 
-        // Extension grants support refresh token if they create or validate users
-        boolean supportRefresh = (extensionGrant.isCreateUser() || extensionGrant.isUserExists()) &&
-                client.hasGrantType(GrantType.REFRESH_TOKEN);
+        boolean supportRefresh = supportsRefreshToken(client);
 
         Map<String, Object> additionalClaims = (user != null && user.getAdditionalInformation() != null)
                 ? new HashMap<>(user.getAdditionalInformation())
@@ -205,8 +207,13 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 extensionGrant.getGrantType(),
                 additionalClaims,
                 source,
+                request.getIdJagAssertionContext(),
                 supportRefresh
         );
+    }
+
+    protected boolean supportsRefreshToken(Client client) {
+        return (extensionGrant.isCreateUser() || extensionGrant.isUserExists()) && client.hasGrantType(GrantType.REFRESH_TOKEN);
     }
 
     private Maybe<User> forgeUserProfile(io.gravitee.am.identityprovider.api.User endUser) {

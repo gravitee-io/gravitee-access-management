@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -129,6 +130,9 @@ class ExtensionGrantManagerImplTest {
 
     @Mock
     private DomainPluginLicenseGate domainPluginLicenseGate;
+
+    @Mock
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Mock
     private AuditService auditService;

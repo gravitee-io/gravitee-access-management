@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.Exte
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -125,6 +126,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private DomainPluginLicenseGate domainPluginLicenseGate;
+
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Override
     public void afterPropertiesSet() {
@@ -252,7 +256,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     private ExtensionGrantStrategy buildStrategy(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
         var domainSubjectManager = domain.getVersion() == DomainVersion.V1_0 ? null : subjectManager;
         return isCrossAppAccess(extensionGrant)
-                ? new CrossAppAccessGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain)
+                ? new CrossAppAccessGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain, openIDDiscoveryService)
                 : new ExtensionGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain);
     }
 
