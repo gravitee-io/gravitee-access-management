@@ -340,6 +340,21 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void dryRun_update_does_not_persist() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.validateUpdate(eq(domainId), any(Domain.class), eq(false)))
+                .thenReturn(Single.just(existing));
+
+        put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
+        verify(domainService, never()).update(anyString(), any(Domain.class), eq(false));
+    }
+
+    @Test
     void dryRun_update_existing_domain() {
         String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
         Domain existing = domain(domainId, "customer-auth");
