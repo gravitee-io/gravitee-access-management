@@ -17,11 +17,13 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.auth.User;
+import io.vertx.rxjava3.ext.web.RequestBody;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
@@ -75,6 +77,52 @@ public class SpyRoutingContext extends RoutingContext {
     @Override
     public JsonObject getBodyAsJson() {
         return this.body == null ? null : this.body.toJsonObject();
+    }
+
+    @Override
+    public RequestBody body() {
+        final io.vertx.core.buffer.Buffer coreBuffer = this.body == null ? null : this.body.getDelegate();
+        return RequestBody.newInstance(new io.vertx.ext.web.RequestBody() {
+            @Override
+            public String asString() {
+                return coreBuffer == null ? null : coreBuffer.toString();
+            }
+
+            @Override
+            public String asString(String encoding) {
+                return coreBuffer == null ? null : coreBuffer.toString(encoding);
+            }
+
+            @Override
+            public JsonObject asJsonObject(int maxAllowedLength) {
+                return coreBuffer == null ? null : coreBuffer.toJsonObject();
+            }
+
+            @Override
+            public JsonArray asJsonArray(int maxAllowedLength) {
+                return coreBuffer == null ? null : coreBuffer.toJsonArray();
+            }
+
+            @Override
+            public io.vertx.core.buffer.Buffer buffer() {
+                return coreBuffer;
+            }
+
+            @Override
+            public <R> R asPojo(Class<R> clazz, int maxAllowedLength) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int length() {
+                return coreBuffer == null ? -1 : coreBuffer.length();
+            }
+
+            @Override
+            public boolean available() {
+                return coreBuffer != null;
+            }
+        });
     }
 
     @Override
