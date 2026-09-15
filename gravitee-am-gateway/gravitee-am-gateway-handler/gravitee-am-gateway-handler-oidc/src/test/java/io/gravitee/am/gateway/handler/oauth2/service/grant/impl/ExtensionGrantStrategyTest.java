@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -50,10 +51,9 @@ import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertion;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
-import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
-import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.untypedAssertion;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -143,35 +143,30 @@ class ExtensionGrantStrategyTest {
     }
 
     @Test
-    void shouldDeclineJwtBearerRequestCarryingIdJagAssertion() {
+    void shouldSupportRequestThePluginAcceptsWhenClientIsAuthorized() {
+        String assertion = idJagAssertion();
+        when(extensionGrantProvider.supports(any())).thenReturn(true);
+
+        assertTrue(strategy.supports(jwtBearerRequest(assertion), client, domain));
+
+        verify(extensionGrantProvider).supports(argThat(pluginRequest ->
+                assertion.equals(pluginRequest.getRequestParameters().get(Parameters.ASSERTION))));
+    }
+
+    @Test
+    void shouldNotSupportRequestThePluginDeclines() {
+        when(extensionGrantProvider.supports(any())).thenReturn(false);
+
         assertFalse(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
     }
 
     @Test
-    void shouldDeclineIdJagAssertionWhenClientAuthorizesBareGrantType() {
-        client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
+    void shouldNotAskPluginWhenClientIsNotAuthorized() {
+        client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+
         assertFalse(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
-    }
 
-    @Test
-    void shouldAcceptJwtBearerRequestWhoseAssertionIsTypedJwt() {
-        assertTrue(strategy.supports(jwtBearerRequest(plainJwtAssertion()), client, domain));
-    }
-
-    @Test
-    void shouldAcceptJwtBearerRequestWhoseAssertionHasNoType() {
-        assertTrue(strategy.supports(jwtBearerRequest(untypedAssertion()), client, domain));
-    }
-
-    @Test
-    void shouldAcceptJwtBearerRequestWhoseAssertionHeaderIsUnparsable() {
-        assertTrue(strategy.supports(jwtBearerRequest("not-a-jwt"), client, domain));
-        assertTrue(strategy.supports(jwtBearerRequest("@@@.e30.c2ln"), client, domain));
-    }
-
-    @Test
-    void shouldAcceptJwtBearerRequestWithoutAssertion() {
-        assertTrue(strategy.supports(jwtBearerRequest(null), client, domain));
+        verifyNoInteractions(extensionGrantProvider);
     }
 
     @Test
@@ -179,6 +174,7 @@ class ExtensionGrantStrategyTest {
         TokenRequest request = jwtBearerRequest(null);
         request.setGrantType(GrantType.CLIENT_CREDENTIALS);
         assertFalse(strategy.supports(request, client, domain));
+        verifyNoInteractions(extensionGrantProvider);
     }
 
     @Test

@@ -20,6 +20,7 @@ import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.IdJagAssertions;
 import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -41,6 +42,11 @@ public class CrossAppAccessExtensionGrantProvider implements ExtensionGrantProvi
 
     @Autowired
     private TrustedIssuerResolver trustedIssuerResolver;
+
+    @Override
+    public boolean supports(TokenRequest tokenRequest) {
+        return IdJagAssertions.isIdJag(tokenRequest);
+    }
 
     @Override
     public Maybe<User> grant(TokenRequest tokenRequest) {

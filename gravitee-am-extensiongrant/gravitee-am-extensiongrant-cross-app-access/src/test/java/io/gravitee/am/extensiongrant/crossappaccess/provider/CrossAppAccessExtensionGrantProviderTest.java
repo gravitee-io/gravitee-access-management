@@ -41,7 +41,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -59,6 +61,17 @@ class CrossAppAccessExtensionGrantProviderTest {
 
     @InjectMocks
     private CrossAppAccessExtensionGrantProvider provider;
+
+    @Test
+    void shouldSupportIdJagTypedAssertion() {
+        assertTrue(provider.supports(request(assertion(new JWTClaimsSet.Builder().issuer(ISSUER).build()))));
+    }
+
+    @Test
+    void shouldDeclineJwtTypedAssertion() {
+        JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build();
+        assertFalse(provider.supports(request(header.toBase64URL() + "." + Base64URL.encode("{}") + "." + Base64URL.encode("signature"))));
+    }
 
     @Test
     void shouldThrowUnsupportedOperationOnGrant() {

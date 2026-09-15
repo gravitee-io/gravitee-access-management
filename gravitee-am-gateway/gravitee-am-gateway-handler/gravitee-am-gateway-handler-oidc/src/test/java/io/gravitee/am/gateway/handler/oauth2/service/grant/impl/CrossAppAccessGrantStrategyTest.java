@@ -44,7 +44,6 @@ import java.util.List;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertion;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
-import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.untypedAssertion;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -101,12 +100,14 @@ class CrossAppAccessGrantStrategyTest {
 
     @Test
     void shouldSupportIdJagRequestWhenClientAuthorizesSuffixedGrantTypeOfNewerGrant() {
+        pluginAcceptsAssertion();
         strategy.setOldestExtensionGrantId("older-caa-id");
         assertTrue(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
     }
 
     @Test
     void shouldSupportIdJagRequestWhenClientAuthorizesBareGrantTypeAndGrantIsOldestCrossAppAccessGrant() {
+        pluginAcceptsAssertion();
         strategy.setOldestExtensionGrantId("caa-id");
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
         assertTrue(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
@@ -120,23 +121,10 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldNotSupportPlainJwtAssertion() {
+    void shouldNotSupportAssertionThePluginDeclines() {
+        when(extensionGrantProvider.supports(any())).thenReturn(false);
+
         assertFalse(strategy.supports(jwtBearerRequest(plainJwtAssertion()), client, domain));
-    }
-
-    @Test
-    void shouldNotSupportUntypedAssertion() {
-        assertFalse(strategy.supports(jwtBearerRequest(untypedAssertion()), client, domain));
-    }
-
-    @Test
-    void shouldNotSupportUnparsableAssertionHeader() {
-        assertFalse(strategy.supports(jwtBearerRequest("not.a.jwt"), client, domain));
-    }
-
-    @Test
-    void shouldNotSupportRequestWithoutAssertion() {
-        assertFalse(strategy.supports(jwtBearerRequest(null), client, domain));
     }
 
     @Test
@@ -168,6 +156,10 @@ class CrossAppAccessGrantStrategyTest {
     void shouldNotSupportGrantTypeAlone() {
         strategy.setOldestExtensionGrantId("caa-id");
         assertFalse(strategy.supports(GrantType.JWT_BEARER, client, domain));
+    }
+
+    private void pluginAcceptsAssertion() {
+        when(extensionGrantProvider.supports(any())).thenReturn(true);
     }
 
     @Test

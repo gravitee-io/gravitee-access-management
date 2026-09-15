@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.ExtensionGrantEvent;
 import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.IdJagAssertions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
@@ -74,6 +75,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -154,6 +156,8 @@ class ExtensionGrantManagerImplTest {
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
 
         lenient().when(domainPluginLicenseGate.check(any(), any(), any())).thenReturn(true);
+        lenient().when(jwtBearerProvider.supports(any())).thenAnswer(invocation -> !IdJagAssertions.isIdJag(invocation.getArgument(0)));
+        lenient().when(crossAppAccessProvider.supports(any())).thenAnswer(invocation -> IdJagAssertions.isIdJag(invocation.getArgument(0)));
         lenient().when(extensionGrantPluginManager.create(any())).thenAnswer(invocation ->
                 ExtensionGrantPluginType.CROSS_APP_ACCESS.equals(invocation.<ExtensionGrantProviderConfiguration>getArgument(0).getType())
                         ? crossAppAccessProvider
@@ -270,7 +274,7 @@ class ExtensionGrantManagerImplTest {
                 .test()
                 .assertError(error -> error instanceof InvalidGrantException && "Assertion issuer is not trusted".equals(error.getMessage()));
 
-        verifyNoInteractions(jwtBearerProvider);
+        verify(jwtBearerProvider, never()).grant(any());
     }
 
     @Test
@@ -300,7 +304,7 @@ class ExtensionGrantManagerImplTest {
                 .test()
                 .assertError(error -> error instanceof InvalidGrantException && "refused by jwt-bearer".equals(error.getMessage()));
 
-        verifyNoInteractions(crossAppAccessProvider);
+        verify(crossAppAccessProvider, never()).resolveEndUser(any());
     }
 
     @Test
@@ -312,7 +316,8 @@ class ExtensionGrantManagerImplTest {
                 .test()
                 .assertError(UnsupportedGrantTypeException.class);
 
-        verifyNoInteractions(jwtBearerProvider, crossAppAccessProvider);
+        verify(jwtBearerProvider, never()).grant(any());
+        verify(crossAppAccessProvider, never()).resolveEndUser(any());
     }
 
     @Test

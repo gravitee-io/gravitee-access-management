@@ -50,11 +50,6 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
     }
 
     @Override
-    public boolean supports(TokenRequest request, Client client, Domain domain) {
-        return super.supports(request.getGrantType(), client, domain) && isIdJagAssertion(request);
-    }
-
-    @Override
     protected Maybe<ResolvedEndUser> resolveEndUser(TokenRequest tokenRequest, Client client) {
         return extensionGrantProvider.resolveEndUser(convertToPluginRequest(tokenRequest))
                 .ignoreElement()

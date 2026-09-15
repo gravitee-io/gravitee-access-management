@@ -33,6 +33,10 @@ public interface ExtensionGrantProvider extends AmPluginProvider {
      */
     Maybe<User> grant(TokenRequest tokenRequest);
 
+    default boolean supports(TokenRequest tokenRequest) {
+        return true;
+    }
+
     default Maybe<ResolvedEndUser> resolveEndUser(TokenRequest tokenRequest) {
         return grant(tokenRequest).map(ResolvedEndUser::endUser);
     }

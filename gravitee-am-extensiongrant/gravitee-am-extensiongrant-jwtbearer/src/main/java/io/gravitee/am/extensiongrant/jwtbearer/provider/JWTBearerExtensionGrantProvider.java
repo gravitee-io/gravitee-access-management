@@ -26,6 +26,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.IdJagAssertions;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -109,6 +110,11 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
 
     @Autowired
     private ResourceRetriever resourceRetriever;
+
+    @Override
+    public boolean supports(TokenRequest tokenRequest) {
+        return !IdJagAssertions.isIdJag(tokenRequest);
+    }
 
     @Override
     public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {

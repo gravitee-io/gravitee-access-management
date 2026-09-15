@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
@@ -876,5 +880,23 @@ public class JWTBearerExtensionGrantProviderTest {
         testObserver.assertComplete()
                 .assertNoErrors()
                 .assertValue(Objects::nonNull);
+    }
+
+    @Test
+    void shouldDeclineIdJagTypedAssertion() {
+        assertFalse(jwtBearerExtensionGrantProvider.supports(assertionRequest(new JOSEObjectType("oauth-id-jag+jwt"))));
+    }
+
+    @Test
+    void shouldSupportJwtTypedAssertion() {
+        assertTrue(jwtBearerExtensionGrantProvider.supports(assertionRequest(JOSEObjectType.JWT)));
+    }
+
+    private static TokenRequest assertionRequest(JOSEObjectType type) {
+        String assertion = new JWSHeader.Builder(JWSAlgorithm.RS256).type(type).build().toBase64URL()
+                + "." + Base64URL.encode("{}") + "." + Base64URL.encode("signature");
+        TokenRequest request = new TokenRequest();
+        request.setRequestParameters(Map.of("assertion", assertion));
+        return request;
     }
 }
