@@ -27,7 +27,7 @@
         <version>4.13.0-alpha.4-SNAPSHOT</version>
     </parent>
 
-    <artifactId>gravitee-am-extensiongrant-cross-app-access</artifactId>
+    <artifactId>gravitee-am-extensiongrant-xaa</artifactId>
     <name>Gravitee IO - Access Management - Extension Grant Cross App Access</name>
     <description>Redeems an identity assertion authorization grant (ID-JAG) presented through the jwt-bearer grant type</description>
 

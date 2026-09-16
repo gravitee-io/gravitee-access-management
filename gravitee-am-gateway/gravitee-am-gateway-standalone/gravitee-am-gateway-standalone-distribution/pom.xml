@@ -194,7 +194,7 @@
         </dependency>
         <dependency>
             <groupId>io.gravitee.am.extensiongrant</groupId>
-            <artifactId>gravitee-am-extensiongrant-cross-app-access</artifactId>
+            <artifactId>gravitee-am-extensiongrant-xaa</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
@@ -661,7 +661,7 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>io.gravitee.am.extensiongrant</groupId>
-                                    <artifactId>gravitee-am-extensiongrant-cross-app-access</artifactId>
+                                    <artifactId>gravitee-am-extensiongrant-xaa</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

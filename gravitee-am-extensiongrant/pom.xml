@@ -37,7 +37,7 @@
     <modules>
         <module>gravitee-am-extensiongrant-api</module>
         <module>gravitee-am-extensiongrant-jwtbearer</module>
-        <module>gravitee-am-extensiongrant-cross-app-access</module>
+        <module>gravitee-am-extensiongrant-xaa</module>
     </modules>
 
     <dependencies>
