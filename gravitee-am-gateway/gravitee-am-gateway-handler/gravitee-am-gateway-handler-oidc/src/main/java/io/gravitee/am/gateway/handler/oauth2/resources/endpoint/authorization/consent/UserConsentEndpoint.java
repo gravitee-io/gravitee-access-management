@@ -74,7 +74,7 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
                 routingContext.fail(h.cause());
                 return;
             }
-            List<Scope> requestedScopes = h.result();
+            List<Scope> requestedScopes = h.result().presentedScopes();
             Set<String> requiredScopeKeys = RequiredScopeUtils.requiredScopeKeys(client);
             List<Scope> requiredScopes = requestedScopes.stream().filter(scope -> requiredScopeKeys.contains(scope.getKey())).collect(Collectors.toList());
             List<Scope> optionalScopes = requestedScopes.stream().filter(scope -> !requiredScopeKeys.contains(scope.getKey())).collect(Collectors.toList());
@@ -86,6 +86,8 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
             routingContext.put(ConstantKeys.OPTIONAL_SCOPES_CONTEXT_KEY, optionalScopes);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.PRESELECT_ALL_SCOPES, client == null || !client.isOptInScopeSelection());
+            routingContext.put(ConstantKeys.ALLOW_EMPTY_SCOPE_SELECTION,
+                    RequiredScopeUtils.canApproveWithoutSelection(client, authorizationRequest.getScopes(), h.result().alreadyApprovedScopes()));
             CimdConsentPageAttributes.putIfApplicable(routingContext, domain, client);
             engine.render(generateData(routingContext, domain, client), getTemplateFileName(client))
                     .subscribe(
@@ -101,24 +103,32 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
         });
     }
 
-    private void fetchConsentInformation(Set<String> requestedConsents, boolean prompt, Client client, io.gravitee.am.model.User user, Handler<AsyncResult<List<Scope>>> handler) {
+    /**
+     * @param alreadyApprovedScopes earlier approvals that are not presented again
+     */
+    private record ConsentInformation(List<Scope> presentedScopes, Set<String> alreadyApprovedScopes) {
+    }
 
-        final Single<List<Scope>> consentInformation;
+    private void fetchConsentInformation(Set<String> requestedConsents, boolean prompt, Client client, io.gravitee.am.model.User user, Handler<AsyncResult<ConsentInformation>> handler) {
+
+        final Single<ConsentInformation> consentInformation;
 
         if (prompt) {
-            consentInformation = userConsentService.getConsentInformation(requestedConsents);
+            consentInformation = userConsentService.getConsentInformation(requestedConsents)
+                    .map(scopes -> new ConsentInformation(scopes, Collections.emptySet()));
         } else {
             consentInformation = userConsentService.checkConsent(client, user)
                     .flatMap(approvedConsent -> {
                         // user approved consent, continue
                         if (approvedConsent.containsAll(requestedConsents)) {
                             //redirectToAuthorize
-                            return Single.just(Collections.<Scope>emptyList());
+                            return Single.just(new ConsentInformation(Collections.emptyList(), approvedConsent));
                         }
                         // else go to the user consent page
                         Set<String> requiredConsent = requestedConsents.stream().filter(requestedScope -> !approvedConsent.contains(requestedScope)).collect(Collectors.toSet());
 
-                        return userConsentService.getConsentInformation(requiredConsent);
+                        return userConsentService.getConsentInformation(requiredConsent)
+                                .map(scopes -> new ConsentInformation(scopes, approvedConsent));
                     });
         }
 

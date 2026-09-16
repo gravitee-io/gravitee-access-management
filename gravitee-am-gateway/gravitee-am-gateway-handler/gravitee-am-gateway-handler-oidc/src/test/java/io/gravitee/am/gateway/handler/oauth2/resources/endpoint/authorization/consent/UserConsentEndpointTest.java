@@ -39,6 +39,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doAnswer;
@@ -102,6 +104,10 @@ public class UserConsentEndpointTest extends RxWebTestBase {
     @SuppressWarnings("unchecked")
     private List<Scope> orderedScopes() {
         return (List<Scope>) capturedContext.get(ConstantKeys.SCOPES_CONTEXT_KEY);
+    }
+
+    private boolean allowEmptyScopeSelection() {
+        return capturedContext.get(ConstantKeys.ALLOW_EMPTY_SCOPE_SELECTION);
     }
 
     private static Scope scope(String key) {
@@ -172,5 +178,60 @@ public class UserConsentEndpointTest extends RxWebTestBase {
 
         assertEquals(Set.of(), keys(requiredScopes()));
         assertEquals(Set.of("read"), keys(optionalScopes()));
+    }
+
+    @Test
+    public void shouldAllowEmptySelection_whenRequiredScopesWereAlreadyApproved() throws Exception {
+        authorizationRequest.setPrompts(Set.of());
+        authorizationRequest.setScopes(Set.of("admin", "read", "write"));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Set.of("admin", "read")));
+        when(userConsentService.getConsentInformation(Set.of("write")))
+                .thenReturn(Single.just(List.of(scope("write"))));
+
+        testRequest(HttpMethod.GET, "/oauth/confirm_access", HttpStatusCode.OK_200, "OK");
+
+        assertEquals(Set.of("write"), keys(orderedScopes()));
+        assertTrue(allowEmptyScopeSelection());
+    }
+
+    @Test
+    public void shouldNotAllowEmptySelection_whenRequiredScopeIsStillPending() throws Exception {
+        authorizationRequest.setPrompts(Set.of());
+        authorizationRequest.setScopes(Set.of("admin", "read", "write"));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Set.of("read")));
+        when(userConsentService.getConsentInformation(Set.of("admin", "write")))
+                .thenReturn(Single.just(List.of(scope("admin"), scope("write"))));
+
+        testRequest(HttpMethod.GET, "/oauth/confirm_access", HttpStatusCode.OK_200, "OK");
+
+        assertEquals(Set.of("admin"), keys(requiredScopes()));
+        assertFalse(allowEmptyScopeSelection());
+    }
+
+    @Test
+    public void shouldNotAllowEmptySelection_whenNothingWasApprovedBefore() throws Exception {
+        authorizationRequest.setPrompts(Set.of());
+        authorizationRequest.setScopes(Set.of("read", "write"));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Set.of()));
+        when(userConsentService.getConsentInformation(Set.of("read", "write")))
+                .thenReturn(Single.just(List.of(scope("read"), scope("write"))));
+
+        testRequest(HttpMethod.GET, "/oauth/confirm_access", HttpStatusCode.OK_200, "OK");
+
+        assertFalse(allowEmptyScopeSelection());
+    }
+
+    @Test
+    public void shouldNotAllowEmptySelection_whenConsentPromptIsForced() throws Exception {
+        authorizationRequest.setScopes(Set.of("admin", "read"));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.getConsentInformation(authorizationRequest.getScopes()))
+                .thenReturn(Single.just(List.of(scope("admin"), scope("read"))));
+
+        testRequest(HttpMethod.GET, "/oauth/confirm_access", HttpStatusCode.OK_200, "OK");
+
+        assertFalse(allowEmptyScopeSelection());
     }
 }

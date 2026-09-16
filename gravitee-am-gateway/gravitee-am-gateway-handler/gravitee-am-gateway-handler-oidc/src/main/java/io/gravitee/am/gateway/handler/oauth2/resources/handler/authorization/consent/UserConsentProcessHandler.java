@@ -73,7 +73,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
         final boolean prompt = authorizationRequest.getPrompts() != null && authorizationRequest.getPrompts().contains("consent");
         if (prompt || requestedConsent.isEmpty()) {
-            processConsent(routingContext, client, user, authorizationRequest, requestedConsent, requestedConsent);
+            processConsent(routingContext, client, user, authorizationRequest, requestedConsent, requestedConsent, Set.of());
             return;
         }
 
@@ -84,7 +84,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
                             Set<String> presentedConsent = requestedConsent.stream()
                                     .filter(scope -> !alreadyApproved.contains(scope))
                                     .collect(Collectors.toSet());
-                            processConsent(routingContext, client, user, authorizationRequest, requestedConsent, presentedConsent);
+                            processConsent(routingContext, client, user, authorizationRequest, requestedConsent, presentedConsent, alreadyApproved);
                         },
                         error -> routingContext.fail(error));
     }
@@ -94,7 +94,8 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
                                 io.gravitee.am.model.User user,
                                 AuthorizationRequest authorizationRequest,
                                 Set<String> requestedConsent,
-                                Set<String> presentedConsent) {
+                                Set<String> presentedConsent,
+                                Set<String> alreadyApprovedConsent) {
         final HttpServerRequest request = routingContext.request();
         final Session session = routingContext.session();
         final MultiMap params = request.formAttributes();
@@ -133,7 +134,8 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
                 return;
             }
 
-            boolean approved = !approvedConsent.isEmpty() || requestedConsent.isEmpty();
+            boolean approved = !approvedConsent.isEmpty() || requestedConsent.isEmpty()
+                    || (!userRejected && RequiredScopeUtils.canApproveWithoutSelection(client, requestedConsent, alreadyApprovedConsent));
             authorizationRequest.setApproved(approved);
             authorizationRequest.setScopes(approvedConsent);
             authorizationRequest.setConsents(h.result());

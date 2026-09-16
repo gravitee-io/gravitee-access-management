@@ -301,6 +301,7 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.REQUIRED_SCOPES_CONTEXT_KEY, requiredScopes);
                 variables.put(ConstantKeys.OPTIONAL_SCOPES_CONTEXT_KEY, optionalScopes);
                 variables.put(ConstantKeys.PRESELECT_ALL_SCOPES, Boolean.TRUE);
+                variables.put(ConstantKeys.ALLOW_EMPTY_SCOPE_SELECTION, Boolean.FALSE);
                 break;
 
             // template without specific variables

@@ -289,6 +289,76 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
         assertFalse(authorizationRequest.isApproved());
     }
 
+    @Test
+    public void shouldApproveEmptySelection_whenRequiredScopesWereAlreadyApproved() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("admin", "read", "write")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Set.of("admin", "read")));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "user_oauth_approval=true"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        List<ScopeApproval> approvals = captureSavedApprovals();
+        assertTrue(approvedScopes(approvals).isEmpty());
+        assertEquals(Set.of("write"), deniedScopes(approvals));
+        assertTrue(authorizationRequest.isApproved());
+    }
+
+    @Test
+    public void shouldDenyEmptySelection_whenUserRejectsWithRequiredScopesAlreadyApproved() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("admin", "read", "write")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Set.of("admin", "read")));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "user_oauth_approval=false"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        assertEquals(Set.of("write"), deniedScopes(captureSavedApprovals()));
+        assertFalse(authorizationRequest.isApproved());
+    }
+
+    @Test
+    public void shouldNotApproveEmptySelection_whenNothingWasApprovedBefore() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "write")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "user_oauth_approval=true"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        assertEquals(Set.of("read", "write"), deniedScopes(captureSavedApprovals()));
+        assertFalse(authorizationRequest.isApproved());
+    }
+
+    @Test
+    public void shouldNotApproveEmptySelection_whenConsentPromptIsForced() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read", "write")));
+        authorizationRequest.setPrompts(Set.of("consent"));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "user_oauth_approval=true"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        assertEquals(Set.of("read", "write"), deniedScopes(captureSavedApprovals()));
+        assertFalse(authorizationRequest.isApproved());
+    }
+
+    @Test
+    public void shouldRejectWithAccessDenied_whenPendingRequiredScopeIsMissingDespiteEarlierApprovals() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("admin", "read", "write")));
+        client.setScopeSettings(List.of(requiredScopeSetting("admin")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Set.of("read")));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "user_oauth_approval=true"),
+                403, "Forbidden", "access_denied");
+
+        verify(userConsentService, never()).saveConsent(any(), anyList(), any());
+        assertFalse(authorizationRequest.isApproved());
+    }
+
     private static ApplicationScopeSettings requiredScopeSetting(String scope) {
         ApplicationScopeSettings settings = new ApplicationScopeSettings(scope);
         settings.setRequiredScope(true);

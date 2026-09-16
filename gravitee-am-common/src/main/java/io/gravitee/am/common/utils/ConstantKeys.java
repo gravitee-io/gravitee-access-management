@@ -35,6 +35,7 @@ public interface ConstantKeys {
     String REQUIRED_SCOPES_CONTEXT_KEY = "requiredScopes";
     String OPTIONAL_SCOPES_CONTEXT_KEY = "optionalScopes";
     String PRESELECT_ALL_SCOPES = "preselectAllScopes";
+    String ALLOW_EMPTY_SCOPE_SELECTION = "allowEmptyScopeSelection";
     String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorization_request";
     String ID_TOKEN_CONTEXT_KEY = "idToken";
     String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
