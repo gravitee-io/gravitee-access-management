@@ -29,11 +29,15 @@ import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.TrustDomainService;
+import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.am.service.model.UpdateTrustedDomain;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,13 +72,20 @@ class TrustedIssuerProjectionTest {
     private TrustDomainService trustDomainService;
 
     @Mock
+    private DomainRepository domainRepository;
+
+    @Mock
+    private TokenExchangeSettingsValidator tokenExchangeSettingsValidator;
+
+    @Mock
     private User principal;
 
     private TrustedIssuerProjection projection;
 
     @BeforeEach
     void setUp() {
-        projection = new TrustedIssuerProjection(trustDomainService);
+        projection = new TrustedIssuerProjection(trustDomainService, domainRepository, tokenExchangeSettingsValidator);
+        lenient().when(tokenExchangeSettingsValidator.validateTrustedIssuers(any())).thenReturn(Completable.complete());
     }
 
     @Test
@@ -273,6 +285,113 @@ class TrustedIssuerProjectionTest {
         verify(trustDomainService, never()).delete(any(), any(), any());
     }
 
+    @Test
+    void shouldMirrorTokenExchangeTrustedDomainsWithTrustedIssuerKeyMaterial() {
+        Domain domain = domain();
+        stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER), pem("td-2", "https://pem.example.com"),
+                withJwkSet(tokenExchange("td-3", "jwk-set", "https://jwk-set.example.com")), spiffe("td-4", "am.local"));
+
+        List<TrustedIssuer> mirrored = projection.mirror(domain).blockingGet().getTokenExchangeSettings().getTrustedIssuers();
+
+        assertEquals(List.of(ISSUER, "https://pem.example.com"), mirrored.stream().map(TrustedIssuer::getIssuer).toList());
+        assertEquals(KeyResolutionMethod.PEM, mirrored.get(1).getKeyResolutionMethod());
+        assertEquals("certificate", mirrored.get(1).getCertificate());
+    }
+
+    @Test
+    void shouldMirrorAnEmptyListWhenNothingIsTrusted() {
+        Domain domain = domain();
+        domain.getTokenExchangeSettings().setTrustedIssuers(List.of(jwksIssuer(ISSUER)));
+        stubExisting(spiffe("td-2", "am.local"));
+
+        Domain mirrored = projection.mirror(domain).blockingGet();
+
+        assertEquals(List.of(), mirrored.getTokenExchangeSettings().getTrustedIssuers());
+    }
+
+    @Test
+    void shouldNotMirrorOntoADomainWithoutTokenExchangeSettings() {
+        Domain domain = new Domain();
+        domain.setId(DOMAIN_ID);
+
+        Domain mirrored = projection.mirror(domain).blockingGet();
+
+        assertNull(mirrored.getTokenExchangeSettings());
+        verify(trustDomainService, never()).findByReference(any(), any());
+    }
+
+    @Test
+    void shouldStoreTheMirrorWhenItChanged() {
+        Domain stored = domain();
+        stored.getTokenExchangeSettings().setTrustedIssuers(null);
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(stored));
+        when(domainRepository.update(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+        stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER));
+
+        projection.syncStored(DOMAIN_ID).blockingAwait();
+
+        ArgumentCaptor<Domain> captor = ArgumentCaptor.forClass(Domain.class);
+        verify(domainRepository).update(captor.capture());
+        assertEquals(ISSUER, captor.getValue().getTokenExchangeSettings().getTrustedIssuers().get(0).getIssuer());
+    }
+
+    @Test
+    void shouldStoreAnEmptyMirrorOverAnAbsentList() {
+        Domain stored = domain();
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(stored));
+        when(domainRepository.update(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+        stubExisting();
+
+        projection.syncStored(DOMAIN_ID).blockingAwait();
+
+        verify(domainRepository).update(stored);
+        assertEquals(List.of(), stored.getTokenExchangeSettings().getTrustedIssuers());
+    }
+
+    @Test
+    void shouldNotStoreAnUnchangedMirror() {
+        TrustedDomain trustDomain = tokenExchange("td-1", "https-issuer.example.com", ISSUER);
+        Domain stored = domain();
+        stubExisting(trustDomain);
+        projection.mirror(stored).blockingGet();
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(stored));
+
+        projection.syncStored(DOMAIN_ID).blockingAwait();
+
+        verify(domainRepository, never()).update(any());
+    }
+
+    @Test
+    void shouldNotStoreAMirrorForADomainWithoutTokenExchangeSettings() {
+        Domain stored = new Domain();
+        stored.setId(DOMAIN_ID);
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(stored));
+
+        projection.syncStored(DOMAIN_ID).blockingAwait();
+
+        verify(domainRepository, never()).update(any());
+    }
+
+    @Test
+    void shouldCompleteWhenTheMirrorCannotBeStored() {
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain()));
+        when(domainRepository.update(any())).thenReturn(Single.error(new IllegalStateException("down")));
+        stubExisting(tokenExchange("td-1", "https-issuer.example.com", ISSUER));
+
+        projection.syncStored(DOMAIN_ID).test().assertComplete();
+    }
+
+    @Test
+    void shouldRejectAnInvalidWrittenListBeforeTouchingTrustedDomains() {
+        Domain domain = domain();
+        when(tokenExchangeSettingsValidator.validateTrustedIssuers(domain.getTokenExchangeSettings()))
+                .thenReturn(Completable.error(new InvalidDomainException("invalid")));
+
+        projection.apply(domain, List.of(jwksIssuer(ISSUER)), principal).test().assertError(InvalidDomainException.class);
+
+        verify(trustDomainService, never()).findByReference(any(), any());
+    }
+
     private void stubExisting(TrustedDomain... trustDomains) {
         when(trustDomainService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID))
                 .thenReturn(Flowable.fromArray(trustDomains));
@@ -312,6 +431,24 @@ class TrustedIssuerProjectionTest {
                         .userBindingCriteria(List.of(criterion))
                         .build())
                 .build();
+    }
+
+    private static TrustedDomain pem(String id, String issuer) {
+        return TrustedDomain.builder()
+                .id(id)
+                .name(id)
+                .keyMaterial(TrustDomainKeyMaterial.builder()
+                        .source(KeyMaterialSource.PEM)
+                        .certificate("certificate")
+                        .build())
+                .domainIdentifier(issuer)
+                .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
+                .build();
+    }
+
+    private static TrustedDomain withJwkSet(TrustedDomain trustDomain) {
+        trustDomain.setKeyMaterial(TrustDomainKeyMaterial.builder().source(KeyMaterialSource.JWK_SET).build());
+        return trustDomain;
     }
 
     private static TrustedDomain crossAppAccessOnly(String id, String name) {

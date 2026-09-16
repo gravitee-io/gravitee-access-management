@@ -90,9 +90,10 @@ public class TokenExchangeSettings {
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
     /**
-     * @deprecated superseded by token-exchange trusted domains. Neither stored nor read here: a
-     * projection over the trusted domains of the security domain, assembled on read and translated
-     * into trusted-domain creates, updates and deletes on write.
+     * @deprecated superseded by token-exchange trusted domains. The API assembles it from the
+     * trusted domains of the security domain on read and translates it into trusted-domain
+     * creates, updates and deletes on write. The stored copy mirrors those trusted domains for
+     * 4.12 nodes, which read trust from here only.
      */
     @Deprecated
     @Schema(deprecated = true, description = "Deprecated: use the trusted-domains API instead. External " +

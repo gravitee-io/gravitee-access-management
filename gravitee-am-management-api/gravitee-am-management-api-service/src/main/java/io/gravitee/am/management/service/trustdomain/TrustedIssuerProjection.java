@@ -24,34 +24,45 @@ import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.am.service.model.UpdateTrustedDomain;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.CustomLog;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
 /**
  * Backs the deprecated inline trusted-issuer list of a security domain's token-exchange settings
- * with the trusted domains that vouch for an issuer, which are the only place external trust is
- * stored.
+ * with the trusted domains that vouch for an issuer, which are the source of external trust.
  */
 @Component
+@CustomLog
 public class TrustedIssuerProjection {
 
     private final TrustDomainService trustDomainService;
+    private final DomainRepository domainRepository;
+    private final TokenExchangeSettingsValidator tokenExchangeSettingsValidator;
 
-    public TrustedIssuerProjection(TrustDomainService trustDomainService) {
+    public TrustedIssuerProjection(TrustDomainService trustDomainService,
+                                   @Lazy DomainRepository domainRepository,
+                                   TokenExchangeSettingsValidator tokenExchangeSettingsValidator) {
         this.trustDomainService = trustDomainService;
+        this.domainRepository = domainRepository;
+        this.tokenExchangeSettingsValidator = tokenExchangeSettingsValidator;
     }
 
     /**
@@ -75,6 +86,53 @@ public class TrustedIssuerProjection {
     }
 
     /**
+     * Sets the list to store on the given security domain: its token-exchange trusted domains whose
+     * key material is a JWKS URL or a PEM certificate. Present settings always get a list, possibly
+     * empty.
+     */
+    public Single<Domain> mirror(Domain domain) {
+        TokenExchangeSettings settings = domain.getTokenExchangeSettings();
+        if (settings == null) {
+            return Single.just(domain);
+        }
+        return tokenExchangeTrustDomains(domain.getId())
+                .map(trustDomains -> {
+                    settings.setTrustedIssuers(trustDomains.stream()
+                            .filter(TrustedIssuerProjection::hasTrustedIssuerKeyMaterial)
+                            .map(TrustedIssuerProjection::asTrustedIssuer)
+                            .toList());
+                    return domain;
+                });
+    }
+
+    /**
+     * Stores the list {@link #mirror} computes when it differs from the stored one, without
+     * publishing an event. Failures are logged and swallowed.
+     */
+    public Completable syncStored(String domainId) {
+        return Completable.defer(() -> domainRepository.findById(domainId)
+                .filter(stored -> stored.getTokenExchangeSettings() != null)
+                .flatMapCompletable(stored -> {
+                    List<TrustedIssuer> before = stored.getTokenExchangeSettings().getTrustedIssuers();
+                    return mirror(stored).flatMapCompletable(mirrored ->
+                            Objects.equals(before, mirrored.getTokenExchangeSettings().getTrustedIssuers())
+                                    ? Completable.complete()
+                                    : domainRepository.update(mirrored).ignoreElement());
+                }))
+                .onErrorResumeNext(ex -> {
+                    log.warn("Unable to refresh the stored trusted issuers of domain {}", domainId, ex);
+                    return Completable.complete();
+                });
+    }
+
+    /**
+     * Validates the inline list carried by the given token-exchange settings.
+     */
+    public Completable validate(TokenExchangeSettings written) {
+        return tokenExchangeSettingsValidator.validateTrustedIssuers(written);
+    }
+
+    /**
      * Translates a written inline list into trusted-domain creates, updates and deletes. The list
      * replaces what the security domain trusts, so an issuer absent from it is withdrawn. A written
      * issuer is matched against every trusted domain of the security domain, so one already holding
@@ -85,8 +143,8 @@ public class TrustedIssuerProjection {
         if (written == null) {
             return Completable.complete();
         }
-        return trustDomainService.findByReference(ReferenceType.DOMAIN, domain.getId())
-                .toList()
+        return validate(domain.getTokenExchangeSettings())
+                .andThen(Single.defer(() -> trustDomainService.findByReference(ReferenceType.DOMAIN, domain.getId()).toList()))
                 .flatMapCompletable(existing -> replace(domain, existing, written, principal));
     }
 
@@ -134,6 +192,12 @@ public class TrustedIssuerProjection {
         return trustDomainService.findByReference(ReferenceType.DOMAIN, domainId)
                 .filter(TrustedDomain::trustsTokenExchange)
                 .toList();
+    }
+
+    private static boolean hasTrustedIssuerKeyMaterial(TrustedDomain trustDomain) {
+        TrustDomainKeyMaterial keyMaterial = trustDomain.getKeyMaterial();
+        return keyMaterial != null
+                && (keyMaterial.getSource() == KeyMaterialSource.JWKS_URL || keyMaterial.getSource() == KeyMaterialSource.PEM);
     }
 
     private static TrustedIssuer asTrustedIssuer(TrustedDomain trustDomain) {

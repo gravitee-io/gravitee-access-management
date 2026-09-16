@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.oidc.TrustDomain;
 import io.gravitee.am.model.permissions.Permission;
@@ -26,6 +27,7 @@ import io.gravitee.am.service.exception.TrustDomainNotFoundException;
 import io.gravitee.am.service.model.UpdateTrustDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,6 +57,9 @@ public class TrustDomainResource extends AbstractResource {
 
     @Autowired
     private TrustDomainService trustDomainService;
+
+    @Autowired
+    private TrustedIssuerProjection trustedIssuerProjection;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,7 +120,8 @@ public class TrustDomainResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMapSingle(domain -> trustDomainService.update(domain, trustDomainId, updateTrustDomain, authenticatedUser))
+                .flatMapSingle(domain -> trustDomainService.update(domain, trustDomainId, updateTrustDomain, authenticatedUser)
+                        .flatMap(td -> trustedIssuerProjection.syncStored(domain.getId()).andThen(Single.just(td))))
                 .map(TrustDomain::from)
                 .subscribe(response::resume, response::resume);
     }
@@ -143,7 +149,8 @@ public class TrustDomainResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.DELETE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMapCompletable(domain -> trustDomainService.delete(domain, trustDomainId, authenticatedUser))
+                .flatMapCompletable(domain -> trustDomainService.delete(domain, trustDomainId, authenticatedUser)
+                        .andThen(trustedIssuerProjection.syncStored(domain.getId())))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

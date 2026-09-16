@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_KEY_RETRIEVAL_SETTINGS_UPGRADER;
 
 /**
- * Moves the fetch, SSRF and cache limits a security domain persisted under its OIDC SPIFFE settings
+ * Copies the fetch, SSRF and cache limits a security domain persisted under its OIDC SPIFFE settings
  * into the domain-level block that now governs key retrieval for every trusted domain.
  *
  * @author GraviteeSource Team
@@ -52,20 +52,21 @@ public class DomainKeyRetrievalSettingsUpgrader extends AsyncUpgrader {
     }
 
     private Maybe<Domain> upgradeDomain(Domain domain) {
-        OIDCSettings oidc = domain.getOidc();
-        if (oidc == null || !needsRelocation(oidc)) {
+        if (!needsRelocation(domain)) {
             return Maybe.empty();
         }
-        KeyRetrievalSettings relocated = domain.getKeyRetrievalSettings();
-        domain.setKeyRetrievalSettings(relocated);
-        oidc.getWorkloadIdentitySettings().clearLegacyRetrievalSettings();
+        SpiffeDomainSettings legacy = domain.getOidc().getWorkloadIdentitySettings();
+        domain.setKeyRetrievalSettings(KeyRetrievalSettings.fromLegacySpiffeSettings(legacy));
         log.debug("Relocating key retrieval settings of domain {}", domain.getId());
         return Maybe.fromSingle(domainService.update(domain.getId(), domain));
     }
 
-    private static boolean needsRelocation(OIDCSettings oidc) {
-        SpiffeDomainSettings spiffe = oidc.getWorkloadIdentitySettings();
-        return spiffe != null && spiffe.hasLegacyRetrievalSettings();
+    private static boolean needsRelocation(Domain domain) {
+        OIDCSettings oidc = domain.getOidc();
+        SpiffeDomainSettings spiffe = oidc != null ? oidc.getWorkloadIdentitySettings() : null;
+        return domain.getConfiguredKeyRetrievalSettings() == null
+                && spiffe != null
+                && spiffe.hasLegacyRetrievalSettings();
     }
 
     @Override

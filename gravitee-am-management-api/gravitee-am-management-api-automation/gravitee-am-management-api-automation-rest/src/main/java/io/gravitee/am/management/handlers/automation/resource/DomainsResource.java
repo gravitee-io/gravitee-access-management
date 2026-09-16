@@ -236,7 +236,8 @@ public class DomainsResource extends AbstractAutomationResource {
         return automationIdentityProviders(existing.getId())
                 .flatMap(idps -> {
                     AutomationDomainMapper.applyTo(definition, existing, idps);
-                    return domainService.validateUpdate(existing.getId(), existing, false);
+                    return trustedIssuerProjection.validate(existing.getTokenExchangeSettings())
+                            .andThen(Single.defer(() -> domainService.validateUpdate(existing.getId(), existing, false)));
                 })
                 .map(AutomationDomainMapper::toAutomationDomain)
                 .onErrorReturn(ex -> withErrors(definition, ex));

@@ -22,6 +22,7 @@ package io.gravitee.am.management.service.impl.upgrades.system.upgraders;
 public final class SystemUpgraderOrder {
     public static final int DEFAULT_IDP_UPGRADER = 1;
     public static final int SYSTEM_CLUSTER_IDP_DATABASE_UPGRADER = 2;
+    public static final int DOMAIN_TRUSTED_ISSUER_MIRROR_UPGRADER = 3;
 
     private SystemUpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");
