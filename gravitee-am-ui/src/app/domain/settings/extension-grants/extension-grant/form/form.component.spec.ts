@@ -13,28 +13,146 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MaterialDesignFrameworkModule } from '@ajsf/material';
+import { GioMatConfigModule } from '@gravitee/ui-particles-angular';
 
 import { ExtensionGrantFormComponent } from './form.component';
 
+const CROSS_APP_ACCESS_SCHEMA = {
+  type: 'object',
+  id: 'urn:jsonschema:io:gravitee:am:extensiongrant:crossappaccess:CrossAppAccessExtensionGrantConfiguration',
+  properties: {
+    grantType: { title: 'Grant Type', default: 'urn:ietf:params:oauth:grant-type:jwt-bearer', readOnly: true },
+    userBindingCriteria: {
+      title: 'User binding rules',
+      type: 'array',
+      default: [],
+      items: {
+        type: 'object',
+        title: 'Rule',
+        properties: {
+          attribute: { title: 'User attribute', type: 'string' },
+          expression: { title: 'Expression', type: 'string', 'x-schema-form': { 'expression-language': true } },
+        },
+        required: ['attribute', 'expression'],
+      },
+    },
+  },
+};
+
+const JWT_BEARER_SCHEMA = {
+  type: 'object',
+  id: 'urn:jsonschema:io:gravitee:am:tokengranter:jwtbearer:JwtBearerTokenGranterConfiguration',
+  properties: {
+    publicKeyResolver: { title: 'Public Key resolver', type: 'string', default: 'GIVEN_KEY', enum: ['GIVEN_KEY', 'JWKS_URL'] },
+    publicKey: { title: 'Resolver parameter', type: 'string' },
+  },
+};
+
 describe('ExtensionGrantFormComponent', () => {
-  let component: ExtensionGrantFormComponent;
   let fixture: ComponentFixture<ExtensionGrantFormComponent>;
+  let emitted: any[];
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule, GioMatConfigModule, MaterialDesignFrameworkModule],
       declarations: [ExtensionGrantFormComponent],
-      teardown: { destroyAfterEach: false },
     }).compileComponents();
-  }));
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(ExtensionGrantFormComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    emitted = [];
+    fixture.componentInstance.configurationCompleted.subscribe((wrapper) => emitted.push(wrapper));
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  async function render(configuration: any, schema: any): Promise<void> {
+    fixture.componentRef.setInput('extensionGrantConfiguration', configuration);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('extensionGrantSchema', schema);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('shouldNotAddPublicKeyResolverToAConfigurationWhoseSchemaDoesNotDeclareIt', async () => {
+    const configuration = {};
+
+    await render(configuration, CROSS_APP_ACCESS_SCHEMA);
+
+    expect(configuration).not.toHaveProperty('publicKeyResolver');
+    expect(emitted.length).toBeGreaterThan(0);
+    emitted.forEach((wrapper) => expect(wrapper.configuration).not.toHaveProperty('publicKeyResolver'));
+  });
+
+  it('shouldNotAddPublicKeyResolverToANewGrantWhoseSchemaDoesNotDeclareIt', async () => {
+    fixture.componentRef.setInput('extensionGrantSchema', {});
+    fixture.detectChanges();
+
+    await render(undefined, CROSS_APP_ACCESS_SCHEMA);
+
+    expect(fixture.componentInstance.data).not.toHaveProperty('publicKeyResolver');
+    expect(emitted.length).toBeGreaterThan(0);
+    emitted.forEach((wrapper) => expect(wrapper.configuration).not.toHaveProperty('publicKeyResolver'));
+  });
+
+  it('shouldDefaultPublicKeyResolverWhenTheSchemaDeclaresIt', async () => {
+    await render({}, JWT_BEARER_SCHEMA);
+
+    expect(fixture.componentInstance.data.publicKeyResolver).toBe('GIVEN_KEY');
+  });
+
+  it('shouldDefaultPublicKeyResolverForANewGrantWithoutConfiguration', async () => {
+    await render(undefined, JWT_BEARER_SCHEMA);
+
+    expect(fixture.componentInstance.data.publicKeyResolver).toBe('GIVEN_KEY');
+  });
+
+  it('shouldKeepTheConfiguredPublicKeyResolver', async () => {
+    await render({ publicKeyResolver: 'JWKS_URL', publicKey: 'https://idp.example.com/jwks' }, JWT_BEARER_SCHEMA);
+
+    expect(fixture.componentInstance.data.publicKeyResolver).toBe('JWKS_URL');
+  });
+
+  it('shouldRenderStoredBindingRulesAsAttributeAndExpressionRows', async () => {
+    await render(
+      {
+        userBindingCriteria: [
+          { attribute: 'emails.value', expression: "{#token['email']}" },
+          { attribute: 'userName', expression: "{#token['aud_sub']}" },
+        ],
+      },
+      CROSS_APP_ACCESS_SCHEMA,
+    );
+
+    const values = Array.from(fixture.nativeElement.querySelectorAll('input')).map((input: HTMLInputElement) => input.value);
+    expect(values).toEqual(expect.arrayContaining(['emails.value', "{#token['email']}", 'userName', "{#token['aud_sub']}"]));
+    expect(emitted.at(-1).configuration.userBindingCriteria).toEqual([
+      { attribute: 'emails.value', expression: "{#token['email']}" },
+      { attribute: 'userName', expression: "{#token['aud_sub']}" },
+    ]);
+  });
+
+  it('shouldEmitABindingRuleAddedAsANewRow', async () => {
+    await render({}, CROSS_APP_ACCESS_SCHEMA);
+
+    const addButton = Array.from(fixture.nativeElement.querySelectorAll('button')).find((button: HTMLButtonElement) =>
+      button.textContent.includes('Add'),
+    ) as HTMLButtonElement;
+    addButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const [attribute, expression] = Array.from(fixture.nativeElement.querySelectorAll('input')) as HTMLInputElement[];
+    attribute.value = 'emails.value';
+    attribute.dispatchEvent(new Event('input'));
+    expression.value = "{#token['email']}";
+    expression.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(emitted.at(-1)).toEqual({
+      isValid: true,
+      configuration: { userBindingCriteria: [{ attribute: 'emails.value', expression: "{#token['email']}" }] },
+    });
   });
 });
