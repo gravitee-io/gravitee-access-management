@@ -256,7 +256,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     private ExtensionGrantStrategy buildStrategy(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
         var domainSubjectManager = domain.getVersion() == DomainVersion.V1_0 ? null : subjectManager;
         return isCrossAppAccess(extensionGrant)
-                ? new CrossAppAccessGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain, openIDDiscoveryService)
+                ? new CrossAppAccessGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain, openIDDiscoveryService, protectedResourceManager, scopeManager)
                 : new ExtensionGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain);
     }
 

@@ -27,6 +27,8 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
@@ -150,7 +152,10 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                         .map(user -> createTokenCreationRequest(request, client, user, resolveSource(endUser.identityProvider()))))
                 .switchIfEmpty(Single.fromCallable(() -> createTokenCreationRequest(request, client, null, resolveSource(null))))
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof InvalidGrantException || ex instanceof UnauthorizedClientException) {
+                    if (ex instanceof InvalidGrantException
+                            || ex instanceof UnauthorizedClientException
+                            || ex instanceof InvalidResourceException
+                            || ex instanceof InvalidScopeException) {
                         return Single.error(ex);
                     }
                     String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();

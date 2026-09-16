@@ -15,5 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
-public record IdJagAssertionContext(String issuer, String identityProvider, String jti, String clientId) {
+import java.util.Set;
+
+public record IdJagAssertionContext(String issuer, String identityProvider, String jti, String clientId, String resource, Set<String> scopes) {
+
+    public IdJagAssertionContext withResource(String resource) {
+        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes);
+    }
+
+    public IdJagAssertionContext withScopes(Set<String> scopes) {
+        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes);
+    }
 }
