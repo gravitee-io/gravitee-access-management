@@ -118,7 +118,8 @@
 
             <div class="scope-consent-buttons">
                 <button type="submit" name="user_oauth_approval" value="false" class="button secondary" th:text="#{oauth.button.deny}"></button>
-                <button type="submit" id="allowButton" name="user_oauth_approval" value="true" class="button primary" th:text="#{oauth.button.allow}"></button>
+                <button type="submit" id="allowButton" name="user_oauth_approval" value="true" class="button primary"
+                        th:attr="data-allow-empty=${allowEmptyScopeSelection == true}" th:text="#{oauth.button.allow}"></button>
             </div>
         </form>
     </div>
@@ -131,6 +132,7 @@
             var checkboxes = mainSection ? Array.prototype.slice.call(mainSection.querySelectorAll('.scope-consent-checkbox')) : [];
             var rows = mainSection ? Array.prototype.slice.call(mainSection.querySelectorAll('.scope-consent-row')) : [];
             var allowButton = document.getElementById('allowButton');
+            var allowEmpty = !!allowButton && allowButton.getAttribute('data-allow-empty') === 'true';
             var selectAll = document.getElementById('selectAllScopes');
             var clearAll = document.getElementById('clearAllScopes');
             var countLabel = document.getElementById('scopeSelectionCount');
@@ -160,7 +162,7 @@
                 }
                 if (allowButton && allCheckboxes.length > 0) {
                     var anySelected = allCheckboxes.some(function (checkbox) { return checkbox.checked; });
-                    allowButton.disabled = !anySelected;
+                    allowButton.disabled = !anySelected && !allowEmpty;
                 }
             }
 

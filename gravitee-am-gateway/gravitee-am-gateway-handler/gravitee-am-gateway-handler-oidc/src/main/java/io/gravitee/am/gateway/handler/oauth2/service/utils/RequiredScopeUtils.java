@@ -42,4 +42,18 @@ public class RequiredScopeUtils {
                 .map(ApplicationScopeSettings::getScope)
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Whether submitting no scopes still approves the request: at least one requested scope, and every requested
+     * required scope, is already approved.
+     */
+    public static boolean canApproveWithoutSelection(Client client, Set<String> requestedScopes, Set<String> alreadyApprovedScopes) {
+        if (requestedScopes == null || alreadyApprovedScopes == null || requestedScopes.stream().noneMatch(alreadyApprovedScopes::contains)) {
+            return false;
+        }
+        final Set<String> requiredScopes = requiredScopeKeys(client);
+        return requestedScopes.stream()
+                .filter(requiredScopes::contains)
+                .allMatch(alreadyApprovedScopes::contains);
+    }
 }
