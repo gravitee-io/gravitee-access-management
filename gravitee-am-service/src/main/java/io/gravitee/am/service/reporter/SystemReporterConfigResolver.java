@@ -55,6 +55,9 @@ public class SystemReporterConfigResolver {
 
     public static final Set<String> SYSTEM_ONLY_TYPES = Set.of(MONGODB, REPORTER_AM_JDBC);
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
+    public static final String HIDDEN_VALUE = "********";
+    public static final String LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA = "legacy.reporters.default.hide.sensitive.data";
+    public static final boolean HIDE_SENSITIVE_DATA_DEFAULT_VALUE = false;
 
     private final RepositoriesEnvironment environment;
 
@@ -150,7 +153,7 @@ public class SystemReporterConfigResolver {
                           "flushInterval": 5
                         }
                         """.formatted(
-                    mongoUri,
+                    hideSensitiveData() ? HIDDEN_VALUE : mongoUri,
                     (mongoHost != null) ? mongoHost : "",
                     (mongoPort != null) ? Integer.parseInt(mongoPort) : null,
                     mongoDBName,
@@ -192,13 +195,18 @@ public class SystemReporterConfigResolver {
                     jdbcDatabase,
                     jdbcDriver,
                     jdbcUser,
-                    jdbcPwd == null ? null : "\"" + jdbcPwd + "\"",
+                    hideSensitiveData() ? "\"" + HIDDEN_VALUE + "\"" : (jdbcPwd == null ? null : "\"" + jdbcPwd + "\""),
                     getReporterTableSuffix(reference),
                     options
             );
 
         }
         return reporterConfig;
+    }
+
+    private Boolean hideSensitiveData() {
+        var hideSensitiveData = environment.getProperty(LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, Boolean.class, HIDE_SENSITIVE_DATA_DEFAULT_VALUE);
+        return hideSensitiveData;
     }
 
     private static String getReporterTableSuffix(Reference reference) {
