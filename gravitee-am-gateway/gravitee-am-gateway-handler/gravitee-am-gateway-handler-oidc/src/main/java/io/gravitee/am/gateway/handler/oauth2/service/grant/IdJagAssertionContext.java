@@ -17,13 +17,40 @@ package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
 import java.util.Set;
 
-public record IdJagAssertionContext(String issuer, String identityProvider, String jti, String clientId, String resource, Set<String> scopes) {
+public record IdJagAssertionContext(
+        String issuer,
+        String identityProvider,
+        String jti,
+        String clientId,
+        String resource,
+        Set<String> scopes,
+        BindingMode bindingMode,
+        String boundUser) {
+
+    public enum BindingMode {
+        TRANSIENT,
+        CREATE_USER,
+        SUBJECT,
+        BINDING_RULES
+    }
+
+    public static IdJagAssertionContext empty() {
+        return new IdJagAssertionContext(null, null, null, null, null, null, null, null);
+    }
 
     public IdJagAssertionContext withResource(String resource) {
-        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes);
+        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes, bindingMode, boundUser);
     }
 
     public IdJagAssertionContext withScopes(Set<String> scopes) {
-        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes);
+        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes, bindingMode, boundUser);
+    }
+
+    public IdJagAssertionContext withBindingMode(BindingMode bindingMode) {
+        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes, bindingMode, boundUser);
+    }
+
+    public IdJagAssertionContext withBoundUser(String boundUser) {
+        return new IdJagAssertionContext(issuer, identityProvider, jti, clientId, resource, scopes, bindingMode, boundUser);
     }
 }

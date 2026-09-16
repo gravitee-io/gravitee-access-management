@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -110,6 +111,8 @@ public class OAuth2Request extends BaseRequest {
      */
 
     private IdJagTarget idJagTarget;
+
+    private IdJagAssertionContext idJagAssertionContext;
 
     /**
      * Boolean indicates if the current request support OAuth 2.0 Refresh Token
@@ -236,6 +239,7 @@ public class OAuth2Request extends BaseRequest {
         this.allParentJtis = other.allParentJtis;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.idJagTarget = other.idJagTarget;
+        this.idJagAssertionContext = other.idJagAssertionContext;
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 
         //BaseRequest

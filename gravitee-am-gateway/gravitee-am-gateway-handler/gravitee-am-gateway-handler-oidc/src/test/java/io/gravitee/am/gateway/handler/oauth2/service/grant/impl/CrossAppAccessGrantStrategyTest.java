@@ -19,6 +19,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -37,8 +41,10 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantData;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext.BindingMode;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -54,7 +60,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -69,12 +78,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertion;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertionCarrying;
@@ -82,7 +93,6 @@ import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtu
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -132,7 +142,10 @@ class CrossAppAccessGrantStrategyTest {
     @Mock
     private ExecutionContext executionContext;
 
-    private final Logger grantStrategiesLogger = (Logger) LoggerFactory.getLogger(CrossAppAccessGrantStrategy.class.getPackageName());
+    @Mock
+    private AuditService auditService;
+
+    private final Logger oauth2Logger = (Logger) LoggerFactory.getLogger("io.gravitee.am.gateway.handler.oauth2");
 
     private ListAppender<ILoggingEvent> capturedLogs;
 
@@ -173,8 +186,8 @@ class CrossAppAccessGrantStrategyTest {
     @AfterEach
     void stopCapturingLogs() {
         if (capturedLogs != null) {
-            grantStrategiesLogger.detachAppender(capturedLogs);
-            grantStrategiesLogger.setLevel(null);
+            oauth2Logger.detachAppender(capturedLogs);
+            oauth2Logger.setLevel(null);
         }
     }
 
@@ -733,9 +746,119 @@ class CrossAppAccessGrantStrategyTest {
 
         TokenCreationRequest creationRequest = strategy.process(request, client, domain).blockingGet();
 
-        IdJagAssertionContext expected = new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id", MCP_SERVER, Set.of("calendar.read"));
+        IdJagAssertionContext expected = new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id",
+                MCP_SERVER, Set.of("calendar.read"), BindingMode.TRANSIENT, "alice");
         assertEquals(expected, request.getIdJagAssertionContext());
         assertEquals(expected, ((GrantData.ExtensionGrantData) creationRequest.grantData()).idJagAssertionContext());
+    }
+
+    @Test
+    void shouldRecordSubjectBindingAndTheBoundUserOnTheAssertionContext() {
+        extensionGrant.setUserExists(true);
+        TokenRequest request = redemptionRequest(idJagAssertion());
+        givenRedeemableAssertion(verifiedClaims());
+        when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser("local-user-id")));
+
+        strategy.process(request, client, domain).blockingGet();
+
+        assertEquals(BindingMode.SUBJECT, request.getIdJagAssertionContext().bindingMode());
+        assertEquals("local-user-id", request.getIdJagAssertionContext().boundUser());
+    }
+
+    @Test
+    void shouldRecordRuleBindingAndTheBoundUserOnTheAssertionContext() {
+        extensionGrant.setUserExists(true);
+        TokenRequest request = redemptionRequest(idJagAssertion());
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "alice@example.com");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        User localUser = localUser("local-user-id");
+        givenUsersMatchingTheBindingFilter(localUser);
+        when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
+
+        strategy.process(request, client, domain).blockingGet();
+
+        assertEquals(BindingMode.BINDING_RULES, request.getIdJagAssertionContext().bindingMode());
+        assertEquals("local-user-id", request.getIdJagAssertionContext().boundUser());
+    }
+
+    @Test
+    void shouldRecordCreateUserBindingAndTheConnectedUserOnTheAssertionContext() {
+        extensionGrant.setCreateUser(true);
+        TokenRequest request = redemptionRequest(idJagAssertion());
+        givenRedeemableAssertion(verifiedClaims());
+        when(userAuthenticationManager.connect(any(), any(), eq(false))).thenReturn(Single.just(localUser("local-user-id")));
+
+        strategy.process(request, client, domain).blockingGet();
+
+        assertEquals(BindingMode.CREATE_USER, request.getIdJagAssertionContext().bindingMode());
+        assertEquals("local-user-id", request.getIdJagAssertionContext().boundUser());
+    }
+
+    @Test
+    void shouldRecordTheBindingModeWithoutABoundUserWhenBindingRefuses() {
+        extensionGrant.setUserExists(true);
+        TokenRequest request = redemptionRequest(idJagAssertion());
+        givenRedeemableAssertion(verifiedClaims());
+        when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.empty());
+
+        strategy.process(request, client, domain).test().assertError(refusal("No user matches the assertion subject"));
+
+        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id",
+                MCP_SERVER, Set.of("calendar.read"), BindingMode.SUBJECT, null), request.getIdJagAssertionContext());
+    }
+
+    @Test
+    void shouldHandTheAssertionContextToTokenCreation() {
+        TokenRequest request = redemptionRequest(idJagAssertion());
+        givenRedeemableAssertion(verifiedClaims());
+
+        OAuth2Request accessTokenRequest = accessTokenRequestIssuedFor(request);
+
+        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id",
+                MCP_SERVER, Set.of("calendar.read"), BindingMode.TRANSIENT, "alice"), accessTokenRequest.getIdJagAssertionContext());
+    }
+
+    @Test
+    void shouldAuditARefusalWithTheVerifiedFactsAndNeverTheAssertion() {
+        String assertion = idJagAssertion();
+        TokenRequest request = redemptionRequest(assertion);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(Claims.CLIENT_ID, "other-agent");
+        givenVerifiedAssertion(claims);
+        pluginAcceptsAssertion();
+        ListAppender<ILoggingEvent> logs = captureLogs();
+
+        Audit audit = auditOfRefusedGrant(request);
+
+        assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
+        assertEquals(EventType.TOKEN_CREATED, audit.getType());
+        assertEquals("Assertion client_id does not match the authenticated client. Request: {"
+                + "\"ASSERTION_CLIENT_ID\":\"other-agent\","
+                + "\"ASSERTION_ISSUER\":\"" + ENTERPRISE_ISSUER + "\","
+                + "\"ASSERTION_JTI\":\"jti-1\","
+                + "\"GRANT_TYPE\":\"" + GrantType.JWT_BEARER + "\","
+                + "\"IDENTITY_PROVIDER\":\"" + IDENTITY_PROVIDER + "\"}", audit.getOutcome().getMessage());
+        assertFalse(logs.list.isEmpty());
+        assertTrue(logs.list.stream().noneMatch(event -> event.getFormattedMessage().contains(assertion)));
+    }
+
+    @Test
+    void shouldAuditOnlyTheGrantTypeWhenThePluginRefuses() {
+        String assertion = idJagAssertion();
+        TokenRequest request = redemptionRequest(assertion);
+        request.setScopes(Set.of("calendar.read"));
+        request.setResources(Set.of(MCP_SERVER));
+        when(extensionGrantProvider.resolveEndUser(any()))
+                .thenReturn(Maybe.error(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException("Assertion cannot be parsed")));
+        pluginAcceptsAssertion();
+        ListAppender<ILoggingEvent> logs = captureLogs();
+
+        Audit audit = auditOfRefusedGrant(request);
+
+        assertEquals("Assertion cannot be parsed. Request: {\"GRANT_TYPE\":\"" + GrantType.JWT_BEARER + "\"}", audit.getOutcome().getMessage());
+        assertFalse(logs.list.isEmpty());
+        assertTrue(logs.list.stream().noneMatch(event -> event.getFormattedMessage().contains(assertion)));
     }
 
     @Test
@@ -747,18 +870,18 @@ class CrossAppAccessGrantStrategyTest {
 
         strategy.process(request, client, domain).test().assertError(InvalidGrantException.class);
 
-        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "other-agent", null, null), request.getIdJagAssertionContext());
+        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "other-agent", null, null, null, null), request.getIdJagAssertionContext());
     }
 
     @Test
-    void shouldAttachNoAssertionContextWhenThePluginRefuses() {
+    void shouldLeaveAnEmptyAssertionContextWhenThePluginRefuses() {
         TokenRequest request = redemptionRequest(idJagAssertion());
         when(extensionGrantProvider.resolveEndUser(any()))
                 .thenReturn(Maybe.error(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException("Assertion verification failed")));
 
         strategy.process(request, client, domain).test().assertError(InvalidGrantException.class);
 
-        assertNull(request.getIdJagAssertionContext());
+        assertEquals(IdJagAssertionContext.empty(), request.getIdJagAssertionContext());
     }
 
     @Test
@@ -1080,7 +1203,7 @@ class CrossAppAccessGrantStrategyTest {
 
         strategy.process(request, client, domain).test().assertError(InvalidScopeException.class);
 
-        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id", MCP_SERVER, null), request.getIdJagAssertionContext());
+        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id", MCP_SERVER, null, null, null), request.getIdJagAssertionContext());
     }
 
     @Test
@@ -1129,11 +1252,23 @@ class CrossAppAccessGrantStrategyTest {
         return accessTokenRequest.getValue();
     }
 
+    private Audit auditOfRefusedGrant(TokenRequest request) {
+        CompositeTokenGranter tokenGranter = new CompositeTokenGranter();
+        ReflectionTestUtils.setField(tokenGranter, "auditService", auditService);
+        tokenGranter.addTokenGranter(extensionGrant.getId(), new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, null, null));
+
+        tokenGranter.grant(request, client).test().awaitDone(5, TimeUnit.SECONDS).assertError(OAuth2Exception.class);
+
+        ArgumentCaptor<ClientTokenAuditBuilder> audit = ArgumentCaptor.forClass(ClientTokenAuditBuilder.class);
+        verify(auditService).report(audit.capture());
+        return audit.getValue().build(new ObjectMapper());
+    }
+
     private ListAppender<ILoggingEvent> captureLogs() {
         capturedLogs = new ListAppender<>();
         capturedLogs.start();
-        grantStrategiesLogger.setLevel(Level.TRACE);
-        grantStrategiesLogger.addAppender(capturedLogs);
+        oauth2Logger.setLevel(Level.TRACE);
+        oauth2Logger.addAppender(capturedLogs);
         return capturedLogs;
     }
 

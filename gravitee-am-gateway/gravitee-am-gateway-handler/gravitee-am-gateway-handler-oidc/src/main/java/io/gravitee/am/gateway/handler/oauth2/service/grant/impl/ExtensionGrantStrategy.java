@@ -163,7 +163,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 });
     }
 
-    private Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client, ResolvedEndUser endUser) {
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client, ResolvedEndUser endUser) {
         var idpUser = endUser.endUser();
         if (extensionGrant.isCreateUser()) {
             return manageUserConnect(client, idpUser, tokenRequest, resolveSource(endUser.identityProvider()));

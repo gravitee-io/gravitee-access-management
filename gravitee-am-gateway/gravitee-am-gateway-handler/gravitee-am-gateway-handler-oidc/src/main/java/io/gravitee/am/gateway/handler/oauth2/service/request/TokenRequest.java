@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import lombok.Getter;
@@ -70,7 +69,5 @@ public class TokenRequest extends OAuth2Request {
      * REQUIRED for <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">User Managed Access Grant</a>
      */
     private String requestingPartyToken;
-
-    private IdJagAssertionContext idJagAssertionContext;
 
 }

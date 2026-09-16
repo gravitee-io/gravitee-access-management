@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.binding.UserBindingException;
 import io.gravitee.am.gateway.handler.oauth2.service.binding.UserBindingResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext.BindingMode;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
@@ -47,12 +48,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.splitScopes;
 
 public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
 
     private final ExtensionGrantProvider extensionGrantProvider;
+    private final ExtensionGrant extensionGrant;
     private final UserGatewayService userService;
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final ProtectedResourceManager protectedResourceManager;
@@ -72,6 +75,7 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
             ScopeManager scopeManager) {
         super(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, subjectManager, domain);
         this.extensionGrantProvider = extensionGrantProvider;
+        this.extensionGrant = extensionGrant;
         this.userService = userService;
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.protectedResourceManager = protectedResourceManager;
@@ -86,7 +90,10 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
 
     @Override
     protected Maybe<ResolvedEndUser> resolveEndUser(TokenRequest tokenRequest, Client client) {
-        return extensionGrantProvider.resolveEndUser(convertToPluginRequest(tokenRequest))
+        return Maybe.defer(() -> {
+                    tokenRequest.setIdJagAssertionContext(IdJagAssertionContext.empty());
+                    return extensionGrantProvider.resolveEndUser(convertToPluginRequest(tokenRequest));
+                })
                 .switchIfEmpty(Maybe.error(() -> new InvalidGrantException("Assertion did not resolve an end user")))
                 .doOnSuccess(resolved -> tokenRequest.setIdJagAssertionContext(verifiedAssertionContext(resolved)))
                 .flatMap(resolved -> validateRedemption(tokenRequest, client, resolved))
@@ -135,7 +142,7 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
 
     private static void attachTargetResource(TokenRequest tokenRequest, String resource) {
         tokenRequest.setResources(Set.of(resource));
-        tokenRequest.setIdJagAssertionContext(tokenRequest.getIdJagAssertionContext().withResource(resource));
+        updateAssertionContext(tokenRequest, context -> context.withResource(resource));
     }
 
     private Maybe<Set<String>> resolveGrantedScopes(TokenRequest tokenRequest, Client client, Map<String, Object> verifiedClaims, String resource) {
@@ -173,7 +180,26 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
 
     private static void attachGrantedScopes(TokenRequest tokenRequest, Set<String> scopes) {
         tokenRequest.setScopes(scopes);
-        tokenRequest.setIdJagAssertionContext(tokenRequest.getIdJagAssertionContext().withScopes(scopes));
+        updateAssertionContext(tokenRequest, context -> context.withScopes(scopes));
+    }
+
+    @Override
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client, ResolvedEndUser endUser) {
+        return Maybe.defer(() -> {
+                    updateAssertionContext(tokenRequest, context -> context.withBindingMode(bindingMode(endUser)));
+                    return super.resolveResourceOwner(tokenRequest, client, endUser);
+                })
+                .doOnSuccess(user -> updateAssertionContext(tokenRequest, context -> context.withBoundUser(user.getId())));
+    }
+
+    private BindingMode bindingMode(ResolvedEndUser endUser) {
+        if (extensionGrant.isCreateUser()) {
+            return BindingMode.CREATE_USER;
+        }
+        if (!extensionGrant.isUserExists()) {
+            return BindingMode.TRANSIENT;
+        }
+        return endUser.bindingCriteria().isEmpty() ? BindingMode.SUBJECT : BindingMode.BINDING_RULES;
     }
 
     @Override
@@ -210,6 +236,10 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
         return false;
     }
 
+    private static void updateAssertionContext(TokenRequest tokenRequest, UnaryOperator<IdJagAssertionContext> update) {
+        tokenRequest.setIdJagAssertionContext(update.apply(tokenRequest.getIdJagAssertionContext()));
+    }
+
     private static IdJagAssertionContext verifiedAssertionContext(ResolvedEndUser resolved) {
         Map<String, Object> verifiedClaims = resolved.verifiedClaims();
         return new IdJagAssertionContext(
@@ -217,6 +247,8 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
                 resolved.identityProvider(),
                 stringClaim(verifiedClaims, Claims.JTI),
                 stringClaim(verifiedClaims, Claims.CLIENT_ID),
+                null,
+                null,
                 null,
                 null);
     }
