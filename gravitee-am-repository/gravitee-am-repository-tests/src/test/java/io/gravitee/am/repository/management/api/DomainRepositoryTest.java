@@ -92,7 +92,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldNotPersistInlineTrustedIssuers() {
+    public void shouldPersistInlineTrustedIssuers() {
         Domain domain = initDomain();
         TokenExchangeSettings tokenExchange = new TokenExchangeSettings();
         tokenExchange.setEnabled(true);
@@ -110,7 +110,23 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getTokenExchangeSettings() != null && d.getTokenExchangeSettings().isEnabled());
-        testObserver.assertValue(d -> d.getTokenExchangeSettings().getTrustedIssuers() == null);
+        testObserver.assertValue(d -> List.of(trustedIssuer).equals(d.getTokenExchangeSettings().getTrustedIssuers()));
+    }
+
+    @Test
+    public void shouldPersistEmptyInlineTrustedIssuers() {
+        Domain domain = initDomain();
+        TokenExchangeSettings tokenExchange = new TokenExchangeSettings();
+        tokenExchange.setTrustedIssuers(List.of());
+        domain.setTokenExchangeSettings(tokenExchange);
+
+        Domain created = domainRepository.create(domain).blockingGet();
+
+        TestObserver<Domain> testObserver = domainRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(d -> d.getTokenExchangeSettings().getTrustedIssuers() != null
+                && d.getTokenExchangeSettings().getTrustedIssuers().isEmpty());
     }
 
     private Domain initDomain() {

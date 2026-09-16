@@ -25,4 +25,10 @@ import io.reactivex.rxjava3.core.Completable;
  * @author GraviteeSource Team
  */
 public interface TokenExchangeSettingsValidator extends Validator<TokenExchangeSettings, Completable> {
+
+    /**
+     * Validates the deprecated inline trusted-issuer list of enabled settings, which
+     * {@link #validate(Object)} skips.
+     */
+    Completable validateTrustedIssuers(TokenExchangeSettings settings);
 }

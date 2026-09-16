@@ -71,10 +71,15 @@ public class TokenExchangeSettingsValidatorImpl implements TokenExchangeSettings
                     + TokenExchangeSettings.MIN_MAX_DELEGATION_DEPTH + " and " + TokenExchangeSettings.MAX_MAX_DELEGATION_DEPTH);
         }
 
-        return validateTrustedIssuers(settings.getTrustedIssuers());
+        return Completable.complete();
     }
 
-    private Completable validateTrustedIssuers(List<TrustedIssuer> trustedIssuers) {
+    @Override
+    public Completable validateTrustedIssuers(TokenExchangeSettings settings) {
+        if (settings == null || !settings.isEnabled()) {
+            return Completable.complete();
+        }
+        List<TrustedIssuer> trustedIssuers = settings.getTrustedIssuers();
         if (trustedIssuers == null || trustedIssuers.isEmpty()) {
             return Completable.complete();
         }

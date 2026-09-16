@@ -611,6 +611,7 @@ public class DomainServiceImpl implements DomainService {
     public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
         log.debug("Update an existing domain: {}", domain);
         return validateUpdate(domainId, domain, validateReferences)
+                .flatMap(trustedIssuerProjection::mirror)
                 .flatMap(validatedDomain -> domainRepository.update(validatedDomain))
                 // create event for sync process
                 .flatMap(domain1 -> {
@@ -647,7 +648,8 @@ public class DomainServiceImpl implements DomainService {
                     return validateDomain(toPatch)
                             .andThen(validateCertificateSettings(toPatch))
                             .andThen(trustedIssuerProjection.apply(toPatch, writtenTrustedIssuers(patchDomain), principal))
-                            .andThen(Single.defer(() -> domainRepository.update(toPatch)))
+                            .andThen(Single.defer(() -> trustedIssuerProjection.mirror(toPatch)))
+                            .flatMap(domainRepository::update)
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));

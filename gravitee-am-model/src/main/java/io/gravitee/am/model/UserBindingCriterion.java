@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,6 +29,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
 @Schema(title = "User binding criterion", description = "A single rule that matches a domain user attribute " +
         "against a value derived from the external token claims.")
 public class UserBindingCriterion {

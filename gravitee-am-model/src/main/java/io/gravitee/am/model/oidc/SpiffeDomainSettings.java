@@ -23,8 +23,8 @@ import java.util.List;
 
 /**
  * Domain-level settings for SPIFFE workload identity support. The fetch, SSRF and cache limits this
- * block used to carry now live in {@link io.gravitee.am.model.KeyRetrievalSettings}; they remain here, deprecated and
- * unset on new domains, only so values written before the move can be read back and relocated.
+ * block used to carry now live in {@link io.gravitee.am.model.KeyRetrievalSettings}. They remain here, deprecated and
+ * unset on new domains, holding their values from before the move for 4.12 nodes to read.
  *
  * @author GraviteeSource Team
  */
@@ -211,14 +211,5 @@ public class SpiffeDomainSettings {
                 || maxResponseSizeKb != null
                 || cacheTtlSeconds != null
                 || cacheMaxEntries != null;
-    }
-
-    public void clearLegacyRetrievalSettings() {
-        this.allowUnsecuredHttpUri = null;
-        this.allowPrivateIpAddress = null;
-        this.fetchTimeoutMs = null;
-        this.maxResponseSizeKb = null;
-        this.cacheTtlSeconds = null;
-        this.cacheMaxEntries = null;
     }
 }

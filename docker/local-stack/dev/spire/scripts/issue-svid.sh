@@ -15,7 +15,7 @@ docker compose \
     -f "$(dirname "$0")/../../docker-compose.yml" \
     -f "$(dirname "$0")/../../docker-compose.spire.yml" \
     exec -T spire-agent \
-    /opt/spire/bin/spire-agent api fetch jwt \
+    /usr/local/bin/spire-agent api fetch jwt \
     -socketPath /run/spire-agent/public/api.sock \
     -audience "${AUDIENCE}" \
     -spiffeID "${SPIFFE_ID}" \

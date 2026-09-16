@@ -50,7 +50,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -219,7 +218,6 @@ class DomainTrustedIssuerUpgraderTest {
         Domain domain = domainWith(jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks"));
 
         initializeSystemTask();
-        stubDomainUpdate();
         when(domainService.listAll()).thenReturn(Flowable.just(domain));
         when(trustDomainRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_ID))
                 .thenReturn(Flowable.just(alreadyMigrated("https://issuer.example.com")));
@@ -298,12 +296,14 @@ class DomainTrustedIssuerUpgraderTest {
     }
 
     @Test
-    void shouldDropInlineTrustedIssuersOnceMigrated() {
-        Domain domain = domainWith(jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks"));
+    void shouldKeepInlineTrustedIssuersOnceMigrated() {
+        TrustedIssuer issuer = jwksIssuer("https://issuer.example.com", "https://issuer.example.com/jwks");
+        Domain domain = domainWith(issuer);
 
         migrate(domain);
 
-        verify(domainService).update(DOMAIN_ID, domain);
+        verify(domainService, never()).update(any(), any());
+        assertSame(issuer, domain.getTokenExchangeSettings().getTrustedIssuers().get(0));
     }
 
     @Test
@@ -337,7 +337,6 @@ class DomainTrustedIssuerUpgraderTest {
 
     private List<TrustedDomain> migrateAll(Domain... domains) {
         initializeSystemTask();
-        stubDomainUpdate();
         when(domainService.listAll()).thenReturn(Flowable.fromArray(domains));
         when(trustDomainRepository.findByReference(any(), any())).thenReturn(Flowable.empty());
         return captureCreated();
@@ -345,7 +344,6 @@ class DomainTrustedIssuerUpgraderTest {
 
     private List<TrustedDomain> migrate(Domain domain, TrustedDomain... existing) {
         initializeSystemTask();
-        stubDomainUpdate();
         when(domainService.listAll()).thenReturn(Flowable.just(domain));
         when(trustDomainRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_ID))
                 .thenReturn(Flowable.fromArray(existing));
@@ -359,10 +357,6 @@ class DomainTrustedIssuerUpgraderTest {
         assertTrue(upgrader.upgrade());
 
         return captor.getAllValues();
-    }
-
-    private void stubDomainUpdate() {
-        lenient().when(domainService.update(anyString(), any(Domain.class))).thenAnswer(i -> Single.just(i.getArgument(1)));
     }
 
     private void initializeSystemTask() {

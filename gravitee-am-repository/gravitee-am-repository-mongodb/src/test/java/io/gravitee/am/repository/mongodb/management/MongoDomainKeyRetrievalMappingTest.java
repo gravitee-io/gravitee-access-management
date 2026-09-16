@@ -98,13 +98,22 @@ public class MongoDomainKeyRetrievalMappingTest {
     }
 
     @Test
-    public void shouldNotWriteBackLegacyLimits() {
+    public void shouldKeepLegacyLimitsOnRewrite() {
         SpiffeDomainSettingsMongo legacy = new SpiffeDomainSettingsMongo();
+        legacy.setAllowPrivateIpAddress(true);
         legacy.setFetchTimeoutMs(1234);
+        legacy.setMaxResponseSizeKb(64);
+        legacy.setCacheTtlSeconds(60);
+        legacy.setCacheMaxEntries(10);
 
         DomainMongo rewritten = MongoDomainRepository.convert(MongoDomainRepository.convert(legacyDocument(legacy)));
 
-        assertNull(rewritten.getOidc().getWorkloadIdentitySettings().getFetchTimeoutMs());
+        SpiffeDomainSettingsMongo kept = rewritten.getOidc().getWorkloadIdentitySettings();
+        assertTrue(kept.getAllowPrivateIpAddress());
+        assertEquals(Integer.valueOf(1234), kept.getFetchTimeoutMs());
+        assertEquals(Integer.valueOf(64), kept.getMaxResponseSizeKb());
+        assertEquals(Integer.valueOf(60), kept.getCacheTtlSeconds());
+        assertEquals(Integer.valueOf(10), kept.getCacheMaxEntries());
         assertEquals(1234, rewritten.getKeyRetrievalSettings().getFetchTimeoutMs());
     }
 

@@ -568,6 +568,12 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo result =
                 new io.gravitee.am.repository.mongodb.management.internal.model.oidc.SpiffeDomainSettingsMongo();
         result.setEnabled(source.isEnabled());
+        result.setAllowUnsecuredHttpUri(source.getAllowUnsecuredHttpUri());
+        result.setAllowPrivateIpAddress(source.getAllowPrivateIpAddress());
+        result.setFetchTimeoutMs(source.getFetchTimeoutMs());
+        result.setMaxResponseSizeKb(source.getMaxResponseSizeKb());
+        result.setCacheTtlSeconds(source.getCacheTtlSeconds());
+        result.setCacheMaxEntries(source.getCacheMaxEntries());
         result.setMaxJwtLifetimeSeconds(source.getMaxJwtLifetimeSeconds());
         result.setClockSkewSeconds(source.getClockSkewSeconds());
         result.setDefaultAllowedAlgorithms(source.getDefaultAllowedAlgorithms());

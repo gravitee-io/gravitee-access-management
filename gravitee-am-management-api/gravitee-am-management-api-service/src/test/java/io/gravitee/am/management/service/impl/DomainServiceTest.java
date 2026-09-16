@@ -420,6 +420,7 @@ public class DomainServiceTest {
     @BeforeEach
     void stubTrustedIssuerProjectionDefaults() {
         Mockito.lenient().when(trustedIssuerProjection.apply(any(Domain.class), any(), any())).thenReturn(Completable.complete());
+        Mockito.lenient().when(trustedIssuerProjection.mirror(any(Domain.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
     }
 
     /**
@@ -1017,6 +1018,10 @@ public class DomainServiceTest {
         testObserver.assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
+        InOrder appliedMirroredThenStored = inOrder(trustedIssuerProjection, domainRepository);
+        appliedMirroredThenStored.verify(trustedIssuerProjection).apply(eq(domain), any(), any());
+        appliedMirroredThenStored.verify(trustedIssuerProjection).mirror(domain);
+        appliedMirroredThenStored.verify(domainRepository).update(domain);
         verify(domainRepository, times(1)).update(argThat(domainArg ->
                 domainArg.getVersion().equals(domain.getVersion()) &&
                         domainArg.getReferenceId().equals(domain.getReferenceId()) &&
@@ -1675,7 +1680,9 @@ public class DomainServiceTest {
                 .assertNoErrors();
 
         verify(domainRepository, times(1)).findById(anyString());
-        verify(domainRepository, times(1)).update(any(Domain.class));
+        InOrder mirroredThenStored = inOrder(trustedIssuerProjection, domainRepository);
+        mirroredThenStored.verify(trustedIssuerProjection).mirror(updateDomain);
+        mirroredThenStored.verify(domainRepository).update(updateDomain);
         verify(eventService, times(1)).create(any(), any());
     }
 

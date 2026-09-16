@@ -31,7 +31,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
@@ -87,16 +86,30 @@ class DomainKeyRetrievalSettingsUpgraderTest {
     }
 
     @Test
-    void shouldClearRelocatedLimitsFromSpiffeBlock() {
+    void shouldKeepRelocatedLimitsInSpiffeBlock() {
         SpiffeDomainSettings spiffe = new SpiffeDomainSettings();
         spiffe.setFetchTimeoutMs(1234);
         spiffe.setAllowPrivateIpAddress(true);
 
         SpiffeDomainSettings upgraded = upgrade(domainWith(spiffe)).getOidc().getWorkloadIdentitySettings();
 
-        assertFalse(upgraded.hasLegacyRetrievalSettings());
-        assertNull(upgraded.getFetchTimeoutMs());
-        assertNull(upgraded.getAllowPrivateIpAddress());
+        assertEquals(1234, upgraded.getFetchTimeoutMs());
+        assertTrue(upgraded.getAllowPrivateIpAddress());
+    }
+
+    @Test
+    void shouldRelocateAgainWhenDomainLevelBlockWasDropped() {
+        SpiffeDomainSettings spiffe = new SpiffeDomainSettings();
+        spiffe.setFetchTimeoutMs(1234);
+        Domain domain = upgrade(domainWith(spiffe));
+        domain.setKeyRetrievalSettings(null);
+        clearInvocations(domainService);
+        when(domainService.listAll()).thenReturn(Flowable.just(domain));
+
+        assertTrue(upgrader.upgrade());
+
+        verify(domainService).update(any(), any());
+        assertEquals(1234, domain.getConfiguredKeyRetrievalSettings().getFetchTimeoutMs());
     }
 
     @Test
@@ -147,8 +160,8 @@ class DomainKeyRetrievalSettingsUpgraderTest {
     void shouldNotTouchAlreadyRelocatedDomain() {
         SpiffeDomainSettings spiffe = new SpiffeDomainSettings();
         spiffe.setEnabled(true);
+        spiffe.setFetchTimeoutMs(1234);
         Domain domain = domainWith(spiffe);
-        domain.getOidc().getWorkloadIdentitySettings().clearLegacyRetrievalSettings();
         KeyRetrievalSettings relocated = new KeyRetrievalSettings();
         relocated.setFetchTimeoutMs(999);
         domain.setKeyRetrievalSettings(relocated);

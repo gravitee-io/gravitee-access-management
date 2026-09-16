@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.TrustedDomain;
@@ -26,6 +27,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -62,6 +64,9 @@ public class TrustedDomainsResource extends AbstractResource {
 
     @Autowired
     private TrustDomainService trustDomainService;
+
+    @Autowired
+    private TrustedIssuerProjection trustedIssuerProjection;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,7 +120,8 @@ public class TrustedDomainsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_TRUST_DOMAIN, Acl.CREATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
-                .flatMapSingle(domain -> trustDomainService.create(domain, newTrustedDomain, authenticatedUser))
+                .flatMapSingle(domain -> trustDomainService.create(domain, newTrustedDomain, authenticatedUser)
+                        .flatMap(td -> trustedIssuerProjection.syncStored(domain.getId()).andThen(Single.just(td))))
                 .map(td -> Response
                         .created(URI.create("/organizations/" + organizationId
                                 + "/environments/" + environmentId

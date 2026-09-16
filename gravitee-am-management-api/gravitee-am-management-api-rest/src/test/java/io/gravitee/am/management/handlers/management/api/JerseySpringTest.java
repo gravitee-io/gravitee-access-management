@@ -33,6 +33,8 @@ import io.gravitee.am.management.service.AuthorizationEngineManager;
 import io.gravitee.am.management.service.AuthorizationEnginePluginService;
 import io.gravitee.am.management.service.AuthorizationEngineServiceProxy;
 import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
+import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidatorImpl;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
@@ -108,6 +110,7 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.node.api.license.LicenseManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.Priority;
 import jakarta.servlet.http.HttpServletRequest;
@@ -763,7 +766,9 @@ public abstract class JerseySpringTest {
 
         @Bean
         public TrustedIssuerProjection trustedIssuerProjection() {
-            return new TrustedIssuerProjection(trustDomainService());
+            DomainRepository domainRepository = mock(DomainRepository.class);
+            when(domainRepository.findById(any())).thenReturn(Maybe.empty());
+            return new TrustedIssuerProjection(trustDomainService(), domainRepository, new TokenExchangeSettingsValidatorImpl(5));
         }
 
         @Bean

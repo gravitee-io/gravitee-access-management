@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,7 +29,7 @@ import java.util.Map;
  * when validated with the configured key material (JWKS URL or PEM certificate).
  *
  * @deprecated superseded by token-exchange trusted domains; this shape is only the projection
- * over them that the deprecated domain-level API still speaks.
+ * over them that the deprecated domain-level API still speaks, and that 4.12 nodes read.
  * @see TokenExchangeSettings#getTrustedIssuers()
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693 - OAuth 2.0 Token Exchange</a>
  * @author GraviteeSource Team
@@ -36,6 +37,7 @@ import java.util.Map;
 @Deprecated
 @Getter
 @Setter
+@EqualsAndHashCode
 @Schema(title = "Trusted issuer", deprecated = true,
         description = "An external token issuer whose JWTs are accepted as subject or " +
         "actor tokens during token exchange, validated with the configured key material.")
