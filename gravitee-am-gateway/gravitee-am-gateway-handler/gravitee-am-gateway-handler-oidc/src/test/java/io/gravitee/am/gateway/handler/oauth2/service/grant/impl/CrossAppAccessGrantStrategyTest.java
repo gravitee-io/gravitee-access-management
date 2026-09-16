@@ -24,6 +24,7 @@ import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -50,8 +51,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -74,6 +77,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertion;
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.idJagAssertionCarrying;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -441,7 +445,7 @@ class CrossAppAccessGrantStrategyTest {
         DefaultUser projectedEndUser = new DefaultUser("mallory");
         projectedEndUser.setId("mallory");
         when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(projectedEndUser, IDENTITY_PROVIDER, verifiedClaims())));
+                .thenReturn(Maybe.just(new ResolvedEndUser(projectedEndUser, IDENTITY_PROVIDER, verifiedClaims(), List.of())));
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -470,12 +474,212 @@ class CrossAppAccessGrantStrategyTest {
         givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read"));
         when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
         when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(new DefaultUser("alice"), IDENTITY_PROVIDER, claims)));
+                .thenReturn(Maybe.just(new ResolvedEndUser(new DefaultUser("alice"), IDENTITY_PROVIDER, claims, List.of())));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
                 .assertError(refusal("No user matches the assertion subject"));
 
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldBindTheOnlyUserMatchingABindingRuleOnTheVerifiedEmail() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "alice@example.com");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        User localUser = localUser("local-user-id");
+        givenUsersMatchingTheBindingFilter(localUser);
+        when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        assertEquals("local-user-id", creationRequest.resourceOwner().getId());
+        assertEquals(attributeEquals("emails.value", "alice@example.com").toString(), bindingFilter().toString());
+        verify(userService, never()).findByExternalIdAndSource(any(), any());
+        verifyNoInteractions(identityProviderManager, userAuthenticationManager);
+    }
+
+    @Test
+    void shouldBindTheOnlyUserMatchingABindingRuleOnTheVerifiedAudSub() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put("aud_sub", "alice-at-domain-b");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("userName", "{#token['aud_sub']}")));
+        User localUser = localUser("local-user-id");
+        givenUsersMatchingTheBindingFilter(localUser);
+        when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        assertEquals("local-user-id", creationRequest.resourceOwner().getId());
+        assertEquals(attributeEquals("userName", "alice-at-domain-b").toString(), bindingFilter().toString());
+    }
+
+    @Test
+    void shouldRequireEveryBindingRuleToMatch() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "alice@example.com");
+        givenRedeemableAssertion(claims, List.of(
+                bindingCriterion("emails.value", "{#token['email']}"),
+                bindingCriterion("userName", "{#token['sub']}")));
+        User localUser = localUser("local-user-id");
+        givenUsersMatchingTheBindingFilter(localUser);
+        when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        FilterCriteria allRules = new FilterCriteria("and", null, null, false, List.of(
+                attributeEquals("emails.value", "alice@example.com"),
+                attributeEquals("userName", "alice")));
+        assertEquals(allRules.toString(), bindingFilter().toString());
+    }
+
+    @Test
+    void shouldEvaluateBindingRulesAgainstTheVerifiedClaimsOnly() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "alice@example.com");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        User localUser = localUser("local-user-id");
+        givenUsersMatchingTheBindingFilter(localUser);
+        when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
+
+        strategy.process(redemptionRequest(idJagAssertionCarrying("{\"email\":\"mallory@example.com\"}")), client, domain).blockingGet();
+
+        assertEquals(attributeEquals("emails.value", "alice@example.com").toString(), bindingFilter().toString());
+    }
+
+    @Test
+    void shouldRefuseWhenBindingRulesMatchNoUser() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "alice@example.com");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenUsersMatchingTheBindingFilter();
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("No user matches the binding rules"));
+
+        verify(userService, never()).findByExternalIdAndSource(any(), any());
+    }
+
+    @Test
+    void shouldRefuseWhenBindingRulesMatchSeveralUsers() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "alice@example.com");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenUsersMatchingTheBindingFilter(localUser("alice-1"), localUser("alice-2"));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("Several users match the binding rules"));
+
+        verify(userService, never()).enhance(any());
+    }
+
+    @Test
+    void shouldRefuseMalformedBindingExpressionWithoutLookingUpUsers() {
+        extensionGrant.setUserExists(true);
+        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email'}")));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("Binding rules cannot be evaluated against the assertion"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldRefuseBindingExpressionThatFailsToEvaluateWithoutLookingUpUsers() {
+        extensionGrant.setUserExists(true);
+        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email'].toLowerCase()}")));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("Binding rules cannot be evaluated against the assertion"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldRefuseBindingExpressionEvaluatingToNothingWithoutLookingUpUsers() {
+        extensionGrant.setUserExists(true);
+        givenRedeemableAssertion(verifiedClaims(), List.of(
+                bindingCriterion("userName", "{#token['sub']}"),
+                bindingCriterion("emails.value", "{#token['email']}")));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("Binding rules cannot be evaluated against the assertion"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldRefuseBindingExpressionEvaluatingToBlankWithoutLookingUpUsers() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(StandardClaims.EMAIL, "  ");
+        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("Binding rules cannot be evaluated against the assertion"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldRefuseBindingRulesWithoutAnyUsableRuleWithoutLookingUpUsers() {
+        extensionGrant.setUserExists(true);
+        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion(" ", "{#token['sub']}"), bindingCriterion("userName", "")));
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(refusal("Binding rules cannot be evaluated against the assertion"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldBindByExternalIdSubjectAndResolvedIdentityProviderWhenBindingCriteriaAreAbsent() {
+        extensionGrant.setUserExists(true);
+        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read"));
+        when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
+        when(extensionGrantProvider.resolveEndUser(any()))
+                .thenReturn(Maybe.just(new ResolvedEndUser(new DefaultUser("alice"), IDENTITY_PROVIDER, verifiedClaims(), null)));
+        when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser("local-user-id")));
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        assertEquals("local-user-id", creationRequest.resourceOwner().getId());
+        verify(userService, never()).findByCriteria(any(FilterCriteria.class));
+    }
+
+    @Test
+    void shouldIgnoreBindingRulesInCreateUserMode() {
+        extensionGrant.setCreateUser(true);
+        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        when(userAuthenticationManager.connect(any(), any(), eq(false))).thenReturn(Single.just(localUser("local-user-id")));
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        assertEquals("local-user-id", creationRequest.resourceOwner().getId());
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void shouldIgnoreBindingRulesInTransientMode() {
+        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email']}")));
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        assertEquals("alice", creationRequest.resourceOwner().getId());
         verifyNoInteractions(userService);
     }
 
@@ -934,17 +1138,52 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     private void givenVerifiedAssertion(Map<String, Object> verifiedClaims) {
+        givenVerifiedAssertion(verifiedClaims, List.of());
+    }
+
+    private void givenVerifiedAssertion(Map<String, Object> verifiedClaims, List<UserBindingCriterion> bindingCriteria) {
         when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
         DefaultUser endUser = new DefaultUser((String) verifiedClaims.get(Claims.SUB));
         endUser.setId((String) verifiedClaims.get(Claims.SUB));
         endUser.setAdditionalInformation(new HashMap<>(Map.of(Claims.SUB, verifiedClaims.get(Claims.SUB))));
         when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(endUser, IDENTITY_PROVIDER, verifiedClaims)));
+                .thenReturn(Maybe.just(new ResolvedEndUser(endUser, IDENTITY_PROVIDER, verifiedClaims, bindingCriteria)));
     }
 
     private void givenRedeemableAssertion(Map<String, Object> verifiedClaims) {
-        givenVerifiedAssertion(verifiedClaims);
+        givenRedeemableAssertion(verifiedClaims, List.of());
+    }
+
+    private void givenRedeemableAssertion(Map<String, Object> verifiedClaims, List<UserBindingCriterion> bindingCriteria) {
+        givenVerifiedAssertion(verifiedClaims, bindingCriteria);
         givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read", "calendar.write", "mail.send"));
+    }
+
+    private void givenUsersMatchingTheBindingFilter(User... users) {
+        when(userService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(users)));
+    }
+
+    private FilterCriteria bindingFilter() {
+        ArgumentCaptor<FilterCriteria> filter = ArgumentCaptor.forClass(FilterCriteria.class);
+        verify(userService).findByCriteria(filter.capture());
+        return filter.getValue();
+    }
+
+    private static FilterCriteria attributeEquals(String attribute, String value) {
+        return new FilterCriteria("eq", attribute, value, true, null);
+    }
+
+    private static UserBindingCriterion bindingCriterion(String attribute, String expression) {
+        UserBindingCriterion criterion = new UserBindingCriterion();
+        criterion.setAttribute(attribute);
+        criterion.setExpression(expression);
+        return criterion;
+    }
+
+    private static User localUser(String id) {
+        User user = new User();
+        user.setId(id);
+        return user;
     }
 
     private void givenRegisteredResourceWithToolScopes(String identifier, Set<String> toolScopes) {

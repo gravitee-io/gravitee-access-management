@@ -28,6 +28,9 @@ import io.gravitee.common.util.MultiValueMap;
 
 public final class AssertionFixtures {
 
+    private static final JWSAlgorithm UNCHECKED_ALGORITHM = JWSAlgorithm.RS256;
+    private static final String UNCHECKED_SIGNATURE = "sig";
+
     private AssertionFixtures() {
     }
 
@@ -44,20 +47,26 @@ public final class AssertionFixtures {
     }
 
     public static String idJagAssertion() {
-        return assertionWithHeader(new JWSHeader.Builder(JWSAlgorithm.RS256)
-                .type(new JOSEObjectType(JwtType.ID_JAG.getValue()))
-                .build());
+        return idJagAssertionCarrying("{}");
+    }
+
+    public static String idJagAssertionCarrying(String payload) {
+        return assertion(new JWSHeader.Builder(UNCHECKED_ALGORITHM).type(new JOSEObjectType(JwtType.ID_JAG.getValue())).build(), payload);
     }
 
     public static String plainJwtAssertion() {
-        return assertionWithHeader(new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build());
+        return assertionWithHeader(new JWSHeader.Builder(UNCHECKED_ALGORITHM).type(JOSEObjectType.JWT).build());
     }
 
     public static String untypedAssertion() {
-        return assertionWithHeader(new JWSHeader.Builder(JWSAlgorithm.RS256).build());
+        return assertionWithHeader(new JWSHeader.Builder(UNCHECKED_ALGORITHM).build());
     }
 
     public static String assertionWithHeader(JWSHeader header) {
-        return header.toBase64URL() + "." + Base64URL.encode("{}") + "." + Base64URL.encode("sig");
+        return assertion(header, "{}");
+    }
+
+    private static String assertion(JWSHeader header, String payload) {
+        return header.toBase64URL() + "." + Base64URL.encode(payload) + "." + Base64URL.encode(UNCHECKED_SIGNATURE);
     }
 }

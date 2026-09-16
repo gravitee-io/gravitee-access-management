@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.extensiongrant.crossappaccess;
+package io.gravitee.am.gateway.handler.oauth2.service.binding;
 
-import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
-import io.gravitee.am.model.UserBindingCriterion;
 import lombok.Getter;
-import lombok.Setter;
-
-import java.util.List;
 
 @Getter
-@Setter
-public class CrossAppAccessExtensionGrantConfiguration implements ExtensionGrantConfiguration {
+public class UserBindingException extends RuntimeException {
 
-    private List<UserBindingCriterion> userBindingCriteria;
+    public enum Reason {
+        NO_MATCH,
+        SEVERAL_MATCHES,
+        UNUSABLE_CRITERIA
+    }
+
+    private final Reason reason;
+
+    public UserBindingException(Reason reason, String message) {
+        super(message);
+        this.reason = reason;
+    }
 }

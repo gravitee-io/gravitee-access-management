@@ -16,16 +16,19 @@
 package io.gravitee.am.extensiongrant.api;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.UserBindingCriterion;
 
+import java.util.List;
 import java.util.Map;
 
-public record ResolvedEndUser(User endUser, String identityProvider, Map<String, Object> verifiedClaims) {
+public record ResolvedEndUser(User endUser, String identityProvider, Map<String, Object> verifiedClaims, List<UserBindingCriterion> bindingCriteria) {
 
     public ResolvedEndUser {
         verifiedClaims = verifiedClaims == null ? Map.of() : verifiedClaims;
+        bindingCriteria = bindingCriteria == null ? List.of() : bindingCriteria;
     }
 
     public static ResolvedEndUser endUser(User endUser){
-        return new ResolvedEndUser(endUser, null, Map.of());
+        return new ResolvedEndUser(endUser, null, Map.of(), List.of());
     }
 }

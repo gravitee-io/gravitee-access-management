@@ -37,6 +37,7 @@ class ExtensionGrantProviderTest {
         assertSame(user, resolved.endUser());
         assertNull(resolved.identityProvider());
         assertTrue(resolved.verifiedClaims().isEmpty());
+        assertTrue(resolved.bindingCriteria().isEmpty());
     }
 
     @Test

@@ -27,6 +27,8 @@ import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.binding.UserBindingException;
+import io.gravitee.am.gateway.handler.oauth2.service.binding.UserBindingResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -38,6 +40,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Collection;
 import java.util.List;
@@ -54,6 +57,7 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final ProtectedResourceManager protectedResourceManager;
     private final ScopeManager scopeManager;
+    private final UserBindingResolver userBindingResolver;
 
     public CrossAppAccessGrantStrategy(
             ExtensionGrantProvider extensionGrantProvider,
@@ -72,6 +76,7 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.protectedResourceManager = protectedResourceManager;
         this.scopeManager = scopeManager;
+        this.userBindingResolver = new UserBindingResolver(userService);
     }
 
     @Override
@@ -173,9 +178,31 @@ public class CrossAppAccessGrantStrategy extends ExtensionGrantStrategy {
 
     @Override
     protected Maybe<User> resolveExistingResourceOwner(TokenRequest tokenRequest, ResolvedEndUser endUser) {
+        return endUser.bindingCriteria().isEmpty()
+                ? resolveBySubject(endUser)
+                : resolveByBindingCriteria(endUser);
+    }
+
+    private Maybe<User> resolveBySubject(ResolvedEndUser endUser) {
         return Maybe.fromOptional(Optional.ofNullable(stringClaim(endUser.verifiedClaims(), Claims.SUB)))
                 .flatMap(subject -> userService.findByExternalIdAndSource(subject, endUser.identityProvider()))
                 .switchIfEmpty(Maybe.error(() -> new InvalidGrantException("No user matches the assertion subject")));
+    }
+
+    private Maybe<User> resolveByBindingCriteria(ResolvedEndUser endUser) {
+        return userBindingResolver.resolve(endUser.bindingCriteria(), endUser.verifiedClaims())
+                .onErrorResumeNext(error -> Single.error(error instanceof UserBindingException bindingError
+                        ? bindingRefusal(bindingError)
+                        : error))
+                .toMaybe();
+    }
+
+    private static InvalidGrantException bindingRefusal(UserBindingException error) {
+        return new InvalidGrantException(switch (error.getReason()) {
+            case NO_MATCH -> "No user matches the binding rules";
+            case SEVERAL_MATCHES -> "Several users match the binding rules";
+            case UNUSABLE_CRITERIA -> "Binding rules cannot be evaluated against the assertion";
+        });
     }
 
     @Override

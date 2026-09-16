@@ -27,11 +27,13 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
+import io.gravitee.am.extensiongrant.crossappaccess.CrossAppAccessExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.trustedissuer.AssertionVerifier;
 import io.gravitee.am.identityprovider.api.trustedissuer.OAuthTrustedIssuer;
 import io.gravitee.am.identityprovider.api.trustedissuer.ResolvedTrustedIssuer;
 import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
+import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +68,9 @@ class CrossAppAccessExtensionGrantProviderTest {
 
     @Mock
     private AssertionVerifier assertionVerifier;
+
+    @Spy
+    private CrossAppAccessExtensionGrantConfiguration configuration = new CrossAppAccessExtensionGrantConfiguration();
 
     @InjectMocks
     private CrossAppAccessExtensionGrantProvider provider;
@@ -155,6 +161,29 @@ class CrossAppAccessExtensionGrantProviderTest {
         assertEquals("jti-1", verifiedClaims.get("jti"));
         assertEquals("agent", verifiedClaims.get("client_id"));
         assertEquals(List.of("https://as.example.com"), verifiedClaims.get("aud"));
+    }
+
+    @Test
+    void shouldCarryConfiguredBindingCriteriaBesideTheVerifiedClaims() {
+        UserBindingCriterion emailRule = bindingCriterion("emails.value", "{#token['email']}");
+        UserBindingCriterion audSubRule = bindingCriterion("userName", "{#token['aud_sub']}");
+        configuration.setUserBindingCriteria(List.of(emailRule, audSubRule));
+        String assertion = assertion(new JWTClaimsSet.Builder().issuer(ISSUER).subject("alice").build());
+        givenTrustedIssuer();
+        when(assertionVerifier.verify(assertion)).thenReturn(Single.just(new JWTClaimsSet.Builder().issuer(ISSUER).subject("alice").build()));
+
+        ResolvedEndUser resolved = provider.resolveEndUser(request(assertion)).blockingGet();
+
+        assertEquals(List.of(emailRule, audSubRule), resolved.bindingCriteria());
+    }
+
+    @Test
+    void shouldCarryNoBindingCriteriaWhenNoneAreConfigured() {
+        String assertion = assertion(new JWTClaimsSet.Builder().issuer(ISSUER).subject("alice").build());
+        givenTrustedIssuer();
+        when(assertionVerifier.verify(assertion)).thenReturn(Single.just(new JWTClaimsSet.Builder().issuer(ISSUER).subject("alice").build()));
+
+        assertTrue(provider.resolveEndUser(request(assertion)).blockingGet().bindingCriteria().isEmpty());
     }
 
     @Test
@@ -284,6 +313,13 @@ class CrossAppAccessExtensionGrantProviderTest {
     private void givenTrustedIssuer() {
         when(trustedIssuerResolver.resolve(ISSUER))
                 .thenReturn(Maybe.just(new ResolvedTrustedIssuer("idp-id", new OAuthTrustedIssuer(ISSUER, assertionVerifier))));
+    }
+
+    private static UserBindingCriterion bindingCriterion(String attribute, String expression) {
+        UserBindingCriterion criterion = new UserBindingCriterion();
+        criterion.setAttribute(attribute);
+        criterion.setExpression(expression);
+        return criterion;
     }
 
     private static TokenRequest request(String assertion) {

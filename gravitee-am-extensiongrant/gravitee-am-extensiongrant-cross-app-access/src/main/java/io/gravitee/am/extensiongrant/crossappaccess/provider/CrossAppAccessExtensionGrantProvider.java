@@ -23,6 +23,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.IdJagAssertions;
 import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
+import io.gravitee.am.extensiongrant.crossappaccess.CrossAppAccessExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.trustedissuer.ResolvedTrustedIssuer;
@@ -42,6 +43,9 @@ public class CrossAppAccessExtensionGrantProvider implements ExtensionGrantProvi
 
     @Autowired
     private TrustedIssuerResolver trustedIssuerResolver;
+
+    @Autowired
+    private CrossAppAccessExtensionGrantConfiguration configuration;
 
     @Override
     public boolean supports(TokenRequest tokenRequest) {
@@ -63,13 +67,13 @@ public class CrossAppAccessExtensionGrantProvider implements ExtensionGrantProvi
         });
     }
 
-    private static Single<ResolvedEndUser> verify(String assertion, ResolvedTrustedIssuer resolved) {
+    private Single<ResolvedEndUser> verify(String assertion, ResolvedTrustedIssuer resolved) {
         return Single.defer(() -> resolved.trustedIssuer().verifier().verify(assertion))
                 .onErrorResumeNext(error -> {
                     log.debug("Assertion verification failed identityProvider={} reason={}", resolved.identityProvider(), error.getMessage());
                     return Single.error(new InvalidGrantException("Assertion verification failed", error));
                 })
-                .map(claims -> new ResolvedEndUser(endUser(claims), resolved.identityProvider(), claims.getClaims()));
+                .map(claims -> new ResolvedEndUser(endUser(claims), resolved.identityProvider(), claims.getClaims(), configuration.getUserBindingCriteria()));
     }
 
     private static String assertion(TokenRequest tokenRequest) {
