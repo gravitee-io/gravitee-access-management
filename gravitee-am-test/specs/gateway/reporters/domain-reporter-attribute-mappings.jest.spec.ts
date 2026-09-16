@@ -20,6 +20,10 @@ import { uniqueName } from '@utils-commands/misc';
 import { KafkaAuditPayload, waitForKafkaMessage } from '@utils-commands/kafka-consumer';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { createScope } from '@management-commands/scope-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { DomainReporterGatewayFixture, setupDomainReporterGatewayFixture } from './fixture/domain-reporter-gateway-fixture';
 import { setup } from '../../test-fixture';
 
@@ -321,6 +325,114 @@ describe('Reporter attribute mappings - Domain Level Gateway', () => {
 
       expect(received.type).toEqual('USER_LOGIN');
       expect(received.customAttributes).toBeUndefined();
+    });
+  });
+
+  describe('Only scalar values are exported', () => {
+    it('should drop a whole map while keeping its scalar leaf', async () => {
+      const topic = uniqueName('mapping-non-scalar', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [
+          { expression: "{#context.attributes['user'].additionalInformation['idp']}", exportedName: 'whole_map' },
+          { expression: "{#context.attributes['user'].additionalInformation['idp']['name']}", exportedName: 'idp_name' },
+        ],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      // The nested map is non-scalar and dropped; only its scalar leaf is exported.
+      expect(received.customAttributes).toEqual({ idp_name: 'Acme IdP' });
+    });
+  });
+
+  describe('The audit itself is a source', () => {
+    it('should export the audit type and transaction id', async () => {
+      const topic = uniqueName('mapping-audit-source', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [
+          { expression: "{#context.attributes['audit'].type}", exportedName: 'audit_type' },
+          { expression: "{#context.attributes['audit'].transactionId}", exportedName: 'txn' },
+        ],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.customAttributes).toEqual({ audit_type: 'USER_LOGIN', txn: received.transactionId });
+    });
+  });
+
+  describe('Nothing resolves', () => {
+    it('should omit the customAttributes property entirely when no mapping resolves', async () => {
+      const topic = uniqueName('mapping-nothing-resolves', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [
+          { expression: "{#context.attributes['user'].additionalInformation['doesNotExist']}", exportedName: 'a' },
+          { expression: "{#context.attributes['user'].additionalInformation['alsoMissing']}", exportedName: 'b' },
+        ],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.type).toEqual('USER_LOGIN');
+      expect(received.customAttributes).toBeUndefined();
+    });
+  });
+
+  describe('Client credentials', () => {
+    it('should carry the client attribute and omit the user attribute on a client_credentials token', async () => {
+      const topic = uniqueName('mapping-client-credentials', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [
+          { expression: "{#context.attributes['user'].username}", exportedName: 'user_name' },
+          { expression: "{#context.attributes['client'].clientId}", exportedName: 'application_id' },
+        ],
+      );
+
+      // A dedicated service application with the client_credentials grant (no end user is involved).
+      const accessToken = await requestAdminAccessToken();
+      await createScope(fixture.domain.id, accessToken, { key: 'read', name: 'read', description: 'read' });
+      const created = await createApplication(fixture.domain.id, accessToken, { name: uniqueName('cc-app', true), type: 'SERVICE' });
+      const app = await waitForSyncAfter(fixture.domain.id, () =>
+        updateApplication(
+          fixture.domain.id,
+          accessToken,
+          { settings: { oauth: { grantTypes: ['client_credentials'], scopeSettings: [{ scope: 'read', defaultScope: false }] } } },
+          created.id,
+        ).then((updated) => {
+          updated.settings.oauth.clientSecret = created.settings.oauth.clientSecret;
+          return updated;
+        }),
+      );
+
+      const requestClientCredentialsToken = () =>
+        performPost(
+          fixture.openIdConfiguration.token_endpoint,
+          '',
+          new URLSearchParams({ grant_type: 'client_credentials', scope: 'read' }).toString(),
+          {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${applicationBase64Token(app)}`,
+          },
+        )
+          .expect(200)
+          .then(() => {});
+
+      const received = await waitForKafkaMessage(
+        topic,
+        { predicate: (msg) => msg.type === 'TOKEN_CREATED' },
+        requestClientCredentialsToken,
+      );
+
+      // No end user, so the user mapping is omitted; only the client attribute is exported.
+      expect(received.customAttributes).toEqual({ application_id: app.settings.oauth.clientId });
     });
   });
 });

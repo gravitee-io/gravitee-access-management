@@ -241,6 +241,23 @@ describe('Domain Reporter Attribute Mapping Validation', () => {
       response: { status: 400 },
     });
   });
+
+  it('should reject growing the mappings past the cap and leave the stored ones unchanged', async () => {
+    const twenty = Array.from({ length: 20 }, (_, i) => ({
+      expression: "{#context.attributes['user'].id}",
+      exportedName: `name_${i}`,
+    }));
+    const reporter = await fixture.createReporter({ attributeMappings: twenty });
+
+    await expect(
+      fixture.updateReporter(reporter, {
+        attributeMappings: [...twenty, { expression: "{#context.attributes['user'].id}", exportedName: 'one_too_many' }],
+      }),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+
+    const fetched: Reporter = await getDomainReporter(fixture.domain.id, fixture.accessToken, reporter.id);
+    expect(fetched.attributeMappings).toHaveLength(20);
+  });
 });
 
 describe('Domain System Reporter', () => {

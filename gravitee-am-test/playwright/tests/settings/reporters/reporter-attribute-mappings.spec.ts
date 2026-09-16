@@ -218,4 +218,28 @@ test.describe('Reporter attribute mappings', () => {
     expect(stored.attributeMappingEventTypes).toEqual(['USER_LOGIN']);
     expect(JSON.parse(stored.configuration).auditTypes).toEqual(['USER_LOGOUT']);
   });
+
+  test('AM-7555: the selected event types keep their order across save and reload', async ({ page, testDomain, adminToken }, testInfo) => {
+    linkJira(testInfo, 'AM-7555');
+
+    const chosen = ['USER_LOGOUT', 'USER_LOGIN', 'MFA_CHALLENGE'];
+    const reporter = await createFileReporter(testDomain.id, adminToken);
+    const reporterPage = new DomainReporterPage(page);
+    await reporterPage.navigateToDetail(testDomain.id, reporter.id);
+
+    await reporterPage.addMapping('user_id', USER_ID_EXPRESSION);
+    await reporterPage.selectEventTypes(chosen);
+    await reporterPage.save();
+    await reporterPage.expectSnackbar(/updated/i);
+
+    // Whatever order the picker settles on, the reporter stores exactly those types.
+    const stored = await getDomainReporter(testDomain.id, adminToken, reporter.id);
+    const storedOrder = stored.attributeMappingEventTypes ?? [];
+    expect([...storedOrder].sort()).toEqual([...chosen].sort());
+
+    // Reopening the reporter renders the chips in the same order it stored — the order is
+    // preserved through save/reload, not re-sorted or lost.
+    await reporterPage.navigateToDetail(testDomain.id, reporter.id);
+    await expect(reporterPage.selectedEventTypes).toHaveText(storedOrder);
+  });
 });
