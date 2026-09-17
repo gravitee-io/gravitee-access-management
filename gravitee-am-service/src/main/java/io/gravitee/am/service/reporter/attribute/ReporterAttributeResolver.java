@@ -73,13 +73,13 @@ public class ReporterAttributeResolver {
                 continue;
             }
             evaluate(engine, mapping.expression(), audit)
-                    .filter(value -> {
-                        if (ExportableValue.isExportable(value)) {
-                            return true;
+                    .flatMap(value -> {
+                        Optional<Object> exportable = ExportableValue.of(value);
+                        if (exportable.isEmpty()) {
+                            log.debug("Reporter attribute mapping '{}' resolves to something that is not exportable data, skipping it for audit {}",
+                                    mapping.expression(), audit.getId());
                         }
-                        log.debug("Reporter attribute mapping '{}' resolves to something other than a single value, skipping it for audit {}",
-                                mapping.expression(), audit.getId());
-                        return false;
+                        return exportable;
                     })
                     .ifPresent(value -> resolved.put(mapping.exportedName(), value));
         }

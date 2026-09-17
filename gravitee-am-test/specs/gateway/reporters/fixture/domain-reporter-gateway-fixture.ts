@@ -93,6 +93,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
     additionalInformation: {
       employeeId: 'E-4471',
       department: 'Platform',
+      teams: ['platform', 'security'],
       azure_b2c_refresh_token: 'RT-XYZ',
       idp: {
         name: 'Acme IdP',

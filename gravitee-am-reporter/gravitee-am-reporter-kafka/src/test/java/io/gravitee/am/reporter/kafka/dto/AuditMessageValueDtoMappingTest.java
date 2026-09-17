@@ -173,6 +173,31 @@ class AuditMessageValueDtoMappingTest {
         }
 
         @Test
+        void aMapIsSerializedAsAJsonObject() {
+            var idp = new java.util.LinkedHashMap<String, Object>();
+            idp.put("name", "Acme IdP");
+            idp.put("groups", java.util.List.of("a", "b"));
+            idp.put("absent", null);
+            var dto = AuditMessageValueDto.from(auditWith(Map.of("idp", Map.of("idp", idp))), null, null);
+
+            assertThat(dto.getCustomAttributes())
+                    .isEqualTo(Map.of("idp", "{\"idp\":{\"name\":\"Acme IdP\",\"groups\":[\"a\",\"b\"],\"absent\":null}}"));
+        }
+
+        @Test
+        void aDateIsSerializedAsAnIsoString() {
+            var dto = AuditMessageValueDto.from(auditWith(Map.of(
+                    "instant", java.time.Instant.parse("2026-09-17T10:15:30Z"),
+                    "nested", java.util.List.of(java.time.LocalDate.parse("2026-09-17")),
+                    "date", new java.util.Date(0))), null, null);
+
+            assertThat(dto.getCustomAttributes()).isEqualTo(Map.of(
+                    "instant", "\"2026-09-17T10:15:30Z\"",
+                    "nested", "[\"2026-09-17\"]",
+                    "date", "\"1970-01-01T00:00:00.000+00:00\""));
+        }
+
+        @Test
         void areAbsentWhenNoneWereResolved() {
             assertThat(AuditMessageValueDto.from(auditWith(null), null, null).getCustomAttributes()).isNull();
             assertThat(AuditMessageValueDto.from(auditWith(Map.of()), null, null).getCustomAttributes()).isNull();
