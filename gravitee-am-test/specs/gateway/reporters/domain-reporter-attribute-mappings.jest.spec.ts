@@ -328,22 +328,61 @@ describe('Reporter attribute mappings - Domain Level Gateway', () => {
     });
   });
 
-  describe('Only scalar values are exported', () => {
-    it('should drop a whole map while keeping its scalar leaf', async () => {
-      const topic = uniqueName('mapping-non-scalar', true);
+  describe('Structured values', () => {
+    it('should export a list as a JSON array', async () => {
+      const topic = uniqueName('mapping-list', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [{ expression: "{#context.attributes['user'].additionalInformation['teams']}", exportedName: 'teams' }],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.customAttributes).toEqual({ teams: '["platform","security"]' });
+    });
+
+    it('should export a map as a JSON object without its denied keys', async () => {
+      const topic = uniqueName('mapping-map', true);
       await fixture.addReporter(
         topic,
         [],
         [
-          { expression: "{#context.attributes['user'].additionalInformation['idp']}", exportedName: 'whole_map' },
-          { expression: "{#context.attributes['user'].additionalInformation['idp']['name']}", exportedName: 'idp_name' },
+          { expression: "{#context.attributes['user'].additionalInformation['idp']}", exportedName: 'idp' },
+          { expression: "{#context.attributes['user'].claims}", exportedName: 'claims' },
         ],
       );
 
       const received = await loginAndAwaitLogin(topic);
 
-      // The nested map is non-scalar and dropped; only its scalar leaf is exported.
-      expect(received.customAttributes).toEqual({ idp_name: 'Acme IdP' });
+      const customAttributes = received.customAttributes as Record<string, string>;
+      expect(JSON.parse(customAttributes.idp)).toEqual({ name: 'Acme IdP' });
+      const claims = JSON.parse(customAttributes.claims);
+      expect(claims).toMatchObject({
+        employeeId: 'E-4471',
+        department: 'Platform',
+        teams: ['platform', 'security'],
+        idp: { name: 'Acme IdP' },
+      });
+      expect(claims).not.toHaveProperty('azure_b2c_refresh_token');
+      expect(JSON.stringify(received)).not.toContain('RT-XYZ');
+      expect(JSON.stringify(received)).not.toContain('SECRET-AT');
+    });
+
+    it('should drop an object while keeping the fields picked out of it', async () => {
+      const topic = uniqueName('mapping-object', true);
+      await fixture.addReporter(
+        topic,
+        [],
+        [
+          { expression: "{#context.attributes['client'].cookieSettings}", exportedName: 'whole_object' },
+          { expression: "{#context.attributes['client'].clientId}", exportedName: 'application_id' },
+        ],
+      );
+
+      const received = await loginAndAwaitLogin(topic);
+
+      expect(received.customAttributes).toEqual({ application_id: fixture.application.settings.oauth.clientId });
     });
   });
 

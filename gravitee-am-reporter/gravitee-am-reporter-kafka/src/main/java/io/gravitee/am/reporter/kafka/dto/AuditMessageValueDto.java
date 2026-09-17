@@ -24,6 +24,8 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.time.Instant;
 import java.util.Map;
@@ -41,6 +43,11 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 public class AuditMessageValueDto {
+
+    private static final ObjectMapper CUSTOM_ATTRIBUTE_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private String id;
     private String transactionId;
@@ -94,14 +101,13 @@ public class AuditMessageValueDto {
         if (customAttributes == null || customAttributes.isEmpty()) {
             return null;
         }
-        var mapper = new ObjectMapper();
         return customAttributes.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> {
                     if (e.getValue() instanceof String value) {
                         return value;
                     }
                     try {
-                        return mapper.writeValueAsString(e.getValue());
+                        return CUSTOM_ATTRIBUTE_MAPPER.writeValueAsString(e.getValue());
                     } catch (JsonProcessingException ex) {
                         return "";
                     }

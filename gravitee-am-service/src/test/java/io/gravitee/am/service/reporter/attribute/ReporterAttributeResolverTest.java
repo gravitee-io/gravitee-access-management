@@ -20,6 +20,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -37,8 +38,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 
 /**
  * @author GraviteeSource Team
@@ -480,6 +484,39 @@ class ReporterAttributeResolverTest {
         }
 
         @Test
+        void areLeftOutOfAnExportedMap() {
+            Audit audit = audit();
+            User user = user();
+            user.getAdditionalInformation().put("refresh_token", "RT-XYZ");
+            user.getAdditionalInformation().put("op_access_token", "OP-AT");
+            user.getAdditionalInformation().put("idp", new HashMap<>(Map.of(
+                    "access_token", "SECRET-AT",
+                    "name", "Acme IdP")));
+            audit.setEnrichmentContext(new AuditEnrichmentContext(user, client()));
+
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].claims}", "claims")), audit);
+
+            assertThat(resolved.get("claims")).asInstanceOf(map(String.class, Object.class))
+                    .doesNotContainKeys("refresh_token", "op_access_token")
+                    .containsEntry("idp", Map.of("name", "Acme IdP"))
+                    .containsEntry("employeeId", "E-4471");
+        }
+
+        @Test
+        void areLeftOutOfExportedIdentityAndClientMaps() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].lastIdentityInformation}", "identity"),
+                    mapping("{#context.attributes['user'].identities.![additionalInformation]}", "identities"),
+                    mapping("{#context.attributes['client'].metadata}", "metadata")), auditWithSensitiveClaims());
+
+            assertThat(resolved).containsOnly(
+                    Map.entry("identity", Map.of("department_code", "PLT")),
+                    Map.entry("identities", List.of(Map.of("department_code", "PLT"))),
+                    Map.entry("metadata", Map.of("tier", "gold")));
+        }
+
+        @Test
         void leaveTheirNonSensitiveSiblingsAlone() {
             var resolved = resolver.resolve(List.of(
                     mapping("{#context.attributes['user'].identities[0].additionalInformation['department_code']}", "department"),
@@ -519,36 +556,152 @@ class ReporterAttributeResolverTest {
     }
 
     @Nested
-    class OnlySingleValuesAreExported {
+    class OnlyDataIsExported {
 
-        @ParameterizedTest
-        @ValueSource(strings = {
-                "{#context.attributes['user'].claims}",
-                "{#context.attributes['user'].additionalInformation}",
-                "{#context.attributes['user'].lastIdentityInformation}",
-                "{#context.attributes['user'].identitiesAsMap}",
-                "{#context.attributes['user'].identities}",
-                "{#context.attributes['user'].rolesPermissions}",
-                "{#context.attributes['client'].metadata}"})
-        void aStructureIsDropped(String expression) {
+        private Audit auditWithStructures() {
             User user = user();
+            user.getAdditionalInformation().put("idp", new HashMap<>(Map.of("name", "Acme IdP")));
             UserIdentity identity = new UserIdentity();
             identity.setProviderId("idp-1");
             identity.setAdditionalInformation(new HashMap<>(Map.of("employeeId", "E-4471")));
             user.setIdentities(List.of(identity));
             user.setLastIdentityUsed("idp-1");
-            Role role = new Role();
-            role.setId("role-1");
-            role.setName("ADMIN");
-            user.setRolesPermissions(Set.of(role));
+            Role admin = new Role();
+            admin.setId("role-1");
+            admin.setName("ADMIN");
+            admin.setOauthScopes(List.of("admin:read", "admin:write"));
+            Role auditor = new Role();
+            auditor.setId("role-2");
+            auditor.setName("AUDITOR");
+            auditor.setOauthScopes(List.of("audit:read"));
+            user.setRolesPermissions(Set.of(admin, auditor));
+            EnrolledFactor factor = new EnrolledFactor();
+            factor.setFactorId("factor-1");
+            user.setFactors(List.of(factor));
             Client client = client();
             client.setMetadata(new HashMap<>(Map.of("tier", "gold")));
             Audit audit = audit();
             audit.setEnrichmentContext(new AuditEnrichmentContext(user, client));
+            return audit;
+        }
 
-            var resolved = resolver.resolve(List.of(mapping(expression, "dumped")), audit);
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "{#context.attributes['user'].identities}",
+                "{#context.attributes['user'].identitiesAsMap}",
+                "{#context.attributes['user'].rolesPermissions}",
+                "{#context.attributes['user'].factors}",
+                "{#context.attributes['client'].cookieSettings}",
+                "{#context.attributes['user']}"})
+        void anObjectIsDropped(String expression) {
+            var resolved = resolver.resolve(List.of(mapping(expression, "dumped")), auditWithStructures());
 
             assertThat(resolved).isEmpty();
+        }
+
+        @Test
+        void aMapIsExported() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].claims['idp']}", "idp"),
+                    mapping("{#context.attributes['client'].metadata}", "metadata"),
+                    mapping("{#context.attributes['request']}", "request")), auditWithStructures());
+
+            assertThat(resolved).containsOnly(
+                    Map.entry("idp", Map.of("name", "Acme IdP")),
+                    Map.entry("metadata", Map.of("tier", "gold")),
+                    Map.entry("request", Map.of("ip", "10.0.0.9", "userAgent", "Mozilla/5.0")));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "{#context.attributes['user'].claims}",
+                "{#context.attributes['user'].additionalInformation}"})
+        void allTheClaimsAreExported(String expression) {
+            var resolved = resolver.resolve(List.of(mapping(expression, "claims")), auditWithStructures());
+
+            assertThat(resolved.get("claims")).asInstanceOf(map(String.class, Object.class))
+                    .containsEntry("employeeId", "E-4471")
+                    .containsEntry("idp", Map.of("name", "Acme IdP"));
+        }
+
+        @Test
+        void theLastIdentityInformationIsExported() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].lastIdentityInformation}", "last_identity")), auditWithStructures());
+
+            assertThat(resolved).containsOnly(Map.entry("last_identity", Map.of("employeeId", "E-4471")));
+        }
+
+        @Test
+        void aMapOfListsIsExported() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].scopesByRole}", "scopes")), auditWithStructures());
+
+            assertThat(resolved).containsOnly(Map.entry("scopes", Map.of(
+                    "ADMIN", List.of("admin:read", "admin:write"),
+                    "AUDITOR", List.of("audit:read"))));
+        }
+
+        @Test
+        void theRolesAreExportedInOrder() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].roles}", "roles")), auditWithStructures());
+
+            assertThat(resolved).containsExactly(Map.entry("roles", List.of("ADMIN", "AUDITOR")));
+        }
+
+        @Test
+        void fieldsCanBePickedOutOfObjects() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].identities.![providerId]}", "providers"),
+                    mapping("{#context.attributes['user'].identities.![additionalInformation]}", "identity_claims")),
+                    auditWithStructures());
+
+            assertThat(resolved).containsOnly(
+                    Map.entry("providers", List.of("idp-1")),
+                    Map.entry("identity_claims", List.of(Map.of("employeeId", "E-4471"))));
+        }
+
+        @Test
+        void theExportedValueIsACopy() {
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['client'].metadata}", "metadata")), auditWithStructures());
+
+            assertThatThrownBy(() -> ((Map<String, Object>) resolved.get("metadata")).put("tier", "changed"))
+                    .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        void aValueTooLargeToExportDoesNotCostTheOthers() {
+            User user = user();
+            user.setGroups(IntStream.range(0, ExportableValue.MAX_NODES + 1).mapToObj(i -> "group-" + i).toList());
+            Audit audit = audit();
+            audit.setEnrichmentContext(new AuditEnrichmentContext(user, client()));
+
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].groups}", "groups"),
+                    mapping("{#context.attributes['user'].email}", "email")), audit);
+
+            assertThat(resolved).containsOnlyKeys("email");
+        }
+
+        @Test
+        void aClaimNestedBeyondTheScrubbedDepthIsCutShort() {
+            Map<String, Object> deep = new HashMap<>(Map.of("leaf", "value"));
+            for (int i = 0; i <= ExportableValue.MAX_DEPTH; i++) {
+                deep = new HashMap<>(Map.of("level", deep));
+            }
+            User user = user();
+            user.getAdditionalInformation().put("deep", deep);
+            Audit audit = audit();
+            audit.setEnrichmentContext(new AuditEnrichmentContext(user, client()));
+
+            var resolved = resolver.resolve(List.of(
+                    mapping("{#context.attributes['user'].claims['deep']}", "deep"),
+                    mapping("{#context.attributes['user'].email}", "email")), audit);
+
+            assertThat(resolved).containsOnlyKeys("deep", "email");
+            assertThat(resolved.get("deep").toString()).doesNotContain("leaf");
         }
 
         @Test
@@ -564,10 +717,10 @@ class ReporterAttributeResolverTest {
         }
 
         @Test
-        void oneStructureDoesNotCostTheScalarsBesideIt() {
+        void oneObjectDoesNotCostTheDataBesideIt() {
             var resolved = resolver.resolve(List.of(
-                    mapping("{#context.attributes['user'].claims}", "everything"),
-                    mapping("{#context.attributes['user'].email}", "email")), audit());
+                    mapping("{#context.attributes['user'].identities}", "everything"),
+                    mapping("{#context.attributes['user'].email}", "email")), auditWithStructures());
 
             assertThat(resolved).containsOnlyKeys("email");
         }

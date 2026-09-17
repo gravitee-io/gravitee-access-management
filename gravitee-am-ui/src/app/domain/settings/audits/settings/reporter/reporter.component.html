@@ -144,7 +144,10 @@
             >
           </small>
           <p>A plain value such as <code>production</code> is exported as it is written.</p>
-          <p>Only single values are exported, and attributes holding credentials or tokens never are.</p>
+          <p>
+            Lists and maps are exported as JSON. A whole map carries every key it holds, so prefer picking single attributes. Attributes
+            holding credentials or tokens are never exported.
+          </p>
           <p>Leaving the event types empty exports the attributes on every audit record.</p>
         </div>
       </ng-container>

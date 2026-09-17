@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -61,6 +62,14 @@ public class CustomAttributesFormatterTest {
     }
 
     @Test
+    public void jsonNestsStructuredOnes() {
+        String out = new JsonFormatter<AuditEntry>().format(entry(Map.of(
+                "idp", Map.of("groups", List.of("a", "b"))))).toString();
+
+        assertTrue(out, out.contains("\"customAttributes\":{\"idp\":{\"groups\":[\"a\",\"b\"]}}"));
+    }
+
+    @Test
     public void jsonOmitsThemWhenThereAreNone() {
         String out = new JsonFormatter<AuditEntry>().format(entry(null)).toString();
 
@@ -73,6 +82,15 @@ public class CustomAttributesFormatterTest {
 
         var decoded = new ObjectMapper(new MessagePackFactory()).readTree(buffer.getBytes());
         assertEquals("E-4471", decoded.get("customAttributes").get("employee_id").asText());
+    }
+
+    @Test
+    public void messagePackNestsStructuredOnes() throws Exception {
+        var buffer = new MsgPackFormatter<AuditEntry>().format(entry(Map.of(
+                "idp", Map.of("groups", List.of("a", "b")))));
+
+        var decoded = new ObjectMapper(new MessagePackFactory()).readTree(buffer.getBytes());
+        assertEquals("b", decoded.get("customAttributes").get("idp").get("groups").get(1).asText());
     }
 
     /** Message pack sets no global null-inclusion policy, so the field carries its own. */
