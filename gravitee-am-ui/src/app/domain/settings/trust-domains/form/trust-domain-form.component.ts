@@ -66,6 +66,8 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
   scopeMappingRows: ScopeStaging[] = [];
   userBindingRows: UserBindingCriterion[] = [];
   resourceServerRows: CrossAppAccessResourceServer[] = [];
+  /** Resource-server cells turned into an input by a double-click, keyed by "<rowIndex>-<field>". */
+  editingResourceServerCell: Record<string, boolean> = {};
   outboundScopeMappingRows: OutboundScopeStaging[] = [];
   audSubMapping = '';
   algorithmInput = '';
@@ -105,6 +107,7 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
       name: rs.name ?? '',
       resource: rs.resource ?? '',
     }));
+    this.editingResourceServerCell = {};
     this.audSubMapping = crossAppAccess?.audSubMapping ?? '';
     this.outboundScopeMappingRows = Object.entries(crossAppAccess?.scopeMappings ?? {}).map(([domainScope, externalScope]) => ({
       domainScope,
@@ -268,6 +271,25 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
 
   removeResourceServer(rowIndex: number): void {
     this.resourceServerRows = this.resourceServerRows.filter((_, idx) => idx !== rowIndex);
+    // Cells are keyed by row index, which shifts once a row is gone.
+    this.editingResourceServerCell = {};
+    this.onFieldChange();
+  }
+
+  editResourceServerCell(rowIndex: number, field: 'name' | 'resource'): void {
+    if (this.editMode) {
+      this.editingResourceServerCell[`${rowIndex}-${field}`] = true;
+    }
+  }
+
+  /** Edits a resource server in place, keeping its id so the applications mapping it still resolve. */
+  updateResourceServer(event: Event, field: 'name' | 'resource', rowIndex: number): void {
+    const value = ((event.target as HTMLInputElement).value ?? '').trim();
+    if (!value) {
+      return;
+    }
+    this.editingResourceServerCell[`${rowIndex}-${field}`] = false;
+    this.resourceServerRows = this.resourceServerRows.map((rs, idx) => (idx === rowIndex ? { ...rs, [field]: value } : rs));
     this.onFieldChange();
   }
 
