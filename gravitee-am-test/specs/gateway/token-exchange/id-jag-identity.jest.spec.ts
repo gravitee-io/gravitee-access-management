@@ -37,9 +37,9 @@ const configure = async (audSubMapping: string, tokenCustomClaims: Record<string
 };
 
 const requestAssertion = async (expectedStatus: number) => {
-  const { accessToken } = await fixture.subjectTokens();
+  const { idToken } = await fixture.subjectTokens();
   const target = `&audience=${encodeURIComponent(fixture.audience)}&resource=${encodeURIComponent(fixture.calendar.resource)}`;
-  return fixture.requestIdJag(accessToken, target).expect(expectedStatus);
+  return fixture.requestIdJag(idToken, target).expect(expectedStatus);
 };
 
 const mintedClaims = async () => decode((await requestAssertion(200)).body.access_token);

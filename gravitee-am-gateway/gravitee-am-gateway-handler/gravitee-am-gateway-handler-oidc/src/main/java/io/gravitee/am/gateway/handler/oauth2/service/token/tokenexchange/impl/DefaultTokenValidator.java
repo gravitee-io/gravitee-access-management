@@ -63,6 +63,7 @@ public class DefaultTokenValidator implements TokenValidator {
     public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
         return jwtService.decodeAndVerify(token, Maybe.fromSupplier(client::getCertificate), jwtTokenType)
                 .map(jwt -> {
+                    TokenValidationUtils.validateTokenKind(jwt.getJti(), jwtTokenType, supportedTokenType);
                     TokenValidationUtils.validateTemporalClaims(jwt.getExp(), jwt.getNbf(), supportedTokenType);
 
                     Map<String, Object> claims = new HashMap<>();

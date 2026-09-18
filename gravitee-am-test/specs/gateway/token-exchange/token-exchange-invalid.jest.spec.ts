@@ -21,6 +21,7 @@ import { TokenClaim } from '@management-models/TokenClaim';
 import { setup } from '../../test-fixture';
 import {
   ACCESS_TOKEN_TYPE,
+  ID_TOKEN_TYPE,
   setupTokenExchangeFixture,
   TOKEN_EXCHANGE_GRANT,
   TOKEN_EXCHANGE_TEST,
@@ -120,6 +121,52 @@ const exchangeExternalJwt = (externalJwt: string) =>
     `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${encodeURIComponent(externalJwt)}&subject_token_type=${JWT_TOKEN_TYPE}`,
     { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${externalFixture.basicAuth}` },
   );
+
+/** Exchange declaring an arbitrary subject_token_type. */
+const exchangeAs = (fixture: TokenExchangeFixture, subjectToken: string, subjectTokenType: string) =>
+  performPost(
+    fixture.oidc.token_endpoint,
+    '',
+    `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${subjectTokenType}`,
+    { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${fixture.basicAuth}` },
+  );
+
+describe('Token Exchange with a subject token that is not of its declared type', () => {
+  it('should refuse an ID token declared as an access token', async () => {
+    const { idToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
+
+    const response = await exchangeAs(defaultFixture, idToken, ACCESS_TOKEN_TYPE).expect(400);
+
+    expect(response.body.error).toBe('invalid_request');
+    expect(response.body.access_token).toBeUndefined();
+  });
+
+  it('should refuse an access token declared as an ID token', async () => {
+    const { accessToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
+
+    const response = await exchangeAs(defaultFixture, accessToken, ID_TOKEN_TYPE).expect(400);
+
+    expect(response.body.error).toBe('invalid_request');
+  });
+
+  it('should refuse a revoked access token declared as an ID token', async () => {
+    const { accessToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
+    await defaultFixture.revokeToken(accessToken, 'access_token');
+
+    const response = await exchangeAs(defaultFixture, accessToken, ID_TOKEN_TYPE).expect(400);
+
+    expect(response.body.error).toBe('invalid_request');
+    expect(response.body.access_token).toBeUndefined();
+  });
+
+  it('should keep accepting an ID token declared as an ID token', async () => {
+    const { idToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
+
+    const response = await exchangeAs(defaultFixture, idToken, ID_TOKEN_TYPE).expect(200);
+
+    expect(response.body.access_token).toBeDefined();
+  });
+});
 
 describe('Token Exchange with invalid tokens', () => {
   it('should reject a subject token with a tampered signature', async () => {

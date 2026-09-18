@@ -163,6 +163,66 @@ public class DefaultTokenValidatorTest {
         );
     }
 
+    @Test
+    public void testValidateRejectsIdTokenPresentedAsAccessToken() {
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(createIdTokenShapedJWT()));
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidRequestException.class);
+        testObserver.assertError(error -> error.getMessage().equals("The presented token is not of type " + TOKEN_TYPE_URN));
+    }
+
+    @Test
+    public void testValidateRejectsAccessTokenPresentedAsIdToken() {
+        DefaultTokenValidator idTokenValidator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ID_TOKEN, TOKEN_TYPE_URN);
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ID_TOKEN)))
+                .thenReturn(Single.just(createValidJWT()));
+
+        TestObserver<ValidatedToken> testObserver = idTokenValidator.validate(TOKEN, settings, domain, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidRequestException.class);
+        testObserver.assertError(error -> error.getMessage().equals("The presented token is not of type " + TOKEN_TYPE_URN));
+    }
+
+    @Test
+    public void testValidateAcceptsIdTokenPresentedAsIdToken() {
+        DefaultTokenValidator idTokenValidator = new DefaultTokenValidator(jwtService, JWTService.TokenType.ID_TOKEN, TOKEN_TYPE_URN);
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ID_TOKEN)))
+                .thenReturn(Single.just(createIdTokenShapedJWT()));
+
+        TestObserver<ValidatedToken> testObserver = idTokenValidator.validate(TOKEN, settings, domain, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNoErrors();
+        testObserver.assertValue(validatedToken -> "user-123".equals(validatedToken.getSubject()));
+    }
+
+    @Test
+    public void testValidateAcceptsAnyShapeForGenericJwtType() {
+        DefaultTokenValidator jwtValidator = new DefaultTokenValidator(jwtService, JWTService.TokenType.JWT, TOKEN_TYPE_URN);
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.JWT)))
+                .thenReturn(Single.just(createIdTokenShapedJWT()), Single.just(createValidJWT()));
+
+        jwtValidator.validate(TOKEN, settings, domain, client).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+        jwtValidator.validate(TOKEN, settings, domain, client).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+    }
+
+    private JWT createIdTokenShapedJWT() {
+        JWT jwt = createValidJWT();
+        jwt.remove(Claims.JTI);
+        jwt.remove(Claims.SCOPE);
+        jwt.remove(Claims.DOMAIN);
+        return jwt;
+    }
+
     private JWT createValidJWT() {
         JWT jwt = new JWT();
         jwt.setSub("user-123");

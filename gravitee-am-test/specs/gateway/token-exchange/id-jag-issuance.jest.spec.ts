@@ -18,7 +18,7 @@ import jwt from 'jsonwebtoken';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { setup } from '../../test-fixture';
 import { ID_JAG_JOSE_TYPE, ID_JAG_TOKEN_TYPE, IdJagFixture, setupIdJagFixture } from './fixtures/id-jag-fixture';
-import { ID_TOKEN_TYPE } from './fixtures/token-exchange-fixture';
+import { ACCESS_TOKEN_TYPE } from './fixtures/token-exchange-fixture';
 
 setup(300000);
 
@@ -51,9 +51,9 @@ afterAll(async () => {
 
 describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
   it('should return the assertion in access_token with an N_A token type', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
 
     expect(response.body.token_type).toBe('N_A');
     expect(response.body.issued_token_type).toBe(ID_JAG_TOKEN_TYPE);
@@ -63,9 +63,9 @@ describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
   });
 
   it('should carry the draft claim set, addressed to the partner rather than to AM', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
     const { header, payload } = decode(response.body.access_token);
 
     expect(header.typ).toBe(ID_JAG_JOSE_TYPE);
@@ -81,9 +81,9 @@ describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
   });
 
   it('should be verifiable from the JWKS AM publishes at the issuer it advertises', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(200);
     const jwks = createRemoteJWKSet(new URL(fixture.oidc.jwks_uri));
 
     const { payload } = await jwtVerify(response.body.access_token, jwks, {
@@ -95,20 +95,10 @@ describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
     expect(payload.sub).toBe(fixture.user.id);
   });
 
-  it('should accept an ID token as the subject token', async () => {
+  it('should select the named resource server among those behind the audience', async () => {
     const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture
-      .requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource), ID_TOKEN_TYPE)
-      .expect(200);
-
-    expect(decode(response.body.access_token).payload.resource).toBe(fixture.calendar.resource);
-  });
-
-  it('should select the named resource server among those behind the audience', async () => {
-    const { accessToken } = await fixture.subjectTokens();
-
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.mail.resource)).expect(200);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.mail.resource)).expect(200);
     const { payload } = decode(response.body.access_token);
 
     expect(payload.resource).toBe(fixture.mail.resource);
@@ -120,9 +110,9 @@ describe('ID-JAG issuance - resource is optional only when it is unambiguous', (
   beforeAll(bothResourceServers);
 
   it('should refuse an omitted resource while several resource servers survive', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam()).expect(400);
+    const response = await fixture.requestIdJag(idToken, audienceParam()).expect(400);
 
     expect(errorOf(response)).toBe('invalid_request');
   });
@@ -130,11 +120,13 @@ describe('ID-JAG issuance - resource is optional only when it is unambiguous', (
   it('should default the resource when the application reaches exactly one resource server', async () => {
     await fixture.setCrossAppAccess({
       enabled: true,
-      resourceServers: [{ trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' }],
+      resourceServers: [
+        { trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' },
+      ],
     });
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam()).expect(200);
+    const response = await fixture.requestIdJag(idToken, audienceParam()).expect(200);
 
     expect(decode(response.body.access_token).payload.resource).toBe(fixture.calendar.resource);
   });
@@ -144,9 +136,9 @@ describe('ID-JAG issuance - resource is optional only when it is unambiguous', (
       enabled: true,
       resourceServers: [{ trustDomainId: fixture.trustDomainId, resourceServerId: 'deleted-resource-server', clientId: 'stale-client' }],
     });
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam()).expect(400);
+    const response = await fixture.requestIdJag(idToken, audienceParam()).expect(400);
 
     expect(errorOf(response)).toBe('invalid_target');
   });
@@ -156,49 +148,73 @@ describe('ID-JAG issuance - every check fails closed', () => {
   beforeAll(bothResourceServers);
 
   it('should refuse a missing audience', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, resourceParam(fixture.calendar.resource)).expect(400);
+    const response = await fixture.requestIdJag(idToken, resourceParam(fixture.calendar.resource)).expect(400);
 
     expect(errorOf(response)).toBe('invalid_request');
   });
 
   it('should refuse a repeated audience rather than resolving it to the first value', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
     const response = await fixture
-      .requestIdJag(accessToken, `${audienceParam()}&audience=${encodeURIComponent('https://auth.other.com')}${resourceParam(fixture.calendar.resource)}`)
+      .requestIdJag(
+        idToken,
+        `${audienceParam()}&audience=${encodeURIComponent('https://auth.other.com')}${resourceParam(fixture.calendar.resource)}`,
+      )
       .expect(400);
 
     expect(errorOf(response)).toBe('invalid_request');
   });
 
   it('should refuse an audience matching no trusted domain', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture
-      .requestIdJag(accessToken, `&audience=${encodeURIComponent('https://auth.unknown.com')}`)
-      .expect(400);
+    const response = await fixture.requestIdJag(idToken, `&audience=${encodeURIComponent('https://auth.unknown.com')}`).expect(400);
 
     expect(errorOf(response)).toBe('invalid_target');
   });
 
   it('should refuse a resource that does not sit behind the requested audience', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam('https://elsewhere.example.com')).expect(400);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam('https://elsewhere.example.com')).expect(400);
 
     expect(errorOf(response)).toBe('invalid_target');
+  });
+
+  it('should refuse a subject token declared as anything but an identity assertion', async () => {
+    const { accessToken, idToken } = await fixture.subjectTokens();
+    const target = audienceParam() + resourceParam(fixture.calendar.resource);
+
+    const fromAccessToken = await fixture.requestIdJag(accessToken, target, ACCESS_TOKEN_TYPE).expect(400);
+    const mislabelled = await fixture.requestIdJag(idToken, target, ACCESS_TOKEN_TYPE).expect(400);
+
+    expect(errorOf(fromAccessToken)).toBe('invalid_request');
+    expect(errorOf(mislabelled)).toBe('invalid_request');
+    expect(mislabelled.body.access_token).toBeUndefined();
+  });
+
+  it('should refuse an ID token issued to another application of the same domain', async () => {
+    const bystanderIdToken = await fixture.otherApplicationIdToken();
+
+    const response = await fixture.requestIdJag(bystanderIdToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(400);
+
+    expect(errorOf(response)).toBe('invalid_request');
+    expect(response.body.access_token).toBeUndefined();
   });
 
   it('should refuse an application whose Cross App Access block is disabled', async () => {
     await fixture.setCrossAppAccess({
       enabled: false,
-      resourceServers: [{ trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' }],
+      resourceServers: [
+        { trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' },
+      ],
     });
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(400);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(400);
 
     expect(errorOf(response)).toBe('unauthorized_client');
   });
@@ -208,35 +224,35 @@ describe("ID-JAG issuance - scopes travel in the partner's vocabulary", () => {
   beforeAll(bothResourceServers);
 
   it('should carry a requested domain scope under the name the trusted domain maps it to', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, calendarWith('profile')).expect(200);
+    const response = await fixture.requestIdJag(idToken, calendarWith('profile')).expect(200);
 
     expect(decode(response.body.access_token).payload.scope).toBe('read:profile');
     expect(response.body.scope).toBe('read:profile');
   });
 
   it('should grant the full mapped set when the request names no scope', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, calendarWith()).expect(200);
+    const response = await fixture.requestIdJag(idToken, calendarWith()).expect(200);
 
     expect(scopesOf(decode(response.body.access_token).payload.scope)).toEqual(['read:email', 'read:profile']);
     expect(scopesOf(response.body.scope)).toEqual(['read:email', 'read:profile']);
   });
 
   it('should refuse a requested scope with no mapping rather than narrow the assertion', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
 
-    const response = await fixture.requestIdJag(accessToken, calendarWith('profile openid')).expect(400);
+    const response = await fixture.requestIdJag(idToken, calendarWith('profile openid')).expect(400);
 
     expect(errorOf(response)).toBe('invalid_scope');
   });
 
   it('should audit a refused scope under the name the agent asked for', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
     const unmappedScope = `unmapped-${Date.now()}`;
-    await fixture.requestIdJag(accessToken, calendarWith(unmappedScope)).expect(400);
+    await fixture.requestIdJag(idToken, calendarWith(unmappedScope)).expect(400);
 
     const audit = await fixture.awaitTokenAudit('FAILURE', (detail) => JSON.stringify(detail).includes(unmappedScope));
 
@@ -244,19 +260,17 @@ describe("ID-JAG issuance - scopes travel in the partner's vocabulary", () => {
     expect(audit.outcome.message).toContain(ID_JAG_TOKEN_TYPE);
   });
 
-  it('should grant the same scopes whether the subject token is an ID token or an access token', async () => {
-    const { accessToken, idToken } = await fixture.subjectTokens('openid');
+  it('should grant a mapped scope to an ID token that carries no scope claim of its own', async () => {
+    const { idToken } = await fixture.subjectTokens('openid');
 
-    const fromAccessToken = await fixture.requestIdJag(accessToken, calendarWith('email')).expect(200);
-    const fromIdToken = await fixture.requestIdJag(idToken, calendarWith('email'), ID_TOKEN_TYPE).expect(200);
+    const response = await fixture.requestIdJag(idToken, calendarWith('email')).expect(200);
 
-    expect(decode(fromAccessToken.body.access_token).payload.scope).toBe('read:email');
-    expect(decode(fromIdToken.body.access_token).payload.scope).toBe('read:email');
+    expect(decode(response.body.access_token).payload.scope).toBe('read:email');
   });
 
   it("should audit the security domain's own scope names, not the partner's", async () => {
-    const { accessToken } = await fixture.subjectTokens();
-    const response = await fixture.requestIdJag(accessToken, calendarWith('profile')).expect(200);
+    const { idToken } = await fixture.subjectTokens();
+    const response = await fixture.requestIdJag(idToken, calendarWith('profile')).expect(200);
     const assertionId = decode(response.body.access_token).payload.jti;
 
     const audit = await fixture.awaitTokenAudit('SUCCESS', (detail) => JSON.stringify(detail).includes(assertionId));
@@ -271,14 +285,16 @@ describe('ID-JAG issuance - the assertion never outlives its subject token', () 
     await fixture.setCrossAppAccess(
       {
         enabled: true,
-        resourceServers: [{ trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' }],
+        resourceServers: [
+          { trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' },
+        ],
       },
       36000,
     );
-    const { accessToken } = await fixture.subjectTokens();
-    const subjectExp = decode(accessToken).payload.exp;
+    const { idToken } = await fixture.subjectTokens();
+    const subjectExp = decode(idToken).payload.exp;
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam()).expect(200);
+    const response = await fixture.requestIdJag(idToken, audienceParam()).expect(200);
     const { payload } = decode(response.body.access_token);
 
     expect(payload.exp).toBeLessThanOrEqual(subjectExp);
@@ -291,8 +307,8 @@ describe('ID-JAG issuance - the audit log answers who was granted access to whic
   beforeAll(bothResourceServers);
 
   it('should audit an issuance in the token stream with the audience and the resolved resource', async () => {
-    const { accessToken } = await fixture.subjectTokens();
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.mail.resource)).expect(200);
+    const { idToken } = await fixture.subjectTokens();
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.mail.resource)).expect(200);
     const assertionId = decode(response.body.access_token).payload.jti;
 
     const audit = await fixture.awaitTokenAudit('SUCCESS', (detail) => JSON.stringify(detail).includes(assertionId));
@@ -305,9 +321,9 @@ describe('ID-JAG issuance - the audit log answers who was granted access to whic
   });
 
   it('should audit a denial with the same context', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
     const unknownAudience = 'https://auth.unaudited.com';
-    await fixture.requestIdJag(accessToken, `&audience=${encodeURIComponent(unknownAudience)}`).expect(400);
+    await fixture.requestIdJag(idToken, `&audience=${encodeURIComponent(unknownAudience)}`).expect(400);
 
     const audit = await fixture.awaitTokenAudit('FAILURE', (detail) => JSON.stringify(detail).includes(unknownAudience));
 
@@ -325,10 +341,10 @@ describe('ID-JAG issuance - the domain-level switch is the single place it is en
   });
 
   it('should refuse an ID-JAG on a domain that does not permit that requested token type', async () => {
-    const { accessToken } = await fixture.subjectTokens();
+    const { idToken } = await fixture.subjectTokens();
     await fixture.setDomainAllowsIdJag(false);
 
-    const response = await fixture.requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(400);
+    const response = await fixture.requestIdJag(idToken, audienceParam() + resourceParam(fixture.calendar.resource)).expect(400);
 
     expect(errorOf(response)).toBe('invalid_request');
   });

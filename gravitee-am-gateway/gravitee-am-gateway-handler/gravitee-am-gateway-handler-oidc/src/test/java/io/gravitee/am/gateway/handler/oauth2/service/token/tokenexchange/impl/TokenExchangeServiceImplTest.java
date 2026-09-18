@@ -2656,12 +2656,18 @@ public class TokenExchangeServiceImplTest {
         private static final String CALENDAR = "https://calendar.acme.com";
         private static final String MAIL = "https://mail.acme.com";
 
+        @BeforeEach
+        void useIdTokenSubject() {
+            service = createService(List.of(new FixedSubjectTokenValidator(), new FixedIdTokenValidator(List.of("client-id"))));
+        }
+
         private Domain domainAllowingIdJag() {
-            return domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ACCESS_TOKEN, TokenType.ID_JAG));
+            return domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN),
+                    List.of(TokenType.ACCESS_TOKEN, TokenType.ID_JAG));
         }
 
         private MultiValueMap<String, String> idJagParameters(String... audiences) {
-            MultiValueMap<String, String> params = buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_JAG);
+            MultiValueMap<String, String> params = buildParameters(TokenType.ID_TOKEN, TokenType.ID_JAG);
             Stream.of(audiences).forEach(audience -> params.add(Parameters.AUDIENCE, audience));
             return params;
         }
@@ -2720,6 +2726,51 @@ public class TokenExchangeServiceImplTest {
 
         private CrossAppAccessResourceServer resourceServer(String id, String resource) {
             return CrossAppAccessResourceServer.builder().id(id).name(id).resource(resource).build();
+        }
+
+        @Test
+        void shouldRefuseAnAccessTokenAsTheSubjectToken() {
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+            MultiValueMap<String, String> params = buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_JAG);
+            params.add(Parameters.AUDIENCE, AUDIENCE);
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(params, CALENDAR),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token_type must be id_token");
+        }
+
+        @Test
+        void shouldRefuseASubjectTokenIssuedToAnotherClient() {
+            service = createService(List.of(new FixedIdTokenValidator(List.of("another-client"))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE), CALENDAR),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token was not issued to this client");
+        }
+
+        @Test
+        void shouldRefuseASubjectTokenCarryingNoAudience() {
+            service = createService(List.of(new FixedIdTokenValidator(List.of())));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE), CALENDAR),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token was not issued to this client");
+        }
+
+        @Test
+        void shouldAcceptASubjectTokenWhoseAudienceListIncludesTheClient() {
+            service = createService(List.of(new FixedIdTokenValidator(List.of("another-client", "client-id"))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            var result = service.exchange(idJagRequest(idJagParameters(AUDIENCE), CALENDAR),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet();
+
+            assertThat(result.issuedTokenType()).isEqualTo(TokenType.ID_JAG);
         }
 
         @Test
@@ -2863,7 +2914,7 @@ public class TokenExchangeServiceImplTest {
         void shouldDenyWhenTheDomainDoesNotPermitIdJag() {
             assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE)),
                     clientWithRows(row("rs-calendar", "acme-calendar-client")),
-                    domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN), List.of(TokenType.ACCESS_TOKEN))).blockingGet())
+                    domainWithTokenExchange(List.of(TokenType.ACCESS_TOKEN, TokenType.ID_TOKEN), List.of(TokenType.ACCESS_TOKEN))).blockingGet())
                     .isInstanceOf(InvalidRequestException.class)
                     .hasMessageContaining("requested_token_type not allowed");
         }
@@ -2882,7 +2933,7 @@ public class TokenExchangeServiceImplTest {
 
         @Test
         void shouldGrantAMappedScopeToASubjectTokenCarryingNoScopeClaim() {
-            service = createService(List.of(scopeValidator(Set.of())));
+            service = createService(List.of(new FixedIdTokenValidator(List.of("client-id"), Set.of())));
             trustDomainWith(Map.of("calendar.read", "read:calendar"), resourceServer("rs-calendar", CALENDAR));
             MultiValueMap<String, String> params = idJagParameters(AUDIENCE);
             params.add(Parameters.SCOPE, "calendar.read");
@@ -2953,6 +3004,37 @@ public class TokenExchangeServiceImplTest {
         @Override
         public String getSupportedTokenType() {
             return TokenType.ACCESS_TOKEN;
+        }
+    }
+
+    private static class FixedIdTokenValidator implements TokenValidator {
+
+        private final List<String> audience;
+        private final Set<String> scopes;
+
+        FixedIdTokenValidator(List<String> audience) {
+            this(audience, Set.of("openid"));
+        }
+
+        FixedIdTokenValidator(List<String> audience, Set<String> scopes) {
+            this.audience = audience;
+            this.scopes = scopes;
+        }
+
+        @Override
+        public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
+            return Single.just(ValidatedToken.builder()
+                    .subject("subject")
+                    .scopes(scopes)
+                    .audience(audience)
+                    .expiration(Date.from(Instant.now().plusSeconds(60)))
+                    .tokenType(TokenType.ID_TOKEN)
+                    .build());
+        }
+
+        @Override
+        public String getSupportedTokenType() {
+            return TokenType.ID_TOKEN;
         }
     }
 

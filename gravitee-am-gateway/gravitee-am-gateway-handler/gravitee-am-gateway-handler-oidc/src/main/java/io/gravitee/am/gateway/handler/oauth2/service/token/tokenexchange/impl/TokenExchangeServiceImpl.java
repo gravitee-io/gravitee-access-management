@@ -104,7 +104,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                              ParsedRequest request,
                                                              Client client,
                                                              Domain domain) {
-        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain, client)
+        return validateSubjectToken(request, domain, client)
                         .flatMap(subjectToken -> buildImpersonationResult(tokenRequest, subjectToken, request, client, domain));
     }
 
@@ -114,7 +114,7 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                                                           Domain domain) {
         TokenExchangeSettings settings = domain.getTokenExchangeSettings();
 
-        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain, client)
+        return validateSubjectToken(request, domain, client)
                 .flatMap(subjectToken -> {
                     // Reject JWT actor tokens when subject is from an external trusted issuer.
                     // This prevents transitive trust chains across external issuers.
@@ -192,6 +192,11 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
                 .isDelegation(isDelegation);
 
         if (TokenType.ID_JAG.equals(requestedTokenType)) {
+            // draft-ietf-oauth-identity-assertion-authz-grant-04 section 4.3 takes an identity assertion as
+            // the subject; of those, AM validates ID tokens.
+            if (!TokenType.ID_TOKEN.equals(subjectTokenType)) {
+                throw new InvalidRequestException("subject_token_type must be id_token when requesting an ID-JAG");
+            }
             builder.idJagTarget(resolveIdJagTarget(tokenRequest, client));
         }
 
@@ -327,6 +332,25 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         if (!settings.isAllowImpersonation()) {
             throw new InvalidRequestException("Impersonation is not allowed for this domain");
         }
+    }
+
+    private Single<ValidatedToken> validateSubjectToken(ParsedRequest request, Domain domain, Client client) {
+        return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain, client)
+                .flatMap(subjectToken -> request.idJagTarget() == null
+                        ? Single.just(subjectToken)
+                        : validateIssuedToClient(subjectToken, client));
+    }
+
+    /**
+     * Per draft-ietf-oauth-identity-assertion-authz-grant-04 section 4.3.3, the assertion must have been
+     * issued to the client authenticating the request.
+     */
+    private static Single<ValidatedToken> validateIssuedToClient(ValidatedToken subjectToken, Client client) {
+        List<String> audience = subjectToken.getAudience();
+        if (audience == null || !audience.contains(client.getClientId())) {
+            return Single.error(new InvalidRequestException("subject_token was not issued to this client"));
+        }
+        return Single.just(subjectToken);
     }
 
     private Single<ValidatedToken> validateSubjectToken(String token, String tokenType, Domain domain, Client client) {
