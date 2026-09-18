@@ -143,6 +143,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
+        when(newExtensionGrant.getType()).thenReturn("jwtbearer-am-extension-grant");
         when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
@@ -155,6 +156,42 @@ public class ExtensionGrantServiceTest {
 
         verify(extensionGrantRepository, times(1)).findByDomainAndName(anyString(), anyString());
         verify(extensionGrantRepository, times(1)).create(any(ExtensionGrant.class));
+    }
+
+    @Test
+    public void shouldCreateCrossAppAccessGrantWithCheckUserOnWhateverThePayloadSays() {
+        NewExtensionGrant newExtensionGrant = new NewExtensionGrant();
+        newExtensionGrant.setName("my-extension-grant");
+        newExtensionGrant.setType("xaa-am-extension-grant");
+        newExtensionGrant.setUserExists(false);
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
+        when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<ExtensionGrant> testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(ExtensionGrant::isUserExists);
+        verify(auditService).report(any());
+    }
+
+    @Test
+    public void shouldKeepPayloadCheckUserForOtherGrantTypes() {
+        NewExtensionGrant newExtensionGrant = new NewExtensionGrant();
+        newExtensionGrant.setName("my-extension-grant");
+        newExtensionGrant.setType("jwtbearer-am-extension-grant");
+        newExtensionGrant.setUserExists(false);
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
+        when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<ExtensionGrant> testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(extensionGrant -> !extensionGrant.isUserExists());
+        verify(auditService).report(any());
     }
 
     @Test
@@ -176,6 +213,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate2_technicalException() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
+        when(newExtensionGrant.getType()).thenReturn("jwtbearer-am-extension-grant");
         when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenReturn(Single.error(TechnicalException::new));
 

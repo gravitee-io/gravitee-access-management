@@ -16,9 +16,15 @@
 package io.gravitee.am.gateway.handler.common.auth.idp.impl;
 
 import io.gravitee.am.common.event.IdentityProviderEvent;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.gateway.handler.common.auth.idp.AmbiguousTrustedIssuerException;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.license.DomainPluginLicenseGate;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.trustedissuer.AssertionVerifier;
+import io.gravitee.am.identityprovider.api.trustedissuer.OAuthTrustedIssuer;
+import io.gravitee.am.identityprovider.api.trustedissuer.ResolvedTrustedIssuer;
+import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerIdp;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -42,7 +48,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Date;
 import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -51,6 +59,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IdentityProviderManagerImplTest {
@@ -151,5 +160,97 @@ public class IdentityProviderManagerImplTest {
         verify(authenticationProvider, times(1)).stop();
         verify(domainReadinessService, never()).pluginUnloaded("domain-id", "idp-id");
         assertNull(identityProviderManager.getIdentityProvider("idp-id"));
+    }
+
+    @Test
+    public void shouldResolveTrustedIssuerToItsIdentityProvider() throws Exception {
+        AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(trusted);
+
+        identityProviderManager.afterPropertiesSet();
+
+        ResolvedTrustedIssuer resolved = identityProviderManager.resolve("https://issuer.example.com").blockingGet();
+        assertEquals("oidc-idp", resolved.identityProvider());
+        assertSame(((TrustedIssuerIdp) trusted).trustedIssuer().orElseThrow(), resolved.trustedIssuer());
+    }
+
+    @Test
+    public void shouldRefuseIssuerClaimedByTwoProviders() throws Exception {
+        AuthenticationProvider first = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        AuthenticationProvider second = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("first-idp"), identityProvider("second-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(first, second);
+
+        identityProviderManager.afterPropertiesSet();
+
+        identityProviderManager.resolve("https://issuer.example.com").test()
+                .assertNoValues()
+                .assertError(AmbiguousTrustedIssuerException.class)
+                .assertError(error -> "invalid_grant".equals(((OAuth2Exception) error).getOAuth2ErrorCode()))
+                .assertError(error -> "Assertion issuer is claimed by several identity providers".equals(error.getMessage()));
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenNoProviderClaimsIssuer() throws Exception {
+        AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(trusted);
+
+        identityProviderManager.afterPropertiesSet();
+
+        identityProviderManager.resolve("https://other.example.com").test()
+                .assertNoValues()
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldNotMatchProviderWhoseDiscoveryHasNotCompleted() throws Exception {
+        AuthenticationProvider discovering = trustedIssuerProvider(Optional.empty());
+        load(identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(discovering);
+
+        identityProviderManager.afterPropertiesSet();
+
+        identityProviderManager.resolve("https://issuer.example.com").test()
+                .assertNoValues()
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldSkipProvidersThatAreNotTrustedIssuers() throws Exception {
+        AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("inline-idp"), identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class)))
+                .thenReturn(mock(AuthenticationProvider.class), trusted);
+
+        identityProviderManager.afterPropertiesSet();
+
+        assertEquals("oidc-idp", identityProviderManager.resolve("https://issuer.example.com").blockingGet().identityProvider());
+    }
+
+    private void load(IdentityProvider... identityProviders) throws Exception {
+        when(domain.getId()).thenReturn("domain-id");
+        when(identityProviderRepository.findAll(ReferenceType.DOMAIN, "domain-id")).thenReturn(Flowable.fromArray(identityProviders));
+        when(identityProviderPluginManager.create(eq("oauth2-generic-am-idp"), any(), any(IdentityProvider.class)))
+                .thenReturn(Single.just(Optional.empty()));
+        for (IdentityProvider identityProvider : identityProviders) {
+            when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_IDENTITY_PROVIDER, "oauth2-generic-am-idp", identityProvider.getId())).thenReturn(true);
+        }
+    }
+
+    private static IdentityProvider identityProvider(String id) {
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId(id);
+        identityProvider.setType("oauth2-generic-am-idp");
+        identityProvider.setConfiguration("{}");
+        return identityProvider;
+    }
+
+    private static AuthenticationProvider trustedIssuerProvider(Optional<String> issuer) {
+        AuthenticationProvider provider = mock(AuthenticationProvider.class, withSettings().extraInterfaces(TrustedIssuerIdp.class));
+        when(((TrustedIssuerIdp) provider).trustedIssuer())
+                .thenReturn(issuer.map(value -> new OAuthTrustedIssuer(value, mock(AssertionVerifier.class))));
+        return provider;
     }
 }

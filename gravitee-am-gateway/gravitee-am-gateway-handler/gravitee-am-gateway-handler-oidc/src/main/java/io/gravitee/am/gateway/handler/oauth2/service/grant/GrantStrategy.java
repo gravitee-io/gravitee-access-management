@@ -32,12 +32,12 @@ public interface GrantStrategy {
     /**
      * Check if this strategy supports the given grant type for the specified client and domain.
      *
-     * @param grantType the OAuth2 grant type
+     * @param request the OAuth2 token request
      * @param client the OAuth2 client
      * @param domain the domain context
      * @return true if this strategy can handle the grant type
      */
-    boolean supports(String grantType, Client client, Domain domain);
+    boolean supports(TokenRequest request, Client client, Domain domain);
 
     /**
      * Process the token request and return a TokenCreationRequest ready for token generation.

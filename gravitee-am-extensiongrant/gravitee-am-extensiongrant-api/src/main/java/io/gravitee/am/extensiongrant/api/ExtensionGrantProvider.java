@@ -16,7 +16,6 @@
 package io.gravitee.am.extensiongrant.api;
 
 import io.gravitee.am.common.plugin.AmPluginProvider;
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 
@@ -31,5 +30,14 @@ public interface ExtensionGrantProvider extends AmPluginProvider {
      * @param tokenRequest tokenRequest token endpoint request
      * @return User representation of the assertion or empty if no user is involved
      */
-    Maybe<User> grant(TokenRequest tokenRequest);
+    Maybe<ExtensionGrantResult> grant(TokenRequest tokenRequest, ExtensionGrantContext context);
+
+    default boolean supports(TokenRequest tokenRequest) {
+        return true;
+    }
+
+    default boolean supportsRefreshToken() {
+        return true;
+    }
+
 }

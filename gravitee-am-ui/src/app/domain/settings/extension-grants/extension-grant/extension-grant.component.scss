@@ -13,6 +13,11 @@
     padding: 20px;
     border: 1px solid rgb(226 229 231);
     border-radius: 2px;
+
+    pre {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
   }
 
   .token-granter-content {
@@ -20,6 +25,7 @@
   }
 
   .token-granter-description {
+    padding-top: 20px;
     margin-left: 20px;
 
     h3 {

@@ -302,6 +302,7 @@ public record TokenCreationRequest(
             String extensionGrantType,
             Map<String, Object> additionalClaims,
             String userSource,
+            IdJagAssertionContext idJagAssertionContext,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(
@@ -309,7 +310,7 @@ public record TokenCreationRequest(
                 extensionGrantType,
                 original.getScopes(),
                 user,
-                new GrantData.ExtensionGrantData(extensionGrantId, extensionGrantType, additionalClaims, userSource),
+                new GrantData.ExtensionGrantData(extensionGrantId, extensionGrantType, additionalClaims, userSource, idJagAssertionContext),
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

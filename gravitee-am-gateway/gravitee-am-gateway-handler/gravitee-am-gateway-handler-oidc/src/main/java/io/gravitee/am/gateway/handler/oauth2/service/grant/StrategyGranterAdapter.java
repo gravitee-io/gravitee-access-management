@@ -91,8 +91,8 @@ public class StrategyGranterAdapter implements TokenGranter {
     }
 
     @Override
-    public boolean handle(String grantType, Client client) {
-        return strategy.supports(grantType, client, domain);
+    public boolean handle(TokenRequest tokenRequest, Client client) {
+        return strategy.supports(tokenRequest, client, domain);
     }
 
     @Override
@@ -347,7 +347,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             case GrantData.ClientCredentialsData ignored -> { }
             case GrantData.PasswordData ignored -> { }
             case GrantData.CibaData data -> oAuth2Request.setAuthorizationDetails(data.authorizationDetails());
-            case GrantData.ExtensionGrantData ignored -> { }
+            case GrantData.ExtensionGrantData data -> oAuth2Request.setIdJagAssertionContext(data.idJagAssertionContext());
         }
     }
 

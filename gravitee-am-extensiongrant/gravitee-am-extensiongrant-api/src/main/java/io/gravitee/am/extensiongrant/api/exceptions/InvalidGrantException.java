@@ -15,17 +15,23 @@
  */
 package io.gravitee.am.extensiongrant.api.exceptions;
 
+import io.gravitee.am.extensiongrant.api.ExtensionGrantResult;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class InvalidGrantException extends RuntimeException {
+public class InvalidGrantException extends ExtensionGrantException {
 
     public InvalidGrantException(String msg, Throwable t) {
-        super(msg, t);
+        super(msg, t, null);
     }
 
     public InvalidGrantException(String msg) {
-        super(msg);
+        super(msg, null, null);
+    }
+
+    public InvalidGrantException(String msg, ExtensionGrantResult verifiedResult) {
+        super(msg, null, verifiedResult);
     }
 }

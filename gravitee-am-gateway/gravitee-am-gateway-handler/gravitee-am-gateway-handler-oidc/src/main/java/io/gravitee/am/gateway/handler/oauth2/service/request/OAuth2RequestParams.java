@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.oauth2.service.grant.IdJagAssertionContext;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 
 import java.util.HashMap;
@@ -31,6 +32,13 @@ public final class OAuth2RequestParams {
     public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
 
+    public static final String ASSERTION_ISSUER = "ASSERTION_ISSUER";
+    public static final String IDENTITY_PROVIDER = "IDENTITY_PROVIDER";
+    public static final String ASSERTION_JTI = "ASSERTION_JTI";
+    public static final String ASSERTION_CLIENT_ID = "ASSERTION_CLIENT_ID";
+    public static final String BINDING_MODE = "BINDING_MODE";
+    public static final String BOUND_USER = "BOUND_USER";
+
     private OAuth2RequestParams() {
     }
 
@@ -43,14 +51,6 @@ public final class OAuth2RequestParams {
         params.put(Parameters.GRANT_TYPE.toUpperCase(), oAuth2Request.getGrantType());
         params.put(Parameters.RESPONSE_TYPE.toUpperCase(), oAuth2Request.getResponseType());
 
-        if (!isEmpty(oAuth2Request.getScopes())) {
-            params.put(Parameters.SCOPE.toUpperCase(), String.join(" ", oAuth2Request.getScopes()));
-        }
-
-        if (!isEmpty(oAuth2Request.getResources())) {
-            params.put(Parameters.RESOURCE.toUpperCase(), String.join(" ", oAuth2Request.getResources()));
-        }
-
         if (certificateInfo != null) {
             params.put(SIGNING_CERTIFICATE_ID, certificateInfo.certificateId());
             params.put(SIGNING_CERTIFICATE_NAME, certificateInfo.certificateAlias());
@@ -60,11 +60,42 @@ public final class OAuth2RequestParams {
             params.put(Parameters.DPOP_JKT.toUpperCase(), oAuth2Request.getConfirmationMethodJkt());
         }
 
-        if (GrantType.TOKEN_EXCHANGE.equals(oAuth2Request.getGrantType())) {
-            addTokenExchangeParams(params, oAuth2Request);
+        IdJagAssertionContext assertionContext = oAuth2Request.getIdJagAssertionContext();
+        if (assertionContext != null) {
+            addIdJagRedemptionParams(params, oAuth2Request, assertionContext);
+        } else {
+            addRequestedParams(params, oAuth2Request);
         }
 
         return params;
+    }
+
+    private static void addIdJagRedemptionParams(Map<String, Object> params, OAuth2Request oAuth2Request, IdJagAssertionContext assertionContext) {
+        putFirstPresent(params, ASSERTION_ISSUER, assertionContext.issuer());
+        putFirstPresent(params, IDENTITY_PROVIDER, assertionContext.identityProvider());
+        putFirstPresent(params, ASSERTION_JTI, assertionContext.jti());
+        putFirstPresent(params, ASSERTION_CLIENT_ID, assertionContext.clientId());
+        putFirstPresent(params, Parameters.RESOURCE, assertionContext.resource());
+        if (assertionContext.scopes() != null) {
+            putFirstPresent(params, Parameters.SCOPE, joined(oAuth2Request.getScopes()));
+        }
+        putFirstPresent(params, BINDING_MODE,
+                assertionContext.bindingMode() == null ? null : assertionContext.bindingMode().name());
+        putFirstPresent(params, BOUND_USER, assertionContext.boundUser());
+    }
+
+    private static void addRequestedParams(Map<String, Object> params, OAuth2Request oAuth2Request) {
+        if (!isEmpty(oAuth2Request.getScopes())) {
+            params.put(Parameters.SCOPE.toUpperCase(), String.join(" ", oAuth2Request.getScopes()));
+        }
+
+        if (!isEmpty(oAuth2Request.getResources())) {
+            params.put(Parameters.RESOURCE.toUpperCase(), String.join(" ", oAuth2Request.getResources()));
+        }
+
+        if (GrantType.TOKEN_EXCHANGE.equals(oAuth2Request.getGrantType())) {
+            addTokenExchangeParams(params, oAuth2Request);
+        }
     }
 
     private static void addTokenExchangeParams(Map<String, Object> params, OAuth2Request oAuth2Request) {

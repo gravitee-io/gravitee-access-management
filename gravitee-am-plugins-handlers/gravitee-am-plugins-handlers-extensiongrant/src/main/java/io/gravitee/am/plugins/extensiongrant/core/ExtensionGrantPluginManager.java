@@ -18,8 +18,10 @@ package io.gravitee.am.plugins.extensiongrant.core;
 import io.gravitee.am.extensiongrant.api.ExtensionGrant;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.ProtectedResourceDirectory;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.NoAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
@@ -61,7 +63,9 @@ public class ExtensionGrantPluginManager
         var extensionGrantConfiguration = configurationFactory.create(extensionGrant.configuration(), providerConfig.getConfiguration());
         return createProvider(extensionGrant, List.of(
                         new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration),
-                        new ExtensionGrantIdentityProviderFactoryPostProcessor(getAuthenticationProvider(providerConfig))
+                        new ExtensionGrantIdentityProviderFactoryPostProcessor(getAuthenticationProvider(providerConfig)),
+                        new ExtensionGrantTrustedIssuerResolverFactoryPostProcessor(providerConfig.getTrustedIssuerResolver()),
+                        new ExtensionGrantProtectedResourceDirectoryFactoryPostProcessor(providerConfig.getProtectedResourceDirectory())
                 )
         );
     }
@@ -79,6 +83,18 @@ public class ExtensionGrantPluginManager
     private static class ExtensionGrantIdentityProviderFactoryPostProcessor extends NamedBeanFactoryPostProcessor<AuthenticationProvider> {
         private ExtensionGrantIdentityProviderFactoryPostProcessor(AuthenticationProvider authenticationProvider) {
             super("authenticationProvider", authenticationProvider);
+        }
+    }
+
+    private static class ExtensionGrantTrustedIssuerResolverFactoryPostProcessor extends NamedBeanFactoryPostProcessor<TrustedIssuerResolver> {
+        private ExtensionGrantTrustedIssuerResolverFactoryPostProcessor(TrustedIssuerResolver trustedIssuerResolver) {
+            super("trustedIssuerResolver", trustedIssuerResolver);
+        }
+    }
+
+    private static class ExtensionGrantProtectedResourceDirectoryFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ProtectedResourceDirectory> {
+        private ExtensionGrantProtectedResourceDirectoryFactoryPostProcessor(ProtectedResourceDirectory protectedResourceDirectory) {
+            super("protectedResourceDirectory", protectedResourceDirectory);
         }
     }
 }

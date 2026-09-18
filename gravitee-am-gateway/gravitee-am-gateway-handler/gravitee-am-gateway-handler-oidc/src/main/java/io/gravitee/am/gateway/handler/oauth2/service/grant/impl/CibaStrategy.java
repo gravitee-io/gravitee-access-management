@@ -64,8 +64,8 @@ public class CibaStrategy implements GrantStrategy {
     }
 
     @Override
-    public boolean supports(String grantType, Client client, Domain domain) {
-        if (!GrantType.CIBA_GRANT_TYPE.equals(grantType)) {
+    public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
+        if (!GrantType.CIBA_GRANT_TYPE.equals(tokenRequest.getGrantType())) {
             return false;
         }
 

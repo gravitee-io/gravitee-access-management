@@ -4,4 +4,9 @@
   border-radius: 2px;
   margin-bottom: 10px;
   text-align: left;
+
+  pre {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
 }

@@ -100,8 +100,8 @@ public class UmaStrategy implements GrantStrategy {
     }
 
     @Override
-    public boolean supports(String grantType, Client client, Domain domain) {
-        if (!GrantType.UMA.equals(grantType)) {
+    public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
+        if (!GrantType.UMA.equals(tokenRequest.getGrantType())) {
             return false;
         }
 

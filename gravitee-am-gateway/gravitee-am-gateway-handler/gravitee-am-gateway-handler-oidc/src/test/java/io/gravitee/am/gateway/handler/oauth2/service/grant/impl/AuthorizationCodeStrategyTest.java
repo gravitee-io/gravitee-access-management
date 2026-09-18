@@ -45,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Set;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static io.gravitee.am.common.oauth2.CodeChallengeMethod.S256;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -92,19 +93,19 @@ class AuthorizationCodeStrategyTest {
 
     @Test
     void shouldSupportAuthorizationCodeGrantType() {
-        assertTrue(strategy.supports(GrantType.AUTHORIZATION_CODE, client, domain));
+        assertTrue(strategy.supports(grantRequest(GrantType.AUTHORIZATION_CODE), client, domain));
     }
 
     @Test
     void shouldNotSupportOtherGrantTypes() {
-        assertFalse(strategy.supports(GrantType.CLIENT_CREDENTIALS, client, domain));
-        assertFalse(strategy.supports(GrantType.PASSWORD, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.CLIENT_CREDENTIALS), client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.PASSWORD), client, domain));
     }
 
     @Test
     void shouldNotSupportWhenClientDoesNotHaveGrantType() {
         client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
-        assertFalse(strategy.supports(GrantType.AUTHORIZATION_CODE, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.AUTHORIZATION_CODE), client, domain));
     }
 
     @Test

@@ -58,6 +58,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static io.gravitee.am.common.oauth2.Parameters.*;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static org.junit.jupiter.api.Assertions.*;
@@ -159,31 +160,31 @@ class UmaStrategyTest {
 
     @Test
     void shouldSupportUmaGrantType() {
-        assertTrue(strategy.supports(GrantType.UMA, client, domain));
+        assertTrue(strategy.supports(grantRequest(GrantType.UMA), client, domain));
     }
 
     @Test
     void shouldNotSupportWhenUmaDisabled() {
         domain.setUma(new UMASettings().setEnabled(false));
-        assertFalse(strategy.supports(GrantType.UMA, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.UMA), client, domain));
     }
 
     @Test
     void shouldNotSupportWhenUmaNull() {
         domain.setUma(null);
-        assertFalse(strategy.supports(GrantType.UMA, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.UMA), client, domain));
     }
 
     @Test
     void shouldNotSupportOtherGrantTypes() {
-        assertFalse(strategy.supports(GrantType.CLIENT_CREDENTIALS, client, domain));
-        assertFalse(strategy.supports(GrantType.PASSWORD, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.CLIENT_CREDENTIALS), client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.PASSWORD), client, domain));
     }
 
     @Test
     void shouldNotSupportWhenClientDoesNotHaveGrantType() {
         client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
-        assertFalse(strategy.supports(GrantType.UMA, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.UMA), client, domain));
     }
 
     @Test

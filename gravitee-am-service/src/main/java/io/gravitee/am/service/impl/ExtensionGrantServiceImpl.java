@@ -45,16 +45,16 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,10 +63,7 @@ import lombok.CustomLog;
 @Component
 @CustomLog
 public class ExtensionGrantServiceImpl implements ExtensionGrantService {
-
-    /**
-     * Logger.
-     */
+    private final static List<String> GRANTS_REQUIRE_USER_EXISTS = List.of("xaa-am-extension-grant");
 
     @Lazy
     @Autowired
@@ -124,7 +121,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
                         extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
                         extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
-                        extensionGrant.setUserExists(newExtensionGrant.isUserExists());
+                        extensionGrant.setUserExists(GRANTS_REQUIRE_USER_EXISTS.contains(newExtensionGrant.getType()) || newExtensionGrant.isUserExists());
                         extensionGrant.setType(newExtensionGrant.getType());
                         extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
                         extensionGrant.setCreatedAt(new Date());
