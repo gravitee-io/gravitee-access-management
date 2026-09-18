@@ -75,6 +75,18 @@ describe('GrantFlowsComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should check stored grant types when secretSettings is undefined (legacy application)', () => {
+    fixture = TestBed.createComponent(GrantFlowsComponent);
+    component = fixture.componentInstance;
+    component.oauthSettings = { grantTypes: ['implicit'] };
+    component.customGrantTypes = [];
+    component.secretSettings = undefined;
+    fixture.detectChanges();
+
+    expect(component.grantTypes.find((grantType) => grantType.value === 'implicit').checked).toBe(true);
+    expect(component.tokenEndpointAuthMethods.some((method) => method.value === 'client_secret_jwt')).toBe(true);
+  });
+
   it('should expose MCP_SERVER_CONTEXT and CLIENT_CREDENTIALS_GRANT_TYPE constants', () => {
     expect(component.MCP_SERVER_CONTEXT).toBe('McpServer');
     expect(component.CLIENT_CREDENTIALS_GRANT_TYPE).toBe('client_credentials');

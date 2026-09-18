@@ -243,7 +243,9 @@ export class GrantFlowsComponent implements OnInit {
       });
     }
 
-    const hashIds = this.secretSettings.filter((settings) => settings.algorithm.toUpperCase() !== 'NONE').map((settings) => settings.id);
+    const hashIds = (this.secretSettings ?? [])
+      .filter((settings) => settings.algorithm.toUpperCase() !== 'NONE')
+      .map((settings) => settings.id);
     if (hashIds?.length !== 0 && this.oauthSettings.tokenEndpointAuthMethod !== 'client_secret_jwt') {
       this.tokenEndpointAuthMethods = this.tokenEndpointAuthMethods.filter((item) => item.value !== 'client_secret_jwt');
     }
