@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
@@ -101,6 +102,55 @@ public class TokenValidationUtilsTest {
     @Test
     public void parseAudience_unsupportedType_returnsEmpty() {
         assertEquals(Collections.emptyList(), TokenValidationUtils.parseAudience(12345));
+    }
+
+    // --- validateTokenKind ---
+
+    @Test
+    public void validateTokenKind_accessTokenWithJti_noException() {
+        TokenValidationUtils.validateTokenKind("jti-123", JWTService.TokenType.ACCESS_TOKEN, "test-token");
+    }
+
+    @Test
+    public void validateTokenKind_refreshTokenWithJti_noException() {
+        TokenValidationUtils.validateTokenKind("jti-123", JWTService.TokenType.REFRESH_TOKEN, "test-token");
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void validateTokenKind_accessTokenWithoutJti_throws() {
+        TokenValidationUtils.validateTokenKind(null, JWTService.TokenType.ACCESS_TOKEN, "test-token");
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void validateTokenKind_accessTokenWithBlankJti_throws() {
+        TokenValidationUtils.validateTokenKind("  ", JWTService.TokenType.ACCESS_TOKEN, "test-token");
+    }
+
+    @Test
+    public void validateTokenKind_idTokenWithoutJti_noException() {
+        TokenValidationUtils.validateTokenKind(null, JWTService.TokenType.ID_TOKEN, "test-token");
+    }
+
+    @Test(expected = InvalidRequestException.class)
+    public void validateTokenKind_idTokenWithJti_throws() {
+        TokenValidationUtils.validateTokenKind("jti-123", JWTService.TokenType.ID_TOKEN, "test-token");
+    }
+
+    @Test
+    public void validateTokenKind_genericJwt_acceptsBothShapes() {
+        TokenValidationUtils.validateTokenKind("jti-123", JWTService.TokenType.JWT, "test-token");
+        TokenValidationUtils.validateTokenKind(null, JWTService.TokenType.JWT, "test-token");
+    }
+
+    @Test
+    public void validateTokenKind_mismatch_messageContainsTokenType() {
+        try {
+            TokenValidationUtils.validateTokenKind(null, JWTService.TokenType.ACCESS_TOKEN, "my-token-type");
+        } catch (InvalidRequestException e) {
+            assertEquals("The presented token is not of type my-token-type", e.getMessage());
+            return;
+        }
+        throw new AssertionError("Expected InvalidRequestException");
     }
 
     // --- validateTemporalClaims ---

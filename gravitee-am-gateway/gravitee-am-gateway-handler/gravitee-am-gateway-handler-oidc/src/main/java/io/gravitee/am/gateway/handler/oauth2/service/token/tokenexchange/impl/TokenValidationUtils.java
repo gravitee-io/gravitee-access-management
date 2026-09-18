@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.TrustedDomain;
@@ -58,6 +59,32 @@ final class TokenValidationUtils {
             case List<?> list -> (List<String>) list;
             default -> Collections.emptyList();
         };
+    }
+
+    /**
+     * Check the presented token is of the type the request declared, as
+     * <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 section 2.1</a> requires.
+     * AM access and refresh tokens always carry a {@code jti}; its ID tokens never do.
+     */
+    static void validateTokenKind(String jti, JWTService.TokenType expected, String tokenType) {
+        boolean hasTokenId = jti != null && !jti.isBlank();
+        switch (expected) {
+            case ACCESS_TOKEN, REFRESH_TOKEN -> {
+                if (!hasTokenId) {
+                    throw notOfType(tokenType);
+                }
+            }
+            case ID_TOKEN -> {
+                if (hasTokenId) {
+                    throw notOfType(tokenType);
+                }
+            }
+            default -> { /* the generic jwt type takes any JWT */ }
+        }
+    }
+
+    private static InvalidRequestException notOfType(String tokenType) {
+        return new InvalidRequestException("The presented token is not of type " + tokenType);
     }
 
     static void validateTemporalClaims(long exp, long nbf, String tokenType) {

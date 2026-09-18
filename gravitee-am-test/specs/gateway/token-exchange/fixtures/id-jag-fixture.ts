@@ -35,7 +35,7 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { User } from '@management-models/User';
 import { createTrustedIssuerKeyMaterial } from './trusted-issuer-jwt-helper';
-import { TOKEN_EXCHANGE_TEST } from './token-exchange-fixture';
+import { ID_TOKEN_TYPE, TOKEN_EXCHANGE_TEST } from './token-exchange-fixture';
 
 export const ID_JAG_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id-jag';
 export const ID_JAG_JOSE_TYPE = 'oauth-id-jag+jwt';
@@ -57,7 +57,8 @@ export interface IdJagFixture {
   calendar: IdJagResourceServer;
   mail: IdJagResourceServer;
   trustDomainId: string;
-  subjectTokens: (scope?: string) => Promise<{ accessToken: string; idToken?: string; expiresIn: number }>;
+  subjectTokens: (scope?: string) => Promise<{ accessToken: string; idToken: string; expiresIn: number }>;
+  otherApplicationIdToken: () => Promise<string>;
   requestIdJag: (subjectToken: string, extraParams?: string, subjectTokenType?: string) => request.Test;
   setCrossAppAccess: (
     crossAppAccessSettings: Record<string, unknown>,
@@ -150,6 +151,19 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
 
+  // shares the agent application's certificate, so its ID token differs only in audience
+  const otherApplication = await createTestApp(uniqueName('bystander', true), domain, accessToken, 'WEB', {
+    certificate,
+    settings: {
+      oauth: {
+        redirectUris: [TOKEN_EXCHANGE_TEST.REDIRECT_URI],
+        grantTypes: ['password', 'refresh_token'],
+        scopeSettings: DOMAIN_SCOPES,
+      },
+    },
+    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+  });
+
   const startedDomain = await startDomain(domain.id, accessToken);
   const oidcResponse = await waitForOidcReady(startedDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
   expect(oidcResponse.status).toBe(200);
@@ -159,6 +173,9 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
   const basicAuth = applicationBase64Token(application);
 
   const subjectTokens = async (scope = 'openid%20profile') => {
+    if (!scope.split(/%20|\s|\+/).includes('openid')) {
+      throw new Error(`subjectTokens needs the openid scope to return an ID token, got: ${scope}`);
+    }
     const response = await performPost(
       oidc.token_endpoint,
       '',
@@ -168,11 +185,20 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     return { accessToken: response.body.access_token, idToken: response.body.id_token, expiresIn: response.body.expires_in };
   };
 
-  const requestIdJag = (
-    subjectToken: string,
-    extraParams = '',
-    subjectTokenType = 'urn:ietf:params:oauth:token-type:access_token',
-  ): request.Test =>
+  const otherApplicationIdToken = async (): Promise<string> => {
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=password&username=${user.username}&password=${TOKEN_EXCHANGE_TEST.USER_PASSWORD}&scope=openid%20profile`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(otherApplication)}`,
+      },
+    ).expect(200);
+    return response.body.id_token;
+  };
+
+  const requestIdJag = (subjectToken: string, extraParams = '', subjectTokenType = ID_TOKEN_TYPE): request.Test =>
     performPost(
       oidc.token_endpoint,
       '',
@@ -190,19 +216,24 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     tokenCustomClaims: Record<string, unknown>[] = [],
   ) => {
     await waitForSyncAfter(domain.id, () =>
-      updateApplication(domain.id, accessToken, {
-        certificate,
-        settings: {
-          oauth: {
-            redirectUris: [TOKEN_EXCHANGE_TEST.REDIRECT_URI],
-            grantTypes: ['password', 'refresh_token', 'urn:ietf:params:oauth:grant-type:token-exchange'],
-            scopeSettings: DOMAIN_SCOPES,
-            idJagValiditySeconds,
-            crossAppAccessSettings,
-            tokenCustomClaims,
+      updateApplication(
+        domain.id,
+        accessToken,
+        {
+          certificate,
+          settings: {
+            oauth: {
+              redirectUris: [TOKEN_EXCHANGE_TEST.REDIRECT_URI],
+              grantTypes: ['password', 'refresh_token', 'urn:ietf:params:oauth:grant-type:token-exchange'],
+              scopeSettings: DOMAIN_SCOPES,
+              idJagValiditySeconds,
+              crossAppAccessSettings,
+              tokenCustomClaims,
+            },
           },
-        },
-      } as any, application.id),
+        } as any,
+        application.id,
+      ),
     );
   };
 
@@ -228,13 +259,11 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     const response = await request(getDomainManagerUrl(domain.id))
       .get(`/audits?type=TOKEN_CREATED&status=${status}&size=20`)
       .set('Authorization', `Bearer ${accessToken}`);
-    return response.status === 200 ? (response.body.data ?? []) : [];
+    return response.status === 200 ? response.body.data ?? [] : [];
   };
 
   const readTokenAudit = async (auditId: string) => {
-    const response = await request(getDomainManagerUrl(domain.id))
-      .get(`/audits/${auditId}`)
-      .set('Authorization', `Bearer ${accessToken}`);
+    const response = await request(getDomainManagerUrl(domain.id)).get(`/audits/${auditId}`).set('Authorization', `Bearer ${accessToken}`);
     return response.status === 200 ? response.body : null;
   };
 
@@ -258,6 +287,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     mail,
     trustDomainId: trustDomain.id,
     subjectTokens,
+    otherApplicationIdToken,
     requestIdJag,
     setCrossAppAccess,
     setAudSubMapping,
