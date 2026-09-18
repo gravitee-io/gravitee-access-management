@@ -3,7 +3,7 @@
 version: 2.1
 
 orbs:
-  keeper: gravitee-io/keeper@0.6.3
+  keeper: gravitee-io/keeper@0.7.1
 
 parameters:
   migration_test_from_tag:
