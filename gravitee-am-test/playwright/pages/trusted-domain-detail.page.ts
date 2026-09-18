@@ -48,10 +48,6 @@ export class TrustedDomainDetailPage extends BasePage {
     return this.usageChoice(usage).locator('input[type="checkbox"]').isChecked();
   }
 
-  get usageBadge(): Locator {
-    return this.page.locator('[data-testid="trustDomainUsage"]');
-  }
-
   /* ------------------------------------------------------------------ */
   /*  Identity                                                           */
   /* ------------------------------------------------------------------ */

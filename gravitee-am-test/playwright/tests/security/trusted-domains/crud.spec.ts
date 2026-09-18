@@ -95,7 +95,7 @@ test.describe('Trusted Domains CRUD', () => {
     const listPage = new TrustedDomainListPage(page);
     await listPage.navigateTo(testDomain.id);
     await expect(listPage.trustDomainRows).toHaveCount(1);
-    await expect(listPage.usageOf(0)).toHaveText(/OIDC - Trusted Issuer/i);
+    await expect(listPage.usageOf(0)).toHaveText(/Token Exchange/i);
     await expect(listPage.rowByName('https-external-idp.example.com')).toHaveCount(1);
   });
 
@@ -151,7 +151,7 @@ test.describe('Trusted Domains CRUD', () => {
     await expect(listPage.trustDomainRows).toHaveCount(1);
     await expect(listPage.rowByName('acme-corp')).toHaveCount(1);
     await expect(listPage.usageOf(0)).toHaveText(/^2 usages$/);
-    expect(await listPage.usageTooltipOf(0)).toBe('SPIFFE, OIDC - Trusted Issuer');
+    expect(await listPage.usageTooltipOf(0)).toBe('SPIFFE, Token Exchange');
   });
 
   test('a detail page is addressed by identifier and can be linked to directly', async ({ page, testDomain }) => {
@@ -170,7 +170,7 @@ test.describe('Trusted Domains CRUD', () => {
 
     await detailPage.navigateToEdit(testDomain.id, trustDomainId);
     await expect(detailPage.issuerUrlInput).toHaveValue('https://linkable.example.com');
-    await expect(detailPage.usageBadge).toHaveText(/OIDC - Trusted Issuer/i);
+    expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(true);
     await expect(detailPage.keySourceSelect).toHaveText(/PEM/i);
     const shownPem = (await detailPage.pemCertTextarea.inputValue()).replace(/\r\n/g, '\n').trim();
     expect(shownPem).toBe(certificatePem.replace(/\r\n/g, '\n').trim());
@@ -235,7 +235,8 @@ test.describe('Trusted Domains CRUD', () => {
     await page.reload();
     await detailPage.waitForReady();
     await expect(detailPage.resourceServerRows).toHaveCount(1);
-    await expect(detailPage.usageBadge).toHaveText(/^Cross App Access$/);
+    expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(false);
+    expect(await detailPage.isUsageSelected('CROSS_APP_ACCESS')).toBe(true);
 
     const listPage = new TrustedDomainListPage(page);
     await listPage.navigateTo(testDomain.id);
@@ -269,12 +270,13 @@ test.describe('Trusted Domains CRUD', () => {
     await expect(detailPage.audSubMappingInput).toHaveValue('{#user.email}');
     await expect(detailPage.outboundScopeMappingRows).toHaveCount(1);
     await expect(detailPage.outboundScopeMappingRows.first()).toContainText('acme:openid');
-    await expect(detailPage.usageBadge).toHaveText(/OIDC - Trusted Issuer, Cross App Access/i);
+    expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(true);
+    expect(await detailPage.isUsageSelected('CROSS_APP_ACCESS')).toBe(true);
 
     const listPage = new TrustedDomainListPage(page);
     await listPage.navigateTo(testDomain.id);
     await expect(listPage.usageOf(0)).toHaveText(/^2 usages$/);
-    expect(await listPage.usageTooltipOf(0)).toBe('OIDC - Trusted Issuer, Cross App Access');
+    expect(await listPage.usageTooltipOf(0)).toBe('Token Exchange, Cross App Access');
   });
 
   test('a trusted domain narrowed to Cross App Access keeps its issuer and hides key material', async ({ page, testDomain }) => {
@@ -301,7 +303,6 @@ test.describe('Trusted Domains CRUD', () => {
     await expect(detailPage.issuerUrlInput).toHaveValue('https://xaa-only.example.com');
     expect(await detailPage.isUsageSelected('TOKEN_EXCHANGE')).toBe(false);
     expect(await detailPage.isUsageSelected('CROSS_APP_ACCESS')).toBe(true);
-    await expect(detailPage.usageBadge).toHaveText(/^Cross App Access$/);
 
     const listPage = new TrustedDomainListPage(page);
     await listPage.navigateTo(testDomain.id);

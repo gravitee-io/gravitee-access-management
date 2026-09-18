@@ -21,12 +21,11 @@ import { AuthService } from '../../../../services/auth.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TrustDomainService } from '../../../../services/trust-domain.service';
-import { TrustDomain, trustDomainUsagesLabel } from '../trust-domain.types';
+import { TrustDomain } from '../trust-domain.types';
 
 @Component({
   selector: 'app-trust-domain',
   templateUrl: './trust-domain.component.html',
-  styleUrls: ['./trust-domain.component.scss'],
   standalone: false,
 })
 export class TrustDomainComponent implements OnInit {
@@ -47,10 +46,6 @@ export class TrustDomainComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.data['domain'].id;
     this.trustDomain = this.route.snapshot.data['trustDomain'];
     this.editMode = this.authService.hasPermissions(['domain_trust_domain_update']);
-  }
-
-  get usagesLabel(): string {
-    return trustDomainUsagesLabel(this.trustDomain);
   }
 
   save(payload: TrustDomain): void {
