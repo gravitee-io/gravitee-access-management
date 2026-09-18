@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   slack: circleci/slack@4.10.1
-  keeper: gravitee-io/keeper@0.6.3
+  keeper: gravitee-io/keeper@0.7.1
   gh: circleci/github-cli@2.2.0
   aws-cli: circleci/aws-cli@5.4.1
   aws-s3: circleci/aws-s3@4.1.3
@@ -205,6 +205,64 @@ commands:
             export GIT_COMMIT_ID=$(git rev-parse --short HEAD)
             echo "export GIT_COMMIT=${GIT_COMMIT_ID}" >> $BASH_ENV
             exit 0
+  azure-artifacts-token:
+    description: Get a short-lived Azure Artifacts token
+    # Exposes the token in AZURE_ARTIFACTS_PAT, which the Maven settings read as ${env.AZURE_ARTIFACTS_PAT}.
+    steps:
+      - keeper/install
+      - run:
+          name: Get an Azure Artifacts token
+          command: |
+            # Read into shell variables rather than exported: they stay inside this step.
+            CLIENT_ID=$(ksm secret notation keeper://UryantA7MvZe8fkWwcUt8g/field/login)
+            CLIENT_SECRET=$(ksm secret notation keeper://UryantA7MvZe8fkWwcUt8g/field/password)
+            TENANT=$(ksm secret notation keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant)
+
+            RESPONSE=$(curl -sS --retry 3 --retry-all-errors --retry-delay 5 --max-time 30 \
+              -w '\n%{http_code}' -X POST \
+              "https://login.microsoftonline.com/${TENANT}/oauth2/v2.0/token" \
+              --data-urlencode "client_id=${CLIENT_ID}" \
+              --data-urlencode "client_secret=${CLIENT_SECRET}" \
+              --data-urlencode "scope=499b84ac-1321-427f-aa17-267ca6975798/.default" \
+              --data-urlencode "grant_type=client_credentials") || RESPONSE=""
+
+            CODE=$(printf '%s' "$RESPONSE" | tail -1)
+            BODY=$(printf '%s' "$RESPONSE" | sed '$d')
+
+            if [ "$CODE" != "200" ]; then
+              echo "Entra refused to issue a token (HTTP ${CODE:-no answer})." >&2
+              printf '%s' "$BODY" | jq -r '.error_description // empty' >&2 || true
+              echo "Same secret as purge-azure-registry: if it expired, that job is failing too." >&2
+              exit 1
+            fi
+
+            TOKEN=$(printf '%s' "$BODY" | jq -r '.access_token // empty') || TOKEN=''
+            if [ -z "$TOKEN" ]; then
+              echo "Entra answered 200 with no access_token in the body." >&2
+              exit 1
+            fi
+
+            # A JWT (base64url and dots): nothing the shell can expand.
+            echo "export AZURE_ARTIFACTS_PAT='${TOKEN}'" >> "$BASH_ENV"
+      - run:
+          name: Check the feed answers
+          # The settings declare Artifactory behind the feed, so a feed rejecting the token would be invisible:
+          # Maven falls back with a warning and the build stays green.
+          # io.gravitee.canary:feed-canary:1.0.0 exists on the feed only.
+          # Scaffolding, to be removed with Artifactory (see the Maven check in the setup job).
+          command: |
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --retry-all-errors --retry-delay 5 --max-time 30 \
+              -u "bot:${AZURE_ARTIFACTS_PAT}" \
+              "https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1/io/gravitee/canary/feed-canary/1.0.0/feed-canary-1.0.0.pom") || CODE=000
+
+            case "$CODE" in
+              200) echo "The feed resolves the canary." ;;
+              401) echo "401 - the feed rejected the token." >&2; exit 1 ;;
+              403) echo "403 - Gravitee.io Bot has no role on the feed." >&2; exit 1 ;;
+              404) echo "404 - token accepted but the canary is gone; publish it again." >&2; exit 1 ;;
+              # Anything else is the feed being unavailable, which the Artifactory fallback exists to absorb.
+              *)   echo "The feed answered HTTP ${CODE}; carrying on, Maven falls back to Artifactory." >&2 ;;
+            esac
   prepare-gpg:
     description: Prepare GPG command
     steps:
@@ -398,14 +456,43 @@ commands:
 jobs:
   setup:
     docker:
-      - image: 'cimg/base:stable'
+      - image: cimg/openjdk:25.0.3
     resource_class: small
     steps:
-      - keeper/env-export:
-          secret-url: keeper://7CgijuGiFDSLynRJt1Dm9w/custom_field/xml
-          var-name: MAVEN_SETTINGS
+      - keeper/install
       - run:
-          command: echo $MAVEN_SETTINGS > .gravitee.settings.xml
+          name: Get the Maven settings
+          # Written straight to its file, never through the environment: keeper/env-export puts the value in
+          # $BASH_ENV inside an unquoted heredoc, where ${env.AZURE_ARTIFACTS_PAT} breaks the export and leaves
+          # the remaining lines to be run as commands, printing the file, credentials included.
+          command: |
+            ksm secret notation keeper://7CgijuGiFDSLynRJt1Dm9w/custom_field/xml_azure > .gravitee.settings.xml
+
+            # An empty or truncated file would only surface later, in another job, as a 401 blamed on credentials.
+            if ! grep -q '</settings>' .gravitee.settings.xml; then
+              echo "The Maven settings read from Keeper are empty or truncated." >&2
+              exit 1
+            fi
+      - azure-artifacts-token
+      - run:
+          name: Check Maven resolves from the feed
+          # Once per pipeline, on the settings every other job attaches. dependency:get runs project-less, so its
+          # repositories come from the settings: this checks what a raw HTTPS request cannot, the <server> id
+          # matching the repository id and ${env.AZURE_ARTIFACTS_PAT} being interpolated.
+          # The plugin version is pinned: an unpinned one resolves maven-metadata.xml first.
+          #
+          # Scaffolding, to be removed with Artifactory, along with the check in azure-artifacts-token and the
+          # io.gravitee.canary:feed-canary artifact: once there is no fallback, a broken feed fails on its own.
+          command: |
+            if ! mvn -B -q -s .gravitee.settings.xml \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+              -Dartifact=io.gravitee.canary:feed-canary:1.0.0:pom; then
+              echo "Maven could not resolve the canary from the feed." >&2
+              echo "The token was accepted over HTTPS a step earlier, so what is left is the settings wiring:" >&2
+              echo 'a <server> id not matching the repository id, or ${env.AZURE_ARTIFACTS_PAT} not interpolated.' >&2
+              exit 1
+            fi
+            echo "Maven resolved io.gravitee.canary:feed-canary from the feed."
       - persist_to_workspace:
           root: .
           paths:
@@ -421,6 +508,7 @@ jobs:
           method: full
       - restore-maven-job-cache:
           jobName: build_branch
+      - azure-artifacts-token
       - run:
           name: Maven Package & deploy on artifactory
           command: |
@@ -428,6 +516,17 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
+      # Only this job publishes snapshots to the feed, not deploy-snapshot-on-nexus: both deploy the same
+      # snapshot on the same push, and an Azure feed is immutable, so the second would take a 409.
+      - azure-artifacts-token
+      - run:
+          name: Maven deploy to the Azure feed (snapshots)
+          # The command-line repositories override what the profile sets; both flags because
+          # maven-deploy-plugin reads altSnapshotDeploymentRepository first for a SNAPSHOT version.
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle deploy -DskipTests \
+              -DaltDeploymentRepository=azure-artifacts-gravitee-snapshots::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee-snapshots/maven/v1 \
+              -DaltSnapshotDeploymentRepository=azure-artifacts-gravitee-snapshots::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee-snapshots/maven/v1
       - save-maven-job-cache:
           jobName: build_branch
       - persist_to_workspace:
@@ -447,6 +546,7 @@ jobs:
           method: full
       - restore-maven-job-cache:
           jobName: build_branch_nexus
+      - azure-artifacts-token
       - run:
           name: "Maven Package and deploy to Nexus Snapshots"
           command: |
@@ -536,8 +636,178 @@ jobs:
           name: Run Management Jest tests (parallel)
           command: JEST_JUNIT_OUTPUT_NAME=junit-management.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
       - run:
+<<<<<<< HEAD
           name: Run Gateway Jest tests (sequential)
           command: JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway
+=======
+          name: Check stack health before Gateway tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+      - run:
+          name: Run Gateway Jest tests (parallel)
+          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway:parallel
+      # capture per-suite JVM/sync metrics even when the gateway suite fails
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports/metrics
+          destination: gateway-metrics
+          when: always
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_jest_tests_cloud_mongo:
+    parameters:
+      mongo_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: mongodb
+      GIO_MAX_MEM: 512m
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - azure-artifacts-token
+      - run:
+          name: Create CIBA image
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+      - run:
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up cloud stack with Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:cloud:mongo
+      - run:
+          name: Check stack health before Cloud tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+      - run:
+          name: Run Cloud Jest tests
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-cloud.xml npm --prefix gravitee-am-test run ci:cloud
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_jest_tests_cloud_psql:
+    parameters:
+      psql_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: jdbc
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - azure-artifacts-token
+      - run:
+          name: Create CIBA image
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+      - run:
+          name: Prepare JDBC plugins
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
+      - run:
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up cloud stack with Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:cloud:psql
+      - run:
+          name: Check stack health before Cloud tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+      - run:
+          name: Run Cloud Jest tests
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-cloud.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:cloud
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_jest_tests_keycloak_mongo:
+    parameters:
+      mongo_version:
+        type: string
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: mongodb
+      GIO_MAX_MEM: 512m
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - install-jdk-25
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - azure-artifacts-token
+      - run:
+          name: Create CIBA image
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
+      - run:
+          name: Build stack
+          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - run:
+          name: Spin up stack with Keycloak and Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:keycloak:mongo
+      - run:
+          name: Check stack health before Keycloak tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+            curl -fsS --retry 24 --retry-delay 5 --retry-all-errors -o /dev/null 'http://localhost:8180/realms/saml-test/protocol/saml/descriptor'
+      - run:
+          name: Run Keycloak Jest tests
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-keycloak.xml npm --prefix gravitee-am-test run ci:keycloak
+>>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
       - store_test_results:
           path: gravitee-am-test/jest-reports/junit
       - store_artifacts:
@@ -676,6 +946,7 @@ jobs:
       - run:
           name: Install test module dependencies
           command: npm --prefix postman install
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
           command: npm --prefix docker/local-stack run stack:init:ciba
@@ -710,6 +981,7 @@ jobs:
       - run:
           name: Install test module dependencies
           command: npm --prefix postman install
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
           command: npm --prefix docker/local-stack run stack:init:ciba
@@ -739,6 +1011,7 @@ jobs:
       - checkout
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_mongo
+      - azure-artifacts-token
       - run:
           name: Build
           command: |
@@ -755,6 +1028,7 @@ jobs:
       - checkout
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_redis
+      - azure-artifacts-token
       - run:
           name: Build
           command: |
@@ -775,6 +1049,7 @@ jobs:
       - checkout
       - restore-maven-job-cache:
           jobName: run_testcontainer_tests_jdbc
+      - azure-artifacts-token
       - run:
           name: Build
           command: |
@@ -811,6 +1086,7 @@ jobs:
             
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
       - create_docker_context
+      - azure-artifacts-token
       - run:
           name: Build Management API Docker Image to Azure Registry
           when: always
@@ -921,6 +1197,7 @@ jobs:
           method: full
       - restore-maven-job-cache:
           jobName: coverage_build
+      - azure-artifacts-token
       - run:
           name: Maven Verify
           command: |
@@ -1043,6 +1320,7 @@ jobs:
           key: v1-oasdiff-{{ checksum ".oasdiff-version" }}
           paths:
             - /usr/local/bin/oasdiff
+      - azure-artifacts-token
       - run:
           name: Check OAS staleness
           command: bash .circleci/scripts/oas-staleness-check.sh --also-make --maven-settings /tmp/.gravitee.settings.xml
@@ -1065,6 +1343,7 @@ jobs:
           var-name: GITHUB_TOKEN
       - restore-maven-job-cache:
           jobName: pull_requests
+      - azure-artifacts-token
       - run:
           name: Copy Maven settings
           command: mkdir -p ~/.m2 && cp /tmp/.gravitee.settings.xml ~/.m2/settings.xml
@@ -1089,6 +1368,7 @@ jobs:
       - checkout
       - restore-maven-job-cache:
           jobName: pull_requests
+      - azure-artifacts-token
       - run:
           name: "Maven verify (backend)"
           no_output_timeout: 30m
@@ -1118,6 +1398,7 @@ jobs:
             - checkout
             - restore-maven-job-cache:
                 jobName: pull_requests
+            - azure-artifacts-token
             - run:
                 name: "Maven test (ui)"
                 command: |
@@ -1135,6 +1416,7 @@ jobs:
       - restore-maven-job-cache:
           jobName: pull_requests
       - mvn_git_commit_id
+      - azure-artifacts-token
       - run:
           name: "Maven Package Install (no tests)"
           command: |
@@ -1193,6 +1475,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - prepare-gpg
+      - azure-artifacts-token
       - run:
           name: Maven Prepare Release
           command: |
@@ -1249,6 +1532,14 @@ jobs:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
+            # A fresh token: the deploy above runs the whole test suite and may outlive the first one (one hour).
+            - azure-artifacts-token
+            - run:
+                name: "Maven deploy to the Azure feed (releases)"
+                command: |
+                  mvn -s /tmp/.gravitee.settings.xml -B -P gio-artifactory-release,gio-release deploy -DskipTests \
+                    -DaltDeploymentRepository=azure-artifacts-gravitee::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1 \
+                    -DaltReleaseDeploymentRepository=azure-artifacts-gravitee::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1
       - when:
           condition: << parameters.dry_run>>
           steps:
@@ -1438,6 +1729,7 @@ jobs:
       - attach_workspace:
           at: /tmp
       - prepare-gpg
+      - azure-artifacts-token
       - run:
           name: Maven Test, Package, and Deploy to Nexus Staging
           command: |
