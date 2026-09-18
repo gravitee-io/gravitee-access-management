@@ -403,7 +403,9 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
 
   private crossAppAccessPayload(): CrossAppAccessSettings | undefined {
     if (!this.crossAppAccessEnabled) {
-      return undefined;
+      // Switching the usage off keeps the stored block, so turning it back on restores it.
+      const stored = this.trustDomain?.crossAppAccess;
+      return stored ? { ...stored, enabled: false } : undefined;
     }
     const audSubMapping = this.audSubMapping.trim();
     const scopeMappings: Record<string, string> = {};
