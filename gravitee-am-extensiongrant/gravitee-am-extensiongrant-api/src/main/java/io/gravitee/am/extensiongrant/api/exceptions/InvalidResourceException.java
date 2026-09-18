@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.extensiongrant.crossappaccess;
+package io.gravitee.am.extensiongrant.api.exceptions;
 
-import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
-import io.gravitee.am.model.UserBindingCriterion;
-import lombok.Getter;
-import lombok.Setter;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantResult;
 
-import java.util.List;
+public class InvalidResourceException extends ExtensionGrantException {
 
-@Getter
-@Setter
-public class CrossAppAccessExtensionGrantConfiguration implements ExtensionGrantConfiguration {
+    public InvalidResourceException(String msg) {
+        super(msg, null, null);
+    }
 
-    private List<UserBindingCriterion> userBindingCriteria;
+    public InvalidResourceException(String msg, ExtensionGrantResult verifiedResult) {
+        super(msg, null, verifiedResult);
+    }
 }

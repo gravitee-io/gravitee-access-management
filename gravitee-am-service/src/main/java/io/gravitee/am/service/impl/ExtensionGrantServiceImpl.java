@@ -18,7 +18,6 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
-import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
@@ -46,16 +45,16 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,10 +63,7 @@ import lombok.CustomLog;
 @Component
 @CustomLog
 public class ExtensionGrantServiceImpl implements ExtensionGrantService {
-
-    /**
-     * Logger.
-     */
+    private final static List<String> GRANTS_REQUIRE_USER_EXISTS = List.of("xaa-am-extension-grant");
 
     @Lazy
     @Autowired
@@ -125,7 +121,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
                         extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
                         extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
-                        extensionGrant.setUserExists(isCheckUserForced(newExtensionGrant.getType()) || newExtensionGrant.isUserExists());
+                        extensionGrant.setUserExists(GRANTS_REQUIRE_USER_EXISTS.contains(newExtensionGrant.getType()) || newExtensionGrant.isUserExists());
                         extensionGrant.setType(newExtensionGrant.getType());
                         extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
                         extensionGrant.setCreatedAt(new Date());
@@ -150,10 +146,6 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 })
                 .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_CREATED).extensionGrant(extensionGrant)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.EXTENSION_GRANT_CREATED).throwable(throwable)));
-    }
-
-    private static boolean isCheckUserForced(String type) {
-        return ExtensionGrantPluginType.CROSS_APP_ACCESS.equals(type);
     }
 
     @Override

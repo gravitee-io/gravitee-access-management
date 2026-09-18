@@ -18,10 +18,11 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.imp
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
-import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.extensiongrant.api.IdJagAssertions;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantAssertionTypes;
+import io.gravitee.am.extensiongrant.api.ProtectedResourceDirectory;
+import io.gravitee.am.extensiongrant.api.ProtectedResourceScopes;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
@@ -42,6 +43,7 @@ import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
@@ -66,6 +68,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,6 +77,7 @@ import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtu
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -85,6 +89,7 @@ import static org.mockito.Mockito.when;
 class ExtensionGrantManagerImplTest {
 
     private static final String JWT_BEARER_PLUGIN_TYPE = "jwtbearer-am-extension-grant";
+    private static final String CROSS_APP_ACCESS_PLUGIN_TYPE = "xaa-am-extension-grant";
 
     @InjectMocks
     private ExtensionGrantManagerImpl manager;
@@ -160,48 +165,38 @@ class ExtensionGrantManagerImplTest {
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
 
         lenient().when(domainPluginLicenseGate.check(any(), any(), any())).thenReturn(true);
-        lenient().when(jwtBearerProvider.supports(any())).thenAnswer(invocation -> !IdJagAssertions.isIdJag(invocation.getArgument(0)));
-        lenient().when(crossAppAccessProvider.supports(any())).thenAnswer(invocation -> IdJagAssertions.isIdJag(invocation.getArgument(0)));
+        lenient().when(jwtBearerProvider.supports(any())).thenAnswer(invocation -> !ExtensionGrantAssertionTypes.isIdJag(invocation.getArgument(0)));
+        lenient().when(crossAppAccessProvider.supports(any())).thenAnswer(invocation -> ExtensionGrantAssertionTypes.isIdJag(invocation.getArgument(0)));
         lenient().when(extensionGrantPluginManager.create(any())).thenAnswer(invocation ->
-                ExtensionGrantPluginType.CROSS_APP_ACCESS.equals(invocation.<ExtensionGrantProviderConfiguration>getArgument(0).getType())
+                CROSS_APP_ACCESS_PLUGIN_TYPE.equals(invocation.<ExtensionGrantProviderConfiguration>getArgument(0).getType())
                         ? crossAppAccessProvider
                         : jwtBearerProvider);
     }
 
     @Test
-    void shouldRouteIdJagToCrossAppAccessAndPlainJwtToJwtBearerWhenJwtBearerIsOlder() {
+    void shouldHandBareAuthorizationToTheOldestGrantOnlyWhenJwtBearerIsOlder() {
         givenGrants(jwtBearer("jwt-id", 1000), crossAppAccess("caa-id", 2000));
 
-        assertEquals(Set.of("caa-id"), grantsHandling(jwtBearerRequest(idJagAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(idJagAssertion())));
         assertEquals(Set.of("jwt-id"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
-    void shouldRouteIdJagToCrossAppAccessAndPlainJwtToJwtBearerWhenCrossAppAccessIsOlder() {
+    void shouldHandBareAuthorizationToTheOldestGrantOnlyWhenCrossAppAccessIsOlder() {
         givenGrants(crossAppAccess("caa-id", 1000), jwtBearer("jwt-id", 2000));
 
         assertEquals(Set.of("caa-id"), grantsHandling(jwtBearerRequest(idJagAssertion())));
-        assertEquals(Set.of("jwt-id"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
-    void shouldSelectOldestGrantOfEachFamilyRegardlessOfLoadingOrder() {
+    void shouldSelectTheOldestGrantRegardlessOfLoadingOrder() {
         givenGrants(
                 jwtBearer("jwt-new", 3000), crossAppAccess("caa-new", 4000),
                 jwtBearer("jwt-old", 2000), crossAppAccess("caa-old", 1000));
 
         assertEquals(Set.of("caa-old"), grantsHandling(jwtBearerRequest(idJagAssertion())));
-        assertEquals(Set.of("jwt-old"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
-    }
-
-    @Test
-    void shouldBreakEqualCreationDatesByExtensionGrantIdInEachFamily() {
-        givenGrants(
-                jwtBearer("jwt-b", 1000), jwtBearer("jwt-a", 1000),
-                crossAppAccess("caa-b", 1000), crossAppAccess("caa-a", 1000));
-
-        assertEquals(Set.of("caa-a"), grantsHandling(jwtBearerRequest(idJagAssertion())));
-        assertEquals(Set.of("jwt-a"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
@@ -216,69 +211,61 @@ class ExtensionGrantManagerImplTest {
     }
 
     @Test
-    void shouldRouteBareIdJagToCrossAppAccessGrantDeployedAfterJwtBearer() {
+    void shouldKeepBareAuthorizationOnTheOldestGrantWhenANewerGrantIsDeployed() {
         givenGrants(jwtBearer("jwt-id", 1000));
         ExtensionGrant crossAppAccess = crossAppAccess("caa-id", 2000);
         when(extensionGrantRepository.findById("caa-id")).thenReturn(Maybe.just(crossAppAccess));
 
         manager.onEvent(new SimpleEvent<>(ExtensionGrantEvent.DEPLOY, payload("caa-id", Action.CREATE)));
 
-        assertEquals(Set.of("caa-id"), grantsHandling(jwtBearerRequest(idJagAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(idJagAssertion())));
         assertEquals(Set.of("jwt-id"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
-    void shouldHandBareAuthorizationToNextOldestGrantWhenOldestIsUndeployed() {
-        givenGrants(
-                jwtBearer("jwt-old", 1000), jwtBearer("jwt-new", 2000),
-                crossAppAccess("caa-old", 1000), crossAppAccess("caa-new", 2000));
+    void shouldHandBareAuthorizationToTheNextOldestGrantWhenTheOldestIsUndeployed() {
+        givenGrants(jwtBearer("jwt-old", 1000), crossAppAccess("caa-id", 2000), jwtBearer("jwt-new", 3000));
 
         manager.onEvent(new SimpleEvent<>(ExtensionGrantEvent.UNDEPLOY, payload("jwt-old", Action.DELETE)));
-        manager.onEvent(new SimpleEvent<>(ExtensionGrantEvent.UNDEPLOY, payload("caa-old", Action.DELETE)));
 
-        assertEquals(Set.of("caa-new"), grantsHandling(jwtBearerRequest(idJagAssertion())));
-        assertEquals(Set.of("jwt-new"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
+        assertEquals(Set.of("caa-id"), grantsHandling(jwtBearerRequest(idJagAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
-    void shouldKeepBareAuthorizationOnOldestGrantsWhenTheyAreUpdated() {
-        givenGrants(
-                jwtBearer("jwt-old", 1000), jwtBearer("jwt-new", 2000),
-                crossAppAccess("caa-old", 1000), crossAppAccess("caa-new", 2000));
+    void shouldKeepBareAuthorizationOnTheOldestGrantWhenItIsUpdated() {
+        givenGrants(jwtBearer("jwt-old", 1000), crossAppAccess("caa-id", 2000));
         ExtensionGrant updatedJwtBearer = jwtBearer("jwt-old", 1000);
         updatedJwtBearer.setUpdatedAt(new Date(5000));
-        ExtensionGrant updatedCrossAppAccess = crossAppAccess("caa-old", 1000);
-        updatedCrossAppAccess.setUpdatedAt(new Date(5000));
         when(extensionGrantRepository.findById("jwt-old")).thenReturn(Maybe.just(updatedJwtBearer));
-        when(extensionGrantRepository.findById("caa-old")).thenReturn(Maybe.just(updatedCrossAppAccess));
 
         manager.onEvent(new SimpleEvent<>(ExtensionGrantEvent.UPDATE, payload("jwt-old", Action.UPDATE)));
-        manager.onEvent(new SimpleEvent<>(ExtensionGrantEvent.UPDATE, payload("caa-old", Action.UPDATE)));
 
-        assertEquals(Set.of("caa-old"), grantsHandling(jwtBearerRequest(idJagAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(idJagAssertion())));
         assertEquals(Set.of("jwt-old"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
-    void shouldHandBareAuthorizationToNextOldestGrantWhenOldestIsUnlicensed() {
-        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_EXTENSION_GRANT, ExtensionGrantPluginType.CROSS_APP_ACCESS, "caa-old"))
+    void shouldHandBareAuthorizationToTheNextOldestGrantWhenTheOldestIsUnlicensed() {
+        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_EXTENSION_GRANT, CROSS_APP_ACCESS_PLUGIN_TYPE, "caa-old"))
                 .thenReturn(false);
         givenGrants(crossAppAccess("caa-old", 1000), crossAppAccess("caa-new", 2000), jwtBearer("jwt-id", 3000));
 
         assertEquals(Set.of("caa-new"), grantsHandling(jwtBearerRequest(idJagAssertion())));
-        assertEquals(Set.of("jwt-id"), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
+        assertEquals(Set.of(), grantsHandling(jwtBearerRequest(plainJwtAssertion())));
     }
 
     @Test
     void shouldHandIdJagToCrossAppAccessPlugin() {
         givenGrants(jwtBearer("jwt-id", 1000), crossAppAccess("caa-id", 2000));
+        client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER, GrantType.JWT_BEARER + "~caa-id"));
         givenCrossAppAccessPluginRefuses();
 
         tokenGranter.grant(jwtBearerRequest(idJagAssertion()), client)
                 .test()
                 .assertError(error -> error instanceof InvalidGrantException && "Assertion issuer is not trusted".equals(error.getMessage()));
 
-        verify(jwtBearerProvider, never()).grant(any());
+        verify(jwtBearerProvider, never()).grant(any(), any());
     }
 
     @Test
@@ -300,15 +287,32 @@ class ExtensionGrantManagerImplTest {
     }
 
     @Test
+    void shouldGivePluginsTheDomainProtectedResourcesAndScopes() {
+        givenGrants(crossAppAccess("caa-id", 1000));
+        ProtectedResource protectedResource = new ProtectedResource();
+        when(protectedResourceManager.getByIdentifier("https://mcp.example.com/calendar")).thenReturn(Set.of(protectedResource));
+        when(protectedResourceManager.getByIdentifier("https://mcp.example.com/mail")).thenReturn(Set.of());
+        when(protectedResourceManager.getScopesForResources(Set.of("https://mcp.example.com/calendar"))).thenReturn(Set.of("calendar", "calendar.read"));
+        when(scopeManager.isParameterizedScope("calendar")).thenReturn(true);
+        when(scopeManager.isParameterizedScope("calendar.read")).thenReturn(false);
+
+        ProtectedResourceDirectory directory = protectedResourceDirectory();
+
+        assertEquals(Optional.of(new ProtectedResourceScopes(Set.of("calendar", "calendar.read"), Set.of("calendar"))),
+                directory.findByIdentifier("https://mcp.example.com/calendar"));
+        assertTrue(directory.findByIdentifier("https://mcp.example.com/mail").isEmpty());
+    }
+
+    @Test
     void shouldHandPlainJwtToJwtBearerPlugin() {
         givenGrants(jwtBearer("jwt-id", 1000), crossAppAccess("caa-id", 2000));
-        when(jwtBearerProvider.grant(any())).thenReturn(Maybe.error(new InvalidGrantException("refused by jwt-bearer")));
+        when(jwtBearerProvider.grant(any(), any())).thenReturn(Maybe.error(new InvalidGrantException("refused by jwt-bearer")));
 
         tokenGranter.grant(jwtBearerRequest(plainJwtAssertion()), client)
                 .test()
                 .assertError(error -> error instanceof InvalidGrantException && "refused by jwt-bearer".equals(error.getMessage()));
 
-        verify(crossAppAccessProvider, never()).resolveEndUser(any());
+        verify(crossAppAccessProvider, never()).grant(any(), any());
     }
 
     @Test
@@ -320,13 +324,13 @@ class ExtensionGrantManagerImplTest {
                 .test()
                 .assertError(UnsupportedGrantTypeException.class);
 
-        verify(jwtBearerProvider, never()).grant(any());
-        verify(crossAppAccessProvider, never()).resolveEndUser(any());
+        verify(jwtBearerProvider, never()).grant(any(), any());
+        verify(crossAppAccessProvider, never()).grant(any(), any());
     }
 
     @Test
     void shouldGateCrossAppAccessGrantByPluginTypeLikeAnyOtherGrant() {
-        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_EXTENSION_GRANT, ExtensionGrantPluginType.CROSS_APP_ACCESS, "caa-id"))
+        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_EXTENSION_GRANT, CROSS_APP_ACCESS_PLUGIN_TYPE, "caa-id"))
                 .thenReturn(false);
         givenGrants(crossAppAccess("caa-id", 1000));
 
@@ -334,19 +338,27 @@ class ExtensionGrantManagerImplTest {
                 .test()
                 .assertError(UnsupportedGrantTypeException.class);
 
-        verify(domainPluginLicenseGate).check(PluginLicenseGate.TYPE_EXTENSION_GRANT, ExtensionGrantPluginType.CROSS_APP_ACCESS, "caa-id");
+        verify(domainPluginLicenseGate).check(PluginLicenseGate.TYPE_EXTENSION_GRANT, CROSS_APP_ACCESS_PLUGIN_TYPE, "caa-id");
         verifyNoInteractions(extensionGrantPluginManager);
     }
 
     private void givenCrossAppAccessPluginRefuses() {
-        when(crossAppAccessProvider.resolveEndUser(any()))
+        when(crossAppAccessProvider.grant(any(), any()))
                 .thenReturn(Maybe.error(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException("Assertion issuer is not trusted")));
     }
 
     private TrustedIssuerResolver trustedIssuerResolver() {
+        return providerConfiguration().getTrustedIssuerResolver();
+    }
+
+    private ProtectedResourceDirectory protectedResourceDirectory() {
+        return providerConfiguration().getProtectedResourceDirectory();
+    }
+
+    private ExtensionGrantProviderConfiguration providerConfiguration() {
         ArgumentCaptor<ExtensionGrantProviderConfiguration> configuration = ArgumentCaptor.forClass(ExtensionGrantProviderConfiguration.class);
         verify(extensionGrantPluginManager).create(configuration.capture());
-        return configuration.getValue().getTrustedIssuerResolver();
+        return configuration.getValue();
     }
 
     private void givenGrants(ExtensionGrant... grants) {
@@ -372,7 +384,7 @@ class ExtensionGrantManagerImplTest {
     }
 
     private static ExtensionGrant crossAppAccess(String id, long createdAt) {
-        return grant(id, ExtensionGrantPluginType.CROSS_APP_ACCESS, createdAt);
+        return grant(id, CROSS_APP_ACCESS_PLUGIN_TYPE, createdAt);
     }
 
     private static ExtensionGrant grant(String id, String type, long createdAt) {

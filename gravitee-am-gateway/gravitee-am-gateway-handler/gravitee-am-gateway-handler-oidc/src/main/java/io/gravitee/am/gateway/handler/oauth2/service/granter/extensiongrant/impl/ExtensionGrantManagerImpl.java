@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.imp
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
 import io.gravitee.am.common.event.Type;
-import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -29,7 +28,6 @@ import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
-import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.CrossAppAccessGrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ExtensionGrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -58,11 +56,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 import lombok.CustomLog;
 
 /**
@@ -72,8 +70,6 @@ import lombok.CustomLog;
 @CustomLog
 public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
-    private static final Comparator<ExtensionGrant> CREATION_ORDER =
-            Comparator.comparing(ExtensionGrant::getCreatedAt).thenComparing(ExtensionGrant::getId);
 
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private final ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
@@ -192,19 +188,11 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     }
 
     private synchronized void electOldestExtensionGrants() {
-        Map<Boolean, String> oldestIdByCrossAppAccess = extensionGrants.values().stream()
-                .collect(Collectors.partitioningBy(ExtensionGrantManagerImpl::isCrossAppAccess,
-                        Collectors.collectingAndThen(Collectors.minBy(CREATION_ORDER), oldest -> oldest.map(ExtensionGrant::getId).orElse(null))));
-        extensionGrants.values().forEach(extensionGrant -> {
-            var strategy = extensionGrantStrategies.get(extensionGrant.getId());
-            if (strategy != null) {
-                strategy.setOldestExtensionGrantId(oldestIdByCrossAppAccess.get(isCrossAppAccess(extensionGrant)));
-            }
-        });
-    }
-
-    private static boolean isCrossAppAccess(ExtensionGrant extensionGrant) {
-        return ExtensionGrantPluginType.CROSS_APP_ACCESS.equals(extensionGrant.getType());
+        Date minDate = extensionGrants.values().stream()
+                .map(ExtensionGrant::getCreatedAt)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+        extensionGrantStrategies.values().forEach(strategy -> strategy.setMinDate(minDate));
     }
 
     private Completable updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
@@ -232,7 +220,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
         return authProviderSingle
                 .flatMapCompletable(optProvider -> Completable.fromAction(() -> {
-                    var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, optProvider.orElse(null), identityProviderManager);
+                    var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, optProvider.orElse(null), identityProviderManager,
+                            new DomainProtectedResourceDirectory(protectedResourceManager, scopeManager));
                     var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
                     var extensionGrantStrategy = buildStrategy(extensionGrant, extensionGrantProvider);
                     extensionGrants.put(extensionGrant.getId(), extensionGrant);
@@ -255,9 +244,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     private ExtensionGrantStrategy buildStrategy(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
         var domainSubjectManager = domain.getVersion() == DomainVersion.V1_0 ? null : subjectManager;
-        return isCrossAppAccess(extensionGrant)
-                ? new CrossAppAccessGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain, openIDDiscoveryService, protectedResourceManager, scopeManager)
-                : new ExtensionGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain);
+        return new ExtensionGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain, openIDDiscoveryService);
     }
 
     /**

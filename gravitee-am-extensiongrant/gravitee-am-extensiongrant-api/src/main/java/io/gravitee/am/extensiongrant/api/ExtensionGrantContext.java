@@ -13,25 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.extensiongrant.api.exceptions;
+package io.gravitee.am.extensiongrant.api;
 
-import io.gravitee.am.extensiongrant.api.ExtensionGrantResult;
+import java.util.Set;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class InvalidGrantException extends ExtensionGrantException {
+public record ExtensionGrantContext(String localDomainIssuer, Set<String> requestedResources, Set<String> applicationScopes) {
 
-    public InvalidGrantException(String msg, Throwable t) {
-        super(msg, t, null);
-    }
-
-    public InvalidGrantException(String msg) {
-        super(msg, null, null);
-    }
-
-    public InvalidGrantException(String msg, ExtensionGrantResult verifiedResult) {
-        super(msg, null, verifiedResult);
+    public ExtensionGrantContext {
+        requestedResources = requestedResources == null ? Set.of() : Set.copyOf(requestedResources);
+        applicationScopes = applicationScopes == null ? Set.of() : Set.copyOf(applicationScopes);
     }
 }

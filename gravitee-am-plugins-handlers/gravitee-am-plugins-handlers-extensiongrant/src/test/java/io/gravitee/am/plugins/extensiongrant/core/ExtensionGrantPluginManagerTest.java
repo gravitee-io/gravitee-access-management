@@ -18,6 +18,7 @@ package io.gravitee.am.plugins.extensiongrant.core;
 import io.gravitee.am.extensiongrant.api.ExtensionGrant;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.ProtectedResourceDirectory;
 import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
@@ -55,6 +56,9 @@ class ExtensionGrantPluginManagerTest {
     @Mock
     private TrustedIssuerResolver trustedIssuerResolver;
 
+    @Mock
+    private ProtectedResourceDirectory protectedResourceDirectory;
+
     private CapturingExtensionGrantPluginManager pluginManager;
 
     @BeforeEach
@@ -66,17 +70,16 @@ class ExtensionGrantPluginManagerTest {
 
     @Test
     void shouldExposeSuppliedTrustedIssuerResolverToPluginContext() {
-        pluginManager.create(new ExtensionGrantProviderConfiguration(grant(), null, trustedIssuerResolver));
+        pluginManager.create(new ExtensionGrantProviderConfiguration(grant(), null, trustedIssuerResolver, protectedResourceDirectory));
 
         assertSame(trustedIssuerResolver, pluginManager.pluginBeanFactory().getBean("trustedIssuerResolver"));
     }
 
     @Test
-    void shouldExposeResolverFindingNothingWhenNoneSupplied() {
-        pluginManager.create(new ExtensionGrantProviderConfiguration(grant(), null, null));
+    void shouldExposeSuppliedProtectedResourceDirectoryToPluginContext() {
+        pluginManager.create(new ExtensionGrantProviderConfiguration(grant(), null, trustedIssuerResolver, protectedResourceDirectory));
 
-        TrustedIssuerResolver resolver = pluginManager.pluginBeanFactory().getBean("trustedIssuerResolver", TrustedIssuerResolver.class);
-        resolver.resolve("https://idp.example.com").test().assertComplete().assertNoValues();
+        assertSame(protectedResourceDirectory, pluginManager.pluginBeanFactory().getBean("protectedResourceDirectory"));
     }
 
     private static io.gravitee.am.model.ExtensionGrant grant() {

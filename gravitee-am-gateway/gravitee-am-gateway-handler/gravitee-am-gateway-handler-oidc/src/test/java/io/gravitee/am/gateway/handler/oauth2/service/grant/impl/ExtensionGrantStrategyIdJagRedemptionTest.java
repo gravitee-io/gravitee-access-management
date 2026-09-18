@@ -24,13 +24,13 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantContext;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.extensiongrant.api.ResolvedEndUser;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantResult;
+import io.gravitee.am.extensiongrant.api.GrantedUserBindingCriterion;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
@@ -55,9 +55,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -103,7 +101,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CrossAppAccessGrantStrategyTest {
+class ExtensionGrantStrategyIdJagRedemptionTest {
 
     private static final String ORIGIN = "https://gateway.example.com";
     private static final String DOMAIN_ISSUER = "https://gateway.example.com/domain-b/oidc";
@@ -111,6 +109,7 @@ class CrossAppAccessGrantStrategyTest {
     private static final String IDENTITY_PROVIDER = "idp-id";
     private static final String MCP_SERVER = "https://mcp.example.com/calendar";
     private static final String OTHER_MCP_SERVER = "https://mcp.example.com/mail";
+    private static final Set<String> APPLICATION_SCOPES = Set.of("calendar.read", "calendar.write");
 
     @Mock
     private ExtensionGrantProvider extensionGrantProvider;
@@ -149,7 +148,7 @@ class CrossAppAccessGrantStrategyTest {
 
     private ListAppender<ILoggingEvent> capturedLogs;
 
-    private CrossAppAccessGrantStrategy strategy;
+    private ExtensionGrantStrategy strategy;
     private ExtensionGrant extensionGrant;
     private Domain domain;
     private Client client;
@@ -158,7 +157,7 @@ class CrossAppAccessGrantStrategyTest {
     void setUp() {
         extensionGrant = new ExtensionGrant();
         extensionGrant.setId("caa-id");
-        extensionGrant.setType(ExtensionGrantPluginType.CROSS_APP_ACCESS);
+        extensionGrant.setType("xaa-am-extension-grant");
         extensionGrant.setGrantType(GrantType.JWT_BEARER);
         extensionGrant.setCreatedAt(new Date(2000));
 
@@ -170,7 +169,7 @@ class CrossAppAccessGrantStrategyTest {
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER + "~caa-id"));
         client.setScopeSettings(List.of(new ApplicationScopeSettings("calendar.read"), new ApplicationScopeSettings("calendar.write")));
 
-        strategy = new CrossAppAccessGrantStrategy(
+        strategy = new ExtensionGrantStrategy(
                 extensionGrantProvider,
                 extensionGrant,
                 userAuthenticationManager,
@@ -178,9 +177,7 @@ class CrossAppAccessGrantStrategyTest {
                 userService,
                 null,
                 domain,
-                openIDDiscoveryService,
-                protectedResourceManager,
-                scopeManager);
+                openIDDiscoveryService);
     }
 
     @AfterEach
@@ -194,21 +191,21 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldSupportIdJagRequestWhenClientAuthorizesSuffixedGrantTypeOfNewerGrant() {
         pluginAcceptsAssertion();
-        strategy.setOldestExtensionGrantId("older-caa-id");
+        strategy.setMinDate(new Date(1000));
         assertTrue(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
     }
 
     @Test
-    void shouldSupportIdJagRequestWhenClientAuthorizesBareGrantTypeAndGrantIsOldestCrossAppAccessGrant() {
+    void shouldSupportIdJagRequestWhenClientAuthorizesBareGrantTypeAndGrantIsOldest() {
         pluginAcceptsAssertion();
-        strategy.setOldestExtensionGrantId("caa-id");
+        strategy.setMinDate(extensionGrant.getCreatedAt());
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
         assertTrue(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
     }
 
     @Test
-    void shouldNotSupportBareGrantTypeWhenAnotherCrossAppAccessGrantIsOldest() {
-        strategy.setOldestExtensionGrantId("older-caa-id");
+    void shouldNotSupportBareGrantTypeWhenAnotherGrantIsOldest() {
+        strategy.setMinDate(new Date(1000));
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER));
         assertFalse(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
     }
@@ -245,12 +242,6 @@ class CrossAppAccessGrantStrategyTest {
         assertFalse(strategy.supports(jwtBearerRequest(idJagAssertion()), client, domain));
     }
 
-    @Test
-    void shouldNotSupportGrantTypeAlone() {
-        strategy.setOldestExtensionGrantId("caa-id");
-        assertFalse(strategy.supports(GrantType.JWT_BEARER, client, domain));
-    }
-
     private void pluginAcceptsAssertion() {
         when(extensionGrantProvider.supports(any())).thenReturn(true);
     }
@@ -258,129 +249,16 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRedeemVerifiedAssertionForTheAssertionSubjectInTransientMode() {
         String assertion = idJagAssertion();
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(assertion), client, domain).blockingGet();
 
         assertEquals("alice", creationRequest.resourceOwner().getId());
         assertEquals("client-id", creationRequest.clientId());
-        verify(extensionGrantProvider).resolveEndUser(argThat(pluginRequest ->
+        verify(extensionGrantProvider).grant(argThat(pluginRequest ->
                 assertion.equals(pluginRequest.getRequestParameters().get(Parameters.ASSERTION))
-                        && "client-id".equals(pluginRequest.getClientId())));
-        verify(extensionGrantProvider, never()).grant(any());
+                        && "client-id".equals(pluginRequest.getClientId())), eq(new ExtensionGrantContext(DOMAIN_ISSUER, Set.of(), APPLICATION_SCOPES)));
         verifyNoInteractions(userAuthenticationManager, identityProviderManager, userService);
-    }
-
-    @Test
-    void shouldAcceptAssertionIssuedByAnotherDomainOnTheSameGateway() {
-        givenRedeemableAssertion(verifiedClaims());
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertNoErrors();
-    }
-
-    @Test
-    void shouldRefuseAssertionIssuedByThisDomainForTheRequestOrigin() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.ISS, DOMAIN_ISSUER);
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion was issued by this domain"));
-
-        verifyNoInteractions(userAuthenticationManager, identityProviderManager, userService);
-    }
-
-    @Test
-    void shouldRefuseAssertionWhoseAudienceArrayOmitsTheDomainIssuer() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.AUD, List.of("https://other-as.example.com", ENTERPRISE_ISSUER));
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion audience does not include this domain"));
-    }
-
-    @Test
-    void shouldRefuseAssertionWhoseAudienceStringIsAnotherIssuer() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.AUD, "https://other-as.example.com");
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion audience does not include this domain"));
-    }
-
-    @Test
-    void shouldRefuseAssertionWithoutAudience() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.remove(Claims.AUD);
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion audience does not include this domain"));
-    }
-
-    @Test
-    void shouldAcceptAudienceStringEqualToTheDomainIssuer() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.AUD, DOMAIN_ISSUER);
-        givenRedeemableAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertNoErrors();
-    }
-
-    @Test
-    void shouldAcceptAudienceArrayContainingTheDomainIssuer() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.AUD, List.of("https://other-as.example.com", DOMAIN_ISSUER));
-        givenRedeemableAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertNoErrors();
-    }
-
-    @Test
-    void shouldRefuseAssertionMintedForAnotherClient() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.CLIENT_ID, "other-agent");
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion client_id does not match the authenticated client"));
-
-        verifyNoInteractions(userAuthenticationManager, identityProviderManager, userService);
-    }
-
-    @Test
-    void shouldRefuseAssertionWithoutClientId() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.remove(Claims.CLIENT_ID);
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion client_id does not match the authenticated client"));
-    }
-
-    @Test
-    void shouldRefuseAssertionWithNonStringClientId() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.CLIENT_ID, 42L);
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion client_id does not match the authenticated client"));
     }
 
     @Test
@@ -388,7 +266,7 @@ class CrossAppAccessGrantStrategyTest {
         String assertion = idJagAssertion();
         Map<String, Object> claims = verifiedClaims();
         claims.put(Claims.CLIENT_ID, "other-agent");
-        givenVerifiedAssertion(claims);
+        givenPluginRefusesAfterVerification(claims, "Assertion client_id does not match the authenticated client");
         ListAppender<ILoggingEvent> logs = captureLogs();
 
         strategy.process(redemptionRequest(assertion), client, domain).test().assertError(InvalidGrantException.class);
@@ -398,48 +276,13 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldCompareAssertionClientIdWithTheResolvedPublicClient() {
-        client.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
-        givenRedeemableAssertion(verifiedClaims());
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertNoErrors();
-    }
-
-    @Test
-    void shouldReportTheFirstFailingCheckInRedemptionOrder() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.AUD, "https://other-as.example.com");
-        claims.put(Claims.CLIENT_ID, "other-agent");
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion audience does not include this domain"));
-    }
-
-    @Test
-    void shouldReportSelfIssuedAssertionBeforeAudienceAndClientChecks() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.ISS, DOMAIN_ISSUER);
-        claims.put(Claims.AUD, "https://other-as.example.com");
-        claims.put(Claims.CLIENT_ID, "other-agent");
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(refusal("Assertion was issued by this domain"));
-    }
-
-    @Test
     void shouldBindLocalUserByExternalIdSubjectAndResolvedIdentityProviderInCheckUserMode() {
         extensionGrant.setUserExists(true);
         User localUser = new User();
         localUser.setId("local-user-id");
         localUser.setExternalId("alice");
         localUser.setSource(IDENTITY_PROVIDER);
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -453,12 +296,11 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         User localUser = new User();
         localUser.setId("local-user-id");
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read"));
         when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
         DefaultUser projectedEndUser = new DefaultUser("mallory");
         projectedEndUser.setId("mallory");
-        when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(projectedEndUser, IDENTITY_PROVIDER, verifiedClaims(), List.of())));
+        when(extensionGrantProvider.grant(any(), any()))
+                .thenReturn(Maybe.just(new ExtensionGrantResult(projectedEndUser, IDENTITY_PROVIDER, verifiedClaims(), List.of(), MCP_SERVER, Set.of("calendar.read"))));
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -469,7 +311,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRefuseWhenNoLocalUserMatchesTheAssertionSubjectInCheckUserMode() {
         extensionGrant.setUserExists(true);
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.empty());
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
@@ -484,10 +326,9 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.remove(Claims.SUB);
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read"));
         when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
-        when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(new DefaultUser("alice"), IDENTITY_PROVIDER, claims, List.of())));
+        when(extensionGrantProvider.grant(any(), any()))
+                .thenReturn(Maybe.just(new ExtensionGrantResult(new DefaultUser("alice"), IDENTITY_PROVIDER, claims, List.of(), MCP_SERVER, Set.of("calendar.read"))));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -501,7 +342,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "alice@example.com");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
         User localUser = localUser("local-user-id");
         givenUsersMatchingTheBindingFilter(localUser);
         when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
@@ -519,7 +360,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put("aud_sub", "alice-at-domain-b");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("userName", "{#token['aud_sub']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("userName", "{#token['aud_sub']}")));
         User localUser = localUser("local-user-id");
         givenUsersMatchingTheBindingFilter(localUser);
         when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
@@ -535,7 +376,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "alice@example.com");
-        givenRedeemableAssertion(claims, List.of(
+        givenVerifiedAssertion(claims, List.of(
                 bindingCriterion("emails.value", "{#token['email']}"),
                 bindingCriterion("userName", "{#token['sub']}")));
         User localUser = localUser("local-user-id");
@@ -555,7 +396,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "alice@example.com");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
         User localUser = localUser("local-user-id");
         givenUsersMatchingTheBindingFilter(localUser);
         when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
@@ -570,7 +411,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "alice@example.com");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
         givenUsersMatchingTheBindingFilter();
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
@@ -585,7 +426,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "alice@example.com");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
         givenUsersMatchingTheBindingFilter(localUser("alice-1"), localUser("alice-2"));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
@@ -598,7 +439,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRefuseMalformedBindingExpressionWithoutLookingUpUsers() {
         extensionGrant.setUserExists(true);
-        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email'}")));
+        givenVerifiedAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email'}")));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -610,7 +451,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRefuseBindingExpressionThatFailsToEvaluateWithoutLookingUpUsers() {
         extensionGrant.setUserExists(true);
-        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email'].toLowerCase()}")));
+        givenVerifiedAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email'].toLowerCase()}")));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -622,7 +463,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRefuseBindingExpressionEvaluatingToNothingWithoutLookingUpUsers() {
         extensionGrant.setUserExists(true);
-        givenRedeemableAssertion(verifiedClaims(), List.of(
+        givenVerifiedAssertion(verifiedClaims(), List.of(
                 bindingCriterion("userName", "{#token['sub']}"),
                 bindingCriterion("emails.value", "{#token['email']}")));
 
@@ -638,7 +479,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setUserExists(true);
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "  ");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -650,7 +491,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRefuseBindingRulesWithoutAnyUsableRuleWithoutLookingUpUsers() {
         extensionGrant.setUserExists(true);
-        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion(" ", "{#token['sub']}"), bindingCriterion("userName", "")));
+        givenVerifiedAssertion(verifiedClaims(), List.of(bindingCriterion(" ", "{#token['sub']}"), bindingCriterion("userName", "")));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -662,10 +503,9 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldBindByExternalIdSubjectAndResolvedIdentityProviderWhenBindingCriteriaAreAbsent() {
         extensionGrant.setUserExists(true);
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read"));
         when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
-        when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(new DefaultUser("alice"), IDENTITY_PROVIDER, verifiedClaims(), null)));
+        when(extensionGrantProvider.grant(any(), any()))
+                .thenReturn(Maybe.just(new ExtensionGrantResult(new DefaultUser("alice"), IDENTITY_PROVIDER, verifiedClaims(), null, MCP_SERVER, Set.of("calendar.read"))));
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser("local-user-id")));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -677,7 +517,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldIgnoreBindingRulesInCreateUserMode() {
         extensionGrant.setCreateUser(true);
-        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email']}")));
         when(userAuthenticationManager.connect(any(), any(), eq(false))).thenReturn(Single.just(localUser("local-user-id")));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -688,7 +528,7 @@ class CrossAppAccessGrantStrategyTest {
 
     @Test
     void shouldIgnoreBindingRulesInTransientMode() {
-        givenRedeemableAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(verifiedClaims(), List.of(bindingCriterion("emails.value", "{#token['email']}")));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
 
@@ -701,7 +541,7 @@ class CrossAppAccessGrantStrategyTest {
         extensionGrant.setCreateUser(true);
         User connectedUser = new User();
         connectedUser.setId("local-user-id");
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
         when(userAuthenticationManager.connect(any(), any(), eq(false))).thenReturn(Single.just(connectedUser));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -717,7 +557,7 @@ class CrossAppAccessGrantStrategyTest {
 
     @Test
     void shouldCarryTheAssertionSubjectWithoutAssertionClaimsInTransientMode() {
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
 
         User resourceOwner = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet().resourceOwner();
 
@@ -731,7 +571,8 @@ class CrossAppAccessGrantStrategyTest {
         client.setAuthorizedGrantTypes(List.of(GrantType.JWT_BEARER + "~caa-id", GrantType.REFRESH_TOKEN));
         User localUser = new User();
         localUser.setId("local-user-id");
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
+        when(extensionGrantProvider.supportsRefreshToken()).thenReturn(false);
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser));
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
@@ -742,7 +583,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldProjectVerifiedAssertionContextIntoExtensionGrantDataOnSuccess() {
         TokenRequest request = redemptionRequest(idJagAssertion());
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
 
         TokenCreationRequest creationRequest = strategy.process(request, client, domain).blockingGet();
 
@@ -756,7 +597,7 @@ class CrossAppAccessGrantStrategyTest {
     void shouldRecordSubjectBindingAndTheBoundUserOnTheAssertionContext() {
         extensionGrant.setUserExists(true);
         TokenRequest request = redemptionRequest(idJagAssertion());
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.just(localUser("local-user-id")));
 
         strategy.process(request, client, domain).blockingGet();
@@ -771,7 +612,7 @@ class CrossAppAccessGrantStrategyTest {
         TokenRequest request = redemptionRequest(idJagAssertion());
         Map<String, Object> claims = verifiedClaims();
         claims.put(StandardClaims.EMAIL, "alice@example.com");
-        givenRedeemableAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
+        givenVerifiedAssertion(claims, List.of(bindingCriterion("emails.value", "{#token['email']}")));
         User localUser = localUser("local-user-id");
         givenUsersMatchingTheBindingFilter(localUser);
         when(userService.enhance(localUser)).thenReturn(Single.just(localUser));
@@ -786,7 +627,7 @@ class CrossAppAccessGrantStrategyTest {
     void shouldRecordCreateUserBindingAndTheConnectedUserOnTheAssertionContext() {
         extensionGrant.setCreateUser(true);
         TokenRequest request = redemptionRequest(idJagAssertion());
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
         when(userAuthenticationManager.connect(any(), any(), eq(false))).thenReturn(Single.just(localUser("local-user-id")));
 
         strategy.process(request, client, domain).blockingGet();
@@ -799,7 +640,7 @@ class CrossAppAccessGrantStrategyTest {
     void shouldRecordTheBindingModeWithoutABoundUserWhenBindingRefuses() {
         extensionGrant.setUserExists(true);
         TokenRequest request = redemptionRequest(idJagAssertion());
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
         when(userService.findByExternalIdAndSource("alice", IDENTITY_PROVIDER)).thenReturn(Maybe.empty());
 
         strategy.process(request, client, domain).test().assertError(refusal("No user matches the assertion subject"));
@@ -811,7 +652,9 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldHandTheAssertionContextToTokenCreation() {
         TokenRequest request = redemptionRequest(idJagAssertion());
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
+
+        givenResourceToolScopes(MCP_SERVER, Set.of("calendar.read"));
 
         OAuth2Request accessTokenRequest = accessTokenRequestIssuedFor(request);
 
@@ -825,7 +668,7 @@ class CrossAppAccessGrantStrategyTest {
         TokenRequest request = redemptionRequest(assertion);
         Map<String, Object> claims = verifiedClaims();
         claims.put(Claims.CLIENT_ID, "other-agent");
-        givenVerifiedAssertion(claims);
+        givenPluginRefusesAfterVerification(claims, "Assertion client_id does not match the authenticated client");
         pluginAcceptsAssertion();
         ListAppender<ILoggingEvent> logs = captureLogs();
 
@@ -849,7 +692,7 @@ class CrossAppAccessGrantStrategyTest {
         TokenRequest request = redemptionRequest(assertion);
         request.setScopes(Set.of("calendar.read"));
         request.setResources(Set.of(MCP_SERVER));
-        when(extensionGrantProvider.resolveEndUser(any()))
+        when(extensionGrantProvider.grant(any(), any()))
                 .thenReturn(Maybe.error(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException("Assertion cannot be parsed")));
         pluginAcceptsAssertion();
         ListAppender<ILoggingEvent> logs = captureLogs();
@@ -862,11 +705,11 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldKeepVerifiedAssertionContextOnTheRequestWhenAGatewayCheckRefuses() {
+    void shouldKeepVerifiedAssertionContextOnTheRequestWhenThePluginRefusesAfterVerification() {
         TokenRequest request = redemptionRequest(idJagAssertion());
         Map<String, Object> claims = verifiedClaims();
         claims.put(Claims.CLIENT_ID, "other-agent");
-        givenVerifiedAssertion(claims);
+        givenPluginRefusesAfterVerification(claims, "Assertion client_id does not match the authenticated client");
 
         strategy.process(request, client, domain).test().assertError(InvalidGrantException.class);
 
@@ -876,7 +719,7 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldLeaveAnEmptyAssertionContextWhenThePluginRefuses() {
         TokenRequest request = redemptionRequest(idJagAssertion());
-        when(extensionGrantProvider.resolveEndUser(any()))
+        when(extensionGrantProvider.grant(any(), any()))
                 .thenReturn(Maybe.error(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException("Assertion verification failed")));
 
         strategy.process(request, client, domain).test().assertError(InvalidGrantException.class);
@@ -886,7 +729,7 @@ class CrossAppAccessGrantStrategyTest {
 
     @Test
     void shouldPropagatePluginRefusalAsInvalidGrantKeepingItsDescription() {
-        when(extensionGrantProvider.resolveEndUser(any()))
+        when(extensionGrantProvider.grant(any(), any()))
                 .thenReturn(Maybe.error(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException("Assertion issuer is not trusted")));
 
         strategy.process(jwtBearerRequest(idJagAssertion()), client, domain)
@@ -896,7 +739,7 @@ class CrossAppAccessGrantStrategyTest {
 
     @Test
     void shouldRefuseWhenPluginResolvesNoEndUser() {
-        when(extensionGrantProvider.resolveEndUser(any())).thenReturn(Maybe.empty());
+        when(extensionGrantProvider.grant(any(), any())).thenReturn(Maybe.empty());
 
         strategy.process(jwtBearerRequest(idJagAssertion()), client, domain)
                 .test()
@@ -907,7 +750,7 @@ class CrossAppAccessGrantStrategyTest {
 
     @Test
     void shouldTargetTheResourceNamedByTheAssertion() {
-        givenRedeemableAssertion(verifiedClaims());
+        givenVerifiedAssertion(verifiedClaims());
 
         TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
 
@@ -915,103 +758,51 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldTargetTheRequestedResourceWhenTheAssertionNamesNone() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.remove(Parameters.RESOURCE);
-        givenRedeemableAssertion(claims);
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setResources(Set.of(MCP_SERVER));
-
-        TokenCreationRequest creationRequest = strategy.process(request, client, domain).blockingGet();
-
-        assertEquals(Set.of(MCP_SERVER), creationRequest.resources());
-    }
-
-    @Test
-    void shouldAcceptRequestedResourceEqualToTheAssertionResource() {
-        givenRedeemableAssertion(verifiedClaims());
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setResources(Set.of(MCP_SERVER));
-
-        TokenCreationRequest creationRequest = strategy.process(request, client, domain).blockingGet();
-
-        assertEquals(Set.of(MCP_SERVER), creationRequest.resources());
-    }
-
-    @Test
-    void shouldRefuseWhenNeitherTheAssertionNorTheRequestNamesAResource() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.remove(Parameters.RESOURCE);
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidTarget("Neither the assertion nor the request names a resource"));
-    }
-
-    @Test
-    void shouldRefuseWhenTheRequestedResourceDiffersFromTheAssertionResource() {
-        givenVerifiedAssertion(verifiedClaims());
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setResources(Set.of(OTHER_MCP_SERVER));
-
-        strategy.process(request, client, domain)
-                .test()
-                .assertError(invalidTarget("Requested resource does not match the assertion resource"));
-
-        verify(protectedResourceManager, never()).getByIdentifier(any());
-    }
-
-    @Test
-    void shouldRefuseWhenTheRequestNamesSeveralResources() {
+    void shouldHandThePluginTheRequestedResources() {
         givenVerifiedAssertion(verifiedClaims());
         TokenRequest request = redemptionRequest(idJagAssertion());
         request.setResources(Set.of(MCP_SERVER, OTHER_MCP_SERVER));
 
+        strategy.process(request, client, domain).test().assertNoErrors();
+
+        verify(extensionGrantProvider).grant(any(), eq(new ExtensionGrantContext(DOMAIN_ISSUER, Set.of(MCP_SERVER, OTHER_MCP_SERVER), APPLICATION_SCOPES)));
+    }
+
+    @Test
+    void shouldReportPluginResourceRefusalAsInvalidTargetKeepingTheVerifiedContext() {
+        TokenRequest request = redemptionRequest(idJagAssertion());
+        when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
+        when(extensionGrantProvider.grant(any(), any())).thenReturn(Maybe.error(
+                new io.gravitee.am.extensiongrant.api.exceptions.InvalidResourceException("Request must name a single resource", refusedResult(verifiedClaims(), null))));
+
         strategy.process(request, client, domain)
                 .test()
                 .assertError(invalidTarget("Request must name a single resource"));
+
+        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id", null, null, null, null), request.getIdJagAssertionContext());
+        verifyNoInteractions(protectedResourceManager);
     }
 
     @Test
-    void shouldRefuseAssertionResourceThatIsNotASingleIdentifier() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Parameters.RESOURCE, List.of(MCP_SERVER));
-        givenVerifiedAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidTarget("Assertion resource must be a single resource identifier"));
-    }
-
-    @Test
-    void shouldRefuseResourceThatIsNotAProtectedResourceOfThisDomain() {
-        givenVerifiedAssertion(verifiedClaims());
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidTarget("Resource is not a protected resource of this domain"));
-    }
-
-    @Test
-    void shouldRefuseRequestedResourceThatIsNotAProtectedResourceOfThisDomain() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.remove(Parameters.RESOURCE);
-        givenVerifiedAssertion(claims);
+    void shouldReportPluginScopeRefusalAsInvalidScopeKeepingTheVerifiedContext() {
         TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setResources(Set.of(OTHER_MCP_SERVER));
+        when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
+        when(extensionGrantProvider.grant(any(), any())).thenReturn(Maybe.error(
+                new io.gravitee.am.extensiongrant.api.exceptions.InvalidScopeException("Assertion scope claim must be a space-delimited string", refusedResult(verifiedClaims(), MCP_SERVER))));
 
         strategy.process(request, client, domain)
                 .test()
-                .assertError(invalidTarget("Resource is not a protected resource of this domain"));
+                .assertError(invalidScope("Assertion scope claim must be a space-delimited string"));
+
+        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id", MCP_SERVER, null, null, null), request.getIdJagAssertionContext());
     }
 
     @Test
-    void shouldReportClientIdMismatchBeforeResourceChecks() {
+    void shouldNotCheckResourcesWhenThePluginRefusesAfterVerification() {
         Map<String, Object> claims = verifiedClaims();
         claims.put(Claims.CLIENT_ID, "other-agent");
         claims.remove(Parameters.RESOURCE);
-        givenVerifiedAssertion(claims);
+        givenPluginRefusesAfterVerification(claims, "Assertion client_id does not match the authenticated client");
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -1023,7 +814,8 @@ class CrossAppAccessGrantStrategyTest {
     @Test
     void shouldRefuseResourceBeforeBindingTheUser() {
         extensionGrant.setUserExists(true);
-        givenVerifiedAssertion(verifiedClaims());
+        givenPluginRefuses(new io.gravitee.am.extensiongrant.api.exceptions.InvalidResourceException(
+                "Resource is not a protected resource of this domain", refusedResult(verifiedClaims(), null)));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -1033,133 +825,10 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldRefuseAssertionScopeNotDefinedByTheResourceTools() {
+    void shouldAttachTheScopesThePluginGrants() {
         Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.read calendar.admin");
-        givenRedeemableAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope is not defined by the resource's MCP tools"));
-    }
-
-    @Test
-    void shouldRefuseAssertionScopeNotDefinedByTheResourceToolsEvenWhenTheRequestNarrowsItAway() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.read calendar.admin");
-        givenRedeemableAssertion(claims);
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setScopes(Set.of("calendar.read"));
-
-        strategy.process(request, client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope is not defined by the resource's MCP tools"));
-    }
-
-    @Test
-    void shouldRefuseAssertionScopeTheApplicationDoesNotPermitEvenWhenTheResourceToolsDefineIt() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.read mail.send");
-        givenRedeemableAssertion(claims);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope is not permitted for the application"));
-    }
-
-    @Test
-    void shouldRefuseAssertionScopeWhenTheApplicationHasNoScopeSettings() {
-        client.setScopeSettings(null);
-        givenRedeemableAssertion(verifiedClaims());
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope is not permitted for the application"));
-    }
-
-    @Test
-    void shouldGrantParameterizedAssertionScopeWhenTheResourceToolsAndTheApplicationHoldItsParameterizedBase() {
-        client.setScopeSettings(List.of(new ApplicationScopeSettings("calendar")));
-        when(scopeManager.isParameterizedScope("calendar")).thenReturn(true);
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar:team-42");
+        claims.put(Claims.SCOPE, "calendar.write");
         givenVerifiedAssertion(claims);
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar"));
-
-        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
-
-        assertEquals(Set.of("calendar:team-42"), creationRequest.scopes());
-    }
-
-    @Test
-    void shouldRefuseParameterizedAssertionScopeWhenItsBaseIsNotAParameterizedScope() {
-        client.setScopeSettings(List.of(new ApplicationScopeSettings("calendar")));
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar:team-42");
-        givenVerifiedAssertion(claims);
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar"));
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope is not defined by the resource's MCP tools"));
-    }
-
-    @Test
-    void shouldRefuseParameterizedAssertionScopeWhenTheApplicationDoesNotHoldItsParameterizedBase() {
-        when(scopeManager.isParameterizedScope("calendar")).thenReturn(true);
-        when(scopeManager.isParameterizedScope("calendar.read")).thenReturn(false);
-        when(scopeManager.isParameterizedScope("calendar.write")).thenReturn(false);
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar:team-42");
-        givenVerifiedAssertion(claims);
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar"));
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope is not permitted for the application"));
-    }
-
-    @Test
-    void shouldRefuseAssertionScopeClaimThatIsNotAString() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, List.of("calendar.read"));
-        givenVerifiedAssertion(claims);
-        givenRegisteredResource(MCP_SERVER);
-
-        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
-                .test()
-                .assertError(invalidScope("Assertion scope claim must be a space-delimited string"));
-    }
-
-    @Test
-    void shouldRefuseRequestedScopeOutsideTheAssertionScopes() {
-        givenRedeemableAssertion(verifiedClaims());
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setScopes(Set.of("calendar.read", "calendar.write"));
-
-        strategy.process(request, client, domain)
-                .test()
-                .assertError(invalidScope("Requested scope exceeds the assertion scopes"));
-    }
-
-    @Test
-    void shouldRefuseRequestedScopeWhenTheAssertionCarriesNoScopes() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.remove(Claims.SCOPE);
-        givenRedeemableAssertion(claims);
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        request.setScopes(Set.of("calendar.read"));
-
-        strategy.process(request, client, domain)
-                .test()
-                .assertError(invalidScope("Requested scope exceeds the assertion scopes"));
-    }
-
-    @Test
-    void shouldNarrowGrantedScopesToTheRequestedSubset() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.read calendar.write");
-        givenRedeemableAssertion(claims);
         TokenRequest request = redemptionRequest(idJagAssertion());
         request.setScopes(Set.of("calendar.write"));
 
@@ -1170,22 +839,10 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldGrantTheAssertionScopesWhenTheRequestNamesNone() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.read calendar.write");
-        givenRedeemableAssertion(claims);
-
-        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
-
-        assertEquals(Set.of("calendar.read", "calendar.write"), creationRequest.scopes());
-    }
-
-    @Test
     void shouldRefuseScopeBeforeBindingTheUser() {
         extensionGrant.setUserExists(true);
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.admin");
-        givenRedeemableAssertion(claims);
+        givenPluginRefuses(new io.gravitee.am.extensiongrant.api.exceptions.InvalidScopeException(
+                "Assertion scope is not defined by the resource's MCP tools", refusedResult(verifiedClaims(), MCP_SERVER)));
 
         strategy.process(redemptionRequest(idJagAssertion()), client, domain)
                 .test()
@@ -1195,22 +852,9 @@ class CrossAppAccessGrantStrategyTest {
     }
 
     @Test
-    void shouldKeepTheResolvedResourceOnTheRequestContextWhenTheScopeCheckRefuses() {
-        TokenRequest request = redemptionRequest(idJagAssertion());
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.admin");
-        givenRedeemableAssertion(claims);
-
-        strategy.process(request, client, domain).test().assertError(InvalidScopeException.class);
-
-        assertEquals(new IdJagAssertionContext(ENTERPRISE_ISSUER, IDENTITY_PROVIDER, "jti-1", "client-id", MCP_SERVER, null, null, null), request.getIdJagAssertionContext());
-    }
-
-    @Test
     void shouldIssueAccessTokenAddressedToTheResolvedResourceWithTheGrantedScopes() {
-        Map<String, Object> claims = verifiedClaims();
-        claims.put(Claims.SCOPE, "calendar.read calendar.write");
-        givenRedeemableAssertion(claims);
+        givenVerifiedAssertion(verifiedClaims());
+        givenResourceToolScopes(MCP_SERVER, Set.of("calendar.read", "calendar.write"));
         TokenRequest request = redemptionRequest(idJagAssertion());
         request.setScopes(Set.of("calendar.read"));
 
@@ -1227,7 +871,9 @@ class CrossAppAccessGrantStrategyTest {
         client.setScopeSettings(List.of(defaultScope, new ApplicationScopeSettings("calendar.write")));
         Map<String, Object> claims = verifiedClaims();
         claims.remove(Claims.SCOPE);
-        givenRedeemableAssertion(claims);
+        givenVerifiedAssertion(claims);
+
+        givenResourceToolScopes(MCP_SERVER, Set.of("calendar.read", "calendar.write"));
 
         OAuth2Request accessTokenRequest = accessTokenRequestIssuedFor(redemptionRequest(idJagAssertion()));
 
@@ -1276,23 +922,38 @@ class CrossAppAccessGrantStrategyTest {
         givenVerifiedAssertion(verifiedClaims, List.of());
     }
 
-    private void givenVerifiedAssertion(Map<String, Object> verifiedClaims, List<UserBindingCriterion> bindingCriteria) {
+    private void givenVerifiedAssertion(Map<String, Object> verifiedClaims, List<GrantedUserBindingCriterion> bindingCriteria) {
         when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
+        when(extensionGrantProvider.grant(any(), argThat(context -> DOMAIN_ISSUER.equals(context.localDomainIssuer()))))
+                .thenReturn(Maybe.just(verifiedResult(verifiedClaims, bindingCriteria)));
+    }
+
+    private void givenPluginRefusesAfterVerification(Map<String, Object> verifiedClaims, String description) {
+        givenPluginRefuses(new io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException(description, refusedResult(verifiedClaims, null)));
+    }
+
+    private void givenPluginRefuses(io.gravitee.am.extensiongrant.api.exceptions.ExtensionGrantException refusal) {
+        when(openIDDiscoveryService.getIssuer(ORIGIN)).thenReturn(DOMAIN_ISSUER);
+        when(extensionGrantProvider.grant(any(), argThat(context -> DOMAIN_ISSUER.equals(context.localDomainIssuer()))))
+                .thenReturn(Maybe.error(refusal));
+    }
+
+    private static ExtensionGrantResult refusedResult(Map<String, Object> verifiedClaims, String resource) {
+        ExtensionGrantResult verified = verifiedResult(verifiedClaims, List.of());
+        return new ExtensionGrantResult(verified.endUser(), verified.identityProvider(), verified.verifiedClaims(), verified.bindingCriteria(), resource, null);
+    }
+
+    private static ExtensionGrantResult verifiedResult(Map<String, Object> verifiedClaims, List<GrantedUserBindingCriterion> bindingCriteria) {
         DefaultUser endUser = new DefaultUser((String) verifiedClaims.get(Claims.SUB));
         endUser.setId((String) verifiedClaims.get(Claims.SUB));
         endUser.setAdditionalInformation(new HashMap<>(Map.of(Claims.SUB, verifiedClaims.get(Claims.SUB))));
-        when(extensionGrantProvider.resolveEndUser(any()))
-                .thenReturn(Maybe.just(new ResolvedEndUser(endUser, IDENTITY_PROVIDER, verifiedClaims, bindingCriteria)));
+        Object resource = verifiedClaims.get(Parameters.RESOURCE);
+        Object scope = verifiedClaims.get(Claims.SCOPE);
+        return new ExtensionGrantResult(endUser, IDENTITY_PROVIDER, verifiedClaims, bindingCriteria,
+                resource instanceof String value ? value : null,
+                scope instanceof String value ? Set.of(value.split(" ")) : Set.of());
     }
 
-    private void givenRedeemableAssertion(Map<String, Object> verifiedClaims) {
-        givenRedeemableAssertion(verifiedClaims, List.of());
-    }
-
-    private void givenRedeemableAssertion(Map<String, Object> verifiedClaims, List<UserBindingCriterion> bindingCriteria) {
-        givenVerifiedAssertion(verifiedClaims, bindingCriteria);
-        givenRegisteredResourceWithToolScopes(MCP_SERVER, Set.of("calendar.read", "calendar.write", "mail.send"));
-    }
 
     private void givenUsersMatchingTheBindingFilter(User... users) {
         when(userService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(users)));
@@ -1308,11 +969,8 @@ class CrossAppAccessGrantStrategyTest {
         return new FilterCriteria("eq", attribute, value, true, null);
     }
 
-    private static UserBindingCriterion bindingCriterion(String attribute, String expression) {
-        UserBindingCriterion criterion = new UserBindingCriterion();
-        criterion.setAttribute(attribute);
-        criterion.setExpression(expression);
-        return criterion;
+    private static GrantedUserBindingCriterion bindingCriterion(String attribute, String expression) {
+        return new GrantedUserBindingCriterion(attribute, expression);
     }
 
     private static User localUser(String id) {
@@ -1321,15 +979,8 @@ class CrossAppAccessGrantStrategyTest {
         return user;
     }
 
-    private void givenRegisteredResourceWithToolScopes(String identifier, Set<String> toolScopes) {
-        givenRegisteredResource(identifier);
+    private void givenResourceToolScopes(String identifier, Set<String> toolScopes) {
         when(protectedResourceManager.getScopesForResources(Set.of(identifier))).thenReturn(toolScopes);
-    }
-
-    private void givenRegisteredResource(String identifier) {
-        ProtectedResource protectedResource = new ProtectedResource();
-        protectedResource.setResourceIdentifiers(List.of(identifier));
-        when(protectedResourceManager.getByIdentifier(identifier)).thenReturn(Set.of(protectedResource));
     }
 
     private static Predicate<Throwable> refusal(String description) {

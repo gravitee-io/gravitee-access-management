@@ -78,7 +78,7 @@ public class IdJagServiceImpl implements IdJagService {
         JWT assertion = new JWT();
         assertion.setType(JwtType.ID_JAG);
         assertion.setIss(openIDDiscoveryService.getIssuer(oAuth2Request.getOrigin()));
-        assertion.setSub(idTokenSubject(user));
+        assertion.setSub(subjectManager.generateSub(user));
         assertion.setAud(target.audience());
         assertion.put(Claims.CLIENT_ID, target.clientId());
         assertion.put(Parameters.RESOURCE, target.resource());
@@ -105,12 +105,6 @@ public class IdJagServiceImpl implements IdJagService {
         }
 
         return assertion;
-    }
-
-    private String idTokenSubject(User user) {
-        JWT subjectClaims = new JWT();
-        subjectManager.updateJWT(subjectClaims, user);
-        return subjectClaims.getSub();
     }
 
     private static List<TokenClaim> idJagCustomClaims(Client client) {

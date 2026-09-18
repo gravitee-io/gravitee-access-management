@@ -25,11 +25,11 @@ import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import java.text.ParseException;
 import java.util.Map;
 
-public final class IdJagAssertions {
+public final class ExtensionGrantAssertionTypes {
 
     private static final JOSEObjectType ID_JAG_TYPE = new JOSEObjectType(JwtType.ID_JAG.getValue());
 
-    private IdJagAssertions() {
+    private ExtensionGrantAssertionTypes() {
     }
 
     public static boolean isIdJag(TokenRequest tokenRequest) {
@@ -43,5 +43,9 @@ public final class IdJagAssertions {
         } catch (ParseException e) {
             return false;
         }
+    }
+
+    public static boolean isNotIdJag(TokenRequest tokenRequest) {
+        return !isIdJag(tokenRequest);
     }
 }

@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.oauth2;
+package io.gravitee.am.extensiongrant.api;
 
-public interface ExtensionGrantPluginType {
+import java.util.Set;
 
-    String CROSS_APP_ACCESS = "cross-app-access-am-extension-grant";
+public record ProtectedResourceScopes(Set<String> scopes, Set<String> parameterizedScopes) {
+
+    public ProtectedResourceScopes {
+        scopes = scopes == null ? Set.of() : Set.copyOf(scopes);
+        parameterizedScopes = parameterizedScopes == null ? Set.of() : Set.copyOf(parameterizedScopes);
+    }
 }

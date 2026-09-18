@@ -34,6 +34,14 @@ public final class AssertionFixtures {
     private AssertionFixtures() {
     }
 
+    public static TokenRequest grantRequest(String grantType) {
+        TokenRequest request = new TokenRequest();
+        request.setClientId("client-id");
+        request.setGrantType(grantType);
+        request.setParameters(new LinkedMultiValueMap<>());
+        return request;
+    }
+
     public static TokenRequest jwtBearerRequest(String assertion) {
         TokenRequest request = new TokenRequest();
         request.setClientId("client-id");

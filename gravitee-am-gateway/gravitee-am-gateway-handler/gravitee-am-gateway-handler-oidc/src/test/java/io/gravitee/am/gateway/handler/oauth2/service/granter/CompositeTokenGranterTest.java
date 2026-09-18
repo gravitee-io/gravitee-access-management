@@ -21,7 +21,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.extensiongrant.api.IdJagAssertions;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantAssertionTypes;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeExcep
 import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ExtensionGrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.oidc.Client;
@@ -174,7 +175,7 @@ public class CompositeTokenGranterTest {
     public void shouldStillRoutePlainJwtToJwtBearerGrant() {
         Client client = jwtBearerClient();
         ExtensionGrantProvider provider = jwtBearerPlugin();
-        when(provider.grant(any())).thenReturn(Maybe.error(new InvalidGrantException("reached jwt-bearer grant")));
+        when(provider.grant(any(), any())).thenReturn(Maybe.error(new InvalidGrantException("reached jwt-bearer grant")));
         compositeTokenGranter.addTokenGranter("jwt-bearer-grant", jwtBearerGranter(provider));
 
         compositeTokenGranter.grant(jwtBearerRequest(plainJwtAssertion()), client)
@@ -201,7 +202,7 @@ public class CompositeTokenGranterTest {
 
     private static ExtensionGrantProvider jwtBearerPlugin() {
         ExtensionGrantProvider provider = mock(ExtensionGrantProvider.class);
-        when(provider.supports(any())).thenAnswer(invocation -> !IdJagAssertions.isIdJag(invocation.getArgument(0)));
+        when(provider.supports(any())).thenAnswer(invocation -> !ExtensionGrantAssertionTypes.isIdJag(invocation.getArgument(0)));
         return provider;
     }
 
@@ -212,8 +213,8 @@ public class CompositeTokenGranterTest {
         extensionGrant.setId("jwt-bearer-grant");
         extensionGrant.setGrantType(GrantType.JWT_BEARER);
         extensionGrant.setCreatedAt(new Date());
-        ExtensionGrantStrategy strategy = new ExtensionGrantStrategy(provider, extensionGrant, null, null, null, domain);
-        strategy.setOldestExtensionGrantId(extensionGrant.getId());
+        ExtensionGrantStrategy strategy = new ExtensionGrantStrategy(provider, extensionGrant, null, null, null, domain, mock(OpenIDDiscoveryService.class));
+        strategy.setMinDate(extensionGrant.getCreatedAt());
         return new StrategyGranterAdapter(strategy, domain, null, null, null, null);
     }
 

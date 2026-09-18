@@ -72,8 +72,6 @@ import lombok.CustomLog;
  */
 @CustomLog
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
-
-
     private final ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
@@ -176,7 +174,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     }
 
     @Override
-    public boolean handle(String grantType, Client client) {
+    public boolean handle(TokenRequest grantType, Client client) {
         return true;
     }
 

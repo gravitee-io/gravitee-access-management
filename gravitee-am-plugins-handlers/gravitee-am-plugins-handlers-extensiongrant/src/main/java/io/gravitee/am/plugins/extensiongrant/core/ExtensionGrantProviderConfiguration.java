@@ -16,6 +16,7 @@
 
 package io.gravitee.am.plugins.extensiongrant.core;
 
+import io.gravitee.am.extensiongrant.api.ProtectedResourceDirectory;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerResolver;
 import io.gravitee.am.model.ExtensionGrant;
@@ -29,13 +30,16 @@ public class ExtensionGrantProviderConfiguration extends ProviderConfiguration {
 
     private final AuthenticationProvider authenticationProvider;
     private final TrustedIssuerResolver trustedIssuerResolver;
+    private final ProtectedResourceDirectory protectedResourceDirectory;
 
     public ExtensionGrantProviderConfiguration(ExtensionGrant extensionGrant,
                                                AuthenticationProvider authenticationProvider,
-                                               TrustedIssuerResolver trustedIssuerResolver) {
+                                               TrustedIssuerResolver trustedIssuerResolver,
+                                               ProtectedResourceDirectory protectedResourceDirectory) {
         super(extensionGrant.getType(), extensionGrant.getConfiguration());
         this.authenticationProvider = authenticationProvider;
         this.trustedIssuerResolver = trustedIssuerResolver;
+        this.protectedResourceDirectory = protectedResourceDirectory;
     }
 
     public AuthenticationProvider getAuthenticationProvider() {
@@ -44,5 +48,9 @@ public class ExtensionGrantProviderConfiguration extends ProviderConfiguration {
 
     public TrustedIssuerResolver getTrustedIssuerResolver() {
         return trustedIssuerResolver;
+    }
+
+    public ProtectedResourceDirectory getProtectedResourceDirectory() {
+        return protectedResourceDirectory;
     }
 }

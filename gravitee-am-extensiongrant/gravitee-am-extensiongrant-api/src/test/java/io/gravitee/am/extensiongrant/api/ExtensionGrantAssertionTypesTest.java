@@ -27,38 +27,38 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class IdJagAssertionsTest {
+class ExtensionGrantAssertionTypesTest {
 
     @Test
     void shouldRecognizeIdJagTypedAssertion() {
-        assertTrue(IdJagAssertions.isIdJag(request(assertion(new JOSEObjectType("oauth-id-jag+jwt")))));
+        assertTrue(ExtensionGrantAssertionTypes.isIdJag(request(assertion(new JOSEObjectType("oauth-id-jag+jwt")))));
     }
 
     @Test
     void shouldRecognizeIdJagTypeRegardlessOfCase() {
-        assertTrue(IdJagAssertions.isIdJag(request(assertion(new JOSEObjectType("OAUTH-ID-JAG+JWT")))));
+        assertTrue(ExtensionGrantAssertionTypes.isIdJag(request(assertion(new JOSEObjectType("OAUTH-ID-JAG+JWT")))));
     }
 
     @Test
     void shouldNotRecognizeJwtTypedAssertion() {
-        assertFalse(IdJagAssertions.isIdJag(request(assertion(JOSEObjectType.JWT))));
+        assertFalse(ExtensionGrantAssertionTypes.isIdJag(request(assertion(JOSEObjectType.JWT))));
     }
 
     @Test
     void shouldNotRecognizeUntypedAssertion() {
-        assertFalse(IdJagAssertions.isIdJag(request(assertion(null))));
+        assertFalse(ExtensionGrantAssertionTypes.isIdJag(request(assertion(null))));
     }
 
     @Test
     void shouldNotRecognizeUnparsableAssertion() {
-        assertFalse(IdJagAssertions.isIdJag(request("not-a-jwt")));
-        assertFalse(IdJagAssertions.isIdJag(request("@@@.e30.c2ln")));
+        assertFalse(ExtensionGrantAssertionTypes.isIdJag(request("not-a-jwt")));
+        assertFalse(ExtensionGrantAssertionTypes.isIdJag(request("@@@.e30.c2ln")));
     }
 
     @Test
     void shouldNotRecognizeRequestWithoutAssertion() {
-        assertFalse(IdJagAssertions.isIdJag(request(null)));
-        assertFalse(IdJagAssertions.isIdJag(new TokenRequest()));
+        assertFalse(ExtensionGrantAssertionTypes.isIdJag(request(null)));
+        assertFalse(ExtensionGrantAssertionTypes.isIdJag(new TokenRequest()));
     }
 
     private static TokenRequest request(String assertion) {

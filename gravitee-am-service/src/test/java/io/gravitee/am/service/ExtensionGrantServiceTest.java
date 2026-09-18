@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.common.oauth2.ExtensionGrantPluginType;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
@@ -144,6 +143,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
+        when(newExtensionGrant.getType()).thenReturn("jwtbearer-am-extension-grant");
         when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
@@ -162,7 +162,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreateCrossAppAccessGrantWithCheckUserOnWhateverThePayloadSays() {
         NewExtensionGrant newExtensionGrant = new NewExtensionGrant();
         newExtensionGrant.setName("my-extension-grant");
-        newExtensionGrant.setType(ExtensionGrantPluginType.CROSS_APP_ACCESS);
+        newExtensionGrant.setType("xaa-am-extension-grant");
         newExtensionGrant.setUserExists(false);
         when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
@@ -213,6 +213,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate2_technicalException() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
+        when(newExtensionGrant.getType()).thenReturn("jwtbearer-am-extension-grant");
         when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenReturn(Single.error(TechnicalException::new));
 

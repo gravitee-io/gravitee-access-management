@@ -17,21 +17,18 @@ package io.gravitee.am.extensiongrant.api.exceptions;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantResult;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class InvalidGrantException extends ExtensionGrantException {
+import java.util.Optional;
 
-    public InvalidGrantException(String msg, Throwable t) {
-        super(msg, t, null);
+public abstract class ExtensionGrantException extends RuntimeException {
+
+    private final transient ExtensionGrantResult verifiedResult;
+
+    protected ExtensionGrantException(String msg, Throwable cause, ExtensionGrantResult verifiedResult) {
+        super(msg, cause);
+        this.verifiedResult = verifiedResult;
     }
 
-    public InvalidGrantException(String msg) {
-        super(msg, null, null);
-    }
-
-    public InvalidGrantException(String msg, ExtensionGrantResult verifiedResult) {
-        super(msg, null, verifiedResult);
+    public Optional<ExtensionGrantResult> getVerifiedResult() {
+        return Optional.ofNullable(verifiedResult);
     }
 }

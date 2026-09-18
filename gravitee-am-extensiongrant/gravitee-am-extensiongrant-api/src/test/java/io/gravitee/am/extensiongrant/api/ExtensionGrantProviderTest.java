@@ -21,6 +21,8 @@ import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,20 +32,30 @@ class ExtensionGrantProviderTest {
     @Test
     void shouldResolveEndUserFromGrantWithoutIdentityProvider() {
         User user = new DefaultUser("alice");
-        ExtensionGrantProvider provider = tokenRequest -> Maybe.just(user);
+        ExtensionGrantResult result = ExtensionGrantResult.endUser(user);
+        ExtensionGrantProvider provider = (tokenRequest, context) -> Maybe.just(result);
 
-        ResolvedEndUser resolved = provider.resolveEndUser(new TokenRequest()).blockingGet();
+        ExtensionGrantResult resolved = provider.grant(new TokenRequest(), new ExtensionGrantContext("https://as.example.com/domain/oidc", Set.of(), Set.of())).blockingGet();
 
         assertSame(user, resolved.endUser());
         assertNull(resolved.identityProvider());
         assertTrue(resolved.verifiedClaims().isEmpty());
         assertTrue(resolved.bindingCriteria().isEmpty());
+        assertNull(resolved.resource());
+        assertNull(resolved.scopes());
+    }
+
+    @Test
+    void shouldSupportRefreshTokenByDefault() {
+        ExtensionGrantProvider provider = (tokenRequest, context) -> Maybe.empty();
+
+        assertTrue(provider.supportsRefreshToken());
     }
 
     @Test
     void shouldResolveNothingWhenGrantReturnsNoUser() {
-        ExtensionGrantProvider provider = tokenRequest -> Maybe.empty();
+        ExtensionGrantProvider provider = (tokenRequest, context) -> Maybe.empty();
 
-        provider.resolveEndUser(new TokenRequest()).test().assertComplete().assertNoValues();
+        provider.grant(new TokenRequest(), new ExtensionGrantContext("https://as.example.com/domain/oidc", Set.of(), Set.of())).test().assertComplete().assertNoValues();
     }
 }
