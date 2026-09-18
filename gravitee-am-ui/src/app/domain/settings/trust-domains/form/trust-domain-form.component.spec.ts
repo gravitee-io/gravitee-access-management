@@ -658,7 +658,7 @@ describe('TrustDomainFormComponent', () => {
       expect(component.getValidationErrors()).toContain('Issuer URL is required.');
     });
 
-    it('shouldDropTheBlockAndTheIssuerWhenSpiffeIsTheOnlyUsageLeft', () => {
+    it('shouldDisableTheBlockAndDropTheIssuerWhenSpiffeIsTheOnlyUsageLeft', () => {
       build({ ...trustedIssuer, spiffeTrustDomain: 'acme.org', crossAppAccess: { enabled: true } }, false);
       component.tokenExchangeEnabled = false;
       component.crossAppAccessEnabled = false;
@@ -666,27 +666,24 @@ describe('TrustDomainFormComponent', () => {
 
       component.submit();
 
-      expect(saved[0].crossAppAccess).toBeUndefined();
+      expect(saved[0].crossAppAccess).toEqual({ enabled: false });
       expect(saved[0].issuer).toBe('');
     });
 
-    it('shouldClearTheBlockWhenTheUsageGoesOff', () => {
-      build(
-        {
-          ...trustedIssuer,
-          crossAppAccess: {
-            enabled: true,
-            resourceServers: [{ id: 'rs-1', name: 'Acme Calendar', resource: 'https://calendar.acme.com' }],
-          },
-        },
-        false,
-      );
+    it('shouldKeepTheStoredBlockWhenTheUsageGoesOff', () => {
+      const crossAppAccess = {
+        enabled: true,
+        resourceServers: [{ id: 'rs-1', name: 'Acme Calendar', resource: 'https://calendar.acme.com' }],
+        audSubMapping: '{#user.email}',
+        scopeMappings: { openid: 'acme:openid' },
+      };
+      build({ ...trustedIssuer, crossAppAccess }, false);
       component.crossAppAccessEnabled = false;
       component.onUsageToggle();
 
       component.submit();
 
-      expect(saved[0].crossAppAccess).toBeUndefined();
+      expect(saved[0].crossAppAccess).toEqual({ ...crossAppAccess, enabled: false });
     });
 
     it('shouldOmitTheBlockEntirelyWhenNothingWasEverConfigured', () => {
