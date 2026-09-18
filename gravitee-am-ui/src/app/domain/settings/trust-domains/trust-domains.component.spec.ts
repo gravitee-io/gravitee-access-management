@@ -108,16 +108,16 @@ describe('DomainSettingsTrustDomainsComponent', () => {
     expect(component.trustDomains).toHaveLength(5);
     expect(component.trustDomains.map((td) => component.usagesLabel(td))).toEqual([
       'SPIFFE',
-      'OIDC - Trusted Issuer',
-      'SPIFFE, OIDC - Trusted Issuer',
+      'Token Exchange',
+      'SPIFFE, Token Exchange',
       'Cross App Access',
-      'OIDC - Trusted Issuer, Cross App Access',
+      'Token Exchange, Cross App Access',
     ]);
   });
 
   it('shouldCollapseSeveralUsagesIntoACountedBadgeKeepingTheListInTheTooltip', () => {
     expect(component.usagesBadgeLabel(bothEntry)).toBe('2 usages');
-    expect(component.usagesLabel(bothEntry)).toBe('SPIFFE, OIDC - Trusted Issuer');
+    expect(component.usagesLabel(bothEntry)).toBe('SPIFFE, Token Exchange');
   });
 
   it('shouldNameTheUsageOnTheBadgeWhenOnlyOneIsDeclared', () => {

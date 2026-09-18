@@ -31,7 +31,6 @@ import {
   keyMaterialErrors,
   TrustDomain,
   TrustDomainKeyMaterial,
-  trustDomainUsagesLabel,
   UserBindingCriterion,
 } from '../trust-domain.types';
 
@@ -157,10 +156,6 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
       userBindingEnabled: td?.userBindingEnabled ?? false,
       userBindingCriteria: td?.userBindingCriteria ?? [],
     };
-  }
-
-  get usagesLabel(): string {
-    return trustDomainUsagesLabel(this.trustDomain);
   }
 
   get crossAppAccessOnly(): boolean {

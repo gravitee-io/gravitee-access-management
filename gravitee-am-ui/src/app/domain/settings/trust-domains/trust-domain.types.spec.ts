@@ -29,7 +29,7 @@ import {
 describe('trust domain types', () => {
   it('shouldLabelEveryUsage', () => {
     expect(trustDomainUsageLabel('SPIFFE')).toBe('SPIFFE');
-    expect(trustDomainUsageLabel('ISSUER')).toBe('OIDC - Trusted Issuer');
+    expect(trustDomainUsageLabel('ISSUER')).toBe('Token Exchange');
     expect(trustDomainUsageLabel('CROSS_APP_ACCESS')).toBe('Cross App Access');
   });
 
@@ -56,7 +56,7 @@ describe('trust domain types', () => {
 
   it('shouldDistinguishACrossAppAccessOnlyTrustedDomainFromATokenExchangeOne', () => {
     expect(trustDomainUsagesLabel({ name: 'a', crossAppAccess: { enabled: true } })).toBe('Cross App Access');
-    expect(trustDomainUsagesLabel({ name: 'a', issuer: 'https://sso.acme.com', tokenExchangeEnabled: true })).toBe('OIDC - Trusted Issuer');
+    expect(trustDomainUsagesLabel({ name: 'a', issuer: 'https://sso.acme.com', tokenExchangeEnabled: true })).toBe('Token Exchange');
     expect(
       trustDomainUsagesLabel({
         name: 'a',
@@ -64,7 +64,7 @@ describe('trust domain types', () => {
         tokenExchangeEnabled: true,
         crossAppAccess: { enabled: true },
       }),
-    ).toBe('OIDC - Trusted Issuer, Cross App Access');
+    ).toBe('Token Exchange, Cross App Access');
   });
 
   it('shouldLabelATrustedDomainServingBothUsages', () => {
@@ -75,7 +75,7 @@ describe('trust domain types', () => {
         issuer: 'https://sso.acme.com',
         tokenExchangeEnabled: true,
       }),
-    ).toBe('SPIFFE, OIDC - Trusted Issuer');
+    ).toBe('SPIFFE, Token Exchange');
   });
 
   it('shouldHumanizeValuesTheOptionListsDoNotKnow', () => {

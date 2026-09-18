@@ -22,7 +22,7 @@ export const ISSUER: TrustDomainUsage = 'ISSUER';
 export const CROSS_APP_ACCESS: TrustDomainUsage = 'CROSS_APP_ACCESS';
 
 const TRUST_DOMAIN_USAGE_LABELS: Readonly<Record<TrustDomainUsage, string>> = {
-  ISSUER: 'OIDC - Trusted Issuer',
+  ISSUER: 'Token Exchange',
   SPIFFE: 'SPIFFE',
   CROSS_APP_ACCESS: 'Cross App Access',
 };
