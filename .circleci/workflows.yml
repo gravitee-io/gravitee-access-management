@@ -2443,6 +2443,7 @@ workflows:
       - setup:
           context: cicd-orchestrator
       - pull_requests_ce:
+          context: cicd-orchestrator
           name: process_pull_request
           requires:
             - setup
@@ -2579,6 +2580,7 @@ workflows:
                 - master
                 - /^\d\.\d+\.x$/
       - build:
+          context: cicd-orchestrator
           requires:
             - setup
           filters:
@@ -2741,6 +2743,7 @@ workflows:
           context:
             - cicd-orchestrator
       - coverage_build:
+          context: cicd-orchestrator
           requires:
             - setup
       - run_sonarcloud_analysis:
@@ -2797,6 +2800,7 @@ workflows:
           context:
             - cicd-orchestrator
       - build:
+          context: cicd-orchestrator
           requires:
             - setup
       - publish-images-azure-registry:
