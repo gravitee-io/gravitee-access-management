@@ -269,10 +269,13 @@ commands:
               -u "bot:${AZURE_ARTIFACTS_PAT}" \
               "https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1/io/gravitee/canary/feed-canary/1.0.0/feed-canary-1.0.0.pom") || CODE=000
 
+<<<<<<< HEAD
             # The Maven check in the setup job reads this to tell an outage here from its own settings wiring,
             # and print only the cause that applies. A status code, so nothing the shell can expand.
             echo "export AZURE_FEED_HTTP_CODE='${CODE}'" >> "$BASH_ENV"
 
+=======
+>>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
             case "$CODE" in
               200) echo "The feed resolves the canary." ;;
               401) echo "401 - the feed rejected the token." >&2; exit 1 ;;
@@ -494,6 +497,7 @@ jobs:
       - azure-artifacts-token
       - run:
           name: Check Maven resolves from the feed
+<<<<<<< HEAD
           # Once per pipeline, on the settings every other job attaches. dependency:get takes its repositories
           # from the settings: this checks what a raw HTTPS request cannot, the <server> id matching the
           # repository id and ${env.AZURE_ARTIFACTS_PAT} being interpolated.
@@ -503,11 +507,17 @@ jobs:
           # round trip. Maven still loads the root project, so gravitee-parent is resolved before the goal runs
           # and a failure there still exits through the message below; less likely, not gone.
           #
+=======
+          # Once per pipeline, on the settings every other job attaches. dependency:get runs project-less, so its
+          # repositories come from the settings: this checks what a raw HTTPS request cannot, the <server> id
+          # matching the repository id and ${env.AZURE_ARTIFACTS_PAT} being interpolated.
+>>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
           # The plugin version is pinned: an unpinned one resolves maven-metadata.xml first.
           #
           # Scaffolding, to be removed with Artifactory, along with the check in azure-artifacts-token and the
           # io.gravitee.canary:feed-canary artifact: once there is no fallback, a broken feed fails on its own.
           command: |
+<<<<<<< HEAD
             if ! mvn -B -q -N -s .gravitee.settings.xml \
               org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
               -Dartifact=io.gravitee.canary:feed-canary:1.0.0:pom; then
@@ -525,6 +535,14 @@ jobs:
                 echo "Artifactory takes over for the rest of the build, which is why that step carried on;" >&2
                 echo "the canary exists on the feed and nowhere else, so nothing can serve it here." >&2
               fi
+=======
+            if ! mvn -B -q -s .gravitee.settings.xml \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:get \
+              -Dartifact=io.gravitee.canary:feed-canary:1.0.0:pom; then
+              echo "Maven could not resolve the canary from the feed." >&2
+              echo "The token was accepted over HTTPS a step earlier, so what is left is the settings wiring:" >&2
+              echo 'a <server> id not matching the repository id, or ${env.AZURE_ARTIFACTS_PAT} not interpolated.' >&2
+>>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
               exit 1
             fi
             echo "Maven resolved io.gravitee.canary:feed-canary from the feed."
