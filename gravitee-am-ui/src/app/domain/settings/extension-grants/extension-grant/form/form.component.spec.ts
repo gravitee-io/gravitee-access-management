@@ -22,7 +22,7 @@ import { ExtensionGrantFormComponent } from './form.component';
 
 const CROSS_APP_ACCESS_SCHEMA = {
   type: 'object',
-  id: 'urn:jsonschema:io:gravitee:am:extensiongrant:crossappaccess:CrossAppAccessExtensionGrantConfiguration',
+  id: 'urn:jsonschema:com:graviteesource:am:extensiongrant:xaa:XAAExtensionGrantConfiguration',
   properties: {
     grantType: { title: 'Grant Type', default: 'urn:ietf:params:oauth:grant-type:jwt-bearer', readOnly: true },
     userBindingCriteria: {
