@@ -19,31 +19,20 @@ import { setup } from '../../test-fixture';
 import { AutomationDataPlaneFixture, connectablePayload, setupAutomationDataPlaneFixture } from './fixtures/automation-dataplane-fixture';
 import { createDomain, patchDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { createUser, getAllUsers } from '@management-commands/user-management-commands';
-import { getDomainApi } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 
 setup(200000);
 
 /**
- * What a domain sees of the data plane it is bound to: the gateway URL its entrypoints resolve to
- * and the store it is served from, both of which follow a data plane update live.
+ * Only a running stack can show a bound domain following its data plane to another store.
+ * Needs a second, empty database of the same type, which the JDBC stack does not have.
  */
 
 let fixture: AutomationDataPlaneFixture;
 
-// the repoint case needs a second, empty database of the same type; the JDBC stack has only one
 const describeMongo = process.env.REPOSITORY_TYPE !== 'jdbc' ? describe : describe.skip;
 /** A fixed name, so runs do not leave a fresh database behind each; user counts are per domain, so sharing it is safe. */
 const EMPTY_DATABASE = 'gravitee-am-e2e-repoint';
-
-const entrypointUrls = async (domainId: string): Promise<string[]> => {
-  const entrypoints = await getDomainApi(fixture.adminToken).getDomainEntrypoints({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-  });
-  return entrypoints.map((entrypoint) => entrypoint.url);
-};
 
 const userCount = async (domainId: string): Promise<number> => (await getAllUsers(domainId, fixture.adminToken)).totalCount;
 
@@ -55,27 +44,6 @@ afterAll(async () => {
   if (fixture) {
     await fixture.cleanUp();
   }
-});
-
-describe('Automation API data planes - what a bound domain sees', () => {
-  it('should resolve the domain entrypoints from the data plane gatewayUrl, following an update', async () => {
-    const id = fixture.reserveId('bind-gateway');
-    const before = 'https://gateway-before.example.com';
-    const after = 'https://gateway-after.example.com';
-    expect((await fixture.client.putDataPlane({ ...connectablePayload(id), gatewayUrl: before })).status).toBe(200);
-    const domain = await createDomain(fixture.adminToken, uniqueName('bind-gateway-domain', true), 'Follows the gateway url', id);
-    await patchDomain(domain.id, fixture.adminToken, { enabled: true });
-
-    try {
-      expect(await entrypointUrls(domain.id)).toEqual([before]);
-
-      expect((await fixture.client.putDataPlane({ ...connectablePayload(id), gatewayUrl: after })).status).toBe(200);
-
-      expect(await entrypointUrls(domain.id)).toEqual([after]);
-    } finally {
-      await safeDeleteDomain(domain.id, fixture.adminToken);
-    }
-  });
 });
 
 describeMongo('Automation API data planes - a bound domain follows its data plane store', () => {

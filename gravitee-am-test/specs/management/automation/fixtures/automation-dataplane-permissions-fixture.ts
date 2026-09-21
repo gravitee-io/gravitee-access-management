@@ -23,9 +23,8 @@ import { createPersona, Persona } from '../../permissions/fixtures/rbac-fixture'
 import { AutomationClient } from './automation-client';
 import { AutomationDataPlaneFixture, setupAutomationDataPlaneFixture } from './automation-dataplane-fixture';
 
-/** The ACLs the DATA_PLANE permission is made of, as the role API spells them. */
+/** The read-only half of the DATA_PLANE permission, as the role API spells it. */
 export const DATA_PLANE_READ_ACLS = ['data_plane_read', 'data_plane_list'];
-export const DATA_PLANE_ALL_ACLS = [...DATA_PLANE_READ_ACLS, 'data_plane_create', 'data_plane_update', 'data_plane_delete'];
 
 /** A principal plus an Automation API client authenticated as them. */
 export interface DataPlanePrincipal extends Persona {
@@ -35,49 +34,31 @@ export interface DataPlanePrincipal extends Persona {
 export interface AutomationDataPlanePermissionsFixture extends Fixture {
   /** Admin-backed fixture: reserves ids, cleans planes up, and its client is used for setup. */
   admin: AutomationDataPlaneFixture;
-  /** Holds only the default ORGANIZATION_USER role (DATA_PLANE read + list). */
-  plainUser: DataPlanePrincipal;
   /** Custom organization role carrying DATA_PLANE read + list only. */
   reader: DataPlanePrincipal;
-  /** Custom organization role carrying every DATA_PLANE ACL and nothing else. */
-  manager: DataPlanePrincipal;
 }
 
-const withClient = (persona: Persona): DataPlanePrincipal => ({ ...persona, client: new AutomationClient(persona.token) });
-
 /**
- * Three organization users, each with a different DATA_PLANE allowance. Custom roles are
- * ORGANIZATION-assignable so a single membership grants them; `createPersona` already verifies
- * every token belongs to the user it was minted for.
+ * An organization user whose only DATA_PLANE allowance comes from a custom ORGANIZATION-assignable
+ * role granted through a membership; `createPersona` verifies the token belongs to that user.
  */
 export const setupAutomationDataPlanePermissionsFixture = async (): Promise<AutomationDataPlanePermissionsFixture> => {
   const admin = await setupAutomationDataPlaneFixture();
   const adminToken = admin.adminToken;
 
   const readerRole = await createCustomOrganizationRole(adminToken, uniqueName('dp-reader', true), 'ORGANIZATION', DATA_PLANE_READ_ACLS);
-  const managerRole = await createCustomOrganizationRole(adminToken, uniqueName('dp-manager', true), 'ORGANIZATION', DATA_PLANE_ALL_ACLS);
   expect(readerRole.id).toEqual(expect.any(String));
-  expect(managerRole.id).toEqual(expect.any(String));
 
-  const plainUser = await createPersona(adminToken, 'dp-plain');
   const reader = await createPersona(adminToken, 'dp-reader');
-  const manager = await createPersona(adminToken, 'dp-manager');
   await addOrganizationMembership(adminToken, userMembership(reader.userId, readerRole.id));
-  await addOrganizationMembership(adminToken, userMembership(manager.userId, managerRole.id));
 
   return {
     admin,
-    plainUser: withClient(plainUser),
-    reader: withClient(reader),
-    manager: withClient(manager),
+    reader: { ...reader, client: new AutomationClient(reader.token) },
     cleanUp: async () => {
       await admin.cleanUp();
-      for (const persona of [plainUser, reader, manager]) {
-        await deleteOrganisationUser(adminToken, persona.userId).catch(() => undefined);
-      }
-      for (const role of [readerRole, managerRole]) {
-        await deleteOrganizationRole(adminToken, role.id).catch(() => undefined);
-      }
+      await deleteOrganisationUser(adminToken, reader.userId).catch(() => undefined);
+      await deleteOrganizationRole(adminToken, readerRole.id).catch(() => undefined);
     },
   };
 };
