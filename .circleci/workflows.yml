@@ -546,7 +546,7 @@ jobs:
           # The command-line repositories override what the profile sets; both flags because
           # maven-deploy-plugin reads altSnapshotDeploymentRepository first for a SNAPSHOT version.
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,ee-bundle,addons-bundle deploy -DskipTests \
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot deploy -DskipTests \
               -DaltDeploymentRepository=azure-artifacts-gravitee-snapshots::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee-snapshots/maven/v1 \
               -DaltSnapshotDeploymentRepository=azure-artifacts-gravitee-snapshots::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee-snapshots/maven/v1
       - save-maven-job-cache:
@@ -621,6 +621,7 @@ jobs:
       - run:
           name: install test module dependencies
           command: npm --prefix gravitee-am-test i
+      - azure-artifacts-token
       - run:
           name: Prepare Access Management
           command: |
@@ -787,6 +788,7 @@ jobs:
       - run:
           name: install test module dependencies
           command: npm --prefix gravitee-am-test i
+      - azure-artifacts-token
       - run:
           name: Prepare Access Management
           command: |
@@ -812,173 +814,17 @@ jobs:
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
       - run:
-<<<<<<< HEAD
           name: Start PostgreSQL
-=======
-          name: Run Gateway Jest tests (parallel)
-          command: ENABLE_METRICS_TRACKING=1 JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-gateway.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:gateway:parallel
-      # capture per-suite JVM/sync metrics even when the gateway suite fails
-      - store_artifacts:
-          path: gravitee-am-test/jest-reports/metrics
-          destination: gateway-metrics
-          when: always
-      - store_test_results:
-          path: gravitee-am-test/jest-reports/junit
-      - store_artifacts:
-          path: gravitee-am-test/jest-reports
-          destination: jest-reports
-      - run:
-          name: Stop
-          when: always
-          command: npm --prefix docker/local-stack run stack:down
-
-  run_jest_tests_cloud_mongo:
-    parameters:
-      mongo_version:
-        type: string
-    machine:
-      image: ubuntu-2204:2024.04.4
-      docker_layer_caching: true
-    resource_class: large
-    environment:
-      REPOSITORY_TYPE: mongodb
-      GIO_MAX_MEM: 512m
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout:
-          method: full
-      - keeper/env-export:
-          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
-          var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
-      - run:
-          name: Install test module dependencies
-          command: npm --prefix gravitee-am-test install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Spin up cloud stack with Mongo << parameters.mongo_version >>
-          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:cloud:mongo
-      - run:
-          name: Check stack health before Cloud tests
->>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
           command: |
             docker pull postgres:<< parameters.psql_version >>
             docker run -d --name postgresql_tmp --rm -p 5432:5432 -e POSTGRES_PASSWORD=T0pS3cr3t postgres:<< parameters.psql_version >>
       - run:
-<<<<<<< HEAD
           name: Start FakeSMTP
-=======
-          name: Run Cloud Jest tests
-          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-cloud.xml npm --prefix gravitee-am-test run ci:cloud
-      - store_test_results:
-          path: gravitee-am-test/jest-reports/junit
-      - store_artifacts:
-          path: gravitee-am-test/jest-reports
-          destination: jest-reports
-      - run:
-          name: Stop
-          when: always
-          command: npm --prefix docker/local-stack run stack:down
-
-  run_jest_tests_cloud_psql:
-    parameters:
-      psql_version:
-        type: string
-    machine:
-      image: ubuntu-2204:2024.04.4
-      docker_layer_caching: true
-    resource_class: large
-    environment:
-      REPOSITORY_TYPE: jdbc
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - keeper/env-export:
-          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
-          var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
-      - run:
-          name: Install test module dependencies
-          command: npm --prefix gravitee-am-test install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
-      - run:
-          name: Prepare JDBC plugins
-          command: npm --prefix docker/local-stack run stack:init:plugins:psql
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Spin up cloud stack with Postgres << parameters.psql_version >>
-          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:cloud:psql
-      - run:
-          name: Check stack health before Cloud tests
->>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
           command: |
             docker pull gessnerfl/fake-smtp-server:1.10.4
             docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server:1.10.4
       - run:
-<<<<<<< HEAD
           name: Start Wiremock
-=======
-          name: Run Cloud Jest tests
-          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-cloud.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:cloud
-      - store_test_results:
-          path: gravitee-am-test/jest-reports/junit
-      - store_artifacts:
-          path: gravitee-am-test/jest-reports
-          destination: jest-reports
-      - run:
-          name: Stop
-          when: always
-          command: npm --prefix docker/local-stack run stack:down
-
-  run_jest_tests_keycloak_mongo:
-    parameters:
-      mongo_version:
-        type: string
-    machine:
-      image: ubuntu-2204:2024.04.4
-      docker_layer_caching: true
-    resource_class: large
-    environment:
-      REPOSITORY_TYPE: mongodb
-      GIO_MAX_MEM: 512m
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout:
-          method: full
-      - keeper/env-export:
-          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
-          var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
-      - run:
-          name: Install test module dependencies
-          command: npm --prefix gravitee-am-test install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Spin up stack with Keycloak and Mongo << parameters.mongo_version >>
-          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:keycloak:mongo
-      - run:
-          name: Check stack health before Keycloak tests
->>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
           command: |
             docker pull wiremock/wiremock:3.13.1
             docker run -d --rm --name wiremock -p 8181:8080 wiremock/wiremock:3.13.1 --verbose --global-response-templating
@@ -1064,14 +910,9 @@ jobs:
           secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
       - run:
-<<<<<<< HEAD
           name: Install Newman
           command: sudo npm i -g newman
-=======
-          name: Install test module dependencies
-          command: npm --prefix postman install
       - azure-artifacts-token
->>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
       - run:
           name: Wait for Mongo to be up and running
           command: timeout 15s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
@@ -1128,15 +969,10 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://w8WBpALVCgYdxtV5pVrQsw/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
+      - azure-artifacts-token
       - run:
-<<<<<<< HEAD
           name: Install Newman
           command: sudo npm i -g newman
-=======
-          name: Install test module dependencies
-          command: npm --prefix postman install
-      - azure-artifacts-token
->>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
       - run:
           name: Wait for PSQL to be up and running
           command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
@@ -1592,13 +1428,9 @@ jobs:
           at: /tmp
       - checkout
       - restore-maven-job-cache:
-<<<<<<< HEAD
           jobName: junit_tests
       - mvn_git_commit_id
-=======
-          jobName: pull_requests
       - azure-artifacts-token
->>>>>>> ae7a8d7 (ci: resolve and publish Maven artifacts through the Azure Artifacts feeds)
       - run:
           name: "Maven unit tests"
           no_output_timeout: 30m
