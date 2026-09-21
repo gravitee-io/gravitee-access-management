@@ -113,7 +113,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(VALUE_PARAM)
                 .append(" OR u.email ").append(wildcard ? SQL_LIKE : "= ")
                 .append(VALUE_PARAM)
-                .append(" OR  u.additional_information->>email ").append(wildcard ? SQL_LIKE : "= ")
+                .append(" OR  u.additional_information->>'email' ").append(wildcard ? SQL_LIKE : "= ")
                 .append(VALUE_PARAM)
                 .append(" OR u.display_name ").append(wildcard ? SQL_LIKE : "= ")
                 .append(VALUE_PARAM)
@@ -149,7 +149,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(" AND u.reference_id = :refId AND (")
                 .append(strict ? "u.email" : "UPPER(u.email)")
                 .append(strict ? " = :email OR " : " = UPPER(:email) OR ")
-                .append(strict ? "u.additional_information->>email" : " UPPER(u.additional_information->>email)")
+                .append(strict ? "u.additional_information->>'email'" : " UPPER(u.additional_information->>'email')")
                 .append(strict ? " = :email" : " = UPPER(:email) ")
                 .append(")").toString();
     }

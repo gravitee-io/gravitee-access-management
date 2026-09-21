@@ -488,21 +488,23 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         String search = this.databaseDialectHelper.buildSearchUserQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountUserQuery(wildcardSearch);
 
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+        Single<List<User>> users = fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                 .bind(REF_ID, reference.id())
                 .bind(REF_TYPE, reference.type().name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
                 .concatMap(app -> completeUser(app).toFlowable()) // single thread to keep order
-                .toList()
-                .concatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
-                        .bind(REF_ID, reference.id())
-                        .bind(REF_TYPE, reference.type().name())
-                        .map((row, rowMetadata) -> row.get(0, Long.class))
-                        .first())
-                        .map(total -> new Page<>(data, page, total)))
+                .toList();
+
+        Single<Long> total = monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
+                .bind(REF_ID, reference.id())
+                .bind(REF_TYPE, reference.type().name())
+                .map((row, rowMetadata) -> row.get(0, Long.class))
+                .first());
+
+        return Single.zip(users, total, (data, totalCount) -> new Page<>(data, page, totalCount))
                 .observeOn(Schedulers.computation());
     }
 
