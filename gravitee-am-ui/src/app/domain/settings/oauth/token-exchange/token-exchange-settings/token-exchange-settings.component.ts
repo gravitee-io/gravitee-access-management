@@ -22,6 +22,7 @@ import { DomainService } from '../../../../../services/domain.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
 import {
+  IdJagSettings,
   TokenExchangeOAuthSettings,
   DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
   TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
@@ -35,6 +36,7 @@ interface TokenExchangeSettings {
   allowedActorTokenTypes: string[];
   allowDelegation: boolean;
   maxDelegationDepth?: number;
+  idJagSettings?: IdJagSettings;
   tokenExchangeOAuthSettings?: TokenExchangeOAuthSettings;
 }
 
@@ -55,26 +57,32 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
   editMode: boolean;
   private destroy$ = new Subject<void>();
 
+  readonly ID_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id_token';
+  readonly ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
+  readonly REFRESH_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:refresh_token';
+  readonly JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
+  readonly ID_JAG_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id-jag';
+
   readonly SUBJECT_TOKEN_TYPES = [
-    { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
-    { value: 'urn:ietf:params:oauth:token-type:refresh_token', label: 'Refresh Token' },
-    { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
-    { value: 'urn:ietf:params:oauth:token-type:jwt', label: 'JWT' },
+    { value: this.ACCESS_TOKEN_TYPE, label: 'Access Token' },
+    { value: this.REFRESH_TOKEN_TYPE, label: 'Refresh Token' },
+    { value: this.ID_TOKEN_TYPE, label: 'ID Token' },
+    { value: this.JWT_TOKEN_TYPE, label: 'JWT' },
   ];
 
   readonly ACTOR_TOKEN_TYPES = [
-    { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
-    { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
-    { value: 'urn:ietf:params:oauth:token-type:jwt', label: 'JWT' },
+    { value: this.ACCESS_TOKEN_TYPE, label: 'Access Token' },
+    { value: this.ID_TOKEN_TYPE, label: 'ID Token' },
+    { value: this.JWT_TOKEN_TYPE, label: 'JWT' },
   ];
 
   readonly REQUESTED_TOKEN_TYPES = [
-    { value: 'urn:ietf:params:oauth:token-type:access_token', label: 'Access Token' },
-    { value: 'urn:ietf:params:oauth:token-type:id_token', label: 'ID Token' },
-    { value: 'urn:ietf:params:oauth:token-type:id-jag', label: 'ID-JAG (Cross App Access)' },
+    { value: this.ACCESS_TOKEN_TYPE, label: 'Access Token' },
+    { value: this.ID_TOKEN_TYPE, label: 'ID Token' },
+    { value: this.ID_JAG_TOKEN_TYPE, label: 'ID-JAG (Cross App Access)' },
   ];
 
-  readonly DEFAULT_REQUESTED_TOKEN_TYPES = ['urn:ietf:params:oauth:token-type:access_token', 'urn:ietf:params:oauth:token-type:id_token'];
+  readonly DEFAULT_REQUESTED_TOKEN_TYPES = [this.ACCESS_TOKEN_TYPE, this.ID_TOKEN_TYPE];
 
   constructor(
     private domainService: DomainService,
@@ -109,6 +117,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowImpersonation: tokenExchangeSettings.allowImpersonation ?? true,
       allowedActorTokenTypes: tokenExchangeSettings.allowedActorTokenTypes ?? this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: tokenExchangeSettings.allowDelegation ?? false,
+      idJagSettings: { laxValidation: tokenExchangeSettings.idJagSettings?.laxValidation ?? false },
     };
 
     normalizedSettings.maxDelegationDepth =
@@ -132,6 +141,7 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
       allowedActorTokenTypes: this.ACTOR_TOKEN_TYPES.map((t) => t.value),
       allowDelegation: false,
       maxDelegationDepth: this.defaultDelegationDepth,
+      idJagSettings: { laxValidation: false },
       tokenExchangeOAuthSettings: { scopeHandling: DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING, inherited: false },
     };
   }
@@ -197,6 +207,10 @@ export class TokenExchangeSettingsComponent implements OnInit, OnDestroy {
   enableTokenExchange(event) {
     this.domain.tokenExchangeSettings.enabled = event.checked;
     this.formChanged = true;
+  }
+
+  isIdJagRequestable(): boolean {
+    return this.domain.tokenExchangeSettings?.allowedRequestedTokenTypes?.includes(this.ID_JAG_TOKEN_TYPE);
   }
 
   isTokenExchangeEnabled(): boolean {

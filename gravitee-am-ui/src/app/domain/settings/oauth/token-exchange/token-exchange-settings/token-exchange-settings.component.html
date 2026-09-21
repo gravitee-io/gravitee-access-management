@@ -64,6 +64,27 @@
               </mat-select>
               <mat-hint>Token types that can be submitted as subject_token for exchange</mat-hint>
             </mat-form-field>
+
+            <div class="id-jag-lax-validation" fxLayout="column" data-testid="idJagLaxValidation">
+              <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+                <mat-slide-toggle
+                  name="idJagLaxValidation"
+                  [(ngModel)]="domain.tokenExchangeSettings.idJagSettings.laxValidation"
+                  (change)="modelChanged()"
+                  [disabled]="!editMode || !isIdJagRequestable()"
+                >
+                  ID-JAG lax validation
+                </mat-slide-toggle>
+                <div *ngIf="!isIdJagRequestable()" class="id-jag-required" data-testid="idJagRequired">
+                  <mat-icon svgIcon="gio:alert-circle"></mat-icon>
+                  ID-JAG requested token type required
+                </div>
+              </div>
+              <div class="gv-form-hint">
+                Also accept an access token as subject_token when requesting an ID-JAG. By default only an ID token is accepted. Either
+                token must be issued to the requesting client.
+              </div>
+            </div>
           </div>
 
           <!-- Requested Token Types Section -->

@@ -351,3 +351,22 @@ describe('ID-JAG issuance - the domain-level switch is the single place it is en
     expect(errorOf(response)).toBe('invalid_request');
   });
 });
+
+describe('ID-JAG issuance - lax validation also accepts an access token', () => {
+  beforeAll(bothResourceServers);
+
+  afterAll(async () => {
+    await fixture.setIdJagLaxValidation(false);
+  });
+
+  it('should issue an ID-JAG from an access token issued to the requesting application', async () => {
+    const { accessToken } = await fixture.subjectTokens();
+    await fixture.setIdJagLaxValidation(true);
+
+    const response = await fixture
+      .requestIdJag(accessToken, audienceParam() + resourceParam(fixture.calendar.resource), ACCESS_TOKEN_TYPE)
+      .expect(200);
+
+    expect(response.body.issued_token_type).toBe(ID_JAG_TOKEN_TYPE);
+  });
+});

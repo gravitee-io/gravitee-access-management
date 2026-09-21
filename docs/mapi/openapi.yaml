@@ -15169,6 +15169,17 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    IdJagSettings:
+      type: object
+      description: ID-JAG issuance behavior of token exchange.
+      properties:
+        laxValidation:
+          type: boolean
+          default: false
+          description: "Lax validation: also accept an access token issued to the\
+            \ requesting client as the subject token. By default only an ID token\
+            \ is accepted."
+      title: ID-JAG settings
     IdentityProvider:
       type: object
       properties:
@@ -18700,6 +18711,8 @@ components:
           type: boolean
           default: false
           description: Whether token exchange is enabled for the domain.
+        idJagSettings:
+          $ref: "#/components/schemas/IdJagSettings"
         maxDelegationDepth:
           type: integer
           format: int32

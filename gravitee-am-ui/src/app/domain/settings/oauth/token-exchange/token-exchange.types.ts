@@ -24,6 +24,10 @@ export interface TokenExchangeOAuthSettings {
   scopeHandling: TokenExchangeScopeHandling;
 }
 
+export interface IdJagSettings {
+  laxValidation: boolean;
+}
+
 export const DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING: TokenExchangeScopeHandling = 'downscoping';
 
 export const TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS: readonly { label: string; value: TokenExchangeScopeHandling }[] = [

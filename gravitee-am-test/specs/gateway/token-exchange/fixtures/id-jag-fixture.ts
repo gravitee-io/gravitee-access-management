@@ -68,6 +68,7 @@ export interface IdJagFixture {
   setAudSubMapping: (audSubMapping: string) => Promise<void>;
   bothResourceServerSettings: () => Record<string, unknown>;
   setDomainAllowsIdJag: (allowed: boolean) => Promise<void>;
+  setIdJagLaxValidation: (laxValidation: boolean) => Promise<void>;
   awaitTokenAudit: (status: 'SUCCESS' | 'FAILURE', matches: (detail: any) => boolean) => Promise<any>;
   cleanUp: () => Promise<void>;
 }
@@ -81,7 +82,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName('id-jag', true), 'ID-JAG issuance');
 
-  const patchTokenExchange = (allowedRequestedTokenTypes: string[]) =>
+  const patchTokenExchange = (allowedRequestedTokenTypes: string[], laxValidation = false) =>
     request(getDomainManagerUrl(domain.id))
       .patch('')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -93,6 +94,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
           allowDelegation: false,
           allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
           allowedRequestedTokenTypes,
+          idJagSettings: { laxValidation },
         },
       })
       .expect(200);
@@ -255,6 +257,12 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     await waitForSyncAfter(domain.id, () => patchTokenExchange(allowedRequestedTokenTypes));
   };
 
+  const setIdJagLaxValidation = async (laxValidation: boolean) => {
+    await waitForSyncAfter(domain.id, () =>
+      patchTokenExchange([...TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES, ID_JAG_TOKEN_TYPE], laxValidation),
+    );
+  };
+
   const listTokenAudits = async (status: string) => {
     const response = await request(getDomainManagerUrl(domain.id))
       .get(`/audits?type=TOKEN_CREATED&status=${status}&size=20`)
@@ -293,6 +301,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     setAudSubMapping,
     bothResourceServerSettings,
     setDomainAllowsIdJag,
+    setIdJagLaxValidation,
     awaitTokenAudit,
     cleanUp: () => safeDeleteDomain(domain.id, accessToken),
   };
