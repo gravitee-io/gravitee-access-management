@@ -46,6 +46,14 @@ public record IdJagTarget(
         }
     }
 
+    public Map<String, Object> contextAttribute() {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        attribute.put("audience", audience);
+        attribute.put("resource", resource);
+        attribute.put("clientId", clientId);
+        return Collections.unmodifiableMap(attribute);
+    }
+
     public String partnerScope(Collection<String> domainScopes) {
         return scopeMappings.entrySet().stream()
                 .filter(mapping -> domainScopes.contains(mapping.getKey()))

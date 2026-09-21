@@ -16,6 +16,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 import { setup } from '../../test-fixture';
+import { getApplicationFlows, updateApplicationFlows } from '@management-commands/application-management-commands';
+import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { ID_JAG_TOKEN_TYPE, IdJagFixture, setupIdJagFixture } from './fixtures/id-jag-fixture';
 
 setup(300000);
@@ -24,6 +28,10 @@ const EMAIL = "{#context.attributes['user'].email}";
 const USERNAME = "{#context.attributes['user'].username}";
 const NOTHING = "{#context.attributes['user'].additionalInformation['acme_id']}";
 const BROKEN = "{#context.attributes['user'].noSuchProperty}";
+const RESOLVED_RESOURCE = "{#context.attributes['idJag']['resource']}";
+const GROOVY_RESOURCE = "{#context.attributes['groovyResource']}";
+const COPY_RESOURCE_SCRIPT =
+  "def idJag = context.attributes['idJag']; if (idJag) { context.setAttribute('groovyResource', idJag['resource']) }";
 
 let fixture: IdJagFixture;
 
@@ -43,6 +51,23 @@ const requestAssertion = async (expectedStatus: number) => {
 };
 
 const mintedClaims = async () => decode((await requestAssertion(200)).body.access_token);
+
+const setPreTokenScript = async (script: string) => {
+  const flows = await getApplicationFlows(fixture.domain.id, fixture.accessToken, fixture.application.id);
+  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Token, 'pre', [
+    {
+      name: 'Groovy',
+      policy: 'groovy',
+      description: '',
+      condition: '',
+      enabled: true,
+      configuration: JSON.stringify({ onRequestScript: script }),
+    },
+  ]);
+  await waitForSyncAfter(fixture.domain.id, () =>
+    updateApplicationFlows(fixture.domain.id, fixture.accessToken, fixture.application.id, flows),
+  );
+};
 
 beforeAll(async () => {
   fixture = await setupIdJagFixture();
@@ -129,5 +154,38 @@ describe('Custom claims on access tokens and ID tokens', () => {
 
     expect(decode(accessToken)).not.toHaveProperty('broken');
     expect(decode(idToken)).not.toHaveProperty('broken');
+  });
+});
+
+describe('ID-JAG issuance - TOKEN flow policies and claims see the resolved target', () => {
+  beforeAll(async () => {
+    await setPreTokenScript(COPY_RESOURCE_SCRIPT);
+    await fixture.setCrossAppAccess(
+      {
+        enabled: true,
+        resourceServers: [
+          { trustDomainId: fixture.trustDomainId, resourceServerId: fixture.calendar.id, clientId: 'agent-at-acme-calendar' },
+        ],
+      },
+      300,
+      [idJagClaim('resolved_resource', RESOLVED_RESOURCE), idJagClaim('groovy_resource', GROOVY_RESOURCE)],
+    );
+  });
+
+  it('should expose the resource AM inferred when the agent omits it', async () => {
+    const { idToken } = await fixture.subjectTokens();
+
+    const response = await fixture.requestIdJag(idToken, `&audience=${encodeURIComponent(fixture.audience)}`).expect(200);
+
+    const claims = decode(response.body.access_token);
+    expect(claims.resolved_resource).toBe(fixture.calendar.resource);
+    expect(claims.groovy_resource).toBe(fixture.calendar.resource);
+  });
+
+  it('should expose the same resource when the agent names it', async () => {
+    const claims = await mintedClaims();
+
+    expect(claims.resolved_resource).toBe(fixture.calendar.resource);
+    expect(claims.groovy_resource).toBe(fixture.calendar.resource);
   });
 });

@@ -36,9 +36,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -122,5 +126,36 @@ public class RulesEngineTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete().assertNoErrors();
         verify(policyChainProcessorFactory, times(1)).create(any(), any());
+    }
+
+    @Test
+    public void shouldSeedContextAttributesBeforePolicies() {
+        Request request = Mockito.mock(Request.class);
+        Client client = mock(Client.class);
+        Map<String, Object> attributes = new HashMap<>();
+        Map<String, Object> idJag = Map.of("resource", "https://calendar.acme.com");
+        when(executionContext.getAttributes()).thenReturn(attributes);
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        when(flowManager.findByExtensionPoint(any(), any(), any())).thenReturn(Single.just(Collections.emptyList()));
+
+        TestObserver<ExecutionContext> testObserver = rulesEngine.fire(ExtensionPoint.PRE_TOKEN, request, null, client, null, Map.of("idJag", idJag)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete().assertNoErrors();
+        assertEquals(idJag, attributes.get("idJag"));
+    }
+
+    @Test
+    public void shouldNotLetSeededAttributesReplaceTheClient() {
+        Request request = Mockito.mock(Request.class);
+        Client client = mock(Client.class);
+        Map<String, Object> attributes = new HashMap<>();
+        when(executionContext.getAttributes()).thenReturn(attributes);
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        when(flowManager.findByExtensionPoint(any(), any(), any())).thenReturn(Single.just(Collections.emptyList()));
+
+        TestObserver<ExecutionContext> testObserver = rulesEngine.fire(ExtensionPoint.PRE_TOKEN, request, null, client, null, Map.of("client", "forged")).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete().assertNoErrors();
+        assertSame(client, attributes.get("client"));
     }
 }

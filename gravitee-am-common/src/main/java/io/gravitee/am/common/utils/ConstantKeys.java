@@ -38,6 +38,7 @@ public interface ConstantKeys {
     String ALLOW_EMPTY_SCOPE_SELECTION = "allowEmptyScopeSelection";
     String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorization_request";
     String ID_TOKEN_CONTEXT_KEY = "idToken";
+    String ID_JAG_CONTEXT_KEY = "idJag";
     String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     String RAW_TOKEN_CONTEXT_KEY = "raw_token";
     String TOKEN_CONTEXT_KEY = "token";

@@ -19,12 +19,15 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -80,5 +83,23 @@ public class OAuth2RequestTest {
         request.setIssuedTokenType(TokenType.ID_TOKEN);
 
         Assertions.assertTrue(request.shouldGenerateIDToken(false));
+    }
+
+    @Test
+    public void shouldCollectTheIdJagTargetAsAContextAttribute() {
+        final var request = new OAuth2Request();
+        request.setIdJagTarget(new IdJagTarget("https://auth.acme.com", "https://calendar.acme.com", "agent-at-acme",
+                Map.of("calendar", "calendar.read"), "{#context.attributes['user'].email}"));
+
+        Assertions.assertEquals(Map.of(ConstantKeys.ID_JAG_CONTEXT_KEY, Map.of(
+                        "audience", "https://auth.acme.com",
+                        "resource", "https://calendar.acme.com",
+                        "clientId", "agent-at-acme")),
+                request.collectAdditionalContextAttributes());
+    }
+
+    @Test
+    public void shouldCollectNoContextAttributesWithoutAnIdJagTarget() {
+        Assertions.assertEquals(Map.of(), new OAuth2Request().collectAdditionalContextAttributes());
     }
 }
