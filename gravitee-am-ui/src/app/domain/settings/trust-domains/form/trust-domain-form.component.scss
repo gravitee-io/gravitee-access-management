@@ -45,6 +45,32 @@
 .datatable-input {
   width: 100%;
   align-self: center;
+  margin: 8px 0;
+}
+
+// The row grows with the cell, so an editing input is never clipped by the one below it.
+:host ::ng-deep ngx-datatable.material {
+  .datatable-body-cell {
+    display: flex;
+    overflow: visible;
+    align-items: center;
+  }
+
+  .datatable-body-cell-label {
+    width: 100%;
+  }
+
+  // styles.scss lifts the action buttons by 9px to centre them in a fixed-height row; the cell
+  // centres them itself now, so that offset would push them off.
+  .gv-table-cell-actions {
+    display: flex;
+    align-items: center;
+    margin-left: 0;
+
+    button {
+      top: auto;
+    }
+  }
 }
 
 .sub-section-title {

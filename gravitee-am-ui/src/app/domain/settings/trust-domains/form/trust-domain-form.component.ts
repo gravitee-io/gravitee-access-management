@@ -65,8 +65,10 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
   scopeMappingRows: ScopeStaging[] = [];
   userBindingRows: UserBindingCriterion[] = [];
   resourceServerRows: CrossAppAccessResourceServer[] = [];
-  /** Resource-server cells turned into an input by a double-click, keyed by "<rowIndex>-<field>". */
-  editingResourceServerCell: Record<string, boolean> = {};
+  /** Row of the resource-server table being edited, if any. Its fields live in resourceServerDraft. */
+  editingResourceServerIndex: number | null = null;
+  /** Holds what is typed while a row is edited, so a redraw of the table never drops it. */
+  resourceServerDraft: CrossAppAccessResourceServer = { name: '', resource: '' };
   outboundScopeMappingRows: OutboundScopeStaging[] = [];
   audSubMapping = '';
   algorithmInput = '';
@@ -106,7 +108,7 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
       name: rs.name ?? '',
       resource: rs.resource ?? '',
     }));
-    this.editingResourceServerCell = {};
+    this.cancelResourceServerEdit();
     this.audSubMapping = crossAppAccess?.audSubMapping ?? '';
     this.outboundScopeMappingRows = Object.entries(crossAppAccess?.scopeMappings ?? {}).map(([domainScope, externalScope]) => ({
       domainScope,
@@ -266,30 +268,52 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
 
   removeResourceServer(rowIndex: number): void {
     this.resourceServerRows = this.resourceServerRows.filter((_, idx) => idx !== rowIndex);
-    // Cells are keyed by row index, which shifts once a row is gone.
-    this.editingResourceServerCell = {};
-    this.onFieldChange();
-  }
-
-  editResourceServerCell(rowIndex: number, field: 'name' | 'resource'): void {
-    if (this.editMode) {
-      this.editingResourceServerCell[`${rowIndex}-${field}`] = true;
+    if (this.editingResourceServerIndex === rowIndex) {
+      this.cancelResourceServerEdit();
+    } else if (this.editingResourceServerIndex > rowIndex) {
+      // The edited row moved up by one.
+      this.editingResourceServerIndex--;
     }
-  }
-
-  /** Edits a resource server in place, keeping its id so the applications mapping it still resolve. */
-  updateResourceServer(event: Event, field: 'name' | 'resource', rowIndex: number): void {
-    const value = ((event.target as HTMLInputElement).value ?? '').trim();
-    if (!value) {
-      return;
-    }
-    this.editingResourceServerCell[`${rowIndex}-${field}`] = false;
-    this.resourceServerRows = this.resourceServerRows.map((rs, idx) => (idx === rowIndex ? { ...rs, [field]: value } : rs));
     this.onFieldChange();
   }
 
   canAddResourceServer(): boolean {
     return !!(this.newResourceServerStaging.name?.trim() && this.newResourceServerStaging.resource?.trim());
+  }
+
+  editResourceServer(rowIndex: number): void {
+    if (!this.editMode) {
+      return;
+    }
+    const row = this.resourceServerRows[rowIndex];
+    this.editingResourceServerIndex = rowIndex;
+    this.resourceServerDraft = { ...row };
+  }
+
+  isEditingResourceServer(rowIndex: number): boolean {
+    return this.editingResourceServerIndex === rowIndex;
+  }
+
+  canApplyResourceServerEdit(): boolean {
+    return !!(this.resourceServerDraft.name?.trim() && this.resourceServerDraft.resource?.trim());
+  }
+
+  /** Writes the draft back, keeping the row's id so the applications mapping it still resolve. */
+  applyResourceServerEdit(): void {
+    if (this.editingResourceServerIndex === null || !this.canApplyResourceServerEdit()) {
+      return;
+    }
+    const edited = this.editingResourceServerIndex;
+    const name = this.resourceServerDraft.name.trim();
+    const resource = this.resourceServerDraft.resource.trim();
+    this.resourceServerRows = this.resourceServerRows.map((rs, idx) => (idx === edited ? { ...rs, name, resource } : rs));
+    this.cancelResourceServerEdit();
+    this.onFieldChange();
+  }
+
+  cancelResourceServerEdit(): void {
+    this.editingResourceServerIndex = null;
+    this.resourceServerDraft = { name: '', resource: '' };
   }
 
   addOutboundScopeMapping(): void {
@@ -370,6 +394,9 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
 
   private crossAppAccessErrors(): string[] {
     const errors: string[] = [];
+    if (this.editingResourceServerIndex !== null) {
+      errors.push('Finish editing the resource server: its name and resource URI are both required.');
+    }
     if (this.resourceServerRows.length === 0) {
       errors.push('At least one resource server is required when Cross App Access is enabled.');
     }
@@ -391,6 +418,8 @@ export class TrustDomainFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   submit(): void {
+    // A row still open carries the operator's last edit; a no-op when nothing is being edited.
+    this.applyResourceServerEdit();
     if (!this.isFormValid()) {
       return;
     }
