@@ -139,7 +139,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> tokenRepository.findAccessTokenByJti(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, null)));
+                .flatMapMaybe(jwt -> tokenRepository.findAccessTokenByJti(jwt.getJti()).map(accessToken -> convertAccessToken(jwt, accessToken.getClient())));
     }
 
     @Override
@@ -151,7 +151,7 @@ public class TokenServiceImpl implements TokenService {
                     }
                     return Single.error(ex);
                 })
-                .flatMapMaybe(jwt -> tokenRepository.findRefreshTokenByJti(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt, null)));
+                .flatMapMaybe(jwt -> tokenRepository.findRefreshTokenByJti(jwt.getJti()).map(storedRefreshToken -> convertRefreshToken(jwt, storedRefreshToken.getClient())));
     }
 
     @Override
@@ -479,7 +479,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     private Token convert(Token token, JWT jwt, String clientId) {
-        token.setClientId(clientId != null ? clientId : jwt.getAud());
+        token.setClientId(resolveClientId(jwt, clientId));
         token.setSubject(jwt.getSub());
         token.setScope(jwt.getScope());
         token.setCreatedAt(new Date(jwt.getIat() * 1000L));
@@ -487,6 +487,14 @@ public class TokenServiceImpl implements TokenService {
         token.setExpiresIn(token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0);
         token.setAdditionalInformation(jwt);
         return token;
+    }
+
+    // RFC 8707 access tokens put the resource URI in aud.
+    private static String resolveClientId(JWT jwt, String storedClientId) {
+        if (storedClientId != null) {
+            return storedClientId;
+        }
+        return jwt.get(Claims.CLIENT_ID) instanceof String clientIdClaim ? clientIdClaim : jwt.getAud();
     }
 
     private JWT createAccessTokenJWT(OAuth2Request request, Client client, User user, ExecutionContext executionContext) {
