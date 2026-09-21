@@ -806,6 +806,150 @@ public class TokenServiceImplTest {
                 });
     }
 
+    @Test
+    public void when_introspect_rfc8707_access_token_in_offline_window_should_use_client_id_claim() {
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.put(Claims.AUD, resourceAudience("https://mcp.local.test/mcp"));
+        jwt.put(Claims.CLIENT_ID, "service-app");
+        jwt.setSub("service-app");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.just(new IntrospectionResult(jwt, null)));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.empty());
+
+        TestObserver<Token> observer = tokenService.introspect("token").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("service-app");
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_introspect_multi_resource_access_token_in_offline_window_should_use_client_id_claim() {
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.put(Claims.AUD, resourceAudience("https://mcp.local.test/mcp", "https://api.local.test/data"));
+        jwt.put(Claims.CLIENT_ID, "service-app");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+
+        Mockito.when(introspectionTokenFacade.introspectAccessToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.just(new IntrospectionResult(jwt, null)));
+        Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.anyString(), Mockito.isNull()))
+                .thenReturn(Maybe.empty());
+
+        TestObserver<Token> observer = tokenService.introspect("token").test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("service-app");
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_get_access_token_for_rfc8707_token_should_prefer_stored_client_over_jwt_claim() {
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.put(Claims.AUD, resourceAudience("https://mcp.local.test/mcp"));
+        jwt.put(Claims.CLIENT_ID, "jwt-claim-client");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+
+        io.gravitee.am.repository.oauth2.model.AccessToken storedToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
+        storedToken.setClient("stored-owner");
+
+        Client client = new Client();
+        client.setClientId("stored-owner");
+
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any(JWTService.TokenType.class)))
+                .thenReturn(Single.just(jwt));
+        when(tokenRepository.findAccessTokenByJti("access-token-id")).thenReturn(Maybe.just(storedToken));
+
+        TestObserver<Token> observer = tokenService.getAccessToken("token", client).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("stored-owner");
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_get_access_token_and_stored_client_is_missing_should_fall_back_to_client_id_claim() {
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.put(Claims.AUD, resourceAudience("https://mcp.local.test/mcp"));
+        jwt.put(Claims.CLIENT_ID, "service-app");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+
+        io.gravitee.am.repository.oauth2.model.AccessToken storedToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
+
+        Client client = new Client();
+        client.setClientId("service-app");
+
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any(JWTService.TokenType.class)))
+                .thenReturn(Single.just(jwt));
+        when(tokenRepository.findAccessTokenByJti("access-token-id")).thenReturn(Maybe.just(storedToken));
+
+        TestObserver<Token> observer = tokenService.getAccessToken("token", client).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("service-app");
+                    return true;
+                });
+    }
+
+    @Test
+    public void when_get_access_token_without_client_id_claim_should_fall_back_to_aud() {
+        JWT jwt = new JWT();
+        jwt.setJti("access-token-id");
+        jwt.setAud("legacy-client");
+        jwt.setIat(System.currentTimeMillis() / 1000);
+        jwt.setExp(System.currentTimeMillis() / 1000 + 3600);
+
+        io.gravitee.am.repository.oauth2.model.AccessToken storedToken = new io.gravitee.am.repository.oauth2.model.AccessToken();
+
+        Client client = new Client();
+        client.setClientId("legacy-client");
+
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any(JWTService.TokenType.class)))
+                .thenReturn(Single.just(jwt));
+        when(tokenRepository.findAccessTokenByJti("access-token-id")).thenReturn(Maybe.just(storedToken));
+
+        TestObserver<Token> observer = tokenService.getAccessToken("token", client).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertComplete()
+                .assertNoErrors()
+                .assertValue(token -> {
+                    assertThat(token.getClientId()).isEqualTo("legacy-client");
+                    return true;
+                });
+    }
+
+    private static JSONArray resourceAudience(String... resources) {
+        JSONArray audience = new JSONArray();
+        audience.addAll(List.of(resources));
+        return audience;
+    }
+
     private EncodedJWT sampleEncodedJwt() {
         return new EncodedJWT("encoded-jwt", createTestCertificateInfo());
     }
