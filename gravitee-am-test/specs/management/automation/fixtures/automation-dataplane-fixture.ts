@@ -15,6 +15,10 @@
  */
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { addOrganizationMembership, userMembership } from '@management-commands/membership-management-commands';
+import { createCustomOrganizationRole, deleteOrganizationRole } from '@management-commands/role-management-commands';
+import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
+import { createPersona, Persona } from '../../permissions/fixtures/rbac-fixture';
 import { uniqueName } from '@utils-commands/misc';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { Fixture } from '../../../test-fixture';
@@ -106,9 +110,15 @@ export const connectablePayload = (id: string) =>
         configuration: { mongodb: { dbname: 'gravitee-am', host: MONGO_HOST, port: MONGO_PORT } },
       };
 
+/** An organization user whose only DATA_PLANE allowance is read + list, granted through a custom role. */
+export interface DataPlaneReader extends Persona {
+  client: AutomationClient;
+}
+
 export interface AutomationDataPlaneFixture extends Fixture {
   adminToken: string;
   client: AutomationClient;
+  reader: DataPlaneReader;
   /** Mints a unique id and registers it for cleanup. */
   reserveId: (prefix?: string) => string;
 }
@@ -124,9 +134,18 @@ export const setupAutomationDataPlaneFixture = async (): Promise<AutomationDataP
   const client = new AutomationClient(adminToken);
   const reserved: string[] = [];
 
+  // the read-only half of DATA_PLANE, as the role API spells it; `createPersona` verifies the token
+  const readerRole = await createCustomOrganizationRole(adminToken, uniqueName('dp-reader', true), 'ORGANIZATION', [
+    'data_plane_read',
+    'data_plane_list',
+  ]);
+  const reader = await createPersona(adminToken, 'dp-reader');
+  await addOrganizationMembership(adminToken, userMembership(reader.userId, readerRole.id));
+
   return {
     adminToken,
     client,
+    reader: { ...reader, client: new AutomationClient(reader.token) },
     reserveId: (prefix = 'dp-auto') => {
       const id = uniqueName(`${prefix}-${process.pid}`, true).toLowerCase();
       reserved.push(id);
@@ -136,6 +155,8 @@ export const setupAutomationDataPlaneFixture = async (): Promise<AutomationDataP
       for (const id of reserved) {
         await client.deleteDataPlane(id).catch(() => undefined);
       }
+      await deleteOrganisationUser(adminToken, reader.userId).catch(() => undefined);
+      await deleteOrganizationRole(adminToken, readerRole.id).catch(() => undefined);
     },
   };
 };

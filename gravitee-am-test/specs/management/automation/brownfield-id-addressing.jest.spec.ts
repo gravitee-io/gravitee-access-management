@@ -23,12 +23,21 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { createDomain, deleteDomain } from '@management-commands/domain-management-commands';
 import { getIdp } from '@management-commands/idp-management-commands';
+import {
+  createDataPlane as provisionOutsideAutomation,
+  deleteDataPlane as deprovisionOutsideAutomation,
+  getDataPlane as readOutsideAutomation,
+} from '@management-commands/dataplane-provisioning-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import { BrownfieldFixture, setupBrownfieldFixture } from './fixtures/brownfield-fixture';
+import { connectablePayload } from './fixtures/automation-dataplane-fixture';
 
 setup(120000);
 
 let fixture: BrownfieldFixture;
+/** A data plane provisioned through the node's internal API, removed the same way. */
+let brownfieldDataPlaneId: string;
 const idRef = (uuid: string) => `id:${uuid}`;
 
 beforeAll(async () => {
@@ -36,6 +45,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (brownfieldDataPlaneId) {
+    await deprovisionOutsideAutomation(brownfieldDataPlaneId).catch(() => undefined);
+  }
   if (fixture) {
     await fixture.cleanUp();
   }
@@ -103,5 +115,39 @@ describe('Automation API - brownfield id: addressing', () => {
     } finally {
       await deleteDomain(otherDomain.id, fixture.accessToken);
     }
+  });
+});
+
+describe('Automation API - brownfield id: addressing of data planes', () => {
+  // the id: resolver is covered by DataPlanesResourceTest; this shows both APIs share one store
+  it('should share one store with the internal API and keep a brownfield data plane unmanaged through an id: update', async () => {
+    brownfieldDataPlaneId = uniqueName(`brownfield-dp-${process.pid}`, true).toLowerCase();
+    const created = await provisionOutsideAutomation(connectablePayload(brownfieldDataPlaneId));
+    expect(created.status).toBe(201);
+    expect(created.body.managedBy).toBe('NONE');
+
+    // visible to the Automation API only through id:, never in its list or by bare key
+    expect((await fixture.client.getDataPlane(brownfieldDataPlaneId)).status).toBe(404);
+    expect((await fixture.client.listDataPlanes()).body.map((dataPlane) => dataPlane.id)).not.toContain(brownfieldDataPlaneId);
+    expect((await fixture.client.getDataPlane(idRef(brownfieldDataPlaneId))).status).toBe(200);
+
+    const updated = await fixture.client.putDataPlane({
+      ...connectablePayload(brownfieldDataPlaneId),
+      id: idRef(brownfieldDataPlaneId),
+      name: 'Updated through id:',
+      gatewayUrl: 'https://gateway-brownfield.example.com',
+    });
+    expect(updated.status).toBe(200);
+    expect(updated.body).toMatchObject({ id: brownfieldDataPlaneId, name: 'Updated through id:' });
+
+    // the internal API reads the change back from the same row, and ownership has not moved
+    const outside = await readOutsideAutomation(brownfieldDataPlaneId);
+    expect(outside.status).toBe(200);
+    expect(outside.body).toMatchObject({
+      name: 'Updated through id:',
+      gatewayUrl: 'https://gateway-brownfield.example.com',
+      managedBy: 'NONE',
+    });
+    expect((await fixture.client.listDataPlanes()).body.map((dataPlane) => dataPlane.id)).not.toContain(brownfieldDataPlaneId);
   });
 });
