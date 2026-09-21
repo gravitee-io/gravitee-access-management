@@ -189,3 +189,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-webauth.yml
   - include:
       - file: liquibase/changelogs/v4_9_5/4.9.5-add-membership-field.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.33-organization-users-search-pattern-ops-indexes.yml

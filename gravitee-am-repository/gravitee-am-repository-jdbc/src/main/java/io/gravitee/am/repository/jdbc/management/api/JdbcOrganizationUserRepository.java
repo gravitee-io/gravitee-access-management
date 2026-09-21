@@ -275,7 +275,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         String search = this.databaseDialectHelper.buildSearchUserQuery(wildcardSearch, page, size, true);
         String count = this.databaseDialectHelper.buildCountUserQuery(wildcardSearch, true);
 
-        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+        Single<List<User>> users = fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                 .bind(REF_ID, referenceId)
                 .bind(REF_TYPE, referenceType.name())
@@ -283,13 +283,15 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .all())
                 .map(this::toEntity)
                 .concatMap(app -> completeUser(app).toFlowable())
-                .toList()
-                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
-                        .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
-                        .bind(REF_ID, referenceId)
-                        .bind(REF_TYPE, referenceType.name())
-                        .map((row, rowMetadat) -> row.get(0, Long.class)).first())
-                        .map(total -> new Page<>(data, page, total)))
+                .toList();
+
+        Single<Long> total = monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
+                .bind(REF_ID, referenceId)
+                .bind(REF_TYPE, referenceType.name())
+                .map((row, rowMetadat) -> row.get(0, Long.class)).first());
+
+        return Single.zip(users, total, (data, totalCount) -> new Page<>(data, page, totalCount))
                 .observeOn(Schedulers.computation());
     }
 
