@@ -89,6 +89,9 @@ public class TokenExchangeSettings {
             "1–100.", defaultValue = "25")
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
+    @Schema(description = "ID-JAG issuance settings.")
+    private IdJagSettings idJagSettings;
+
     /**
      * @deprecated superseded by token-exchange trusted domains. The API assembles it from the
      * trusted domains of the security domain on read and translates it into trusted-domain
@@ -120,6 +123,7 @@ public class TokenExchangeSettings {
         this.allowedActorTokenTypes = other.allowedActorTokenTypes;
         this.allowDelegation = other.allowDelegation;
         this.maxDelegationDepth = other.maxDelegationDepth;
+        this.idJagSettings = other.idJagSettings == null ? null : new IdJagSettings(other.idJagSettings);
         this.trustedIssuers = other.trustedIssuers;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings;
     }
@@ -133,6 +137,13 @@ public class TokenExchangeSettings {
             return new ArrayList<>(DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES);
         }
         return allowedRequestedTokenTypes;
+    }
+
+    public IdJagSettings getIdJagSettings() {
+        if (idJagSettings == null) {
+            return new IdJagSettings();
+        }
+        return idJagSettings;
     }
 
     /**

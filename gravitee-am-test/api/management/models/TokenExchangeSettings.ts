@@ -25,15 +25,14 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
 import type { TrustedIssuer } from './TrustedIssuer';
-import { TrustedIssuerFromJSON, TrustedIssuerFromJSONTyped, TrustedIssuerToJSON, TrustedIssuerToJSONTyped } from './TrustedIssuer';
+import { TrustedIssuerFromJSON, TrustedIssuerToJSON } from './TrustedIssuer';
+import type { IdJagSettings } from './IdJagSettings';
+import { IdJagSettingsFromJSON, IdJagSettingsToJSON } from './IdJagSettings';
 import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
 import {
   TokenExchangeOAuthSettingsFromJSON,
-  TokenExchangeOAuthSettingsFromJSONTyped,
   TokenExchangeOAuthSettingsToJSON,
-  TokenExchangeOAuthSettingsToJSONTyped,
 } from './TokenExchangeOAuthSettings';
 
 /**
@@ -79,6 +78,12 @@ export interface TokenExchangeSettings {
    */
   enabled?: boolean;
   /**
+   *
+   * @type {IdJagSettings}
+   * @memberof TokenExchangeSettings
+   */
+  idJagSettings?: IdJagSettings;
+  /**
    * Maximum depth of the delegation chain (nested "act" claims). Clamped to the range 1–100.
    * @type {number}
    * @memberof TokenExchangeSettings
@@ -121,6 +126,7 @@ export function TokenExchangeSettingsFromJSONTyped(json: any, ignoreDiscriminato
     allowedRequestedTokenTypes: json['allowedRequestedTokenTypes'] == null ? undefined : json['allowedRequestedTokenTypes'],
     allowedSubjectTokenTypes: json['allowedSubjectTokenTypes'] == null ? undefined : json['allowedSubjectTokenTypes'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    idJagSettings: json['idJagSettings'] == null ? undefined : IdJagSettingsFromJSON(json['idJagSettings']),
     maxDelegationDepth: json['maxDelegationDepth'] == null ? undefined : json['maxDelegationDepth'],
     tokenExchangeOAuthSettings:
       json['tokenExchangeOAuthSettings'] == null ? undefined : TokenExchangeOAuthSettingsFromJSON(json['tokenExchangeOAuthSettings']),
@@ -144,6 +150,7 @@ export function TokenExchangeSettingsToJSONTyped(value?: TokenExchangeSettings |
     allowedRequestedTokenTypes: value['allowedRequestedTokenTypes'],
     allowedSubjectTokenTypes: value['allowedSubjectTokenTypes'],
     enabled: value['enabled'],
+    idJagSettings: IdJagSettingsToJSON(value['idJagSettings']),
     maxDelegationDepth: value['maxDelegationDepth'],
     tokenExchangeOAuthSettings: TokenExchangeOAuthSettingsToJSON(value['tokenExchangeOAuthSettings']),
     trustedIssuers: value['trustedIssuers'] == null ? undefined : (value['trustedIssuers'] as Array<any>).map(TrustedIssuerToJSON),

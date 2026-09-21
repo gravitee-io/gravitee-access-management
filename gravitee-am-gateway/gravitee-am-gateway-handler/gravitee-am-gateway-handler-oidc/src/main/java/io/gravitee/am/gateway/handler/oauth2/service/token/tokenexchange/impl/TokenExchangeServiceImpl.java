@@ -194,13 +194,23 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         if (TokenType.ID_JAG.equals(requestedTokenType)) {
             // draft-ietf-oauth-identity-assertion-authz-grant-04 section 4.3 takes an identity assertion as
             // the subject; of those, AM validates ID tokens.
-            if (!TokenType.ID_TOKEN.equals(subjectTokenType)) {
-                throw new InvalidRequestException("subject_token_type must be id_token when requesting an ID-JAG");
-            }
+            validateIdJagSubjectTokenType(subjectTokenType, settings);
             builder.idJagTarget(resolveIdJagTarget(tokenRequest, client));
         }
 
         return builder.build();
+    }
+
+    private static void validateIdJagSubjectTokenType(String subjectTokenType, TokenExchangeSettings settings) {
+        if (TokenType.ID_TOKEN.equals(subjectTokenType)) {
+            return;
+        }
+        if (!settings.getIdJagSettings().isLaxValidation()) {
+            throw new InvalidRequestException("subject_token_type must be id_token when requesting an ID-JAG");
+        }
+        if (!TokenType.ACCESS_TOKEN.equals(subjectTokenType)) {
+            throw new InvalidRequestException("subject_token_type must be id_token or access_token when requesting an ID-JAG");
+        }
     }
 
     private void validateSubjectParameters(String subjectToken, String subjectTokenType,
@@ -346,11 +356,18 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
      * issued to the client authenticating the request.
      */
     private static Single<ValidatedToken> validateIssuedToClient(ValidatedToken subjectToken, Client client) {
-        List<String> audience = subjectToken.getAudience();
-        if (audience == null || !audience.contains(client.getClientId())) {
+        if (!isIssuedTo(subjectToken, client.getClientId())) {
             return Single.error(new InvalidRequestException("subject_token was not issued to this client"));
         }
         return Single.just(subjectToken);
+    }
+
+    private static boolean isIssuedTo(ValidatedToken subjectToken, String clientId) {
+        if (TokenType.ACCESS_TOKEN.equals(subjectToken.getTokenType())) {
+            return clientId.equals(subjectToken.getClientId());
+        }
+        List<String> audience = subjectToken.getAudience();
+        return audience != null && audience.contains(clientId);
     }
 
     private Single<ValidatedToken> validateSubjectToken(String token, String tokenType, Domain domain, Client client) {

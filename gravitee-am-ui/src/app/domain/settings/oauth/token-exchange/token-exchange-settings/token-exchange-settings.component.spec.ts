@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
 
@@ -40,7 +40,7 @@ describe('TokenExchangeSettingsComponent', () => {
     },
   };
 
-  const componentFor = (storedDomain: unknown): TokenExchangeSettingsComponent => {
+  const fixtureFor = (storedDomain: unknown): ComponentFixture<TokenExchangeSettingsComponent> => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       declarations: [TokenExchangeSettingsComponent],
@@ -55,8 +55,13 @@ describe('TokenExchangeSettingsComponent', () => {
     });
     const created = TestBed.createComponent(TokenExchangeSettingsComponent);
     created.detectChanges();
-    return created.componentInstance;
+    return created;
   };
+
+  const componentFor = (storedDomain: unknown): TokenExchangeSettingsComponent => fixtureFor(storedDomain).componentInstance;
+
+  const idJagRequiredWarning = (fixture: ComponentFixture<TokenExchangeSettingsComponent>): HTMLElement =>
+    fixture.nativeElement.querySelector('[data-testid="idJagRequired"]');
 
   beforeEach(waitForAsync(() => {
     domainServiceStub = {
@@ -102,5 +107,40 @@ describe('TokenExchangeSettingsComponent', () => {
     });
 
     expect(chosen.domain.tokenExchangeSettings.allowedRequestedTokenTypes).toContain('urn:ietf:params:oauth:token-type:id-jag');
+  });
+
+  it('shouldWarnThatIdJagIsRequiredForLaxValidationWhenIdJagIsNotRequestable', () => {
+    const fixture = fixtureFor(domain);
+
+    expect(idJagRequiredWarning(fixture).textContent.trim()).toEqual('ID-JAG requested token type required');
+  });
+
+  it('shouldNotWarnThatIdJagIsRequiredForLaxValidationWhenIdJagIsRequestable', () => {
+    const fixture = fixtureFor({
+      id: 'domain-4',
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:id-jag'],
+      },
+    });
+
+    expect(idJagRequiredWarning(fixture)).toBeNull();
+  });
+
+  it('shouldDefaultIdJagLaxValidationToFalseWhenIdJagSettingsAreMissing', () => {
+    expect(component.domain.tokenExchangeSettings.idJagSettings).toEqual({ laxValidation: false });
+  });
+
+  it('shouldKeepIdJagLaxValidationOnADomainThatHasEnabledIt', () => {
+    const lax = componentFor({
+      id: 'domain-5',
+      tokenExchangeSettings: {
+        enabled: true,
+        allowedRequestedTokenTypes: ['urn:ietf:params:oauth:token-type:id-jag'],
+        idJagSettings: { laxValidation: true },
+      },
+    });
+
+    expect(lax.domain.tokenExchangeSettings.idJagSettings).toEqual({ laxValidation: true });
   });
 });

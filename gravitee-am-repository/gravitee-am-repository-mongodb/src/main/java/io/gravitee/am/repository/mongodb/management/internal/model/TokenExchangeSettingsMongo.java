@@ -35,6 +35,7 @@ public class TokenExchangeSettingsMongo {
     private List<String> allowedActorTokenTypes;
     private boolean allowDelegation;
     private Integer maxDelegationDepth;
+    private IdJagSettingsMongo idJagSettings;
     /**
      * @deprecated mirror of the security domain's token-exchange trusted domains, kept for 4.12
      * nodes, which read trust from here only.
@@ -99,6 +100,14 @@ public class TokenExchangeSettingsMongo {
         this.maxDelegationDepth = maxDelegationDepth;
     }
 
+    public IdJagSettingsMongo getIdJagSettings() {
+        return idJagSettings;
+    }
+
+    public void setIdJagSettings(IdJagSettingsMongo idJagSettings) {
+        this.idJagSettings = idJagSettings;
+    }
+
     public List<TrustedIssuerMongo> getTrustedIssuers() {
         return trustedIssuers;
     }
@@ -130,6 +139,9 @@ public class TokenExchangeSettingsMongo {
         if (maxDelegationDepth != null) {
             settings.setMaxDelegationDepth(maxDelegationDepth);
         }
+        if (idJagSettings != null) {
+            settings.setIdJagSettings(idJagSettings.convert());
+        }
         if (trustedIssuers != null) {
             settings.setTrustedIssuers(trustedIssuers.stream()
                     .map(TrustedIssuerMongo::convert)
@@ -157,6 +169,7 @@ public class TokenExchangeSettingsMongo {
         mongo.setAllowedActorTokenTypes(settings.getAllowedActorTokenTypes());
         mongo.setAllowDelegation(settings.isAllowDelegation());
         mongo.setMaxDelegationDepth(settings.getMaxDelegationDepth());
+        mongo.setIdJagSettings(IdJagSettingsMongo.convert(settings.getIdJagSettings()));
         if (settings.getTrustedIssuers() != null) {
             mongo.setTrustedIssuers(settings.getTrustedIssuers().stream()
                     .map(TrustedIssuerMongo::convert)

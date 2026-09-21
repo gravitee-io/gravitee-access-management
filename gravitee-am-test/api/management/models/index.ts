@@ -116,6 +116,7 @@ export * from './GraviteeLicense';
 export * from './Group';
 export * from './GroupPage';
 export * from './I18nDictionary';
+export * from './IdJagSettings';
 export * from './IdentityProvider';
 export * from './InstallationConfiguration';
 export * from './InstallationEntity';

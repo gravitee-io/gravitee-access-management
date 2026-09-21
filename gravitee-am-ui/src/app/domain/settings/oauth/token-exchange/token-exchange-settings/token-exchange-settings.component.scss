@@ -3,3 +3,22 @@
   align-items: center;
   color: #f44336;
 }
+
+.id-jag-lax-validation {
+  margin-top: 16px;
+}
+
+.id-jag-required {
+  position: relative;
+  top: 2px;
+  display: flex;
+  align-items: center;
+  color: orange;
+  font-size: 12px;
+  gap: 4px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+  }
+}

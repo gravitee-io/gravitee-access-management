@@ -33,6 +33,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenEx
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdJagSettings;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
@@ -2666,6 +2667,20 @@ public class TokenExchangeServiceImplTest {
                     List.of(TokenType.ACCESS_TOKEN, TokenType.ID_JAG));
         }
 
+        private Domain laxDomainAllowingIdJag() {
+            Domain domain = domainAllowingIdJag();
+            IdJagSettings idJagSettings = new IdJagSettings();
+            idJagSettings.setLaxValidation(true);
+            domain.getTokenExchangeSettings().setIdJagSettings(idJagSettings);
+            return domain;
+        }
+
+        private MultiValueMap<String, String> laxAccessTokenParameters() {
+            MultiValueMap<String, String> params = buildParameters(TokenType.ACCESS_TOKEN, TokenType.ID_JAG);
+            params.add(Parameters.AUDIENCE, AUDIENCE);
+            return params;
+        }
+
         private MultiValueMap<String, String> idJagParameters(String... audiences) {
             MultiValueMap<String, String> params = buildParameters(TokenType.ID_TOKEN, TokenType.ID_JAG);
             Stream.of(audiences).forEach(audience -> params.add(Parameters.AUDIENCE, audience));
@@ -2747,6 +2762,28 @@ public class TokenExchangeServiceImplTest {
 
             assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE), CALENDAR),
                     clientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token was not issued to this client");
+        }
+
+        @Test
+        void shouldAcceptAnAccessTokenIssuedToTheClientWithLaxValidation() {
+            service = createService(List.of(new FixedSubjectTokenValidator("client-id")));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            var result = service.exchange(idJagRequest(laxAccessTokenParameters(), CALENDAR),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), laxDomainAllowingIdJag()).blockingGet();
+
+            assertThat(result.issuedTokenType()).isEqualTo(TokenType.ID_JAG);
+        }
+
+        @Test
+        void shouldRefuseAnAccessTokenIssuedToAnotherClientWithLaxValidation() {
+            service = createService(List.of(new FixedSubjectTokenValidator("another-client")));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(laxAccessTokenParameters(), CALENDAR),
+                    clientWithRows(row("rs-calendar", "acme-calendar-client")), laxDomainAllowingIdJag()).blockingGet())
                     .isInstanceOf(InvalidRequestException.class)
                     .hasMessageContaining("subject_token was not issued to this client");
         }
@@ -2991,10 +3028,21 @@ public class TokenExchangeServiceImplTest {
 
     private static class FixedSubjectTokenValidator implements TokenValidator {
 
+        private final String clientId;
+
+        FixedSubjectTokenValidator() {
+            this(null);
+        }
+
+        FixedSubjectTokenValidator(String clientId) {
+            this.clientId = clientId;
+        }
+
         @Override
         public Single<ValidatedToken> validate(String token, TokenExchangeSettings settings, Domain domain, Client client) {
             return Single.just(ValidatedToken.builder()
                     .subject("subject")
+                    .clientId(clientId)
                     .scopes(Set.of("openid"))
                     .expiration(Date.from(Instant.now().plusSeconds(60)))
                     .tokenType(TokenType.ACCESS_TOKEN)
