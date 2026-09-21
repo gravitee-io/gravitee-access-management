@@ -447,81 +447,136 @@ describe('TrustDomainFormComponent', () => {
         },
       };
 
-      function editCell(testIdPrefix: string, rowIndex: number, value: string): void {
-        const cells = fixture.nativeElement.querySelectorAll(`[data-testid="${testIdPrefix}Cell"]`);
-        cells[rowIndex].dispatchEvent(new Event('dblclick'));
-        fixture.detectChanges();
-        const input = testId(`${testIdPrefix}CellInput`) as HTMLInputElement;
-        input.value = value;
-        input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' }));
+      function openRow(rowIndex: number): void {
+        const buttons = fixture.nativeElement.querySelectorAll('[data-testid="editResourceServerButton"]');
+        (buttons[rowIndex] as HTMLButtonElement).click();
         fixture.detectChanges();
       }
 
-      it('shouldKeepTheIdWhenTheNameIsEdited', () => {
+      // The template binds the inputs with ngModel, which NO_ERRORS_SCHEMA leaves inert, so the
+      // draft is written the way the other tests write the staging rows.
+      function type(field: 'name' | 'resource', value: string): void {
+        expect(testId(`resourceServer${field === 'name' ? 'Name' : 'Resource'}CellInput`)).toBeTruthy();
+        component.resourceServerDraft[field] = value;
+        fixture.detectChanges();
+      }
+
+      function click(id: string): void {
+        (testId(id) as HTMLButtonElement).click();
+        fixture.detectChanges();
+      }
+
+      it('shouldOpenBothFieldsOfTheRowFromThePencilButton', () => {
         build(withResourceServers, false);
 
-        editCell('resourceServerName', 0, '  Acme Agenda  ');
+        openRow(1);
 
-        expect(testId('resourceServerNameCellInput')).toBeFalsy();
-        expect(component.formChanged).toBe(true);
+        expect(component.editingResourceServerIndex).toBe(1);
+        expect(component.resourceServerDraft).toEqual({ id: 'rs-2', name: 'Acme Mail', resource: 'https://mail.acme.com' });
+        expect(testId('resourceServerNameCellInput')).toBeTruthy();
+        expect(testId('resourceServerResourceCellInput')).toBeTruthy();
+      });
+
+      it('shouldKeepBothEditsOfARowAndItsId', () => {
+        build(withResourceServers, false);
+        openRow(0);
+
+        type('name', '  Acme Agenda  ');
+        type('resource', '  https://agenda.acme.com  ');
+        click('applyResourceServerEditButton');
+
+        expect(component.editingResourceServerIndex).toBeNull();
         component.submit();
         expect(saved[0].crossAppAccess.resourceServers).toEqual([
-          { id: 'rs-1', name: 'Acme Agenda', resource: 'https://calendar.acme.com' },
+          { id: 'rs-1', name: 'Acme Agenda', resource: 'https://agenda.acme.com' },
           { id: 'rs-2', name: 'Acme Mail', resource: 'https://mail.acme.com' },
         ]);
       });
 
-      it('shouldKeepTheIdWhenTheResourceIsEdited', () => {
+      it('shouldApplyAnOpenRowOnSubmit', () => {
         build(withResourceServers, false);
+        openRow(1);
 
-        editCell('resourceServerResource', 1, 'https://mail.acme.io');
-
+        type('name', 'Acme Webmail');
+        type('resource', 'https://webmail.acme.com');
         component.submit();
+
         expect(saved[0].crossAppAccess.resourceServers).toEqual([
           { id: 'rs-1', name: 'Acme Calendar', resource: 'https://calendar.acme.com' },
-          { id: 'rs-2', name: 'Acme Mail', resource: 'https://mail.acme.io' },
+          { id: 'rs-2', name: 'Acme Webmail', resource: 'https://webmail.acme.com' },
         ]);
       });
 
-      it('shouldIgnoreAnEmptyValue', () => {
+      it('shouldLeaveTheRowUntouchedWhenTheEditIsCancelled', () => {
         build(withResourceServers, false);
+        openRow(0);
 
-        editCell('resourceServerName', 0, '   ');
+        type('name', 'Acme Agenda');
+        click('cancelResourceServerEditButton');
 
-        expect(testId('resourceServerNameCellInput')).toBeTruthy();
+        expect(component.editingResourceServerIndex).toBeNull();
         expect(component.resourceServerRows[0]).toEqual({ id: 'rs-1', name: 'Acme Calendar', resource: 'https://calendar.acme.com' });
-        expect(component.formChanged).toBe(false);
+      });
+
+      it('shouldRefuseToApplyAnEmptyField', () => {
+        build(withResourceServers, false);
+        openRow(0);
+
+        type('name', '   ');
+
+        expect(component.canApplyResourceServerEdit()).toBe(false);
+        expect((testId('applyResourceServerEditButton') as HTMLButtonElement).disabled).toBe(true);
+        click('applyResourceServerEditButton');
+        expect(component.editingResourceServerIndex).toBe(0);
+        component.submit();
+        expect(saved).toHaveLength(0);
+        expect(component.getValidationErrors()).toContain(
+          'Finish editing the resource server: its name and resource URI are both required.',
+        );
       });
 
       it('shouldRejectAnEditThatDuplicatesAnotherResource', () => {
         build(withResourceServers, false);
+        openRow(1);
 
-        editCell('resourceServerResource', 1, 'https://calendar.acme.com');
+        type('resource', 'https://calendar.acme.com');
+        click('applyResourceServerEditButton');
 
         expect(component.getValidationErrors()).toContain('Resource server resource https://calendar.acme.com is used more than once.');
         component.submit();
         expect(saved).toHaveLength(0);
       });
 
-      it('shouldNotOpenTheInputOutsideEditMode', () => {
+      it('shouldNotOfferEditionOutsideEditMode', () => {
         build(withResourceServers, false, false);
 
-        testId('resourceServerNameCell').dispatchEvent(new Event('dblclick'));
-        fixture.detectChanges();
-
-        expect(testId('resourceServerNameCellInput')).toBeFalsy();
+        expect((testId('editResourceServerButton') as HTMLButtonElement).disabled).toBe(true);
+        component.editResourceServer(0);
+        expect(component.editingResourceServerIndex).toBeNull();
       });
 
-      it('shouldCloseOpenInputsWhenARowIsRemoved', () => {
+      it('shouldFollowTheEditedRowWhenAnEarlierRowIsRemoved', () => {
         build(withResourceServers, false);
-        fixture.nativeElement.querySelectorAll('[data-testid="resourceServerNameCell"]')[1].dispatchEvent(new Event('dblclick'));
-        fixture.detectChanges();
+        openRow(1);
 
         component.removeResourceServer(0);
         fixture.detectChanges();
 
+        expect(component.editingResourceServerIndex).toBe(0);
+        type('name', 'Acme Webmail');
+        click('applyResourceServerEditButton');
+        expect(component.resourceServerRows).toEqual([{ id: 'rs-2', name: 'Acme Webmail', resource: 'https://mail.acme.com' }]);
+      });
+
+      it('shouldCancelTheEditWhenTheEditedRowIsRemoved', () => {
+        build(withResourceServers, false);
+        openRow(0);
+
+        component.removeResourceServer(0);
+        fixture.detectChanges();
+
+        expect(component.editingResourceServerIndex).toBeNull();
         expect(testId('resourceServerNameCellInput')).toBeFalsy();
-        expect(component.resourceServerRows).toEqual([{ id: 'rs-2', name: 'Acme Mail', resource: 'https://mail.acme.com' }]);
       });
     });
 

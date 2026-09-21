@@ -397,54 +397,50 @@
         data-testid="resourceServersTable"
         [columnMode]="'flex'"
         [headerHeight]="40"
-        [rowHeight]="55"
+        [rowHeight]="'auto'"
         [messages]="{ emptyMessage: 'No resource servers configured' }"
         [rows]="resourceServerRows"
       >
         <ngx-datatable-column name="Name" [flexGrow]="2" [sortable]="false" [resizeable]="false" [draggable]="false">
           <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-            <span
-              data-testid="resourceServerNameCell"
-              (dblclick)="editResourceServerCell(rowIndex, 'name')"
-              *ngIf="!editingResourceServerCell[rowIndex + '-name']"
+            <span *ngIf="!isEditingResourceServer(rowIndex)" data-testid="resourceServerNameCell">{{ row.name }}</span>
+            <mat-form-field
+              *ngIf="isEditingResourceServer(rowIndex)"
+              appearance="outline"
+              subscriptSizing="dynamic"
+              class="datatable-input"
             >
-              {{ row.name }}
-            </span>
-            <mat-form-field *ngIf="editingResourceServerCell[rowIndex + '-name']" class="datatable-input">
               <input
                 matInput
                 type="text"
-                required
-                autofocus
+                name="resourceServerDraftName"
                 data-testid="resourceServerNameCellInput"
                 placeholder="Name"
-                (keyup.enter)="updateResourceServer($event, 'name', rowIndex)"
-                (blur)="editingResourceServerCell[rowIndex + '-name'] = false"
-                [value]="row.name"
+                [(ngModel)]="resourceServerDraft.name"
+                (keyup.enter)="applyResourceServerEdit()"
+                (keyup.escape)="cancelResourceServerEdit()"
               />
             </mat-form-field>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Resource URI" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
           <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-            <span
-              data-testid="resourceServerResourceCell"
-              (dblclick)="editResourceServerCell(rowIndex, 'resource')"
-              *ngIf="!editingResourceServerCell[rowIndex + '-resource']"
+            <span *ngIf="!isEditingResourceServer(rowIndex)" data-testid="resourceServerResourceCell">{{ row.resource }}</span>
+            <mat-form-field
+              *ngIf="isEditingResourceServer(rowIndex)"
+              appearance="outline"
+              subscriptSizing="dynamic"
+              class="datatable-input"
             >
-              {{ row.resource }}
-            </span>
-            <mat-form-field *ngIf="editingResourceServerCell[rowIndex + '-resource']" class="datatable-input">
               <input
                 matInput
                 type="text"
-                required
-                autofocus
+                name="resourceServerDraftResource"
                 data-testid="resourceServerResourceCellInput"
                 placeholder="Resource URI"
-                (keyup.enter)="updateResourceServer($event, 'resource', rowIndex)"
-                (blur)="editingResourceServerCell[rowIndex + '-resource'] = false"
-                [value]="row.resource"
+                [(ngModel)]="resourceServerDraft.resource"
+                (keyup.enter)="applyResourceServerEdit()"
+                (keyup.escape)="cancelResourceServerEdit()"
               />
             </mat-form-field>
           </ng-template>
@@ -452,17 +448,52 @@
         <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false" [resizeable]="false" [draggable]="false">
           <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
             <div fxLayout="row" class="gv-table-cell-actions">
-              <button mat-button type="button" (click)="removeResourceServer(rowIndex)" [disabled]="!editMode">
-                <mat-icon>close</mat-icon>
-              </button>
+              <ng-container *ngIf="!isEditingResourceServer(rowIndex)">
+                <button
+                  mat-button
+                  type="button"
+                  matTooltip="Edit this resource server"
+                  data-testid="editResourceServerButton"
+                  (click)="editResourceServer(rowIndex)"
+                  [disabled]="!editMode"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-button
+                  type="button"
+                  matTooltip="Remove this resource server"
+                  (click)="removeResourceServer(rowIndex)"
+                  [disabled]="!editMode"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </ng-container>
+              <ng-container *ngIf="isEditingResourceServer(rowIndex)">
+                <button
+                  mat-button
+                  type="button"
+                  matTooltip="Apply"
+                  data-testid="applyResourceServerEditButton"
+                  (click)="applyResourceServerEdit()"
+                  [disabled]="!canApplyResourceServerEdit()"
+                >
+                  <mat-icon>done</mat-icon>
+                </button>
+                <button
+                  mat-button
+                  type="button"
+                  matTooltip="Cancel"
+                  data-testid="cancelResourceServerEditButton"
+                  (click)="cancelResourceServerEdit()"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </ng-container>
             </div>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>
-      <mat-hint *ngIf="editMode && resourceServerRows.length" class="section-hint table-hint">
-        Double-click a name or a resource URI to edit it, then press Enter. Editing keeps the resource server's identity, so the
-        applications mapping it are not affected.
-      </mat-hint>
 
       <h5 class="sub-section-title">End-user identifier</h5>
       <mat-form-field appearance="outline" class="trust-domain-field">
