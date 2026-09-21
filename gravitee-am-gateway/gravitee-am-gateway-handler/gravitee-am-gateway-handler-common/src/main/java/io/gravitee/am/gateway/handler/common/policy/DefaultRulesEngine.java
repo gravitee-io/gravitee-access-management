@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.CustomLog;
@@ -80,16 +81,17 @@ public class DefaultRulesEngine implements RulesEngine {
 
     @Override
     public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Client client, User user) {
-        return executeFire(extensionPoint, request, null, client, user);
+        return fire(extensionPoint, request, null, client, user, Map.of());
     }
 
     @Override
     public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user) {
-        return executeFire(extensionPoint, request, response, client, user);
+        return fire(extensionPoint, request, response, client, user, Map.of());
     }
 
-    private Single<ExecutionContext> executeFire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user){
-        return prepareContext(request, response, client, user)
+    @Override
+    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user, Map<String, Object> attributes) {
+        return prepareContext(request, response, client, user, attributes)
                 .flatMap(executionContext -> {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
@@ -102,7 +104,7 @@ public class DefaultRulesEngine implements RulesEngine {
                 });
     }
 
-    private Single<ExecutionContext> prepareContext(Request request, Response response, Client client, User user) {
+    private Single<ExecutionContext> prepareContext(Request request, Response response, Client client, User user, Map<String, Object> attributes) {
         if (response == null) {
             response = new NoOpResponse();
         }
@@ -111,6 +113,7 @@ public class DefaultRulesEngine implements RulesEngine {
         return Single.fromCallable(() -> {
             ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, serverResponse);
             ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+            executionContext.getAttributes().putAll(attributes);
             // add current context attributes
             executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             // user can be null for flow such as client_credentials

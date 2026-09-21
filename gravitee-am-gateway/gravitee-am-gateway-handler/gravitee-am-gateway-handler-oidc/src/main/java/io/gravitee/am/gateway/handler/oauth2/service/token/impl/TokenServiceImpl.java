@@ -691,6 +691,7 @@ public class TokenServiceImpl implements TokenService {
         }
         // put oauth2 request execution context attributes in context
         executionContext.getAttributes().putAll(request.getExecutionContext());
+        executionContext.getAttributes().putAll(request.collectAdditionalContextAttributes());
         executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
         if (user != null) {
             executionContext.setAttribute(ConstantKeys.USER_CONTEXT_KEY, new UserProperties(user, true));

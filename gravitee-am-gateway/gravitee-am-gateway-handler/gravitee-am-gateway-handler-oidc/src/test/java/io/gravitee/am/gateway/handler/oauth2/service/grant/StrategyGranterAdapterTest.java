@@ -139,9 +139,7 @@ class StrategyGranterAdapterTest {
         Map<String, Object> attributes = new HashMap<>();
         when(executionContext.getAttributes()).thenReturn(attributes);
 
-        when(rulesEngine.fire(any(), any(), any(), eq(client), any()))
-                .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(any(), any(), eq(client), any()))
+        when(rulesEngine.fire(any(), any(), any(), eq(client), any(), any()))
                 .thenReturn(Single.just(executionContext));
 
         when(tokenService.create(any(), eq(client), any()))
@@ -185,9 +183,7 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(any(), any(), any(), eq(client), eq(user)))
-                .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(any(), any(), eq(client), any()))
+        when(rulesEngine.fire(any(), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         when(tokenService.create(any(), eq(client), eq(user)))
@@ -221,7 +217,7 @@ class StrategyGranterAdapterTest {
                 .thenReturn(Single.just(creationRequest));
 
         // Capture the OAuth2Request passed to PRE_TOKEN and modify it (simulating policy behavior)
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), any()))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), any(), any()))
                 .thenAnswer(invocation -> {
                     OAuth2Request oAuth2Request = invocation.getArgument(1);
                     // PRE_TOKEN policy modifies the request
@@ -238,7 +234,7 @@ class StrategyGranterAdapterTest {
 
         ExecutionContext postTokenContext = mock(ExecutionContext.class);
         lenient().when(postTokenContext.getAttributes()).thenReturn(new HashMap<>());
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), any()))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), any(), any()))
                 .thenReturn(Single.just(postTokenContext));
 
         // Capture the OAuth2Request passed to tokenService.create()
@@ -282,13 +278,13 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), preTokenCaptor.capture(), any(), eq(client), any()))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), preTokenCaptor.capture(), any(), eq(client), any(), any()))
                 .thenReturn(Single.just(executionContext));
 
         when(tokenService.create(createTokenCaptor.capture(), eq(client), any()))
                 .thenReturn(Single.just(expectedToken));
 
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), postTokenCaptor.capture(), eq(client), any()))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), postTokenCaptor.capture(), any(), eq(client), any(), any()))
                 .thenReturn(Single.just(executionContext));
 
         adapter.grant(tokenRequest, client).blockingGet();
@@ -350,9 +346,9 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
@@ -417,9 +413,9 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
@@ -489,9 +485,9 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
@@ -561,9 +557,9 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
@@ -617,9 +613,9 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
@@ -670,9 +666,9 @@ class StrategyGranterAdapterTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
 
-        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), eq(client), eq(user)))
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
                 .thenReturn(Single.just(executionContext));
 
         ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
@@ -876,8 +872,7 @@ class StrategyGranterAdapterTest {
         when(strategy.process(eq(tokenRequest), eq(client), eq(domain))).thenReturn(Single.just(creationRequest));
         ExecutionContext ec = mock(ExecutionContext.class);
         lenient().when(ec.getAttributes()).thenReturn(new HashMap<>());
-        lenient().when(rulesEngine.fire(any(), any(), any(), eq(client), any())).thenReturn(Single.just(ec));
-        lenient().when(rulesEngine.fire(any(), any(), eq(client), any())).thenReturn(Single.just(ec));
+        lenient().when(rulesEngine.fire(any(), any(), any(), eq(client), any(), any())).thenReturn(Single.just(ec));
         when(tokenService.create(any(), eq(client), any())).thenReturn(Single.just(new AccessToken("access-token-value")));
     }
 }

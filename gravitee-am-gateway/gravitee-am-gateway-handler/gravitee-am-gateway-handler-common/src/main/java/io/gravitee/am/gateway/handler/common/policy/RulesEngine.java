@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,4 +38,7 @@ public interface RulesEngine {
     Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Client client, User user);
 
     Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user);
+
+    Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user, Map<String, Object> attributes);
+
 }

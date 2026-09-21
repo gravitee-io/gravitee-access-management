@@ -214,7 +214,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             Client client,
             User user) {
 
-        return rulesEngine.fire(ExtensionPoint.PRE_TOKEN, oAuth2Request, response, client, user)
+        return rulesEngine.fire(ExtensionPoint.PRE_TOKEN, oAuth2Request, response, client, user, oAuth2Request.collectAdditionalContextAttributes())
                 .map(executionContext -> {
                     // Add execution context attributes to OAuth2Request so they're available
                     // for token creation and POST_TOKEN policy
@@ -247,7 +247,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             Token token) {
 
         // Use the same OAuth2Request that was used throughout the flow
-        return rulesEngine.fire(ExtensionPoint.POST_TOKEN, oAuth2Request, client, user)
+        return rulesEngine.fire(ExtensionPoint.POST_TOKEN, oAuth2Request, null, client, user, oAuth2Request.collectAdditionalContextAttributes())
                 .map(executionContext -> token);
     }
 

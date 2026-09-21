@@ -1470,6 +1470,25 @@ public class TokenServiceImplTest {
     }
 
     @Test
+    public void shouldExposeTheIdJagTargetToTheIssuanceExecutionContext() {
+        OAuth2Request request = idJagRequest();
+        request.getExecutionContext().put(ConstantKeys.ID_JAG_CONTEXT_KEY, Map.of("resource", "https://forged.example.com"));
+        when(idJagService.create(any(OAuth2Request.class), any(Client.class), any(User.class), any()))
+                .thenReturn(Single.just(new IdJag("assertion", "assertion-jti", 300, null)));
+
+        tokenService.create(request, createClient("agent-at-am"), createUser("user-123")).test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete();
+
+        ArgumentCaptor<ExecutionContext> executionContext = ArgumentCaptor.forClass(ExecutionContext.class);
+        verify(idJagService).create(any(OAuth2Request.class), any(Client.class), any(User.class), executionContext.capture());
+        assertThat(executionContext.getValue().getAttribute(ConstantKeys.ID_JAG_CONTEXT_KEY)).isEqualTo(Map.of(
+                "audience", "https://auth.acme.com",
+                "resource", "https://calendar.acme.com",
+                "clientId", "agent-at-acme"));
+    }
+
+    @Test
     public void shouldReturnTheAssertionAsAnIdJagResponse() {
         OAuth2Request request = idJagRequest();
         Client client = createClient("agent-at-am");

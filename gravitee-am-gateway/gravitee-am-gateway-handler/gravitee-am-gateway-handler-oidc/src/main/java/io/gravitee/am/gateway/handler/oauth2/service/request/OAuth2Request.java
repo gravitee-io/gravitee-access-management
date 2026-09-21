@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.model.uma.PermissionRequest;
@@ -312,6 +313,11 @@ public class OAuth2Request extends BaseRequest {
     @Override
     public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
         return this;
+    }
+
+    public Map<String, Object> collectAdditionalContextAttributes() {
+        IdJagTarget idJagTarget = getIdJagTarget();
+        return idJagTarget == null ? Map.of() : Map.of(ConstantKeys.ID_JAG_CONTEXT_KEY, idJagTarget.contextAttribute());
     }
 
 }
