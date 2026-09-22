@@ -60,24 +60,30 @@ public class ScheduledPurgeService extends AbstractService implements Runnable {
     }
 
     private void doPurgeExpiredData() {
-        log.debug("Cleaning expired data #{} started at {}", counter.incrementAndGet(), Instant.now().toString());
+        long run = counter.incrementAndGet();
+        log.debug("Cleaning expired data #{} started at {}", run, Instant.now());
         Completable
                 .concat(getJobs())
-                .subscribe();
-        log.debug("Cleaning expired data #{} ended at {}", counter.get(), Instant.now().toString());
+                .subscribe(() -> log.debug("Cleaning expired data #{} ended at {}", run, Instant.now()));
     }
 
     private List<Completable> getJobs(){
         return this.purgeTargets.stream()
-                .flatMap(target -> getSweeper(target).stream())
-                .map(ExpiredDataSweeper::purgeExpiredData)
+                .flatMap(target -> getSweeper(target).map(sweeper -> purge(target, sweeper)).stream())
                 .toList();
+    }
+
+    private Completable purge(Target target, ExpiredDataSweeper sweeper) {
+        return Completable.defer(sweeper::purgeExpiredData)
+                .doOnError(error -> log.error("Failed to purge expired data for target {}", target, error))
+                .onErrorComplete();
     }
 
     private Optional<ExpiredDataSweeper> getSweeper(Target target) {
         try {
             return Optional.ofNullable(sweeper.getExpiredDataSweeper(target));
         } catch (Exception e) {
+            log.warn("Unable to resolve the purge sweeper for target {}", target, e);
             return Optional.empty();
         }
     }
