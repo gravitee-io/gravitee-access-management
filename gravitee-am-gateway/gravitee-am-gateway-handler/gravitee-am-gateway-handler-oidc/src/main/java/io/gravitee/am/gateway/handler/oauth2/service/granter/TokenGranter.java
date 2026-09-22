@@ -39,11 +39,11 @@ public interface TokenGranter {
 
     /**
      * Select which OAuth 2.0 grant flow can handle the incoming Access Token Request
-     * @param grantType OAuth 2.0 grant flow type
+     * @param tokenRequest OAuth 2.0 token request
      * @param client OAuth 2.0 client
      * @return true if a grant flow can handle the Access Token Request
      */
-    boolean handle(String grantType, Client client);
+    boolean handle(TokenRequest tokenRequest, Client client);
 
     /**
      * The client requests an access token by authenticating with the authorization server and presenting the authorization grant.
@@ -56,7 +56,4 @@ public interface TokenGranter {
 
     Single<Token> grant(TokenRequest tokenRequest, Response response, Client client);
 
-    default boolean handle(String grantType) {
-        return handle(grantType, null);
-    }
 }

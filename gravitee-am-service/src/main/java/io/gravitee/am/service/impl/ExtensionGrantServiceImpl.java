@@ -45,16 +45,16 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
+import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.CustomLog;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,10 +63,7 @@ import lombok.CustomLog;
 @Component
 @CustomLog
 public class ExtensionGrantServiceImpl implements ExtensionGrantService {
-
-    /**
-     * Logger.
-     */
+    private static final List<String> GRANTS_REQUIRE_EXISTING_USER = List.of("xaa-am-extension-grant");
 
     @Lazy
     @Autowired
@@ -123,8 +120,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         extensionGrant.setName(newExtensionGrant.getName());
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
                         extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
-                        extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
-                        extensionGrant.setUserExists(newExtensionGrant.isUserExists());
+                        extensionGrant.setCreateUser(!requiresExistingUser(newExtensionGrant.getType()) && newExtensionGrant.isCreateUser());
+                        extensionGrant.setUserExists(requiresExistingUser(newExtensionGrant.getType()) || newExtensionGrant.isUserExists());
                         extensionGrant.setType(newExtensionGrant.getType());
                         extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
                         extensionGrant.setCreatedAt(new Date());
@@ -173,8 +170,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     extensionGrantToUpdate.setName(updateExtensionGrant.getName());
                     extensionGrantToUpdate.setGrantType(updateExtensionGrant.getGrantType() != null ? updateExtensionGrant.getGrantType() : oldExtensionGrant.getGrantType());
                     extensionGrantToUpdate.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
-                    extensionGrantToUpdate.setCreateUser(updateExtensionGrant.isCreateUser());
-                    extensionGrantToUpdate.setUserExists(updateExtensionGrant.isUserExists());
+                    extensionGrantToUpdate.setCreateUser(!requiresExistingUser(oldExtensionGrant.getType()) && updateExtensionGrant.isCreateUser());
+                    extensionGrantToUpdate.setUserExists(requiresExistingUser(oldExtensionGrant.getType()) || updateExtensionGrant.isUserExists());
                     extensionGrantToUpdate.setConfiguration(updateExtensionGrant.getConfiguration());
                     extensionGrantToUpdate.setUpdatedAt(new Date());
 
@@ -242,6 +239,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete extension grant: %s", extensionGrantId), ex));
                 });
+    }
+
+    private static boolean requiresExistingUser(String type) {
+        return type != null && GRANTS_REQUIRE_EXISTING_USER.contains(type);
     }
 
 }

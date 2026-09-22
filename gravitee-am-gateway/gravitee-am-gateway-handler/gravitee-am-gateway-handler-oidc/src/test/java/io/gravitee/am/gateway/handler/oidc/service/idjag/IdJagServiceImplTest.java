@@ -21,12 +21,16 @@ import io.gravitee.am.common.jwt.JwtType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.manager.subject.SubjectManagerV1;
+import io.gravitee.am.gateway.handler.manager.subject.SubjectManagerV2;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idjag.impl.IdJagServiceImpl;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -40,6 +44,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Date;
@@ -51,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -71,6 +77,9 @@ class IdJagServiceImplTest {
     private static final String FORGED = "{#forged}";
     private static final String FORGED_AUDIENCES = "{#forgedAudiences}";
     private static final String SCOPES = "{#scopes}";
+    private static final String USER_SOURCE = "idp-id";
+    private static final String USER_EXTERNAL_ID = "external-id";
+    private static final String V2_SUBJECT_OF_USER_SOURCE_AND_EXTERNAL_ID = "0e38c13b-44e9-3f25-97a2-bfd82e6893c9";
 
     @InjectMocks
     private final IdJagServiceImpl service = new IdJagServiceImpl();
@@ -94,6 +103,15 @@ class IdJagServiceImplTest {
         lenient().when(openIDDiscoveryService.getIssuer(any())).thenReturn(ISSUER);
         lenient().when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("signed-assertion"));
         lenient().when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        inV2Domain();
+    }
+
+    private void inV2Domain() {
+        ReflectionTestUtils.setField(service, "subjectManager", new SubjectManagerV2(mock(UserGatewayService.class), new Domain()));
+    }
+
+    private void inV1Domain() {
+        ReflectionTestUtils.setField(service, "subjectManager", new SubjectManagerV1(mock(UserGatewayService.class)));
     }
 
     private static Client client(int idJagValiditySeconds) {
@@ -112,6 +130,8 @@ class IdJagServiceImplTest {
     private static User user() {
         User user = new User();
         user.setId("user-id");
+        user.setSource(USER_SOURCE);
+        user.setExternalId(USER_EXTERNAL_ID);
         return user;
     }
 
@@ -157,13 +177,35 @@ class IdJagServiceImplTest {
         JWT assertion = mintedAssertion();
 
         assertThat(assertion.getIss()).isEqualTo(ISSUER);
-        assertThat(assertion.getSub()).isEqualTo("user-id");
+        assertThat(assertion.getSub()).isEqualTo(V2_SUBJECT_OF_USER_SOURCE_AND_EXTERNAL_ID);
         assertThat(assertion.getAudList()).containsExactly(AUDIENCE);
         assertThat(assertion.get(Claims.CLIENT_ID)).isEqualTo("agent-at-acme");
         assertThat(assertion.get(Parameters.RESOURCE)).isEqualTo(RESOURCE);
         assertThat(assertion.getJti()).isNotBlank();
         assertThat(assertion.getIat()).isPositive();
         assertThat(assertion.getExp()).isGreaterThan(assertion.getIat());
+    }
+
+    @Test
+    void shouldCarryTheUserIdAsSubInAV1Domain() {
+        inV1Domain();
+
+        assertThat(mintedAssertion().getSub()).isEqualTo("user-id");
+    }
+
+    @Test
+    void shouldNotCarryTheInternalSubjectToThePartner() {
+        assertThat(mintedAssertion()).doesNotContainKey(Claims.GIO_INTERNAL_SUB);
+    }
+
+    @Test
+    void shouldCarryTheUserIdAsSubForAUserWithoutSourceInAV2Domain() {
+        User synthetic = new User();
+        synthetic.setId("external-subject");
+
+        service.create(request(), client(300), synthetic, executionContext).blockingGet();
+
+        assertThat(capturedAssertion().getSub()).isEqualTo("external-subject");
     }
 
     @Test

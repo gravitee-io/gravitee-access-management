@@ -145,6 +145,14 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         return (T) this;
     }
 
+    private static String causeSuffix(Throwable throwable) {
+        Throwable cause = throwable.getCause();
+        if (cause == null || cause.getMessage() == null || cause.getMessage().equals(throwable.getMessage())) {
+            return "";
+        }
+        return ". Cause: " + cause.getMessage();
+    }
+
     public T throwable(Throwable throwable) {
         this.throwable = throwable;
         return (T) this;
@@ -325,7 +333,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
             }
         } else {
             result.setStatus(Status.FAILURE);
-            result.setMessage(throwable.getMessage() + (throwable.getCause() != null ? ". Cause: " + throwable.getCause().getMessage() : ""));
+            result.setMessage(throwable.getMessage() + causeSuffix(throwable));
         }
         audit.setOutcome(result);
 

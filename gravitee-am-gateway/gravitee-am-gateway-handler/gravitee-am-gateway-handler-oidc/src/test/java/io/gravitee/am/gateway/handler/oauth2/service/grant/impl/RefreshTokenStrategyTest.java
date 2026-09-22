@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -81,19 +82,19 @@ class RefreshTokenStrategyTest {
 
     @Test
     void shouldSupportRefreshTokenGrantType() {
-        assertTrue(strategy.supports(GrantType.REFRESH_TOKEN, client, domain));
+        assertTrue(strategy.supports(grantRequest(GrantType.REFRESH_TOKEN), client, domain));
     }
 
     @Test
     void shouldNotSupportOtherGrantTypes() {
-        assertFalse(strategy.supports(GrantType.CLIENT_CREDENTIALS, client, domain));
-        assertFalse(strategy.supports(GrantType.PASSWORD, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.CLIENT_CREDENTIALS), client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.PASSWORD), client, domain));
     }
 
     @Test
     void shouldNotSupportWhenClientDoesNotHaveGrantType() {
         client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
-        assertFalse(strategy.supports(GrantType.REFRESH_TOKEN, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.REFRESH_TOKEN), client, domain));
     }
 
     @Test

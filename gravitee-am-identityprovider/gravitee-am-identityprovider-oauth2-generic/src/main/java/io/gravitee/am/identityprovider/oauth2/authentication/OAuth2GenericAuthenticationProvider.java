@@ -20,9 +20,13 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.trustedissuer.OAuthTrustedIssuer;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.trustedissuer.TrustedIssuerIdp;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractOpenIDConnectAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.trustedissuer.IdJagAssertionVerifier;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
@@ -38,6 +42,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,8 +50,9 @@ import java.util.concurrent.TimeUnit;
  * @author GraviteeSource Team
  */
 @Import(OAuth2GenericAuthenticationProviderConfiguration.class)
-public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider {
+public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider implements TrustedIssuerIdp {
 
+    private static final String ISSUER = "issuer";
     private static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
     private static final String TOKEN_ENDPOINT = "token_endpoint";
     private static final String USERINFO_ENDPOINT = "userinfo_endpoint";
@@ -71,9 +77,16 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
 
     private Disposable initializationDisposable;
 
+    private volatile OAuthTrustedIssuer trustedIssuer;
+
     @Override
     public OpenIDConnectIdentityProviderConfiguration getConfiguration() {
         return this.configuration;
+    }
+
+    @Override
+    public Optional<OAuthTrustedIssuer> trustedIssuer() {
+        return Optional.ofNullable(trustedIssuer);
     }
 
     @Override
@@ -128,13 +141,33 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
                         .maxDelay(60)
                         .exponential()
                         .build())
-                .andThen(Completable.fromAction(this::generateJWTProcessor));
+                .doOnSuccess(discovery -> {
+                    generateJWTProcessor();
+                    trustDiscoveredIssuer(discovery);
+                })
+                .ignoreElement();
     }
 
-    private Completable getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {
+    private void trustDiscoveredIssuer(Map<String, Object> discovery) {
+        if (discovery.get(ISSUER) instanceof String issuer &&
+                discovery.get(JWKS_ENDPOINT) instanceof String jwks) {
+            try {
+                var jwkSource = new RemoteJWKSourceResolver<>(retriever, jwks).resolve();
+                trustedIssuer = new OAuthTrustedIssuer(issuer, new IdJagAssertionVerifier(issuer, jwkSource));
+            } catch (Exception e) {
+                LOGGER.warn("Issuer '{}' discovered at '{}' will not be trusted for assertions, its jwks_uri '{}' is unusable : {}",
+                        issuer, configuration.getWellKnownUri(), jwks, e.getMessage());
+            }
+        } else if (!discovery.isEmpty()) {
+            LOGGER.warn("Issuer discovered at '{}' will not be trusted for assertions, its metadata declares no '{}' or no '{}'",
+                    configuration.getWellKnownUri(), ISSUER, JWKS_ENDPOINT);
+        }
+    }
+
+    private Single<Map<String, Object>> getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {
         // fetch OpenID Provider information
         if (configuration.getWellKnownUri() == null || configuration.getWellKnownUri().isEmpty()) {
-            return Completable.complete();
+            return Single.just(Map.of());
         }
         return client.getAbs(configuration.getWellKnownUri())
                         .rxSend()
@@ -178,7 +211,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
                                     }
                                     return Single.just(providerConfiguration);
                                 }
-                        ).ignoreElement();
+                        );
     }
 
     void setJwtProcessor(JWTProcessor jwtProcessor) {

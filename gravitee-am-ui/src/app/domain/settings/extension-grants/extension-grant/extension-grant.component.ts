@@ -26,6 +26,8 @@ import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
 import { PluginFeatureService } from '../../../../services/plugin-feature.service';
 
+const CROSS_APP_ACCESS_EXTENSION_GRANT = 'xaa-am-extension-grant';
+
 @Component({
   selector: 'app-extension-grant',
   templateUrl: './extension-grant.component.html',
@@ -42,6 +44,7 @@ export class ExtensionGrantComponent implements OnInit {
   extensionGrantConfiguration: any;
   updateTokenGranterConfiguration: any;
   identityProviders: any[];
+  crossAppAccess: boolean;
 
   rfc3986_absolute_URI =
     // eslint-disable-next-line
@@ -65,6 +68,7 @@ export class ExtensionGrantComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.extensionGrant = this.route.snapshot.data['extensionGrant'];
     this.identityProviders = this.route.snapshot.data['identityProviders'];
+    this.crossAppAccess = this.extensionGrant.type === CROSS_APP_ACCESS_EXTENSION_GRANT;
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
     this.updateTokenGranterConfiguration = this.extensionGrantConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_extension_grant_update']);

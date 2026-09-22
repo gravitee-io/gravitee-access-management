@@ -95,7 +95,7 @@ describe("ID-JAG issuance - the application's own ID-JAG claims", () => {
     expect((await mintedClaims()).aud_sub).toBe(fixture.user.username);
   });
 
-  it('should let a sub claim override the AM user id', async () => {
+  it('should let a sub claim override the default sub', async () => {
     await configure(EMAIL, [idJagClaim('sub', USERNAME)]);
 
     expect((await mintedClaims()).sub).toBe(fixture.user.username);

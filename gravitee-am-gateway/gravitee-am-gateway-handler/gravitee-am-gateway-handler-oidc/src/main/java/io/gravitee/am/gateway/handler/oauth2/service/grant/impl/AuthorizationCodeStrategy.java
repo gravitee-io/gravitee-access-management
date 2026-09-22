@@ -77,8 +77,8 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
     }
 
     @Override
-    public boolean supports(String grantType, Client client, Domain domain) {
-        if (!GrantType.AUTHORIZATION_CODE.equals(grantType)) {
+    public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
+        if (!GrantType.AUTHORIZATION_CODE.equals(tokenRequest.getGrantType())) {
             return false;
         }
 

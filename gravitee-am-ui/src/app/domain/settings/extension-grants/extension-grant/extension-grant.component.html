@@ -49,7 +49,7 @@
           </mat-form-field>
         </div>
 
-        <div class="gv-form-section">
+        <div class="gv-form-section" *ngIf="!crossAppAccess">
           <div class="gv-form-section-title">
             <h5>User creation</h5>
             <mat-divider></mat-divider>
@@ -62,7 +62,7 @@
           </div>
         </div>
 
-        <div class="gv-form-section">
+        <div class="gv-form-section" *ngIf="!crossAppAccess">
           <div class="gv-form-section-title">
             <h5>Check user</h5>
             <mat-divider></mat-divider>
@@ -80,21 +80,27 @@
             <h5>Identity provider</h5>
             <mat-divider></mat-divider>
           </div>
-          <div>
-            <mat-form-field appearance="outline" floatLabel="always">
-              <mat-select
-                placeholder="Identity provider"
-                name="identityProvider"
-                [(ngModel)]="extensionGrant.identityProvider"
-                [disabled]="!editMode"
-              >
-                <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
-                  identityProvider.name
-                }}</mat-option>
-              </mat-select>
-              <mat-hint>Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
-            </mat-form-field>
+          <div *ngIf="crossAppAccess; else identityProviderSelect" class="gv-form-hint" data-testid="identityProviderResolutionHint">
+            Resolved from the assertion issuer: the identity provider whose discovered issuer matches the assertion's <code>iss</code> claim
+            verifies the assertion.
           </div>
+          <ng-template #identityProviderSelect>
+            <div>
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-select
+                  placeholder="Identity provider"
+                  name="identityProvider"
+                  [(ngModel)]="extensionGrant.identityProvider"
+                  [disabled]="!editMode"
+                >
+                  <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
+                    identityProvider.name
+                  }}</mat-option>
+                </mat-select>
+                <mat-hint>Identity provider used to retrieve user information from incoming request assertion.</mat-hint>
+              </mat-form-field>
+            </div>
+          </ng-template>
         </div>
 
         <div class="gv-form-section">

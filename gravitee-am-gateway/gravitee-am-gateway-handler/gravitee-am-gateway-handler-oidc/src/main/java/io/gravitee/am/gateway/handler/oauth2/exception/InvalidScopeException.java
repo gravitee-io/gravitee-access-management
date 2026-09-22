@@ -35,6 +35,10 @@ public class InvalidScopeException extends OAuth2Exception {
         super(message);
     }
 
+    public InvalidScopeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "invalid_scope";

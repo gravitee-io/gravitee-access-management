@@ -16,8 +16,10 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -32,6 +34,8 @@ import lombok.Setter;
 @EqualsAndHashCode
 @Schema(title = "User binding criterion", description = "A single rule that matches a domain user attribute " +
         "against a value derived from the external token claims.")
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserBindingCriterion {
 
     @Schema(description = "Domain user attribute used for the lookup. Must match a field supported by the user " +
@@ -41,4 +45,5 @@ public class UserBindingCriterion {
     @Schema(description = "Expression evaluated against the validated token claims (variable \"token\") to " +
             "produce the value to match.", example = "{#token['email']}")
     private String expression;
+
 }

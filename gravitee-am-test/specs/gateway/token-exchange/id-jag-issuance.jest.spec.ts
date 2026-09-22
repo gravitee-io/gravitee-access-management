@@ -70,7 +70,9 @@ describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
 
     expect(header.typ).toBe(ID_JAG_JOSE_TYPE);
     expect(payload.iss).toBe(fixture.oidc.issuer);
-    expect(payload.sub).toBe(fixture.user.id);
+    expect(payload.sub).toBe(decode(idToken).payload.sub);
+    expect(payload.sub).not.toBe(fixture.user.id);
+    expect(payload.gis).toBeUndefined();
     expect(payload.aud).toBe(fixture.audience);
     expect(payload.client_id).toBe('agent-at-acme-calendar');
     expect(payload.client_id).not.toBe(fixture.application.settings.oauth.clientId);
@@ -92,7 +94,7 @@ describe('ID-JAG issuance - the assertion an agent takes to a partner', () => {
       typ: ID_JAG_JOSE_TYPE,
     });
 
-    expect(payload.sub).toBe(fixture.user.id);
+    expect(payload.sub).toBe(decode(idToken).payload.sub);
   });
 
   it('should select the named resource server among those behind the audience', async () => {

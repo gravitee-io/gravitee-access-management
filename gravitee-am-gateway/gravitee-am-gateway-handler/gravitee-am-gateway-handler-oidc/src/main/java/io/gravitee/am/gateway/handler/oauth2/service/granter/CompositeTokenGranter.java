@@ -72,8 +72,6 @@ import lombok.CustomLog;
  */
 @CustomLog
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
-
-
     private final ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
@@ -158,7 +156,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private Single<TokenGranter> findGranter(TokenRequest tokenRequest, Client client) {
         return Observable
                 .fromIterable(tokenGranters.values())
-                .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
+                .filter(tokenGranter -> tokenGranter.handle(tokenRequest, client))
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())));
     }
@@ -176,7 +174,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     }
 
     @Override
-    public boolean handle(String grantType, Client client) {
+    public boolean handle(TokenRequest tokenRequest, Client client) {
         return true;
     }
 

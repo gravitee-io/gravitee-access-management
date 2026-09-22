@@ -29,7 +29,8 @@ import { ExtensionGrantService } from '../../../services/extension-grant.service
 })
 export class DomainSettingsExtensionGrantsComponent implements OnInit {
   private extensionGrantTypes: any = {
-    'jwtbearer-am-extension-grant': 'Extension Grant JWT Bearer',
+    'jwtbearer-am-extension-grant': 'JWT Bearer',
+    'xaa-am-extension-grant': 'Cross App Access',
   };
   extensionGrants: any[];
   domainId: string;

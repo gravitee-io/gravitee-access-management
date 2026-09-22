@@ -36,8 +36,8 @@ public class ClientCredentialsStrategy implements GrantStrategy {
 
 
     @Override
-    public boolean supports(String grantType, Client client, Domain domain) {
-        if (!GrantType.CLIENT_CREDENTIALS.equals(grantType)) {
+    public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
+        if (!GrantType.CLIENT_CREDENTIALS.equals(tokenRequest.getGrantType())) {
             return false;
         }
 

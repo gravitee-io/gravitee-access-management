@@ -68,8 +68,8 @@ public class RefreshTokenStrategy implements GrantStrategy {
     }
 
     @Override
-    public boolean supports(String grantType, Client client, Domain domain) {
-        if (!GrantType.REFRESH_TOKEN.equals(grantType)) {
+    public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
+        if (!GrantType.REFRESH_TOKEN.equals(tokenRequest.getGrantType())) {
             return false;
         }
 

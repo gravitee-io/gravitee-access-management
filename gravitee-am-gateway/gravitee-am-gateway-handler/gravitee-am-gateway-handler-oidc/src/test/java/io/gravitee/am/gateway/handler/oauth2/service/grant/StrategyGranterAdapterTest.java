@@ -54,6 +54,7 @@ import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import org.mockito.ArgumentCaptor;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -107,18 +108,18 @@ class StrategyGranterAdapterTest {
 
     @Test
     void shouldDelegateHandleToStrategy() {
-        when(strategy.supports(eq(GrantType.CLIENT_CREDENTIALS), eq(client), eq(domain)))
-                .thenReturn(true);
+        TokenRequest tokenRequest = grantRequest(GrantType.CLIENT_CREDENTIALS);
+        when(strategy.supports(tokenRequest, client, domain)).thenReturn(true);
 
-        assertTrue(adapter.handle(GrantType.CLIENT_CREDENTIALS, client));
+        assertTrue(adapter.handle(tokenRequest, client));
     }
 
     @Test
     void shouldReturnFalseWhenStrategyDoesNotSupport() {
-        when(strategy.supports(eq(GrantType.PASSWORD), eq(client), eq(domain)))
-                .thenReturn(false);
+        TokenRequest tokenRequest = grantRequest(GrantType.PASSWORD);
+        when(strategy.supports(tokenRequest, client, domain)).thenReturn(false);
 
-        assertFalse(adapter.handle(GrantType.PASSWORD, client));
+        assertFalse(adapter.handle(tokenRequest, client));
     }
 
     @Test
