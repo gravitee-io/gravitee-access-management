@@ -18,6 +18,7 @@ import { waitFor } from '@management-commands/domain-management-commands';
 import { expect } from '@jest/globals';
 import { performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import faker from 'faker';
+import { randomUUID } from 'crypto';
 import { BulkResponse } from '@management-models/BulkResponse';
 import { BulkOperationResultObject } from '@management-models/BulkOperationResultObject';
 
@@ -34,9 +35,7 @@ const cheerio = require('cheerio');
 export function uniqueName(name: string, forceRandom: boolean = false) {
   const randomize = forceRandom || process.env.AM_TEST_RANDOMIZE_NAMES?.toLowerCase() === 'true';
   if (randomize) {
-    return faker.helpers.slugify(
-      `${name}-${faker.commerce.productAdjective()}-${faker.animal.type()}-${faker.datatype.number({ min: 1, max: 10000 })}`,
-    );
+    return faker.helpers.slugify(`${name}-${faker.commerce.productAdjective()}-${faker.animal.type()}-${randomUUID().slice(0, 8)}`);
   } else {
     return name;
   }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import faker from 'faker';
+import { randomUUID } from 'crypto';
 
 faker.seed(Date.now() ^ (process.pid << 16) ^ (Math.random() * 0xffffffff));
 
@@ -35,9 +36,7 @@ export async function quietly<T>(fn: () => Promise<T>): Promise<T> {
  * Generates a unique, slugified test name using faker for collision avoidance.
  */
 export const uniqueTestName = (prefix: string) =>
-  faker.helpers.slugify(
-    `${prefix}-${faker.commerce.productAdjective()}-${faker.animal.type()}-${faker.datatype.number({ min: 1, max: 10000 })}`,
-  );
+  faker.helpers.slugify(`${prefix}-${faker.commerce.productAdjective()}-${faker.animal.type()}-${randomUUID().slice(0, 8)}`);
 
 /** Gateway base URL from env, with trailing slash stripped. */
 export function getGatewayBaseUrl(): string {
