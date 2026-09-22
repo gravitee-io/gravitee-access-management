@@ -40,7 +40,7 @@ class SystemReporterConfigResolverTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldHaveNullPortWhenMongoServersAreDefined() throws Exception {
+    void shouldHaveNoHostOrPortWhenMongoServersAreDefined() throws Exception {
         environment.setProperty("repositories.management.mongodb.servers[0].host", "localhost");
         environment.setProperty("repositories.management.mongodb.servers[0].port", 27017);
         environment.setProperty("repositories.management.mongodb.port", 99999); // this value should be ignored
@@ -48,24 +48,8 @@ class SystemReporterConfigResolverTest {
         String reporterConfig = resolver.createReporterConfig(Reference.domain("test"));
         Map<String, Object> config = new ObjectMapper().readValue(reporterConfig, Map.class);
 
+        assertEquals("", config.get("host"));
         assertNull(config.get("port"));
-        assertEquals("mongodb://localhost:27017/gravitee-am?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void shouldPairHostAndPortOfEveryMongoServer() throws Exception {
-        environment.setProperty("repositories.management.mongodb.servers[0].host", "mongo-1");
-        environment.setProperty("repositories.management.mongodb.servers[0].port", 27017);
-        environment.setProperty("repositories.management.mongodb.servers[1].host", "mongo-2");
-        environment.setProperty("repositories.management.mongodb.servers[1].port", 27018);
-        environment.setProperty("repositories.management.mongodb.servers[2].host", "mongo-3");
-
-        String reporterConfig = resolver.createReporterConfig(Reference.domain("test"));
-        Map<String, Object> config = new ObjectMapper().readValue(reporterConfig, Map.class);
-
-        assertNull(config.get("port"));
-        assertEquals("mongodb://mongo-1:27017,mongo-2:27018,mongo-3:27017/gravitee-am?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
     }
 
     @Test
@@ -79,7 +63,6 @@ class SystemReporterConfigResolverTest {
 
         assertEquals("localhost", config.get("host"));
         assertEquals(27017, config.get("port"));
-        assertEquals("mongodb://localhost:27017/gravitee-am?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
     }
 
     @Test
@@ -145,56 +128,51 @@ class SystemReporterConfigResolverTest {
         assertEquals("gravitee-am", config.get("database"));
         assertEquals("postgresql", config.get("driver"));
         assertEquals("am-user", config.get("username"));
-        assertEquals("am-secret", config.get("password"));
+        assertEquals(SystemReporterConfigResolver.HIDDEN_VALUE, config.get("password"));
         assertEquals("domain_1", config.get("tableSuffix"));
         assertEquals(List.of(Map.of("option", "currentSchema", "value", "am-schema")), config.get("options"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldResolveJdbcConfigurationWithoutPasswordAndSchema() throws Exception {
+    void shouldResolveJdbcConfigurationWithoutSchema() throws Exception {
         useJdbcBackend();
         environment.setProperty("repositories.management.jdbc.username", "am-user");
 
         Map<String, Object> config = new ObjectMapper().readValue(resolver.createReporterConfig(Reference.domain("domain-1")), Map.class);
 
-        assertNull(config.get("password"));
         assertEquals(List.of(), config.get("options"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldHideMongoUriWhenLegacyReportersDefaultHideSensitiveDataIsEnabled() throws Exception {
+    void shouldAlwaysHideMongoUri() throws Exception {
         environment.setProperty("repositories.management.mongodb.host", "localhost");
         environment.setProperty("repositories.management.mongodb.port", 27017);
-        environment.setProperty(SystemReporterConfigResolver.LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, "true");
+        environment.setProperty("repositories.management.mongodb.username", "am-user");
+        environment.setProperty("repositories.management.mongodb.password", "am-secret");
 
-        String reporterConfig = resolver.createReporterConfig(Reference.domain("test"));
-        Map<String, Object> config = new ObjectMapper().readValue(reporterConfig, Map.class);
+        Map<String, Object> config = new ObjectMapper().readValue(resolver.createReporterConfig(Reference.domain("test")), Map.class);
 
         assertEquals(SystemReporterConfigResolver.HIDDEN_VALUE, config.get("uri"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldHideMongoUriWhenLegacyReportersDefaultHideSensitiveDataIsDisabled() throws Exception {
-        environment.setProperty("repositories.management.mongodb.host", "localhost");
-        environment.setProperty("repositories.management.mongodb.port", 27017);
-        environment.setProperty(SystemReporterConfigResolver.LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, "false");
+    void shouldAlwaysHideMongoUriEvenWhenTheConfiguredUriIsExplicit() throws Exception {
+        environment.setProperty("repositories.management.mongodb.uri", "mongodb://am-user:am-secret@localhost:27017/gravitee-am");
 
-        String reporterConfig = resolver.createReporterConfig(Reference.domain("test"));
-        Map<String, Object> config = new ObjectMapper().readValue(reporterConfig, Map.class);
+        Map<String, Object> config = new ObjectMapper().readValue(resolver.createReporterConfig(Reference.domain("test")), Map.class);
 
-        assertEquals("mongodb://localhost:27017/gravitee-am?connectTimeoutMS=5000&socketTimeoutMS=5000", config.get("uri"));
+        assertEquals(SystemReporterConfigResolver.HIDDEN_VALUE, config.get("uri"));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldHideJdbcPasswordWhenLegacyReportersDefaultHideSensitiveDataIsEnabled() throws Exception {
+    void shouldAlwaysHideJdbcPassword() throws Exception {
         useJdbcBackend();
         environment.setProperty("repositories.management.jdbc.username", "am-user");
         environment.setProperty("repositories.management.jdbc.password", "am-secret");
-        environment.setProperty(SystemReporterConfigResolver.LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, "true");
 
         Map<String, Object> config = new ObjectMapper().readValue(resolver.createReporterConfig(Reference.domain("domain-1")), Map.class);
 
@@ -203,15 +181,15 @@ class SystemReporterConfigResolverTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldNotHideJdbcPasswordWhenLegacyReportersDefaultHideSensitiveDataIsDisabled() throws Exception {
+    void shouldIgnoreTheWithdrawnHideSensitiveDataFlag() throws Exception {
         useJdbcBackend();
         environment.setProperty("repositories.management.jdbc.username", "am-user");
         environment.setProperty("repositories.management.jdbc.password", "am-secret");
-        environment.setProperty(SystemReporterConfigResolver.LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, "false");
+        environment.setProperty("legacy.reporters.default.hide.sensitive.data", "false");
 
         Map<String, Object> config = new ObjectMapper().readValue(resolver.createReporterConfig(Reference.domain("domain-1")), Map.class);
 
-        assertEquals("am-secret", config.get("password"));
+        assertEquals(SystemReporterConfigResolver.HIDDEN_VALUE, config.get("password"));
     }
 
     @Test
