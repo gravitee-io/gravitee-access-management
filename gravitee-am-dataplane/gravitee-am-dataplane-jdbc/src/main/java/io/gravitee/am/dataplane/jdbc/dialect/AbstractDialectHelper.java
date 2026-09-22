@@ -302,7 +302,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
 
     @Override
     public String buildCountUserQuery(boolean wildcard, boolean organizationUser) {
-        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT u.id) FROM " + (organizationUser ? ORGANIZATION_USERS : USERS) + U_WHERE);
+        StringBuilder builder = new StringBuilder("SELECT COUNT(*) FROM " + (organizationUser ? ORGANIZATION_USERS : USERS) + U_WHERE);
         return buildSearchUser(wildcard, builder)
                 .toString();
     }
