@@ -26,6 +26,7 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { uniqueName } from '@utils-commands/misc';
+import { retryUntil } from '@utils-commands/retry';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { Fixture } from '../../../test-fixture';
@@ -48,6 +49,11 @@ export interface ProtectedResourcesFixture extends Fixture {
     accessToken: string,
     introspectingResource: { clientId?: string; clientSecret?: string },
   ) => any;
+  revokeToken: (accessToken: string, revokingClient: { clientId?: string; clientSecret?: string }) => any;
+  waitUntilTokenInactive: (
+    accessToken: string,
+    introspectingClient: { clientId?: string; clientSecret?: string },
+  ) => Promise<void>;
 }
 
 // Test constants
@@ -66,6 +72,8 @@ export const PROTECTED_RESOURCES_TEST = {
   USER_LAST_NAME: 'User',
   REDIRECT_URI: 'https://example.com/callback',
 } as const;
+
+const REVOCATION_POLL_TIMEOUT_MS = 20000;
 
 // Helper functions for authorization flow
 export function buildAuthorizationUrlWithResources(endpoint: string, clientId: string, redirectUri: string, resources: string[]): string {
@@ -305,6 +313,29 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     );
   };
 
+  const revokeToken = (accessToken: string, revokingClient: { clientId?: string; clientSecret?: string }) => {
+    return performPost(
+      openIdConfiguration.revocation_endpoint,
+      '',
+      `token=${accessToken}&token_type_hint=access_token`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + getBase64BasicAuth(revokingClient.clientId, revokingClient.clientSecret),
+      },
+    );
+  };
+
+  const waitUntilTokenInactive = async (
+    token: string,
+    introspectingClient: { clientId?: string; clientSecret?: string },
+  ): Promise<void> => {
+    await retryUntil(
+      () => introspectToken(token, introspectingClient).then((response) => response.body.active),
+      (active) => active === false,
+      { timeoutMillis: REVOCATION_POLL_TIMEOUT_MS, intervalMillis: 100 },
+    );
+  };
+
     const cleanUp = async () => {
       // Delete domain (this will cascade delete applications, users, protected resources, etc.)
       await safeDeleteDomain(domain?.id, accessToken);
@@ -326,6 +357,8 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
       exchangeAuthCodeForTokenWithoutResources: exchangeCodeForTokenWithoutResources,
       exchangeRefreshToken: exchangeRefreshForTokenWithResources,
       introspectToken,
+      revokeToken,
+      waitUntilTokenInactive,
     };
   } catch (error) {
     // Cleanup domain if setup fails partway through
