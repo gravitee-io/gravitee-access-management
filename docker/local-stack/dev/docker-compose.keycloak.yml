@@ -49,8 +49,8 @@ services:
       GRAVITEE_HTTP_MAXFORMATTRIBUTESIZE: 65536
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    command: ['start-dev', '--import-realm', '--health-enabled=true']
+    image: quay.io/keycloak/keycloak:26.7.4
+    command: ['start-dev', '--import-realm', '--health-enabled=true', '--features=identity-assertion-jwt']
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
