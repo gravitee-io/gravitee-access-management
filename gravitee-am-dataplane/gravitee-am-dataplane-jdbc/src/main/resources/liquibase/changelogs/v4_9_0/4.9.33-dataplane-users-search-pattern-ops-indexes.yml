@@ -1,0 +1,123 @@
+# The *_pattern_ops opclasses are required since a plain btree cannot serve LIKE 'term%' under a
+# non-C collation.
+databaseChangeLog:
+
+  - changeSet:
+      id: 4.9.33-dp-users-search-pattern-ops-1
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_reference_username_pattern
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_reference_username_pattern ON users USING btree (reference_id, reference_type, username varchar_pattern_ops);
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS idx_users_reference_username_pattern;
+
+  - changeSet:
+      id: 4.9.33-dp-users-search-pattern-ops-2
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_reference_email_pattern
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_reference_email_pattern ON users USING btree (reference_id, reference_type, email varchar_pattern_ops);
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS idx_users_reference_email_pattern;
+
+  - changeSet:
+      id: 4.9.33-dp-users-search-pattern-ops-3
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_reference_displayname_pattern
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_reference_displayname_pattern ON users USING btree (reference_id, reference_type, display_name varchar_pattern_ops);
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS idx_users_reference_displayname_pattern;
+
+  - changeSet:
+      id: 4.9.33-dp-users-search-pattern-ops-4
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_reference_firstname_pattern
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_reference_firstname_pattern ON users USING btree (reference_id, reference_type, first_name varchar_pattern_ops);
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS idx_users_reference_firstname_pattern;
+
+  - changeSet:
+      id: 4.9.33-dp-users-search-pattern-ops-5
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_reference_lastname_pattern
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_reference_lastname_pattern ON users USING btree (reference_id, reference_type, last_name varchar_pattern_ops);
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS idx_users_reference_lastname_pattern;
+
+  - changeSet:
+      id: 4.9.33-dp-users-search-pattern-ops-6
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_additional_info_email_pattern
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_email_pattern ON users USING btree (reference_id, reference_type, ((additional_information->>'email')) text_pattern_ops);
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP INDEX IF EXISTS idx_users_additional_info_email_pattern;
