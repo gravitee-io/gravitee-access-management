@@ -37,12 +37,17 @@ public class ScheduledPurgeServiceFactory {
     }
 
     private List<ExpiredDataSweeper.Target> purgeTargets(List<String> excluded) {
-        try {
-            List<ExpiredDataSweeper.Target> excludedPurgeTargets = excluded.stream().map(ExpiredDataSweeper.Target::valueOf).toList();
-            return supportedPurgeTargets.stream().filter(target -> !excludedPurgeTargets.contains(target)).toList();
-        } catch (Exception e){
-            log.error("Error while resolving purge targets, fallback to default list", e);
-            return supportedPurgeTargets;
-        }
+        List<ExpiredDataSweeper.Target> excludedPurgeTargets = excluded.stream()
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .<ExpiredDataSweeper.Target>mapMulti((name, targets) -> {
+                    try {
+                        targets.accept(ExpiredDataSweeper.Target.valueOf(name));
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Ignoring unknown purge target [{}] in services.purge.exclude", name);
+                    }
+                })
+                .toList();
+        return supportedPurgeTargets.stream().filter(target -> !excludedPurgeTargets.contains(target)).toList();
     }
 }
