@@ -32,6 +32,10 @@ public class InvalidGrantException extends OAuth2Exception {
         super(message);
     }
 
+    public InvalidGrantException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     @Override
     public String getOAuth2ErrorCode() {
         return "invalid_grant";

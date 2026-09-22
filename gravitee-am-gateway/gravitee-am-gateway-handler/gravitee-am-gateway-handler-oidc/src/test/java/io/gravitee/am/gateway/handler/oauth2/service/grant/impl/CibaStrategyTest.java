@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,19 +81,19 @@ class CibaStrategyTest {
 
     @Test
     void shouldSupportCibaGrantType() {
-        assertTrue(strategy.supports(GrantType.CIBA_GRANT_TYPE, client, domain));
+        assertTrue(strategy.supports(grantRequest(GrantType.CIBA_GRANT_TYPE), client, domain));
     }
 
     @Test
     void shouldNotSupportOtherGrantTypes() {
-        assertFalse(strategy.supports(GrantType.CLIENT_CREDENTIALS, client, domain));
-        assertFalse(strategy.supports(GrantType.PASSWORD, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.CLIENT_CREDENTIALS), client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.PASSWORD), client, domain));
     }
 
     @Test
     void shouldNotSupportWhenClientDoesNotHaveGrantType() {
         client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
-        assertFalse(strategy.supports(GrantType.CIBA_GRANT_TYPE, client, domain));
+        assertFalse(strategy.supports(grantRequest(GrantType.CIBA_GRANT_TYPE), client, domain));
     }
 
     @Test

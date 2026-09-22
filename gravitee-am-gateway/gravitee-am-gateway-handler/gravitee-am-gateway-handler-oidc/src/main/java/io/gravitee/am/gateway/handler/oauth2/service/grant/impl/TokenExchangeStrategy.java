@@ -45,8 +45,8 @@ public class TokenExchangeStrategy implements GrantStrategy {
     }
 
     @Override
-    public boolean supports(String grantType, Client client, Domain domain) {
-        if (!GrantType.TOKEN_EXCHANGE.equals(grantType)) {
+    public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
+        if (!GrantType.TOKEN_EXCHANGE.equals(tokenRequest.getGrantType())) {
             return false;
         }
 

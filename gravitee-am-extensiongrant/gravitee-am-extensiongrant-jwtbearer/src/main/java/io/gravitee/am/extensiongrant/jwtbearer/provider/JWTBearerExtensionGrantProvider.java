@@ -25,7 +25,9 @@ import io.gravitee.am.common.exception.jwt.SignatureException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantRequest;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantResult;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -38,7 +40,6 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.AbstractKeyPr
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.HMACKeyProcessor;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProcessor;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcessor;
-import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -49,8 +50,6 @@ import org.springframework.util.Assert;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
@@ -71,6 +70,7 @@ import java.util.regex.Pattern;
 
 import static io.gravitee.am.common.jwt.Claims.GIO_INTERNAL_SUB;
 import static io.gravitee.am.common.jwt.Claims.SUB;
+import static io.gravitee.am.extensiongrant.api.ExtensionGrantAssertionTypes.isNotIdJag;
 import static java.util.Arrays.copyOfRange;
 import static java.util.Objects.nonNull;
 
@@ -111,8 +111,13 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
     private ResourceRetriever resourceRetriever;
 
     @Override
-    public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {
-        String assertion = tokenRequest.getRequestParameters().get(ASSERTION_QUERY_PARAM);
+    public boolean supports(ExtensionGrantRequest request) {
+        return isNotIdJag(request);
+    }
+
+    @Override
+    public Maybe<ExtensionGrantResult> grant(ExtensionGrantRequest request) throws InvalidGrantException {
+        String assertion = request.parameter(ASSERTION_QUERY_PARAM);
 
         if (assertion == null) {
             throw new InvalidGrantException("Assertion value is missing");
@@ -134,6 +139,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
         })
         .subscribeOn(Schedulers.io())
         .firstElement()
+        .map(ExtensionGrantResult::endUser)
         .observeOn(Schedulers.computation());
     }
 

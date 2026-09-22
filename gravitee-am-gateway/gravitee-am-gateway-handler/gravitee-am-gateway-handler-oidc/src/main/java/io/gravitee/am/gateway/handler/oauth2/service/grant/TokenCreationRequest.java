@@ -74,6 +74,17 @@ public record TokenCreationRequest(
     }
 
     /**
+     * Create a new request with updated resources.
+     */
+    public TokenCreationRequest withResources(Set<String> newResources) {
+        return new TokenCreationRequest(
+                clientId, grantType, scopes, resourceOwner, grantData,
+                supportRefreshToken, newResources, originalAuthorizationResources, httpInfo,
+                additionalParameters, context, executionContext
+        );
+    }
+
+    /**
      * Check if this is a client-only request (no user).
      */
     public boolean isClientOnly() {

@@ -62,6 +62,12 @@ public interface SubjectManager {
      */
     void updateJWT(JWT jwt, User user);
 
+    default String generateSub(User user) {
+        JWT subjectClaims = new JWT();
+        updateJWT(subjectClaims, user);
+        return subjectClaims.getSub();
+    }
+
     Maybe<User> findUserBySub(JWT token);
 
     Maybe<UserId> findUserIdBySub(JWT token);

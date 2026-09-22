@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantRequest;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.extensiongrant.jwtbearer.provider.JWTBearerExtensionGrantProvider.SSH_PUB_KEY;
@@ -45,7 +50,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class JWTBearerExtensionGrantProviderTest {
 
-    private static final String ECDSA_SHA2_NISTP_256 = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGzYZe0xJ2NQWJKasGGCeo3SbgR9PaKn0q0FuMU3sMlDx5+cabj0NR0quVKfSQ7+Vl9cCur+e62AmGozkF1WfQA=";
+    private static final String ISSUER = "https://as.example.com/domain/oidc";
+    private static final String ECDSA_SHA2_NISTP_256 ="ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGzYZe0xJ2NQWJKasGGCeo3SbgR9PaKn0q0FuMU3sMlDx5+cabj0NR0quVKfSQ7+Vl9cCur+e62AmGozkF1WfQA=";
     private static final String EC256_JWT_TOKEN = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.6jk6B4IKg_lj9Fl8JBaJxOMBAvl_LKldjYb83XX4Kv23WFSr0MSQrsEJPnSX2AH8GqSBPFJWIyk1-BoDV3LEaw";
     private static final String ECDSA_SHA2_NISTP_256_CERT = """
             -----BEGIN CERTIFICATE-----
@@ -272,10 +278,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_grant_with_rsa256() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -290,10 +295,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_grant_with_rsa384() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -308,10 +312,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_grant_with_rsa512() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA512_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -323,10 +326,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_grant_with_ecdsa_sha2_nistp256() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -337,10 +339,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_grant_with_ecdsa_sha2_nistp384() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_384);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -351,10 +352,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_grant_with_ecdsa_sha2_nistp512() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_512);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -365,10 +365,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_fail_due_to_wrong_publickey_with_wrong_assertion() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_512);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -377,10 +376,9 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_fail_due_to_rsa_algorithm_mismatch() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS384_JWT_TOKEN)); // Using RS384 token with RS256 key
+        final ExtensionGrantRequest grantRequest = request(RS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -389,17 +387,16 @@ public class JWTBearerExtensionGrantProviderTest {
     public void must_fail_due_to_wrong_public_key_prefix() {
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn("wrong prefix");
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.test"));
+        final ExtensionGrantRequest grantRequest = request("eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.test");
 
-        assertThrows(InvalidGrantException.class, () -> jwtBearerExtensionGrantProvider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidGrantException.class, () -> jwtBearerExtensionGrantProvider.grant(grantRequest).blockingGet());
     }
 
     @Test
     public void must_fail_due_to_null_assertion() {
-        final TokenRequest tokenRequest = new TokenRequest();
+        final ExtensionGrantRequest grantRequest = request(null);
 
-        assertThrows(InvalidGrantException.class, () -> jwtBearerExtensionGrantProvider.grant(tokenRequest).blockingGet());
+        assertThrows(InvalidGrantException.class, () -> jwtBearerExtensionGrantProvider.grant(grantRequest).blockingGet());
     }
 
     /**
@@ -410,10 +407,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -428,10 +424,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -446,10 +441,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA512_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -464,10 +458,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -482,10 +475,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -500,10 +492,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA512_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -518,10 +509,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -536,10 +526,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_384);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -554,10 +543,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_512);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -572,10 +560,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -590,10 +577,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_284_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -608,10 +594,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_512_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -626,10 +611,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", HS256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(HS256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -644,10 +628,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_384_SECRET);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", HS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(HS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -662,10 +645,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_512_SECRET);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", HS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(HS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -680,10 +662,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA256_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -696,10 +677,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(RSA_SHA384_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", RS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(RS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -712,10 +692,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_256);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -728,10 +707,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(ECDSA_SHA2_NISTP_384);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", EC512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(EC512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -744,10 +722,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", HS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(HS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -760,10 +737,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_384_SECRET);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", HS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(HS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertError(InvalidGrantException.class);
     }
@@ -777,10 +753,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_SSH_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", PS256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(PS256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -795,10 +770,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_SSH_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", PS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(PS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -813,10 +787,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_SSH_KEY);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", PS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(PS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -832,10 +805,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", PS256_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(PS256_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -850,10 +822,9 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", PS384_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(PS384_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
@@ -868,13 +839,35 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.usesJWKs()).thenReturn(false);
         when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(PSS_RSA_CERT);
 
-        final TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setRequestParameters(Map.of("assertion", PS512_JWT_TOKEN));
+        final ExtensionGrantRequest grantRequest = request(PS512_JWT_TOKEN);
 
-        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
         testObserver.await(10, TimeUnit.SECONDS);
         testObserver.assertComplete()
                 .assertNoErrors()
                 .assertValue(Objects::nonNull);
+    }
+
+    @Test
+    void shouldDeclineIdJagTypedAssertion() {
+        assertFalse(jwtBearerExtensionGrantProvider.supports(assertionRequest(new JOSEObjectType("oauth-id-jag+jwt"))));
+    }
+
+    @Test
+    void shouldSupportJwtTypedAssertion() {
+        assertTrue(jwtBearerExtensionGrantProvider.supports(assertionRequest(JOSEObjectType.JWT)));
+    }
+
+    private static ExtensionGrantRequest assertionRequest(JOSEObjectType type) {
+        return request(new JWSHeader.Builder(JWSAlgorithm.RS256).type(type).build().toBase64URL()
+                + "." + Base64URL.encode("{}") + "." + Base64URL.encode("signature"));
+    }
+
+    private static ExtensionGrantRequest request(String assertion) {
+        return ExtensionGrantRequest.builder()
+                .clientId("client-id")
+                .parameters(assertion == null ? Map.of() : Map.of("assertion", assertion))
+                .authorizationServerIssuer(ISSUER)
+                .build();
     }
 }

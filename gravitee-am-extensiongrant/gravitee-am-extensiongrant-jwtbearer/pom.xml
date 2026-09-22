@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
-    <name>Gravitee IO - Access Management - Extension Grant JWT Bearer</name>
+    <name>Gravitee IO - Access Management - Extension Grant - JWT Bearer</name>
 
     <dependencies>
         <!-- Gravitee.io -->

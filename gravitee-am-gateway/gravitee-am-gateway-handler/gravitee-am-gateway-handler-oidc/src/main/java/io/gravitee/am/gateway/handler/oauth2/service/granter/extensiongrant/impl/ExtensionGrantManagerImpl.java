@@ -35,6 +35,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.Exte
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
@@ -54,12 +55,11 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 import lombok.CustomLog;
 
 /**
@@ -69,10 +69,10 @@ import lombok.CustomLog;
 @CustomLog
 public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
+
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
     private final ConcurrentMap<String, ExtensionGrant> extensionGrants = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ExtensionGrantStrategy> extensionGrantStrategies = new ConcurrentHashMap<>();
-    private Date minDate;
 
     @Autowired
     private Domain domain;
@@ -122,20 +122,15 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     @Autowired
     private DomainPluginLicenseGate domainPluginLicenseGate;
 
+    @Autowired
+    private OpenIDDiscoveryService openIDDiscoveryService;
+
     @Override
     public void afterPropertiesSet() {
         log.info("Initializing extension grants for domain {}", domain.getName());
         this.tokenRequestResolver.setManagers(this.scopeManager, this.protectedResourceManager);
         extensionGrantRepository.findByDomain(domain.getId())
-                .concatMapCompletable(extensionGrant -> {
-                    // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                    if (minDate == null) {
-                        minDate = extensionGrant.getCreatedAt();
-                    } else if (minDate.after(extensionGrant.getCreatedAt())) {
-                        minDate = extensionGrant.getCreatedAt();
-                    }
-                    return updateExtensionGrantProvider(extensionGrant);
-                })
+                .concatMapCompletable(this::updateExtensionGrantProvider)
                 .doOnComplete(() -> log.info("Extension grants loaded for domain {}", domain.getName()))
                 .subscribe(
                         () -> {},
@@ -177,14 +172,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         log.info("Domain {} has received {} extension grant event for {}", domain.getName(), eventType, extensionGrantId);
         extensionGrantRepository.findById(extensionGrantId)
                 .subscribe(
-                        extensionGrant -> {
-                            // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                            if (extensionGrants.isEmpty()) {
-                                minDate = extensionGrant.getCreatedAt();
-                            }
-                            updateExtensionGrantProvider(extensionGrant)
-                                    .subscribe(() -> log.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName()));
-                        },
+                        extensionGrant -> updateExtensionGrantProvider(extensionGrant)
+                                .subscribe(() -> log.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName())),
                         error -> log.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
                         () -> log.error("No extension grant found with id {}", extensionGrantId));
     }
@@ -194,11 +183,15 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         ((CompositeTokenGranter) tokenGranter).removeTokenGranter(extensionGrantId);
         extensionGrants.remove(extensionGrantId);
         extensionGrantStrategies.remove(extensionGrantId);
-        // backward compatibility, update remaining strategies for the min date
-        if (!extensionGrants.isEmpty()) {
-            minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
-            extensionGrantStrategies.values().forEach(strategy -> strategy.setMinDate(minDate));
-        }
+        electOldestExtensionGrants();
+    }
+
+    private synchronized void electOldestExtensionGrants() {
+        Date minDate = extensionGrants.values().stream()
+                .map(ExtensionGrant::getCreatedAt)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+        extensionGrantStrategies.values().forEach(strategy -> strategy.setMinDate(minDate));
     }
 
     private Completable updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
@@ -226,18 +219,18 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
         return authProviderSingle
                 .flatMapCompletable(optProvider -> Completable.fromAction(() -> {
-                    var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, optProvider.orElse(null));
+                    var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, optProvider.orElse(null), identityProviderManager,
+                            new DomainProtectedResourceDirectory(protectedResourceManager, scopeManager));
                     var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
                     var extensionGrantStrategy = buildStrategy(extensionGrant, extensionGrantProvider);
-                    // backward compatibility, set min date to the extension grant strategy to choose the good one for the old clients
-                    extensionGrantStrategy.setMinDate(minDate);
+                    extensionGrants.put(extensionGrant.getId(), extensionGrant);
+                    extensionGrantStrategies.put(extensionGrant.getId(), extensionGrantStrategy);
+                    electOldestExtensionGrants();
 
                     // Wrap strategy with adapter to integrate with CompositeTokenGranter
                     var adapter = new StrategyGranterAdapter(extensionGrantStrategy, domain, tokenService, rulesEngine, tokenRequestResolver, dpopProofValidator);
 
                     ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), adapter);
-                    extensionGrants.put(extensionGrant.getId(), extensionGrant);
-                    extensionGrantStrategies.put(extensionGrant.getId(), extensionGrantStrategy);
                     domainReadinessService.pluginLoaded(domain.getId(), extensionGrant.getId());
                 }))
                 .doOnError(ex -> {
@@ -249,26 +242,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     }
 
     private ExtensionGrantStrategy buildStrategy(ExtensionGrant extensionGrant, ExtensionGrantProvider extensionGrantProvider) {
-        if (domain.getVersion() == DomainVersion.V1_0) {
-            // V1 mode - without SubjectManager
-            return new ExtensionGrantStrategy(
-                    extensionGrantProvider,
-                    extensionGrant,
-                    userAuthenticationManager,
-                    identityProviderManager,
-                    userService,
-                    domain);
-        } else {
-            // V2 mode - with SubjectManager
-            return new ExtensionGrantStrategy(
-                    extensionGrantProvider,
-                    extensionGrant,
-                    userAuthenticationManager,
-                    identityProviderManager,
-                    userService,
-                    subjectManager,
-                    domain);
-        }
+        var domainSubjectManager = domain.getVersion() == DomainVersion.V1_0 ? null : subjectManager;
+        return new ExtensionGrantStrategy(extensionGrantProvider, extensionGrant, userAuthenticationManager, identityProviderManager, userService, domainSubjectManager, domain, openIDDiscoveryService);
     }
 
     /**
