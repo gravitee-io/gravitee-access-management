@@ -29,13 +29,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Checks that one failing purge target does not stop the purge of the other targets.
- * The assertions are on subscription, because the service builds every target's
- * {@link Completable} before it subscribes to any of them.
+ * Checks which targets a scheduled purge run purges: the exclusions it honours, and that
+ * one failing target does not stop the others. The assertions are on subscription, because
+ * the service builds every target's {@link Completable} before it subscribes to any of them.
  *
  * @author GraviteeSource Team
  */
@@ -100,10 +101,40 @@ class ScheduledPurgeServiceTargetsTest {
         assertThat(subscribed).containsExactlyElementsOf(TARGETS);
     }
 
+    @Test
+    void shouldExcludeTargetWrittenWithSpaceAfterComma() {
+        givenSweeperForEveryTarget();
+
+        purgeService(List.of("access_tokens", " refresh_tokens")).run();
+
+        assertThat(subscribed).containsExactly(Target.authorization_codes);
+    }
+
+    @Test
+    void shouldKeepValidExclusionsWhenOneExclusionIsUnknown() {
+        givenSweeperForEveryTarget();
+
+        purgeService(List.of("access_tokens", "not_a_target")).run();
+
+        assertThat(subscribed).containsExactly(Target.authorization_codes, Target.refresh_tokens);
+    }
+
     private void givenSweeper(Target target, Completable purge) {
         ExpiredDataSweeper sweeper = mock(ExpiredDataSweeper.class);
         when(sweeper.purgeExpiredData()).thenReturn(purge.doOnSubscribe(disposable -> subscribed.add(target)));
         when(sweepers.getExpiredDataSweeper(target)).thenReturn(sweeper);
+    }
+
+    private void givenSweeperForEveryTarget() {
+        when(sweepers.getExpiredDataSweeper(any())).thenAnswer(invocation -> {
+            Target target = invocation.getArgument(0);
+            return new ExpiredDataSweeper() {
+                @Override
+                public Completable purgeExpiredData() {
+                    return Completable.complete().doOnSubscribe(disposable -> subscribed.add(target));
+                }
+            };
+        });
     }
 
     private ScheduledPurgeService purgeService(List<String> excludedTargets) {
