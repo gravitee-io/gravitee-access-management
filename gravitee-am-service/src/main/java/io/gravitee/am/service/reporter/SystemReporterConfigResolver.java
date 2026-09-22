@@ -53,8 +53,7 @@ public class SystemReporterConfigResolver {
     private static final String JDBC = "jdbc";
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String HIDDEN_VALUE = "********";
-    public static final String LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA = "legacy.reporters.default.hide.sensitive.data";
-    public static final boolean HIDE_SENSITIVE_DATA_DEFAULT_VALUE = false;
+    public static final String LEGACY_REPORTERS_DEFAULT_PLAINTEXT_SENSITIVE_DATA = "legacy.reporters.default.plaintextSensitiveData";
 
     private final RepositoriesEnvironment environment;
 
@@ -197,9 +196,8 @@ public class SystemReporterConfigResolver {
         return reporterConfig;
     }
 
-    private Boolean hideSensitiveData() {
-        var hideSensitiveData = environment.getProperty(LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, Boolean.class, HIDE_SENSITIVE_DATA_DEFAULT_VALUE);
-        return hideSensitiveData;
+    private boolean hideSensitiveData() {
+        return !environment.getProperty(LEGACY_REPORTERS_DEFAULT_PLAINTEXT_SENSITIVE_DATA, Boolean.class, true);
     }
 
     private static String getReporterTableSuffix(Reference reference) {
