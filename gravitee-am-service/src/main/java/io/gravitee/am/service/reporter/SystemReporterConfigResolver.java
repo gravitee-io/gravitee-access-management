@@ -27,14 +27,9 @@ import io.gravitee.am.service.model.NewReporter;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.repository.BackendConfigurationUtils.getMongoDatabaseName;
 
@@ -51,8 +46,6 @@ public class SystemReporterConfigResolver {
     private static final String JDBC = "jdbc";
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String HIDDEN_VALUE = "********";
-    public static final String LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA = "legacy.reporters.default.hide.sensitive.data";
-    public static final boolean HIDE_SENSITIVE_DATA_DEFAULT_VALUE = false;
 
     private final RepositoriesEnvironment environment;
 
@@ -113,24 +106,14 @@ public class SystemReporterConfigResolver {
     public String createReporterConfig(Reference reference) {
         String reporterConfig = null;
         if (useMongoReporter()) {
-            Optional<String> mongoServers = getMongoServers(environment);
             String mongoHost = null;
             String mongoPort = null;
-            if (mongoServers.isEmpty()) {
+            if (!hasMongoServers()) {
                 mongoHost = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.host", "localhost");
                 mongoPort = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.port", "27017");
             }
 
-            final String username = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.username");
-            final String password = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.password");
             String mongoDBName = getMongoDatabaseName(environment);
-
-            String defaultMongoUri = "mongodb://";
-            if (StringUtils.hasLength(username) && StringUtils.hasLength(password)) {
-                defaultMongoUri += username + ":" + password + "@";
-            }
-            defaultMongoUri += mongoServers.orElse(mongoHost + ":" + mongoPort) + "/" + mongoDBName;
-            String mongoUri = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
 
             var collectionSuffix = (reference == null || reference.matches(ReferenceType.ORGANIZATION, Organization.DEFAULT))
                     ? ""
@@ -148,7 +131,7 @@ public class SystemReporterConfigResolver {
                           "flushInterval": 5
                         }
                         """.formatted(
-                    hideSensitiveData() ? HIDDEN_VALUE : mongoUri,
+                    HIDDEN_VALUE,
                     (mongoHost != null) ? mongoHost : "",
                     (mongoPort != null) ? Integer.parseInt(mongoPort) : null,
                     mongoDBName,
@@ -160,7 +143,6 @@ public class SystemReporterConfigResolver {
             String jdbcDatabase = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.database");
             String jdbcDriver = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.driver");
             String jdbcUser = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.username");
-            String jdbcPwd = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.password");
             String jdbcSchema = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.schema");
 
             String options = jdbcSchema == null || jdbcSchema.isEmpty() ? "[]" : """
@@ -174,7 +156,7 @@ public class SystemReporterConfigResolver {
                           "database": "%s",
                           "driver": "%s",
                           "username": "%s",
-                          "password": %s,
+                          "password": "%s",
                           "tableSuffix": "%s",
                           "options": %s,
                           "initialSize": 0,
@@ -190,18 +172,13 @@ public class SystemReporterConfigResolver {
                     jdbcDatabase,
                     jdbcDriver,
                     jdbcUser,
-                    hideSensitiveData() ? "\"" + HIDDEN_VALUE + "\"" : (jdbcPwd == null ? null : "\"" + jdbcPwd + "\""),
+                    HIDDEN_VALUE,
                     getReporterTableSuffix(reference),
                     options
             );
 
         }
         return reporterConfig;
-    }
-
-    private Boolean hideSensitiveData() {
-        var hideSensitiveData = environment.getProperty(LEGACY_REPORTERS_DEFAULT_HIDE_SENSITIVE_DATA, Boolean.class, HIDE_SENSITIVE_DATA_DEFAULT_VALUE);
-        return hideSensitiveData;
     }
 
     private static String getReporterTableSuffix(Reference reference) {
@@ -222,47 +199,9 @@ public class SystemReporterConfigResolver {
         }
     }
 
-    private String addOptionsToURI(RepositoriesEnvironment environment, String mongoUri) {
-        Integer connectTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.connectTimeout", Integer.class, 5000);
-        Integer socketTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.socketTimeout", Integer.class, 5000);
-        Integer maxConnectionIdleTime = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.maxConnectionIdleTime", Integer.class);
-        Integer heartbeatFrequency = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.heartbeatFrequency", Integer.class);
-        Boolean sslEnabled = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.sslEnabled", Boolean.class);
-        String authSource = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.authSource", String.class);
-
-        mongoUri += "?connectTimeoutMS=" + connectTimeout + "&socketTimeoutMS=" + socketTimeout;
-        if (authSource != null) {
-            mongoUri += "&authSource=" + authSource;
-        }
-        if (maxConnectionIdleTime != null) {
-            mongoUri += "&maxIdleTimeMS=" + maxConnectionIdleTime;
-        }
-        if (heartbeatFrequency != null) {
-            mongoUri += "&heartbeatFrequencyMS=" + heartbeatFrequency;
-        }
-        if (sslEnabled != null) {
-            mongoUri += "&ssl=" + sslEnabled;
-        }
-
-        return mongoUri;
-    }
-
-    private Optional<String> getMongoServers(RepositoriesEnvironment env) {
+    private boolean hasMongoServers() {
         log.debug("Looking for MongoDB server configuration...");
-        boolean found = true;
-        int idx = 0;
-        List<String> endpoints = new ArrayList<>();
-
-        while (found) {
-            String serverHost = env.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[" + (idx) + "].host");
-            int serverPort = env.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[" + (idx) + "].port", int.class, 27017);
-            idx++;
-            found = (serverHost != null);
-            if (found) {
-                endpoints.add(serverHost + ":" + serverPort);
-            }
-        }
-        return endpoints.isEmpty() ? Optional.empty() : Optional.of(endpoints.stream().collect(Collectors.joining(",")));
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.servers[0].host") != null;
     }
 
     private boolean useMongoReporter() {
