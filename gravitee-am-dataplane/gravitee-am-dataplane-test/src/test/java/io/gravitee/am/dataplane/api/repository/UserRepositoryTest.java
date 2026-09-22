@@ -878,6 +878,35 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
     }
 
     @Test
+    public void testSearch_byAdditionalInformationEmail_wildcard() {
+        final String domain = "domain";
+
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setUsername("testUsername");
+        user.setEmail("primary@mail.com");
+        user.setAdditionalInformation(Map.of("email", "claimed@mail.com"));
+        userRepository.create(user).blockingGet();
+
+        User other = new User();
+        other.setReferenceType(ReferenceType.DOMAIN);
+        other.setReferenceId(domain);
+        other.setUsername("otherUsername");
+        other.setEmail("other@mail.com");
+        userRepository.create(other).blockingGet();
+
+        // the term must stay unique to additionalInformation.email
+        TestObserver<Page<User>> testObserver = userRepository.search(Reference.domain(domain), "claimed@*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+        testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals("testUsername"));
+    }
+
+    @Test
     public void testSearch_byUsername_paged() {
         final String domain = "domain";
         // create user
