@@ -43,7 +43,7 @@
             <mat-label>Data Plane</mat-label>
             <mat-select name="dataPlane" [(ngModel)]="domain.dataPlaneId" required>
               @for (dp of dataPlanes; track dp) {
-                <mat-option [value]="dp.id">{{ dp.name }}</mat-option>
+                <mat-option [value]="dp.id">{{ dp.name }} ({{ dp.id }})</mat-option>
               }
             </mat-select>
             <mat-hint> Data plane to be used with this domain.</mat-hint>
