@@ -101,9 +101,12 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
                 .doOnSuccess(definition -> {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                     // a replayed definition keeps its version, and rebuilding it would close a pool that is in use
 >>>>>>> d170018 (fix: leave a data plane untouched when a PUT replays its stored settings)
+=======
+>>>>>>> 1ba794a (docs: trim the data plane replay comments)
                     if (!isServing(definition)) {
                         deactivate(dataPlaneId);
                         activate(definition, storage);

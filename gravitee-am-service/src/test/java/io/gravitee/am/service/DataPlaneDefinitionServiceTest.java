@@ -1042,12 +1042,15 @@ class DataPlaneDefinitionServiceTest {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     /**
      * A pipeline that re-applies its desired state on every run sends the stored settings back. Writing,
      * auditing or publishing them would make every node rebuild a provider that is already current.
      */
 >>>>>>> d170018 (fix: leave a data plane untouched when a PUT replays its stored settings)
+=======
+>>>>>>> 1ba794a (docs: trim the data plane replay comments)
     @Test
     void shouldLeaveTheDefinitionAloneWhenTheUpdateChangesNothing() {
         DataPlaneDefinition stored = storedDefinition();
