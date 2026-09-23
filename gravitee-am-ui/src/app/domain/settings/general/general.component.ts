@@ -84,7 +84,8 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   private updateDataPlaneName() {
     if (this.domain.dataPlaneId && this.dataPlanes) {
-      this.domain.dataPlaneName = this.dataPlanes.find((dp) => dp.id === this.domain.dataPlaneId)?.name;
+      const dataPlane = this.dataPlanes.find((dp) => dp.id === this.domain.dataPlaneId);
+      this.domain.dataPlaneName = dataPlane && `${dataPlane.name} (${dataPlane.id})`;
     }
   }
 
