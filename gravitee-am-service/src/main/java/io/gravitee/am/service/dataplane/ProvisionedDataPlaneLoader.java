@@ -85,33 +85,32 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
                 .blockingForEach(definition -> activate(definition, storage));
     }
 
-    Completable register(String dataPlaneId) {
+    /**
+     * Makes this node serve the stored definition, dropping whatever it served under that id first. A
+     * definition it already serves at that version keeps its running provider.
+     */
+    public Completable activate(String dataPlaneId) {
         var storage = storageRef.get();
 
         // nothing is lost when the registry has not started yet: load publishes its consumer before
         // reading the repository, so the definition just persisted is picked up by that read
-        if (storage == null || registered.containsKey(dataPlaneId)) {
+        if (storage == null) {
             return Completable.complete();
         }
 
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
-                .doOnSuccess(definition -> activate(definition, storage))
+                .doOnSuccess(definition -> {
+                    // a replayed definition keeps its version, and rebuilding it would close a pool that is in use
+                    if (!isServing(definition)) {
+                        deactivate(dataPlaneId);
+                        activate(definition, storage);
+                    }
+                })
                 // fires only when findById completes empty
                 .doOnComplete(() -> log.warn("Data plane [{}] was not found when read back after being provisioned and will be unavailable until restart", dataPlaneId))
                 .ignoreElement()
                 .doOnError(e -> log.error("Data plane [{}] could not be read back after being provisioned and will be unavailable until restart", dataPlaneId, e))
                 .onErrorComplete();
-    }
-
-    /**
-     * Makes this node serve the stored definition, dropping whatever it served under that id first.
-     */
-    public Completable activate(String dataPlaneId) {
-        if (storageRef.get() == null) {
-            return Completable.complete();
-        }
-        deactivate(dataPlaneId);
-        return register(dataPlaneId);
     }
 
     /**

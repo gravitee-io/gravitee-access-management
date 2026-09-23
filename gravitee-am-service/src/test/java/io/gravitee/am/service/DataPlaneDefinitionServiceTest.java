@@ -900,6 +900,66 @@ class DataPlaneDefinitionServiceTest {
         assertThat(capturedAudit().getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
     }
 
+    /**
+     * A pipeline that re-applies its desired state on every run sends the stored settings back. Writing,
+     * auditing or publishing them would make every node rebuild a provider that is already current.
+     */
+    @Test
+    void shouldLeaveTheDefinitionAloneWhenTheUpdateChangesNothing() {
+        DataPlaneDefinition stored = storedDefinition();
+        Date updatedAt = new Date(1_000_000L);
+        stored.setUpdatedAt(updatedAt);
+
+        TestObserver<DataPlaneDefinitionSummary> observer = service.update("dp-acme", replayOf(stored), null).test();
+        observer.awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        observer.assertValue(summary -> "dp-acme".equals(summary.id()) && updatedAt.equals(summary.updatedAt()));
+        assertThat(stored.getUpdatedAt()).isEqualTo(updatedAt);
+        verify(dataPlaneDefinitionRepository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    void shouldTreatAConfigurationWithReorderedKeysAsUnchanged() {
+        DataPlaneDefinition stored = storedDefinition();
+        NewDataPlaneDefinition payload = replayOf(stored);
+        payload.setConfiguration(readTree("{\"mongodb\": {\"port\": 27017, \"host\": \"mongo\", \"dbname\": \"gravitee-am-acme\"}}"));
+
+        service.update("dp-acme", payload, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(dataPlaneDefinitionRepository, never()).update(any());
+    }
+
+    @Test
+    void shouldRejectAnEnvironmentChangeThatCarriesTheStoredSettings() {
+        DataPlaneDefinition stored = storedDefinition();
+        NewDataPlaneDefinition payload = replayOf(stored);
+        payload.setEnvironmentId("env-other");
+
+        assertUpdateRejected(payload, "'environmentId' cannot be changed");
+    }
+
+    @Test
+    void shouldReplaceAStoredConfigurationThatCanNoLongerBeRead() {
+        DataPlaneDefinition stored = storedDefinition();
+        NewDataPlaneDefinition payload = replayOf(stored);
+        stored.setConfiguration("not json");
+
+        service.update("dp-acme", payload, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(dataPlaneDefinitionRepository).update(any());
+        assertThat(readTree(stored.getConfiguration())).isEqualTo(readTree(MONGO_CONFIGURATION));
+    }
+
+    private NewDataPlaneDefinition replayOf(DataPlaneDefinition stored) {
+        NewDataPlaneDefinition payload = payload();
+        payload.setName(stored.getName());
+        payload.setGatewayUrl(stored.getGatewayUrl());
+        payload.setConfiguration(readTree(stored.getConfiguration()));
+        return payload;
+    }
+
     /** Puts a definition in the repository under the id {@link #payload()} uses, and returns it. */
     private DataPlaneDefinition storedDefinition() {
         DataPlaneDefinition stored = definition("dp-acme", Environment.DEFAULT);
