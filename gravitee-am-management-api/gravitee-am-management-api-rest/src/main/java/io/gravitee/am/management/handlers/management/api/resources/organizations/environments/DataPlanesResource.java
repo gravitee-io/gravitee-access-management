@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.dataplane.api.DataPlane;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,14 +44,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class DataPlanesResource extends AbstractResource {
 
     @Autowired
-    private DataPlaneRegistry dataPlaneRegistry;
+    private DomainService domainService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "listDataPlanes",
             summary = "List of data planes",
-            description = "List all the data planes accessible to the current user. " +
+            description = "List the data planes a new domain of the environment can be created on. " +
                     "User must have DATA_PLANE[READ] permission on the specified environment or organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List accessible data planes for current user",
@@ -65,7 +64,7 @@ public class DataPlanesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, Permission.DATA_PLANE, Acl.READ)
-                .andThen(Maybe.just(dataPlaneRegistry.getDataPlanes()))
+                .andThen(domainService.listSelectableDataPlanes(organizationId, environmentId))
                 .subscribe(response::resume, response::resume);
     }
 
