@@ -86,6 +86,15 @@ describe('Orchestrator', () => {
         expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.10', '--label', 'beta']);
     });
 
+    test('seed-beta strips the pre-release suffix from the to-tag version', async () => {
+        options.toTag = '4.13.0-alpha.4';
+        orchestrator.runSeed = jest.fn();
+
+        await orchestrator.run(['seed-beta']);
+
+        expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.13', '--label', 'beta']);
+    });
+
     test('seed / seed-upgrade remain available as backward-compatible aliases', async () => {
         options.toTag = '4.11.0';
         orchestrator.runSeed = jest.fn();

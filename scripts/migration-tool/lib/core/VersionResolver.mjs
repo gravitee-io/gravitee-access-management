@@ -6,9 +6,13 @@
  * the floating tag's digest and find the plain X.Y.Z tag with a matching digest. No registry auth
  * or manifest-blob fetch is needed. Variant-suffixed tags (latest-debian) do not share a digest
  * with a plain X.Y.Z and therefore fail to resolve (by design — fail fast).
+ *
+ * Pre-release tags (4.13.0-alpha.4, 4.13.0-rc.1) are already pinned versions with no X.Y.Z sibling,
+ * so they are returned unchanged. Seeding only uses major.minor, so the suffix is irrelevant there.
  */
 const REGISTRY = 'graviteeio';
 const CONCRETE = /^\d+\.\d+\.\d+$/;
+const PRERELEASE = /^\d+\.\d+\.\d+-(alpha|beta|rc)\.\d+$/;
 const MAX_PAGES = 5;
 const PAGE_SIZE = 100;
 
@@ -17,15 +21,20 @@ export function isConcreteVersion(tag) {
     return CONCRETE.test(String(tag));
 }
 
+/** True iff `tag` is a pre-release version (X.Y.Z-alpha.N, -beta.N, -rc.N). */
+export function isPreReleaseVersion(tag) {
+    return PRERELEASE.test(String(tag));
+}
+
 /**
- * Resolve a floating tag to a concrete X.Y.Z. Concrete tags are returned unchanged with no network
- * call. Throws on no match or fetch failure.
+ * Resolve a floating tag to a concrete X.Y.Z. Concrete and pre-release tags are returned unchanged
+ * with no network call. Throws on no match or fetch failure.
  * @param {string} tag
  * @param {{imageName?: string}} [opts]
  * @returns {Promise<string>}
  */
 export async function resolveFloatingTag(tag, { imageName = 'am-management-api' } = {}) {
-    if (isConcreteVersion(tag)) return tag;
+    if (isConcreteVersion(tag) || isPreReleaseVersion(tag)) return tag;
 
     const base = `https://hub.docker.com/v2/repositories/${REGISTRY}/${imageName}`;
 
