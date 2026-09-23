@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 4.x](https://github.com/gravitee-io/gravitee-access-management/tree/master/helm/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.13.0
+
+- The management node now handles only the MANAGEMENT repository scope.
+
 ### 4.12.0
 
 - Make Automation API configurable using `api.http.api.automation.enabled` and `api.http.api.automation.entrypoint` values
