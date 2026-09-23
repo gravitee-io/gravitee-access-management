@@ -900,10 +900,6 @@ class DataPlaneDefinitionServiceTest {
         assertThat(capturedAudit().getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
     }
 
-    /**
-     * A pipeline that re-applies its desired state on every run sends the stored settings back. Writing,
-     * auditing or publishing them would make every node rebuild a provider that is already current.
-     */
     @Test
     void shouldLeaveTheDefinitionAloneWhenTheUpdateChangesNothing() {
         DataPlaneDefinition stored = storedDefinition();

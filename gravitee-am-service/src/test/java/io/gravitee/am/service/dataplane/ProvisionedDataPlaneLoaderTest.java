@@ -489,7 +489,6 @@ class ProvisionedDataPlaneLoaderTest {
         loader.load(loaded::add);
         clearInvocations(registry);
 
-        // a replayed PUT leaves the stored version where it was
         loader.activate("dp-1").test().assertComplete();
 
         verify(registry, never()).registerProvisioned(any());
