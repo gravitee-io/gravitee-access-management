@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * Orchestrator manages the migration test lifecycle and stages.
@@ -153,13 +155,16 @@ export class Orchestrator {
      * Seed one version under a channel label. When a SeedWorktree is configured (and enabled), the
      * seed runs from a worktree of `tag` so it uses that version's own SDK + scripts; otherwise (or
      * when the tag predates the seeding framework) it falls back to the current checkout.
+     * When the seed directory has no data set for the tag's minor (e.g. a 4.13.0-alpha tag cut
+     * before versions/4.13 existed), the previous minor's data set is seeded instead.
      */
     async seedStage(tag, label) {
-        const args = ['--version', toMinorVersion(tag), '--label', label];
         let seedDir = null;
         if (this.seedWorktree && this.options.seedFromWorktree) {
             seedDir = await this.seedWorktree.resolveSeedDir(tag);
         }
+        const version = resolveSeedVersion(seedDir || this.options.testDir, toMinorVersion(tag));
+        const args = ['--version', version, '--label', label];
         if (seedDir) {
             console.log(`🌱 Seeding ${label} from worktree: ${seedDir}`);
             await this.runSeed(args, seedDir);
@@ -207,6 +212,30 @@ export class Orchestrator {
     getMigrationTestLabel() {
         return this.options.testLabel || 'alpha';
     }
+}
+
+/**
+ * The seed data set to run for `minorVersion` in `testDir`: the version itself when
+ * migration-seeding/versions/<minorVersion> exists, else the previous minor (n-1). Throws when
+ * neither exists. Without a testDir there is nothing to inspect, so the version is kept as-is.
+ */
+export function resolveSeedVersion(testDir, minorVersion) {
+    if (!testDir) {
+        return minorVersion;
+    }
+    const versionsDir = join(testDir, 'migration-seeding', 'versions');
+    if (existsSync(join(versionsDir, minorVersion))) {
+        return minorVersion;
+    }
+    const [major, minor] = minorVersion.split('.').map(Number);
+    const previous = minor > 0 ? `${major}.${minor - 1}` : null;
+    if (previous && existsSync(join(versionsDir, previous))) {
+        console.log(`ℹ️  No seed data set for ${minorVersion} in ${versionsDir}; seeding ${previous} instead.`);
+        return previous;
+    }
+    throw new Error(
+        `No seed data set for ${minorVersion}${previous ? ` nor ${previous}` : ''} in ${versionsDir}.`
+    );
 }
 
 function toMinorVersion(version) {

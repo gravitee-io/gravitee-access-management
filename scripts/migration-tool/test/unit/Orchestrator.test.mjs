@@ -1,5 +1,8 @@
-import { Orchestrator } from '../../lib/Orchestrator.mjs';
+import { Orchestrator, resolveSeedVersion } from '../../lib/Orchestrator.mjs';
 import { jest } from '@jest/globals';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 /**
  * TDD for Orchestrator
@@ -95,6 +98,22 @@ describe('Orchestrator', () => {
         expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.13', '--label', 'beta']);
     });
 
+    test('seed-beta falls back to the previous minor seed when the to-tag one is missing', async () => {
+        const testDir = mkdtempSync(join(tmpdir(), 'seed-'));
+        try {
+            mkdirSync(join(testDir, 'migration-seeding', 'versions', '4.12'), { recursive: true });
+            options.testDir = testDir;
+            options.toTag = '4.13.0-alpha.4';
+            orchestrator.runSeed = jest.fn();
+
+            await orchestrator.run(['seed-beta']);
+
+            expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.12', '--label', 'beta']);
+        } finally {
+            rmSync(testDir, { recursive: true, force: true });
+        }
+    });
+
     test('seed / seed-upgrade remain available as backward-compatible aliases', async () => {
         options.toTag = '4.11.0';
         orchestrator.runSeed = jest.fn();
@@ -132,5 +151,41 @@ describe('Orchestrator', () => {
         options.testLabel = 'beta';
 
         expect(orchestrator.getMigrationTestLabel()).toBe('beta');
+    });
+});
+
+describe('resolveSeedVersion', () => {
+    let testDir;
+
+    beforeEach(() => {
+        testDir = mkdtempSync(join(tmpdir(), 'seed-'));
+    });
+
+    afterEach(() => {
+        rmSync(testDir, { recursive: true, force: true });
+    });
+
+    function addSeed(version) {
+        mkdirSync(join(testDir, 'migration-seeding', 'versions', version), { recursive: true });
+    }
+
+    test('keeps the version when its seed exists', () => {
+        addSeed('4.12');
+        addSeed('4.13');
+        expect(resolveSeedVersion(testDir, '4.13')).toBe('4.13');
+    });
+
+    test('falls back to the previous minor when the seed is missing', () => {
+        addSeed('4.12');
+        expect(resolveSeedVersion(testDir, '4.13')).toBe('4.12');
+    });
+
+    test('throws when neither the version nor the previous minor has a seed', () => {
+        addSeed('4.11');
+        expect(() => resolveSeedVersion(testDir, '4.13')).toThrow(/4\.13 nor 4\.12/);
+    });
+
+    test('keeps the version when there is no directory to inspect', () => {
+        expect(resolveSeedVersion(undefined, '4.13')).toBe('4.13');
     });
 });
