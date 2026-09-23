@@ -2060,7 +2060,7 @@ components:
         gatewayUrl:
           type: string
           description: Base URL of the gateway serving the domains bound to this data
-            plane.
+            plane. Must be an absolute http(s) URL; omitted or empty leaves it unset.
           example: https://gateway-eu.example.com
           maxLength: 256
           minLength: 0
