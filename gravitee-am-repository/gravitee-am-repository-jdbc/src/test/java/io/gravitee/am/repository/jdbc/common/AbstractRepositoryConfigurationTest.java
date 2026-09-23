@@ -16,11 +16,19 @@
 package io.gravitee.am.repository.jdbc.common;
 
 import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
+import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.r2dbc.spi.ConnectionFactory;
 import org.junit.Test;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.mock.env.MockEnvironment;
+
+import java.util.Optional;
 
 import static io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration.isLiquibaseEnabled;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -70,5 +78,39 @@ public class AbstractRepositoryConfigurationTest {
                 PREFIX + "liquibase.enabled", "true");
         assertTrue(isLiquibaseEnabled(env, PREFIX));
         assertFalse(isLiquibaseEnabled(env, "repositories.management.jdbc."));
+    }
+
+    @Test
+    public void liquibase_failure_should_prevent_startup() {
+        TestConfiguration configuration = new TestConfiguration();
+        RepositoryInitializationException ex = assertThrows(RepositoryInitializationException.class,
+                () -> configuration.runLiquibase(null, "liquibase/does-not-exist.yml"));
+        assertTrue(ex.getMessage().contains("liquibase/does-not-exist.yml"));
+    }
+
+    private static class TestConfiguration extends AbstractRepositoryConfiguration {
+        @Override
+        protected Optional<Converter> jsonConverter() {
+            return Optional.empty();
+        }
+
+        @Override
+        public DatabaseDialectHelper databaseDialectHelper(R2dbcDialect dialect) {
+            return null;
+        }
+
+        @Override
+        protected String getDriver() {
+            return null;
+        }
+
+        @Override
+        public ConnectionFactory connectionFactory() {
+            return null;
+        }
+
+        @Override
+        public void afterPropertiesSet() {
+        }
     }
 }

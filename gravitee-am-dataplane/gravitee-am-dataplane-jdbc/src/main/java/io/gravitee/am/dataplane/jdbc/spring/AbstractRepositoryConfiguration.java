@@ -164,7 +164,8 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
             final Liquibase liquibase = new Liquibase("liquibase/dp-master.yml", resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
-            LOGGER.error("Failed to set up database: ", ex);
+            // never continue on a partially migrated schema
+            throw new RepositoryInitializationException("Failed to set up database schema using Liquibase changelog " + "liquibase/dp-master.yml", ex);
         }
     }
 
