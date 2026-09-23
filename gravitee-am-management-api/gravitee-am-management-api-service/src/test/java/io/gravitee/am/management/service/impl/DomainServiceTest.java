@@ -104,6 +104,7 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
+import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidDataPlaneException;
@@ -844,6 +845,78 @@ public class DomainServiceTest {
                 .assertError(InvalidDataPlaneException.class);
 
         verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldReject_standalone_suppliedId_provisionedDpDeletedButStillLoaded() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("provisioned-dp");
+        // Deleted through another node: this node's registry still holds it until its next sync.
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "provisioned-dp");
+        when(dataPlaneDefinitionService.findById("provisioned-dp"))
+                .thenReturn(Single.error(new DataPlaneDefinitionNotFoundException("provisioned-dp")));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_standalone_suppliedId_provisionedDpLoadedAndDefined() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("provisioned-dp");
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "provisioned-dp");
+        when(dataPlaneDefinitionService.findById("provisioned-dp")).thenReturn(Single.just(dpSummary("provisioned-dp")));
+        when(dataPlaneRegistry.verified("provisioned-dp")).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(domainRepository).create(argThat(d -> "provisioned-dp".equals(d.getDataPlaneId())));
+    }
+
+    @Test
+    public void shouldReject_standalone_suppliedId_provisionedDpOfAnotherEnvironment() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("other-env-dp");
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "other-env-dp");
+        when(dataPlaneDefinitionService.findById("other-env-dp")).thenReturn(Single.just(new DataPlaneDefinitionSummary(
+                "other-env-dp", "other-env-dp", "mongodb", null, ORGANIZATION_ID, "other-environment", null, List.of(), ManagedBy.NONE, null, null)));
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidDataPlaneException.class);
+
+        verify(domainRepository, never()).create(any(Domain.class));
+    }
+
+    @Test
+    public void shouldCreate_standalone_suppliedId_declaredDp_withoutRepositoryLookup() {
+        NewDomain newDomain = new NewDomain();
+        newDomain.setName("my-domain");
+        newDomain.setDataPlaneId("declared-dp");
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "declared-dp");
+        when(dataPlaneConfigurationLoader.isDeclared("declared-dp")).thenReturn(true);
+        when(dataPlaneRegistry.verified("declared-dp")).thenReturn(Completable.complete());
+        stubCreateDomainPersistence("my-domain");
+
+        domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(dataPlaneDefinitionService, never()).findById(anyString());
+        verify(domainRepository).create(argThat(d -> "declared-dp".equals(d.getDataPlaneId())));
     }
 
     @Test
