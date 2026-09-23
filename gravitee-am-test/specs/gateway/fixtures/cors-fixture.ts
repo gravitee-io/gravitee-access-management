@@ -27,7 +27,7 @@ import {
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { Application } from '@management-models/Application';
 import { CorsSettings } from '@management-models/CorsSettings';
 import { Domain } from '@management-models/Domain';
@@ -67,9 +67,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
   expect(domain.id).toBeDefined();
 
   // Get default IDP (available immediately after domain creation)
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-  expect(defaultIdp).toBeDefined();
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   // Create test application before domain start
   const appName = uniqueName('cors-app', true);

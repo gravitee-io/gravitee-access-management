@@ -40,6 +40,7 @@ import type { PatchChallengeSettingsTypeEnum } from '@management-models/PatchCha
 import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 /* ------------------------------------------------------------------ */
 /*  Fixture types                                                      */
@@ -139,7 +140,7 @@ export const test = base.extend<MfaMatrixFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(matrixDomain.id), priority: 0 }]),
       }),
     );
 

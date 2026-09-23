@@ -24,7 +24,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { buildCreateAndTestUser, deleteUser } from '@management-commands/user-management-commands';
@@ -143,11 +143,7 @@ export const setupRecoveryCodeFixture = async (): Promise<RecoveryCodeFixture> =
       name: 'Recovery Code',
     });
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) {
-      throw new Error('Domain has no default identity provider');
-    }
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     // The secret is set here rather than left to AM: the update call's response does not carry it
     // back, and the token exchange below needs it to authenticate the client.

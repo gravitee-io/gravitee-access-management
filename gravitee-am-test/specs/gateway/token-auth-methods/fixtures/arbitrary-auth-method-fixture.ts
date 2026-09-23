@@ -24,7 +24,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
@@ -62,7 +62,7 @@ export const setupArbitraryAuthMethodFixture = async (): Promise<ArbitraryAuthMe
       },
     });
 
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const idp = await createIdp(domain.id, accessToken, {
       external: false,
       type: 'inline-am-idp',

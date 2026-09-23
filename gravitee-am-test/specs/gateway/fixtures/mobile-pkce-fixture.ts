@@ -25,7 +25,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
@@ -112,9 +112,7 @@ async function setupTestEnvironment() {
   expect(domain.id).toBeDefined();
 
   // Get default IDP (available immediately after domain creation)
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-  expect(defaultIdp).toBeDefined();
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   return { domain, defaultIdp, accessToken };
 }

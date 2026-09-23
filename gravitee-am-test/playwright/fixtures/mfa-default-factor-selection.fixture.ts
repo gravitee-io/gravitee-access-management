@@ -38,6 +38,7 @@ import type { User } from '@management-models/User';
 import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 /** Mock verification code for the **default** factor (distinct from {@link MOCK_MFA_CODE}). */
 export const DEFAULT_SELECTION_MOCK_CODE = '5678';
@@ -101,7 +102,7 @@ export const test = base.extend<MfaDefaultFactorFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${defDomain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(defDomain.id), priority: 0 }]),
       }),
     );
 

@@ -19,7 +19,7 @@ import { setup } from '../../test-fixture';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { decodeToken, setupTokenIdentityFixture, TokenIdentityFixture } from './fixtures/token-identity-fixture';
 
@@ -100,8 +100,7 @@ describe('Custom claims - the identity anchor is protected at configuration time
     const domain = await createDomain(adminToken, uniqueName('claim-guard', true), 'Reserved claim name guard');
     guardDomainId = domain.id;
 
-    const idpSet = await getAllIdps(domain.id, adminToken);
-    const defaultIdp = idpSet.values().next().value;
+    const defaultIdp = await getDefaultIdp(domain.id, adminToken);
 
     await expect(
       createTestApp('claim-guard-app', domain, adminToken, 'WEB', {

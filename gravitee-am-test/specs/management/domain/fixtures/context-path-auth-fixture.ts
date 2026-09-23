@@ -26,7 +26,7 @@ import {
   waitForDomainStart,
   waitForOidcReady,
 } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { performGet, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
@@ -83,7 +83,6 @@ export const setupContextPathAuthFixture = async (): Promise<ContextPathAuthFixt
   const originalPath = `/${domain.hrid}`;
 
   // Create the application and user before starting the domain, so the first sync picks them up.
-  const idpSet = await getAllIdps(domain.id, accessToken);
   const application = await createApplication(domain.id, accessToken, {
     name: uniqueName('ctxpath-client', true),
     type: 'WEB',
@@ -101,7 +100,7 @@ export const setupContextPathAuthFixture = async (): Promise<ContextPathAuthFixt
             grantTypes: ['authorization_code'],
           },
         },
-        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {

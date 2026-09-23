@@ -25,7 +25,7 @@ import { Application } from '@management-models/Application';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { extractXsrfToken, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { User } from '@management-models/User';
@@ -50,9 +50,7 @@ export const setupFixture = async (): Promise<VerifyEmailFixture> => {
     // Create domain but don't start yet — apps must exist before first sync
     domain = await createDomain(accessToken, uniqueName('reg-verify-email', true), 'Email verification registration tests');
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) throw new Error('No default identity provider found for domain');
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const appVerifyOnly = await createApp(domain.id, accessToken, {
       settings: {

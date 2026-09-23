@@ -21,7 +21,7 @@ import {
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { DownstreamDomain, UserData } from './account-link-fixture';
@@ -42,7 +42,6 @@ export const setupDownstreamDomain = async (
       },
     }),
   );
-  const idpSet = await getAllIdps(oidcDomain.id, accessToken);
 
   const oidcApp = await createApplication(oidcDomain.id, accessToken, {
     name: 'oidc-app',
@@ -66,7 +65,7 @@ export const setupDownstreamDomain = async (
             ],
           },
         },
-        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(oidcDomain.id), priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {

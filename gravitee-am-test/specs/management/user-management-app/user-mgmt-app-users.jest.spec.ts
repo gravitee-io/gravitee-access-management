@@ -21,6 +21,7 @@ import { waitForDomainSync } from '@management-commands/domain-management-comman
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { withRetry } from '@utils-commands/retry';
 import { UserManagementAppFixture, setupUserManagementAppFixture, CONSTANTS } from './fixtures/user-management-app-fixture';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 setup();
 
@@ -206,7 +207,7 @@ describe('Users - Create', () => {
     expect(user.enabled).toBe(true);
     expect(user.preRegistration).toBe(false);
     expect(user.registrationCompleted).toBe(true);
-    expect(user.source).toEqual(`default-idp-${fixture.domain.id}`);
+    expect(user.source).toEqual(defaultIdpId(fixture.domain.id));
     userId = user.id;
   });
 
@@ -269,7 +270,7 @@ describe('Users - Create', () => {
       expect(user.enabled).toBe(false);
       expect(user.preRegistration).toBe(true);
       expect(user.registrationCompleted).toBe(false);
-      expect(user.source).toEqual(`default-idp-${fixture.domain.id}`);
+      expect(user.source).toEqual(defaultIdpId(fixture.domain.id));
       preRegUserId = user.id;
       registrationUserUri = user.registrationUserUri;
       registrationAccessToken = user.registrationAccessToken;

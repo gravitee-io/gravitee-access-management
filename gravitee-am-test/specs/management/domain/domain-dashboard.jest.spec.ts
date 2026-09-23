@@ -16,7 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
@@ -52,8 +52,7 @@ type DomainDefinition = {
 async function setupDomainWithApp(name: string): Promise<DomainDefinition> {
   const { domain, oidcConfig } = await setupDomainForTest(uniqueName(name, true), { accessToken, waitForStart: true });
 
-  const idps = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idps.values().next().value;
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   const app = await createTestApp(`${name}-app`, domain, accessToken, 'WEB', {
     settings: {

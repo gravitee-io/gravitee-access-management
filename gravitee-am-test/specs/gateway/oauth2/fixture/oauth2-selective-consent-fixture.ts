@@ -20,7 +20,7 @@ import { Application } from '@management-models/Application';
 import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -60,7 +60,7 @@ export const setupSelectiveConsentFixture = async (): Promise<SelectiveConsentFi
     const started = await setupDomainForTest(uniqueName(SELECTIVE_CONSENT.DOMAIN_PREFIX, true), { accessToken, waitForStart: true });
     domain = started.domain;
 
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const users: TestUser[] = Array.from({ length: SELECTIVE_CONSENT.USER_COUNT }, (_, i) => ({
       username: uniqueName(`selective-consent-user-${i}`, true),
       password: SELECTIVE_CONSENT.USER_PASSWORD,

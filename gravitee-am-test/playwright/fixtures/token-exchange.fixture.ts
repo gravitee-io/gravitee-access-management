@@ -27,7 +27,7 @@ import {
   waitForOidcReady,
 } from '@management-commands/domain-management-commands';
 import { waitForNextSync } from '@gateway-commands/monitoring-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -163,13 +163,7 @@ export function createTokenExchangeFixture(config: TokenExchangeConfig = {}) {
     tokenExchangeApp: async ({ teAdminToken, tokenExchangeDomain }, use) => {
       const { grantTypes = TOKEN_EXCHANGE_DEFAULTS.GRANT_TYPES, scopes = TOKEN_EXCHANGE_DEFAULTS.SCOPES } = config;
 
-      const idpSet = await getAllIdps(tokenExchangeDomain.id, teAdminToken);
-      const defaultIdp = idpSet.values().next().value;
-      if (!defaultIdp) {
-        throw new Error(
-          `No identity providers found for domain "${tokenExchangeDomain.id}". Cannot create token exchange app without an IdP.`,
-        );
-      }
+      const defaultIdp = await getDefaultIdp(tokenExchangeDomain.id, teAdminToken);
 
       const app = await quietly(() =>
         createTestApp(uniqueTestName('pw-te-app'), tokenExchangeDomain, teAdminToken, 'WEB', {

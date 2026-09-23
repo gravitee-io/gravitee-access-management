@@ -20,7 +20,7 @@ import { Oauth2SettingsPage } from '../../../pages/oauth2-settings.page';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { waitForNextSync } from '@gateway-commands/monitoring-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -205,8 +205,6 @@ test.describe('Token Exchange Configuration', () => {
     linkJira(testInfo, 'AM-6475');
 
     // Create a WEB app with password grant + token exchange grant type
-    const idps = await quietly(() => getAllIdps(testDomain.id, adminToken));
-    const defaultIdp = idps.find((idp) => idp.external === false);
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-te-disabled'), testDomain, adminToken, 'WEB', {
         settings: {
@@ -216,7 +214,7 @@ test.describe('Token Exchange Configuration', () => {
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: defaultIdp ? new Set([{ identity: defaultIdp.id, priority: 0 }]) : new Set(),
+        identityProviders: new Set([{ identity: defaultIdpId(testDomain.id), priority: 0 }]),
       }),
     );
     const user = await quietly(() => buildCreateAndTestUser(testDomain.id, adminToken, 0));

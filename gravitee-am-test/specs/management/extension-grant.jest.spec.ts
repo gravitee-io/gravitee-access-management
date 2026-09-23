@@ -28,7 +28,7 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { buildCreateAndTestUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
 import { delay, uniqueName } from '@utils-commands/misc';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { generateSignedJwt, getPublicKey } from '@utils-commands/jwt';
 import { setup } from '../test-fixture';
 
@@ -59,8 +59,7 @@ beforeAll(async () => {
 
   app = await createApplication(domain.id, accessToken, appBody);
 
-  const identityProviders = await getAllIdps(domain.id, accessToken);
-  defaultIdp = identityProviders.values().next().value.id;
+  defaultIdp = defaultIdpId(domain.id);
   pub = getPublicKey();
   user = await buildCreateAndTestUser(domain.id, accessToken, 0);
 });

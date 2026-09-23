@@ -371,7 +371,7 @@ import {
 import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
@@ -429,9 +429,7 @@ async function setupTestEnvironment() {
   );
   expect(domain.id).toEqual(expect.any(String));
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-  expect(defaultIdp?.id).toEqual(expect.any(String));
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   return { domain, defaultIdp, accessToken, oidcConfig };
 }
@@ -1304,7 +1302,7 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { setupDomainForTest, safeDeleteDomain, waitForDomainSync, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { createApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 
 // Domain State Commands (gateway monitoring)
 import { waitForDomainReady, waitForNextSync } from '@gateway-commands/monitoring-commands';

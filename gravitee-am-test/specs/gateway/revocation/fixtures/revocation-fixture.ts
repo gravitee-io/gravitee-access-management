@@ -24,7 +24,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { createTestApp } from '@utils-commands/application-commands';
@@ -393,9 +393,7 @@ export const setupRevocationFixture = async (options: RevocationFixtureOptions =
     expect(createdDomain.id).toEqual(expect.any(String));
     domain = createdDomain;
 
-    const idpSet = await getAllIdps(createdDomain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp?.id).toEqual(expect.any(String));
+    const defaultIdp = await getDefaultIdp(createdDomain.id, accessToken);
 
     if (enableTokenExchange) {
       await enableTokenExchangeOnDomain(createdDomain.id, accessToken);

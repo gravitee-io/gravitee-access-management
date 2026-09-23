@@ -26,7 +26,7 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { uniqueName } from '@utils-commands/misc';
 import { expect } from '@jest/globals';
 import { createScope } from '@management-commands/scope-management-commands';
-import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, getAllIdps, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createDomainCertificate } from './oauth2-cert-fixture';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { Application } from '@management-models/Application';
@@ -183,7 +183,7 @@ async function createNewIdp(domain: Domain, accessToken: string) {
 }
 
 async function mustDeleteDefaultIdp(domain: Domain, accessToken: string) {
-  await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+  await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
   const idpSet = await getAllIdps(domain.id, accessToken);
   expect(idpSet.length).toEqual(0);
 }

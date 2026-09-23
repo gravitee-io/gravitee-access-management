@@ -25,7 +25,7 @@ import { Application } from '@management-models/Application';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createCustomIdp } from '@utils-commands/idps-commands';
 import { expect } from '@jest/globals';
 import { IdentityProvider } from '@management-models/IdentityProvider';
@@ -55,9 +55,7 @@ export const setupFixture = async (): Promise<UserRegistrationFixture> => {
   try {
     accessToken = await requestAdminAccessToken();
     domain = await createDomain(accessToken, uniqueName('user-registration', true), 'Description');
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) throw new Error('No default identity provider found for domain');
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
     const customIdp = await createCustomIdp(domain.id, accessToken);
     const application = await createApp(domain.id, accessToken, {
       settings: {

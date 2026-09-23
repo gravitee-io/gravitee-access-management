@@ -26,7 +26,7 @@ import {
   safeDeleteDomain,
   waitForOidcReady,
 } from '@management-commands/domain-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createTheme, deleteTheme, updateTheme } from '@management-commands/theme-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import type { Application } from '@management-models/Application';
@@ -59,7 +59,7 @@ export const test = base.extend<{ themeGatewayBundle: ThemeGatewayBundle }>({
 
     const credentials = { username: 'pw_theme_user', password: API_USER_PASSWORD };
 
-    await quietly(() => deleteIdp(domain.id, adminToken, `default-idp-${domain.id}`));
+    await quietly(() => deleteIdp(domain.id, adminToken, defaultIdpId(domain.id)));
 
     const idp = await quietly(() =>
       createIdp(domain.id, adminToken, {

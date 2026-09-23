@@ -22,7 +22,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, startDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
-import { getAllIdps, createIdp } from '@management-commands/idp-management-commands';
+import { getDefaultIdp, createIdp } from '@management-commands/idp-management-commands';
 import { createCertificate, getAllCertificates } from '@management-commands/certificate-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
@@ -247,8 +247,7 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
     );
     const [selfMcp] = selfTrustedDomain.crossAppAccess.resourceServers;
     const resourceCertificates = await getAllCertificates(resourceDomain.id, accessToken);
-    const resourceIdps = await getAllIdps(resourceDomain.id, accessToken);
-    const resourceDefaultIdp = resourceIdps.values().next().value;
+    const resourceDefaultIdp = await getDefaultIdp(resourceDomain.id, accessToken);
     selfIssuingApp = await createIdJagIssuerApp('self-issuer', resourceDomain, accessToken, {
       certificate: resourceCertificates[0].id,
       identityProvider: resourceDefaultIdp.id,
@@ -291,8 +290,7 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
   const [partnerMcp, partnerNowhere] = partner.crossAppAccess.resourceServers;
   const [strangerMcp] = stranger.crossAppAccess.resourceServers;
 
-  const issuerIdps = await getAllIdps(issuerDomain.id, accessToken);
-  const issuerDefaultIdp = issuerIdps.values().next().value;
+  const issuerDefaultIdp = await getDefaultIdp(issuerDomain.id, accessToken);
   const issuerCertificates = await getAllCertificates(issuerDomain.id, accessToken);
   const issuerCertificate = issuerCertificates[0].id;
   await createCertificate(issuerDomain.id, accessToken, createBundledPKCS12CertificateRequest());
