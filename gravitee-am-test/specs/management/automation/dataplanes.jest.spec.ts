@@ -101,7 +101,7 @@ describe('Automation API data planes - create, read and replay', () => {
 
     expect(second.status).toBe(200);
     expect(second.body.createdAt).toEqual(first.body.createdAt);
-    expect(new Date(second.body.updatedAt).getTime()).toBeGreaterThanOrEqual(new Date(first.body.updatedAt).getTime());
+    expect(second.body.updatedAt).toEqual(first.body.updatedAt);
   });
 
   it('should return 404 for a data plane that does not exist', async () => {
