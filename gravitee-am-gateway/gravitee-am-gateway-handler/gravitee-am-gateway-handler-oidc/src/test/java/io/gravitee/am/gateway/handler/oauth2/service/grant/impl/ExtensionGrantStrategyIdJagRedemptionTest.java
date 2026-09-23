@@ -71,8 +71,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.slf4j.LoggerFactory;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -86,8 +86,8 @@ import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtu
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.plainJwtAssertion;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -783,8 +783,7 @@ class ExtensionGrantStrategyIdJagRedemptionTest {
         TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
         tokenRequestResolver.setManagers(scopeManager, protectedResourceManager);
         when(executionContext.getAttributes()).thenReturn(new HashMap<>());
-        when(rulesEngine.fire(any(), any(), any(), eq(client), any())).thenReturn(Single.just(executionContext));
-        when(rulesEngine.fire(any(), any(), eq(client), any())).thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(any(), any(), any(), eq(client), any(), any())).thenReturn(Single.just(executionContext));
         when(tokenService.create(any(), eq(client), any())).thenReturn(Single.just(new AccessToken("access-token")));
 
         new StrategyGranterAdapter(strategy, domain, tokenService, rulesEngine, tokenRequestResolver, null)
