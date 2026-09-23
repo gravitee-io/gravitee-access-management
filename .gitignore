@@ -73,3 +73,5 @@ CLAUDE.local.md
 
 # Git worktrees
 .worktrees/
+.mcp.json
+.codegraph
