@@ -88,6 +88,7 @@ import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidDataPlaneException;
@@ -477,18 +478,19 @@ public class DomainServiceImpl implements DomainService {
      */
     private Single<String> resolveDataPlaneId(String environmentId, String requestedId) {
         boolean cloudEnabled = CloudProperties.isManagedCloudEnabled(springEnvironment);
-        // A standalone caller naming a plane is not held to the environment's links: the planes the
-        // node's configuration declares serve every environment, so `default` stays a valid choice for
-        // an environment that also has one provisioned against it. Saves the repository round-trip too.
+        // A standalone caller naming a plane declared by the node's configuration is not held to the
+        // environment's links: those planes serve every environment, so `default` stays a valid choice
+        // for an environment that also has one provisioned against it. Only a provisioned plane costs
+        // a repository round-trip, to confirm its definition still exists for this environment.
         if (!cloudEnabled && StringUtils.hasText(requestedId)) {
-            return resolveDataPlaneIdForStandalone(requestedId, List.of());
+            return resolveDataPlaneIdForStandalone(environmentId, requestedId, List.of());
         }
         return dataPlaneDefinitionService.findByEnvironmentId(environmentId)
                 .map(DataPlaneDefinitionSummary::id)
                 .toList()
                 .flatMap(linkedForEnv -> cloudEnabled
                         ? resolveDataPlaneIdForCloud(requestedId, linkedForEnv)
-                        : resolveDataPlaneIdForStandalone(requestedId, linkedForEnv));
+                        : resolveDataPlaneIdForStandalone(environmentId, requestedId, linkedForEnv));
     }
 
     private Single<String> resolveDataPlaneIdForCloud(String requestedId, List<String> linkedForEnv) {
@@ -510,9 +512,10 @@ public class DomainServiceImpl implements DomainService {
         return requireLoadedOnThisNode(requestedId);
     }
 
-    private Single<String> resolveDataPlaneIdForStandalone(String requestedId, List<String> linkedForEnv) {
+    private Single<String> resolveDataPlaneIdForStandalone(String environmentId, String requestedId, List<String> linkedForEnv) {
         if (StringUtils.hasText(requestedId)) {
-            return requireLoadedOnThisNode(requestedId);
+            return requireLoadedOnThisNode(requestedId)
+                    .flatMap(loadedId -> requireProvisionedForEnvironment(environmentId, loadedId));
         }
         boolean onlyDefaultDeclared = Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID)
                 .equals(dataPlaneConfigurationLoader.declaredIds());
@@ -537,6 +540,26 @@ public class DomainServiceImpl implements DomainService {
                     "An error occurred while trying to create a domain. Data Plane [" + dataPlaneId + "] is not loaded on this node."));
         }
         return Single.just(dataPlaneId);
+    }
+
+    /**
+     * The registry only catches up with a definition deleted through another node on its next sync,
+     * so a provisioned plane is confirmed against the repository, and it must be provisioned for the
+     * environment the domain is created in. Planes the node's configuration owns have no definition
+     * to look up.
+     */
+    private Single<String> requireProvisionedForEnvironment(String environmentId, String dataPlaneId) {
+        if (DataPlaneDescription.DEFAULT_DATA_PLANE_ID.equals(dataPlaneId) || dataPlaneConfigurationLoader.isDeclared(dataPlaneId)) {
+            return Single.just(dataPlaneId);
+        }
+        return dataPlaneDefinitionService.findById(dataPlaneId)
+                .onErrorResumeNext(ex -> Single.error(ex instanceof DataPlaneDefinitionNotFoundException
+                        ? new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane [" + dataPlaneId + "] no longer exists.")
+                        : ex))
+                .flatMap(definition -> environmentId.equals(definition.environmentId())
+                        ? Single.just(definition.id())
+                        : Single.error(new InvalidDataPlaneException(
+                                "Data Plane [" + dataPlaneId + "] is not linked to this environment.")));
     }
 
     private boolean isLoadedOnThisNode(String dataPlaneId) {
