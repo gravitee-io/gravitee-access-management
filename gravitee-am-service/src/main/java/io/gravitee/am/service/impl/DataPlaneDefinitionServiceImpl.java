@@ -62,6 +62,8 @@ import lombok.CustomLog;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -381,12 +383,13 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
             throw new InvalidParameterException("No data plane plugin is deployed for type [" + payload.getType() + "]");
         }
         validateConfiguration(payload.getType(), payload.getConfiguration());
+        String gatewayUrl = validateGatewayUrl(payload.getGatewayUrl());
 
         DataPlaneDefinition definition = new DataPlaneDefinition();
         definition.setId(payload.getId());
         definition.setName(payload.getName());
         definition.setType(payload.getType());
-        definition.setGatewayUrl(payload.getGatewayUrl());
+        definition.setGatewayUrl(gatewayUrl);
         // overwritten by resolveReferences, but a failed resolution still has to be audited against something
         definition.setOrganizationId(hasText(payload.getOrganizationId()) ? payload.getOrganizationId() : Organization.DEFAULT);
         definition.setEnvironmentId(hasText(payload.getEnvironmentId()) ? payload.getEnvironmentId() : Environment.DEFAULT);
@@ -398,6 +401,22 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         if (value != null && value.length() > maxLength) {
             throw new InvalidParameterException("'" + field + "' must be at most " + maxLength + " characters");
         }
+    }
+
+    private static String validateGatewayUrl(String gatewayUrl) {
+        if (!hasText(gatewayUrl)) {
+            return null;
+        }
+        try {
+            URI uri = new URI(gatewayUrl);
+            String scheme = uri.getScheme();
+            if (("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && hasText(uri.getHost())) {
+                return gatewayUrl;
+            }
+        } catch (URISyntaxException e) {
+            // reported below
+        }
+        throw new InvalidParameterException("'gatewayUrl' must be an absolute http(s) URL");
     }
 
     // an id colliding with a gravitee.yml plane would persist but never register: the registry keeps

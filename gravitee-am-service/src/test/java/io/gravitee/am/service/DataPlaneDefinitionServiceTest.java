@@ -60,6 +60,8 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -447,6 +449,53 @@ class DataPlaneDefinitionServiceTest {
         payload.setConfiguration(readTree("{\"mongodb\": {\"dbname\": \"db\", \"host\": \"mongo\"}, \"jdbc\": {\"uri\": \"r2dbc:postgresql://pg/db\"}}"));
 
         assertRejected(payload, InvalidParameterException.class, "must only declare the 'mongodb' block");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"not a url", "gw-acme.cloud.gravitee.io", "/relative/path", "ftp://gw-acme.cloud.gravitee.io", "https://", "mailto:ops@acme.com"})
+    void shouldRejectAGatewayUrlThatIsNotAnAbsoluteHttpUrl(String gatewayUrl) {
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl(gatewayUrl);
+
+        assertRejected(payload, InvalidParameterException.class, "'gatewayUrl' must be an absolute http(s) URL");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"https://gw-acme.cloud.gravitee.io", "http://localhost:8092", "HTTPS://gw-acme.cloud.gravitee.io/am"})
+    void shouldAcceptAnAbsoluteHttpGatewayUrl(String gatewayUrl) {
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl(gatewayUrl);
+
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        assertThat(captor.getValue().getGatewayUrl()).isEqualTo(gatewayUrl);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void shouldTreatABlankGatewayUrlAsOmitted(String gatewayUrl) {
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl(gatewayUrl);
+
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        assertThat(captor.getValue().getGatewayUrl()).isNull();
+    }
+
+    @Test
+    void shouldAcceptAnOmittedGatewayUrl() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl(null);
+
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        ArgumentCaptor<DataPlaneDefinition> captor = ArgumentCaptor.forClass(DataPlaneDefinition.class);
+        verify(dataPlaneDefinitionRepository).create(captor.capture());
+        assertThat(captor.getValue().getGatewayUrl()).isNull();
     }
 
     @Test
@@ -883,6 +932,29 @@ class DataPlaneDefinitionServiceTest {
         payload.setConfiguration(readTree("{\"mongodb\": {\"host\": \"mongo\"}}"));
 
         assertUpdateRejected(payload, "dbname");
+    }
+
+    @Test
+    void shouldRejectAGatewayUrlThatIsNotAnAbsoluteHttpUrlOnUpdate() {
+        DataPlaneDefinition stored = storedDefinition();
+        String previous = stored.getGatewayUrl();
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl("not a url");
+
+        assertUpdateRejected(payload, "'gatewayUrl' must be an absolute http(s) URL");
+        assertThat(stored.getGatewayUrl()).isEqualTo(previous);
+    }
+
+    @Test
+    void shouldClearTheGatewayUrlWhenABlankOneIsSentOnUpdate() {
+        DataPlaneDefinition stored = storedDefinition();
+        stored.setGatewayUrl("https://gw-acme.cloud.gravitee.io");
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl("");
+
+        service.update("dp-acme", payload, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        assertThat(stored.getGatewayUrl()).isNull();
     }
 
     @Test
