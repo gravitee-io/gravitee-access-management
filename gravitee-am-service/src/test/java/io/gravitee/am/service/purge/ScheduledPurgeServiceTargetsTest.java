@@ -17,6 +17,7 @@ package io.gravitee.am.service.purge;
 
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.common.ExpiredDataSweeper.Target;
+import io.gravitee.am.repository.common.ExpiredDataSweeperProvider;
 import io.reactivex.rxjava3.core.Completable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,7 +53,7 @@ class ScheduledPurgeServiceTargetsTest {
     private TaskScheduler taskScheduler;
 
     @Mock
-    private ExpiredDataSweepers sweepers;
+    private ExpiredDataSweeperProvider sweepers;
 
     private final List<Target> subscribed = new ArrayList<>();
 
