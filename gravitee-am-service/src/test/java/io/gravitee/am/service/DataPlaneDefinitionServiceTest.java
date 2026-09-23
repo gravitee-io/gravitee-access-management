@@ -1041,6 +1041,13 @@ class DataPlaneDefinitionServiceTest {
         assertThat(capturedAudit().getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * A pipeline that re-applies its desired state on every run sends the stored settings back. Writing,
+     * auditing or publishing them would make every node rebuild a provider that is already current.
+     */
+>>>>>>> d170018 (fix: leave a data plane untouched when a PUT replays its stored settings)
     @Test
     void shouldLeaveTheDefinitionAloneWhenTheUpdateChangesNothing() {
         DataPlaneDefinition stored = storedDefinition();
@@ -1089,6 +1096,7 @@ class DataPlaneDefinitionServiceTest {
         assertThat(readTree(stored.getConfiguration())).isEqualTo(readTree(MONGO_CONFIGURATION));
     }
 
+<<<<<<< HEAD
     @Test
     void shouldFindTheDeclaredAndLinkedDataPlanes_standalone() {
         when(dataPlaneDefinitionRepository.findByEnvironmentId(Environment.DEFAULT))
@@ -1139,6 +1147,8 @@ class DataPlaneDefinitionServiceTest {
                 .toList());
     }
 
+=======
+>>>>>>> d170018 (fix: leave a data plane untouched when a PUT replays its stored settings)
     private NewDataPlaneDefinition replayOf(DataPlaneDefinition stored) {
         NewDataPlaneDefinition payload = payload();
         payload.setName(stored.getName());

@@ -165,6 +165,10 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                             .doOnSuccess(updated -> reportUpdated(before, updated, principal, null))
                             .doOnError(throwable -> reportUpdated(before, before, principal, throwable))
                             .flatMapSingle(updated -> publishEvent(updated, Action.UPDATE).toSingleDefault(updated))
+<<<<<<< HEAD
+=======
+                            // a replay of the stored settings writes, audits and publishes nothing, so no node rebuilds its provider
+>>>>>>> d170018 (fix: leave a data plane untouched when a PUT replays its stored settings)
                             .defaultIfEmpty(before);
                 });
     }
@@ -180,7 +184,11 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
             return false;
         }
         try {
+<<<<<<< HEAD
             // ignores key order
+=======
+            // compared as trees, so a payload that only reorders its keys is still a replay
+>>>>>>> d170018 (fix: leave a data plane untouched when a PUT replays its stored settings)
             return objectMapper.readTree(existing.getConfiguration()).equals(objectMapper.readTree(resolved.getConfiguration()));
         } catch (JsonProcessingException e) {
             // a stored configuration that can no longer be read is replaced
