@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
@@ -53,6 +54,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DataPlaneDefinitionAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.CustomLog;
 import org.springframework.context.annotation.Lazy;
@@ -143,20 +145,40 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                     var before = toSummary(existing);
                     return Single.fromCallable(() -> validate(newDataPlaneDefinition))
                             .flatMap(candidate -> resolveReferences(newDataPlaneDefinition, candidate))
-                            .map(resolved -> applyTo(existing, resolved))
-                            .flatMap(dataPlaneDefinitionRepository::update)
-                            .map(this::toSummary)
+                            .flatMapMaybe(resolved -> {
+                                rejectImmutableChanges(existing, resolved);
+                                return hasSameSettings(existing, resolved)
+                                        ? Maybe.<DataPlaneDefinitionSummary>empty()
+                                        : dataPlaneDefinitionRepository.update(applyTo(existing, resolved)).map(this::toSummary).toMaybe();
+                            })
                             .doOnSuccess(updated -> reportUpdated(before, updated, principal, null))
-                            .doOnError(throwable -> reportUpdated(before, before, principal, throwable));
-                })
-                .flatMap(summary -> publishEvent(summary, Action.UPDATE).toSingleDefault(summary));
+                            .doOnError(throwable -> reportUpdated(before, before, principal, throwable))
+                            .flatMapSingle(updated -> publishEvent(updated, Action.UPDATE).toSingleDefault(updated))
+                            // a replay of the stored settings writes, audits and publishes nothing, so no node rebuilds its provider
+                            .defaultIfEmpty(before);
+                });
     }
 
-    private DataPlaneDefinition applyTo(DataPlaneDefinition existing, DataPlaneDefinition resolved) {
+    private void rejectImmutableChanges(DataPlaneDefinition existing, DataPlaneDefinition resolved) {
         rejectChange("type", existing.getType(), resolved.getType(), existing.getId());
         rejectChange("organizationId", existing.getOrganizationId(), resolved.getOrganizationId(), existing.getId());
         rejectChange("environmentId", existing.getEnvironmentId(), resolved.getEnvironmentId(), existing.getId());
+    }
 
+    private boolean hasSameSettings(DataPlaneDefinition existing, DataPlaneDefinition resolved) {
+        if (!Objects.equals(existing.getName(), resolved.getName()) || !Objects.equals(existing.getGatewayUrl(), resolved.getGatewayUrl())) {
+            return false;
+        }
+        try {
+            // compared as trees, so a payload that only reorders its keys is still a replay
+            return objectMapper.readTree(existing.getConfiguration()).equals(objectMapper.readTree(resolved.getConfiguration()));
+        } catch (JsonProcessingException e) {
+            // a stored configuration that can no longer be read is replaced
+            return false;
+        }
+    }
+
+    private DataPlaneDefinition applyTo(DataPlaneDefinition existing, DataPlaneDefinition resolved) {
         existing.setName(resolved.getName());
         existing.setGatewayUrl(resolved.getGatewayUrl());
         existing.setConfiguration(resolved.getConfiguration());

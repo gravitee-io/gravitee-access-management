@@ -258,7 +258,7 @@ class ProvisionedDataPlaneLoaderTest {
         when(dataPlaneDefinitionRepository.findById("dp-1"))
                 .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
 
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://h:27017/db");
@@ -266,22 +266,16 @@ class ProvisionedDataPlaneLoaderTest {
 
     @Test
     void should_not_register_a_definition_the_startup_load_already_picked_up() {
-        when(dataPlaneDefinitionRepository.findAll())
-                .thenReturn(Flowable.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+        var definition = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}");
+        definition.setUpdatedAt(new Date(1_000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(definition));
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition));
         var loader = loader();
         loader.load(loaded::add);
 
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
-        verify(dataPlaneDefinitionRepository, never()).findById(any());
-    }
-
-    @Test
-    void should_ignore_a_registration_that_arrives_before_the_registry_has_started() {
-        loader().register("dp-1").test().assertComplete();
-
-        verify(dataPlaneDefinitionRepository, never()).findById(any());
     }
 
     @Test
@@ -300,8 +294,8 @@ class ProvisionedDataPlaneLoaderTest {
         when(dataPlaneDefinitionRepository.findById("dp-1"))
                 .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
 
-        loader.register("dp-1").test().assertComplete();
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(refused).containsExactly("dp-1");
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
@@ -323,8 +317,8 @@ class ProvisionedDataPlaneLoaderTest {
                 Maybe.just(definition("dp-1", "jdbc", "{\"jdbc\":{\"host\":\"h1\",\"collation\":\"latin1\"}}")),
                 Maybe.just(definition("dp-1", "jdbc", "{\"jdbc\":{\"host\":\"h2\"}}")));
 
-        loader.register("dp-1").test().assertComplete();
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.jdbc.host")).isEqualTo("h2");
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.jdbc.collation")).isNull();
@@ -337,7 +331,7 @@ class ProvisionedDataPlaneLoaderTest {
         loader.load(loaded::add);
         when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.empty());
 
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(loaded).isEmpty();
     }
@@ -349,7 +343,7 @@ class ProvisionedDataPlaneLoaderTest {
         loader.load(loaded::add);
         when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.error(new RuntimeException("connection lost")));
 
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(loaded).isEmpty();
     }
@@ -389,7 +383,7 @@ class ProvisionedDataPlaneLoaderTest {
         when(dataPlaneDefinitionRepository.findById("dp-1"))
                 .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://new:27017/db\"}}")));
 
-        loader.register("dp-1").test().assertComplete();
+        loader.activate("dp-1").test().assertComplete();
 
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://new:27017/db");
         assertThat(loaded).hasSize(2);
@@ -481,6 +475,25 @@ class ProvisionedDataPlaneLoaderTest {
         inOrder.verify(registry).registerProvisioned(argThat(description -> "dp-1".equals(description.id())));
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://new:27017/db");
         assertThat(loader.isServing(changed)).isTrue();
+    }
+
+    @Test
+    void should_leave_the_provider_alone_when_the_stored_definition_is_the_one_it_serves() {
+        var registry = mock(DataPlaneRegistry.class);
+        var served = definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}");
+        served.setUpdatedAt(new Date(1_000L));
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.just(served));
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(served));
+        var loader = loader();
+        loader.setRegistry(registry);
+        loader.load(loaded::add);
+        clearInvocations(registry);
+
+        // a replayed PUT leaves the stored version where it was
+        loader.activate("dp-1").test().assertComplete();
+
+        verify(registry, never()).registerProvisioned(any());
+        verify(registry, never()).unregister(any());
     }
 
     @Test
