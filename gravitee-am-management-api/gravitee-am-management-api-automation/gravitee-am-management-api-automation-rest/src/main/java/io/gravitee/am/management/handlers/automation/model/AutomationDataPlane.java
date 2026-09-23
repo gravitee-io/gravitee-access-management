@@ -58,7 +58,8 @@ public class AutomationDataPlane {
     private String type;
 
     @Size(max = NewDataPlaneDefinition.GATEWAY_URL_MAX_LENGTH)
-    @Schema(description = "Base URL of the gateway serving the domains bound to this data plane.",
+    @Schema(description = "Base URL of the gateway serving the domains bound to this data plane. " +
+            "Must be an absolute http(s) URL; omitted or empty leaves it unset.",
             example = "https://gateway-eu.example.com")
     private String gatewayUrl;
 
