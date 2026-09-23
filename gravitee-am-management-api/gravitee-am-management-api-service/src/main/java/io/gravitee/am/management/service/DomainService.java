@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
@@ -55,6 +56,13 @@ public interface DomainService extends DomainReadService {
     Flowable<Domain> findByIdIn(Collection<String> ids);
 
     Single<Domain> create(String organizationId, String environmentId, NewDomain domain, User principal);
+
+    /**
+     * The loaded data planes a new domain of this environment can be created on: the ones provisioned
+     * against the environment and, outside managed cloud, the ones the node's configuration declares.
+     * Planes provisioned for another organization or environment are never returned.
+     */
+    Single<List<DataPlaneDescription>> listSelectableDataPlanes(String organizationId, String environmentId);
 
     Single<Domain> validateCreate(String organizationId, String environmentId, NewDomain newDomain);
 

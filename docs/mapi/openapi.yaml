@@ -322,8 +322,9 @@ paths:
       summary: List all the environments
   /organizations/{organizationId}/environments/{environmentId}/data-planes:
     get:
-      description: "List all the data planes accessible to the current user. User\
-        \ must have DATA_PLANE[READ] permission on the specified environment or organization"
+      description: "List the data planes a new domain of the environment can be created\
+        \ on. User must have DATA_PLANE[READ] permission on the specified environment\
+        \ or organization"
       operationId: listDataPlanes
       parameters:
       - in: path
