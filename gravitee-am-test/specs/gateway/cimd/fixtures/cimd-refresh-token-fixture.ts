@@ -25,7 +25,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Application } from '@management-models/Application';
@@ -63,9 +63,7 @@ export const setupCimdRefreshTokenFixture = async (): Promise<CimdRefreshTokenFi
     );
     expect(domain.id).toBeDefined();
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp?.id).toBeDefined();
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const user = await buildCreateAndTestUser(domain.id, accessToken, 0);
     expect(user.username).toBeDefined();

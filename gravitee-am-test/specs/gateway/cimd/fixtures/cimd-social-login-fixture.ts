@@ -25,7 +25,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, getAllIdps, defaultIdpId } from '@management-commands/idp-management-commands';
 import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
@@ -292,7 +292,7 @@ async function createOAuthApplication(
 }
 
 async function replaceDefaultIdpWithInline(domain: Domain, accessToken: string): Promise<IdentityProvider> {
-  await deleteIdp(domain.id, accessToken, `default-idp-${domain.id}`);
+  await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
   expect(await getAllIdps(domain.id, accessToken)).toHaveLength(0);
 
   const idp = await createIdp(domain.id, accessToken, {

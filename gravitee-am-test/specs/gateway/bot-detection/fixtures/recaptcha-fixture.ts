@@ -32,6 +32,7 @@ import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { extractXsrfToken, extractXsrfTokenAndActionResponse, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 /**
  * Google's siteverify is replaced by WireMock: the reCAPTCHA plugin's serviceUrl points at a stub
@@ -95,7 +96,7 @@ export const setupRecaptchaFixture = async (): Promise<RecaptchaFixture> => {
     };
     await createUser(domain.id, accessToken, { firstName: 'Recaptcha', lastName: 'User', ...user });
 
-    const application = await createTestApp(domain, accessToken, `default-idp-${domain.id}`);
+    const application = await createTestApp(domain, accessToken, defaultIdpId(domain.id));
 
     // Domain-level settings are a route redeploy on the gateway: wait for sync, then for routing to be live
     await waitForSyncAfter(domain.id, () =>

@@ -30,7 +30,7 @@ import {
   waitForOAuthAuthorizeRedirectsToLogin,
   waitForOidcReady,
 } from '@management-commands/domain-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import type { Application } from '@management-models/Application';
 import type { Domain } from '@management-models/Domain';
@@ -67,7 +67,7 @@ export const test = base.extend<{ externalOidcBundle: ExternalOidcBundle; hideLo
     );
     providerDomain = await quietly(() => allowHttpLocalhostRedirects(providerDomain, adminToken));
 
-    await quietly(() => deleteIdp(providerDomain.id, adminToken, `default-idp-${providerDomain.id}`));
+    await quietly(() => deleteIdp(providerDomain.id, adminToken, defaultIdpId(providerDomain.id)));
 
     const providerUsername = uniqueTestName('oidc_prov_user');
     const providerInlineIdp = await quietly(() =>
@@ -106,7 +106,7 @@ export const test = base.extend<{ externalOidcBundle: ExternalOidcBundle; hideLo
       }),
     );
 
-    await quietly(() => deleteIdp(clientDomain.id, adminToken, `default-idp-${clientDomain.id}`));
+    await quietly(() => deleteIdp(clientDomain.id, adminToken, defaultIdpId(clientDomain.id)));
 
     const clientOidcIdp = await quietly(() =>
       createIdp(clientDomain.id, adminToken, {

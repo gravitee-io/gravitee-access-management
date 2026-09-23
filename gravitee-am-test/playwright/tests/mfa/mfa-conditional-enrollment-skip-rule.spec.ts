@@ -32,6 +32,7 @@ import {
   waitUntilMfaEnrollmentSkipWindowExpired,
 } from '../../utils/mfa-helpers';
 import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 /**
  * AM-2825 / AM-2826 / AM-2827 — the skip rule layered on conditional enrollment.
@@ -237,7 +238,7 @@ test.describe('Conditional enrollment with an altered skip duration (AM-2827)', 
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(matrixDomain.id), priority: 0 }]),
       }),
     );
 

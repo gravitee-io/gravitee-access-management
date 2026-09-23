@@ -21,6 +21,7 @@ import { createApplication, patchApplication, updateApplication } from '@managem
 import { createDevice } from '@management-commands/device-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { expect } from '@jest/globals';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 export interface Domain {
   admin: {
@@ -145,7 +146,7 @@ export async function createTestDomain(domain: Domain): Promise<any> {
   return createDomain(domain.admin.accessToken, domain.domain.domainHrid, domain.domain.domainHrid).then((domain) => {
     return {
       domainId: domain.id,
-      defaultIdpId: `default-idp-${domain.id}`,
+      defaultIdpId: defaultIdpId(domain.id),
     };
   });
 }
@@ -348,7 +349,7 @@ export const createRequiredMfaApp = async (domain, accessToken, factorIds: strin
           challenge: { active: true, type: 'REQUIRED' },
         },
       },
-      identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+      identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       factors: factorIds,
     },
     application.id,

@@ -24,7 +24,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -148,9 +148,7 @@ export const setupTargetDomain = async (accessToken: string): Promise<TargetDoma
     domain = await createDomain(accessToken, uniqueName('ciba-fed-target', true), 'CIBA federation target domain');
     expect(domain.id).toBeDefined();
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp).toBeDefined();
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const user = await createUser(domain.id, accessToken, {
       firstName: TARGET_USER.firstName,

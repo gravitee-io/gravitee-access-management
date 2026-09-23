@@ -22,7 +22,7 @@ import { buildCreateAndTestUser, updateUserStatus } from '@management-commands/u
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createTestApp } from '@utils-commands/application-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../test-fixture';
@@ -44,8 +44,7 @@ beforeAll(async () => {
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
-  const idpSet = await getAllIdps(createdDomain.id, accessToken);
-  defaultIdp = idpSet.values().next().value;
+  defaultIdp = await getDefaultIdp(createdDomain.id, accessToken);
 
   client = await createTestApp('webapp', createdDomain, accessToken, 'WEB', {
     settings: {

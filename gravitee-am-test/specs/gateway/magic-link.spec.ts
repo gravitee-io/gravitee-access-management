@@ -29,7 +29,7 @@ import { extractXsrfTokenAndHref, performGet, performPost } from '@gateway-comma
 import { initiateLoginFlow } from '@gateway-commands/login-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { Domain } from '@management-models/Domain';
 import { setup } from '../test-fixture';
 import {clearEmails, getLastEmail} from '@utils-commands/email-commands';
@@ -67,8 +67,7 @@ beforeAll(async () => {
                 }),
         );
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     app = await createApplication(domain.id, accessToken, {
         name: 'test',

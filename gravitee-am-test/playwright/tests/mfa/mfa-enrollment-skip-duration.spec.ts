@@ -29,6 +29,7 @@ import {
   waitUntilMfaEnrollmentSkipWindowExpired,
 } from '../../utils/mfa-helpers';
 import { API_USER_PASSWORD, AUTH_CODE_FORMAT, MULTI_PHASE_TEST_TIMEOUT } from '../../utils/test-constants';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 /**
  * AM-2821 / UC-AM-MFA3 — the skip duration on optional enrolment.
@@ -124,7 +125,7 @@ test.describe('Optional enrolment skip duration (AM-2821)', () => {
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(matrixDomain.id), priority: 0 }]),
       }),
     );
 
