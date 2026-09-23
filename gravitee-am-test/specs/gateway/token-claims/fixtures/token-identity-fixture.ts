@@ -25,7 +25,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser, createUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createScope } from '@management-commands/scope-management-commands';
@@ -192,9 +192,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       await createScope(domain.id, accessToken, { key: scope, name: scope, description: `${scope} test scope` });
     }
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp?.id).toEqual(expect.any(String));
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const app = await createTestApp(TOKEN_IDENTITY_TEST.APP_NAME, domain, accessToken, 'WEB', {
       settings: {

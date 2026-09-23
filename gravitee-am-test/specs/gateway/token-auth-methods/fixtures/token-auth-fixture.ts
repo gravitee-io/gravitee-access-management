@@ -25,7 +25,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { Fixture } from '../../../test-fixture';
@@ -62,7 +62,7 @@ export const setupTokenAuthFixture = async (settings: TokenAuthSettings = {}): P
     });
 
     // Inline IdP with test user — auth method tests are about CLIENT auth, not IdP type
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const idpUsers = [
       {
         firstname: 'Token',

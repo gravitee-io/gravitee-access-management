@@ -24,7 +24,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
@@ -53,7 +53,7 @@ export const setupFlowPolicyFixture = async (): Promise<FlowPolicyFixture> => {
     });
 
     // Create inline IdP
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const idpUsers = [{ firstname: 'Flow', lastname: 'User', username: uniqueName('flow-user', true), password: '#CoMpL3X-P@SsW0Rd' }];
     const idp = await createIdp(domain.id, accessToken, {
       external: false,

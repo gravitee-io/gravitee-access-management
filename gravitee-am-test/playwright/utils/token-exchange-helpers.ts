@@ -21,7 +21,7 @@ import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { getWellKnownOpenIdConfiguration, performPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter, waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createDomain, startDomain, waitForDomainSync, safeDeleteDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -414,9 +414,7 @@ export async function setupIssuerDomain(adminToken: string): Promise<IssuerDomai
     await quietly(() => waitForDomainSync(domain.id));
 
     // Create app with password grant
-    const idpSet = await getAllIdps(domain.id, adminToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) throw new Error('No IdP found for issuer domain');
+    const defaultIdp = await getDefaultIdp(domain.id, adminToken);
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-issuer-app'), domain, adminToken, 'WEB', {

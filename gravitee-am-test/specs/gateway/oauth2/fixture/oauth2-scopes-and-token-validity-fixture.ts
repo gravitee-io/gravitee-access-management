@@ -19,7 +19,7 @@ import { Application } from '@management-models/Application';
 import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -64,7 +64,7 @@ export const setupOAuth2ScopesAndValidityFixture = async (): Promise<OAuth2Scope
     const started = await setupDomainForTest(uniqueName(OAUTH2_SCOPES_VALIDITY.DOMAIN_PREFIX, true), { accessToken, waitForStart: true });
     domain = started.domain;
 
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const users: TestUser[] = [0, 1].map((i) => ({
       username: uniqueName(`oauth-settings-user-${i}`, true),
       password: OAUTH2_SCOPES_VALIDITY.USER_PASSWORD,

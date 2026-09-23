@@ -17,7 +17,7 @@
 import { expect } from '@jest/globals';
 import { createDomain, safeDeleteDomain, startDomain, waitFor, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { introspectToken as introspectOidcToken, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -232,9 +232,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
     domain = createdDomain;
 
     // Get default IDP
-    const idpSet = await getAllIdps(createdDomain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp).toBeDefined();
+    const defaultIdp = await getDefaultIdp(createdDomain.id, accessToken);
 
     // Enable token exchange
     await enableTokenExchange(createdDomain.id, accessToken, {

@@ -23,7 +23,7 @@ import {
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
@@ -239,9 +239,7 @@ export const setupTokenExchangeMcpFixture = async (
     expect(createdDomain.id).toBeDefined();
     domain = createdDomain;
 
-    const idpSet = await getAllIdps(createdDomain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp).toBeDefined();
+    const defaultIdp = await getDefaultIdp(createdDomain.id, accessToken);
 
     await enableTokenExchange(createdDomain.id, accessToken, allowedSubjectTokenTypes, allowDelegation
       ? { allowDelegation: true, allowedActorTokenTypes, maxDelegationDepth }

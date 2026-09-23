@@ -19,7 +19,7 @@ import { Domain } from '@management-models/Domain';
 import { DomainOidcConfig } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { extractXsrfTokenAndActionResponse, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
@@ -39,7 +39,6 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
   const domain = await createDomain(accessToken, uniqueName('enduser-logout', true), 'test end-user logout');
 
   // Create all resources BEFORE starting domain so initial sync picks up everything
-  const idpSet = await getAllIdps(domain.id, accessToken);
   const appClientId = uniqueName('app-logout', true);
   const appClientSecret = uniqueName('app-logout', true);
   const appName = uniqueName('my-client', true);
@@ -60,7 +59,7 @@ export const setupFixture = async (): Promise<EnduserLogoutFixture> => {
             grantTypes: ['authorization_code'],
           },
         },
-        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {

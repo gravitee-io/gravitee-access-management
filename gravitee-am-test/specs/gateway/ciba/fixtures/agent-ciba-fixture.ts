@@ -30,7 +30,7 @@ import {
   updateApplication,
 } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { retryUntil } from '@utils-commands/retry';
@@ -382,9 +382,7 @@ export const setupAgentCibaFixture = async (): Promise<AgentCibaFixture> => {
     domain = await createDomain(accessToken, uniqueName('agent-ciba', true), 'CIBA × agent blueprint integration test');
     expect(domain.id).toBeDefined();
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp).toBeDefined();
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const templateApplication = await createTemplateApplication(domain.id, accessToken, defaultIdp.id);
 

@@ -28,7 +28,7 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { expect } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
@@ -115,7 +115,6 @@ export const setupFixture = async (domainSettings: any, domainNamePrefix = 'self
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName(domainNamePrefix, true), 'Description');
   await patchDomain(domain.id, accessToken, domainSettings);
-  const idpSet = await getAllIdps(domain.id, accessToken);
 
   const application = await createApplication(domain.id, accessToken, {
     name: 'name',
@@ -148,7 +147,7 @@ export const setupFixture = async (domainSettings: any, domainNamePrefix = 'self
             ],
           },
         },
-        identityProviders: new Set([{ identity: idpSet.values().next().value.id, priority: -1 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: -1 }]),
       },
       app.id,
     ).then((updatedApp) => {
@@ -199,7 +198,6 @@ export const setupFactorFixture = async (domainNamePrefix = 'self-account-factor
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName(domainNamePrefix, true), 'Description');
   await patchDomain(domain.id, accessToken, SELF_ACCOUNT_ENABLED_SETTINGS);
-  const idpSet = await getAllIdps(domain.id, accessToken);
 
   const application = await createApplication(domain.id, accessToken, {
     name: 'name',
@@ -219,7 +217,7 @@ export const setupFactorFixture = async (domainNamePrefix = 'self-account-factor
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: idpSet.values().next().value.id, priority: -1 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: -1 }]),
       },
       app.id,
     ).then((updatedApp) => {
@@ -269,7 +267,6 @@ export const setupRecoveryCodeFixture = async (): Promise<SelfAccountRecoveryCod
   const accessToken = await requestAdminAccessToken();
   const domain = await createDomain(accessToken, uniqueName('self-account-recovery', true), 'Description');
   await patchDomain(domain.id, accessToken, SELF_ACCOUNT_ENABLED_SETTINGS);
-  const idpSet = await getAllIdps(domain.id, accessToken);
 
   const application = await createApplication(domain.id, accessToken, {
     name: 'name',
@@ -289,7 +286,7 @@ export const setupRecoveryCodeFixture = async (): Promise<SelfAccountRecoveryCod
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: idpSet.values().next().value.id, priority: -1 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: -1 }]),
       },
       app.id,
     ).then((updatedApp) => {

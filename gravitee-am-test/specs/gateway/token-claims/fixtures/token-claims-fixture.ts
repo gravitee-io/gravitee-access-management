@@ -25,7 +25,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
 
@@ -64,7 +64,7 @@ export const setupTokenClaimsFixture = async (settings: TokenClaimsSettings = {}
     });
 
     // Create inline IdP with test user (including email for EL claim tests)
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const idpUsers = [
       {
         firstname: 'Claims',

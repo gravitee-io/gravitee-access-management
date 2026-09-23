@@ -25,7 +25,7 @@ import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { Domain } from '@management-models/Domain';
 import { createTestApp } from '@utils-commands/application-commands';
 import { expect } from '@jest/globals';
-import { createIdp, deleteIdp, getAllIdps, updateIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, getAllIdps, updateIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { Application } from '@management-models/Application';
 import { initiateLoginFlow, login, postConsent } from '@gateway-commands/login-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
@@ -335,7 +335,7 @@ async function createOidcProvider(clientDomain: Domain, providerDomain: Domain, 
 }
 
 async function ensureDefaultIdpIsDeleted(domain: Domain, accessToken: string) {
-  await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+  await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
   const idpSet = await getAllIdps(domain.id, accessToken);
   expect(idpSet).toHaveLength(0);
 }

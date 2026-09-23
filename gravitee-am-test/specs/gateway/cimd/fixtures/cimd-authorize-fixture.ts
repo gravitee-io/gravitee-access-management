@@ -25,7 +25,7 @@ import {
 } from '@management-commands/domain-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
@@ -272,9 +272,7 @@ export const setupCimdAuthorizeFixture = async (profile: CimdAuthorizeProfile): 
     domain = await createDomain(accessToken, uniqueName(`cimd-${profile.toLowerCase()}`, true), `CIMD authorize ${profile}`);
     expect(domain.id).toBeDefined();
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value as IdentityProvider;
-    expect(defaultIdp).toBeDefined();
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const templateApplication = await createOAuthApplication(domain.id, accessToken, 'cimd-template', undefined, defaultIdp.id);
     await patchApplication(domain.id, accessToken, { template: true }, templateApplication.id);

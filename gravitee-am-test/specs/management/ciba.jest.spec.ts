@@ -21,7 +21,7 @@ import { buildTestUser, createUser } from '@management-commands/user-management-
 import { patchApplication } from '@management-commands/application-management-commands';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { privateJwk, publicJwk } from '@api-fixtures/oidc';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import jwt from 'jsonwebtoken';
 import jwkToPem from 'jwk-to-pem';
@@ -194,14 +194,13 @@ describe('Create CIBA application', () => {
   });
 
   it('Assign default IDP', async () => {
-    const idps = await getAllIdps(cibaDomain.id, accessToken);
     await patchApplication(
       cibaDomain.id,
       accessToken,
       {
         identityProviders: [
           {
-            identity: idps[0].id,
+            identity: defaultIdpId(cibaDomain.id),
             priority: -1,
           },
         ],
