@@ -27,7 +27,7 @@ import {
   waitForOidcReady,
   patchDomain,
 } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
@@ -119,9 +119,7 @@ export const test = base.extend<MfaWebAuthnFixtures>({
   },
 
   mfaApp: async ({ mfaAdminToken, mfaDomain, mfaFactorId, mfaDeviceId }, use) => {
-    const idpSet = await getAllIdps(mfaDomain.id, mfaAdminToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) throw new Error('No IdP found');
+    const defaultIdp = await getDefaultIdp(mfaDomain.id, mfaAdminToken);
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-mfa-app'), mfaDomain, mfaAdminToken, 'WEB', {

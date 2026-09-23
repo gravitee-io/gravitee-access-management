@@ -27,7 +27,7 @@ import {
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, getAllIdps, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
@@ -345,7 +345,7 @@ async function makeMaster(domain: Domain, accessToken: string): Promise<Domain> 
 }
 
 async function createInlineIdp(domain: Domain, accessToken: string) {
-  await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+  await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
   expect((await getAllIdps(domain.id, accessToken)).length).toEqual(0);
 
   const users = [{ firstname: 'Joe', lastname: 'Doe', username: uniqueName('joe.doe', true), password: USER_PASSWORD }];

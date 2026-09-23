@@ -48,6 +48,7 @@ import {
   createRecoveryCodeFactor,
   createSMSFactor,
 } from './fixture/mfa-setup-fixture';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 const cheerio = require('cheerio');
 
@@ -551,7 +552,7 @@ const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFact
             flowsInherited: false,
           },
         },
-        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       app.id,
     ),
@@ -645,7 +646,7 @@ const createMfaFlowApp = async (domain, accessToken, factor) => {
             flowsInherited: false,
           },
         },
-        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       app.id,
     ),
@@ -719,7 +720,7 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
             },
           },
         },
-        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
         factors: factors,
       },
       app.id,

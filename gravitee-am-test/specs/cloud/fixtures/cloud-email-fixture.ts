@@ -30,6 +30,7 @@ import { retryUntil, withRetry } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
 import { setupCloudSharedFixture } from './cloud-shared-fixture';
 import { expect } from '@jest/globals';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const SCIM_CUSTOM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:extension:custom:2.0:User';
@@ -185,7 +186,7 @@ export const setupCloudEmailFixture = async (): Promise<CloudEmailFixture> => {
           scopeSettings: [{ scope: 'openid', defaultScope: true }],
         },
       },
-      identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+      identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: 0 }]),
     },
   });
   const resetClientId = webApp.settings.oauth.clientId;
@@ -218,7 +219,7 @@ export const setupCloudEmailFixture = async (): Promise<CloudEmailFixture> => {
         login: { inherited: false, registerEnabled: true },
         account: { inherited: false, sendVerifyRegistrationAccountEmail: true },
       },
-      identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+      identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: 0 }]),
     },
   });
   const registerClientId = registerApp.settings.oauth.clientId;
@@ -381,7 +382,7 @@ export const setupCloudEmailFixture = async (): Promise<CloudEmailFixture> => {
         lastName: 'Me',
         email,
         password: LOGIN_PASSWORD,
-        source: `default-idp-${domain.id}`,
+        source: defaultIdpId(domain.id),
         preRegistration: false,
       },
     });

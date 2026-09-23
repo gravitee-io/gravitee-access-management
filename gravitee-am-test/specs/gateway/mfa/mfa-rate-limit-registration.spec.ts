@@ -38,7 +38,7 @@ import {
 } from '@management-commands/application-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { setup } from '../../test-fixture';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -177,8 +177,7 @@ beforeAll(async () => {
   smtpResource = await createSMTPResource(domain, accessToken);
   emailFactor = await createEmailFactor(smtpResource, domain, accessToken);
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  defaultIdp = idpSet.values().next().value.id;
+  defaultIdp = defaultIdpId(domain.id);
 
   application = await createApplication(domain.id, accessToken, {
     name: 'mfa-registration-app',

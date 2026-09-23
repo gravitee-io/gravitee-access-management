@@ -27,7 +27,7 @@ import {
   waitForOidcReady,
   waitForOAuthAuthorizeRedirectsToLogin,
 } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
@@ -97,9 +97,7 @@ export const test = base.extend<MfaLoginFixtures>({
   },
 
   mfaApp: async ({ adminToken, mfaDomain, factorIds, forceEnrollment }, use) => {
-    const idpSet = await getAllIdps(mfaDomain.id, adminToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) throw new Error('No IdP found');
+    const defaultIdp = await getDefaultIdp(mfaDomain.id, adminToken);
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-mfa-login-app'), mfaDomain, adminToken, 'WEB', {

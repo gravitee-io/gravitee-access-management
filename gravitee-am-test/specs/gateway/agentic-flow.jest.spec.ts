@@ -30,7 +30,7 @@ import {createScope} from '@management-commands/scope-management-commands';
 import {mcpAuthorizationModel, tupleFactory, authzenFactory} from '@api-fixtures/openfga-fixtures';
 import {AuthorizationEngine} from '@management-models/AuthorizationEngine';
 import {createApplication, updateApplication} from '@management-commands/application-management-commands';
-import {getAllIdps} from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import {performPost, performGet, requestClientCredentialsToken} from '@gateway-commands/oauth-oidc-commands';
 import {evaluateAccess} from '@gateway-commands/authzen-commands';
 import {
@@ -153,8 +153,7 @@ beforeAll(async () => {
     await updateProtectedResource(testDomain.id, accessToken, mcpServer.id, updateToolsRequest);
 
     // 10. Create Web Application for authorization code flow
-    const idpSet = await getAllIdps(testDomain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
+    const defaultIdp = await getDefaultIdp(testDomain.id, accessToken);
 
     const appClientId = uniqueName('agentic-app', true);
     const appClientSecret = uniqueName('agentic-secret', true);

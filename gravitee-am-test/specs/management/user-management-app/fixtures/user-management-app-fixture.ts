@@ -55,7 +55,7 @@ import {
   getGroupRoles,
 } from '@management-commands/group-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
@@ -162,10 +162,6 @@ export const setupUserManagementAppFixture = async (options?: SetupOptions): Pro
     expect(domain).toBeDefined();
     expect(domain.id).toBeDefined();
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
-    expect(defaultIdp).toBeDefined();
-    const defaultIdpId = defaultIdp.id;
 
     // oidcConfig is set after domain start; requestPasswordGrant closes over this variable
     let oidcConfig: any = null;
@@ -179,7 +175,7 @@ export const setupUserManagementAppFixture = async (options?: SetupOptions): Pro
     const fixture: UserManagementAppFixture = {
       domain,
       accessToken,
-      defaultIdpId,
+      defaultIdpId: defaultIdpId(domain.id),
       get openIdConfiguration() {
         return oidcConfig;
       },

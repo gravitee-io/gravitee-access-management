@@ -29,7 +29,7 @@ import {
   waitForOAuthAuthorizeRedirectsToLogin,
   waitForOidcReady,
 } from '@management-commands/domain-management-commands';
-import { createIdp, deleteIdp, updateIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, updateIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createRole } from '@management-commands/role-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import type { Application } from '@management-models/Application';
@@ -87,7 +87,7 @@ export const test = base.extend<RoleMapperFlowFixtures>({
   },
 
   mapperIdp: async ({ adminToken, mapperDomain, mappedRoleName, mapperCredentials }, use) => {
-    await quietly(() => deleteIdp(mapperDomain.id, adminToken, `default-idp-${mapperDomain.id}`));
+    await quietly(() => deleteIdp(mapperDomain.id, adminToken, defaultIdpId(mapperDomain.id)));
 
     const idp = await quietly(() =>
       createIdp(mapperDomain.id, adminToken, {

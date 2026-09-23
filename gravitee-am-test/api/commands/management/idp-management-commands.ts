@@ -32,6 +32,10 @@ export const getIdp = (domainId, accessToken, idpId) =>
     identity: idpId,
   });
 
+export const defaultIdpId = (domainId: string) => `default-idp-${domainId.toLowerCase()}`;
+
+export const getDefaultIdp = (domainId, accessToken) => getIdp(domainId, accessToken, defaultIdpId(domainId));
+
 export const getAllIdps = (domainId, accessToken) =>
   getIdpApi(accessToken).listIdentityProviders({
     organizationId: process.env.AM_DEF_ORG_ID,

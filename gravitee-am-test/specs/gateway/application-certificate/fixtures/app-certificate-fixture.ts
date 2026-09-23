@@ -21,7 +21,7 @@ import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@managem
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createCertificate, getPublicKeys } from '@management-commands/certificate-management-commands';
-import { createIdp, deleteIdp } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
@@ -67,7 +67,7 @@ export const setupAppCertificateFixture = async (): Promise<AppCertificateFixtur
     const started = await setupDomainForTest(uniqueName(APP_CERTIFICATE.DOMAIN_PREFIX, true), { accessToken, waitForStart: true });
     domain = started.domain;
 
-    await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+    await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
     const user = { username: uniqueName('cert-user', true), password: APP_CERTIFICATE.USER_PASSWORD };
     const idp = await createIdp(domain.id, accessToken, {
       external: false,

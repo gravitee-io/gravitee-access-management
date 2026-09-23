@@ -37,6 +37,7 @@ import type { User } from '@management-models/User';
 import { getGatewayBaseUrl, oauthWebSettings, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
 import { API_USER_PASSWORD } from '../utils/test-constants';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 export type ForgotPasswordGatewayBundle = {
   domain: Domain;
@@ -74,7 +75,7 @@ export const test = base.extend<{ forgotPasswordBundle: ForgotPasswordGatewayBun
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-fpw-app'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: 0 }]),
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           account: {

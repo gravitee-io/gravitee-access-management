@@ -19,7 +19,7 @@ import request from 'supertest';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { safeDeleteDomain, startDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { createDomain } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTrustedDomain, updateTrustedDomain } from '../../../management/domain/fixtures/cross-app-access-fixture';
 import { getAllCertificates } from '@management-commands/certificate-management-commands';
@@ -131,8 +131,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     ],
   });
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   const certificates = await getAllCertificates(domain.id, accessToken);
   const certificate = certificates[0].id;

@@ -22,7 +22,7 @@ import { DomainOidcConfig, safeDeleteDomain, setupDomainForTest } from '@managem
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createDomainReporter, deleteDomainReporter } from '@management-commands/reporter-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -50,9 +50,6 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
   const accessToken = await requestAdminAccessToken();
   const { domain, oidcConfig } = await setupDomainForTest(uniqueName('reporter-gw-domain', true), { accessToken, waitForStart: true });
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdpId = idpSet.values().next().value.id;
-
   const appName = uniqueName('reporter-gw-app', true);
   const app = await createApplication(domain.id, accessToken, {
     name: appName,
@@ -70,7 +67,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: [{ identity: defaultIdpId, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       created.id,
     ).then((updated) => {
