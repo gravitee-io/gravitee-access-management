@@ -173,7 +173,8 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
             final Liquibase liquibase = new Liquibase(liquibaseFile, resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
-            LOGGER.error("Failed to set up database: ", ex);
+            // never continue on a partially migrated schema
+            throw new RepositoryInitializationException("Failed to set up database schema using Liquibase changelog " + liquibaseFile, ex);
         }
     }
 
