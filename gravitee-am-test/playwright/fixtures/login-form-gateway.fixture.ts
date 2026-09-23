@@ -39,6 +39,7 @@ import { NewFormTemplateEnum } from '@management-models/NewForm';
 import { getGatewayBaseUrl, oauthWebSettings, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { AM2193_LOGIN_FORM_MARKER_TEXT } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/webauthn-helpers';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 const LOGIN_HTML_PATH = join(
   __dirname,
@@ -73,7 +74,7 @@ export const test = base.extend<{ loginFormGatewayBundle: LoginFormGatewayBundle
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-lf-app'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: 0 }]),
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           advanced: { skipConsent: true },

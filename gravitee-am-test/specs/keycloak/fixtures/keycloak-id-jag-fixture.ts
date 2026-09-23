@@ -19,7 +19,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, startDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { getAllCertificates } from '@management-commands/certificate-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
@@ -111,12 +111,12 @@ const setupIssuer = async (target: IssuerTarget): Promise<Issuer> => {
   const [keycloakMcp] = keycloak.crossAppAccess.resourceServers;
   const [strangerMcp] = stranger.crossAppAccess.resourceServers;
 
-  const idps = await getAllIdps(domain.id, accessToken);
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
   const certificates = await getAllCertificates(domain.id, accessToken);
   const issuerApp = (name: string, targetClientId: string) =>
     createIdJagIssuerApp(name, domain, accessToken, {
       certificate: certificates[0].id,
-      identityProvider: idps.values().next().value.id,
+      identityProvider: defaultIdp.id,
       scopes: [ISSUER_SCOPE],
       resourceServers: [
         { trustDomainId: keycloak.id, resourceServerId: keycloakMcp.id, clientId: targetClientId },

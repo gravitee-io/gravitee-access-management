@@ -24,7 +24,7 @@ import {
   waitForOidcDown,
   patchDomain,
 } from '@management-commands/domain-management-commands';
-import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
+import { createIdp, deleteIdp, getAllIdps, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createCertificate, getPublicKeys } from '@management-commands/certificate-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
@@ -528,7 +528,7 @@ async function createClientApp(domain: Domain, accessToken: string, idpId: strin
 }
 
 async function ensureDefaultIdpIsDeleted(domain: Domain, accessToken: string) {
-  await deleteIdp(domain.id, accessToken, 'default-idp-' + domain.id);
+  await deleteIdp(domain.id, accessToken, defaultIdpId(domain.id));
   const idpSet = await getAllIdps(domain.id, accessToken);
   expect(idpSet).toHaveLength(0);
 }

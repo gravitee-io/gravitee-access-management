@@ -17,15 +17,13 @@ import { expect } from '@jest/globals';
 import { extractXsrfTokenAndActionResponse, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getLastEmail, clearEmails } from '@utils-commands/email-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { extractSharedSecret, extractSharedSecretForFactor } from '../../mfa/fixture/mfa-extract-fixture';
 
 /** Creates a WEB app with required MFA enrollment + challenge for the given factor. */
 export async function createMfaApplication(domainId: string, accessToken: string, factorId: string, namePrefix: string) {
-  const idpSet = await getAllIdps(domainId, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-  if (!defaultIdp) throw new Error('No default IdP found');
+  const defaultIdp = await getDefaultIdp(domainId, accessToken);
 
   const app = await createApplication(domainId, accessToken, {
     name: uniqueName(`${namePrefix}-app`, true),

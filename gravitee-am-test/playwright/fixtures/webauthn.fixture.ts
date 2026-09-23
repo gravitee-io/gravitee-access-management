@@ -27,7 +27,7 @@ import {
   waitForOidcReady,
   patchDomain,
 } from '@management-commands/domain-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import type { Application } from '@management-models/Application';
@@ -123,9 +123,7 @@ export const test = base.extend<WebAuthnFixtures>({
   },
 
   waApp: async ({ waAdminToken, waDomain }, use) => {
-    const idpSet = await getAllIdps(waDomain.id, waAdminToken);
-    const defaultIdp = idpSet.values().next().value;
-    if (!defaultIdp) throw new Error('No IdP found for WebAuthn domain');
+    const defaultIdp = await getDefaultIdp(waDomain.id, waAdminToken);
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-wa-app'), waDomain, waAdminToken, 'WEB', {

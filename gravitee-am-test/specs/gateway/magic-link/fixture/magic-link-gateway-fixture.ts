@@ -27,7 +27,7 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { createUser, getUser } from '@management-commands/user-management-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { extractXsrfTokenAndHref, performGet, performPost, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { initiateLoginFlow } from '@gateway-commands/login-commands';
 import { clearEmails, waitForEmail } from '@utils-commands/email-commands';
@@ -99,7 +99,7 @@ export const setupFixture = async (domainPrefix = 'magic-link-gw'): Promise<Magi
   const domain = started.domain;
   const oidc = started.oidcConfig;
 
-  const defaultIdp = (await getAllIdps(domain.id, accessToken)).values().next().value;
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   const app = await createApplication(domain.id, accessToken, {
     name: uniqueName('magic-link-app', true),

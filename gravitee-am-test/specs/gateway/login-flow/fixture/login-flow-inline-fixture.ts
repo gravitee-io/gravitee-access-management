@@ -20,7 +20,7 @@ import { setupDomainForTest, safeDeleteDomain, DomainOidcConfig } from '@managem
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { getHeaderLocation, initiateLoginFlow, login } from '@gateway-commands/login-commands';
 import { logoutUser, performGet, requestToken } from '@gateway-commands/oauth-oidc-commands';
-import { createIdp } from '@management-commands/idp-management-commands';
+import { createIdp, defaultIdpId } from '@management-commands/idp-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { getLastEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
@@ -77,7 +77,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(domain.id).toBeDefined();
   const openIdConfiguration = oidcConfig;
 
-  const defaultIdpId = `default-idp-${domain.id}`;
+  const defaultIdentityProviderId = defaultIdpId(domain.id);
 
   const inmemoryIdp1 = await createIdp(domain.id, accessToken, {
     external: false,
@@ -127,7 +127,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(appSso1.id).toBeDefined();
 
   const appSso2 = await createTestApp(uniqueName('app-sso2', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([{ identity: defaultIdpId, priority: -1 }]),
+    identityProviders: new Set([{ identity: defaultIdentityProviderId, priority: -1 }]),
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -214,7 +214,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   // Wrap the last app creation in waitForSyncAfter so the gateway picks up all apps created since domain start.
   const appAccountTests = await waitForSyncAfter(domain.id, () =>
     createTestApp(uniqueName('app-account-tests2', true), domain, accessToken, 'WEB', {
-      identityProviders: new Set([{ identity: defaultIdpId, priority: -1 }]),
+      identityProviders: new Set([{ identity: defaultIdentityProviderId, priority: -1 }]),
       settings: {
         oauth: INLINE_IDP_OAUTH_SETTINGS,
         advanced: { skipConsent: true },
@@ -229,7 +229,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
     openIdConfiguration,
     inmemoryIdp1,
     inmemoryIdp2,
-    defaultIdpId,
+    defaultIdpId: defaultIdentityProviderId,
     appSso1,
     appSso2,
     appSelectionRule,

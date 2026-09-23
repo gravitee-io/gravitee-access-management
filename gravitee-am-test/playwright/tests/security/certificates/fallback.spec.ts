@@ -29,7 +29,7 @@ import { waitForNextSync } from '@gateway-commands/monitoring-commands';
 import { createCertificate, getAllCertificates, deleteCertificate } from '@management-commands/certificate-management-commands';
 import { deleteApplication } from '@management-commands/application-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import type { Application } from '@management-models/Application';
@@ -124,9 +124,6 @@ const test = base.extend<CertFallbackFixtures>({
   },
 
   certApp: async ({ certAdminToken, certDomain }, use) => {
-    const idps = await quietly(() => getAllIdps(certDomain.id, certAdminToken));
-    const defaultIdp = idps.find((idp) => idp.external === false);
-
     const app = await quietly(() =>
       createTestApp(uniqueTestName('cert-fb-app'), certDomain, certAdminToken, 'WEB', {
         settings: {
@@ -139,7 +136,7 @@ const test = base.extend<CertFallbackFixtures>({
             ],
           },
         },
-        identityProviders: defaultIdp ? new Set([{ identity: defaultIdp.id, priority: 0 }]) : new Set(),
+        identityProviders: new Set([{ identity: defaultIdpId(certDomain.id), priority: 0 }]),
       }),
     );
 
@@ -287,9 +284,6 @@ test.describe('Certificate Fallback — Token Signing', () => {
     });
     await quietly(() => waitForDomainSync(certDomain.id));
 
-    const idps = await quietly(() => getAllIdps(certDomain.id, certAdminToken));
-    const defaultIdp = idps.find((idp) => idp.external === false);
-
     const secondApp = await quietly(() =>
       createTestApp(uniqueTestName('cert-fb-app2'), certDomain, certAdminToken, 'WEB', {
         settings: {
@@ -302,7 +296,7 @@ test.describe('Certificate Fallback — Token Signing', () => {
             ],
           },
         },
-        identityProviders: defaultIdp ? new Set([{ identity: defaultIdp.id, priority: 0 }]) : new Set(),
+        identityProviders: new Set([{ identity: defaultIdpId(certDomain.id), priority: 0 }]),
       }),
     );
 

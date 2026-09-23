@@ -39,6 +39,7 @@ import type { User } from '@management-models/User';
 import { getGatewayBaseUrl, quietly, uniqueTestName } from '../utils/fixture-helpers';
 import { API_USER_PASSWORD, MOCK_MFA_CODE } from '../utils/test-constants';
 import { REDIRECT_URI } from '../utils/mfa-helpers';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 export { MOCK_MFA_CODE } from '../utils/test-constants';
 
@@ -100,7 +101,7 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${rememberDomain.id}`, priority: 0 }]),
+        identityProviders: new Set([{ identity: defaultIdpId(rememberDomain.id), priority: 0 }]),
       }),
     );
 

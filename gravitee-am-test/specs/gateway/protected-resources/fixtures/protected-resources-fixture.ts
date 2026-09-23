@@ -20,7 +20,7 @@ import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domai
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
@@ -106,9 +106,7 @@ async function setupTestEnvironment() {
     waitForStart: true,
   });
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
-  expect(defaultIdp).toBeDefined();
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   return { domain, defaultIdp, accessToken, oidcConfig };
 }

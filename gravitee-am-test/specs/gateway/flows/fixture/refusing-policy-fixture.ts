@@ -26,7 +26,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createUser, listUsers } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
@@ -115,8 +115,7 @@ export const setupRefusingPolicyFixture = async (): Promise<RefusingPolicyFixtur
 
   const domain = await createDomain(accessToken, uniqueName('refusing-policy', true), 'AM-2199 a policy that refuses a sign-in');
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   const appName = uniqueName('refusing-policy-app', true);
   const application = await createApplication(domain.id, accessToken, {

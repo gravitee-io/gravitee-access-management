@@ -21,7 +21,7 @@ import {
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
-import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
+import { createIdp, getDefaultIdp } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { DownstreamDomain, UpstreamDomain, UserData } from './account-link-fixture';
@@ -103,11 +103,7 @@ export const setupUpstreamDomain = async (
   );
 
   // Create an application with an internal provider
-  const idpSetAccountLinkingDomain = await getAllIdps(domain.id, accessToken);
-  const localIdp = idpSetAccountLinkingDomain
-    .filter((idp) => idp.type === 'mongo-am-idp' || idp.type === 'jdbc-am-idp')
-    .values()
-    .next().value;
+  const localIdp = await getDefaultIdp(domain.id, accessToken);
   const localIdpApp = await createApplication(domain.id, accessToken, {
     name: uniqueName('app-local', true),
     type: 'WEB',

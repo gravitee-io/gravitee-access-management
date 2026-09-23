@@ -18,7 +18,7 @@ import { DomainOidcConfig, createDomain, safeDeleteDomain, startDomain, waitForD
 import { Application } from '@management-models/Application';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 
 export interface ConfirmPreRegistrationFixture {
@@ -36,8 +36,7 @@ export const setupFixture = async (): Promise<ConfirmPreRegistrationFixture> => 
   // Create domain without starting it
   const domain = await createDomain(accessToken, uniqueName('pre-registration', true), 'pre-registration tests');
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
-  const defaultIdp = idpSet.values().next().value;
+  const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
   // Create and configure application BEFORE starting domain — initial sync picks up everything
   const appClientId = uniqueName('preregapp', true);

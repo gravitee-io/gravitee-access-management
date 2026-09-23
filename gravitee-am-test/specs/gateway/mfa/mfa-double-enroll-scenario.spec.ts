@@ -34,6 +34,7 @@ import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
 import { createCallFactor, createSMSFactor } from './fixture/mfa-setup-fixture';
 import { setup } from '../../test-fixture';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 setup(200000);
 
@@ -235,7 +236,7 @@ const createApp = async (domain, accessToken, smsFactorId, callFactorId) => {
             flowsInherited: false,
           },
         },
-        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       app.id,
     ),

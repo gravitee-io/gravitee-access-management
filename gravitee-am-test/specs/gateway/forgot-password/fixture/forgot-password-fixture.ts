@@ -36,6 +36,7 @@ import { DomainTestSettings } from './settings-utils';
 import { ForgotPasswordContext } from './forgot-password-flow-utils';
 import { ResetPasswordContext } from './reset-password-flow-utils';
 import { User } from '@management-models/User';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 
 export interface ForgotPasswordFixture extends Fixture {
   domain: Domain;
@@ -99,7 +100,7 @@ export const setupFixture = async (setting: DomainTestSettings, userProps: User)
             },
             account: setting.inherited ? {} : setting.settings.accountSettings,
           },
-          identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
+          identityProviders: [{ identity: defaultIdpId(domain.id), priority: 0 }],
         },
         app.id,
       ).then((updatedApp) => {

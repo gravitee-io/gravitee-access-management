@@ -27,7 +27,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import {
   createApplication,
@@ -93,7 +93,6 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
   const domain = started.domain;
   const openIdConfiguration = started.oidcConfig;
 
-  const idpSet = await getAllIdps(domain.id, accessToken);
   const appClientId = uniqueName('flow-app', true);
   const appClientSecret = uniqueName('flow-app', true);
   const appName = uniqueName('my-client', true);
@@ -114,7 +113,7 @@ export const setupFixture = async (): Promise<FlowExecutionFixture> => {
             grantTypes: ['authorization_code'],
           },
         },
-        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
+        identityProviders: [{ identity: defaultIdpId(domain.id), priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {

@@ -23,7 +23,7 @@ import {
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { getAllIdps } from '@management-commands/idp-management-commands';
+import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createDictionary, updateDictionaryEntries } from '@management-commands/dictionary-management-commands';
 import { getDomainApi } from '@management-commands/service/utils';
@@ -61,8 +61,7 @@ export const setupTranslationFixture = async (): Promise<TranslationFixture> => 
   try {
     domain = await createDomain(accessToken, uniqueName('translation', true), 'AM-2184 a translation used on a form');
 
-    const idpSet = await getAllIdps(domain.id, accessToken);
-    const defaultIdp = idpSet.values().next().value;
+    const defaultIdp = await getDefaultIdp(domain.id, accessToken);
 
     const appName = uniqueName('translation-app', true);
     const created = await createApplication(domain.id, accessToken, {
