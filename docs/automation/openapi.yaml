@@ -2060,10 +2060,12 @@ components:
         gatewayUrl:
           type: string
           description: Base URL of the gateway serving the domains bound to this data
-            plane. Must be an absolute http(s) URL; omitted or empty leaves it unset.
+            plane. Must be an absolute http(s) URL with a lowercase scheme; omitted
+            or empty leaves it unset.
           example: https://gateway-eu.example.com
           maxLength: 256
           minLength: 0
+          pattern: ^\s*$|^https?://.+
         hosts:
           type: array
           description: "Hosts the configuration points at, as host:port. Read-only."

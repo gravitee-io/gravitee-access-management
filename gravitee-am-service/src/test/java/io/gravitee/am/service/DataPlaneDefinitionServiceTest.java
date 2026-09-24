@@ -452,7 +452,7 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"not a url", "gw-acme.cloud.gravitee.io", "/relative/path", "ftp://gw-acme.cloud.gravitee.io", "https://", "mailto:ops@acme.com"})
+    @ValueSource(strings = {"not a url", "gw-acme.cloud.gravitee.io", "/relative/path", "ftp://gw-acme.cloud.gravitee.io", "https://", "mailto:ops@acme.com", "HTTPS://gw-acme.cloud.gravitee.io"})
     void shouldRejectAGatewayUrlThatIsNotAnAbsoluteHttpUrl(String gatewayUrl) {
         NewDataPlaneDefinition payload = payload();
         payload.setGatewayUrl(gatewayUrl);
@@ -461,7 +461,7 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"https://gw-acme.cloud.gravitee.io", "http://localhost:8092", "HTTPS://gw-acme.cloud.gravitee.io/am"})
+    @ValueSource(strings = {"https://gw-acme.cloud.gravitee.io", "http://localhost:8092", "https://gw-acme.cloud.gravitee.io/am?x=1"})
     void shouldAcceptAnAbsoluteHttpGatewayUrl(String gatewayUrl) {
         NewDataPlaneDefinition payload = payload();
         payload.setGatewayUrl(gatewayUrl);
