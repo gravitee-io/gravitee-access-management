@@ -397,6 +397,16 @@ class DataPlaneDefinitionServiceTest {
         assertRejected(payload, InvalidParameterException.class, "requires either 'uri' or 'dbname'");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "\"x\"", "[]", "42"})
+    void shouldReportABlockThatIsNotAnObjectInItsOwnWords(String block) {
+        registerMongoSchema();
+        NewDataPlaneDefinition payload = payload();
+        payload.setConfiguration(readTree("{\"mongodb\": " + block + "}"));
+
+        assertRejected(payload, InvalidParameterException.class, "configuration must contain a 'mongodb' object");
+    }
+
     @Test
     void shouldSkipTheSchemaPassWhenThePluginShipsNoSchema() {
         NewDataPlaneDefinition payload = payload();
