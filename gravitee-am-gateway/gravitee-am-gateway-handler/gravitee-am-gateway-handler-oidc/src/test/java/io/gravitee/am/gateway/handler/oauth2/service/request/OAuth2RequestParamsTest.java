@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -35,6 +36,7 @@ import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtu
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.jwtBearerRequest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OAuth2RequestParamsTest {
 
@@ -61,6 +63,32 @@ class OAuth2RequestParamsTest {
                 "SCOPE", "calendar.read",
                 "RESOURCE", MCP_SERVER), recordedParameters(audit));
         assertFalse(audit.getOutcome().getMessage().contains(assertion));
+    }
+
+    @Test
+    void shouldAddAdditionalDataToAuditParams() {
+        TokenRequest request = new TokenRequest();
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        Map<String, Object> additionalData = Map.of("AUTHZEN", Map.of("decision", true));
+        request.getExecutionContext().put(ConstantKeys.POLICY_AUDIT_DATA, additionalData);
+
+        Map<String, Object> params = OAuth2RequestParams.of(request);
+
+        assertEquals(additionalData, params.get(OAuth2RequestParams.ADDITIONAL_DATA));
+    }
+
+    @Test
+    void shouldSkipAdditionalDataWhenAbsent() {
+        TokenRequest request = new TokenRequest();
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+
+        assertFalse(OAuth2RequestParams.of(request).containsKey(OAuth2RequestParams.ADDITIONAL_DATA));
+
+        request.getExecutionContext().put(ConstantKeys.POLICY_AUDIT_DATA, Map.of());
+        assertFalse(OAuth2RequestParams.of(request).containsKey(OAuth2RequestParams.ADDITIONAL_DATA));
+
+        request.setExecutionContext(null);
+        assertTrue(OAuth2RequestParams.of(request).containsKey("GRANT_TYPE"));
     }
 
     private Map<String, Object> recordedParameters(Audit audit) {
