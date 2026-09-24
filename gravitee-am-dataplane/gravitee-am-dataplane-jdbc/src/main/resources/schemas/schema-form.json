@@ -24,6 +24,7 @@
     "port": {
       "type": "number",
       "minimum": 1,
+      "maximum": 65535,
       "title": "Database port"
     },
     "database": {
@@ -94,6 +95,22 @@
       "title": "Validation query",
       "description": "Set to validate pooled connections against the server rather than locally."
     },
+    "maxValidationTime": {
+      "type": "number",
+      "default": 5000,
+      "minimum": 0,
+      "title": "Maximum validation time (ms)",
+      "description": "Only used with a validation query."
+    },
+    "tcpKeepAlive": {
+      "type": "boolean",
+      "default": true,
+      "title": "TCP keep-alive"
+    },
+    "preferCursoredExecution": {
+      "type": "boolean",
+      "title": "Prefer cursored execution"
+    },
     "sslEnabled": {
       "type": "boolean",
       "default": false,
@@ -102,6 +119,36 @@
     "tlsProtocol": {
       "type": "string",
       "title": "TLS protocol"
+    },
+    "sslMode": {
+      "type": "string",
+      "title": "TLS mode",
+      "description": "Driver specific, e.g. verify-ca or verify-full."
+    },
+    "sslServerCert": {
+      "type": "string",
+      "title": "Server certificate",
+      "description": "Path to the certificate used to verify the server."
+    },
+    "trustStore": {
+      "type": "object",
+      "title": "Trust store",
+      "description": "Trust store used to verify the server certificate when TLS is enabled.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "title": "Trust store path"
+        },
+        "password": {
+          "type": "string",
+          "title": "Trust store password",
+          "widget": "password",
+          "sensitive": true
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
     },
     "trustServerCertificate": {
       "type": "boolean",
@@ -121,5 +168,6 @@
     {
       "required": ["driver", "host", "database"]
     }
-  ]
+  ],
+  "additionalProperties": false
 }
