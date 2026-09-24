@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.dataplane.config;
 
-import io.gravitee.json.validation.JsonSchemaValidatorImpl;
+import io.gravitee.am.plugins.handlers.api.core.StrictJsonSchemaValidator;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -32,7 +32,7 @@ class DataPlaneSchemaFormTest {
 
     private static final Path PLUGINS = Path.of("..", "gravitee-am-dataplane");
 
-    private final JsonSchemaValidatorImpl validator = new JsonSchemaValidatorImpl();
+    private final StrictJsonSchemaValidator validator = new StrictJsonSchemaValidator();
 
     private static String schemaOf(String plugin) {
         Path path = PLUGINS.resolve(plugin).resolve("src/main/resources/schemas/schema-form.json");
@@ -84,6 +84,31 @@ class DataPlaneSchemaFormTest {
     }
 
     @Test
+    void mongoSchemaRejectsAnUnknownKey() {
+        // a typo would otherwise be dropped and the plugin would fall back to its default
+        rejects(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": 27017, \"bogus\": \"x\"}", "bogus");
+        rejects(mongo(), "{\"dbName\": \"acme\", \"host\": \"mongo\"}", "dbName");
+        rejects(mongo(), "{\"dbname\": \"acme\", \"servers\": [{\"host\": \"m1\", \"Port\": 27017}]}", "Port");
+        rejects(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"truststore\": {\"path\": \"/etc/ts.jks\", \"pass\": \"x\"}}", "pass");
+    }
+
+    @Test
+    void mongoSchemaRejectsAPortOutOfRange() {
+        rejects(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": 99999}", "port");
+        rejects(mongo(), "{\"dbname\": \"acme\", \"servers\": [{\"host\": \"m1\", \"port\": 65536}]}", "port");
+        accepts(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": 65535}");
+    }
+
+    @Test
+    void mongoSchemaAcceptsTheKeyAndTrustStores() {
+        accepts(mongo(), """
+                {"dbname": "acme", "host": "mongo", "sslEnabled": true,
+                 "keystore": {"path": "/etc/ks.p12", "type": "PKCS12", "password": "secret", "keyPassword": "secret"},
+                 "truststore": {"path": "/etc/ts.jks", "type": "JKS", "password": "secret"}}
+                """);
+    }
+
+    @Test
     void jdbcSchemaAcceptsBothConnectionForms() {
         accepts(jdbc(), "{\"uri\": \"r2dbc:postgresql://pg:5432/gravitee-am-acme\"}");
         accepts(jdbc(), "{\"driver\": \"postgresql\", \"host\": \"pg\", \"port\": 5432, \"database\": \"acme\"}");
@@ -115,8 +140,7 @@ class DataPlaneSchemaFormTest {
     }
 
     @Test
-    void schemasToleratePropertiesTheyDoNotDescribe() {
-        accepts(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"keystore\": \"/etc/keystore.jks\"}");
+    void jdbcSchemaToleratesPropertiesItDoesNotDescribe() {
         accepts(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"preferCursoredExecution\": true}");
     }
 }
