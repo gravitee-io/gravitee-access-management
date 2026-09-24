@@ -143,6 +143,43 @@ describe('Orchestrator', () => {
         expect(orchestrator.runTests).toHaveBeenCalledWith(expect.any(String), 'ci:migration', 'specs/migration', 'beta');
     });
 
+    test('verify exposes the seeded versions and the deployed Management API version', async () => {
+        const testDir = mkdtempSync(join(tmpdir(), 'seed-'));
+        try {
+            mkdirSync(join(testDir, 'migration-seeding', 'versions', '4.11'), { recursive: true });
+            mkdirSync(join(testDir, 'migration-seeding', 'versions', '4.12'), { recursive: true });
+            options.testDir = testDir;
+            options.fromTag = '4.11.17';
+            options.toTag = '4.13.0-alpha.4';
+            orchestrator.runSeed = jest.fn();
+
+            await orchestrator.run(['deploy-from', 'seed-alpha']);
+            expect(orchestrator.getVersionEnv()).toEqual({
+                AM_MIGRATION_FROM_VERSION: '4.11',
+                AM_MIGRATION_TO_VERSION: '4.13',
+                AM_MIGRATION_MAPI_VERSION: '4.11.17',
+            });
+
+            await orchestrator.run(['upgrade-mapi', 'seed-beta']);
+            expect(orchestrator.getVersionEnv()).toEqual({
+                AM_MIGRATION_FROM_VERSION: '4.11',
+                AM_MIGRATION_TO_VERSION: '4.12',
+                AM_MIGRATION_MAPI_VERSION: '4.13.0-alpha.4',
+            });
+
+            await orchestrator.run(['downgrade-mapi']);
+            expect(orchestrator.getVersionEnv().AM_MIGRATION_MAPI_VERSION).toBe('4.11.17');
+        } finally {
+            rmSync(testDir, { recursive: true, force: true });
+        }
+    });
+
+    test('verify leaves out versions it cannot know', () => {
+        options.toTag = 'latest';
+
+        expect(orchestrator.getVersionEnv()).toEqual({ AM_MIGRATION_FROM_VERSION: '4.10' });
+    });
+
     test('migration tests should default to the alpha label', () => {
         expect(orchestrator.getMigrationTestLabel()).toBe('alpha');
     });
