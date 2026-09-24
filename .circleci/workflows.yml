@@ -1490,14 +1490,6 @@ jobs:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
-            # A fresh token: the deploy above runs the whole test suite and may outlive the first one (one hour).
-            - azure-artifacts-token
-            - run:
-                name: "Maven deploy to the Azure feed (releases)"
-                command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -P gio-artifactory-release,gio-release deploy -DskipTests \
-                    -DaltDeploymentRepository=azure-artifacts-gravitee::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1 \
-                    -DaltReleaseDeploymentRepository=azure-artifacts-gravitee::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1
       - when:
           condition: << parameters.dry_run>>
           steps:
