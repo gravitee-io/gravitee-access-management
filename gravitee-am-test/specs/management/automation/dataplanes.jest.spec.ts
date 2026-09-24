@@ -142,6 +142,17 @@ describe('Automation API data planes - update', () => {
   });
 });
 
+describe('Automation API data planes - payload validation', () => {
+  it.each(['B-two', 'b.one', 'b one', 'b_one', '-bone', 'bone-'])('should reject the id %p and name the id field', async (id) => {
+    const response = await fixture.client.putDataPlane(dataPlanePayload(id));
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual(
+      'id must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character',
+    );
+  });
+});
+
 describe('Automation API data planes - a domain keeps the plane it was created on', () => {
   it('should refuse an apply that moves a domain to another data plane', async () => {
     const id = fixture.reserveId('dp-pinned');
