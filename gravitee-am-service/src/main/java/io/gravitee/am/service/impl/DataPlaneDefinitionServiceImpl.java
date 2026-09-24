@@ -339,12 +339,15 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         if (!hasText(payload.getId())) {
             throw new InvalidParameterException("'id' is required");
         }
+        rejectLongerThan("id", payload.getId(), NewDataPlaneDefinition.ID_MAX_LENGTH);
         if (isReservedByConfiguration(payload.getId())) {
             throw new InvalidParameterException("'" + payload.getId() + "' is reserved for a data plane declared in the gravitee.yml");
         }
         if (!hasText(payload.getName())) {
             throw new InvalidParameterException("'name' is required");
         }
+        rejectLongerThan("name", payload.getName(), NewDataPlaneDefinition.NAME_MAX_LENGTH);
+        rejectLongerThan("gatewayUrl", payload.getGatewayUrl(), NewDataPlaneDefinition.GATEWAY_URL_MAX_LENGTH);
         if (!hasText(payload.getType())) {
             throw new InvalidParameterException("'type' is required");
         }
@@ -363,6 +366,12 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         definition.setEnvironmentId(hasText(payload.getEnvironmentId()) ? payload.getEnvironmentId() : Environment.DEFAULT);
         definition.setConfiguration(payload.getConfiguration().toString());
         return definition;
+    }
+
+    private static void rejectLongerThan(String field, String value, int maxLength) {
+        if (value != null && value.length() > maxLength) {
+            throw new InvalidParameterException("'" + field + "' must be at most " + maxLength + " characters");
+        }
     }
 
     // an id colliding with a gravitee.yml plane would persist but never register: the registry keeps
