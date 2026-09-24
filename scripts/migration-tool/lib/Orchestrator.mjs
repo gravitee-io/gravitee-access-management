@@ -18,6 +18,11 @@ export class Orchestrator {
         // Timestamp of the last log scan; each verify scan only covers logs since then so the
         // summary stays focused and the same ERROR lines aren't re-printed every stage.
         this._lastScanAt = Date.now();
+        // Seed data set run per channel label (alpha/beta), after any n-1 fallback, and the tag the
+        // Management API currently runs. Exposed to the verify specs so they can skip assertions the
+        // seeded data or the deployed version cannot satisfy.
+        this.seededVersions = {};
+        this.mapiVersion = null;
     }
 
     async run(stages, options = {}) {
@@ -76,6 +81,7 @@ export class Orchestrator {
                 break;
             case 'deploy-from':
                 await this.provider.deploy(this.options.fromTag);
+                this.mapiVersion = this.options.fromTag;
                 break;
             case 'seed':
             case 'seed-alpha':
@@ -83,6 +89,7 @@ export class Orchestrator {
                 break;
             case 'upgrade-mapi':
                 await this.provider.upgradeMapi(this.options.toTag);
+                this.mapiVersion = this.options.toTag;
                 break;
             case 'upgrade-gw':
                 await this.provider.upgradeGw(this.options.toTag);
@@ -93,6 +100,7 @@ export class Orchestrator {
                 break;
             case 'downgrade-mapi':
                 await this.provider.upgradeMapi(this.options.fromTag);
+                this.mapiVersion = this.options.fromTag;
                 break;
             case 'downgrade-gw':
                 await this.provider.upgradeGw(this.options.fromTag);
@@ -127,6 +135,7 @@ export class Orchestrator {
         const jestEnv = {
             ...process.env,
             ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}),
+            ...this.getVersionEnv(),
             AM_MIGRATION_TEST_LABEL: label || this.getMigrationTestLabel()
         };
         Object.assign(process.env, jestEnv);
@@ -164,6 +173,7 @@ export class Orchestrator {
             seedDir = await this.seedWorktree.resolveSeedDir(tag);
         }
         const version = resolveSeedVersion(seedDir || this.options.testDir, toMinorVersion(tag));
+        this.seededVersions[label] = version;
         const args = ['--version', version, '--label', label];
         if (seedDir) {
             console.log(`🌱 Seeding ${label} from worktree: ${seedDir}`);
@@ -209,6 +219,21 @@ export class Orchestrator {
         }
     }
 
+    /**
+     * Version context for the verify specs: AM_MIGRATION_FROM_VERSION / AM_MIGRATION_TO_VERSION are
+     * the data sets seeded on the alpha / beta channels (the tag's minor when this run did not seed
+     * it), AM_MIGRATION_MAPI_VERSION the deployed Management API tag. A value that is unknown — e.g.
+     * a single verify stage run on its own — is left out, so the specs assert everything.
+     */
+    getVersionEnv() {
+        const env = {
+            AM_MIGRATION_FROM_VERSION: this.seededVersions.alpha ?? minorVersionOrUndefined(this.options.fromTag),
+            AM_MIGRATION_TO_VERSION: this.seededVersions.beta ?? minorVersionOrUndefined(this.options.toTag),
+            AM_MIGRATION_MAPI_VERSION: this.mapiVersion ?? undefined,
+        };
+        return Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined));
+    }
+
     getMigrationTestLabel() {
         return this.options.testLabel || 'alpha';
     }
@@ -236,6 +261,10 @@ export function resolveSeedVersion(testDir, minorVersion) {
     throw new Error(
         `No seed data set for ${minorVersion}${previous ? ` nor ${previous}` : ''} in ${versionsDir}.`
     );
+}
+
+function minorVersionOrUndefined(version) {
+    return /^\d+\.\d+/.test(String(version)) ? toMinorVersion(version) : undefined;
 }
 
 function toMinorVersion(version) {
