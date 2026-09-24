@@ -17,6 +17,7 @@
       "type": "number",
       "default": 27017,
       "minimum": 1,
+      "maximum": 65535,
       "title": "MongoDB connection port"
     },
     "dbname": {
@@ -39,10 +40,12 @@
             "type": "number",
             "default": 27017,
             "minimum": 1,
+            "maximum": 65535,
             "title": "Member port"
           }
         },
-        "required": ["host"]
+        "required": ["host"],
+        "additionalProperties": false
       }
     },
     "username": {
@@ -137,6 +140,61 @@
       "type": "boolean",
       "default": false,
       "title": "Allow an invalid host name"
+    },
+    "keystore": {
+      "type": "object",
+      "title": "Client key store",
+      "description": "Key store holding the client certificate presented when TLS is enabled.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "title": "Key store path"
+        },
+        "type": {
+          "type": "string",
+          "title": "Key store type"
+        },
+        "password": {
+          "type": "string",
+          "title": "Key store password",
+          "widget": "password",
+          "sensitive": true
+        },
+        "keyPassword": {
+          "type": "string",
+          "title": "Key password",
+          "widget": "password",
+          "sensitive": true
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    },
+    "truststore": {
+      "type": "object",
+      "title": "Trust store",
+      "description": "Trust store used to verify the server certificate when TLS is enabled.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "title": "Trust store path"
+        },
+        "type": {
+          "type": "string",
+          "title": "Trust store type"
+        },
+        "password": {
+          "type": "string",
+          "title": "Trust store password",
+          "widget": "password",
+          "sensitive": true
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }
