@@ -26,6 +26,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Date;
@@ -33,12 +35,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -172,6 +172,38 @@ class DataPlanesResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class).contains("id must be lowercase alphanumeric"));
         verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"not a url", "gw.example.com", "/relative/path", "ftp://gw.example.com", "https://", "HTTPS://gw.example.com", "Http://gw.example.com"})
+    void put_rejects_a_gateway_url_that_is_not_an_absolute_http_url(String gatewayUrl) {
+        givenEnvironmentHolds();
+        AutomationDataPlane definition = definition(DATA_PLANE_ID);
+        definition.setGatewayUrl(gatewayUrl);
+
+        Response response = put(dataPlanesTarget(), definition);
+
+        assertEquals(400, response.getStatus());
+        String body = readEntity(response, String.class);
+        assertTrue(body.contains("'gatewayUrl' must be an absolute http(s) URL"), body);
+        verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   ", "http://localhost:8092", "https://gw.example.com/am?x=1"})
+    void put_leaves_a_blank_or_absolute_http_gateway_url_to_the_service(String gatewayUrl) {
+        givenEnvironmentHolds();
+        when(dataPlaneDefinitionService.create(any(), any(), any()))
+                .thenReturn(Single.just(summary(DATA_PLANE_ID, ManagedBy.AUTOMATION_API)));
+        AutomationDataPlane definition = definition(DATA_PLANE_ID);
+        definition.setGatewayUrl(gatewayUrl);
+
+        Response response = put(dataPlanesTarget(), definition);
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<NewDataPlaneDefinition> captor = ArgumentCaptor.forClass(NewDataPlaneDefinition.class);
+        verify(dataPlaneDefinitionService).create(captor.capture(), eq(ManagedBy.AUTOMATION_API), any());
+        assertEquals(gatewayUrl, captor.getValue().getGatewayUrl());
     }
 
     @Test
