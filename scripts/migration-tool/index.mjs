@@ -311,7 +311,7 @@ function printHelp() {
     console.log('  --keep-worktrees  Do not delete the .worktrees/seed-<ref> dirs after the run (debugging)');
     console.log('\nSeeding source:');
     console.log('  By default every tag is seeded from the current checkout, with the seed module of the tag\'s');
-    console.log('  major.minor (or the previous minor when that one is missing). With --seed-worktree each tag is');
+    console.log('  major.minor (4.13.0-alpha.4 -> versions/4.13; no fallback). With --seed-worktree each tag is');
     console.log('  seeded from a git worktree of that tag (its own SDK + scripts; npm ci once per worktree);');
     console.log('  tags predating the migration-seeding framework then fall back to the current checkout.');
     console.log('\nStages (default pipeline order):');
