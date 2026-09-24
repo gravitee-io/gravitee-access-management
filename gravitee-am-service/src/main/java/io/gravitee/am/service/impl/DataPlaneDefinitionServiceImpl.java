@@ -410,7 +410,7 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         try {
             URI uri = new URI(gatewayUrl);
             String scheme = uri.getScheme();
-            if (("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && hasText(uri.getHost())) {
+            if (("http".equals(scheme) || "https".equals(scheme)) && hasText(uri.getHost())) {
                 return gatewayUrl;
             }
         } catch (URISyntaxException e) {
