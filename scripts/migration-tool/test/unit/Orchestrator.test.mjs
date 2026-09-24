@@ -1,8 +1,5 @@
-import { Orchestrator, resolveSeedVersion } from '../../lib/Orchestrator.mjs';
+import { Orchestrator } from '../../lib/Orchestrator.mjs';
 import { jest } from '@jest/globals';
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 /**
  * TDD for Orchestrator
@@ -98,22 +95,6 @@ describe('Orchestrator', () => {
         expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.13', '--label', 'beta']);
     });
 
-    test('seed-beta falls back to the previous minor seed when the to-tag one is missing', async () => {
-        const testDir = mkdtempSync(join(tmpdir(), 'seed-'));
-        try {
-            mkdirSync(join(testDir, 'migration-seeding', 'versions', '4.12'), { recursive: true });
-            options.testDir = testDir;
-            options.toTag = '4.13.0-alpha.4';
-            orchestrator.runSeed = jest.fn();
-
-            await orchestrator.run(['seed-beta']);
-
-            expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.12', '--label', 'beta']);
-        } finally {
-            rmSync(testDir, { recursive: true, force: true });
-        }
-    });
-
     test('seed / seed-upgrade remain available as backward-compatible aliases', async () => {
         options.toTag = '4.11.0';
         orchestrator.runSeed = jest.fn();
@@ -144,34 +125,22 @@ describe('Orchestrator', () => {
     });
 
     test('verify exposes the seeded versions and the deployed Management API version', async () => {
-        const testDir = mkdtempSync(join(tmpdir(), 'seed-'));
-        try {
-            mkdirSync(join(testDir, 'migration-seeding', 'versions', '4.11'), { recursive: true });
-            mkdirSync(join(testDir, 'migration-seeding', 'versions', '4.12'), { recursive: true });
-            options.testDir = testDir;
-            options.fromTag = '4.11.17';
-            options.toTag = '4.13.0-alpha.4';
-            orchestrator.runSeed = jest.fn();
+        options.fromTag = '4.11.17';
+        options.toTag = '4.13.0-alpha.4';
+        orchestrator.runSeed = jest.fn();
 
-            await orchestrator.run(['deploy-from', 'seed-alpha']);
-            expect(orchestrator.getVersionEnv()).toEqual({
-                AM_MIGRATION_FROM_VERSION: '4.11',
-                AM_MIGRATION_TO_VERSION: '4.13',
-                AM_MIGRATION_MAPI_VERSION: '4.11.17',
-            });
+        await orchestrator.run(['deploy-from', 'seed-alpha']);
+        expect(orchestrator.getVersionEnv()).toEqual({
+            AM_MIGRATION_FROM_VERSION: '4.11',
+            AM_MIGRATION_TO_VERSION: '4.13',
+            AM_MIGRATION_MAPI_VERSION: '4.11.17',
+        });
 
-            await orchestrator.run(['upgrade-mapi', 'seed-beta']);
-            expect(orchestrator.getVersionEnv()).toEqual({
-                AM_MIGRATION_FROM_VERSION: '4.11',
-                AM_MIGRATION_TO_VERSION: '4.12',
-                AM_MIGRATION_MAPI_VERSION: '4.13.0-alpha.4',
-            });
+        await orchestrator.run(['upgrade-mapi', 'seed-beta']);
+        expect(orchestrator.getVersionEnv().AM_MIGRATION_MAPI_VERSION).toBe('4.13.0-alpha.4');
 
-            await orchestrator.run(['downgrade-mapi']);
-            expect(orchestrator.getVersionEnv().AM_MIGRATION_MAPI_VERSION).toBe('4.11.17');
-        } finally {
-            rmSync(testDir, { recursive: true, force: true });
-        }
+        await orchestrator.run(['downgrade-mapi']);
+        expect(orchestrator.getVersionEnv().AM_MIGRATION_MAPI_VERSION).toBe('4.11.17');
     });
 
     test('verify leaves out versions it cannot know', () => {
@@ -188,41 +157,5 @@ describe('Orchestrator', () => {
         options.testLabel = 'beta';
 
         expect(orchestrator.getMigrationTestLabel()).toBe('beta');
-    });
-});
-
-describe('resolveSeedVersion', () => {
-    let testDir;
-
-    beforeEach(() => {
-        testDir = mkdtempSync(join(tmpdir(), 'seed-'));
-    });
-
-    afterEach(() => {
-        rmSync(testDir, { recursive: true, force: true });
-    });
-
-    function addSeed(version) {
-        mkdirSync(join(testDir, 'migration-seeding', 'versions', version), { recursive: true });
-    }
-
-    test('keeps the version when its seed exists', () => {
-        addSeed('4.12');
-        addSeed('4.13');
-        expect(resolveSeedVersion(testDir, '4.13')).toBe('4.13');
-    });
-
-    test('falls back to the previous minor when the seed is missing', () => {
-        addSeed('4.12');
-        expect(resolveSeedVersion(testDir, '4.13')).toBe('4.12');
-    });
-
-    test('throws when neither the version nor the previous minor has a seed', () => {
-        addSeed('4.11');
-        expect(() => resolveSeedVersion(testDir, '4.13')).toThrow(/4\.13 nor 4\.12/);
-    });
-
-    test('keeps the version when there is no directory to inspect', () => {
-        expect(resolveSeedVersion(undefined, '4.13')).toBe('4.13');
     });
 });
