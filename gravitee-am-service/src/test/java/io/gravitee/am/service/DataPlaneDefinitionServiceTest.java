@@ -29,11 +29,13 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.dataplane.api.DataPlane;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.model.DataPlaneDefinition;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
@@ -63,9 +65,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.mock.env.MockEnvironment;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,6 +118,11 @@ class DataPlaneDefinitionServiceTest {
     @Mock
     private MultiDataPlaneLoader configurationLoader;
 
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
+
+    private final MockEnvironment springEnvironment = new MockEnvironment();
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final PluginConfigurationValidatorsRegistry validatorsRegistry = new PluginConfigurationValidatorsRegistry();
@@ -131,7 +141,9 @@ class DataPlaneDefinitionServiceTest {
                 List.of(new MongoDataPlaneConfigHandler(), new JdbcDataPlaneConfigHandler()),
                 auditService,
                 eventService,
-                configurationLoader);
+                configurationLoader,
+                dataPlaneRegistry,
+                springEnvironment);
 
         when(dataPlanePluginManager.get("dataplane-am-mongodb")).thenReturn(mock(DataPlane.class));
         when(dataPlanePluginManager.get("dataplane-am-jdbc")).thenReturn(mock(DataPlane.class));
@@ -946,6 +958,56 @@ class DataPlaneDefinitionServiceTest {
 
         verify(dataPlaneDefinitionRepository).update(any());
         assertThat(readTree(stored.getConfiguration())).isEqualTo(readTree(MONGO_CONFIGURATION));
+    }
+
+    @Test
+    void shouldFindTheDeclaredAndLinkedDataPlanes_standalone() {
+        when(dataPlaneDefinitionRepository.findByEnvironmentId(Environment.DEFAULT))
+                .thenReturn(Flowable.just(definition("env-dp", Environment.DEFAULT), definition("not-loaded-dp", Environment.DEFAULT)));
+        when(configurationLoader.declaredIds()).thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "env-dp", "other-env-dp");
+
+        service.findByOrganizationAndEnvironment(Organization.DEFAULT, Environment.DEFAULT)
+                .map(DataPlaneDescription::id)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValues(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "env-dp");
+    }
+
+    @Test
+    void shouldFindOnlyTheLinkedDataPlanes_managedCloud() {
+        springEnvironment.setProperty("cloud.enabled", "true");
+        springEnvironment.setProperty("installation.type", "managed");
+        when(dataPlaneDefinitionRepository.findByEnvironmentId(Environment.DEFAULT))
+                .thenReturn(Flowable.just(definition("env-dp", Environment.DEFAULT)));
+        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "env-dp", "other-env-dp");
+
+        service.findByOrganizationAndEnvironment(Organization.DEFAULT, Environment.DEFAULT)
+                .map(DataPlaneDescription::id)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValues("env-dp");
+        verify(configurationLoader, never()).declaredIds();
+    }
+
+    @Test
+    void shouldNotFindTheDataPlanesOfAnotherOrganization() {
+        DataPlaneDefinition foreign = definition("foreign-dp", Environment.DEFAULT);
+        foreign.setOrganizationId("another-org");
+        when(dataPlaneDefinitionRepository.findByEnvironmentId(Environment.DEFAULT)).thenReturn(Flowable.just(foreign));
+        stubLoadedDataPlanes("foreign-dp");
+
+        service.findByOrganizationAndEnvironment(Organization.DEFAULT, Environment.DEFAULT)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoValues()
+                .assertComplete();
+    }
+
+    private void stubLoadedDataPlanes(String... ids) {
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(Arrays.stream(ids)
+                .map(id -> new DataPlaneDescription(id, id, "mongodb", "test", null))
+                .toList());
     }
 
     private NewDataPlaneDefinition replayOf(DataPlaneDefinition stored) {
