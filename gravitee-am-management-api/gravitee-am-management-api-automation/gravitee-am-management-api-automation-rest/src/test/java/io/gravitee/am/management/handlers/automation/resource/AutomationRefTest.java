@@ -75,6 +75,18 @@ class AutomationRefTest {
     }
 
     @Test
+    void names_the_key_field_when_a_key_violates_the_pattern() {
+        var error = assertThrows(InvalidParameterException.class, () -> AutomationRef.parse("Has-Caps"));
+        assertTrue(error.getMessage().startsWith("key must be lowercase alphanumeric"));
+    }
+
+    @Test
+    void names_the_given_field_when_a_key_violates_the_pattern() {
+        var error = assertThrows(InvalidParameterException.class, () -> AutomationRef.parse("B-two", "id"));
+        assertTrue(error.getMessage().startsWith("id must be lowercase alphanumeric"));
+    }
+
+    @Test
     void rejects_a_key_exceeding_the_length_bound() {
         String tooLong = "a".repeat(AutomationRef.MAX_KEY_LENGTH + 1);
         assertThrows(InvalidParameterException.class, () -> AutomationRef.parse(tooLong));
