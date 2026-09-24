@@ -62,6 +62,7 @@ export class DomainCreationComponent implements OnInit {
       },
       (error: unknown) => {
         this.createDomainBtn.nativeElement.loading = false;
+        this.createDomainBtn.nativeElement.disabled = false;
         this.snackbarService.openFromComponent('Errors', [get(error, 'error.message')]);
       },
     );
