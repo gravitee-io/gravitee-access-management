@@ -135,7 +135,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -492,23 +491,6 @@ public class DomainServiceImpl implements DomainService {
                 .flatMap(linkedForEnv -> cloudEnabled
                         ? resolveDataPlaneIdForCloud(requestedId, linkedForEnv)
                         : resolveDataPlaneIdForStandalone(environmentId, requestedId, linkedForEnv));
-    }
-
-    @Override
-    public Single<List<DataPlaneDescription>> listSelectableDataPlanes(String organizationId, String environmentId) {
-        return dataPlaneDefinitionService.findByEnvironmentId(environmentId)
-                .filter(definition -> organizationId.equals(definition.organizationId()))
-                .map(DataPlaneDefinitionSummary::id)
-                .collect(HashSet<String>::new, Set::add)
-                .map(linkedForEnv -> {
-                    // Same rule as resolveDataPlaneId: managed cloud only takes the environment's planes.
-                    Set<String> declared = CloudProperties.isManagedCloudEnabled(springEnvironment)
-                            ? Set.of()
-                            : dataPlaneConfigurationLoader.declaredIds();
-                    return dataPlaneRegistry.getDataPlanes().stream()
-                            .filter(dataPlane -> linkedForEnv.contains(dataPlane.id()) || declared.contains(dataPlane.id()))
-                            .toList();
-                });
     }
 
     private Single<String> resolveDataPlaneIdForCloud(String requestedId, List<String> linkedForEnv) {

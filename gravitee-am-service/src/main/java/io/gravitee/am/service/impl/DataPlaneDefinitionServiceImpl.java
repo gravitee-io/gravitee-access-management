@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
@@ -31,6 +32,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.repository.management.api.DataPlaneDefinitionRepository;
@@ -61,6 +63,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -87,6 +90,8 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     private final AuditService auditService;
     private final EventService eventService;
     private final MultiDataPlaneLoader configurationLoader;
+    private final DataPlaneRegistry dataPlaneRegistry;
+    private final org.springframework.core.env.Environment springEnvironment;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -99,7 +104,9 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
                                           List<DataPlaneConfigHandler> configHandlers,
                                           AuditService auditService,
                                           EventService eventService,
-                                          MultiDataPlaneLoader configurationLoader) {
+                                          MultiDataPlaneLoader configurationLoader,
+                                          @Lazy DataPlaneRegistry dataPlaneRegistry,
+                                          org.springframework.core.env.Environment springEnvironment) {
         this.dataPlaneDefinitionRepository = dataPlaneDefinitionRepository;
         this.domainRepository = domainRepository;
         this.organizationService = organizationService;
@@ -110,6 +117,8 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
         this.auditService = auditService;
         this.eventService = eventService;
         this.configurationLoader = configurationLoader;
+        this.dataPlaneRegistry = dataPlaneRegistry;
+        this.springEnvironment = springEnvironment;
     }
 
     @Override
@@ -225,6 +234,23 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
     public Flowable<DataPlaneDefinitionSummary> findByEnvironmentId(String environmentId) {
         log.debug("Find data plane definitions for environment {}", environmentId);
         return dataPlaneDefinitionRepository.findByEnvironmentId(environmentId).map(this::toSummary);
+    }
+
+    @Override
+    public Flowable<DataPlaneDescription> findByOrganizationAndEnvironment(String organizationId, String environmentId) {
+        log.debug("Find data planes for organization {} and environment {}", organizationId, environmentId);
+        return dataPlaneDefinitionRepository.findByEnvironmentId(environmentId)
+                .filter(definition -> organizationId.equals(definition.getOrganizationId()))
+                .map(DataPlaneDefinition::getId)
+                .collect(HashSet<String>::new, Set::add)
+                .flattenStreamAsFlowable(linkedIds -> {
+                    // Same rule as domain creation: managed cloud only takes the environment's planes.
+                    Set<String> declaredIds = CloudProperties.isManagedCloudEnabled(springEnvironment)
+                            ? Set.of()
+                            : configurationLoader.declaredIds();
+                    return dataPlaneRegistry.getDataPlanes().stream()
+                            .filter(dataPlane -> linkedIds.contains(dataPlane.id()) || declaredIds.contains(dataPlane.id()));
+                });
     }
 
     @Override
