@@ -93,6 +93,12 @@ class DataPlaneSchemaFormTest {
     }
 
     @Test
+    void mongoSchemaAcceptsANullValueForADeclaredKeyOnly() {
+        accepts(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": null, \"username\": null, \"truststore\": null}");
+        rejects(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"bogus\": null}", "bogus");
+    }
+
+    @Test
     void mongoSchemaRejectsAPortOutOfRange() {
         rejects(mongo(), "{\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": 99999}", "port");
         rejects(mongo(), "{\"dbname\": \"acme\", \"servers\": [{\"host\": \"m1\", \"port\": 65536}]}", "port");
@@ -145,6 +151,12 @@ class DataPlaneSchemaFormTest {
         rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"bogus\": \"x\"}", "bogus");
         rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"userName\": \"am\"}", "userName");
         rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"trustStore\": {\"path\": \"/etc/ts.jks\", \"pass\": \"x\"}}", "pass");
+    }
+
+    @Test
+    void jdbcSchemaAcceptsANullValueForADeclaredKeyOnly() {
+        accepts(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"port\": null, \"database\": \"acme\", \"schema\": null}");
+        rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"userName\": null}", "userName");
     }
 
     @Test

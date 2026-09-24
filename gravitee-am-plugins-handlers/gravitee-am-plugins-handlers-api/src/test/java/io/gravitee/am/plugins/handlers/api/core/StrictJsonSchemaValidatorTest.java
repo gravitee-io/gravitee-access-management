@@ -18,6 +18,7 @@ package io.gravitee.am.plugins.handlers.api.core;
 import io.gravitee.json.validation.InvalidJsonException;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,7 +30,20 @@ class StrictJsonSchemaValidatorTest {
               "type": "object",
               "properties": {
                 "host": { "type": "string" },
-                "port": { "type": "number", "default": 27017, "maximum": 65535 }
+                "port": { "type": "number", "default": 27017, "maximum": 65535 },
+                "tls": {
+                  "type": "object",
+                  "properties": { "path": { "type": "string" } },
+                  "additionalProperties": false
+                },
+                "servers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": { "host": { "type": "string" }, "port": { "type": "number" } },
+                    "additionalProperties": false
+                  }
+                }
               },
               "required": ["host", "port"],
               "additionalProperties": false
@@ -62,7 +76,35 @@ class StrictJsonSchemaValidatorTest {
     }
 
     @Test
-    void shouldRejectANullValueInsteadOfClearingIt() {
+    void shouldAcceptANullValueForADeclaredProperty() {
+        String json = "{\"host\":\"mongo\",\"port\":27017,\"tls\":null,\"servers\":[{\"host\":\"m1\",\"port\":null}]}";
+
+        assertEquals(json, validator.validate(SCHEMA, json));
+    }
+
+    @Test
+    void shouldAcceptANullValueForADeclaredNestedProperty() {
+        assertDoesNotThrow(() -> validator.validate(SCHEMA, "{\"host\":\"mongo\",\"port\":27017,\"tls\":{\"path\":null}}"));
+    }
+
+    @Test
+    void shouldRejectANullValueForAnUndeclaredProperty() {
+        InvalidJsonException ex = assertThrows(InvalidJsonException.class,
+                () -> validator.validate(SCHEMA, "{\"host\":\"mongo\",\"port\":27017,\"bogus\":null}"));
+
+        assertTrue(ex.getMessage().contains("bogus"), ex.getMessage());
+    }
+
+    @Test
+    void shouldRejectANullValueForAnUndeclaredNestedProperty() {
+        InvalidJsonException ex = assertThrows(InvalidJsonException.class,
+                () -> validator.validate(SCHEMA, "{\"host\":\"mongo\",\"port\":27017,\"servers\":[{\"host\":\"m1\",\"Port\":null}]}"));
+
+        assertTrue(ex.getMessage().contains("Port"), ex.getMessage());
+    }
+
+    @Test
+    void shouldTreatANullRequiredPropertyAsMissing() {
         InvalidJsonException ex = assertThrows(InvalidJsonException.class,
                 () -> validator.validate(SCHEMA, "{\"host\":\"mongo\",\"port\":null}"));
 
