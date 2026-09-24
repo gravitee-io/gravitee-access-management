@@ -42,6 +42,7 @@ public interface ConstantKeys {
     String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     String RAW_TOKEN_CONTEXT_KEY = "raw_token";
     String TOKEN_CONTEXT_KEY = "token";
+    String POLICY_AUDIT_DATA = "policyAuditData";
     String SILENT_AUTH_CONTEXT_KEY = "silentAuth";
     String RETURN_URL_KEY = "return_url";
     String ID_TOKEN_KEY = "id_token";
