@@ -36,8 +36,6 @@ setup(200000);
 
 let fixture: AutomationDataPlaneFixture;
 
-// AM-7755: the JDBC columns (id 64, name 128) are narrower than the documented 255
-const itMongo = process.env.REPOSITORY_TYPE !== 'jdbc' ? it : it.skip;
 // the repoint case needs a second, empty database of the same type, which the JDBC stack does not have
 const describeMongo = process.env.REPOSITORY_TYPE !== 'jdbc' ? describe : describe.skip;
 // a fixed name so runs do not each leave a database behind; user counts are per domain, so sharing it is safe
@@ -249,16 +247,27 @@ describe('Automation API data planes - permissions', () => {
 
 describe('Automation API data planes - stored limits', () => {
   // field validation is covered by DataPlaneDefinitionServiceTest; this shows the backend can store what the API accepts
-  itMongo('should store an id of 255 characters, the documented maximum', async () => {
+  it('should store every field at its documented maximum', async () => {
     // the padded id is not the one the fixture reserved, so it is deleted here
-    const longest = fixture.reserveId('dp-len').padEnd(255, 'x');
+    const longest = fixture.reserveId('dp-len').padEnd(64, 'x');
+    const gatewayUrl = 'https://gateway.example.com/'.padEnd(256, 'g');
 
     try {
-      expect((await fixture.client.putDataPlane(dataPlanePayload(longest))).status).toBe(200);
-      expect((await fixture.client.getDataPlane(longest)).status).toBe(200);
+      expect((await fixture.client.putDataPlane(dataPlanePayload(longest, { name: 'n'.repeat(128), gatewayUrl }))).status).toBe(200);
+      const read = await fixture.client.getDataPlane(longest);
+      expect(read.status).toBe(200);
+      expect(read.body.name).toHaveLength(128);
+      expect(read.body.gatewayUrl).toEqual(gatewayUrl);
     } finally {
       await fixture.client.deleteDataPlane(longest);
     }
+  });
+
+  it('should refuse an id past the documented maximum with a 400', async () => {
+    const response = await fixture.client.putDataPlane(dataPlanePayload(fixture.reserveId('dp-len').padEnd(65, 'x')));
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('size must be between 1 and 64');
   });
 });
 
