@@ -178,7 +178,7 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 | `--test-label` | Seed channel (`alpha`/`beta`) asserted by ad-hoc migration Jest tests | `alpha` |
 | `--with-downgrade` | After the full upgrade, downgrade back to from-tag and re-verify | `false` (CLI); CircleCI migration workflow may default to `true` |
 | `--test-dir` | Test suite directory (relative or absolute); overrides config default | From `Config.test.dir` or `AM_MIGRATION_TEST_DIR` |
-| `--no-seed-worktree` | Seed from the current checkout for all tags (disable per-tag worktree seeding) | worktree seeding on |
+| `--seed-worktree` | Seed each tag from a git worktree of that tag instead of the current checkout | `false` (current checkout) |
 | `--keep-worktrees` | Keep the `.worktrees/seed-<ref>` dirs after the run (debugging) | `false` (removed) |
 
 ---
@@ -244,7 +244,7 @@ The seed runner takes `--version <major.minor>` (which seed module / data shape 
 
 For each channel, the seed duplicates the full data set onto every data plane id listed by `AM_DOMAIN_DATA_PLANE_ID` (primary) and `AM_DOMAIN_DATA_PLANE_ID_DP2` (second, set automatically by the k8s tool). Entities are named by an **instance label** (`<channel>-<dataPlaneId>`), so a single `seed(label)` call produces one isolated domain per data plane. With no second-data-plane env (local runs) it seeds just one.
 
-Seed and verify through the orchestrator so the version (`--version`)/label/`AM_MIGRATION_TEST_LABEL` wiring — and the git-worktree seeding below — happen automatically. Each `--stage` assumes the environment is already deployed (see the single-stage caveat above):
+Seed and verify through the orchestrator so the version (`--version`)/label/`AM_MIGRATION_TEST_LABEL` wiring happens automatically. Each `--stage` assumes the environment is already deployed (see the single-stage caveat above):
 
 ```bash
 # Seed the from-tag (alpha) channel into an already-deployed environment
@@ -259,41 +259,48 @@ Seed and verify through the orchestrator so the version (`--version`)/label/`AM_
 
 When running through the migration tool, `AM_MIGRATION_TEST_LABEL` is set automatically per stage (`alpha` for `*-alpha` stages, `beta` for `*-beta` stages; ad-hoc generic verify stages use `--test-label`, default `alpha`).
 
-> **Low-level escape hatch (debugging only).** The orchestrator stages ultimately invoke the `gravitee-am-test` npm scripts directly, which you can run by hand — but these run from the **current checkout** and bypass the worktree seeding below, so the version-correct SDK/scripts are *not* used:
+> **Low-level escape hatch (debugging only).** The orchestrator stages ultimately invoke the `gravitee-am-test` npm scripts directly, which you can run by hand — but these bypass the version wiring (seed fallback, `AM_MIGRATION_*_VERSION`), so the specs assert everything:
 > ```bash
 > npm --prefix gravitee-am-test run migration:seed -- --version 4.10 --label alpha
 > AM_MIGRATION_TEST_LABEL=alpha npm --prefix gravitee-am-test run ci:migration
 > ```
 
-### Version-correct seeding via git worktrees
+### Seed source
 
-By default each tag is seeded from a **git worktree of that tag**, so the seed runs against that
-version's *own* committed Management API SDK (`gravitee-am-test/api/management`) and
-`migration-seeding` scripts rather than the current branch's. The `seed-alpha` stage uses a worktree
-of `--from-tag`; `seed-beta` uses a worktree of `--to-tag`. AM itself still runs from the published
-`graviteeio/am-*:<tag>` Docker image — the worktree provides **only** the TS seed tooling, so there
-is no Maven build.
+By default every tag is seeded from the **current checkout**: `seed-alpha` runs
+`migration-seeding/versions/<major.minor of --from-tag>` and `seed-beta` the one of `--to-tag`
+(pre-release suffixes such as `-alpha.4` are ignored). When the checkout has no module for that
+version — e.g. a `4.13.0-alpha` tag before `versions/4.13` exists — the previous minor's module is
+seeded instead; when that one is missing too, the stage fails. Version-specific payloads belong in
+the per-version module (over raw HTTP when the current SDK no longer models them), not in an older
+checkout.
 
-Mechanics (`lib/core/SeedWorktree.mjs`):
+The verify stages receive the seeded and deployed versions so the specs can skip what the data or
+the running Management API cannot satisfy:
+
+| Variable | Value |
+|----------|-------|
+| `AM_MIGRATION_FROM_VERSION` | Seed module run on the alpha channel (after fallback) |
+| `AM_MIGRATION_TO_VERSION` | Seed module run on the beta channel (after fallback) |
+| `AM_MIGRATION_MAPI_VERSION` | Management API tag currently deployed (set by `deploy-from`, `upgrade-mapi`, `downgrade-mapi`) |
+
+#### Opt-in: seeding from a worktree of the tag (`--seed-worktree`)
+
+With `--seed-worktree`, each tag is seeded from a **git worktree of that tag**, so the seed runs
+against that version's *own* committed Management API SDK and `migration-seeding` scripts. AM
+itself still runs from the published Docker image; the worktree provides only the TS seed tooling.
 
 - Worktrees are cached under `<repoRoot>/.worktrees/seed-<ref>` (git-ignored). The ref is fetched
-  (`git fetch --tags`) if not present locally; tags, branches, and commits are all accepted.
-- `npm ci` runs **once** per worktree (skipped when `node_modules` already exists), installing that
-  tag's exact committed lockfile.
+  (`git fetch --tags`) if not present locally.
+- `npm ci` runs **once** per worktree (skipped when `node_modules` already exists).
 - Worktrees are removed after the run unless `--keep-worktrees` is passed.
+- A tag that predates the `migration-seeding/` framework falls back to the current checkout.
 
-**Going-forward fallback.** If a tag predates the `migration-seeding/` framework (i.e. the directory
-is absent in that tag — today's `4.10.x`/`4.11.x`/`4.12.x`), the tool logs a notice and seeds from
-the **current checkout** instead. So newer-vs-newer migrations get version-correct seeding while
-older from-tags transparently keep working. Pass `--no-seed-worktree` to force current-checkout
-seeding for every tag.
+A tag's seed is frozen when the tag is cut: seeds added or fixed afterwards on the branch are not
+seen, which is why this is not the default.
 
-Because no published tag ships the framework yet, the mechanism can be exercised today by passing a
-ref that *does* contain it — e.g. the current branch — as `--from-tag`.
-
-Prefer adding seeds before or during the release where the data shape is introduced, so that release's
-tag carries a version-correct seed. For older releases (fallback to current checkout), keep seed data
-to API fields accepted by that older AM version.
+Add a version's seed module before or during the release where the data shape is introduced, and
+keep each module to the API fields accepted by that AM version.
 
 ---
 
