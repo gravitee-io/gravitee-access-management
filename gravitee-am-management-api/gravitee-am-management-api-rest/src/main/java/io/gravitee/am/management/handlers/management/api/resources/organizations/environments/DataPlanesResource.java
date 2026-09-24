@@ -17,9 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.dataplane.api.DataPlane;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -44,7 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class DataPlanesResource extends AbstractResource {
 
     @Autowired
-    private DomainService domainService;
+    private DataPlaneDefinitionService dataPlaneDefinitionService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -64,7 +64,7 @@ public class DataPlanesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, Permission.DATA_PLANE, Acl.READ)
-                .andThen(domainService.listSelectableDataPlanes(organizationId, environmentId))
+                .andThen(dataPlaneDefinitionService.findByOrganizationAndEnvironment(organizationId, environmentId).toList())
                 .subscribe(response::resume, response::resume);
     }
 
