@@ -694,6 +694,7 @@
                         <exclude>node_modules/**</exclude>
                         <exclude>**/node_modules/**</exclude>
                         <exclude>dist/**</exclude>
+                        <exclude>target/**</exclude>
                         <exclude>.tmp/**</exclude>
                         <exclude>bower_components/**</exclude>
                         <exclude>.*</exclude>
