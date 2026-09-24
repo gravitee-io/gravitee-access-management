@@ -30,6 +30,11 @@ import lombok.Setter;
 @Setter
 public class NewDataPlaneDefinition {
 
+    // the widths of the JDBC columns; domains, events and audits hold the id in 64 characters too
+    public static final int ID_MAX_LENGTH = 64;
+    public static final int NAME_MAX_LENGTH = 128;
+    public static final int GATEWAY_URL_MAX_LENGTH = 256;
+
     private String id;
 
     private String name;

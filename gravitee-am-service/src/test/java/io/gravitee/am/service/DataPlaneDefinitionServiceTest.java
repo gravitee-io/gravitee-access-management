@@ -317,6 +317,43 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
+    void shouldRejectAnIdLongerThanTheLimit() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setId("i".repeat(NewDataPlaneDefinition.ID_MAX_LENGTH + 1));
+
+        assertRejected(payload, InvalidParameterException.class, "'id' must be at most 64 characters");
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldRejectANameLongerThanTheLimit() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setName("n".repeat(NewDataPlaneDefinition.NAME_MAX_LENGTH + 1));
+
+        assertRejected(payload, InvalidParameterException.class, "'name' must be at most 128 characters");
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldRejectAGatewayUrlLongerThanTheLimit() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setGatewayUrl("https://" + "g".repeat(NewDataPlaneDefinition.GATEWAY_URL_MAX_LENGTH));
+
+        assertRejected(payload, InvalidParameterException.class, "'gatewayUrl' must be at most 256 characters");
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldAcceptEachFieldAtItsLimit() {
+        NewDataPlaneDefinition payload = payload();
+        payload.setId("i".repeat(NewDataPlaneDefinition.ID_MAX_LENGTH));
+        payload.setName("n".repeat(NewDataPlaneDefinition.NAME_MAX_LENGTH));
+        payload.setGatewayUrl("https://" + "g".repeat(NewDataPlaneDefinition.GATEWAY_URL_MAX_LENGTH - "https://".length()));
+
+        service.create(payload, ManagedBy.NONE, null).test().awaitDone(10, TimeUnit.SECONDS).assertComplete().assertNoErrors();
+    }
+
+    @Test
     void shouldRejectATypeWithNoDeployedPlugin() {
         NewDataPlaneDefinition payload = payload();
         payload.setType("cassandra");
