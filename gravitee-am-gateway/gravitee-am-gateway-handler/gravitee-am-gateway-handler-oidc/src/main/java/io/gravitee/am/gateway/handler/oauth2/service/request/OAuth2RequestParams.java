@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 
 import java.util.HashMap;
@@ -30,6 +31,7 @@ public final class OAuth2RequestParams {
 
     public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
+    public static final String ADDITIONAL_DATA = "ADDITIONAL_DATA";
 
     private OAuth2RequestParams() {
     }
@@ -64,6 +66,8 @@ public final class OAuth2RequestParams {
             addTokenExchangeParams(params, oAuth2Request);
         }
 
+        addAdditionalData(params, oAuth2Request);
+
         return params;
     }
 
@@ -85,6 +89,15 @@ public final class OAuth2RequestParams {
         if (oAuth2Request.isDelegation()) {
             putFirstPresent(params, Parameters.ACTOR_TOKEN, oAuth2Request.getActorTokenId());
             putFirstPresent(params, Parameters.ACTOR_TOKEN_TYPE, oAuth2Request.getActorTokenType());
+        }
+    }
+
+    private static void addAdditionalData(Map<String, Object> params, OAuth2Request oAuth2Request) {
+        Map<String, Object> executionContext = oAuth2Request.getExecutionContext();
+        if (executionContext != null
+                && executionContext.get(ConstantKeys.POLICY_AUDIT_DATA) instanceof Map<?, ?> additionalData
+                && !additionalData.isEmpty()) {
+            params.put(ADDITIONAL_DATA, new HashMap<>(additionalData));
         }
     }
 
