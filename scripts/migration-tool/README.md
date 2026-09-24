@@ -259,7 +259,7 @@ Seed and verify through the orchestrator so the version (`--version`)/label/`AM_
 
 When running through the migration tool, `AM_MIGRATION_TEST_LABEL` is set automatically per stage (`alpha` for `*-alpha` stages, `beta` for `*-beta` stages; ad-hoc generic verify stages use `--test-label`, default `alpha`).
 
-> **Low-level escape hatch (debugging only).** The orchestrator stages ultimately invoke the `gravitee-am-test` npm scripts directly, which you can run by hand — but these bypass the version wiring (seed fallback, `AM_MIGRATION_*_VERSION`), so the specs assert everything:
+> **Low-level escape hatch (debugging only).** The orchestrator stages ultimately invoke the `gravitee-am-test` npm scripts directly, which you can run by hand — but these bypass the version wiring (`AM_MIGRATION_*_VERSION`), so the specs assert everything:
 > ```bash
 > npm --prefix gravitee-am-test run migration:seed -- --version 4.10 --label alpha
 > AM_MIGRATION_TEST_LABEL=alpha npm --prefix gravitee-am-test run ci:migration
@@ -269,9 +269,9 @@ When running through the migration tool, `AM_MIGRATION_TEST_LABEL` is set automa
 
 By default every tag is seeded from the **current checkout**: `seed-alpha` runs
 `migration-seeding/versions/<major.minor of --from-tag>` and `seed-beta` the one of `--to-tag`
-(pre-release suffixes such as `-alpha.4` are ignored). When the checkout has no module for that
-version — e.g. a `4.13.0-alpha` tag before `versions/4.13` exists — the previous minor's module is
-seeded instead; when that one is missing too, the stage fails. Version-specific payloads belong in
+(pre-release suffixes such as `-alpha.4` are ignored, so `4.13.0-alpha.4` seeds `versions/4.13`).
+There is no fallback: when the checkout has no module for that version, the seed stage fails and the
+module has to be added. Version-specific payloads belong in
 the per-version module (over raw HTTP when the current SDK no longer models them), not in an older
 checkout.
 
@@ -280,8 +280,8 @@ the running Management API cannot satisfy:
 
 | Variable | Value |
 |----------|-------|
-| `AM_MIGRATION_FROM_VERSION` | Seed module run on the alpha channel (after fallback) |
-| `AM_MIGRATION_TO_VERSION` | Seed module run on the beta channel (after fallback) |
+| `AM_MIGRATION_FROM_VERSION` | Seed module run on the alpha channel (`--from-tag` major.minor) |
+| `AM_MIGRATION_TO_VERSION` | Seed module run on the beta channel (`--to-tag` major.minor) |
 | `AM_MIGRATION_MAPI_VERSION` | Management API tag currently deployed (set by `deploy-from`, `upgrade-mapi`, `downgrade-mapi`) |
 
 #### Opt-in: seeding from a worktree of the tag (`--seed-worktree`)
