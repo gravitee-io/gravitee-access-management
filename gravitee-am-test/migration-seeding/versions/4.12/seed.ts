@@ -15,7 +15,12 @@
  */
 
 import { seedMapiData } from '../../seed';
+import { seedTokenExchangeData } from '../../token-exchange-seed';
 
 export async function seed(label: string): Promise<void> {
   await seedMapiData(label);
+  // 4.12 has no trusted-domains API: both consumer domains carry their trusted issuer in the inline
+  // list, and the key-retrieval limits live in the SPIFFE block. This is the shape the 4.13 upgrade
+  // has to migrate.
+  await seedTokenExchangeData(label, { trustedIssuerApi: 'inline', keyRetrievalApi: 'legacy-spiffe' });
 }
