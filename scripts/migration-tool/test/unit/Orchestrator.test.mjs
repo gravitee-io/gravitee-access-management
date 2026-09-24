@@ -134,13 +134,23 @@ describe('Orchestrator', () => {
             AM_MIGRATION_FROM_VERSION: '4.11',
             AM_MIGRATION_TO_VERSION: '4.13',
             AM_MIGRATION_MAPI_VERSION: '4.11.17',
+            AM_MIGRATION_GW_VERSION: '4.11.17',
         });
 
         await orchestrator.run(['upgrade-mapi', 'seed-beta']);
-        expect(orchestrator.getVersionEnv().AM_MIGRATION_MAPI_VERSION).toBe('4.13.0-alpha.4');
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.13.0-alpha.4',
+            AM_MIGRATION_GW_VERSION: '4.11.17',
+        });
 
-        await orchestrator.run(['downgrade-mapi']);
-        expect(orchestrator.getVersionEnv().AM_MIGRATION_MAPI_VERSION).toBe('4.11.17');
+        await orchestrator.run(['upgrade-gw']);
+        expect(orchestrator.getVersionEnv().AM_MIGRATION_GW_VERSION).toBe('4.13.0-alpha.4');
+
+        await orchestrator.run(['downgrade-gw', 'downgrade-mapi']);
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.11.17',
+            AM_MIGRATION_GW_VERSION: '4.11.17',
+        });
     });
 
     test('verify leaves out versions it cannot know', () => {
