@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -40,14 +41,14 @@ import java.util.List;
 public class AutomationDataPlane {
 
     @NotNull
-    @Size(min = 1, max = 255)
+    @Size(min = 1, max = NewDataPlaneDefinition.ID_MAX_LENGTH)
     @Schema(description = "Stable, immutable identifier for the data plane within its environment. Lowercase " +
             "alphanumeric and hyphens, starting and ending with an alphanumeric character. This is the value " +
             "a domain's dataPlaneId refers to.",
             example = "acme-eu")
     private String id;
 
-    @Size(min = 1, max = 255)
+    @Size(min = 1, max = NewDataPlaneDefinition.NAME_MAX_LENGTH)
     @Schema(description = "Human-readable name of the data plane.", example = "ACME EU data plane")
     private String name;
 
@@ -56,6 +57,7 @@ public class AutomationDataPlane {
             example = "mongodb")
     private String type;
 
+    @Size(max = NewDataPlaneDefinition.GATEWAY_URL_MAX_LENGTH)
     @Schema(description = "Base URL of the gateway serving the domains bound to this data plane.",
             example = "https://gateway-eu.example.com")
     private String gatewayUrl;

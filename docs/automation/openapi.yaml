@@ -2062,6 +2062,8 @@ components:
           description: Base URL of the gateway serving the domains bound to this data
             plane.
           example: https://gateway-eu.example.com
+          maxLength: 256
+          minLength: 0
         hosts:
           type: array
           description: "Hosts the configuration points at, as host:port. Read-only."
@@ -2080,13 +2082,13 @@ components:
             \ with an alphanumeric character. This is the value a domain's dataPlaneId\
             \ refers to."
           example: acme-eu
-          maxLength: 255
+          maxLength: 64
           minLength: 1
         name:
           type: string
           description: Human-readable name of the data plane.
           example: ACME EU data plane
-          maxLength: 255
+          maxLength: 128
           minLength: 1
         organizationId:
           type: string
