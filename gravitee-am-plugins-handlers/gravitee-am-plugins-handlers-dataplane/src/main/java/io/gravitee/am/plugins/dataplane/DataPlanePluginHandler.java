@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
-import static io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator.defaultSchemaValidator;
+import static io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidator.strictSchemaValidator;
 
 @CustomLog
 public class DataPlanePluginHandler extends AbstractPluginHandler {
@@ -64,10 +64,13 @@ public class DataPlanePluginHandler extends AbstractPluginHandler {
         }
     }
 
-    /** Publishes the plugin's {@code schemas/schema-form.json} so definitions can be validated against it. */
+    /**
+     * Publishes the plugin's {@code schemas/schema-form.json} so definitions can be validated against it.
+     * Strict, because a property dropped by the validator would leave the data plane on a default store.
+     */
     private void registerValidator(Plugin plugin) {
         try {
-            validatorsRegistry.put(defaultSchemaValidator(plugin.id(), pluginManager.getSchema(plugin.id())));
+            validatorsRegistry.put(strictSchemaValidator(plugin.id(), pluginManager.getSchema(plugin.id())));
         } catch (Exception e) {
             log.error("Unexpected error while creating the data-plane schema validator for {}", plugin.id(), e);
         }

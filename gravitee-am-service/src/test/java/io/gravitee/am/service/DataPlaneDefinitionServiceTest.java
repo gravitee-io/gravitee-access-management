@@ -373,6 +373,15 @@ class DataPlaneDefinitionServiceTest {
     }
 
     @Test
+    void shouldRejectAKeyThePluginSchemaDoesNotDeclare() {
+        registerMongoSchema();
+        NewDataPlaneDefinition payload = payload();
+        payload.setConfiguration(readTree("{\"mongodb\": {\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": 27017, \"bogus\": \"x\"}}"));
+
+        assertRejected(payload, InvalidParameterException.class, "configuration.mongodb is not valid: #: extraneous key [bogus] is not permitted");
+    }
+
+    @Test
     void shouldAcceptAConfigurationThatMatchesThePluginSchema() {
         registerMongoSchema();
 
@@ -397,14 +406,15 @@ class DataPlaneDefinitionServiceTest {
     }
 
     private void registerMongoSchema() {
-        validatorsRegistry.put(PluginConfigurationValidator.defaultSchemaValidator("dataplane-am-mongodb", """
+        validatorsRegistry.put(PluginConfigurationValidator.strictSchemaValidator("dataplane-am-mongodb", """
                 {
                   "type": "object",
                   "properties": {
                     "dbname": { "type": "string" },
                     "host": { "type": "string" },
                     "port": { "type": "number" }
-                  }
+                  },
+                  "additionalProperties": false
                 }
                 """));
     }

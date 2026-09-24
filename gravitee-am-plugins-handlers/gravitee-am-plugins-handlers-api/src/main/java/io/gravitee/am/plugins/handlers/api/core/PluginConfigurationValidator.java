@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PluginConfigurationValidator {
     private static final JsonSchemaValidatorImpl SCHEMA_VALIDATOR = new JsonSchemaValidatorImpl();
+    private static final StrictJsonSchemaValidator STRICT_SCHEMA_VALIDATOR = new StrictJsonSchemaValidator();
 
     @Getter
     private final String pluginIdentifier;
@@ -31,6 +32,11 @@ public class PluginConfigurationValidator {
 
     public static PluginConfigurationValidator defaultSchemaValidator(String pluginIdentifier, String schema){
         return new PluginConfigurationValidator(pluginIdentifier, schema, SCHEMA_VALIDATOR);
+    }
+
+    /** Rejects a configuration declaring a property the schema does not, see {@link StrictJsonSchemaValidator}. */
+    public static PluginConfigurationValidator strictSchemaValidator(String pluginIdentifier, String schema){
+        return new PluginConfigurationValidator(pluginIdentifier, schema, STRICT_SCHEMA_VALIDATOR);
     }
 
     public Result validate(String pluginData) {
