@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.gravitee.am.service.model.NewDataPlaneDefinition;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,8 +59,10 @@ public class AutomationDataPlane {
     private String type;
 
     @Size(max = NewDataPlaneDefinition.GATEWAY_URL_MAX_LENGTH)
+    @Pattern(regexp = "^\\s*$|^https?://.+",
+            message = "'gatewayUrl' must be an absolute http(s) URL")
     @Schema(description = "Base URL of the gateway serving the domains bound to this data plane. " +
-            "Must be an absolute http(s) URL; omitted or empty leaves it unset.",
+            "Must be an absolute http(s) URL with a lowercase scheme; omitted or empty leaves it unset.",
             example = "https://gateway-eu.example.com")
     private String gatewayUrl;
 
