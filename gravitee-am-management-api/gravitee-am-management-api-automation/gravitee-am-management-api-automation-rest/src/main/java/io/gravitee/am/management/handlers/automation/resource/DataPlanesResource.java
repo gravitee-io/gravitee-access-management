@@ -135,7 +135,7 @@ public class DataPlanesResource extends AbstractAutomationResource {
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
-        final AutomationRef ref = AutomationRef.parse(definition.getId());
+        final AutomationRef ref = AutomationRef.parse(definition.getId(), "id");
 
         // The ACL is chosen from a non-erroring lookup so the permission gate runs before any
         // existence is revealed (404 for an unknown id: reference, 409 for a taken id).

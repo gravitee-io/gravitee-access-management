@@ -40,7 +40,7 @@ public sealed interface AutomationRef permits AutomationRef.KeyRef, AutomationRe
     int MAX_KEY_LENGTH = 255;
     Pattern KEY_PATTERN = Pattern.compile("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$");
     String KEY_PATTERN_MESSAGE =
-            "key must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character";
+            " must be lowercase alphanumeric and hyphens, starting and ending with an alphanumeric character";
 
     /** The original token as received, including the {@code id:} prefix for an {@link IdRef}. */
     String raw();
@@ -75,6 +75,14 @@ public sealed interface AutomationRef permits AutomationRef.KeyRef, AutomationRe
      *                                   identifier, or a key violates the pattern / length bound
      */
     static AutomationRef parse(String token) {
+        return parse(token, "key");
+    }
+
+    /**
+     * Same as {@link #parse(String)}, but a pattern violation names {@code field}, for a resource whose
+     * identity field is not spelled {@code key}.
+     */
+    static AutomationRef parse(String token, String field) {
         if (token == null || token.isBlank()) {
             throw new InvalidParameterException("A resource reference is required");
         }
@@ -86,7 +94,7 @@ public sealed interface AutomationRef permits AutomationRef.KeyRef, AutomationRe
             return new IdRef(id);
         }
         if (token.length() > MAX_KEY_LENGTH || !KEY_PATTERN.matcher(token).matches()) {
-            throw new InvalidParameterException(KEY_PATTERN_MESSAGE);
+            throw new InvalidParameterException(field + KEY_PATTERN_MESSAGE);
         }
         return new KeyRef(token);
     }

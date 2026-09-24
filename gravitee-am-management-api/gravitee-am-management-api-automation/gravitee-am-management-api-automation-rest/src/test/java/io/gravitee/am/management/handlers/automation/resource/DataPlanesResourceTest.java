@@ -34,6 +34,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -169,6 +170,7 @@ class DataPlanesResourceTest extends AutomationJerseySpringTest {
         Response response = put(dataPlanesTarget(), definition("Not A Key"));
 
         assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("id must be lowercase alphanumeric"));
         verify(dataPlaneDefinitionService, never()).create(any(), any(), any());
     }
 
