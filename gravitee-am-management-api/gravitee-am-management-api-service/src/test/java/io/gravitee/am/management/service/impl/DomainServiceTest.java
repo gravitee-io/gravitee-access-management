@@ -846,54 +846,6 @@ public class DomainServiceTest {
         verify(domainRepository, never()).create(any(Domain.class));
     }
 
-    private DataPlaneDefinitionSummary dpSummary(String id, String organizationId) {
-        return new DataPlaneDefinitionSummary(
-                id, id, "mongodb", null, organizationId, ENVIRONMENT_ID, null, List.of(), ManagedBy.NONE, null, null);
-    }
-
-    @Test
-    public void shouldListSelectableDataPlanes_standalone_declaredAndLinkedOnly() {
-        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
-                .thenReturn(Flowable.just(dpSummary("env-dp"), dpSummary("not-loaded-dp")));
-        when(dataPlaneConfigurationLoader.declaredIds())
-                .thenReturn(Set.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID));
-        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "env-dp", "other-env-dp");
-
-        domainService.listSelectableDataPlanes(ORGANIZATION_ID, ENVIRONMENT_ID)
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertValue(dataPlanes -> dataPlanes.stream().map(DataPlaneDescription::id).toList()
-                        .equals(List.of(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "env-dp")));
-    }
-
-    @Test
-    public void shouldListSelectableDataPlanes_cloud_linkedOnly() {
-        enableCloudMode();
-        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
-                .thenReturn(Flowable.just(dpSummary("env-dp")));
-        stubLoadedDataPlanes(DataPlaneDescription.DEFAULT_DATA_PLANE_ID, "env-dp", "other-env-dp");
-
-        domainService.listSelectableDataPlanes(ORGANIZATION_ID, ENVIRONMENT_ID)
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertValue(dataPlanes -> dataPlanes.stream().map(DataPlaneDescription::id).toList()
-                        .equals(List.of("env-dp")));
-        verify(dataPlaneConfigurationLoader, never()).declaredIds();
-    }
-
-    @Test
-    public void shouldListSelectableDataPlanes_ignoresPlaneOfAnotherOrganization() {
-        enableCloudMode();
-        when(dataPlaneDefinitionService.findByEnvironmentId(ENVIRONMENT_ID))
-                .thenReturn(Flowable.just(dpSummary("foreign-dp", "another-org")));
-        stubLoadedDataPlanes("foreign-dp");
-
-        domainService.listSelectableDataPlanes(ORGANIZATION_ID, ENVIRONMENT_ID)
-                .test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertValue(List::isEmpty);
-    }
-
     @Test
     public void shouldCreate_cloud_omittedId_singleLinkedDp() {
         enableCloudMode();

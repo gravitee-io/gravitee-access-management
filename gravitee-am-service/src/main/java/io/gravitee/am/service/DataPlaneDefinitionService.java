@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
@@ -42,6 +43,13 @@ public interface DataPlaneDefinitionService {
     Flowable<DataPlaneDefinitionSummary> findAll();
 
     Flowable<DataPlaneDefinitionSummary> findByEnvironmentId(String environmentId);
+
+    /**
+     * The data planes loaded on this node that a domain of the environment can be created on: the
+     * ones provisioned against the organization and environment and, outside managed cloud, the ones
+     * the node's configuration declares. Planes provisioned elsewhere are never returned.
+     */
+    Flowable<DataPlaneDescription> findByOrganizationAndEnvironment(String organizationId, String environmentId);
 
     Single<DataPlaneDefinitionSummary> findById(String id);
 
