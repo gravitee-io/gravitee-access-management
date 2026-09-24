@@ -236,6 +236,9 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 
 ## Migration seeding
 
+> To add a seeded data set and its verification spec, follow
+> [gravitee-am-test/MIGRATION_TEST_GUIDELINES.md](../../gravitee-am-test/MIGRATION_TEST_GUIDELINES.md).
+
 The migration tool seeds deterministic data through the generated Management API SDK in `gravitee-am-test/api/management`.
 
 Seed files live in `gravitee-am-test/migration-seeding/versions/<major.minor>/seed.ts`. Each seed file must be idempotent and use stable identifiers, names, or metadata so migration specs can find the same objects after upgrade and downgrade. A seed file exposes `seed(label)` and names every entity by that **label** (not the version), so the same version's data can be seeded twice under different labels without colliding.

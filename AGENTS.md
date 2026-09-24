@@ -148,6 +148,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 | `gravitee-am-ui/` | Angular frontend |
 | `gravitee-am-test/` | Integration tests (Jest) |
 | `gravitee-am-test/GUIDELINES.md` | Integration test guidelines |
+| `gravitee-am-test/MIGRATION_TEST_GUIDELINES.md` | Migration test guidelines (seed + upgrade/downgrade verification) |
 | `postman/collections/` | Postman/Newman API contract tests |
 | `helm/` | Helm charts and tests (`helm/tests/`) |
 | `docs/mapi/openapi.yaml` | OpenAPI 3 spec for Management API |
@@ -301,6 +302,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 | **Repository** | JUnit + Testcontainers | `gravitee-am-repository/gravitee-am-repository-tests/src/test/java/` | Data layer against real DBs | `run_testcontainer_tests_*` |
 | **Jest Management** | Jest / TypeScript | `gravitee-am-test/specs/management/` | Management API endpoints | `run_jest_tests_*` |
 | **Jest Gateway** | Jest / TypeScript | `gravitee-am-test/specs/gateway/` | OAuth2/OIDC protocol flows | `run_jest_tests_*` |
+| **Migration** | Jest / TypeScript | `gravitee-am-test/migration-seeding/`, `gravitee-am-test/specs/migration/` | Data and behaviour across AM upgrades/downgrades | migration workflow (`workflows-migration.yml`) |
 | **Playwright** | Playwright | `gravitee-am-test/playwright/` | Console UI E2E flows | `run_playwright_tests_*` |
 | **Postman** | Newman | `postman/collections/` | API contract testing | `run_postman_tests_*` |
 | **UI** | Jest / Angular | `gravitee-am-ui/src/**/*.spec.ts` | Angular component/service tests | `ui_tests` |
@@ -378,6 +380,14 @@ REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
 ```
 
 Follow `gravitee-am-test/GUIDELINES.md` for all integration test work.
+
+#### Migration Tests
+
+Seed data with one AM version, upgrade/downgrade the Management API and gateways, and verify it
+survived. Driven by `scripts/migration-test.mjs` (see `scripts/migration-tool/README.md`).
+
+Follow `gravitee-am-test/MIGRATION_TEST_GUIDELINES.md` for any change under
+`gravitee-am-test/migration-seeding/` or `gravitee-am-test/specs/migration/`.
 
 #### Postman / Newman Tests
 
