@@ -65,7 +65,7 @@ public class DataPlaneResource extends AbstractAutomationResource {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE, Acl.READ)
-                .andThen(resolver.resolveDataPlane(environmentId, AutomationRef.parse(dataPlaneId)))
+                .andThen(resolver.resolveDataPlane(environmentId, AutomationRef.parse(dataPlaneId, "id")))
                 .map(AutomationDataPlaneMapper::toAutomationDataPlane)
                 .subscribe(response::resume, response::resume);
     }
@@ -84,7 +84,7 @@ public class DataPlaneResource extends AbstractAutomationResource {
 
         final var principal = getAuthenticatedUser();
         checkAnyPermission(principal, organizationId, environmentId, Permission.DATA_PLANE, Acl.DELETE)
-                .andThen(resolver.resolveDataPlaneMaybe(environmentId, AutomationRef.parse(dataPlaneId)))
+                .andThen(resolver.resolveDataPlaneMaybe(environmentId, AutomationRef.parse(dataPlaneId, "id")))
                 .flatMapCompletable(dataPlane -> dataPlaneProvisioningService.deprovision(dataPlane.id(), principal))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
