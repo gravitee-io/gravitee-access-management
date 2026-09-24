@@ -452,8 +452,9 @@ public class DataPlaneDefinitionServiceImpl implements DataPlaneDefinitionServic
      * the handler as the only check.
      */
     private void validateAgainstSchema(String type, String blockName, JsonNode block) {
-        if (block == null) {
-            // the type-specific pass reports this in its own words
+        if (block == null || !block.isObject()) {
+            // the type-specific pass reports this in its own words, the schema validator would only
+            // echo the json library failing to parse a null or a string as an object
             return;
         }
         pluginValidatorsRegistry.get(PLUGIN_ID_PREFIX + type)
