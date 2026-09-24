@@ -140,7 +140,26 @@ class DataPlaneSchemaFormTest {
     }
 
     @Test
-    void jdbcSchemaToleratesPropertiesItDoesNotDescribe() {
-        accepts(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"preferCursoredExecution\": true}");
+    void jdbcSchemaRejectsAnUnknownKey() {
+        // a typo would otherwise be dropped and the plugin would fall back to its default
+        rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"bogus\": \"x\"}", "bogus");
+        rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"userName\": \"am\"}", "userName");
+        rejects(jdbc(), "{\"driver\": \"mysql\", \"host\": \"db\", \"database\": \"acme\", \"trustStore\": {\"path\": \"/etc/ts.jks\", \"pass\": \"x\"}}", "pass");
+    }
+
+    @Test
+    void jdbcSchemaRejectsAPortOutOfRange() {
+        rejects(jdbc(), "{\"driver\": \"postgresql\", \"host\": \"pg\", \"port\": 99999, \"database\": \"acme\"}", "port");
+        accepts(jdbc(), "{\"driver\": \"postgresql\", \"host\": \"pg\", \"port\": 65535, \"database\": \"acme\"}");
+    }
+
+    @Test
+    void jdbcSchemaAcceptsTheSettingsReadByTheConnectionFactory() {
+        accepts(jdbc(), """
+                {"driver": "postgresql", "host": "pg", "database": "acme",
+                 "validationQuery": "SELECT 1", "maxValidationTime": 2000, "tcpKeepAlive": false, "preferCursoredExecution": true,
+                 "sslEnabled": true, "sslMode": "verify-full", "sslServerCert": "/etc/pg.crt",
+                 "trustStore": {"path": "/etc/ts.jks", "password": "secret"}}
+                """);
     }
 }
