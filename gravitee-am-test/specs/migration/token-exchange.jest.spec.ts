@@ -19,7 +19,13 @@ import { getDomain } from '@management-commands/domain-management-commands';
 import { getDataPlaneTargets, getInstanceLabel } from '../../migration-seeding/seed';
 import { TOKEN_EXCHANGE_VARIANTS, TRUSTED_ISSUER_SCOPE_MAPPINGS, TokenExchangeVariant } from '../../migration-seeding/token-exchange-seed';
 import { createTokenExchangeMigrationFixture, TokenExchangeMigrationFixture } from './fixture/token-exchange-fixture';
-import { channelHoldsTokenExchangeSeed, managementApiHasTrustedDomainsEndpoint } from './fixture/migration-versions';
+import {
+  channelHoldsTokenExchangeSeed,
+  gatewaySupports,
+  managementApiHasTrustedDomainsEndpoint,
+  managementApiSupports,
+  TOKEN_EXCHANGE_VERSION,
+} from './fixture/migration-versions';
 import { setup } from '../test-fixture';
 
 setup(120000);
@@ -44,10 +50,15 @@ suite.each(getDataPlaneTargets())('migration token exchange [data plane $id]', (
       fixture = await createTokenExchangeMigrationFixture(label, variant, target);
     });
 
+    // A channel seeded by a recent version is still asserted after a downgrade; below 4.11 the
+    // component under test has no token exchange at all, so there is nothing to assert against.
+    const managementApiTest = managementApiSupports(TOKEN_EXCHANGE_VERSION) ? it : it.skip;
+    const gatewayTest = gatewaySupports(TOKEN_EXCHANGE_VERSION) ? it : it.skip;
+
     // Asserted at every stage of the pipeline, whichever API wrote the issuer and whichever
     // versions are deployed: the inline list is the contract a 4.12 gateway reads and a 4.12
     // Management API serves, so it has to survive the upgrade — and the downgrade.
-    it('still reports the seeded trusted issuer on the security domain', async () => {
+    managementApiTest('still reports the seeded trusted issuer on the security domain', async () => {
       const domain = await getDomain(fixture.consumerDomain.id, fixture.accessToken);
       const trustedIssuers = domain.tokenExchangeSettings?.trustedIssuers ?? [];
       const trustedIssuer = trustedIssuers.find((candidate) => candidate.issuer?.includes(fixture.issuerDomain.hrid));
@@ -77,7 +88,7 @@ suite.each(getDataPlaneTargets())('migration token exchange [data plane $id]', (
       expect(trustedDomain.tokenExchange?.scopeMappings).toEqual(TRUSTED_ISSUER_SCOPE_MAPPINGS);
     });
 
-    it('exchanges a JWT minted by the trusted security domain for a local access token', async () => {
+    gatewayTest('exchanges a JWT minted by the trusted security domain for a local access token', async () => {
       const issuerToken = await fixture.mintIssuerToken();
 
       const response = await fixture.exchange(issuerToken);
@@ -90,7 +101,7 @@ suite.each(getDataPlaneTargets())('migration token exchange [data plane $id]', (
 
     // Guards the test above against passing for the wrong reason: a gateway that no longer verifies
     // the issuer's signature at all would exchange anything presented to it.
-    it('refuses a JWT that the trusted issuer did not sign', async () => {
+    gatewayTest('refuses a JWT that the trusted issuer did not sign', async () => {
       const issuerToken = await fixture.mintIssuerToken();
       const tampered = `${issuerToken.slice(0, issuerToken.lastIndexOf('.'))}.ZGVhZGJlZWY`;
 

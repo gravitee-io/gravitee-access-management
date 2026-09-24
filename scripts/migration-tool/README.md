@@ -283,6 +283,11 @@ the running Management API cannot satisfy:
 | `AM_MIGRATION_FROM_VERSION` | Seed module run on the alpha channel (`--from-tag` major.minor) |
 | `AM_MIGRATION_TO_VERSION` | Seed module run on the beta channel (`--to-tag` major.minor) |
 | `AM_MIGRATION_MAPI_VERSION` | Management API tag currently deployed (set by `deploy-from`, `upgrade-mapi`, `downgrade-mapi`) |
+| `AM_MIGRATION_GW_VERSION` | Gateway tag currently deployed (set by `deploy-from`, `upgrade-gw`, `downgrade-gw`) |
+
+A spec that covers a feature introduced in a given version gates on both sides: the channel must have
+been seeded by a version that has the feature, and the component the assertion talks to must be
+deployed at such a version (see `specs/migration/fixture/migration-versions.ts`).
 
 #### Opt-in: seeding from a worktree of the tag (`--seed-worktree`)
 
