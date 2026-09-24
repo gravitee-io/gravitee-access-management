@@ -26,6 +26,9 @@
 
 type MinorVersion = { major: number; minor: number };
 
+/** Token exchange (RFC 8693) appeared in 4.11: neither component knows it before. */
+export const TOKEN_EXCHANGE_VERSION: MinorVersion = { major: 4, minor: 11 };
+
 /** Trusted issuers became trusted-domain entities of their own in 4.13. */
 export const TRUSTED_DOMAIN_ENTITY_VERSION: MinorVersion = { major: 4, minor: 13 };
 
@@ -65,10 +68,24 @@ export function channelHoldsTokenExchangeSeed(channelLabel: string): boolean {
 }
 
 /**
+ * Whether the deployed Management API is at least `floor`. A channel seeded by a recent version
+ * is still asserted after a downgrade, so a feature the downgraded component does not know has
+ * nothing to be asserted against.
+ */
+export function managementApiSupports(floor: MinorVersion): boolean {
+  return isAtLeast(process.env.AM_MIGRATION_MAPI_VERSION, floor);
+}
+
+/** Whether the deployed gateways are at least `floor`. See {@link managementApiSupports}. */
+export function gatewaySupports(floor: MinorVersion): boolean {
+  return isAtLeast(process.env.AM_MIGRATION_GW_VERSION, floor);
+}
+
+/**
  * Whether the deployed Management API serves the `trusted-domains` endpoint, which 4.13 introduced
  * alongside the entities. Unlike the inline list — which every version must keep serving — this
  * endpoint simply does not exist before then, so there is nothing to assert against.
  */
 export function managementApiHasTrustedDomainsEndpoint(): boolean {
-  return isAtLeast(process.env.AM_MIGRATION_MAPI_VERSION, TRUSTED_DOMAIN_ENTITY_VERSION);
+  return managementApiSupports(TRUSTED_DOMAIN_ENTITY_VERSION);
 }
