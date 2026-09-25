@@ -1107,10 +1107,13 @@ paths:
       - Identity Providers
       - Domains
     put:
-      description: Idempotent create-or-update. Uses the key field in the body to
-        identify the identity provider within the domain. On first apply the identity
-        provider is created; subsequent applies update it. The system flag is immutable;
-        changing it requires deleting and recreating the identity provider.
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the identity provider within the domain. On first apply the identity\
+        \ provider is created; subsequent applies update it. The system flag is immutable;\
+        \ changing it requires deleting and recreating the identity provider. When\
+        \ dryRun is true, the endpoint validates the payload without persisting; the\
+        \ returned identity provider carries a dryRunErrors list (empty on success,\
+        \ populated with validation errors otherwise)."
       operationId: automationCreateOrUpdateIdentityProvider
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -1135,6 +1138,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: "When true, validates the payload without persisting. The returned\
+          \ identity provider includes a dryRunErrors field."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           application/json:
@@ -1201,7 +1211,9 @@ paths:
                     system: true
               schema:
                 $ref: "#/components/schemas/AutomationIdentityProvider"
-          description: The created or updated identity provider
+          description: The created or updated identity provider. When dryRun is true
+            the identity provider includes a dryRunErrors field with any validation
+            errors.
         "400":
           content:
             application/json:
@@ -2266,6 +2278,13 @@ components:
             description: "Email domains allowed to authenticate through this identity\
               \ provider. When set, users whose email domain is not listed are rejected."
             example: "[\"example.com\"]"
+        dryRunErrors:
+          type: array
+          description: Validation errors returned when dryRun is true. Absent when
+            validation succeeds.
+          items:
+            $ref: "#/components/schemas/DryRunError"
+          readOnly: true
         groupMapper:
           type: object
           additionalProperties:

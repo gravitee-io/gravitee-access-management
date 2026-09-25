@@ -504,18 +504,53 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldNotUpdate_WhenDatasourceIsInvalid() {
         UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
-        IdentityProvider idp = new IdentityProvider();
-        idp.setReferenceType(ReferenceType.DOMAIN);
-        idp.setReferenceId("domain#1");
 
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
-        when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+        verify(identityProviderRepository, never()).update(any(IdentityProvider.class));
+    }
+
+    @Test
+    public void validateCreate_returnsIdentityProviderWithoutPersisting() {
+        NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
+        newIdentityProvider.setName("my-idp");
+        newIdentityProvider.setType("inline-am-idp");
+        newIdentityProvider.setConfiguration("{}");
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+
+        TestObserver<IdentityProvider> testObserver = identityProviderService.validateCreate(new Domain(DOMAIN), newIdentityProvider, false).test();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(idp -> "my-idp".equals(idp.getName()) && DOMAIN.equals(idp.getReferenceId()));
+        verify(identityProviderRepository, never()).create(any(IdentityProvider.class));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void validateUpdate_returnsIdentityProviderWithoutPersisting() {
+        UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
+        updateIdentityProvider.setName("renamed");
+        updateIdentityProvider.setConfiguration("{}");
+        IdentityProvider existing = new IdentityProvider();
+        existing.setId("my-identity-provider");
+        existing.setType("inline-am-idp");
+        when(identityProviderRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-identity-provider")).thenReturn(Maybe.just(existing));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+
+        TestObserver<IdentityProvider> testObserver = identityProviderService
+                .validateUpdate(ReferenceType.DOMAIN, DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(idp -> "renamed".equals(idp.getName()));
+        verify(identityProviderRepository, never()).update(any(IdentityProvider.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test

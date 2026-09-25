@@ -184,14 +184,21 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     @Override
     public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         log.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain.getId());
+        return validateCreate(domain, newIdentityProvider, system)
+                .flatMap(this::persist)
+                .onErrorResumeNext(this::toCreateError);
+    }
 
+    @Override
+    public Single<IdentityProvider> validateCreate(Domain domain, NewIdentityProvider newIdentityProvider, boolean system) {
         var identityProvider = prepareIdp(newIdentityProvider, ReferenceType.DOMAIN, domain.getId(), system);
         identityProvider.setDataPlaneId(domain.getDataPlaneId());
 
         return checkLicense(Reference.domain(domain.getId()), newIdentityProvider.getType(), system)
                 .andThen(pinStorage(identityProvider))
                 .andThen(validateConfiguration(identityProvider, system))
-                .andThen(Single.defer(() -> innerCreate(identityProvider)));
+                .andThen(Completable.defer(() -> datasourceValidator.validate(identityProvider.getConfiguration())))
+                .andThen(Single.just(identityProvider));
     }
 
     private Completable checkLicense(Reference reference, String type, boolean system) {
@@ -214,19 +221,25 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
         return datasourceValidator.validate(identityProvider.getConfiguration())
-                .andThen(Single.defer(() -> identityProviderRepository.create(identityProvider)))
+                .andThen(Single.defer(() -> persist(identityProvider)))
+                .onErrorResumeNext(this::toCreateError);
+    }
+
+    private Single<IdentityProvider> persist(IdentityProvider identityProvider) {
+        return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    log.error("An error occurs while trying to create an identity provider", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
                 });
+    }
+
+    private Single<IdentityProvider> toCreateError(Throwable ex) {
+        if (ex instanceof AbstractManagementException) {
+            return Single.error(ex);
+        }
+        log.error("An error occurs while trying to create an identity provider", ex);
+        return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
     }
 
     /**
@@ -269,19 +282,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
         log.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
 
-        return identityProviderRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
-                .flatMap(oldIdentity -> {
-                    // 'type' is immutable for an existing identity provider
-                    if (updateIdentityProvider.getType() != null && !updateIdentityProvider.getType().isBlank()
-                            && !updateIdentityProvider.getType().equals(oldIdentity.getType())) {
-                        return Single.error(new InvalidParameterException("Identity provider type cannot be changed"));
-                    }
-                    if (!oldIdentity.isSystem() && !isUpgrader) {
-                        return pluginLicenseGate.check(new Reference(referenceType, referenceId), PluginLicenseGate.TYPE_IDENTITY_PROVIDER, oldIdentity.getType())
-                                .andThen(Single.defer(() -> doUpdate(updateIdentityProvider, oldIdentity, isUpgrader)));
-                    }
-                    return doUpdate(updateIdentityProvider, oldIdentity, isUpgrader);
+        return validateUpdate(referenceType, referenceId, id, updateIdentityProvider, isUpgrader)
+                .flatMap(identityToUpdate -> identityProviderRepository.update(identityToUpdate))
+                .flatMap(identityProvider1 -> {
+                    // create event for sync process
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -293,7 +299,25 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 });
     }
 
-    private Single<IdentityProvider> doUpdate(UpdateIdentityProvider updateIdentityProvider, IdentityProvider oldIdentity, boolean isUpgrader) {
+    @Override
+    public Single<IdentityProvider> validateUpdate(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, boolean isUpgrader) {
+        return identityProviderRepository.findById(referenceType, referenceId, id)
+                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
+                .flatMap(oldIdentity -> {
+                    // 'type' is immutable for an existing identity provider
+                    if (updateIdentityProvider.getType() != null && !updateIdentityProvider.getType().isBlank()
+                            && !updateIdentityProvider.getType().equals(oldIdentity.getType())) {
+                        return Single.error(new InvalidParameterException("Identity provider type cannot be changed"));
+                    }
+                    if (!oldIdentity.isSystem() && !isUpgrader) {
+                        return pluginLicenseGate.check(new Reference(referenceType, referenceId), PluginLicenseGate.TYPE_IDENTITY_PROVIDER, oldIdentity.getType())
+                                .andThen(Single.defer(() -> prepareUpdate(updateIdentityProvider, oldIdentity, isUpgrader)));
+                    }
+                    return prepareUpdate(updateIdentityProvider, oldIdentity, isUpgrader);
+                });
+    }
+
+    private Single<IdentityProvider> prepareUpdate(UpdateIdentityProvider updateIdentityProvider, IdentityProvider oldIdentity, boolean isUpgrader) {
         IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
         identityToUpdate.setName(updateIdentityProvider.getName());
         // System idp config is normally immutable through the API, but the Automation API owns
@@ -315,12 +339,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
 
         return datasourceValidator.validate(identityToUpdate.getConfiguration())
-                .andThen(identityProviderRepository.update(identityToUpdate))
-                .flatMap(identityProvider1 -> {
-                    // create event for sync process
-                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
-                });
+                .andThen(Single.just(identityToUpdate));
     }
 
     @Override
@@ -333,7 +352,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
         validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
 
-        // Deliberately not doUpdate: systemClusterIdpPolicy.applyOnUpdate rejects a storage change,
+        // Deliberately not prepareUpdate: systemClusterIdpPolicy.applyOnUpdate rejects a storage change,
         // which is exactly what the platform is doing here.
         return identityProviderRepository.update(identityToUpdate)
                 .flatMap(updatedIdp -> {
