@@ -142,7 +142,7 @@ public class EmailServiceImpl implements EmailService {
             // prepare email
             Email email = prepareEmail(domain, client, template, emailTemplate, user);
             // send email
-            sendEmail(email, user, dictionaryProvider);
+            sendEmail(template, email, user, dictionaryProvider);
             return email;
         });
     }
@@ -157,7 +157,7 @@ public class EmailServiceImpl implements EmailService {
         return emailManager.getEmail(template, user, getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
-    private void sendEmail(Email email, User user, DomainBasedDictionaryProvider dictionaryProvider) {
+    private void sendEmail(io.gravitee.am.model.Template template, Email email, User user, DomainBasedDictionaryProvider dictionaryProvider) {
         if (enabled) {
             try {
                 final var locale = preferredLanguage(user, Locale.ENGLISH);
@@ -165,13 +165,14 @@ public class EmailServiceImpl implements EmailService {
                 emailService.send(emailToSend);
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                         .reference(Reference.domain(user.getReferenceId()))
-                        .client(ADMIN_CLIENT).email(email)
+                        .client(ADMIN_CLIENT)
+                        .template(template)
                         .user(user));
             } catch (final Exception ex) {
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                         .reference(Reference.domain(user.getReferenceId()))
                         .client(ADMIN_CLIENT)
-                        .email(email)
+                        .template(template)
                         .throwable(ex));
             }
         }
