@@ -86,6 +86,15 @@ describe('Orchestrator', () => {
         expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.10', '--label', 'beta']);
     });
 
+    test('seed-beta strips the pre-release suffix from the to-tag version', async () => {
+        options.toTag = '4.13.0-alpha.4';
+        orchestrator.runSeed = jest.fn();
+
+        await orchestrator.run(['seed-beta']);
+
+        expect(orchestrator.runSeed).toHaveBeenCalledWith(['--version', '4.13', '--label', 'beta']);
+    });
+
     test('seed / seed-upgrade remain available as backward-compatible aliases', async () => {
         options.toTag = '4.11.0';
         orchestrator.runSeed = jest.fn();
@@ -113,6 +122,67 @@ describe('Orchestrator', () => {
         await orchestrator.run(['verify-beta']);
 
         expect(orchestrator.runTests).toHaveBeenCalledWith(expect.any(String), 'ci:migration', 'specs/migration', 'beta');
+    });
+
+    test('verify exposes the seeded versions and the deployed Management API version', async () => {
+        options.fromTag = '4.11.17';
+        options.toTag = '4.13.0-alpha.4';
+        orchestrator.runSeed = jest.fn();
+
+        await orchestrator.run(['deploy-from', 'seed-alpha']);
+        expect(orchestrator.getVersionEnv()).toEqual({
+            AM_MIGRATION_FROM_VERSION: '4.11',
+            AM_MIGRATION_TO_VERSION: '4.13',
+            AM_MIGRATION_MAPI_VERSION: '4.11.17',
+            AM_MIGRATION_GW_VERSION: '4.11.17',
+        });
+
+        await orchestrator.run(['upgrade-mapi', 'seed-beta']);
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.13.0-alpha.4',
+            AM_MIGRATION_GW_VERSION: '4.11.17',
+        });
+
+        await orchestrator.run(['upgrade-gw']);
+        expect(orchestrator.getVersionEnv().AM_MIGRATION_GW_VERSION).toBe('4.13.0-alpha.4');
+
+        await orchestrator.run(['downgrade-gw', 'downgrade-mapi']);
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.11.17',
+            AM_MIGRATION_GW_VERSION: '4.11.17',
+        });
+    });
+
+    test('a verify stage run on its own reads the deployed versions from the provider', async () => {
+        options.testDir = '/tmp/does-not-matter';
+        mockProvider.getDeployedVersions = jest.fn().mockResolvedValue({ mapi: '4.13.0-alpha.4', gateway: '4.12.0' });
+
+        await orchestrator.resolveDeployedVersions();
+
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.13.0-alpha.4',
+            AM_MIGRATION_GW_VERSION: '4.12.0',
+        });
+    });
+
+    test('versions tracked by this run take precedence over the provider', async () => {
+        options.fromTag = '4.12.0';
+        mockProvider.getDeployedVersions = jest.fn().mockResolvedValue({ mapi: 'other', gateway: 'other' });
+
+        await orchestrator.run(['deploy-from']);
+        await orchestrator.resolveDeployedVersions();
+
+        expect(mockProvider.getDeployedVersions).not.toHaveBeenCalled();
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.12.0',
+            AM_MIGRATION_GW_VERSION: '4.12.0',
+        });
+    });
+
+    test('verify leaves out versions it cannot know', () => {
+        options.toTag = 'latest';
+
+        expect(orchestrator.getVersionEnv()).toEqual({ AM_MIGRATION_FROM_VERSION: '4.10' });
     });
 
     test('migration tests should default to the alpha label', () => {

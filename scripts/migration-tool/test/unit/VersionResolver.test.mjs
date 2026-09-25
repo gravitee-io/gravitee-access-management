@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-const { isConcreteVersion, resolveFloatingTag } = await import('../../lib/core/VersionResolver.mjs');
+const { isConcreteVersion, isPreReleaseVersion, resolveFloatingTag } = await import('../../lib/core/VersionResolver.mjs');
 
 describe('isConcreteVersion', () => {
     it('accepts plain X.Y.Z', () => {
@@ -9,6 +9,19 @@ describe('isConcreteVersion', () => {
     it('rejects floating and variant tags', () => {
         for (const t of ['latest', '4', '4.11', '4.11.9-debian', 'latest-noble']) {
             expect(isConcreteVersion(t)).toBe(false);
+        }
+    });
+});
+
+describe('isPreReleaseVersion', () => {
+    it('accepts alpha, beta and rc tags', () => {
+        for (const t of ['4.13.0-alpha.4', '4.13.0-beta.1', '4.13.0-rc.2']) {
+            expect(isPreReleaseVersion(t)).toBe(true);
+        }
+    });
+    it('rejects plain, floating and variant tags', () => {
+        for (const t of ['4.13.0', 'latest', '4.13', '4.13.0-debian', '4.13.0-alpha']) {
+            expect(isPreReleaseVersion(t)).toBe(false);
         }
     });
 });
@@ -35,6 +48,12 @@ describe('resolveFloatingTag', () => {
     it('returns concrete tag unchanged without any fetch', async () => {
         global.fetch = jest.fn();
         await expect(resolveFloatingTag('4.11.9')).resolves.toBe('4.11.9');
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('returns pre-release tag unchanged without any fetch', async () => {
+        global.fetch = jest.fn();
+        await expect(resolveFloatingTag('4.13.0-alpha.4')).resolves.toBe('4.13.0-alpha.4');
         expect(global.fetch).not.toHaveBeenCalled();
     });
 

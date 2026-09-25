@@ -16,6 +16,10 @@ export class Orchestrator {
         // Timestamp of the last log scan; each verify scan only covers logs since then so the
         // summary stays focused and the same ERROR lines aren't re-printed every stage.
         this._lastScanAt = Date.now();
+        // The tags the Management API and the gateways currently run. Exposed to the verify specs,
+        // with the seeded versions, so they can skip assertions the deployed versions cannot satisfy.
+        this.mapiVersion = null;
+        this.gwVersion = null;
     }
 
     async run(stages, options = {}) {
@@ -74,6 +78,8 @@ export class Orchestrator {
                 break;
             case 'deploy-from':
                 await this.provider.deploy(this.options.fromTag);
+                this.mapiVersion = this.options.fromTag;
+                this.gwVersion = this.options.fromTag;
                 break;
             case 'seed':
             case 'seed-alpha':
@@ -81,9 +87,11 @@ export class Orchestrator {
                 break;
             case 'upgrade-mapi':
                 await this.provider.upgradeMapi(this.options.toTag);
+                this.mapiVersion = this.options.toTag;
                 break;
             case 'upgrade-gw':
                 await this.provider.upgradeGw(this.options.toTag);
+                this.gwVersion = this.options.toTag;
                 break;
             case 'seed-upgrade':
             case 'seed-beta':
@@ -91,9 +99,11 @@ export class Orchestrator {
                 break;
             case 'downgrade-mapi':
                 await this.provider.upgradeMapi(this.options.fromTag);
+                this.mapiVersion = this.options.fromTag;
                 break;
             case 'downgrade-gw':
                 await this.provider.upgradeGw(this.options.fromTag);
+                this.gwVersion = this.options.fromTag;
                 break;
             // Structured verification: the "alpha" channel is the --from-tag seeded domain; the "beta"
             // channel is the --to-tag seeded domain. The same verify runs at several points in the
@@ -122,9 +132,11 @@ export class Orchestrator {
         }
         const filter = (this.options.testFilter || '').trim();
 
+        await this.resolveDeployedVersions();
         const jestEnv = {
             ...process.env,
             ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}),
+            ...this.getVersionEnv(),
             AM_MIGRATION_TEST_LABEL: label || this.getMigrationTestLabel()
         };
         Object.assign(process.env, jestEnv);
@@ -155,11 +167,11 @@ export class Orchestrator {
      * when the tag predates the seeding framework) it falls back to the current checkout.
      */
     async seedStage(tag, label) {
-        const args = ['--version', toMinorVersion(tag), '--label', label];
         let seedDir = null;
         if (this.seedWorktree && this.options.seedFromWorktree) {
             seedDir = await this.seedWorktree.resolveSeedDir(tag);
         }
+        const args = ['--version', toMinorVersion(tag), '--label', label];
         if (seedDir) {
             console.log(`🌱 Seeding ${label} from worktree: ${seedDir}`);
             await this.runSeed(args, seedDir);
@@ -204,9 +216,44 @@ export class Orchestrator {
         }
     }
 
+    /**
+     * Fill in the deployed Management API / gateway versions this process did not deploy itself —
+     * a single verify stage run with --stage — from what the provider reports as running.
+     */
+    async resolveDeployedVersions() {
+        if ((this.mapiVersion && this.gwVersion) || typeof this.provider.getDeployedVersions !== 'function') {
+            return;
+        }
+        const deployed = await this.provider.getDeployedVersions();
+        this.mapiVersion ??= deployed?.mapi ?? null;
+        this.gwVersion ??= deployed?.gateway ?? null;
+    }
+
+    /**
+     * Version context for the verify specs: AM_MIGRATION_FROM_VERSION / AM_MIGRATION_TO_VERSION are
+     * the data sets seeded on the alpha / beta channels (the from / to tag's major.minor),
+     * AM_MIGRATION_MAPI_VERSION / AM_MIGRATION_GW_VERSION the deployed Management API / gateway tags,
+     * tracked through the deploy / upgrade / downgrade stages of this run or read back from the
+     * provider (see resolveDeployedVersions). A value that is still unknown is left out, so the
+     * specs assert everything.
+     */
+    getVersionEnv() {
+        const env = {
+            AM_MIGRATION_FROM_VERSION: minorVersionOrUndefined(this.options.fromTag),
+            AM_MIGRATION_TO_VERSION: minorVersionOrUndefined(this.options.toTag),
+            AM_MIGRATION_MAPI_VERSION: this.mapiVersion ?? undefined,
+            AM_MIGRATION_GW_VERSION: this.gwVersion ?? undefined,
+        };
+        return Object.fromEntries(Object.entries(env).filter(([, value]) => value !== undefined));
+    }
+
     getMigrationTestLabel() {
         return this.options.testLabel || 'alpha';
     }
+}
+
+function minorVersionOrUndefined(version) {
+    return /^\d+\.\d+/.test(String(version)) ? toMinorVersion(version) : undefined;
 }
 
 function toMinorVersion(version) {

@@ -59,7 +59,7 @@ const parsed = parseArgs({
         'test-label': { type: 'string' },
         'test-dir': { type: 'string' },
         'with-downgrade': { type: 'boolean', default: false },
-        'no-seed-worktree': { type: 'boolean', default: false },
+        'seed-worktree': { type: 'boolean', default: false },
         'keep-worktrees': { type: 'boolean', default: false },
     },
     allowPositionals: true,
@@ -95,7 +95,7 @@ if (firstIsCommand) {
         'test-label': zxArgv['test-label'],
         'test-dir': zxArgv['test-dir'],
         'with-downgrade': zxArgv['with-downgrade'],
-        'no-seed-worktree': zxArgv['no-seed-worktree'],
+        'seed-worktree': zxArgv['seed-worktree'],
         'keep-worktrees': zxArgv['keep-worktrees'],
     };
 } else {
@@ -119,8 +119,9 @@ const options = {
     testLabel: (raw['test-label'] ?? '').trim() || undefined,
     testDir,
     withDowngrade: raw['with-downgrade'] === true,
-    // Seed each tag from a git worktree of that tag (its own SDK + scripts); on by default.
-    seedFromWorktree: raw['no-seed-worktree'] !== true,
+    // Seed each tag from a git worktree of that tag (its own SDK + scripts); off by default, so every
+    // tag is seeded from the current checkout's migration-seeding/versions/<major.minor>.
+    seedFromWorktree: raw['seed-worktree'] === true,
     keepWorktrees: raw['keep-worktrees'] === true,
     token: process.env.CIRCLECI_TOKEN,
 };
@@ -306,14 +307,13 @@ function printHelp() {
     console.log('  --test-label <alpha|beta>  Seed channel asserted by ad-hoc migration Jest tests (default: alpha)');
     console.log('  --test-dir <path>   Test suite directory (default from config; use full path to override)');
     console.log('  --with-downgrade  After the full upgrade, downgrade back to from-tag and re-verify');
-    console.log('  --no-seed-worktree  Seed from the current checkout for all tags (disable per-tag worktree seeding)');
+    console.log('  --seed-worktree   Seed each tag from a git worktree of that tag instead of the current checkout');
     console.log('  --keep-worktrees  Do not delete the .worktrees/seed-<ref> dirs after the run (debugging)');
     console.log('\nSeeding source:');
-    console.log('  By default each tag is seeded from a git worktree of that tag (its own SDK + scripts),');
-    console.log('  so alpha reflects --from-tag and beta reflects --to-tag. AM itself runs from the published');
-    console.log('  Docker image; the worktree only provides the TS seed tooling (npm ci once per worktree).');
-    console.log('  Going-forward: tags predating the migration-seeding framework transparently fall back to');
-    console.log('  the current checkout. Use --no-seed-worktree to force current-checkout seeding everywhere.');
+    console.log('  By default every tag is seeded from the current checkout, with the seed module of the tag\'s');
+    console.log('  major.minor (4.13.0-alpha.4 -> versions/4.13; no fallback). With --seed-worktree each tag is');
+    console.log('  seeded from a git worktree of that tag (its own SDK + scripts; npm ci once per worktree);');
+    console.log('  tags predating the migration-seeding framework then fall back to the current checkout.');
     console.log('\nStages (default pipeline order):');
     console.log('  clean, k8s:setup, deploy-from, seed-alpha, verify-alpha, upgrade-mapi, seed-beta,');
     console.log('  verify-alpha, verify-beta, upgrade-gw, verify-alpha, verify-beta');
