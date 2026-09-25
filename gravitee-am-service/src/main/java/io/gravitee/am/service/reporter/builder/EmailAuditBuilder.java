@@ -16,9 +16,10 @@
 package io.gravitee.am.service.reporter.builder;
 
 import io.gravitee.am.common.audit.EntityType;
-import io.gravitee.am.common.email.Email;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 
 /**
@@ -37,9 +38,29 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
         setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
     }
 
-    public EmailAuditBuilder email(Email email) {
-        if (email != null) {
-            type(email.getTemplate().replace(HTML_SUFFIX, "").toUpperCase() + EVENT_SUFFIX);
+    /**
+     * Set the audit type from the built-in template the email was sent for.
+     */
+    public EmailAuditBuilder template(Template template) {
+        if (template != null) {
+            type(switch (template) {
+                case RESET_PASSWORD -> EventType.RESET_PASSWORD_EMAIL_SENT;
+                case BLOCKED_ACCOUNT -> EventType.BLOCKED_ACCOUNT_EMAIL_SENT;
+                case VERIFY_ATTEMPT -> EventType.VERIFY_ATTEMPT_EMAIL_SENT;
+                case REGISTRATION_VERIFY -> EventType.REGISTRATION_VERIFY_EMAIL_SENT;
+                case REGISTRATION_CONFIRMATION -> EventType.REGISTRATION_CONFIRMATION_EMAIL_SENT;
+                default -> null;
+            });
+        }
+        return this;
+    }
+
+    /**
+     * Set the audit type from a free-form template name.
+     */
+    public EmailAuditBuilder customTemplate(String templateName) {
+        if (templateName != null) {
+            type(templateName.replace(HTML_SUFFIX, "").toUpperCase() + EVENT_SUFFIX);
         }
         return this;
     }
