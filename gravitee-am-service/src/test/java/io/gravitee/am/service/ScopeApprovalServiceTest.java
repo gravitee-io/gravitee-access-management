@@ -24,6 +24,7 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
@@ -43,9 +44,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.junit.Assert.assertFalse;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,6 +117,40 @@ public class ScopeApprovalServiceTest {
     }
 
     @Test
+    public void shouldFindByIdAndUser() {
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setUserId(new UserId("user-id", "external-id", "idp-id"));
+        when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
+
+        scopeApprovalService.findByIdAndUser(DOMAIN, CONSENT_ID, UserId.internal("user-id")).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(scopeApproval);
+    }
+
+    @Test
+    public void shouldFindByIdAndUser_ownerMatchedByExternalIdAndSource() {
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setUserId(new UserId("user-id", "external-id", "idp-id"));
+        when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
+
+        scopeApprovalService.findByIdAndUser(DOMAIN, CONSENT_ID, new UserId(null, "external-id", "idp-id")).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(scopeApproval);
+    }
+
+    @Test
+    public void shouldNotFindByIdAndUser_consentOfAnotherUser() {
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setUserId(new UserId("owner-id", "external-id", "idp-id"));
+        when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
+
+        scopeApprovalService.findByIdAndUser(DOMAIN, CONSENT_ID, new UserId("caller-id", "external-id", "other-idp-id")).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoValues();
+    }
+
+    @Test
     public void shouldFindByDomainAndUser() {
         ScopeApproval dummyScopeApproval = new ScopeApproval();
         dummyScopeApproval.setUserId(UserId.internal(""));
@@ -172,7 +211,7 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(userRepository.findById(any(UserId.class))).thenReturn(Maybe.just(new User()));
+        when(userRepository.findById(any(UserId.class))).thenReturn(Maybe.just(user("user-id")));
 
         ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setClientId("client-id");
@@ -190,6 +229,47 @@ public class ScopeApprovalServiceTest {
 
         verify(scopeApprovalRepository, times(1)).delete(CONSENT_ID);
         verify(auditService, times(1)).report(any(UserConsentAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldDelete_ownerMatchedByExternalIdAndSource() {
+        User user = user("user-id");
+        user.setExternalId("external-id");
+        user.setSource("idp-id");
+        when(userRepository.findById(any(UserId.class))).thenReturn(Maybe.just(user));
+
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setClientId("client-id");
+        scopeApproval.setDomain(DOMAIN_ID);
+        scopeApproval.setUserId(new UserId(null, "external-id", "idp-id"));
+        when(scopeApprovalRepository.delete(CONSENT_ID)).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
+
+        TestObserver testObserver = scopeApprovalService.revokeByConsent(new Domain(DOMAIN_ID), UserId.internal("user-id"), CONSENT_ID, (domain, revokeToken) -> Completable.complete(), null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(scopeApprovalRepository, times(1)).delete(CONSENT_ID);
+    }
+
+    @Test
+    public void shouldNotDelete_consentOfAnotherUser() {
+        when(userRepository.findById(any(UserId.class))).thenReturn(Maybe.just(user("caller-id")));
+
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setClientId("client-id");
+        scopeApproval.setDomain(DOMAIN_ID);
+        scopeApproval.setUserId(UserId.internal("owner-id"));
+        when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
+        AtomicBoolean tokensRevoked = new AtomicBoolean();
+
+        TestObserver testObserver = scopeApprovalService.revokeByConsent(new Domain(DOMAIN_ID), UserId.internal("caller-id"), CONSENT_ID, (domain, revokeToken) -> Completable.fromAction(() -> tokensRevoked.set(true)), null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(ScopeApprovalNotFoundException.class);
+        verify(scopeApprovalRepository, never()).delete(anyString());
+        verify(auditService, never()).report(any());
+        assertFalse(tokensRevoked.get());
     }
 
     @Test
@@ -251,5 +331,11 @@ public class ScopeApprovalServiceTest {
 
         TestObserver<Void> testObserver = scopeApprovalService.revokeByUserAndClient(new Domain(DOMAIN_ID), UserId.internal("user-id"), "client-id", (Domain, RevokeToken) -> Completable.complete(), new DefaultUser("user-id")).test();
         testObserver.assertError(UserNotFoundException.class);
+    }
+
+    private static User user(String id) {
+        User user = new User();
+        user.setId(id);
+        return user;
     }
 }
