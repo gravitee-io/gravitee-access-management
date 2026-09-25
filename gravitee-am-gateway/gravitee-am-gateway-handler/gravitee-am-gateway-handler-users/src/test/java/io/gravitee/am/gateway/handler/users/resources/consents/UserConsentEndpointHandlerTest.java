@@ -131,7 +131,7 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldGetConsent() throws Exception {
-        when(userService.consent(anyString())).thenReturn(Maybe.just(new ScopeApproval()));
+        when(userService.consent(anyString())).thenReturn(Maybe.just(consentOf(UserId.internal("user-id"))));
 
         router.route("/users/:userId/consents/:consentId")
                 .handler(underTest::get)
@@ -143,6 +143,40 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
                 200,
                 "OK", null);
 
+    }
+
+    @Test
+    public void shouldGetConsent_pathIsInternalSub() throws Exception {
+        UserId owner = new UserId("user-id", "external-id", "idp-id");
+        when(userService.consent(anyString())).thenReturn(Maybe.just(consentOf(owner)));
+        when(subjectManager.generateInternalSubFrom(owner)).thenReturn("internal-sub");
+
+        router.route("/users/:userId/consents/:consentId")
+                .handler(underTest::get)
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.GET, "/users/internal-sub/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                200,
+                "OK", null);
+    }
+
+    @Test
+    public void shouldNotGetConsent_notOwnedByPathUser() throws Exception {
+        UserId owner = UserId.internal("owner-id");
+        when(userService.consent(anyString())).thenReturn(Maybe.just(consentOf(owner)));
+        when(subjectManager.generateInternalSubFrom(owner)).thenReturn("owner-internal-sub");
+
+        router.route("/users/:userId/consents/:consentId")
+                .handler(underTest::get)
+                .failureHandler(new ErrorHandler());
+
+        testRequest(
+                HttpMethod.GET, "/users/user-id/consents/consent-id",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+                404,
+                "Not Found", null);
     }
 
     @Test
@@ -318,4 +352,10 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
         return token;
     }
 
+
+    private static ScopeApproval consentOf(UserId owner) {
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setUserId(owner);
+        return scopeApproval;
+    }
 }
