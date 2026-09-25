@@ -328,6 +328,18 @@ describe('K8sProvider with releases (multi-dataplane)', () => {
         expect(mockPortForwarder.start).toHaveBeenCalledTimes(4);
     });
 
+    test('getDeployedVersions reads the Management API and first gateway release images', async () => {
+        mockKubectl.getDeploymentImageTag = jest.fn()
+            .mockResolvedValueOnce('4.13.0-alpha.4')
+            .mockResolvedValueOnce('4.12.0');
+
+        await expect(provider.getDeployedVersions()).resolves.toEqual({ mapi: '4.13.0-alpha.4', gateway: '4.12.0' });
+        expect(mockKubectl.getDeploymentImageTag).toHaveBeenNthCalledWith(1,
+            'app.kubernetes.io/instance=am-mapi,app.kubernetes.io/component=management-api');
+        expect(mockKubectl.getDeploymentImageTag).toHaveBeenNthCalledWith(2,
+            'app.kubernetes.io/instance=am-gateway-dp1,app.kubernetes.io/component=gateway');
+    });
+
     test('prepareTests should start tunnels when running a verify stage in a new process', async () => {
         await provider.prepareTests();
 

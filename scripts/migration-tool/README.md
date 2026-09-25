@@ -288,6 +288,9 @@ the running Management API cannot satisfy:
 | `AM_MIGRATION_MAPI_VERSION` | Management API tag currently deployed (set by `deploy-from`, `upgrade-mapi`, `downgrade-mapi`) |
 | `AM_MIGRATION_GW_VERSION` | Gateway tag currently deployed (set by `deploy-from`, `upgrade-gw`, `downgrade-gw`) |
 
+When a stage runs on its own (`--stage`), the tool did not deploy anything in that process, so it reads
+the Management API and gateway tags back from the image of their Deployments in the cluster.
+
 A spec that covers a feature introduced in a given version gates on both sides: the channel must have
 been seeded by a version that has the feature, and the component the assertion talks to must be
 deployed at such a version (see `specs/migration/fixture/migration-versions.ts`).

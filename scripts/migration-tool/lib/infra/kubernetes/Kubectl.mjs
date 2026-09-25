@@ -59,6 +59,28 @@ export class Kubectl {
         await this.shell`kubectl delete namespace ${this.namespace} --ignore-not-found`;
     }
 
+    /**
+     * Image tag of the first container of the first Deployment matching the label selector, e.g.
+     * "4.13.0" for graviteeio/am-management-api:4.13.0. Null when nothing matches, the image has no
+     * tag, or kubectl fails — callers treat the version as unknown.
+     * @param {string} selector - label selector
+     * @returns {Promise<string|null>}
+     */
+    async getDeploymentImageTag(selector) {
+        const result = await this.shell`kubectl get deployments -n ${this.namespace} -l ${selector} -o json`.quiet().nothrow();
+        if (result.exitCode !== 0) {
+            return null;
+        }
+        try {
+            const image = JSON.parse(result.stdout).items?.[0]?.spec?.template?.spec?.containers?.[0]?.image;
+            // Only the last path segment carries the tag: a registry host may have a port (host:5000/...).
+            const name = image?.split('@')[0].split('/').pop();
+            return name?.includes(':') ? name.slice(name.lastIndexOf(':') + 1) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
     async getPods(selector) {
         const result = await this.shell`kubectl get pods -n ${this.namespace} -l ${selector} -o json`;
         return JSON.parse(result.stdout).items;
