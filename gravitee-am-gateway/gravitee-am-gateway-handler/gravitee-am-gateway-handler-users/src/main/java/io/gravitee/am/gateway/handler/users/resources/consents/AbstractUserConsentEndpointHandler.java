@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Maybe;
@@ -130,5 +131,10 @@ public class AbstractUserConsentEndpointHandler {
         var matchesGis = requestedUserId.equals(this.subjectManager.generateInternalSubFrom(idFromSub));
         var matchesSub = requestedUserId.equals(accessToken.getSub());
         return sameUser || matchesSub || matchesGis;
+    }
+
+    protected boolean userIdParamMatchConsentOwner(ScopeApproval consent, String requestedUserId) {
+        var owner = consent.getUserId();
+        return requestedUserId.equals(owner.id()) || requestedUserId.equals(this.subjectManager.generateInternalSubFrom(owner));
     }
 }

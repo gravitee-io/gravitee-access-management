@@ -85,7 +85,7 @@ public class UserConsentResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> scopeApprovalService.findById(domain, consent))
+                        .flatMap(domain -> scopeApprovalService.findByIdAndUser(domain, consent, UserId.internal(user)))
                         .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consent)))
                         .flatMapSingle(scopeApproval -> getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
                                 .map(clientEntity -> {

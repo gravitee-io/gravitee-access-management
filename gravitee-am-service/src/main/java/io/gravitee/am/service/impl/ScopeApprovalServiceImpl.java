@@ -78,6 +78,11 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
+    public Maybe<ScopeApproval> findByIdAndUser(Domain domain, String id, UserId userId) {
+        return findById(domain, id).filter(scopeApproval -> isOwnedBy(scopeApproval, userId));
+    }
+
+    @Override
     public Flowable<ScopeApproval> findByDomainAndUser(Domain domain, UserId userId) {
         LOGGER.debug("Find scope approvals by domain: {} and user: {}", domain, userId);
         return dataPlaneRegistry.getScopeApprovalRepository(domain).findByDomainAndUser(domain.getId(), userId)
@@ -131,6 +136,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> scopeApprovalRepository.findById(consentId)
+                        .filter(scopeApproval -> isOwnedBy(scopeApproval, user.getFullId()))
                         .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)))
                         .flatMapCompletable(scopeApproval -> scopeApprovalRepository.delete(consentId)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
@@ -222,5 +228,13 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                             String.format("An error occurs while trying to revoke scope approvals for domain: %s, user: %s and client: %s", domain, userId, clientId), ex));
                 });
 
+    }
+
+    private static boolean isOwnedBy(ScopeApproval scopeApproval, UserId userId) {
+        UserId owner = scopeApproval.getUserId();
+        if (owner.id() != null && owner.id().equals(userId.id())) {
+            return true;
+        }
+        return owner.hasExternal() && owner.externalId().equals(userId.externalId()) && owner.source().equals(userId.source());
     }
 }
