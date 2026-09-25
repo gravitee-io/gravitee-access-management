@@ -19,6 +19,7 @@ import { getApplicationApi, getDomainApi, getExtensionApi, getFactorApi, getIdpA
 import { Application } from '../api/management/models/Application';
 import { Domain } from '../api/management/models/Domain';
 import { NewApplicationTypeEnum } from '../api/management/models/NewApplication';
+import { migrationSeed } from './version-range';
 
 export const JWT_BEARER_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
 
@@ -112,6 +113,13 @@ export function getCustomIdpUserName(label: string): string {
 function isJdbcRepository(): boolean {
   return process.env.REPOSITORY_TYPE === 'jdbc';
 }
+
+/** The core Management API data set (domain, applications, factor, identity providers, users), seeded from 4.10 on. */
+export const MAPI_DATA_SEED = migrationSeed({
+  name: 'Management API data',
+  variants: [{ range: { from: '4.10' }, options: undefined }],
+  seed: (channelLabel) => seedMapiData(channelLabel),
+});
 
 export async function seedMapiData(channelLabel: string): Promise<void> {
   const accessToken = await requestAdminAccessToken();
