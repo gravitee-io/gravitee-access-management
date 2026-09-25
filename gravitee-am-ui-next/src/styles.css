@@ -15,4 +15,7 @@
  */
 @import 'tailwindcss';
 @import '@gravitee/graphene-core/tailwind-theme';
+/* Last, so Graphene's base and utilities win over the app's Tailwind build. A separate JS import
+   lands in the vendors chunk, which the page loads before this file. */
+@import '@gravitee/graphene-core/styles';
 @source './**/*.{ts,tsx}';

@@ -32,7 +32,7 @@ Viable, with conditions. The spike built every layer of the path and ran it end 
 | 9 | Decisions needed | Decision, options, recommendation, owner, deadline | 1.4 below | Ready to fill |
 | 10 | Dependencies on other teams | What each team must deliver and when | 1.5 below | Needs Cloud team input |
 | 11 | Recommendation and phasing | Phases with exit criteria | 1.6 below | Draft ready |
-| 12 | Cross-cutting concerns | Permissions, licences, the policy studio, plugin form generation | 1.8 below | Draft ready. Policy studio waits for the flows spike |
+| 12 | Cross-cutting concerns | Permissions, licences, the policy studio, plugin form generation | 1.8 below | Draft ready. Policy studio proven in spike step 5b |
 
 ### 1.4 Decisions the report must request
 
@@ -48,7 +48,7 @@ Viable, with conditions. The spike built every layer of the path and ran it end 
 | Licence feature key | Which `feature` in the `identity-and-access-management` pack gates the tile | Confirm the key name | Licensing owner |
 | External module SPI | `externalUrl` on `GammaModuleDefinition`, or keep the host's id check | `externalUrl`, so the next external product needs no host edit | Gamma platform team |
 | Plugin schema approach | Keep AM's schemas and translate them in the browser, or move AM plugin schemas to APIM's style (draft-07 with `gioConfig`) | The adapter now. Move each schema when its plugin next releases, then delete the adapter | AM |
-| Policy studio for AM flows | Extend Graphene's policy studio with an AM flow model, or wrap the current `gv-policy-studio` web component in React | Decide from the flows spike. The wrapper is the fallback that keeps AM-J off the Graphene critical path | AM and Graphene |
+| Policy studio for AM flows | Extend Graphene's policy studio with an AM flow model, or wrap the current `gv-policy-studio` web component in React | Extend Graphene with the opt-in `FlowModel` prop. Spike step 5b edited and saved AM flows with it, and APIM behaviour did not change. The wrapper is no longer needed | AM and Graphene |
 
 ### 1.5 Dependencies on other teams
 
@@ -61,7 +61,7 @@ Viable, with conditions. The spike built every layer of the path and ran it end 
 | Cloud | Per-user module entitlement, for the switcher filter | Later, optional |
 | Cloud SRE | Ingress that serves the AM console and `/management` on one origin | Phase 1 |
 | Gamma platform | `externalUrl` in the module SPI, the `am` plugin in the distribution bundle | Phase 1 |
-| Graphene | Custom field extension for AM widgets, the Monaco peer fix, policy studio fit for AM flows, a React licence check and upgrade dialog | Phase 2 |
+| Graphene | Custom field extension for AM widgets, the Monaco peer fix, the policy studio `FlowModel` release, a React licence check and upgrade dialog | Phase 2 |
 
 ### 1.6 Phasing for the report
 
@@ -76,7 +76,7 @@ Viable, with conditions. The spike built every layer of the path and ran it end 
 
 1. Calibrate the port cost: time one page per pattern (list, tabbed detail, schema form, code editor) from the spike, then apply it to the component counts per area in Part 2.
 2. Survey the EE plugin schemas: factors, reporters, certificates, bot detection, policies. Count custom widgets that need a Graphene field. Check that Graphene's form handles `if`/`then` and `allOf`.
-3. Run the short flows and policies spike. Compare two options: extend Graphene's policy studio with an AM flow model, or wrap `gv-policy-studio` in React. It is the one area that can move the cost a lot.
+3. ~~Run the short flows and policies spike.~~ Done in spike steps 5a and 5b: AM flows are editable in Graphene's policy studio with one opt-in prop. See the spike notes.
 4. Record bundle and build metrics for the report: initial JS, gzipped size, build time, test count.
 5. Record a GIF of the round trip.
 6. Get the Cloud team's answer on the signing key, provisioning, and `return_to`.
@@ -106,12 +106,14 @@ The React console needs a licence check hook and the upgrade dialog. The AM-A st
 
 Graphene's policy studio is APIM-shaped: API types, plans, and the REQUEST, RESPONSE, PUBLISH and SUBSCRIBE phases. AM flows have flow types such as ROOT, LOGIN, CONSENT and REGISTER, each with pre and post steps. The Angular console uses `gv-policy-studio` from `@gravitee/ui-components` 4.3.3, a web component.
 
-The flows spike (1.7 item 3) compares two options:
+The flows spike (1.7 item 3) compared two options:
 
 - Extend Graphene's policy studio with an AM flow model. This is the long-term target and needs Graphene team capacity.
 - Wrap `gv-policy-studio` in React. React 19 supports custom elements. This unblocks AM-J without Graphene work.
 
-Decision 1.4 records the choice. AM-J stays at high risk until the spike ends.
+Decision 1.4 records the choice.
+
+**Spike result (steps 5a and 5b).** Graphene's organization scope already takes flows with a request and a response phase, which is AM's pre and post shape. One opt-in prop, `FlowModel`, covered the rest: AM phase text and actors, one sidebar group per flow type, a condition-only flow form, and step names. The save output returns the flows per group. With it, the React console edited, added and removed AM flows and steps and saved them through `PUT .../flows`. All 509 existing policy studio tests passed unchanged. A new flow model in Graphene is not needed, and AM-J drops to medium risk. The Graphene change is on the local branch `spike/am-gamma` for the Graphene team to review.
 
 #### Plugin form generation and schema versions
 
@@ -133,13 +135,79 @@ Graphene validates with Ajv 8 and `strict: false`. It already turns the draft-04
 
 Sizes: S is up to 3 developer days, M up to 10, L up to 20, XL above 20. Port epics carry component counts from `gravitee-am-ui/src/app` as the size input; item 1 of 1.7 turns them into days. When these become Jira tickets, each one is written as requirements only, without the notes and file references below.
 
+### 2.0 Epic list
+
+The work splits into 3 spikes, 14 epics owned by the AM team, and 1 epic owned by the Graphene team. The 13 port areas (AM-D to AM-P) merge into 7 port epics, because several areas hold only 2 or 3 stories and ship together. Sections 2.1 to 2.5 hold the story detail. The Source column maps each epic to its working code there.
+
+#### Spikes before the epics
+
+Run these under AM-7349 first. Their results change the scope and size of the epics.
+
+| Spike | Output | Unblocks |
+|---|---|---|
+| ~~Flows and policy studio~~ | Done in spike steps 5a and 5b: extend Graphene with `FlowModel` | Epic 11 |
+| Port cost calibration | Time one page per pattern, then days per port epic (1.7 item 1) | Cost section of the report, epics 6 to 14 |
+| EE plugin schema survey | Custom widget count, `if`/`then` and `allOf` usage (1.7 item 2) | Epic 1 schema adapter, Graphene custom fields |
+
+#### Phase 1: open AM from Gamma
+
+| # | Epic | Repo | Source | Stories |
+|---|---|---|---|---|
+| 1 | React console foundation | `gravitee-access-management` | AM-A | 11 |
+| 2 | Gamma mode in the Management API | `gravitee-access-management` | AM-B | 11 |
+| 3 | Gamma-mode shell | `gravitee-access-management` | AM-C | 4 |
+| 4 | Access Management tile plugin | `gravitee-gamma-module-am` (new) | GM-A | 7 |
+| 5 | External module support in Gamma | `gravitee-api-management` | GA-A | 5 |
+| 6 | Port: domains and applications | `gravitee-access-management` | AM-D, AM-E | By area |
+
+#### Phase 2: domain parity
+
+| # | Epic | Source | Graphene risk |
+|---|---|---|---|
+| 7 | Port: identity providers, users, groups and roles | AM-F, AM-G | Low |
+| 8 | Port: OAuth and OIDC settings, scopes, CIBA, UMA, certificates | AM-H, AM-I | Low |
+| 9 | Port: MFA, bot detection and device identifiers | AM-K | Medium |
+| 10 | Port: login pages, forms, emails and themes | AM-L | Low |
+| 11 | Port: flows and policies | AM-J | Medium. Needs the Graphene `FlowModel` change merged |
+| 12 | Port: audits, analytics, reporters and alerts | AM-M, AM-N | Medium |
+| 13 | Port: MCP servers, agents and authorization engines | AM-O | Medium |
+
+#### Phase 3: full parity and cut-over
+
+| # | Epic | Source |
+|---|---|---|
+| 14 | Organization settings, self-hosted switch and removal of the Angular console | AM-P plus the cut-over work |
+
+#### Graphene team
+
+| Epic | Source | Stories |
+|---|---|---|
+| Graphene gaps for AM | GR-A | 8 |
+
+Epic 1 needs the Monaco peer fix, custom schema fields, `if`/`then` support and the upgrade dialog in phase 1. Epic 11 needs the `FlowModel` prop released in the policy studio.
+
+#### Other teams
+
+The Cloud, Cloud SRE and licensing items in 2.5 are not AM epics. Each one is a ticket in the owning team's project, linked to the epic it blocks:
+
+- Signing delegation, user provisioning and `return_to` block epics 2 and 4.
+- The same-origin ingress blocks the phase 1 release.
+- The licence feature key blocks epic 4.
+
+#### Order of work
+
+- Epics 1, 2, 4 and 5 can run in parallel.
+- Epic 3 depends on epic 2.
+- Epic 6 depends on epic 1.
+- In phase 2, epics 7, 8, 10, 12 and 13 can run in parallel. Epic 9 waits for the schema survey. Epic 11 waits for the Graphene `FlowModel` release.
+
 ### 2.1 `gravitee-access-management`
 
 #### Epic AM-A: React console foundation (`gravitee-am-ui-next`)
 
 | Story | Detail | Size |
 |---|---|---|
-| Module and build | Maven module, rsbuild, React 19, Graphene pinned to gamma-console's version, lint, vitest. Add to the root pom. Spike code is the starting point | S |
+| Module and build | Maven module, rsbuild, React 19, Graphene pinned to gamma-console's version, lint, vitest. Add to the root pom. Import Graphene's CSS last from `styles.css`. Spike code is the starting point | S |
 | Delivery | Docker image on the existing nginx pattern, `constants.json` contract, Helm values to pick the image, CI build and publish jobs | M |
 | Auth and HTTP layer | Login and logout redirect chain, callback, CSRF echo, 401 handling, error toasts. Exists in the spike; needs review and tests | S |
 | Permission model | Load user permissions, route guards, permission-gated actions, matching Angular's 139 guarded routes and the `hasPermission` directives in 103 files | M |
@@ -176,7 +244,9 @@ Sizes: S is up to 3 developer days, M up to 10, L up to 20, XL above 20. Port ep
 | Hide the org surface | Gamma mode hides org menu entries and org routes | S |
 | Environment mapping | Map the Gamma environment to the AM environment for the Home link and the landing route | S |
 
-#### Port epics AM-D to AM-P, in port order
+#### Port areas AM-D to AM-P, in port order
+
+The epic list in 2.0 merges these 13 areas into 7 port epics.
 
 Counts are Angular components from the size survey. Area names follow `gravitee-am-ui/src/app/domain/`.
 
@@ -188,7 +258,7 @@ Counts are Angular components from the size survey. Area names follow `gravitee-
 | AM-G | Users, groups, roles | part of `settings` | Low | |
 | AM-H | OIDC and OAuth settings, scopes, CIBA, UMA | part of `settings` | Low | |
 | AM-I | Certificates | part of `settings` | Low | |
-| AM-J | Flows and policies | part of `settings` | **High** | Needs the flows spike first. Extend Graphene's studio or wrap `gv-policy-studio` |
+| AM-J | Flows and policies | part of `settings` | Medium | Spike built the domain flows page on Graphene's studio with `FlowModel`. Application flows and inheritance remain |
 | AM-K | MFA factors, bot detection, device identifiers | part of `settings` | Medium | Custom widgets likely |
 | AM-L | Login, forms, emails, themes, branding | part of `settings` | Low | Spike built the login form |
 | AM-M | Audits, analytics, reporters | part of `settings` | Medium | Charts move to `graphene-charts` |
@@ -204,7 +274,7 @@ Epic GM-A: Access Management tile plugin.
 
 | Story | Detail | Size |
 |---|---|---|
-| Repository | Create the repo from the AuthZ module: pom, CI, release, renovate, CODEOWNERS. Move the local spike folder in | S |
+| Repository | Create the repo from the AuthZ module: pom, CI, release, renovate, CODEOWNERS. Move the spike folder in | S |
 | SSO resource | `GET /sso` returns the AM console URL. Production error handling: no connection, issuer failure, unknown user | S |
 | Token issuer | Call the Cloud signing endpoint, or sign with a provisioned key, per decision 1.4 | M |
 | Subject mapping | `sub` from the Cloud user id of the APIM user | S |
@@ -219,7 +289,7 @@ Epic GA-A: Gamma support for an external module.
 | Story | Detail | Size |
 |---|---|---|
 | External module SPI | `externalUrl` on `GammaModuleDefinition`; `hasUi` accepts it; remove the host's id check | M |
-| Host edits | Catalog entry, icon, Home card, `AccessManagementRedirect` route. Done in the spike working tree; needs review and tests | S |
+| Host edits | Catalog entry, icon, Home card, `AccessManagementRedirect` route. Done on the spike branch; needs review and tests | S |
 | Distribution | Bundle the `am` plugin zip in the distribution pom, like the other Gamma modules | S |
 | AM connection for SSO | Let SSO use a connection without a service-account token, or document that it needs one | S |
 | Module display data | Optional: return label, tagline and icon from `/modules`, so AM and gamma-console share one catalog | M |
@@ -232,11 +302,12 @@ Epic GR-A: gaps found by the AM port.
 |---|---|---|
 | Monaco as a true optional peer | The root entry imports the code editor, so a build without `monaco-editor` fails | S |
 | Custom schema fields | An extension point in `JsonSchemaForm` for AM widgets such as `datasource` | M |
-| Policy studio for AM flows | An AM flow model: flow types with pre and post steps. Depends on the flows spike | Unknown |
+| Policy studio `FlowModel` | Review and release the opt-in `FlowModel` prop from the spike branch: host phase text, host groups, condition-only form, step names, `flowGroups` in the save output | M |
+| Policy studio robustness | Escape the step-validity key, so a flow id with `:` does not crash the studio. Say why Save is disabled when a step in another flow is invalid | S |
 | Licence check and upgrade dialog | A React upgrade dialog shared by gamma modules, fed by a licence feature list | M |
 | Conditional schemas | Confirm or add `if`/`then` support in `JsonSchemaForm` | S |
 | Lint rule | Flag `divide-y` and `border` without a colour token under Tailwind 4 | S |
-| Docs | Form value types must be `type` aliases for the resolvers | S |
+| Docs | Form value types must be `type` aliases for the resolvers. Warn that bundler code splitting can load `graphene-core/styles` before the app's Tailwind CSS; import it last from the app's CSS | S |
 
 ### 2.5 Other teams, outside our repositories
 
@@ -249,7 +320,7 @@ Epic GR-A: gaps found by the AM port.
 ## Part 3. Where to resume on 2026-09-25
 
 1. Review Part 1 and Part 2 of this file together and adjust the epic list.
-2. Choose which of the six items in 1.7 to do before the report. Calibrating the cost and the flows spike matter most.
+2. Choose which of the six items in 1.7 to do before the report. Calibrating the cost matters most. The flows spike is done.
 3. Draft the report itself from 1.3, in a shareable place.
 4. After the report is accepted, create the Jira epics and stories from Part 2 under AM-7349.
 

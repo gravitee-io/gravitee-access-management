@@ -348,6 +348,107 @@ Findings:
 | `clean` removes the licence | The distribution `clean` deletes `target/distribution/license/`. The AM team licence (`gravitee-universe-v4.key`) has no Gamma packs, so aim, authz, esm and edge stop loading with `detected but not activated`. `~/Downloads/license.key` ("Gravitee Internal - Development and Testing") activates all of them |
 | Restart log trap | `nohup ... > apim-restapi.log` truncates the log while the old process still writes its shutdown lines into it. The new process's start lines then look lost. The first failed restart was this plus the class skew above |
 
+### Step 5a result: AM flows in Graphene's policy studio, read-only (2026-09-25)
+
+The goal was to see how far AM flows get in Graphene's `PolicyStudio` with no change to Graphene.
+
+**Approach.** The studio's organization scope (`scope="ORGANIZATION"`, `apiType="PROXY"`) takes one flat list of flows with request and response phases. APIM uses it for platform flows, which have the same v2 `pre`/`post` shape as AM flows. The page maps each AM flow into that list: `pre` goes to `request`, `post` goes to `response`, and the flow condition becomes a `CONDITION` selector.
+
+| Part | Detail |
+|---|---|
+| Package | `@gravitee/graphene-policy-studio` 3.22.1, the same version as `graphene-core`. No separate CSS; one `@source` line in `styles.css` |
+| API calls | `GET .../domains/{d}/flows`, `GET /platform/plugins/policies?expand=icon`, `GET .../policies/{id}/schema`, `GET .../policies/{id}/documentation` (AsciiDoc, read as text) |
+| Code | `features/flows/am-flows.ts` (mapping, 2 tests), `features/flows/FlowsPage.tsx`, a Flows nav item, `httpText()` in `http.ts` |
+| Test data | Sample steps on `acme-customers`: Enrich Authentication Flow in LOGIN pre, Enrich User Profile in LOGIN post, a disabled Rate Limit in ALL pre |
+
+**What works with no Graphene change**
+
+- The sidebar lists the 12 AM flow types, with a step count on each.
+- The canvas shows pre and post steps in order, with the enabled state.
+- A step opens the settings panel. The form comes from the AM policy schema through the existing `am-schema.ts` adapter, and the step description and condition show.
+- The Documentation tab renders the AM AsciiDoc documentation, with a section list.
+- The policy catalog keeps all 14 AM policies. AM policies declare no phase compatibility, and organization scope keeps those.
+- Typecheck, lint and 15 unit tests pass. The browser console shows no errors or warnings.
+
+Screenshots: `scratchpad/s5a-flows-1.png`, `s5a-flows-login.png`, `s5a-flows-step.png`, `s5a-flows-docs.png`.
+
+**What is wrong without a Graphene change**
+
+| Gap | Seen | Graphene change |
+|---|---|---|
+| Phase wording | "Request Phase: policies applied to the incoming client request before it reaches any API", "Response Phase", and the step panel badge "Request" | Phase labels and descriptions from the host |
+| Actors | CLIENT and GATEWAY at each end of the canvas | Actor labels from the host, or none |
+| Group label | "PLATFORM FLOWS", with APIM help text | Group label from the host |
+| Flow grouping | One flat list. AM can hold several ordered flows per type (`FlowServiceImpl` sets an `order` per type), always with one default flow per type. AM also has application flows that inherit from the domain | Host-defined groups, one group per flow type |
+| Flow form | Organization scope offers HTTP path, methods and sharding tags. AM flows have a name and a condition only. A new flow must get a type | A condition-only flow form that also sets the group |
+| Step name | The card shows the policy name. The step name the user gave ("Remember login source") does not show | Show `step.name` when it is set |
+| Save output | `SaveOutput.commonFlows`. Usable, but the AM shape comes from the mapping | None needed for AM. A generic flow list is cleaner |
+| Policy icons | All AM policies show the default icon. The studio picks an icon from `category`, and AM policies have none | None. AM can send a category, or the studio can use `policy.icon` |
+
+**Other findings**
+
+- AM returns a default flow with `id: null` for each type that has never been saved. The mapping uses the type as the id.
+- The policy list returns a `feature` field. It is the licence feature for each policy, so the licence check hook can use it.
+- Some AM policy plugins return the parent POM description ("The Gravitee.IO Parent POM provides common settings…") as their description. That is an AM plugin packaging bug.
+- The seeded Rate Limit step has an empty configuration, so the studio flags a validation error on the ALL flow. The studio validates step settings against the schema even when it is read-only.
+
+**Verdict for 5b.** Organization scope gets AM flows on screen, readable and correct, with zero Graphene change. The gaps are wording, a condition-only flow form, host-defined groups and the step name. All of them are "take this from the host" changes. None needs a new flow model in Graphene. That makes 5b smaller than the plan assumed.
+
+### Step 5b result: AM flows editable in Graphene's policy studio (2026-09-25)
+
+The goal was to close the 5a gaps with the smallest Graphene change, then edit and save AM flows from the React console.
+
+**The Graphene change.** One optional prop, `flowModel`, on `PolicyStudio` at organization scope. With no `flowModel`, the studio behaves exactly as before. It is on the local branch `spike/am-gamma` in `gravitee-ui-graphene`: 16 files, about +180 −30 lines.
+
+| `FlowModel` field | What it replaces |
+|---|---|
+| `phases[phase]`: `label`, `title`, `description`, `startActorLabel`, `endActorLabel`, `guidance` | "Request Phase", the APIM descriptions and empty-phase hints, CLIENT and GATEWAY, the "Request" badge |
+| `groups` and `groupOf(flow)` | The single "Platform flows" group. The sidebar shows one section per host group, each with its own add button |
+| `conditionOnly` | The HTTP path, methods and tags fields in the flow form, and the "path and method" name hint |
+| `showStepNames` | The policy name on step cards, when the step has its own name |
+
+The save output gains `flowGroups: { id, flows }[]`, so the host gets each flow back with its group. The new-flow sheet takes its title from the group ("Create a new Login flow").
+
+Checks: 513 policy studio tests pass (509 existing and 4 new). The `tsc` error count is unchanged at 233; they all come from the test and story setup on `main`. ESLint is clean. Prettier ran on the changed files.
+
+**The AM side** (`features/flows/`)
+
+- `AM_FLOW_MODEL`: Pre and Post phases with AM text, User and Access Management as the actors, one group per flow type (12), a condition-only form, and step names.
+- The studio flow id is `<type>~<id>`, or `<type>~default` for a type's default flow that has never been saved. `groupOf` reads the type from it.
+- `toAmFlows()` turns `flowGroups` back into AM flows. The group id becomes the flow type. Step configuration goes back to a JSON string, and the HTTP selector that the flow form still emits is dropped.
+- Save sends the full list to `PUT .../domains/{d}/flows` and puts the response in the query cache.
+- The package comes from `spike/vendor/graphene-policy-studio-am-spike.tgz`, a `yarn pack` of the Graphene branch. `graphene-core` moved to 3.23.1 to match. `scratchpad/relink-policy-studio.sh` runs tests, build, pack and reinstall.
+
+**Proven in the browser, and checked through the API**
+
+| Action | Result in AM |
+|---|---|
+| Edit a step's configuration key | Stored in `configuration` of the LOGIN pre step |
+| Remove a step | Gone from the ALL flow |
+| Add a flow "Partner login" with a condition to the Login group | New flow, `type: login`, with the condition and a new id |
+| Add Latency from the catalog quick-insert to that flow | Pre step `latency` with `{"time":100,"timeUnit":"MILLISECONDS"}` |
+| Reload | All 12 types keep their ids. No console errors or warnings |
+
+Screenshots: `scratchpad/s5b-flows-final.png`, `s5b-flows-login.png`, `s5b-add-flow.png`, `s5b-flow-added.png`, `s5b-catalog.png`, `s5b-policy-added.png`, `s5b-flows-saved.png`.
+
+**Findings**
+
+| Finding | Detail | Action |
+|---|---|---|
+| A `:` in a flow id crashes the studio | The step-validity key is `flowId:phase:index`, split on `:`. An id with a `:` throws "Invalid step validity key" and blanks the page | Graphene: escape the key, or document the rule. AM uses `~` |
+| One invalid step blocks every save | The studio counts invalid steps across all flows. A step with a bad configuration in one flow disables Save everywhere, with only a red dot on the flow | Graphene: say why Save is disabled |
+| Selection resets after save | New flows get their AM id on save, so the selected flow disappears and the studio selects the first flow | AM: keep the id stable, or reselect by name |
+| 2 of 14 policies missing in quick-insert | "Search 12 policies". Not investigated | Check the catalog filter against AM's policy list |
+| The sidebar is long | 12 group headers, each with one flow. A flat list with type labels would be shorter | Design choice for the Graphene team |
+| Gateway run not re-tested | The console writes the same flow shape AM already stores. The gateway reading it is AM's existing behaviour | Out of scope for the UI question |
+
+**Styling findings from the same session**
+
+- rsbuild puts `import '@gravitee/graphene-core/styles'` in the vendors chunk. That chunk loads before the app's `index.css`, so the app's Tailwind preflight overrode Graphene's base rules: black table borders everywhere. The fix was to import Graphene's CSS last, inside `styles.css`, and drop the JS import. Graphene's guide says to load app CSS first, but it does not warn that code splitting can reverse the order.
+- In 5a, the `@source` line for the policy studio dist made the app's Tailwind build emit `.hidden`. That rule beat Graphene's `md:block` and hid the sidebar rail. The guide already says not to add that `@source` line.
+
+**Verdict.** AM flows run in Graphene's policy studio with one additive, opt-in prop. The change does not alter APIM behaviour: all 509 existing tests pass unchanged. A new flow model is not needed. The flows epic drops from high risk to medium. The remaining work is Graphene review of the `FlowModel` API, application-level flows with inheritance, and the findings above.
+
 ### Current state and how to resume (2026-09-24, after step 4b)
 
 | Item | State |

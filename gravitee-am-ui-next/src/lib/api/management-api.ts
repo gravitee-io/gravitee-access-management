@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { http } from './http';
+import { http, httpText } from './http';
 
 /** Claims of the console JWT plus the flattened platform and organization permissions, as `GET /user` returns them. */
 export interface CurrentUser {
@@ -97,6 +97,40 @@ export interface Form {
     readonly content: string;
 }
 
+export interface FlowStep {
+    readonly name?: string;
+    readonly policy: string;
+    readonly description?: string;
+    /** Policy configuration, serialized as a JSON string. */
+    readonly configuration?: string;
+    readonly enabled: boolean;
+    readonly condition?: string;
+}
+
+export interface AmFlow {
+    /** Absent while the domain still uses the default flow for this type. */
+    readonly id?: string | null;
+    readonly type: string;
+    readonly name: string;
+    readonly enabled: boolean;
+    readonly condition?: string | null;
+    readonly pre: FlowStep[];
+    readonly post: FlowStep[];
+    readonly icon?: string;
+}
+
+export interface PolicyPlugin {
+    readonly id: string;
+    readonly name: string;
+    readonly description?: string;
+    readonly version?: string;
+    readonly deployed?: boolean;
+    /** Licence feature that unlocks the policy. */
+    readonly feature?: string;
+    /** Data URI, returned with `expand=icon`. */
+    readonly icon?: string;
+}
+
 function domainPath(organizationId: string, environmentId: string, domainId: string): string {
     return `/organizations/${organizationId}/environments/${environmentId}/domains/${domainId}`;
 }
@@ -109,8 +143,15 @@ export function listEnvironments(organizationId: string): Promise<Environment[]>
     return http<Environment[]>(`/organizations/${organizationId}/environments`);
 }
 
-export function listDomains(organizationId: string, environmentId: string, page: number, size: number): Promise<Page<Domain>> {
-    return http<Page<Domain>>(`/organizations/${organizationId}/environments/${environmentId}/domains?page=${page}&size=${size}`);
+// The Management API matches `q` as a wildcard pattern, so a free-text search becomes `*text*`.
+function searchParam(query: string): string {
+    return query ? `&q=${encodeURIComponent(`*${query}*`)}` : '';
+}
+
+export function listDomains(organizationId: string, environmentId: string, page: number, size: number, query = ''): Promise<Page<Domain>> {
+    return http<Page<Domain>>(
+        `/organizations/${organizationId}/environments/${environmentId}/domains?page=${page}&size=${size}${searchParam(query)}`,
+    );
 }
 
 export function getDomainByHrid(organizationId: string, environmentId: string, hrid: string): Promise<Domain> {
@@ -123,9 +164,9 @@ export interface DomainRef {
     readonly domainId: string;
 }
 
-export function listApplications(ref: DomainRef, page: number, size: number): Promise<Page<Application>> {
+export function listApplications(ref: DomainRef, page: number, size: number, query = ''): Promise<Page<Application>> {
     return http<Page<Application>>(
-        `${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/applications?page=${page}&size=${size}`,
+        `${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/applications?page=${page}&size=${size}${searchParam(query)}`,
     );
 }
 
@@ -177,4 +218,29 @@ export function saveForm(ref: DomainRef, form: Form): Promise<Form> {
               method: 'POST',
               body: JSON.stringify({ template: form.template, enabled: form.enabled, content: form.content }),
           });
+}
+
+export function listFlows(ref: DomainRef): Promise<AmFlow[]> {
+    return http<AmFlow[]>(`${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/flows`);
+}
+
+/** Replaces every flow of the domain. The order within a type is the execution order. */
+export function updateFlows(ref: DomainRef, flows: AmFlow[]): Promise<AmFlow[]> {
+    return http<AmFlow[]>(`${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/flows`, {
+        method: 'PUT',
+        body: JSON.stringify(flows),
+    });
+}
+
+export function listPolicies(): Promise<PolicyPlugin[]> {
+    return http<PolicyPlugin[]>('/platform/plugins/policies?expand=icon');
+}
+
+export function getPolicySchema(policyId: string): Promise<Record<string, unknown>> {
+    return http<Record<string, unknown>>(`/platform/plugins/policies/${policyId}/schema`);
+}
+
+/** AsciiDoc. */
+export function getPolicyDocumentation(policyId: string): Promise<string> {
+    return httpText(`/platform/plugins/policies/${policyId}/documentation`);
 }

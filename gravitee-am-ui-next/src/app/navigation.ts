@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import type { NavGroup } from '@gravitee/graphene-core';
-import { AppWindowIcon, ArrowLeftIcon, FileCodeIcon, ShieldIcon, UsersIcon } from '@gravitee/graphene-core/icons';
+import { AppWindowIcon, ArrowLeftIcon, FileCodeIcon, ShieldIcon, UsersIcon, WorkflowIcon } from '@gravitee/graphene-core/icons';
 
 export const NAV_GROUPS: NavGroup[] = [
     {
@@ -32,6 +32,7 @@ export const DOMAIN_NAV_GROUPS: NavGroup[] = [
             { key: 'applications', title: 'Applications', icon: AppWindowIcon },
             { key: 'identity-providers', title: 'Identity providers', icon: UsersIcon },
             { key: 'login-form', title: 'Login form', icon: FileCodeIcon },
+            { key: 'flows', title: 'Flows', icon: WorkflowIcon },
         ],
     },
 ];

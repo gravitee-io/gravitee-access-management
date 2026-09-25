@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { BadgeCell, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
-import { AppWindowIcon } from '@gravitee/graphene-core/icons';
+import { AppWindowIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
+import { SearchField } from '../../app/components/SearchField';
 import { type Application, listApplications } from '../../lib/api/management-api';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
@@ -58,18 +59,23 @@ export function ApplicationsPage() {
     // Graphene pages start at 1, the Management API pages start at 0.
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
+    const [query, setQuery] = useState('');
+    const search = useCallback((text: string) => {
+        setQuery(text);
+        setPage(1);
+    }, []);
     useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: basePath }, { label: 'Applications' }]);
 
     const { data, isFetching } = useQuery({
-        queryKey: ['applications', ref, page, pageSize],
-        queryFn: () => listApplications(ref, page - 1, pageSize),
+        queryKey: ['applications', ref, page, pageSize, query],
+        queryFn: () => listApplications(ref, page - 1, pageSize, query),
         placeholderData: keepPreviousData,
     });
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Applications" description="Clients that sign users in through this domain." />
-            {data?.totalCount === 0 ? (
+            {data?.totalCount === 0 && !query ? (
                 <DataTableEmptyState
                     variant="first-use"
                     icon={<AppWindowIcon />}
@@ -84,6 +90,16 @@ export function ApplicationsPage() {
                     loading={isFetching}
                     skeletonCount={pageSize}
                     serverSide
+                    enableColumnVisibility
+                    toolbar={<SearchField label="applications" onSearch={search} />}
+                    emptyMessage={
+                        <DataTableEmptyState
+                            variant="no-results"
+                            icon={<SearchIcon />}
+                            title="No applications match your search"
+                            description="Change the search text."
+                        />
+                    }
                     pagination={{
                         page,
                         pageSize,

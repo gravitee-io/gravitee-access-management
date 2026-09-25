@@ -20,6 +20,7 @@ import { ApplicationPage } from '../features/applications/ApplicationPage';
 import { ApplicationsPage } from '../features/applications/ApplicationsPage';
 import { LoginCallback, LoginRedirect, LogoutCallback, LogoutRedirect } from '../features/auth/AuthRoutes';
 import { DomainsPage } from '../features/domains/DomainsPage';
+import { FlowsPage } from '../features/flows/FlowsPage';
 import { LoginFormPage } from '../features/forms/LoginFormPage';
 import { IdentityProviderPage } from '../features/identity-providers/IdentityProviderPage';
 import { IdentityProvidersPage } from '../features/identity-providers/IdentityProvidersPage';
@@ -76,6 +77,7 @@ export function App() {
                                                             element={<IdentityProviderPage />}
                                                         />
                                                         <Route path="login-form" element={<LoginFormPage />} />
+                                                        <Route path="flows" element={<FlowsPage />} />
                                                     </Route>
                                                 </Route>
                                             </Route>

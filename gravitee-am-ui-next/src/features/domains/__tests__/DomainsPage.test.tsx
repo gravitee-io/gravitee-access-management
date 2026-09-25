@@ -15,7 +15,7 @@
  */
 import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { listDomains } from '../../../lib/api/management-api';
 import { DomainsPage } from '../DomainsPage';
@@ -54,7 +54,7 @@ describe('DomainsPage', () => {
         expect(await screen.findByRole('link', { name: 'Acme' })).toHaveAttribute('href', '/acme');
         expect(screen.getByText('Customer realm')).toBeInTheDocument();
         expect(screen.getByText('Enabled')).toBeInTheDocument();
-        expect(listDomains).toHaveBeenCalledWith('DEFAULT', 'env-1', 0, 25);
+        expect(listDomains).toHaveBeenCalledWith('DEFAULT', 'env-1', 0, 25, '');
     });
 
     it('shows the first-use empty state when the environment has no domain', async () => {
@@ -63,5 +63,22 @@ describe('DomainsPage', () => {
         renderPage();
 
         expect(await screen.findByText('No security domains')).toBeInTheDocument();
+    });
+
+    it('searches the domains and shows the no-results state when nothing matches', async () => {
+        vi.mocked(listDomains)
+            .mockResolvedValueOnce({
+                data: [{ id: 'd1', hrid: 'acme', name: 'Acme', description: '', enabled: true, updatedAt: Date.now() }],
+                currentPage: 0,
+                totalCount: 1,
+            })
+            .mockResolvedValue({ data: [], currentPage: 0, totalCount: 0 });
+
+        renderPage();
+        fireEvent.change(await screen.findByRole('textbox', { name: 'Search domains' }), { target: { value: 'zzz' } });
+
+        await waitFor(() => expect(listDomains).toHaveBeenLastCalledWith('DEFAULT', 'env-1', 0, 25, 'zzz'));
+        expect(await screen.findByText('No domains match your search')).toBeInTheDocument();
+        expect(screen.queryByText('No security domains')).not.toBeInTheDocument();
     });
 });

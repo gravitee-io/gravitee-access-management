@@ -24,12 +24,12 @@ interface PageHeaderProps {
 /** The header row of the Graphene list-page pattern (USAGE_GUIDE "Header button coordination"). */
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
     return (
-        <div className="flex items-center justify-between gap-4">
-            <div>
-                <h2 className="text-lg font-semibold">{title}</h2>
+        <header className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+                <h1>{title}</h1>
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </div>
             {actions}
-        </div>
+        </header>
     );
 }

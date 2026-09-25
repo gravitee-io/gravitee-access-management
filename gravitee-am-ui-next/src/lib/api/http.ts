@@ -28,7 +28,7 @@ export class HttpError extends Error {
 let xsrfToken: string | null = null;
 
 /** Calls the Management API with the session cookie. `path` is relative to `baseURL`, e.g. `/user`. */
-export async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function send(path: string, init: RequestInit): Promise<Response> {
     const headers = new Headers(init.headers);
     if (xsrfToken) {
         headers.set('X-Xsrf-Token', xsrfToken);
@@ -48,5 +48,14 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
         const body = await response.json().catch(() => ({}));
         throw new HttpError(response.status, body.message ?? response.statusText);
     }
+    return response;
+}
+
+export async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const response = await send(path, init);
     return response.status === 204 ? (undefined as T) : response.json();
+}
+
+export async function httpText(path: string): Promise<string> {
+    return (await send(path, {})).text();
 }

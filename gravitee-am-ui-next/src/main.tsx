@@ -16,7 +16,6 @@
 import '@gravitee/graphene-core/fonts';
 import './monaco-setup';
 import './styles.css';
-import '@gravitee/graphene-core/styles';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
