@@ -132,6 +132,7 @@ export class Orchestrator {
         }
         const filter = (this.options.testFilter || '').trim();
 
+        await this.resolveDeployedVersions();
         const jestEnv = {
             ...process.env,
             ...(typeof this.provider.getTestEnv === 'function' ? this.provider.getTestEnv() : {}),
@@ -216,10 +217,25 @@ export class Orchestrator {
     }
 
     /**
+     * Fill in the deployed Management API / gateway versions this process did not deploy itself —
+     * a single verify stage run with --stage — from what the provider reports as running.
+     */
+    async resolveDeployedVersions() {
+        if ((this.mapiVersion && this.gwVersion) || typeof this.provider.getDeployedVersions !== 'function') {
+            return;
+        }
+        const deployed = await this.provider.getDeployedVersions();
+        this.mapiVersion ??= deployed?.mapi ?? null;
+        this.gwVersion ??= deployed?.gateway ?? null;
+    }
+
+    /**
      * Version context for the verify specs: AM_MIGRATION_FROM_VERSION / AM_MIGRATION_TO_VERSION are
      * the data sets seeded on the alpha / beta channels (the from / to tag's major.minor),
-     * AM_MIGRATION_MAPI_VERSION / AM_MIGRATION_GW_VERSION the deployed Management API / gateway tags. A value that is unknown — e.g.
-     * a single verify stage run on its own — is left out, so the specs assert everything.
+     * AM_MIGRATION_MAPI_VERSION / AM_MIGRATION_GW_VERSION the deployed Management API / gateway tags,
+     * tracked through the deploy / upgrade / downgrade stages of this run or read back from the
+     * provider (see resolveDeployedVersions). A value that is still unknown is left out, so the
+     * specs assert everything.
      */
     getVersionEnv() {
         const env = {
