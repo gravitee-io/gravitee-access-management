@@ -120,7 +120,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         extensionGrant.setName(newExtensionGrant.getName());
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
                         extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
-                        extensionGrant.setCreateUser(!requiresExistingUser(newExtensionGrant.getType()) && newExtensionGrant.isCreateUser());
+                        extensionGrant.setCreateUser(newExtensionGrant.isCreateUser());
                         extensionGrant.setUserExists(requiresExistingUser(newExtensionGrant.getType()) || newExtensionGrant.isUserExists());
                         extensionGrant.setType(newExtensionGrant.getType());
                         extensionGrant.setConfiguration(newExtensionGrant.getConfiguration());
@@ -170,7 +170,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     extensionGrantToUpdate.setName(updateExtensionGrant.getName());
                     extensionGrantToUpdate.setGrantType(updateExtensionGrant.getGrantType() != null ? updateExtensionGrant.getGrantType() : oldExtensionGrant.getGrantType());
                     extensionGrantToUpdate.setIdentityProvider(updateExtensionGrant.getIdentityProvider());
-                    extensionGrantToUpdate.setCreateUser(!requiresExistingUser(oldExtensionGrant.getType()) && updateExtensionGrant.isCreateUser());
+                    extensionGrantToUpdate.setCreateUser(updateExtensionGrant.isCreateUser());
                     extensionGrantToUpdate.setUserExists(requiresExistingUser(oldExtensionGrant.getType()) || updateExtensionGrant.isUserExists());
                     extensionGrantToUpdate.setConfiguration(updateExtensionGrant.getConfiguration());
                     extensionGrantToUpdate.setUpdatedAt(new Date());

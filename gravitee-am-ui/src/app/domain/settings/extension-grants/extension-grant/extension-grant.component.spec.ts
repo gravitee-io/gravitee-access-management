@@ -112,18 +112,27 @@ describe('ExtensionGrantComponent', () => {
       expect(element.querySelector('mat-select[name="identityProvider"]')).toBeNull();
     });
 
-    it('shouldExplainThatTheIdentityProviderIsResolvedFromTheAssertionIssuer', () => {
-      const hint = element.querySelector('[data-testid="identityProviderResolutionHint"]');
+    it('shouldNotOfferTheIdentityProviderSection', () => {
+      const titles = Array.from(element.querySelectorAll('.gv-form-section-title h5')).map((title) => title.textContent.trim());
 
-      expect(hint).not.toBeNull();
-      expect(hint.classList).toContain('gv-form-hint');
-      expect(hint.textContent).toContain('issuer');
+      expect(titles).not.toContain('Identity provider');
     });
 
-    it('shouldNotOfferTheUserToggles', () => {
+    it('shouldOfferOnlyTheCreateUserToggle', () => {
       const toggles = Array.from(element.querySelectorAll('mat-slide-toggle')).map((toggle) => toggle.textContent.trim());
 
-      expect(toggles).toEqual([]);
+      expect(toggles).toEqual(['Create user account']);
+    });
+
+    it('shouldEnableSaveAfterTheCreateUserToggleChanges', async () => {
+      expect(saveButton().disabled).toBe(true);
+
+      element.querySelector<HTMLButtonElement>('mat-slide-toggle button').click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.extensionGrant.createUser).toBe(true);
+      expect(saveButton().disabled).toBe(false);
     });
   });
 
@@ -132,10 +141,6 @@ describe('ExtensionGrantComponent', () => {
 
     it('shouldOfferTheIdentityProviderSelect', () => {
       expect(element.querySelector('mat-select[name="identityProvider"]')).not.toBeNull();
-    });
-
-    it('shouldNotShowTheIssuerResolutionHint', () => {
-      expect(element.querySelector('[data-testid="identityProviderResolutionHint"]')).toBeNull();
     });
 
     it('shouldKeepBothUserToggles', () => {
