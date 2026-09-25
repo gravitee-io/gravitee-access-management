@@ -205,7 +205,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     @Override
     public Flowable<ProtectedResource> findAll() {
         Flowable<ProtectedResource> resources = this.spring.findAll().map(this::toEntity);
-        return attachIdentifiers(attachSecrets(resources));
+        return attachIdentifiers(attachFeatures(attachSecrets(resources)));
     }
 
     @Override
@@ -216,7 +216,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity);
-        return attachIdentifiers(attachSecrets(resources));
+        return attachIdentifiers(attachFeatures(attachSecrets(resources)));
     }
 
     private Flowable<ProtectedResource> attachSecrets(Flowable<ProtectedResource> resourcesFlow) {
