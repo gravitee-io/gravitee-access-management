@@ -15,15 +15,18 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import freemarker.cache.ConditionalTemplateConfigurationFactory;
 import freemarker.cache.FileExtensionMatcher;
 import freemarker.cache.FileTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
 import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
 import freemarker.core.TemplateConfiguration;
 import freemarker.template.Configuration;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
@@ -65,7 +68,9 @@ import java.nio.file.Path;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -297,6 +302,62 @@ public class EmailServiceImplTest {
 
         cut.send(createDomain(), null, Template.REGISTRATION_CONFIRMATION, createUser("en")).test().await().assertError(IllegalStateException.class);
         org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "registration_confirmation|DOMAINid, REGISTRATION_CONFIRMATION_EMAIL_SENT",
+            "registration_confirmation|DOMAINid|app-id, REGISTRATION_CONFIRMATION_EMAIL_SENT",
+            "registration_verify|DOMAINid|app-id, REGISTRATION_VERIFY_EMAIL_SENT",
+    })
+    void must_audit_standard_event_type_when_template_is_overridden(String templateName, String expectedEventType) throws Exception {
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+
+        this.i18nDictionaryService = mock(I18nDictionaryService.class);
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+        when(environment.getProperty("email.enabled", "false")).thenReturn("true");
+        when(environment.getProperty("user.registration.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
+        when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.notifier.certificate.expiryEmailSubject")).thenReturn(null);
+        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon")).thenReturn("Client secret will expire soon");
+
+        when(dataPlaneRegistry.getDescription(any()))
+                .thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "http://localhost:1234/unittest"));
+
+        var overriddenTemplates = new StringTemplateLoader();
+        overriddenTemplates.putTemplate(templateName + ".html", "custom content");
+        freemarkerConfiguration.setTemplateLoader(overriddenTemplates);
+
+        var cut = new EmailServiceImpl(
+                emailManager,
+                emailService,
+                freemarkerConfiguration,
+                auditService,
+                jwtBuilder,
+                new DomainReadServiceImpl(mock(), dataPlaneRegistry, mock(), new MockEnvironment(), "http://localhost:1234/default/unittest"),
+                i18nDictionaryService,
+                environment
+        );
+
+        var emailTemplate = new Email();
+        emailTemplate.setFrom("no-reply@gravitee.io");
+        emailTemplate.setSubject("subject");
+        emailTemplate.setTemplate(templateName);
+        emailTemplate.setExpiresAfter(86400);
+        when(emailManager.getEmail(any(), any(), any(), anyInt())).thenReturn(Maybe.just(emailTemplate));
+
+        var template = Template.parse(templateName.substring(0, templateName.indexOf(EmailManager.TEMPLATE_NAME_SEPARATOR)));
+        cut.send(createDomain(), null, template, createUser("en")).test().await().assertComplete();
+
+        assertThat(greenMail.getReceivedMessages()).hasSize(1);
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(new ObjectMapper());
+            return expectedEventType.equals(audit.getType())
+                    && Status.SUCCESS.equals(audit.getOutcome().getStatus());
+        }));
     }
 
     private static Domain createDomain() {
