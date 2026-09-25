@@ -30,8 +30,26 @@ import {
   JWT_TOKEN_TYPE,
   listTrustedDomains,
   TOKEN_EXCHANGE_GRANT_TYPE,
+  TOKEN_EXCHANGE_SEED,
   TokenExchangeVariant,
 } from '../../../migration-seeding/token-exchange-seed';
+import { migrationRequirements } from '../../../migration-seeding/version-range';
+
+/**
+ * What each token exchange assertion needs. A channel seeded by a recent version is still asserted
+ * after a downgrade, so each assertion also names the component it talks to and the versions where
+ * that component can answer it.
+ */
+export const TOKEN_EXCHANGE_REQUIREMENTS = migrationRequirements({
+  /** The channel holds the trusted-issuer data set. */
+  seeded: { seed: TOKEN_EXCHANGE_SEED },
+  /** Token exchange (RFC 8693) appeared in 4.11: the Management API does not report it before. */
+  managementApiReportsTrustedIssuer: { managementApi: { from: '4.11' } },
+  /** The `trusted-domains` endpoint appeared in 4.13 with the trusted-domain entities. */
+  managementApiServesTrustedDomains: { managementApi: { from: '4.13' } },
+  /** Token exchange appeared in 4.11: the gateway does not exchange tokens before. */
+  gatewayExchangesTokens: { gateway: { from: '4.11' } },
+});
 
 export interface TokenExchangeMigrationFixture {
   accessToken: string;

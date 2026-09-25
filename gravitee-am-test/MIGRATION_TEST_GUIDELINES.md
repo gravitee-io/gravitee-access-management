@@ -19,10 +19,10 @@ The migration tool (`scripts/migration-test.mjs`) drives a K8s stack through the
 | # | Stage | Management API | Gateways | What runs from this directory |
 |---|-------|----------------|----------|-------------------------------|
 | 1 | `deploy-from` | from | from | – |
-| 2 | `seed-alpha` | from | from | `versions/<from major.minor>/seed.ts`, label `alpha` |
+| 2 | `seed-alpha` | from | from | seeds covering the from version, label `alpha` |
 | 3 | `verify-alpha` | from | from | `specs/migration`, label `alpha` |
 | 4 | `upgrade-mapi` | **to** | from | – |
-| 5 | `seed-beta` | to | from | `versions/<to major.minor>/seed.ts`, label `beta` |
+| 5 | `seed-beta` | to | from | seeds covering the to version, label `beta` |
 | 6 | `verify-alpha`, `verify-beta` | to | from | `specs/migration` per label |
 | 7 | `upgrade-gw` | to | **to** | – |
 | 8 | `verify-alpha`, `verify-beta` | to | to | `specs/migration` per label |
@@ -35,9 +35,9 @@ Consequences every test author must keep in mind:
   **to** version. The same spec file verifies both, several times.
 - An assertion can face **old data on a new component** (alpha after an upgrade) and **new data on
   an old component** (beta before `upgrade-gw`, or after a downgrade).
-- Seeding always runs from the **current checkout**, never from the tag. `4.13.0-alpha.4` seeds
-  `versions/4.13`; pre-release suffixes are ignored. There is **no fallback**: if
-  `versions/<major.minor>` is missing, the seed stage fails.
+- Seeding always runs from the **current checkout**, never from the tag. A version seeds every data
+  set whose declared version range covers it, compared on major.minor (`4.13.0-alpha.4` is 4.13).
+  A version no data set covers fails the seed stage.
 
 ## 2. Where things go
 
@@ -45,14 +45,15 @@ Consequences every test author must keep in mind:
 gravitee-am-test/
 ├── migration-seeding/
 │   ├── bootstrap.ts              # entry point: --version <major.minor> --label <channel>
-│   ├── seed.ts                   # core data set + shared helpers (labels, data planes, naming)
-│   ├── <feature>-seed.ts         # one file per feature data set (e.g. token-exchange-seed.ts)
-│   └── versions/<major.minor>/seed.ts   # what a given version seeds: calls the feature seeds
+│   ├── version-range.ts          # VersionRange, migrationSeed(), requirements (shared with the specs)
+│   ├── seeds.ts                  # registry of every data set, in seeding order
+│   ├── seed.ts                   # core data set (MAPI_DATA_SEED) + shared helpers (labels, data planes, naming)
+│   └── <feature>-seed.ts         # one file per feature data set and its declaration (e.g. TOKEN_EXCHANGE_SEED)
 └── specs/migration/
     ├── <feature>.jest.spec.ts    # the verification
     └── fixture/
-        ├── <feature>-fixture.ts  # finds the seeded entities, exposes actions
-        └── migration-versions.ts # version gates (when a feature exists)
+        ├── <feature>-fixture.ts  # finds the seeded entities, exposes actions, declares the requirements
+        └── migration-versions.ts # reads the versions of the current stage: describeWhen / itWhen
 ```
 
 ## 3. Writing the seed
@@ -62,6 +63,7 @@ gravitee-am-test/
 Create `migration-seeding/<feature>-seed.ts`. It exports:
 
 - the seed function, `seed<Feature>Data(channelLabel, options)`;
+- its **declaration**, `<FEATURE>_SEED = migrationSeed({...})` (see 3.3);
 - the **name builders** for every entity it creates (`get<Feature>DomainName(label)`, …);
 - the **constants** the spec asserts against (scopes, mappings, expected values).
 
@@ -81,7 +83,7 @@ Rules:
   poll the domain's `/.well-known/openid-configuration`) before returning.
 - **Parameterise by API shape, not by version number.** When the way to write the data changed
   between versions, take an option that names the write path (`trustedIssuerApi: 'inline' |
-  'trusted-domain'`). Each version module picks the option its Management API supports.
+  'trusted-domain'`). Each variant of the declaration picks the option its Management API supports.
 
 ### 3.2 Version-specific payloads
 
@@ -91,26 +93,37 @@ no longer models (older versions) or does not model yet, call the Management API
 `token-exchange-seed.ts`. Never rely on the SDK to send a field it does not declare: it drops it
 silently.
 
-Only use endpoints and fields that exist in the version the module seeds. For example, 4.12 has no
-`/trusted-domains` endpoint, so the 4.12 module writes trusted issuers through the inline list.
+Only use endpoints and fields that exist in the versions a variant covers. For example, 4.12 has no
+`/trusted-domains` endpoint, so the variant covering 4.12 writes trusted issuers through the inline list.
 
-### 3.3 Register the feature in the version modules
+### 3.3 Declare the versions it covers
 
-Call the feature seed from **every** `versions/<major.minor>/seed.ts` from the version that
-introduces the feature onward, with that version's options:
+A data set declares, next to its seed function, the ranges of versions it is seeded from and the
+options each range needs. A range is `{ from?, until? }` on major.minor: `from` inclusive, `until`
+exclusive, either bound optional (`{}` covers every version, `{ from: '4.13' }` 4.13 onwards,
+unreleased versions included).
 
 ```ts
-// versions/4.12/seed.ts
-await seedMapiData(label);
-await seedTokenExchangeData(label, { trustedIssuerApi: 'inline', keyRetrievalApi: 'legacy-spiffe' });
-
-// versions/4.13/seed.ts
-await seedMapiData(label);
-await seedTokenExchangeData(label, { trustedIssuerApi: 'trusted-domain', keyRetrievalApi: 'key-retrieval-settings' });
+// token-exchange-seed.ts
+export const TOKEN_EXCHANGE_SEED = migrationSeed<TokenExchangeSeedOptions>({
+  name: 'token exchange trusted issuer',
+  variants: [
+    { range: { from: '4.12', until: '4.13' }, options: { trustedIssuerApi: 'inline', keyRetrievalApi: 'legacy-spiffe' } },
+    { range: { from: '4.13' }, options: { trustedIssuerApi: 'trusted-domain', keyRetrievalApi: 'key-retrieval-settings' } },
+  ],
+  seed: seedTokenExchangeData,
+});
 ```
 
-When a new minor version is released, add its `versions/<major.minor>/seed.ts`, calling every
-feature seed that applies. Without it, a run with that version as `--from-tag` or `--to-tag` fails.
+Then add it to `MIGRATION_SEEDS` in `seeds.ts`. For a version V, the seed stage runs every
+registered data set one of whose variants covers V, with that variant's options, in registration
+order.
+
+- Variants must not overlap: `migrationSeed()` throws when two ranges share a version.
+- A version no variant covers does not seed the data set: that is how a data set starts at the
+  version introducing the feature (`from`), or stops where its API was removed (`until`).
+- A new minor version needs no change as long as the write path does not change. When it does,
+  close the current variant with `until` and add one for the new write path.
 
 ## 4. Writing the verification
 
@@ -118,6 +131,8 @@ feature seed that applies. Without it, a run with that version as `--from-tag` o
 
 `specs/migration/fixture/<feature>-fixture.ts` takes the instance label (and the data plane
 target when it talks to a gateway). It:
+
+- declares the spec's **requirements** (see section 5);
 
 - finds the seeded entities **by the names exported from the seed file**, and fails with a clear
   assertion when they are missing;
@@ -130,10 +145,10 @@ It never creates data: everything it needs was created by the seed.
 ```ts
 setup(120000);
 
-const channelLabel = process.env.AM_MIGRATION_TEST_LABEL || 'alpha';
-const suite = channelHoldsFeatureSeed(channelLabel) ? describe : describe.skip;
+const channelLabel = currentChannel();
+const requires = FEATURE_REQUIREMENTS;
 
-suite.each(getDataPlaneTargets())('migration <feature> [data plane $id]', (target) => {
+describeWhen(requires.seeded, channelLabel).each(getDataPlaneTargets())('migration <feature> [data plane $id]', (target) => {
   const label = getInstanceLabel(channelLabel, target.id);
   let fixture: FeatureMigrationFixture;
 
@@ -141,15 +156,12 @@ suite.each(getDataPlaneTargets())('migration <feature> [data plane $id]', (targe
     fixture = await createFeatureMigrationFixture(label, target);
   });
 
-  const managementApiTest = managementApiSupports(FEATURE_VERSION) ? it : it.skip;
-  const gatewayTest = gatewaySupports(FEATURE_VERSION) ? it : it.skip;
-
-  managementApiTest('still reports <the configuration>', async () => { /* Management API read */ });
-  gatewayTest('still <performs the flow>', async () => { /* gateway call */ });
+  itWhen(requires.managementApiReadsIt)('still reports <the configuration>', async () => { /* Management API read */ });
+  itWhen(requires.gatewayRunsIt)('still <performs the flow>', async () => { /* gateway call */ });
 });
 ```
 
-- Read the channel from `AM_MIGRATION_TEST_LABEL`; the tool sets it per stage.
+- Read the channel with `currentChannel()` (`AM_MIGRATION_TEST_LABEL`); the tool sets it per stage.
 - Iterate over `getDataPlaneTargets()` (gateway specs) or `getDataPlaneIds()` (Management API only).
 - Assert **behaviour**, not only presence: a flow that must still work after the upgrade should be
   executed through the gateway.
@@ -169,36 +181,49 @@ The tool exposes the versions of the current stage to the specs:
 | `AM_MIGRATION_MAPI_VERSION` | Management API tag deployed now |
 | `AM_MIGRATION_GW_VERSION` | gateway tag deployed now |
 
-`specs/migration/fixture/migration-versions.ts` turns them into gates. Declare the version a
-feature appeared in, then gate on **both** questions:
+A spec's fixture declares what each assertion needs as a `MigrationRequirement`, which the spec
+passes to `describeWhen` / `itWhen` (`specs/migration/fixture/migration-versions.ts`): the test runs
+when the requirement holds for the current stage, and is skipped otherwise. A requirement answers
+two questions, each optional:
 
-1. **Does the channel hold the data?** Suite level, from the seed version:
-   `isAtLeast(seedVersionOf(channelLabel), FEATURE_SEED_VERSION)`.
-2. **Does the component under test know the feature?** Per test, from the deployed version:
-   `managementApiSupports(FEATURE_VERSION)` for a Management API assertion,
-   `gatewaySupports(FEATURE_VERSION)` for a gateway assertion.
+1. **Does the channel hold the data?** `seed: <FEATURE>_SEED`: the version that seeded the channel
+   must be covered by the data set (section 3.3). Used at suite level.
+2. **Does the component under test know the feature?** `managementApi: { from: '4.13' }` for a
+   Management API assertion, `gateway: { from: '4.11' }` for a gateway assertion, checked against
+   the deployed version. Any `VersionRange`, so `until` expresses an API that was removed.
 
-The second gate matters on downgrade: `beta` data seeded by 4.13 is still verified after the
-gateways go back to 4.10, which has no token exchange at all.
+The second question matters on downgrade: `beta` data seeded by 4.13 is still verified after the
+gateways go back to an older version.
 
-When a variable is absent (spec run by hand, outside the tool), every gate answers "yes", so a plain
+```ts
+// token-exchange-fixture.ts
+export const TOKEN_EXCHANGE_REQUIREMENTS = migrationRequirements({
+  seeded: { seed: TOKEN_EXCHANGE_SEED },
+  managementApiReportsTrustedIssuer: { managementApi: { from: '4.11' } },
+  managementApiServesTrustedDomains: { managementApi: { from: '4.13' } },
+  gatewayExchangesTokens: { gateway: { from: '4.11' } },
+});
+```
+
+When a variable is absent (spec run by hand, outside the tool), every requirement holds, so a plain
 run against a current stack asserts everything.
 
 Example (`token-exchange.jest.spec.ts`):
 
-| Test | Gate |
-|------|------|
-| whole suite | channel seeded by ≥ 4.12 (`TOKEN_EXCHANGE_SEED_VERSION`) |
-| issuer still reported on the domain | Management API ≥ 4.11 (`TOKEN_EXCHANGE_VERSION`) |
-| issuer exposed as a trusted domain | Management API ≥ 4.13 (`TRUSTED_DOMAIN_ENTITY_VERSION`) |
-| exchange succeeds / tampered token refused | gateway ≥ 4.11 (`TOKEN_EXCHANGE_VERSION`) |
+| Test | Requirement |
+|------|-------------|
+| whole suite | channel seeded by a version `TOKEN_EXCHANGE_SEED` covers (4.12 onwards) |
+| issuer still reported on the domain | Management API `{ from: '4.11' }` |
+| issuer exposed as a trusted domain | Management API `{ from: '4.13' }` |
+| exchange succeeds / tampered token refused | gateway `{ from: '4.11' }` |
 
 ## 6. Running it
 
-Type check first:
+Type check and run the seeding unit tests first (no stack needed):
 
 ```bash
 npx tsc --noEmit -p gravitee-am-test
+npm --prefix gravitee-am-test run test -- migration-seeding
 ```
 
 Against a stack deployed by the tool (from the repository root, see the tool README):
@@ -212,17 +237,17 @@ The full pipeline, locally or through CircleCI (`trigger` command), is the only 
 upgrade and downgrade stages.
 
 Running `npm run migration:seed` / `npm run ci:migration` by hand bypasses the version variables,
-so no gate applies.
+so every requirement holds.
 
 ## 7. Checklist
 
-- [ ] Feature seed file exports the seed function, the entity name builders and the asserted constants
+- [ ] Feature seed file exports the seed function, its `migrationSeed` declaration, the entity name builders and the asserted constants
 - [ ] Every entity name is derived from the label (`normalizeForName`), none from the version
 - [ ] The seed loops over the data planes and is idempotent
-- [ ] Each version module from the introducing version onward calls the feature seed with options valid for that version
+- [ ] The declaration's variants cover the versions from the introducing one onward, without overlap, and the data set is registered in `seeds.ts`
 - [ ] Payloads only use endpoints and fields that exist in the seeded version (raw HTTP where the SDK disagrees)
 - [ ] The fixture finds entities by the exported names and creates nothing
 - [ ] The spec iterates over data planes and reads the channel from `AM_MIGRATION_TEST_LABEL`
-- [ ] Suite gated on the seed version; each test gated on the Management API or gateway version it talks to
+- [ ] Requirements declared in the fixture: suite gated on the seed, each test on the Management API or gateway version it talks to
 - [ ] Positive flows have a negative control
 - [ ] `tsc --noEmit` is clean

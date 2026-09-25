@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { MAPI_DATA_SEED } from './seed';
+import { TOKEN_EXCHANGE_SEED } from './token-exchange-seed';
+import { MigrationSeed } from './version-range';
 
-import { seedMapiData } from '../../seed';
-import { seedTokenExchangeData } from '../../token-exchange-seed';
-
-export async function seed(label: string): Promise<void> {
-  await seedMapiData(label);
-  // 4.13 registers a trusted issuer as a trusted domain of its own and carries the key-retrieval
-  // limits at the top level. The `legacy` consumer domain still goes through the deprecated inline
-  // list, which the Management API keeps accepting as a projection onto the same entities.
-  await seedTokenExchangeData(label, { trustedIssuerApi: 'trusted-domain', keyRetrievalApi: 'key-retrieval-settings' });
-}
+/**
+ * Every migration data set, in seeding order. A version seeds each data set one of whose variants
+ * covers it; register a new data set here once its seed is declared.
+ */
+export const MIGRATION_SEEDS: MigrationSeed<any>[] = [MAPI_DATA_SEED, TOKEN_EXCHANGE_SEED];

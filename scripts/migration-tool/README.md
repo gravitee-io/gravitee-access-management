@@ -241,9 +241,9 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 
 The migration tool seeds deterministic data through the generated Management API SDK in `gravitee-am-test/api/management`.
 
-Seed files live in `gravitee-am-test/migration-seeding/versions/<major.minor>/seed.ts`. Each seed file must be idempotent and use stable identifiers, names, or metadata so migration specs can find the same objects after upgrade and downgrade. A seed file exposes `seed(label)` and names every entity by that **label** (not the version), so the same version's data can be seeded twice under different labels without colliding.
+Each data set is declared in `gravitee-am-test/migration-seeding/<feature>-seed.ts` with the version ranges it is seeded from, and registered in `migration-seeding/seeds.ts`. Each seed must be idempotent and use stable identifiers, names, or metadata so migration specs can find the same objects after upgrade and downgrade. A seed names every entity by that **label** (not the version), so the same version's data can be seeded twice under different labels without colliding.
 
-The seed runner takes `--version <major.minor>` (which seed module / data shape to run) and `--label <name>` (the channel suffix used for naming). The `seed-alpha` stage runs the `--from-tag` module under label `alpha`; the `seed-beta` stage runs the `--to-tag` module under label `beta`. Because each channel targets a single version+label, this works for patch migrations too (e.g. `4.10.7 → 4.10.8` seeds the `4.10` module twice, as `alpha` and `beta`).
+The seed runner takes `--version <major.minor>` (the data shape: every data set whose range covers it is seeded) and `--label <name>` (the channel suffix used for naming). The `seed-alpha` stage seeds the `--from-tag` version under label `alpha`; the `seed-beta` stage seeds the `--to-tag` version under label `beta`. Because each channel targets a single version+label, this works for patch migrations too (e.g. `4.10.7 → 4.10.8` seeds the `4.10` module twice, as `alpha` and `beta`).
 
 For each channel, the seed duplicates the full data set onto every data plane id listed by `AM_DOMAIN_DATA_PLANE_ID` (primary) and `AM_DOMAIN_DATA_PLANE_ID_DP2` (second, set automatically by the k8s tool). Entities are named by an **instance label** (`<channel>-<dataPlaneId>`), so a single `seed(label)` call produces one isolated domain per data plane. With no second-data-plane env (local runs) it seeds just one.
 
@@ -270,30 +270,31 @@ When running through the migration tool, `AM_MIGRATION_TEST_LABEL` is set automa
 
 ### Seed source
 
-By default every tag is seeded from the **current checkout**: `seed-alpha` runs
-`migration-seeding/versions/<major.minor of --from-tag>` and `seed-beta` the one of `--to-tag`
-(pre-release suffixes such as `-alpha.4` are ignored, so `4.13.0-alpha.4` seeds `versions/4.13`).
-There is no fallback: when the checkout has no module for that version, the seed stage fails and the
-module has to be added. Version-specific payloads belong in
-the per-version module (over raw HTTP when the current SDK no longer models them), not in an older
-checkout.
+By default every tag is seeded from the **current checkout**: `seed-alpha` seeds every data set whose
+declared version range covers the major.minor of `--from-tag`, `seed-beta` those covering `--to-tag`
+(pre-release suffixes such as `-alpha.4` are ignored, so `4.13.0-alpha.4` is 4.13). Ranges may be
+open-ended, so a version released after the data set was written is covered without change; a version
+no data set covers fails the seed stage. Version-specific payloads belong in the data set's variant for
+that range (over raw HTTP when the current SDK no longer models them), not in an older checkout. See
+[gravitee-am-test/MIGRATION_TEST_GUIDELINES.md](../../gravitee-am-test/MIGRATION_TEST_GUIDELINES.md).
 
 The verify stages receive the seeded and deployed versions so the specs can skip what the data or
 the running Management API cannot satisfy:
 
 | Variable | Value |
 |----------|-------|
-| `AM_MIGRATION_FROM_VERSION` | Seed module run on the alpha channel (`--from-tag` major.minor) |
-| `AM_MIGRATION_TO_VERSION` | Seed module run on the beta channel (`--to-tag` major.minor) |
+| `AM_MIGRATION_FROM_VERSION` | Version seeded on the alpha channel (`--from-tag` major.minor) |
+| `AM_MIGRATION_TO_VERSION` | Version seeded on the beta channel (`--to-tag` major.minor) |
 | `AM_MIGRATION_MAPI_VERSION` | Management API tag currently deployed (set by `deploy-from`, `upgrade-mapi`, `downgrade-mapi`) |
 | `AM_MIGRATION_GW_VERSION` | Gateway tag currently deployed (set by `deploy-from`, `upgrade-gw`, `downgrade-gw`) |
 
 When a stage runs on its own (`--stage`), the tool did not deploy anything in that process, so it reads
 the Management API and gateway tags back from the image of their Deployments in the cluster.
 
-A spec that covers a feature introduced in a given version gates on both sides: the channel must have
-been seeded by a version that has the feature, and the component the assertion talks to must be
-deployed at such a version (see `specs/migration/fixture/migration-versions.ts`).
+A spec declares, in its fixture, what each assertion requires: the channel must have been seeded with
+the data set, and the component the assertion talks to must run a version in a given range. It passes
+these requirements to `describeWhen` / `itWhen` (`specs/migration/fixture/migration-versions.ts`),
+which skip what the current stage cannot satisfy.
 
 #### Opt-in: seeding from a worktree of the tag (`--seed-worktree`)
 
@@ -310,8 +311,8 @@ itself still runs from the published Docker image; the worktree provides only th
 A tag's seed is frozen when the tag is cut: seeds added or fixed afterwards on the branch are not
 seen, which is why this is not the default.
 
-Add a version's seed module before or during the release where the data shape is introduced, and
-keep each module to the API fields accepted by that AM version.
+Declare a data set (or a new variant of it) before or during the release where the data shape is
+introduced, and keep each variant to the API fields accepted by the versions its range covers.
 
 ---
 
