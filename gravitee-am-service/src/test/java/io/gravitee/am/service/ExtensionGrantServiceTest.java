@@ -159,7 +159,7 @@ public class ExtensionGrantServiceTest {
     }
 
     @Test
-    public void shouldCreateCrossAppAccessGrantBoundToAnExistingUserWhateverThePayloadSays() {
+    public void shouldCreateCrossAppAccessGrantBoundToAnExistingUserAndKeepPayloadCreateUser() {
         NewExtensionGrant newExtensionGrant = new NewExtensionGrant();
         newExtensionGrant.setName("my-extension-grant");
         newExtensionGrant.setType("xaa-am-extension-grant");
@@ -173,7 +173,7 @@ public class ExtensionGrantServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
-        testObserver.assertValue(extensionGrant -> extensionGrant.isUserExists() && !extensionGrant.isCreateUser());
+        testObserver.assertValue(extensionGrant -> extensionGrant.isUserExists() && extensionGrant.isCreateUser());
         verify(auditService).report(any());
     }
 
@@ -265,9 +265,10 @@ public class ExtensionGrantServiceTest {
     }
 
     @Test
-    public void shouldUpdateCrossAppAccessGrantBoundToAnExistingUserWithoutReadingThePayloadFlags() {
+    public void shouldUpdateCrossAppAccessGrantBoundToAnExistingUserAndKeepPayloadCreateUser() {
         UpdateExtensionGrant updateExtensionGrant = Mockito.mock(UpdateExtensionGrant.class);
         when(updateExtensionGrant.getName()).thenReturn("my-extension-grant");
+        when(updateExtensionGrant.isCreateUser()).thenReturn(true);
         ExtensionGrant extensionGrant = new ExtensionGrant();
         extensionGrant.setDomain(DOMAIN.getId());
         extensionGrant.setType("xaa-am-extension-grant");
@@ -280,7 +281,7 @@ public class ExtensionGrantServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
-        testObserver.assertValue(updated -> updated.isUserExists() && !updated.isCreateUser());
+        testObserver.assertValue(updated -> updated.isUserExists() && updated.isCreateUser());
     }
 
     @Test
