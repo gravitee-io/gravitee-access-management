@@ -760,10 +760,12 @@ paths:
       - Certificates
       - Domains
     put:
-      description: Idempotent create-or-update. Uses the key field in the body to
-        identify the certificate within the domain. Re-applying an unchanged definition
-        is a no-op. The system flag is immutable; changing it requires deleting and
-        recreating the certificate.
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the certificate within the domain. Re-applying an unchanged definition\
+        \ is a no-op. The system flag is immutable; changing it requires deleting\
+        \ and recreating the certificate. When dryRun is true, the endpoint validates\
+        \ the payload without persisting; the returned certificate carries a dryRunErrors\
+        \ list (empty on success, populated with validation errors otherwise)."
       operationId: automationCreateOrUpdateCertificate
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -788,6 +790,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: "When true, validates the payload without persisting. The returned\
+          \ certificate includes a dryRunErrors field."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           application/json:
@@ -834,7 +843,8 @@ paths:
                     system: true
               schema:
                 $ref: "#/components/schemas/AutomationCertificate"
-          description: The created or updated certificate
+          description: The created or updated certificate. When dryRun is true the
+            certificate includes a dryRunErrors field with any validation errors.
         "400":
           content:
             application/json:
@@ -1929,6 +1939,13 @@ components:
           type: string
           format: date-time
           description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
+          readOnly: true
+        dryRunErrors:
+          type: array
+          description: Validation errors returned when dryRun is true. Absent when
+            validation succeeds.
+          items:
+            $ref: "#/components/schemas/DryRunError"
           readOnly: true
         expiresAt:
           type: string

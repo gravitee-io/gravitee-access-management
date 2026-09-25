@@ -73,7 +73,17 @@ public interface CertificateService {
      */
     Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal, boolean isSystem);
 
+    /**
+     * Run every create validation and return the certificate that would be created, without persisting it.
+     */
+    Single<Certificate> validateCreate(Domain domain, NewCertificate newCertificate, boolean isSystem);
+
     Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal);
+
+    /**
+     * Run every update validation and return the certificate as it would be updated, without persisting it.
+     */
+    Single<Certificate> validateUpdate(Domain domain, String id, UpdateCertificate updateCertificate);
 
     default Completable delete(String certificateId, User principal) {
         return delete(certificateId, principal, false);
