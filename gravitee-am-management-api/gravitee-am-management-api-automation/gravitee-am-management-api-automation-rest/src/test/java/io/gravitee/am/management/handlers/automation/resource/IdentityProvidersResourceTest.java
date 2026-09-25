@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationIdentityProvider;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
@@ -37,6 +38,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -552,5 +554,132 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("Dev Users!"));
 
         assertEquals(400, response.getStatus());
+    }
+
+    // --- dry-run tests ---
+
+    @Test
+    void dryRun_create_valid_body_returns_200_without_errors() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId))).thenReturn(Flowable.empty());
+        when(identityProviderService.validateCreate(any(Domain.class), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        AutomationIdentityProvider body = readEntity(response, AutomationIdentityProvider.class);
+        assertEquals("dev-users", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_create_invalid_body_returns_200_with_errors() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId))).thenReturn(Flowable.empty());
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(eq("inline-am-idp"), anyString());
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        AutomationIdentityProvider body = readEntity(response, AutomationIdentityProvider.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals(DryRunError.Severity.ERROR, body.getDryRunErrors().get(0).severity());
+        assertTrue(body.getDryRunErrors().get(0).message().contains("not valid"));
+        verify(identityProviderService, never()).validateCreate(any(Domain.class), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_update_existing_validates_without_persisting() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+        when(identityProviderService.validateUpdate(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        AutomationIdentityProvider body = readEntity(response, AutomationIdentityProvider.class);
+        assertEquals("dev-users", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(identityProviderService, never())
+                .update(eq(ReferenceType.DOMAIN), anyString(), anyString(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_update_rejects_system_flag_change_as_error() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setSystem(true);
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), def);
+
+        assertEquals(200, response.getStatus());
+        AutomationIdentityProvider body = readEntity(response, AutomationIdentityProvider.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertTrue(body.getDryRunErrors().get(0).message()
+                .contains("The 'system' flag is immutable for an existing identity provider 'dev-users'"));
+    }
+
+    @Test
+    void dryRun_create_system_does_not_create_default_identity_provider() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId))).thenReturn(Flowable.empty());
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), systemDefinition("default"));
+
+        assertEquals(200, response.getStatus());
+        assertNull(readEntity(response, AutomationIdentityProvider.class).getDryRunErrors());
+        verify(defaultIdentityProviderService, never()).create(any(Domain.class), anyString(), any());
+    }
+
+    @Test
+    void dryRun_key_conflict_returns_200_with_errors() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", null)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        AutomationIdentityProvider body = readEntity(response, AutomationIdentityProvider.class);
+        assertTrue(body.getDryRunErrors().get(0).message()
+                .contains("conflicts with an existing identity provider"));
+    }
+
+    @Test
+    void dryRun_by_id_validates_existing_without_persisting() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp()));
+        when(identityProviderService.validateUpdate(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), eq(false)))
+                .thenReturn(Single.just(brownfieldIdp()));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("id:" + BROWNFIELD_ID));
+
+        assertEquals(200, response.getStatus());
+        assertNull(readEntity(response, AutomationIdentityProvider.class).getDryRunErrors());
+        verify(identityProviderService, never())
+                .update(any(), anyString(), anyString(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_without_permission_reports_error_and_never_validates() {
+        denyPermission();
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId))).thenReturn(Flowable.empty());
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(1, readEntity(response, AutomationIdentityProvider.class).getDryRunErrors().size());
+        verify(identityProviderService, never()).validateCreate(any(Domain.class), any(), anyBoolean());
     }
 }
