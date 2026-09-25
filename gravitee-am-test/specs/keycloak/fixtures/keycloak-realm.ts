@@ -18,8 +18,8 @@ import { expect } from '@jest/globals';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 
 /** Keycloak as the gateway container reaches it, and as this test process reaches it. */
-const KEYCLOAK_INTERNAL = process.env.KEYCLOAK_INTERNAL_URL || 'http://keycloak:8080';
-const KEYCLOAK_EXTERNAL = process.env.KEYCLOAK_URL || 'http://localhost:8180';
+export const KEYCLOAK_INTERNAL = process.env.KEYCLOAK_INTERNAL_URL || 'http://keycloak:8080';
+export const KEYCLOAK_EXTERNAL = process.env.KEYCLOAK_URL || 'http://localhost:8180';
 
 export const KEYCLOAK_TEST = {
   REALM: 'saml-test',
