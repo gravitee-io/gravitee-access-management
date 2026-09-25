@@ -30,6 +30,7 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
+import { decodeJwt } from '@utils-commands/jwt';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
@@ -67,6 +68,15 @@ export interface RevocationFixture {
   introspectToken: (token: string) => Promise<any>;
   exchangeToken: (subjectToken: string, subjectTokenType: 'access_token' | 'refresh_token') => Promise<string>;
 }
+
+const OFFLINE_VERIFICATION_SECONDS = Number(process.env.AM_OFFLINE_VERIFICATION_SECONDS ?? 0);
+const REVOKE_PROPAGATION_SETTLE_MS = 2000;
+
+export const waitPastOfflineVerification = async (token: string): Promise<void> => {
+  const { iat } = decodeJwt(token) as { iat: number };
+  const remainingWindowMs = Math.max(0, (iat + OFFLINE_VERIFICATION_SECONDS) * 1000 - Date.now());
+  await new Promise((resolve) => setTimeout(resolve, remainingWindowMs + REVOKE_PROPAGATION_SETTLE_MS));
+};
 
 const REVOCATION_TEST = {
   DOMAIN_NAME_PREFIX: 'revoke-consents',
