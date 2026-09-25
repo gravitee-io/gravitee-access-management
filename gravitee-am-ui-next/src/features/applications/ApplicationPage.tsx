@@ -23,21 +23,19 @@ import {
     Input,
     Spinner,
     Switch,
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
     Textarea,
     toast,
 } from '@gravitee/graphene-core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { Outlet, useOutletContext, useParams } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
+import { APPLICATION_NAV_GROUPS } from '../../app/navigation';
 import { type ApplicationDetail, getApplication, patchApplication } from '../../lib/api/management-api';
-import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
+import { useSectionSidebar } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
+import { FlowsPage } from '../flows/FlowsPage';
 import { APPLICATION_TYPE_LABELS } from './application-types';
 
 function Property({ label, children }: { readonly label: string; readonly children: ReactNode }) {
@@ -132,19 +130,14 @@ function Settings({ application }: { readonly application: ApplicationDetail }) 
     );
 }
 
-export function ApplicationPage() {
+/** Loads the application and shows its sections in the context sidebar. */
+export function ApplicationLayout() {
     const { applicationId = '' } = useParams();
-    const { domain, ref, basePath, domainsPath } = useCurrentDomain();
+    const { ref } = useCurrentDomain();
     const { data: application, error } = useQuery({
         queryKey: ['application', ref, applicationId],
         queryFn: () => getApplication(ref, applicationId),
     });
-    useBreadcrumbs([
-        { label: 'Domains', to: domainsPath },
-        { label: domain.name, to: basePath },
-        { label: 'Applications', to: `${basePath}/applications` },
-        { label: application?.name ?? '…' },
-    ]);
 
     if (error) {
         return <p className="text-sm text-destructive">Could not load the application.</p>;
@@ -152,29 +145,86 @@ export function ApplicationPage() {
     if (!application) {
         return <Spinner />;
     }
+    return <ApplicationSections application={application} />;
+}
+
+function ApplicationSections({ application }: { readonly application: ApplicationDetail }) {
+    const { domain, basePath, domainsPath } = useCurrentDomain();
+    useSectionSidebar({
+        title: application.name,
+        badges: [APPLICATION_TYPE_LABELS[application.type] ?? application.type, application.enabled ? 'Enabled' : 'Disabled'],
+        groups: APPLICATION_NAV_GROUPS,
+        base: `${basePath}/applications/${application.id}`,
+        crumbs: [
+            { label: 'Domains', to: domainsPath },
+            { label: domain.name, to: `${basePath}/dashboard` },
+            { label: 'Applications', to: `${basePath}/applications` },
+            { label: application.name, to: `${basePath}/applications/${application.id}/overview` },
+        ],
+    });
+    return <Outlet context={application} />;
+}
+
+export function ApplicationOverviewPage() {
+    const application = useOutletContext<ApplicationDetail>();
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader
-                title={
-                    <span className="flex items-center gap-2">
-                        {application.name}
-                        <Badge variant="outline">{APPLICATION_TYPE_LABELS[application.type] ?? application.type}</Badge>
-                    </span>
-                }
-                description={application.description}
-            />
-            <Tabs defaultValue="overview">
-                <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
-                </TabsList>
-                <TabsContent value="overview" className="pt-4">
-                    <Overview application={application} />
-                </TabsContent>
-                <TabsContent value="settings" className="pt-4">
-                    <Settings application={application} />
-                </TabsContent>
-            </Tabs>
+            <PageHeader title="Overview" description={application.description} />
+            <Overview application={application} />
         </div>
+    );
+}
+
+export function ApplicationGeneralPage() {
+    const application = useOutletContext<ApplicationDetail>();
+    return (
+        <div className="flex flex-col gap-6">
+            <PageHeader title="General" description="The application's name, description and status." />
+            <Settings application={application} />
+        </div>
+    );
+}
+
+const TOKEN_ONLY = ['token'];
+
+/** Service applications never show a login page, so AM only lets them edit the token flow. */
+export function ApplicationFlowsPage() {
+    const application = useOutletContext<ApplicationDetail>();
+    const { ref } = useCurrentDomain();
+    const queryClient = useQueryClient();
+    const inherit = useMutation({
+        mutationFn: (flowsInherited: boolean) => patchApplication(ref, application.id, { settings: { advanced: { flowsInherited } } }),
+        onSuccess: updated => {
+            queryClient.setQueryData(['application', ref, application.id], updated);
+            toast.success('Application saved.');
+        },
+        onError: error => toast.error(`Could not save the application. ${error.message}`),
+    });
+    const tokenOnly = application.type === 'service';
+
+    return (
+        <FlowsPage
+            applicationId={application.id}
+            types={tokenOnly ? TOKEN_ONLY : undefined}
+            description={
+                tokenOnly
+                    ? 'Policies that run around token issuance for this application.'
+                    : 'Policies that run before and after each authentication step for this application.'
+            }
+            actions={
+                <Field orientation="horizontal" className="w-auto">
+                    <Switch
+                        id="flows-inherited"
+                        checked={application.settings?.advanced?.flowsInherited ?? false}
+                        disabled={inherit.isPending}
+                        onCheckedChange={checked => inherit.mutate(checked)}
+                    />
+                    <FieldLabel htmlFor="flows-inherited" className="flex-col items-start gap-0.5">
+                        Inherit configuration
+                        <span className="text-xs font-normal text-muted-foreground">Also run the flows of the security domain.</span>
+                    </FieldLabel>
+                </Field>
+            }
+        />
     );
 }

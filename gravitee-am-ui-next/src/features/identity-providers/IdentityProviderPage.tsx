@@ -116,8 +116,9 @@ export function IdentityProviderPage() {
     });
     useBreadcrumbs([
         { label: 'Domains', to: domainsPath },
-        { label: domain.name, to: basePath },
-        { label: 'Identity providers', to: `${basePath}/identity-providers` },
+        { label: domain.name, to: `${basePath}/dashboard` },
+        { label: 'Settings', to: `${basePath}/settings/general` },
+        { label: 'Providers', to: `${basePath}/settings/providers` },
         { label: provider?.name ?? '…' },
     ]);
 

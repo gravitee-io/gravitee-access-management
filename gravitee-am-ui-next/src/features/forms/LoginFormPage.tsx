@@ -19,7 +19,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { PageHeader } from '../../app/components/PageHeader';
 import { type Form, getForm, saveForm } from '../../lib/api/management-api';
-import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 
 const TEMPLATE = 'LOGIN';
@@ -62,8 +61,7 @@ function LoginFormEditor({ form }: { readonly form: Form }) {
 }
 
 export function LoginFormPage() {
-    const { domain, ref, basePath, domainsPath } = useCurrentDomain();
-    useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: basePath }, { label: 'Login form' }]);
+    const { ref } = useCurrentDomain();
     const { data: form, error } = useQuery({ queryKey: ['form', ref, TEMPLATE], queryFn: () => getForm(ref, TEMPLATE) });
 
     return (

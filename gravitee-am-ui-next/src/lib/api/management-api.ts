@@ -68,6 +68,7 @@ export interface ApplicationDetail extends Application {
             readonly redirectUris?: string[];
             readonly scopeSettings?: { readonly scope: string }[];
         };
+        readonly advanced?: { readonly flowsInherited?: boolean };
     };
     readonly createdAt?: number;
 }
@@ -177,7 +178,9 @@ export function getApplication(ref: DomainRef, applicationId: string): Promise<A
 export function patchApplication(
     ref: DomainRef,
     applicationId: string,
-    patch: Pick<Application, 'name' | 'description' | 'enabled'>,
+    patch: Partial<Pick<Application, 'name' | 'description' | 'enabled'>> & {
+        readonly settings?: { readonly advanced: { readonly flowsInherited: boolean } };
+    },
 ): Promise<ApplicationDetail> {
     return http<ApplicationDetail>(`${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/applications/${applicationId}`, {
         method: 'PATCH',
@@ -220,13 +223,19 @@ export function saveForm(ref: DomainRef, form: Form): Promise<Form> {
           });
 }
 
-export function listFlows(ref: DomainRef): Promise<AmFlow[]> {
-    return http<AmFlow[]>(`${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/flows`);
+function flowsPath(ref: DomainRef, applicationId?: string): string {
+    const domain = domainPath(ref.organizationId, ref.environmentId, ref.domainId);
+    return applicationId ? `${domain}/applications/${applicationId}/flows` : `${domain}/flows`;
 }
 
-/** Replaces every flow of the domain. The order within a type is the execution order. */
-export function updateFlows(ref: DomainRef, flows: AmFlow[]): Promise<AmFlow[]> {
-    return http<AmFlow[]>(`${domainPath(ref.organizationId, ref.environmentId, ref.domainId)}/flows`, {
+/** The flows of the domain, or of one application when `applicationId` is set. */
+export function listFlows(ref: DomainRef, applicationId?: string): Promise<AmFlow[]> {
+    return http<AmFlow[]>(flowsPath(ref, applicationId));
+}
+
+/** Replaces every flow of the domain or application. The order within a type is the execution order. */
+export function updateFlows(ref: DomainRef, flows: AmFlow[], applicationId?: string): Promise<AmFlow[]> {
+    return http<AmFlow[]>(flowsPath(ref, applicationId), {
         method: 'PUT',
         body: JSON.stringify(flows),
     });

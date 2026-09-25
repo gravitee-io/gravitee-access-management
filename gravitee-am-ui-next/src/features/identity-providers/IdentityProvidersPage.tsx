@@ -22,7 +22,6 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type IdentityProviderSummary, listIdentityProviders } from '../../lib/api/management-api';
-import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 
 const columns: ColumnDef<IdentityProviderSummary, unknown>[] = [
@@ -49,8 +48,7 @@ const columns: ColumnDef<IdentityProviderSummary, unknown>[] = [
 ];
 
 export function IdentityProvidersPage() {
-    const { domain, ref, basePath, domainsPath } = useCurrentDomain();
-    useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: basePath }, { label: 'Identity providers' }]);
+    const { ref } = useCurrentDomain();
     // The Management API returns every identity provider in one list, so the table pages it client-side.
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);

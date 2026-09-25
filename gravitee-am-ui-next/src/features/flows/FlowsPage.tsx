@@ -16,10 +16,9 @@
 import { Spinner, toast } from '@gravitee/graphene-core';
 import { type Policy, PolicyStudio, type SaveOutput } from '@gravitee/graphene-policy-studio';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import { PageHeader } from '../../app/components/PageHeader';
-import { getPolicyDocumentation, getPolicySchema, listFlows, listPolicies, updateFlows } from '../../lib/api/management-api';
-import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
+import { type AmFlow, getPolicyDocumentation, getPolicySchema, listFlows, listPolicies, updateFlows } from '../../lib/api/management-api';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { adaptAmSchema } from '../identity-providers/am-schema';
 import { AM_FLOW_MODEL, toAmFlows, toStudioFlow, toStudioPolicy } from './am-flows';
@@ -27,13 +26,32 @@ import { AM_FLOW_MODEL, toAmFlows, toStudioFlow, toStudioPolicy } from './am-flo
 const NONE = [] as const;
 const FLOW_EXECUTION = { mode: 'DEFAULT' } as const;
 
-export function FlowsPage() {
-    const { domain, ref, basePath, domainsPath } = useCurrentDomain();
-    const { data: flows, error: flowsError } = useQuery({ queryKey: ['flows', ref], queryFn: () => listFlows(ref) });
-    const { data: plugins, error: pluginsError } = useQuery({ queryKey: ['policies'], queryFn: listPolicies, staleTime: Infinity });
-    useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: basePath }, { label: 'Flows' }]);
+interface FlowsPageProps {
+    /** Edits this application's flows instead of the domain's. */
+    readonly applicationId?: string;
+    /** Shows only these flow types. Flows of the other types are kept on save. */
+    readonly types?: readonly string[];
+    readonly description?: string;
+    readonly actions?: ReactNode;
+}
 
-    const commonFlows = useMemo(() => flows?.map(toStudioFlow) ?? [], [flows]);
+export function FlowsPage({
+    applicationId,
+    types,
+    description = 'Policies that run before and after each step of the authentication journey.',
+    actions,
+}: FlowsPageProps) {
+    const { ref } = useCurrentDomain();
+    const flowsKey = useMemo(() => ['flows', ref, applicationId ?? 'domain'], [ref, applicationId]);
+    const { data: flows, error: flowsError } = useQuery({ queryKey: flowsKey, queryFn: () => listFlows(ref, applicationId) });
+    const { data: plugins, error: pluginsError } = useQuery({ queryKey: ['policies'], queryFn: listPolicies, staleTime: Infinity });
+
+    const shown = useCallback((flow: AmFlow) => !types || types.includes(flow.type), [types]);
+    const commonFlows = useMemo(() => flows?.filter(shown).map(toStudioFlow) ?? [], [flows, shown]);
+    const flowModel = useMemo(
+        () => (types ? { ...AM_FLOW_MODEL, groups: AM_FLOW_MODEL.groups?.filter(group => types.includes(group.id)) } : AM_FLOW_MODEL),
+        [types],
+    );
     const policies = useMemo(() => plugins?.map(toStudioPolicy) ?? [], [plugins]);
     const fetchSchema = useCallback(async (policy: Policy) => adaptAmSchema(await getPolicySchema(policy.id)).schema, []);
     const fetchDocumentation = useCallback(
@@ -47,14 +65,15 @@ export function FlowsPage() {
                 return;
             }
             try {
-                queryClient.setQueryData(['flows', ref], await updateFlows(ref, toAmFlows(output)));
+                const hidden = flows?.filter(flow => !shown(flow)) ?? [];
+                queryClient.setQueryData(flowsKey, await updateFlows(ref, [...toAmFlows(output), ...hidden], applicationId));
                 toast.success('Flows saved.');
             } catch (error) {
                 toast.error(`Could not save the flows. ${(error as Error).message}`);
                 throw error;
             }
         },
-        [queryClient, ref],
+        [queryClient, ref, applicationId, flows, shown, flowsKey],
     );
 
     if (flowsError || pluginsError) {
@@ -65,12 +84,12 @@ export function FlowsPage() {
     }
     return (
         <div className="flex h-[calc(100vh-9rem)] flex-col gap-4">
-            <PageHeader title="Flows" description="Policies that run before and after each step of the authentication journey." />
+            <PageHeader title="Flows" description={description} actions={actions} />
             <div className="min-h-0 flex-1 overflow-hidden rounded-md border">
                 <PolicyStudio
                     apiType="PROXY"
                     scope="ORGANIZATION"
-                    flowModel={AM_FLOW_MODEL}
+                    flowModel={flowModel}
                     policies={policies}
                     sharedPolicyGroups={NONE}
                     plans={NONE}
