@@ -152,6 +152,21 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     @Override
+    public Single<IdentityProvider> validateCreate(Domain domain, NewIdentityProvider newIdentityProvider, boolean system) {
+        return identityProviderService.validateCreate(domain, newIdentityProvider, system)
+                .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
+    public Single<IdentityProvider> validateUpdate(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, boolean isUpgrader) {
+        return identityProviderService.findById(id)
+                .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
+                .flatMap(oldIdP -> updateSensitiveData(updateIdentityProvider, oldIdP))
+                .flatMap(idpToUpdate -> identityProviderService.validateUpdate(referenceType, referenceId, id, idpToUpdate, isUpgrader))
+                .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
     public Single<IdentityProvider> assignDataPlane(IdentityProvider identityProvider, String dataPlaneId) {
         return identityProviderService.assignDataPlane(identityProvider, dataPlaneId);
     }
