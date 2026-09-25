@@ -159,7 +159,7 @@ public class EmailServiceImpl implements EmailService {
             // prepare email
             Email email = prepareEmail(template, emailTemplate, user, client, queryParams);
             // send email
-            sendEmail(email, user, client);
+            sendEmail(template, email, user, client);
         }
     }
 
@@ -171,13 +171,13 @@ public class EmailServiceImpl implements EmailService {
 
         if (enabled) {
             var emailsToSend = containers.stream().map(container -> {
-                Email email = null;
+                io.gravitee.am.model.Template template = null;
                 try {
-                    var template = io.gravitee.am.model.Template.valueOf(container.stagingEmail().getEmailTemplateName());
+                    template = templateOf(container);
                     // get raw email template
                     io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, container.client());
                     // prepare email
-                    email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
+                    Email email = prepareEmail(template, emailTemplate, container.user(), container.client(), MultiMap.caseInsensitiveMultiMap());
 
                     return container.with(prepareEmailToSend(email, container.user()));
                 } catch (Exception ex) {
@@ -186,7 +186,7 @@ public class EmailServiceImpl implements EmailService {
                     container.stagingEmail().markAsProcessed();
                     auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                             .reference(Reference.domain(domain.getId()))
-                            .email(email) // email() method check ignore null value
+                            .template(template)
                             .throwable(ex));
                     return null;
                 }
@@ -202,7 +202,7 @@ public class EmailServiceImpl implements EmailService {
                     container.stagingEmail().markAsProcessed();
                     log.debug("Email staging process {}", container.stagingEmail());
                     gatewayMetricProvider.incrementProcessedStagingEmails(true);
-                    traceSuccessfulEmail(container.email(), container.user(), container.client());
+                    traceSuccessfulEmail(templateOf(container), container.user(), container.client());
                 });
             } catch (BatchEmailException batchEx) {
                 batchEx.getEmails().forEach(email -> {
@@ -215,7 +215,7 @@ public class EmailServiceImpl implements EmailService {
                                 container.stagingEmail().markAsProcessed();
                                 log.warn("Send {} email failed for user {}, max attempts have been reach", container.stagingEmail().getEmailTemplateName(), email);
                                 gatewayMetricProvider.incrementProcessedStagingEmails(false);
-                                traceFailureEmail(container.email(), container.user(), container.client(), batchEx);
+                                traceFailureEmail(templateOf(container), container.user(), container.client(), batchEx);
                             } else {
                                 log.info("Send {} email failed for user {}", container.stagingEmail().getEmailTemplateName(), email);
                             }
@@ -229,7 +229,7 @@ public class EmailServiceImpl implements EmailService {
                         containerValues.forEach(successfulContainer -> {
                             successfulContainer.stagingEmail().markAsProcessed();
                             gatewayMetricProvider.incrementProcessedStagingEmails(true);
-                            traceSuccessfulEmail(successfulContainer.email(), successfulContainer.user(), successfulContainer.client());
+                            traceSuccessfulEmail(templateOf(successfulContainer), successfulContainer.user(), successfulContainer.client());
                         });
                     }
                 });
@@ -247,11 +247,11 @@ public class EmailServiceImpl implements EmailService {
                 emailService.send(emailToSend);
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                         .reference(Reference.domain(domain.getId()))
-                        .email(email));
+                        .customTemplate(email.getTemplate()));
             } catch (Exception ex) {
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                         .reference(Reference.domain(domain.getId()))
-                        .email(email)
+                        .customTemplate(email.getTemplate())
                         .throwable(ex));
             }
         }
@@ -299,13 +299,13 @@ public class EmailServiceImpl implements EmailService {
         return emailToSend;
     }
 
-    private void sendEmail(Email email, User user, Client client) {
+    private void sendEmail(io.gravitee.am.model.Template template, Email email, User user, Client client) {
         try {
             final Email emailToSend = prepareEmailToSend(email, user);
             emailService.send(emailToSend);
-            traceSuccessfulEmail(email, user, client);
+            traceSuccessfulEmail(template, user, client);
         } catch (final Exception ex) {
-            traceFailureEmail(email, user, client, ex);
+            traceFailureEmail(template, user, client, ex);
         }
     }
 
@@ -333,20 +333,24 @@ public class EmailServiceImpl implements EmailService {
         return emailToSend;
     }
 
-    private void traceFailureEmail(Email email, User user, Client client, Exception ex) {
+    private static io.gravitee.am.model.Template templateOf(EmailContainer container) {
+        return io.gravitee.am.model.Template.valueOf(container.stagingEmail().getEmailTemplateName());
+    }
+
+    private void traceFailureEmail(io.gravitee.am.model.Template template, User user, Client client, Exception ex) {
         auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                 .reference(Reference.domain(domain.getId()))
                 .client(client)
-                .email(email)
+                .template(template)
                 .user(user)
                 .throwable(ex));
     }
 
-    private void traceSuccessfulEmail(Email email, User user, Client client) {
+    private void traceSuccessfulEmail(io.gravitee.am.model.Template template, User user, Client client) {
         auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                 .reference(Reference.domain(domain.getId()))
                 .client(client)
-                .email(email)
+                .template(template)
                 .user(user));
     }
 
@@ -496,13 +500,6 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void traceEmailEviction(User user, Client client, io.gravitee.am.model.Template template) {
-        Email email = new Email();
-        email.setTemplate(getTemplateName(template, client));
-        auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
-                .reference(Reference.domain(domain.getId()))
-                .client(client)
-                .user(user)
-                .email(email)
-                .throwable(droppedException));
+        traceFailureEmail(template, user, client, droppedException);
     }
 }
