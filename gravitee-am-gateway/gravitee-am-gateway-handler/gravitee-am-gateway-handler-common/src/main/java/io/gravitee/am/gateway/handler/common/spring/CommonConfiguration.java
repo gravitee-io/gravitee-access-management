@@ -71,6 +71,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.DelegatingInternalClientTokenIssuer;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionAccessTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionRefreshTokenService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
@@ -413,6 +414,11 @@ public class CommonConfiguration {
     @Bean
     public ExecutionContextFactory executionContextFactory() {
         return new ExecutionContextFactory();
+    }
+
+    @Bean
+    public DelegatingInternalClientTokenIssuer delegatingInternalClientTokenIssuer() {
+        return new DelegatingInternalClientTokenIssuer();
     }
 
     @Bean
