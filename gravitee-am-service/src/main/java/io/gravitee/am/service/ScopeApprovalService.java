@@ -37,6 +37,8 @@ public interface ScopeApprovalService {
 
     Maybe<ScopeApproval> findById(Domain domain, String id);
 
+    Maybe<ScopeApproval> findByIdAndUser(Domain domain, String id, UserId userId);
+
     Flowable<ScopeApproval> findByDomainAndUser(Domain domain, UserId userId);
 
     Flowable<ScopeApproval> findByDomainAndUserAndClient(Domain domain, UserId userId, String client);
