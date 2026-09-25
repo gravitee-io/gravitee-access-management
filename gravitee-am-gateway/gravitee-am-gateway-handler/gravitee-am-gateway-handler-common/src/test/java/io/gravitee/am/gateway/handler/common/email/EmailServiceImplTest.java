@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapperBuilder;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -628,6 +629,112 @@ public class EmailServiceImplTest {
         // Verify audit service was called: 1 time for user2 failure during preparation, 2 times for successful emails
         verify(auditService, times(2)).report(argThat(builder -> builder.build(mapper).getOutcome().getStatus().equals(Status.SUCCESS)));
         verify(auditService, times(1)).report(argThat(builder -> builder.build(mapper).getOutcome().getStatus().equals(Status.FAILURE)));
+    }
+
+    @Test
+    public void must_audit_standard_event_type_when_application_overrides_template() throws IOException {
+        emailServiceSpy = Mockito.spy(instantiateEmailService(true));
+        MockitoAnnotations.openMocks(this);
+
+        final Email emailTemplate = buildEmail();
+        emailTemplate.setTemplate(Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + "client-id");
+        mockEmailRendering(emailTemplate);
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        emailServiceSpy.send(Template.RESET_PASSWORD, new User(), client);
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            var audit = builder.build(mapper);
+            return EventType.RESET_PASSWORD_EMAIL_SENT.equals(audit.getType())
+                    && Status.SUCCESS.equals(audit.getOutcome().getStatus());
+        }));
+    }
+
+    @Test
+    public void must_audit_standard_event_type_when_sending_overridden_template_fails() throws IOException {
+        emailServiceSpy = Mockito.spy(instantiateEmailService(true));
+        MockitoAnnotations.openMocks(this);
+
+        final Email emailTemplate = buildEmail();
+        emailTemplate.setTemplate(Template.BLOCKED_ACCOUNT.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + "client-id");
+        mockEmailRendering(emailTemplate);
+        Mockito.doThrow(new IllegalStateException("smtp down")).when(this.emailService).send(any());
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        emailServiceSpy.send(Template.BLOCKED_ACCOUNT, new User(), client);
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            var audit = builder.build(mapper);
+            return EventType.BLOCKED_ACCOUNT_EMAIL_SENT.equals(audit.getType())
+                    && Status.FAILURE.equals(audit.getOutcome().getStatus());
+        }));
+    }
+
+    @Test
+    public void must_audit_standard_event_type_on_email_eviction_with_client() {
+        emailServiceSpy = Mockito.spy(instantiateEmailService(true));
+        MockitoAnnotations.openMocks(this);
+        when(domain.getId()).thenReturn("domain-id");
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        emailServiceSpy.traceEmailEviction(new User(), client, Template.REGISTRATION_CONFIRMATION);
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            var audit = builder.build(mapper);
+            return EventType.REGISTRATION_CONFIRMATION_EMAIL_SENT.equals(audit.getType())
+                    && Status.FAILURE.equals(audit.getOutcome().getStatus());
+        }));
+    }
+
+    @Test
+    public void must_audit_standard_event_type_for_batch_emails_with_overridden_template() throws IOException {
+        emailServiceSpy = Mockito.spy(instantiateEmailService(true));
+        MockitoAnnotations.openMocks(this);
+
+        final Email emailTemplate = buildEmail();
+        emailTemplate.setTemplate(Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + "client-id");
+        mockEmailRendering(emailTemplate);
+
+        User user = new User();
+        user.setId("user-1");
+        user.setEmail("user1@gravitee.io");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        emailServiceSpy.batch(List.of(new EmailContainer(user, client, defaultStagingEmail(user, client))), 1);
+
+        verify(auditService, times(1)).report(argThat(builder -> {
+            var audit = builder.build(mapper);
+            return EventType.RESET_PASSWORD_EMAIL_SENT.equals(audit.getType())
+                    && Status.SUCCESS.equals(audit.getOutcome().getStatus());
+        }));
+    }
+
+    private void mockEmailRendering(Email emailTemplate) throws IOException {
+        when(domain.getId()).thenReturn("domain-id");
+
+        final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
+
+        when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
+        when(freemarkerConfiguration.getNamingConvention()).thenReturn(AUTO_DETECT_NAMING_CONVENTION);
+        when(freemarkerConfiguration.getObjectWrapper()).thenReturn(new DefaultObjectWrapperBuilder(DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build());
+
+        var templateMock = new freemarker.template.Template("content", new StringReader("content"), freemarkerConfiguration);
+        when(freemarkerConfiguration.getTemplate(anyString())).thenReturn(templateMock);
+
+        when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(emailTemplate);
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+        when(domainService.buildUrl(any(), any(), any())).thenReturn("http://localhost/reset");
     }
 
     private Email buildEmail() {
