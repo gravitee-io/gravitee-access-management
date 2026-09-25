@@ -6,37 +6,28 @@ labels:
 mongodb-replicaset:
   enabled: false
 
-gatewayEnv: &gatewayEnv
-  - name: gravitee_repositories_system_cluster
-    value: gateway
-  - name: gravitee_repositories_management_type
-    value: mongodb
-  - name: gravitee_repositories_management_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
-  - name: gravitee_repositories_management_mongodb_dbname
-    value: "gravitee"
-  - name: gravitee_repositories_gateway_type
-    value: mongodb
-  - name: gravitee_repositories_gateway_use_management_settings
-    value: "false"
-  - name: gravitee_repositories_gateway_dataPlane_id
-    value: dp1
-  - name: gravitee_repositories_gateway_dataPlane_url
-    value: "http://localhost:8091"
-  - name: gravitee_repositories_gateway_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
-  - name: gravitee_repositories_gateway_mongodb_dbname
-    value: "gravitee-dp1"
-  - name: gravitee_repositories_oauth2_type
-    value: mongodb
-  - name: gravitee_repositories_oauth2_use_management_settings
-    value: "false"
-  - name: gravitee_repositories_oauth2_use_gateway_settings
-    value: "true"
-  - name: gravitee_repositories_oauth2_mongodb_uri
-    value: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000"
-  - name: gravitee_repositories_oauth2_mongodb_dbname
-    value: "gravitee-dp1"
+repositories:
+  system-cluster: gateway
+  management:
+    type: mongodb
+    mongodb:
+      uri: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+      dbname: gravitee
+  oauth2:
+    type: mongodb
+    use-management-settings: false
+    mongodb:
+      uri: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee?serverSelectionTimeoutMS=30000"
+      dbname: gravitee
+  gateway:
+    type: mongodb
+    use-management-settings: false
+    dataPlane:
+      id: dp1
+      url: "http://localhost:8091"
+    mongodb:
+      uri: "mongodb://gravitee:gravitee-password@mongo-mongodb:27017/gravitee-dp1?serverSelectionTimeoutMS=30000&authSource=gravitee"
+      dbname: gravitee-dp1
 
 api:
   enabled: false
@@ -53,7 +44,6 @@ gateway:
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
-  env: *gatewayEnv
 
 ui:
   enabled: false
