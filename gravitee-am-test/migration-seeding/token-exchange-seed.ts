@@ -21,6 +21,7 @@ import { Application } from '../api/management/models/Application';
 import { Domain } from '../api/management/models/Domain';
 import { NewApplicationTypeEnum } from '../api/management/models/NewApplication';
 import { DataPlaneTarget, getDataPlaneTargets, getInstanceLabel, normalizeForName } from './seed';
+import { migrationSeed } from './version-range';
 
 export const TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
 export const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
@@ -70,6 +71,24 @@ export interface TokenExchangeSeedOptions {
   trustedIssuerApi: TrustedIssuerApi;
   keyRetrievalApi: KeyRetrievalApi;
 }
+
+/**
+ * The trusted-issuer token exchange data set, seeded from 4.12 on. 4.11 already had trusted issuers
+ * but no way to widen the key-retrieval policy, so a 4.11-seeded issuer whose JWKS sits on a loopback
+ * address could not be resolved after the upgrade.
+ */
+export const TOKEN_EXCHANGE_SEED = migrationSeed<TokenExchangeSeedOptions>({
+  name: 'token exchange trusted issuer',
+  variants: [
+    // No trusted-domains API yet: both consumer domains carry their trusted issuer in the inline list,
+    // and the key-retrieval limits live in the SPIFFE block. The shape the 4.13 upgrade has to migrate.
+    { range: { from: '4.12', until: '4.13' }, options: { trustedIssuerApi: 'inline', keyRetrievalApi: 'legacy-spiffe' } },
+    // A trusted issuer is a trusted domain of its own and the key-retrieval limits sit at the top level.
+    // The `legacy` consumer domain still goes through the deprecated inline list.
+    { range: { from: '4.13' }, options: { trustedIssuerApi: 'trusted-domain', keyRetrievalApi: 'key-retrieval-settings' } },
+  ],
+  seed: seedTokenExchangeData,
+});
 
 export function getTokenExchangeIssuerDomainName(label: string): string {
   return `migration-seeded-te-issuer-${normalizeForName(label)}`;
