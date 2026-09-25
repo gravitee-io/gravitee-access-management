@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <frontend-maven-plugin.version>1.15.4</frontend-maven-plugin.version>
+    <node.version>v24.16.0</node.version>
+    <yarn.version>v1.22.22</yarn.version>
+    <!-- Distribution bundle: published on download.gravitee.io, never on Nexus/Artifactory/Maven -->
+    <maven.deploy.skip>true</maven.deploy.skip>
+  </properties>
+
+  <parent>
+    <groupId>io.gravitee.am</groupId>
+    <artifactId>gravitee-am-parent</artifactId>
+    <version>4.14.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>io.gravitee.am</groupId>
+  <artifactId>gravitee-am-webui-next</artifactId>
+  <version>4.14.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Gravitee.io AM - Console (React)</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>dist</directory>
+            </fileset>
+            <fileset>
+              <directory>node</directory>
+            </fileset>
+            <fileset>
+              <directory>node_modules</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>${frontend-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>install node and yarn</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>install-node-and-yarn</goal>
+            </goals>
+            <configuration>
+              <nodeVersion>${node.version}</nodeVersion>
+              <yarnVersion>${yarn.version}</yarnVersion>
+            </configuration>
+          </execution>
+          <execution>
+            <id>yarn install</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments>install --no-immutable</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>yarn lint</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments>run lint</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>yarn test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments>run test</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>yarn run-script prod</id>
+            <phase>package</phase>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments>build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
+              <descriptors>
+                <descriptor>assembly.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!--Plugin used to replace version on several files -->
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>${project.basedir}/package.json</include>
+                <include>${project.basedir}/build.json</include>
+              </includes>
+              <replacements>
+                <replacement>
+                  <token>"name"(\s*):(\s*)"(.*)"</token>
+                  <value>"name": "${project.artifactId}"</value>
+                </replacement>
+                <replacement>
+                  <token>"version": "(.*)"</token>
+                  <value>"version": "${project.version}"</value>
+                </replacement>
+                <replacement>
+                  <token>'version': '(.*)'</token>
+                  <value>'version': '${project.version}'</value>
+                </replacement>
+                <replacement>
+                  <token>"description"(\s*):(\s*)"(.*)"</token>
+                  <value>"description": "${project.name}"</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
