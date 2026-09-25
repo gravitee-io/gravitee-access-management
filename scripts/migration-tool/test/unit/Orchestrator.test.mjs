@@ -153,6 +153,32 @@ describe('Orchestrator', () => {
         });
     });
 
+    test('a verify stage run on its own reads the deployed versions from the provider', async () => {
+        options.testDir = '/tmp/does-not-matter';
+        mockProvider.getDeployedVersions = jest.fn().mockResolvedValue({ mapi: '4.13.0-alpha.4', gateway: '4.12.0' });
+
+        await orchestrator.resolveDeployedVersions();
+
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.13.0-alpha.4',
+            AM_MIGRATION_GW_VERSION: '4.12.0',
+        });
+    });
+
+    test('versions tracked by this run take precedence over the provider', async () => {
+        options.fromTag = '4.12.0';
+        mockProvider.getDeployedVersions = jest.fn().mockResolvedValue({ mapi: 'other', gateway: 'other' });
+
+        await orchestrator.run(['deploy-from']);
+        await orchestrator.resolveDeployedVersions();
+
+        expect(mockProvider.getDeployedVersions).not.toHaveBeenCalled();
+        expect(orchestrator.getVersionEnv()).toMatchObject({
+            AM_MIGRATION_MAPI_VERSION: '4.12.0',
+            AM_MIGRATION_GW_VERSION: '4.12.0',
+        });
+    });
+
     test('verify leaves out versions it cannot know', () => {
         options.toTag = 'latest';
 

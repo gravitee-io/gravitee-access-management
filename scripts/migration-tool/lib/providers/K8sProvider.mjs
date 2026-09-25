@@ -194,6 +194,27 @@ export class K8sProvider extends BaseProvider {
         return total; // returned but NOT thrown on — report-only
     }
 
+    /**
+     * The image tags the Management API and the gateways currently run, read from their Deployments.
+     * Lets a single stage run in its own process (--stage) know what an earlier process deployed.
+     * The gateway tag comes from the first gateway release; an unknown tag is null.
+     * @returns {Promise<{ mapi: string|null, gateway: string|null }>}
+     */
+    async getDeployedVersions() {
+        const mapiRelease = this.releases.find((r) => r.component === 'mapi');
+        const gatewayRelease = this.releases.find((r) => r.component === 'gateway');
+        const mapiSelector = mapiRelease
+            ? `app.kubernetes.io/instance=${mapiRelease.name},app.kubernetes.io/component=management-api`
+            : 'app.kubernetes.io/component=management-api';
+        const gatewaySelector = gatewayRelease
+            ? `app.kubernetes.io/instance=${gatewayRelease.name},app.kubernetes.io/component=gateway`
+            : 'app.kubernetes.io/component=gateway';
+        return {
+            mapi: await this.kubectl.getDeploymentImageTag(mapiSelector),
+            gateway: await this.kubectl.getDeploymentImageTag(gatewaySelector),
+        };
+    }
+
     async setup() {
         console.log('🏗️  Setting up K8s environment...');
 

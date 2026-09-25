@@ -163,4 +163,41 @@ describe('Kubectl', () => {
         });
         await expect(kubectl.logs('app=gateway')).resolves.toBe('');
     });
+
+    function deploymentsWithImage(image) {
+        const stdout = JSON.stringify({ items: image ? [{ spec: { template: { spec: { containers: [{ image }] } } } }] : [] });
+        return () => {
+            const session = Promise.resolve({ exitCode: 0, stdout });
+            session.quiet = () => session;
+            session.nothrow = () => session;
+            return session;
+        };
+    }
+
+    test('getDeploymentImageTag returns the tag of the matching deployment image', async () => {
+        mockShell.mockImplementation(deploymentsWithImage('graviteeio/am-management-api:4.13.0-alpha.4'));
+        await expect(kubectl.getDeploymentImageTag('app=mapi')).resolves.toBe('4.13.0-alpha.4');
+    });
+
+    test('getDeploymentImageTag ignores a registry port', async () => {
+        mockShell.mockImplementation(deploymentsWithImage('registry.local:5000/graviteeio/am-gateway:4.12.0'));
+        await expect(kubectl.getDeploymentImageTag('app=gw')).resolves.toBe('4.12.0');
+    });
+
+    test('getDeploymentImageTag returns null when no deployment or no tag', async () => {
+        mockShell.mockImplementation(deploymentsWithImage(null));
+        await expect(kubectl.getDeploymentImageTag('app=none')).resolves.toBeNull();
+        mockShell.mockImplementation(deploymentsWithImage('registry.local:5000/graviteeio/am-gateway'));
+        await expect(kubectl.getDeploymentImageTag('app=gw')).resolves.toBeNull();
+    });
+
+    test('getDeploymentImageTag returns null when kubectl fails', async () => {
+        mockShell.mockImplementation(() => {
+            const session = Promise.resolve({ exitCode: 1, stdout: '' });
+            session.quiet = () => session;
+            session.nothrow = () => session;
+            return session;
+        });
+        await expect(kubectl.getDeploymentImageTag('app=mapi')).resolves.toBeNull();
+    });
 });
