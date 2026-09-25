@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
@@ -30,8 +31,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -322,5 +325,127 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Response response = put(certificatesTarget(DOMAIN_KEY), definition("Bad Key!", false));
 
         assertEquals(400, response.getStatus());
+    }
+
+    // --- dry-run tests ---
+
+    @Test
+    void dryRun_create_valid_body_returns_200_without_errors() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        when(certificateService.validateCreate(any(Domain.class), any(), eq(false)))
+                .thenReturn(Single.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertEquals("my-cert", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(certificateService, never()).create(any(Domain.class), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_create_invalid_body_returns_200_with_errors() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        when(certificateService.validateCreate(any(Domain.class), any(), eq(false)))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals(DryRunError.Severity.ERROR, body.getDryRunErrors().get(0).severity());
+        assertTrue(body.getDryRunErrors().get(0).message().contains("not valid"));
+    }
+
+    @Test
+    void dryRun_update_existing_validates_without_persisting() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+        when(certificateService.validateUpdate(any(Domain.class), eq(certId), any()))
+                .thenReturn(Single.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertEquals("my-cert", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(certificateService, never()).update(any(Domain.class), anyString(), any(), any());
+    }
+
+    @Test
+    void dryRun_update_rejects_system_flag_change_as_error() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", true));
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertTrue(body.getDryRunErrors().get(0).message()
+                .contains("The 'system' flag is immutable for an existing certificate 'my-cert'"));
+    }
+
+    @Test
+    void dryRun_create_system_does_not_create_system_certificate() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), systemDefinition("sys-cert"));
+
+        assertEquals(200, response.getStatus());
+        assertNull(readEntity(response, AutomationCertificate.class).getDryRunErrors());
+        verify(certificateService, never()).createSystem(any(Domain.class), anyString(), anyString(), any());
+    }
+
+    @Test
+    void dryRun_key_conflict_returns_200_with_errors() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, null)));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
+
+        assertEquals(200, response.getStatus());
+        assertTrue(readEntity(response, AutomationCertificate.class).getDryRunErrors().get(0).message()
+                .contains("conflicts with an existing certificate"));
+    }
+
+    @Test
+    void dryRun_by_id_validates_existing_without_persisting() {
+        String brownfieldId = "11111111-2222-3333-4444-555555555555";
+        Certificate brownfield = cert(brownfieldId, null, false, null);
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findById(eq(brownfieldId))).thenReturn(Maybe.just(brownfield));
+        when(certificateService.validateUpdate(any(Domain.class), eq(brownfieldId), any()))
+                .thenReturn(Single.just(brownfield));
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("id:" + brownfieldId, false));
+
+        assertEquals(200, response.getStatus());
+        assertNull(readEntity(response, AutomationCertificate.class).getDryRunErrors());
+        verify(certificateService, never()).update(any(Domain.class), anyString(), any(), any());
+    }
+
+    @Test
+    void dryRun_without_permission_reports_error_and_never_validates() {
+        denyPermission();
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(1, readEntity(response, AutomationCertificate.class).getDryRunErrors().size());
+        verify(certificateService, never()).validateCreate(any(Domain.class), any(), anyBoolean());
     }
 }

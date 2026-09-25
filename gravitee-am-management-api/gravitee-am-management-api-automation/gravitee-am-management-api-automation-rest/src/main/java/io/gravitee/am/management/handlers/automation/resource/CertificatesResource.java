@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationCertificateMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
@@ -28,6 +29,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewCertificate;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -37,11 +39,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -100,8 +104,11 @@ public class CertificatesResource extends AbstractAutomationResource {
             summary = "Create or update a certificate",
             description = "Idempotent create-or-update. Uses the key field in the body to identify the " +
                     "certificate within the domain. Re-applying an unchanged definition is a no-op. The system " +
-                    "flag is immutable; changing it requires deleting and recreating the certificate.")
-    @ApiResponse(responseCode = "200", description = "The created or updated certificate",
+                    "flag is immutable; changing it requires deleting and recreating the certificate. When dryRun " +
+                    "is true, the endpoint validates the payload without persisting; the returned certificate " +
+                    "carries a dryRunErrors list (empty on success, populated with validation errors otherwise).")
+    @ApiResponse(responseCode = "200", description = "The created or updated certificate. When dryRun is true the " +
+            "certificate includes a dryRunErrors field with any validation errors.",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationCertificate.class)))
     @ApiResponse(responseCode = "400", description = "Invalid request: a key conflict, a missing required " +
@@ -127,12 +134,20 @@ public class CertificatesResource extends AbstractAutomationResource {
                                             value = "{\"key\":\"default\",\"system\":true}")
                             }))
             @Valid @NotNull AutomationCertificate definition,
+            @Parameter(description = "When true, validates the payload without persisting. The returned certificate includes a dryRunErrors field.")
+            @QueryParam("dryRun") @DefaultValue("false") boolean dryRun,
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
         final AutomationRef domainRef = AutomationRef.parse(domainKey);
         final AutomationRef certRef = AutomationRef.parse(definition.getAutomationKey());
         final String key = certRef.raw();
+
+        if (dryRun) {
+            dryRunCreateOrUpdate(organizationId, environmentId, domainRef, definition, certRef, principal)
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
 
         // An 'id:' body addresses a preexisting certificate directly (update-only)
         if (certRef instanceof AutomationRef.IdRef) {
@@ -164,21 +179,13 @@ public class CertificatesResource extends AbstractAutomationResource {
 
     private Single<AutomationCertificate> updateExisting(Domain domain, Certificate existing,
             AutomationCertificate definition, String key, User principal) {
-        // 'system' is an immutable identity attribute; reject a change.
-        if (definition.isSystem() != existing.isSystem()) {
-            return Single.error(new InvalidParameterException(
-                    "The 'system' flag is immutable for an existing certificate '" + key
-                            + "'; delete and recreate it to change it"));
+        Single<AutomationCertificate> immutableRejection = rejectIfImmutableFieldChanged(existing, definition, key);
+        if (immutableRejection != null) {
+            return immutableRejection;
         }
         if (existing.isSystem()) {
             // re-PUT is an idempotent no-op
             return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
-        }
-        // 'type' is an immutable identity attribute; reject a change early
-        if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
-            return Single.error(new InvalidParameterException(
-                    "The 'type' is immutable for an existing certificate '" + key
-                            + "'; delete and recreate it to change it"));
         }
         Single<AutomationCertificate> updateRejection = rejectIfMissingCertificateFields(definition, key);
         if (updateRejection != null) {
@@ -192,17 +199,9 @@ public class CertificatesResource extends AbstractAutomationResource {
     private Single<AutomationCertificate> createNew(Domain domain, List<Certificate> allExisting,
             AutomationCertificate definition, String key, User principal) {
         final String certId = AutomationIds.certificateId(domain.getId(), key);
-        Optional<Certificate> occupant = allExisting.stream()
-                .filter(certificate -> certId.equals(certificate.getId()))
-                .findFirst();
-        if (occupant.isPresent()) {
-            return Single.error(new InvalidParameterException(
-                    "Certificate key '" + key + "' conflicts with an existing certificate"));
-        }
-        if (definition.isSystem() && allExisting.stream()
-                .anyMatch(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API) && certificate.isSystem())) {
-            return Single.error(new InvalidParameterException(
-                    "The domain already has a system certificate"));
+        Single<AutomationCertificate> conflictRejection = rejectIfConflicting(allExisting, certId, definition, key);
+        if (conflictRejection != null) {
+            return conflictRejection;
         }
         if (definition.isSystem()) {
             return certificateService.createSystem(domain, certId, key, principal)
@@ -216,6 +215,108 @@ public class CertificatesResource extends AbstractAutomationResource {
         newCertificate.setId(certId);
         return certificateService.create(domain, newCertificate, principal, false)
                 .map(AutomationCertificateMapper::toAutomationCertificate);
+    }
+
+    private Single<AutomationCertificate> dryRunCreateOrUpdate(String organizationId, String environmentId,
+            AutomationRef domainRef, AutomationCertificate definition, AutomationRef certRef, User principal) {
+        final String key = certRef.raw();
+
+        if (certRef instanceof AutomationRef.IdRef) {
+            return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> resolver.resolveCertificate(domain, certRef)
+                            .flatMap(existing -> dryRunUpdate(domain, existing, definition, key)))
+                    .onErrorReturn(ex -> withErrors(definition, ex));
+        }
+
+        final String domainId = AutomationIds.domainId(environmentId, domainRef);
+        return certificateService.findByDomain(domainId).toList().flatMap(allExisting -> {
+            Optional<Certificate> match = allExisting.stream()
+                    .filter(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API))
+                    .filter(certificate -> key.equals(certificate.getAutomationKey()))
+                    .findFirst();
+            Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
+            return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, requiredAcl)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> match.isPresent()
+                            ? dryRunUpdate(domain, match.get(), definition, key)
+                            : dryRunCreate(domain, allExisting, definition, key));
+        })
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    private Single<AutomationCertificate> dryRunUpdate(Domain domain, Certificate existing,
+            AutomationCertificate definition, String key) {
+        Single<AutomationCertificate> immutableRejection = rejectIfImmutableFieldChanged(existing, definition, key);
+        if (immutableRejection != null) {
+            return immutableRejection;
+        }
+        if (existing.isSystem()) {
+            return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
+        }
+        Single<AutomationCertificate> rejection = rejectIfMissingCertificateFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        return certificateService.validateUpdate(domain, existing.getId(), AutomationCertificateMapper.toUpdateCertificate(definition))
+                .map(AutomationCertificateMapper::toAutomationCertificate);
+    }
+
+    private Single<AutomationCertificate> dryRunCreate(Domain domain, List<Certificate> allExisting,
+            AutomationCertificate definition, String key) {
+        final String certId = AutomationIds.certificateId(domain.getId(), key);
+        Single<AutomationCertificate> conflictRejection = rejectIfConflicting(allExisting, certId, definition, key);
+        if (conflictRejection != null) {
+            return conflictRejection;
+        }
+        if (definition.isSystem()) {
+            // a system certificate is fully defined by the platform; nothing else to validate
+            return Single.just(definition);
+        }
+        Single<AutomationCertificate> rejection = rejectIfMissingCertificateFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        AutomationNewCertificate newCertificate = AutomationCertificateMapper.toNewCertificate(definition);
+        newCertificate.setId(certId);
+        return certificateService.validateCreate(domain, newCertificate, false)
+                .map(AutomationCertificateMapper::toAutomationCertificate);
+    }
+
+    private static AutomationCertificate withErrors(AutomationCertificate definition, Throwable ex) {
+        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
+        return definition;
+    }
+
+    private static Single<AutomationCertificate> rejectIfImmutableFieldChanged(Certificate existing,
+            AutomationCertificate definition, String key) {
+        // 'system' is an immutable identity attribute; reject a change.
+        if (definition.isSystem() != existing.isSystem()) {
+            return Single.error(new InvalidParameterException(
+                    "The 'system' flag is immutable for an existing certificate '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        // 'type' is an immutable identity attribute; reject a change early
+        if (!existing.isSystem() && !isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+            return Single.error(new InvalidParameterException(
+                    "The 'type' is immutable for an existing certificate '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        return null;
+    }
+
+    private static Single<AutomationCertificate> rejectIfConflicting(List<Certificate> allExisting, String certId,
+            AutomationCertificate definition, String key) {
+        if (allExisting.stream().anyMatch(certificate -> certId.equals(certificate.getId()))) {
+            return Single.error(new InvalidParameterException(
+                    "Certificate key '" + key + "' conflicts with an existing certificate"));
+        }
+        if (definition.isSystem() && allExisting.stream()
+                .anyMatch(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API) && certificate.isSystem())) {
+            return Single.error(new InvalidParameterException(
+                    "The domain already has a system certificate"));
+        }
+        return null;
     }
 
     private static Single<AutomationCertificate> rejectIfMissingCertificateFields(AutomationCertificate definition, String key) {

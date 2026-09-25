@@ -224,6 +224,27 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal, boolean isSystem) {
         log.debug("Create a new certificate {} for domain {}", newCertificate, domain.getId());
+        return validateCreate(domain, newCertificate, isSystem)
+                .flatMap(certificateRepository::create)
+                // create event for sync process
+                .flatMap(certificate -> {
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(certificate));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof CertificateException) {
+                        return Single.error(new InvalidParameterException(ex.getMessage()));
+                    }
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    log.error("An error occurs while trying to create a certificate", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
+                });
+    }
+
+    @Override
+    public Single<Certificate> validateCreate(Domain domain, NewCertificate newCertificate, boolean isSystem) {
         final Completable licenseCheck = isSystem
                 ? Completable.complete()
                 : pluginLicenseGate.check(Reference.domain(domain.getId()), PluginLicenseGate.TYPE_CERTIFICATE, newCertificate.getType());
@@ -240,10 +261,10 @@ public class CertificateServiceImpl implements CertificateService {
                         if (!isSystem) {
                             return extractAlias(validated.getConfiguration())
                                     .map(alias -> checkAliasUniqueness(domain.getId(), alias, null)
-                                            .andThen(Single.defer(() -> certificateRepository.create(validated))))
-                                    .orElseGet(() -> certificateRepository.create(validated));
+                                            .andThen(Single.just(validated)))
+                                    .orElseGet(() -> Single.just(validated));
                         }
-                        return certificateRepository.create(validated);
+                        return Single.just(validated);
                     } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
                         return Single.error(ex);
@@ -255,21 +276,6 @@ public class CertificateServiceImpl implements CertificateService {
                         return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                     }
 
-                })
-                // create event for sync process
-                .flatMap(certificate -> {
-                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
-                    return eventService.create(event, domain).flatMap(__ -> Single.just(certificate));
-                })
-                .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to create a certificate", ex);
-                    if (ex instanceof CertificateException) {
-                        return Single.error(new InvalidParameterException(ex.getMessage()));
-                    }
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a certificate", ex));
                 })));
     }
 
@@ -355,6 +361,27 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal) {
         log.debug("Update a certificate {} for domain {}", id, domain.getId());
+        return validateUpdate(domain, id, updateCertificate)
+                .flatMap(certificateRepository::update)
+                // create event for sync process
+                .flatMap(certificate1 -> {
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(certificate1));
+                })
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to update a certificate", ex);
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    if (ex instanceof CertificateException) {
+                        return Single.error(new InvalidParameterException(ex.getMessage()));
+                    }
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
+                });
+    }
+
+    @Override
+    public Single<Certificate> validateUpdate(Domain domain, String id, UpdateCertificate updateCertificate) {
         return certificateRepository.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> {
@@ -391,13 +418,12 @@ public class CertificateServiceImpl implements CertificateService {
                     Optional<String> oldAlias = extractAlias(oldCertificate.certificate().getConfiguration());
                     boolean aliasChanged = newAlias.isPresent() && !newAlias.equals(oldAlias);
 
-                    Single<Certificate> validateAndUpdate = Single.defer(() -> {
+                    Single<Certificate> validated = Single.defer(() -> {
                         try {
                             // for update validate config against schema here instead of the resource
                             // as certificate may be system certificate so on the UI config is empty.
                             validationService.validate(certificate.getType(), certificate.getConfiguration());
-                            var validated = validate(certificate);
-                            return certificateRepository.update(validated);
+                            return Single.just(validate(certificate));
                         } catch (CertificateException ex) {
                             log.error("An error occurs while trying to update certificate binaries", ex);
                             return Single.error(ex);
@@ -409,24 +435,9 @@ public class CertificateServiceImpl implements CertificateService {
 
                     if (aliasChanged) {
                         return checkAliasUniqueness(certificate.getDomain(), newAlias.get(), certificate.getId())
-                                .andThen(validateAndUpdate);
+                                .andThen(validated);
                     }
-                    return validateAndUpdate;
-                })
-                // create event for sync process
-                .flatMap(certificate1 -> {
-                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
-                    return eventService.create(event, domain).flatMap(__ -> Single.just(certificate1));
-                })
-                .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to update a certificate", ex);
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    if (ex instanceof CertificateException) {
-                        return Single.error(new InvalidParameterException(ex.getMessage()));
-                    }
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a certificate", ex));
+                    return validated;
                 });
     }
 
