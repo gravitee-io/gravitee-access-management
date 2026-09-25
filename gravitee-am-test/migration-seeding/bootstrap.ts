@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-export type SeedModule = {
-  seed(label: string): Promise<void>;
-};
+import { MIGRATION_SEEDS } from './seeds';
+import { MigrationSeed, SeedVariant, toMinorVersion, variantFor } from './version-range';
 
-export function toMinorVersion(version: string): string {
-  const match = version.match(/^(\d+)\.(\d+)/);
-  if (!match) {
-    throw new Error(`Invalid AM version: ${version}`);
-  }
-  return `${match[1]}.${match[2]}`;
+export { toMinorVersion };
+
+/** The data sets `version` seeds, each with the variant that covers it, in registration order. */
+export function selectSeeds(seeds: MigrationSeed<any>[], version: string): { seed: MigrationSeed<any>; variant: SeedVariant<any> }[] {
+  return seeds.flatMap((seed) => {
+    const variant = variantFor(seed, version);
+    return variant ? [{ seed, variant }] : [];
+  });
 }
 
 export function applyMissingSeedEnvironmentDefaults(): void {
@@ -38,15 +39,21 @@ export function applyMissingSeedEnvironmentDefaults(): void {
 }
 
 /**
- * Seed one version's data set under a channel label.
- * @param version  Which seed module to run (the data shape), e.g. "4.10". Normalized to major.minor.
+ * Seed, under a channel label, every data set the given version covers.
+ * @param version  The AM version whose data shape to seed, e.g. "4.12" or "4.13.0-alpha.4". Compared on major.minor.
  * @param label    The channel/instance label used to name the seeded entities, e.g. "alpha" (baseline) or "beta" (newline).
  */
 export async function runSeed(version: string, label: string): Promise<void> {
   applyMissingSeedEnvironmentDefaults();
   const minorVersion = toMinorVersion(version);
-  const seedModule = (await import(`./versions/${minorVersion}/seed`)) as SeedModule;
-  await seedModule.seed(label);
+  const selected = selectSeeds(MIGRATION_SEEDS, minorVersion);
+  if (selected.length === 0) {
+    throw new Error(`No migration seed covers version ${minorVersion}`);
+  }
+  for (const { seed, variant } of selected) {
+    console.log(`🌱 Seeding "${seed.name}" for ${minorVersion} under label ${label}`);
+    await seed.seed(label, variant.options);
+  }
 }
 
 function readArg(name: string): string | undefined {
