@@ -71,7 +71,7 @@ public interface AccountService {
 
     Single<List<ScopeApproval>> getConsentList(User user, Client client);
 
-    Single<ScopeApproval> getConsent(String id);
+    Single<ScopeApproval> getConsent(User user, String id);
 
     Completable removeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal);
 }
