@@ -49,6 +49,9 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
+import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -105,8 +108,34 @@ public class AccountServiceTest {
     @Mock
     private PasswordPolicyManager passwordPolicyManager;
 
+    @Mock
+    private ScopeApprovalService scopeApprovalService;
+
     @InjectMocks
     private AccountService accountService = new AccountServiceImpl();
+
+    @Test
+    public void shouldGetConsent_ownedByCaller() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setId("user-id");
+        ScopeApproval consent = new ScopeApproval();
+        when(scopeApprovalService.findByIdAndUser(domain, "consent-id", user.getFullId())).thenReturn(Maybe.just(consent));
+
+        accountService.getConsent(user, "consent-id").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(consent);
+    }
+
+    @Test
+    public void shouldNotGetConsent_notOwnedByCaller() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setId("user-id");
+        when(scopeApprovalService.findByIdAndUser(domain, "consent-id", user.getFullId())).thenReturn(Maybe.empty());
+
+        accountService.getConsent(user, "consent-id").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ScopeApprovalNotFoundException.class);
+    }
 
     @Test
     public void shouldRemoveWebAuthnCredentials_nominalCase() {

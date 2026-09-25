@@ -55,9 +55,10 @@ public class AccountConsentEndpointHandler {
      * @param routingContext the routingContext holding the current user
      */
     public void getConsent(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final String consentId = routingContext.request().getParam("consentId");
 
-        accountService.getConsent(consentId)
+        accountService.getConsent(user, consentId)
                 .subscribe(
                         consent -> AccountResponseHandler.handleDefaultResponse(routingContext, consent),
                         routingContext::fail

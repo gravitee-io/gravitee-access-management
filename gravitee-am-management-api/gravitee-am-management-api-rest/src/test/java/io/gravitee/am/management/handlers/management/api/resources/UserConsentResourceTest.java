@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -65,7 +66,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
-        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(mockDomain, scopeApproval.getId());
+        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findByIdAndUser(mockDomain, scopeApproval.getId(), mockUser.getFullId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -77,6 +78,27 @@ public class UserConsentResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotGetUserConsent_notOwnedByUser() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Maybe.empty()).when(scopeApprovalService).findByIdAndUser(mockDomain, "consent-id", UserId.internal("user-id-1"));
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .path("user-id-1")
+                .path("consents")
+                .path("consent-id")
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test

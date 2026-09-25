@@ -313,8 +313,8 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     }
 
     @Override
-    public Single<ScopeApproval> getConsent(String id) {
-        return scopeApprovalService.findById(domain, id)
+    public Single<ScopeApproval> getConsent(User user, String id) {
+        return scopeApprovalService.findByIdAndUser(domain, id, user.getFullId())
                 .switchIfEmpty(Single.error(new ScopeApprovalNotFoundException(id)));
     }
 
