@@ -15,7 +15,7 @@ The report is a separate document from the spike plan. The plan is the lab noteb
 
 ### 1.2 Draft verdict
 
-Viable, with conditions. The spike built every layer of the path and ran it end to end in a browser, in both directions. No step needed a change to AM code or to Graphene. The cost is the console port, which is large but known work. Three conditions sit outside the AM team: the production signing key, the user provisioning model, and the hosting topology.
+Viable, with conditions. The spike built every layer of the path and ran it end to end in a browser, in both directions. No step needed a change to AM code. The flows editor needed one opt-in prop in Graphene's policy studio (1.8). The cost is the console port, which is large but known work. Three conditions sit outside the AM team: the production signing key, the user provisioning model, and the hosting topology.
 
 ### 1.3 Report sections
 
@@ -32,7 +32,7 @@ Viable, with conditions. The spike built every layer of the path and ran it end 
 | 9 | Decisions needed | Decision, options, recommendation, owner, deadline | 1.4 below | Ready to fill |
 | 10 | Dependencies on other teams | What each team must deliver and when | 1.5 below | Needs Cloud team input |
 | 11 | Recommendation and phasing | Phases with exit criteria | 1.6 below | Draft ready |
-| 12 | Cross-cutting concerns | Permissions, licences, the policy studio, plugin form generation | 1.8 below | Draft ready. Policy studio proven in spike step 5b |
+| 12 | Cross-cutting concerns | Permissions, licences, the policy studio, plugin form generation | 1.8 below | Draft ready. Policy studio proven for domain and application flows |
 
 ### 1.4 Decisions the report must request
 
@@ -113,7 +113,9 @@ The flows spike (1.7 item 3) compared two options:
 
 Decision 1.4 records the choice.
 
-**Spike result (steps 5a and 5b).** Graphene's organization scope already takes flows with a request and a response phase, which is AM's pre and post shape. One opt-in prop, `FlowModel`, covered the rest: AM phase text and actors, one sidebar group per flow type, a condition-only flow form, and step names. The save output returns the flows per group. With it, the React console edited, added and removed AM flows and steps and saved them through `PUT .../flows`. All 509 existing policy studio tests passed unchanged. A new flow model in Graphene is not needed, and AM-J drops to medium risk. The Graphene change is on the local branch `spike/am-gamma` for the Graphene team to review.
+**Spike result (steps 5a and 5b).** Graphene's organization scope already takes flows with a request and a response phase, which is AM's pre and post shape. One opt-in prop, `FlowModel`, covered the rest: AM phase text and actors, one sidebar group per flow type, a condition-only flow form, and step names. The save output returns the flows per group. With it, the React console edited, added and removed AM flows and steps and saved them through `PUT .../flows`. All 509 existing policy studio tests passed unchanged. A new flow model in Graphene is not needed, and AM-J drops to medium risk. The Graphene change is in draft PR [#470](https://github.com/gravitee-io/gravitee-ui-graphene/pull/470) for the Graphene team to review.
+
+**Application flows.** The same page edits one application's flows through `PUT .../applications/{id}/flows`. The page header has the inherit switch, which sets `settings.advanced.flowsInherited`. As in AM, a service application shows only the token flow. Graphene drops any flow whose group the flow model does not list. The page therefore adds the hidden flows back before it saves, so a save keeps them. A gateway run of flows saved from the React console is not checked yet.
 
 #### Plugin form generation and schema versions
 
@@ -252,13 +254,13 @@ Counts are Angular components from the size survey. Area names follow `gravitee-
 
 | Epic | Area | Components | Graphene risk | Notes |
 |---|---|---|---|---|
-| AM-D | Domains list, creation, dashboard | part of 229 in `domain` | Low | Spike built the list |
-| AM-E | Applications | 44 | Low | 30 child routes in Angular. Spike built 2 tabs |
+| AM-D | Domains list, creation, dashboard | part of 229 in `domain` | Low | Spike built the list, the domain switcher and the prototype's navigation |
+| AM-E | Applications | 44 | Low | 30 child routes in Angular. Spike built the detail layout with the prototype's context sidebar: Overview, General and Flows. The other sections are placeholders |
 | AM-F | Identity providers | part of `settings` 132 | Low | Spike built the JDBC form |
 | AM-G | Users, groups, roles | part of `settings` | Low | |
 | AM-H | OIDC and OAuth settings, scopes, CIBA, UMA | part of `settings` | Low | |
 | AM-I | Certificates | part of `settings` | Low | |
-| AM-J | Flows and policies | part of `settings` | Medium | Spike built the domain flows page on Graphene's studio with `FlowModel`. Application flows and inheritance remain |
+| AM-J | Flows and policies | part of `settings` | Medium | Spike built the domain and application flows pages on Graphene's studio with `FlowModel`, with inheritance. A gateway run is not checked |
 | AM-K | MFA factors, bot detection, device identifiers | part of `settings` | Medium | Custom widgets likely |
 | AM-L | Login, forms, emails, themes, branding | part of `settings` | Low | Spike built the login form |
 | AM-M | Audits, analytics, reporters | part of `settings` | Medium | Charts move to `graphene-charts` |
@@ -302,8 +304,8 @@ Epic GR-A: gaps found by the AM port.
 |---|---|---|
 | Monaco as a true optional peer | The root entry imports the code editor, so a build without `monaco-editor` fails | S |
 | Custom schema fields | An extension point in `JsonSchemaForm` for AM widgets such as `datasource` | M |
-| Policy studio `FlowModel` | Review and release the opt-in `FlowModel` prop from the spike branch: host phase text, host groups, condition-only form, step names, `flowGroups` in the save output | M |
-| Policy studio robustness | Escape the step-validity key, so a flow id with `:` does not crash the studio. Say why Save is disabled when a step in another flow is invalid | S |
+| Policy studio `FlowModel` | Review and release the opt-in `FlowModel` prop from draft PR #470: host phase text, host groups, condition-only form, step names, `flowGroups` in the save output | M |
+| Policy studio robustness | Escape the step-validity key, so a flow id with `:` does not crash the studio. Say why Save is disabled when a step in another flow is invalid. Keep the flows whose group the host model does not list, or document that the host must keep them | S |
 | Licence check and upgrade dialog | A React upgrade dialog shared by gamma modules, fed by a licence feature list | M |
 | Conditional schemas | Confirm or add `if`/`then` support in `JsonSchemaForm` | S |
 | Lint rule | Flag `divide-y` and `border` without a colour token under Tailwind 4 | S |

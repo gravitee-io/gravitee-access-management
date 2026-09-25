@@ -449,6 +449,37 @@ Screenshots: `scratchpad/s5b-flows-final.png`, `s5b-flows-login.png`, `s5b-add-f
 
 **Verdict.** AM flows run in Graphene's policy studio with one additive, opt-in prop. The change does not alter APIM behaviour: all 509 existing tests pass unchanged. A new flow model is not needed. The flows epic drops from high risk to medium. The remaining work is Graphene review of the `FlowModel` API, application-level flows with inheritance, and the findings above.
 
+### Step 5c result: Gamma prototype navigation and application flows (2026-09-25)
+
+The goal was to match the navigation of the Gamma prototype (`gamma-baby`, `src/modules/am`), and to bring flows to the application level.
+
+**Lists.** The Domains, Applications and Identity providers pages use Graphene's `DataTable` with pagination, a search toolbar and the column "View" menu. Domains and applications search on the server with `q=*text*`, as the Angular console does. Identity providers filter in the browser, because the API returns one full list. Page titles use a plain `<h1>`, which Graphene styles as the Gamma page title.
+
+**Navigation.** The menus copy `navigation.ts` from the prototype.
+
+| Level | What the spike built |
+|---|---|
+| Main sidebar | A domain switcher, then the Domain menu (Dashboard, Applications, Agents, MCP Servers, Authorization, Alerts, Settings) and Organization. Switching domain keeps the section. Outside a domain, the menu acts on the last domain visited |
+| Domain settings | A context sidebar with the prototype's groups, Settings to SAML 2.0. Providers, Forms and Flows are real pages. Forms is not in the prototype: it holds the domain login form |
+| Organization | A context sidebar with Console, User Management, Gateway, Audit and Cockpit. All placeholders |
+| Application detail | A context sidebar with the application name, type and status in its header. Overview, Settings › General and Design › Flows are real pages. The other sections are placeholders |
+
+One hook, `useSectionSidebar`, drives all three context sidebars. It sets the context slots, the toggle and the breadcrumbs. A detail page below a section item, for example one identity provider, sets its own breadcrumbs. The shell needed the `viewMode`, `contextSidebar`, `contextExpanded` and `leading` slots passed to `AppLayout` and `ContentHeader`. Graphene 3.23.1 already has `ContextSidebar` and `ContextToggleButton`.
+
+**Application flows.** `FlowsPage` takes an optional application id and edits `GET` and `PUT .../applications/{id}/flows`, which the Management API already has. The page header has the "Inherit configuration" switch. It sends a `PATCH` with `settings.advanced.flowsInherited`, and the value survives a reload. A service application shows only the token flow, as in AM.
+
+Graphene's `buildHostFlowGroups` keeps only the flows whose group the model lists. A save therefore drops the hidden types. The page adds them back before the `PUT`. No unit test covers this merge yet.
+
+The Graphene branch is pushed as draft PR [#470](https://github.com/gravitee-io/gravitee-ui-graphene/pull/470).
+
+**Findings**
+
+| Finding | Detail | Action |
+|---|---|---|
+| The studio drops flows outside the model's groups | Any host that shows a subset of types loses the rest on save | Graphene: keep them, or document that the host must. Added to the GR-A robustness story |
+| The prototype confirms before it changes inheritance | The spike saves on click | Add the confirm dialog in the port |
+| The application flows save is not tested in the browser | The page loads and the inherit switch saves. A flows save uses the domain code path with the application URL | Test it before the flows epic |
+
 ### Current state and how to resume (2026-09-24, after step 4b)
 
 | Item | State |
