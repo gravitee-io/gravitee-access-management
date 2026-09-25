@@ -297,6 +297,36 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldFindByDomainWithFeatures() {
+        ProtectedResource toSave = generateResource(generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("tool_b"), generateMcpTool("tool_a")));
+        toSave.setDomainId("features-domain-id");
+        repository.create(toSave).blockingGet();
+
+        TestObserver<List<ProtectedResource>> testObserver = repository.findByDomain("features-domain-id").toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() == 1)
+                .assertValue(res -> res.getFirst().getFeatures().stream().map(ProtectedResourceFeature::getKey).toList().equals(List.of("tool_a", "tool_b")))
+                .assertValue(res -> ((McpTool) res.getFirst().getFeatures().getFirst()).getScopes().equals(List.of("abc", "cde")));
+    }
+
+    @Test
+    public void shouldFindAllWithFeatures() {
+        ProtectedResource toSave = generateResource(generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("tool_a")));
+        toSave.setDomainId("features-all-domain-id");
+        ProtectedResource created = repository.create(toSave).blockingGet();
+
+        TestObserver<List<ProtectedResource>> testObserver = repository.findAll().toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.stream()
+                        .filter(resource -> resource.getId().equals(created.getId()))
+                        .anyMatch(resource -> resource.getFeatures().size() == 1 && resource.getFeatures().getFirst().getKey().equals("tool_a")));
+    }
+
+    @Test
     public void testFindByDomainAndId() {
         ClientSecret clientSecret = generateClientSecret();
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
