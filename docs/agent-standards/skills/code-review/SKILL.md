@@ -98,7 +98,7 @@ Return results in this structure:
 **Data & Persistence:**
 - [ ] Repository interfaces extend `CrudRepository<T, String>` (unless established pattern differs)
 - [ ] Repository methods are domain-scoped (avoid wide fetch + in-code filtering)
-- [ ] **If a Repository is changed, check for corresponding implementation in BOTH `mongo/` and `jdbc/` directories**
+- [ ] **If a Repository is changed, check for the corresponding implementation in BOTH the MongoDB and JDBC modules (`gravitee-am-repository-mongodb`/`-jdbc`, `gravitee-am-dataplane-mongodb`/`-jdbc`)**
 - [ ] Both MongoDB and JDBC implementations provided when applicable
 - [ ] Liquibase changesets grouped logically (table + indexes + constraints together)
 - [ ] Mongo indexes follow established initials + sort-order naming convention
@@ -142,7 +142,7 @@ Return results in this structure:
 **Data:**
 - Wide queries + in-code filtering instead of scoped queries
 - Missing Mongo/JDBC parity where required
-- Repository changes without checking both `mongo/` and `jdbc/` directories
+- Repository changes without checking both the MongoDB and JDBC modules
 
 **API:**
 - Missing SDK regeneration after API changes

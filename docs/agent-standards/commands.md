@@ -3,7 +3,7 @@
 This file lists the canonical, **verified** commands for building, testing, linting, and generating artefacts for Gravitee Access Management.
 
 ## Prerequisites
-- Java 17 or higher
+- Java 25 or higher
 - Maven 3.6+
 - Node.js >= 20.11.1
 - Yarn 4.1.1 (packageManager)
@@ -44,13 +44,11 @@ mvn test -pl gravitee-am-service
 mvn test -Dtest="TestClassName"
 ```
 
-### Integration tests
+### Repository tests (Testcontainers)
 ```bash
-# Run integration tests
-mvn verify
-
-# Run integration tests for specific module
-mvn verify -pl gravitee-am-repository
+# The cicd* profiles turn the repository tests on; build the whole project, not one -pl module
+mvn install -pl '!gravitee-am-ui' -Pcicd -DskipTests                  # MongoDB
+mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Ppostgres -DskipTests   # PostgreSQL
 ```
 
 ### Clean
