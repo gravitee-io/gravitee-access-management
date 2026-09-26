@@ -16,6 +16,8 @@
 package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
+import io.gravitee.am.management.handlers.automation.model.DryRunResult;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -29,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.security.Principal;
+import java.util.List;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
@@ -56,6 +59,14 @@ public abstract class AbstractAutomationResource {
 
     protected static String nullToEmpty(String s) {
         return s == null ? "" : s;
+    }
+
+    /**
+     * Report a failed dry-run: the definition is returned as sent, carrying the error that stopped the validation.
+     */
+    protected static <T extends DryRunResult> T withErrors(T definition, Throwable ex) {
+        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
+        return definition;
     }
 
     protected User getAuthenticatedUser() {

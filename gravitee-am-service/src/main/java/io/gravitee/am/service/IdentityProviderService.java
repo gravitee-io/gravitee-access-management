@@ -51,7 +51,17 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system);
 
+    /**
+     * Run every create validation and return the identity provider that would be created, without persisting it.
+     */
+    Single<IdentityProvider> validateCreate(Domain domain, NewIdentityProvider newIdentityProvider, boolean system);
+
     Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader);
+
+    /**
+     * Run every update validation and return the identity provider as it would be updated, without persisting it.
+     */
+    Single<IdentityProvider> validateUpdate(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, boolean isUpgrader);
 
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
 

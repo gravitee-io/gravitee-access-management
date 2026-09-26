@@ -808,6 +808,50 @@ public class CertificateServiceTest {
     }
 
     @Test
+    public void validateCreate_returnsCertificateWithoutPersisting() {
+        var type = "aws-am-certificate";
+        when(certificatePluginService.getSchema(type)).thenReturn(Maybe.just(certificateAwsSchemaDefinition));
+        var newCertificate = new NewCertificate();
+        newCertificate.setName("aws-cert");
+        newCertificate.setType(type);
+        newCertificate.setConfiguration(objectMapper.createObjectNode().put("secretname", "aws-secret-name").toString());
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+
+        TestObserver<Certificate> testObserver = certificateService.validateCreate(DOMAIN, newCertificate, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(certificate -> "aws-cert".equals(certificate.getName())
+                && DOMAIN.getId().equals(certificate.getDomain()));
+        verify(certificateRepository, never()).create(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
+    public void validateUpdate_returnsCertificateWithoutPersisting() {
+        var id = "cert-to-update";
+        var existingCert = new Certificate();
+        existingCert.setId(id);
+        existingCert.setDomain(DOMAIN.getId());
+        existingCert.setType(DEFAULT_CERTIFICATE_PLUGIN);
+        existingCert.setConfiguration("{\"content\":\"test.p12\",\"alias\":\"my-alias\",\"storepass\":\"pass\",\"keypass\":\"pass\"}");
+        existingCert.setMetadata(new HashMap<>());
+        when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN)).thenReturn(Maybe.just(certificateSchemaDefinition));
+        when(certificateRepository.findById(id)).thenReturn(Maybe.just(existingCert));
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
+
+        var updateCert = new UpdateCertificate();
+        updateCert.setName("renamed-cert");
+        updateCert.setConfiguration(existingCert.getConfiguration());
+
+        TestObserver<Certificate> testObserver = certificateService.validateUpdate(DOMAIN, id, updateCert).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(certificate -> "renamed-cert".equals(certificate.getName()));
+        verify(certificateRepository, never()).update(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
     public void shouldNotUpdateCertificateWithDuplicateAlias() {
         var id = "cert-to-update";
         var type = DEFAULT_CERTIFICATE_PLUGIN;

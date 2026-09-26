@@ -30,6 +30,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewReporter;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -39,11 +40,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -105,8 +108,11 @@ public class ReportersResource extends AbstractAutomationResource {
             summary = "Create or update a reporter",
             description = "Idempotent create-or-update. Uses the key field in the body to identify the reporter " +
                     "within the domain. On first apply the reporter is created; subsequent applies update it. The " +
-                    "system flag is immutable; changing it requires deleting and recreating the reporter.")
-    @ApiResponse(responseCode = "200", description = "The created or updated reporter",
+                    "system flag is immutable; changing it requires deleting and recreating the reporter. When " +
+                    "dryRun is true, the endpoint validates the payload without persisting; the returned reporter " +
+                    "carries a dryRunErrors list (empty on success, populated with validation errors otherwise).")
+    @ApiResponse(responseCode = "200", description = "The created or updated reporter. When dryRun is true the " +
+            "reporter includes a dryRunErrors field with any validation errors.",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AutomationReporter.class)))
     @ApiResponse(responseCode = "400", description = "Invalid request: a key conflict, a missing required field " +
@@ -132,12 +138,20 @@ public class ReportersResource extends AbstractAutomationResource {
                                             value = "{\"key\":\"default\",\"system\":true}")
                             }))
             @Valid @NotNull AutomationReporter definition,
+            @Parameter(description = "When true, validates the payload without persisting. The returned reporter includes a dryRunErrors field.")
+            @QueryParam("dryRun") @DefaultValue("false") boolean dryRun,
             @Suspended final AsyncResponse response) {
 
         final var principal = getAuthenticatedUser();
         final AutomationRef domainRef = AutomationRef.parse(domainKey);
         final AutomationRef reporterRef = AutomationRef.parse(definition.getAutomationKey());
         final String key = reporterRef.raw();
+
+        if (dryRun) {
+            dryRunCreateOrUpdate(organizationId, environmentId, domainRef, definition, reporterRef, principal)
+                    .subscribe(response::resume, response::resume);
+            return;
+        }
 
         // An 'id:' body addresses a preexisting reporter directly (update-only)
         if (reporterRef instanceof AutomationRef.IdRef) {
@@ -170,21 +184,13 @@ public class ReportersResource extends AbstractAutomationResource {
 
     private Single<AutomationReporter> updateExisting(Domain domain, Reporter existing,
             AutomationReporter definition, String key, User principal) {
-        // 'system' is an immutable identity attribute; reject a change.
-        if (definition.isSystem() != existing.isSystem()) {
-            return Single.error(new InvalidParameterException(
-                    "The 'system' flag is immutable for an existing reporter '" + key
-                            + "'; delete and recreate it to change it"));
+        Single<AutomationReporter> immutableRejection = rejectIfImmutableFieldChanged(existing, definition, key);
+        if (immutableRejection != null) {
+            return immutableRejection;
         }
         if (existing.isSystem()) {
             // re-PUT is an idempotent no-op
             return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
-        }
-        // 'type' is an immutable identity attribute; reject a change early
-        if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
-            return Single.error(new InvalidParameterException(
-                    "The 'type' is immutable for an existing reporter '" + key
-                            + "'; delete and recreate it to change it"));
         }
         Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
         if (rejection != null) {
@@ -199,17 +205,9 @@ public class ReportersResource extends AbstractAutomationResource {
     private Single<AutomationReporter> createNew(Reference reference, Domain domain, List<Reporter> allExisting,
             AutomationReporter definition, String key, User principal) {
         final String reporterId = AutomationIds.reporterId(domain.getId(), key);
-        Optional<Reporter> occupant = allExisting.stream()
-                .filter(reporter -> reporterId.equals(reporter.getId()))
-                .findFirst();
-        if (occupant.isPresent()) {
-            return Single.error(new InvalidParameterException(
-                    "Reporter key '" + key + "' conflicts with an existing reporter"));
-        }
-        if (definition.isSystem() && allExisting.stream()
-                .anyMatch(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API) && reporter.isSystem())) {
-            return Single.error(new InvalidParameterException(
-                    "The domain already has a system reporter"));
+        Single<AutomationReporter> conflictRejection = rejectIfConflicting(allExisting, reporterId, definition, key);
+        if (conflictRejection != null) {
+            return conflictRejection;
         }
         if (definition.isSystem()) {
             return reporterService.createSystem(reference, reporterId, key, principal)
@@ -224,6 +222,107 @@ public class ReportersResource extends AbstractAutomationResource {
         return reporterPluginService.checkPluginDeployment(definition.getType())
                 .andThen(Single.defer(() -> reporterService.create(reference, newReporter, principal, false)))
                 .map(AutomationReporterMapper::toAutomationReporter);
+    }
+
+    private Single<AutomationReporter> dryRunCreateOrUpdate(String organizationId, String environmentId,
+            AutomationRef domainRef, AutomationReporter definition, AutomationRef reporterRef, User principal) {
+        final String key = reporterRef.raw();
+
+        if (reporterRef instanceof AutomationRef.IdRef) {
+            return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, Acl.UPDATE)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> resolver.resolveReporter(domain, reporterRef)
+                            .flatMap(existing -> dryRunUpdate(domain, existing, definition, key)))
+                    .onErrorReturn(ex -> withErrors(definition, ex));
+        }
+
+        final String domainId = AutomationIds.domainId(environmentId, domainRef);
+        final Reference reference = Reference.domain(domainId);
+        return reporterService.findByReference(reference).toList().flatMap(allExisting -> {
+            Optional<Reporter> match = allExisting.stream()
+                    .filter(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API))
+                    .filter(reporter -> key.equals(reporter.getAutomationKey()))
+                    .findFirst();
+            Acl requiredAcl = match.isPresent() ? Acl.UPDATE : Acl.CREATE;
+            return checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, requiredAcl)
+                    .andThen(resolver.resolveDomain(environmentId, domainRef))
+                    .flatMap(domain -> match.isPresent()
+                            ? dryRunUpdate(domain, match.get(), definition, key)
+                            : dryRunCreate(reference, domain, allExisting, definition, key));
+        })
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    private Single<AutomationReporter> dryRunUpdate(Domain domain, Reporter existing,
+            AutomationReporter definition, String key) {
+        Single<AutomationReporter> immutableRejection = rejectIfImmutableFieldChanged(existing, definition, key);
+        if (immutableRejection != null) {
+            return immutableRejection;
+        }
+        if (existing.isSystem()) {
+            return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
+        }
+        Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        return reporterPluginService.checkPluginDeployment(definition.getType())
+                .andThen(Single.defer(() -> reporterService.validateUpdate(Reference.domain(domain.getId()), existing.getId(),
+                        AutomationReporterMapper.toUpdateReporter(definition), false)))
+                .map(AutomationReporterMapper::toAutomationReporter);
+    }
+
+    private Single<AutomationReporter> dryRunCreate(Reference reference, Domain domain, List<Reporter> allExisting,
+            AutomationReporter definition, String key) {
+        final String reporterId = AutomationIds.reporterId(domain.getId(), key);
+        Single<AutomationReporter> conflictRejection = rejectIfConflicting(allExisting, reporterId, definition, key);
+        if (conflictRejection != null) {
+            return conflictRejection;
+        }
+        if (definition.isSystem()) {
+            // a system reporter is fully defined by the platform; nothing else to validate
+            return Single.just(definition);
+        }
+        Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
+        if (rejection != null) {
+            return rejection;
+        }
+        AutomationNewReporter newReporter = AutomationReporterMapper.toNewReporter(definition);
+        newReporter.setId(reporterId);
+        return reporterPluginService.checkPluginDeployment(definition.getType())
+                .andThen(Single.defer(() -> reporterService.validateCreate(reference, newReporter, false)))
+                .map(AutomationReporterMapper::toAutomationReporter);
+    }
+
+    private static Single<AutomationReporter> rejectIfImmutableFieldChanged(Reporter existing,
+            AutomationReporter definition, String key) {
+        // 'system' is an immutable identity attribute; reject a change.
+        if (definition.isSystem() != existing.isSystem()) {
+            return Single.error(new InvalidParameterException(
+                    "The 'system' flag is immutable for an existing reporter '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        // 'type' is an immutable identity attribute; reject a change early
+        if (!existing.isSystem() && !isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
+            return Single.error(new InvalidParameterException(
+                    "The 'type' is immutable for an existing reporter '" + key
+                            + "'; delete and recreate it to change it"));
+        }
+        return null;
+    }
+
+    private static Single<AutomationReporter> rejectIfConflicting(List<Reporter> allExisting, String reporterId,
+            AutomationReporter definition, String key) {
+        if (allExisting.stream().anyMatch(reporter -> reporterId.equals(reporter.getId()))) {
+            return Single.error(new InvalidParameterException(
+                    "Reporter key '" + key + "' conflicts with an existing reporter"));
+        }
+        if (definition.isSystem() && allExisting.stream()
+                .anyMatch(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API) && reporter.isSystem())) {
+            return Single.error(new InvalidParameterException(
+                    "The domain already has a system reporter"));
+        }
+        return null;
     }
 
     private static Single<AutomationReporter> rejectIfMissingReporterFields(AutomationReporter definition, String key) {

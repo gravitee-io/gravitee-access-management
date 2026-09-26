@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -368,5 +370,126 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), definition("Bad Key!", false));
 
         assertEquals(400, response.getStatus());
+    }
+
+    // --- dry-run tests ---
+
+    @Test
+    void dryRun_create_valid_body_returns_200_without_errors() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        when(reporterService.validateCreate(eq(reference), any(), eq(false)))
+                .thenReturn(Single.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("audit-log", false));
+
+        assertEquals(200, response.getStatus());
+        AutomationReporter body = readEntity(response, AutomationReporter.class);
+        assertEquals("audit-log", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(reporterService, never()).create(any(Reference.class), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_create_invalid_body_returns_200_with_errors() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        when(reporterService.validateCreate(eq(reference), any(), eq(false)))
+                .thenReturn(Single.error(new ReporterConfigurationException("Filename is invalid")));
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("audit-log", false));
+
+        assertEquals(200, response.getStatus());
+        AutomationReporter body = readEntity(response, AutomationReporter.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals(DryRunError.Severity.ERROR, body.getDryRunErrors().get(0).severity());
+        assertEquals("Filename is invalid", body.getDryRunErrors().get(0).message());
+    }
+
+    @Test
+    void dryRun_update_existing_validates_without_persisting() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+        when(reporterService.validateUpdate(eq(reference), eq(reporterId), any(), eq(false)))
+                .thenReturn(Single.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("audit-log", false));
+
+        assertEquals(200, response.getStatus());
+        AutomationReporter body = readEntity(response, AutomationReporter.class);
+        assertEquals("audit-log", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(reporterService, never()).update(any(Reference.class), anyString(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_update_rejects_system_flag_change_as_error() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("audit-log", true));
+
+        assertEquals(200, response.getStatus());
+        assertTrue(readEntity(response, AutomationReporter.class).getDryRunErrors().get(0).message()
+                .contains("The 'system' flag is immutable for an existing reporter 'audit-log'"));
+    }
+
+    @Test
+    void dryRun_create_system_does_not_create_system_reporter() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), systemDefinition("sys-reporter"));
+
+        assertEquals(200, response.getStatus());
+        assertNull(readEntity(response, AutomationReporter.class).getDryRunErrors());
+        verify(reporterService, never()).createSystem(any(Reference.class), anyString(), anyString(), any());
+    }
+
+    @Test
+    void dryRun_key_conflict_returns_200_with_errors() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-log");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, null)));
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("audit-log", false));
+
+        assertEquals(200, response.getStatus());
+        assertTrue(readEntity(response, AutomationReporter.class).getDryRunErrors().get(0).message()
+                .contains("conflicts with an existing reporter"));
+    }
+
+    @Test
+    void dryRun_by_id_validates_existing_without_persisting() {
+        String brownfieldId = "11111111-2222-3333-4444-555555555555";
+        Reporter brownfield = reporter(brownfieldId, null, false, null);
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findById(eq(brownfieldId))).thenReturn(Maybe.just(brownfield));
+        when(reporterService.validateUpdate(eq(reference), eq(brownfieldId), any(), eq(false)))
+                .thenReturn(Single.just(brownfield));
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("id:" + brownfieldId, false));
+
+        assertEquals(200, response.getStatus());
+        assertNull(readEntity(response, AutomationReporter.class).getDryRunErrors());
+        verify(reporterService, never()).update(any(Reference.class), anyString(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_without_permission_reports_error_and_never_validates() {
+        denyPermission();
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+
+        Response response = put(reportersTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("audit-log", false));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(1, readEntity(response, AutomationReporter.class).getDryRunErrors().size());
+        verify(reporterService, never()).validateCreate(any(Reference.class), any(), anyBoolean());
     }
 }

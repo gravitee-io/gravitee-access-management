@@ -760,10 +760,12 @@ paths:
       - Certificates
       - Domains
     put:
-      description: Idempotent create-or-update. Uses the key field in the body to
-        identify the certificate within the domain. Re-applying an unchanged definition
-        is a no-op. The system flag is immutable; changing it requires deleting and
-        recreating the certificate.
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the certificate within the domain. Re-applying an unchanged definition\
+        \ is a no-op. The system flag is immutable; changing it requires deleting\
+        \ and recreating the certificate. When dryRun is true, the endpoint validates\
+        \ the payload without persisting; the returned certificate carries a dryRunErrors\
+        \ list (empty on success, populated with validation errors otherwise)."
       operationId: automationCreateOrUpdateCertificate
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -788,6 +790,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: "When true, validates the payload without persisting. The returned\
+          \ certificate includes a dryRunErrors field."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           application/json:
@@ -834,7 +843,8 @@ paths:
                     system: true
               schema:
                 $ref: "#/components/schemas/AutomationCertificate"
-          description: The created or updated certificate
+          description: The created or updated certificate. When dryRun is true the
+            certificate includes a dryRunErrors field with any validation errors.
         "400":
           content:
             application/json:
@@ -1107,10 +1117,13 @@ paths:
       - Identity Providers
       - Domains
     put:
-      description: Idempotent create-or-update. Uses the key field in the body to
-        identify the identity provider within the domain. On first apply the identity
-        provider is created; subsequent applies update it. The system flag is immutable;
-        changing it requires deleting and recreating the identity provider.
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the identity provider within the domain. On first apply the identity\
+        \ provider is created; subsequent applies update it. The system flag is immutable;\
+        \ changing it requires deleting and recreating the identity provider. When\
+        \ dryRun is true, the endpoint validates the payload without persisting; the\
+        \ returned identity provider carries a dryRunErrors list (empty on success,\
+        \ populated with validation errors otherwise)."
       operationId: automationCreateOrUpdateIdentityProvider
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -1135,6 +1148,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: "When true, validates the payload without persisting. The returned\
+          \ identity provider includes a dryRunErrors field."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           application/json:
@@ -1201,7 +1221,9 @@ paths:
                     system: true
               schema:
                 $ref: "#/components/schemas/AutomationIdentityProvider"
-          description: The created or updated identity provider
+          description: The created or updated identity provider. When dryRun is true
+            the identity provider includes a dryRunErrors field with any validation
+            errors.
         "400":
           content:
             application/json:
@@ -1475,10 +1497,13 @@ paths:
       - Reporters
       - Domains
     put:
-      description: Idempotent create-or-update. Uses the key field in the body to
-        identify the reporter within the domain. On first apply the reporter is created;
-        subsequent applies update it. The system flag is immutable; changing it requires
-        deleting and recreating the reporter.
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the reporter within the domain. On first apply the reporter is\
+        \ created; subsequent applies update it. The system flag is immutable; changing\
+        \ it requires deleting and recreating the reporter. When dryRun is true, the\
+        \ endpoint validates the payload without persisting; the returned reporter\
+        \ carries a dryRunErrors list (empty on success, populated with validation\
+        \ errors otherwise)."
       operationId: automationCreateOrUpdateReporter
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -1503,6 +1528,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: "When true, validates the payload without persisting. The returned\
+          \ reporter includes a dryRunErrors field."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           application/json:
@@ -1549,7 +1581,8 @@ paths:
                     system: true
               schema:
                 $ref: "#/components/schemas/AutomationReporter"
-          description: The created or updated reporter
+          description: The created or updated reporter. When dryRun is true the reporter
+            includes a dryRunErrors field with any validation errors.
         "400":
           content:
             application/json:
@@ -1918,6 +1951,13 @@ components:
           format: date-time
           description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
           readOnly: true
+        dryRunErrors:
+          type: array
+          description: Validation errors returned when dryRun is true. Absent when
+            validation succeeds.
+          items:
+            $ref: "#/components/schemas/DryRunError"
+          readOnly: true
         expiresAt:
           type: string
           format: date-time
@@ -2266,6 +2306,13 @@ components:
             description: "Email domains allowed to authenticate through this identity\
               \ provider. When set, users whose email domain is not listed are rejected."
             example: "[\"example.com\"]"
+        dryRunErrors:
+          type: array
+          description: Validation errors returned when dryRun is true. Absent when
+            validation succeeds.
+          items:
+            $ref: "#/components/schemas/DryRunError"
+          readOnly: true
         groupMapper:
           type: object
           additionalProperties:
@@ -2414,6 +2461,13 @@ components:
           type: string
           description: "Category of data the reporter handles, derived from its type.\
             \ Read-only."
+          readOnly: true
+        dryRunErrors:
+          type: array
+          description: Validation errors returned when dryRun is true. Absent when
+            validation succeeds.
+          items:
+            $ref: "#/components/schemas/DryRunError"
           readOnly: true
         enabled:
           type: boolean

@@ -28,7 +28,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.TrustedIssuer;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewDomain;
@@ -241,11 +240,6 @@ public class DomainsResource extends AbstractAutomationResource {
                 })
                 .map(AutomationDomainMapper::toAutomationDomain)
                 .onErrorReturn(ex -> withErrors(definition, ex));
-    }
-
-    private static AutomationDomain withErrors(AutomationDomain definition, Throwable ex) {
-        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
-        return definition;
     }
 
     @Path("/{domainKey}")

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.automation.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -37,7 +38,7 @@ import java.util.Map;
 @Schema(name = "AutomationIdentityProvider", title = "Identity provider",
         description = "An identity provider managed under a domain by the Automation API. The key field is " +
                 "the stable, immutable identity used for idempotent create-or-update.")
-public class AutomationIdentityProvider {
+public class AutomationIdentityProvider implements DryRunResult {
 
     @NotNull
     @Size(min = 1, max = 255)
@@ -102,4 +103,14 @@ public class AutomationIdentityProvider {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
     @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only.")
     private Date updatedAt;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY,
+            description = "Validation errors returned when dryRun is true. Absent when validation succeeds.")
+    @Setter(lombok.AccessLevel.NONE)
+    private List<DryRunError> dryRunErrors;
+
+    public void setDryRunErrors(List<DryRunError> dryRunErrors) {
+        this.dryRunErrors = dryRunErrors != null && !dryRunErrors.isEmpty() ? dryRunErrors : null;
+    }
 }
