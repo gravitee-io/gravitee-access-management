@@ -136,6 +136,39 @@ class ReporterServiceImplTest {
         verify(reporterRepository).update(any());
     }
 
+    @Test
+    void validateCreate_returns_the_reporter_without_persisting() {
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+        NewReporter newReporter = new NewReporter();
+        newReporter.setName("name");
+        newReporter.setType("reporter-am-kafka");
+        newReporter.setConfiguration("{}");
+
+        TestObserver<Reporter> observer = service.validateCreate(reference, newReporter, false).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertValue(reporter -> "name".equals(reporter.getName()) && reference.equals(reporter.getReference()));
+        verify(reporterRepository, never()).create(any());
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    void validateUpdate_returns_the_reporter_without_persisting() {
+        when(reporterRepository.findById(REPORTER_ID)).thenReturn(Maybe.just(existing("reporter-am-kafka")));
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+        UpdateReporter update = new UpdateReporter();
+        update.setName("renamed");
+        update.setType("reporter-am-kafka");
+        update.setConfiguration("{}");
+
+        TestObserver<Reporter> observer = service.validateUpdate(reference, REPORTER_ID, update, false).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+
+        observer.assertValue(reporter -> "renamed".equals(reporter.getName()));
+        verify(reporterRepository, never()).update(any());
+        verify(eventService, never()).create(any());
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Attribute mappings
     // ---------------------------------------------------------------------------------------------
