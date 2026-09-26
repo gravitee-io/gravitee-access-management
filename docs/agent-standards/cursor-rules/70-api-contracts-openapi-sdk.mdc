@@ -5,8 +5,6 @@ globs: "docs/mapi/openapi.yaml,**/*Dto*.java,**/*DTO*.java,**/*Resource*.java,**
 ---
 # API Contracts, OpenAPI, SDK Regeneration
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## When API Changes
 
 If API behaviour, endpoints, DTOs, or annotations change:

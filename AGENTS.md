@@ -8,8 +8,7 @@ Consumed by: OpenAI Codex, GitHub Copilot, Cursor, Gemini/Jules, Windsurf, Zed, 
 # Agent Guide
 
 If you are an AI agent operating in this repository:
-- You MUST read this file fully before making changes.
-- You MUST follow the rules defined here.
+- Follow the rules defined here.
 - If any instruction conflicts with other files, this file takes precedence.
 
 ## 1. Quick Reference Commands
@@ -171,7 +170,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 - Produce a short plan (goal, steps, files, tests, validation criteria) before implementing.
 - **Stop after the plan** unless the user explicitly says "continue".
-- For non-trivial tasks (behaviour/API/data changes, unclear requirements, or 3+ files), use structured plan headings.
+- For non-trivial tasks (behavior/API/data changes, unclear requirements, or 3+ files), use structured plan headings.
 
 ### Ambiguity Handling
 
@@ -200,7 +199,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 ### Must Not
 
-- Invent endpoints, config keys, behaviours, or workflows not present in the codebase.
+- Invent endpoints, config keys, behaviors, or workflows not present in the codebase.
 - Log secrets, tokens, PII, or full request/response bodies; prefer structured logs (`key=value`).
 - Run destructive commands (`docker system prune -a`, `git reset --hard`) unless explicitly requested and confirmed.
 
@@ -223,14 +222,14 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 - Respect layer order: **Repository → Service → Resource**.
 - **Resources** handle HTTP + permissions; **Services** handle business logic.
-- NEVER use blocking operations on request paths; **do not use `blockingGet()`** on reactive chains.
+- Do not block on request paths: no `blockingGet()` on reactive chains. A blocked Vert.x event-loop thread stalls every request it serves.
 
 ### RxJava Usage
 
 - Use `Single`/`Maybe` for I/O operations and `Completable` for side-effect operations.
 - Preserve error intent: expected 4xx must not become generic 5xx.
 
-### Audit Logging (Mandatory for C/U/D)
+### Audit Logging (Create/Update/Delete)
 
 - Implement in core services/service proxies, **not** in Resources.
 - Resources must **pass the authenticated User principal** into service methods that require audit logging.
@@ -248,18 +247,18 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 - Do not fetch wide data and filter in memory when a scoped query is appropriate.
 - Follow existing repository patterns and naming conventions.
 
-### Repository Implementation Naming (Mandatory)
+### Repository Implementation Naming
 
 - **MongoDB:** `Mongo{RepositoryName}Repository`
 - **JDBC:** `Jdbc{RepositoryName}Repository`
-- Verify naming matches existing repos before finalising.
+- Verify naming matches existing repos before finalizing.
 
 ### DB Migrations (Liquibase)
 
 - Related schema changes **must be grouped** into a single changeset (e.g., table + indexes + constraints).
 - Check existing migrations for patterns before creating new ones.
 
-### MongoDB Index Naming (Mandatory)
+### MongoDB Index Naming
 
 - Index names **must follow** the established initials+sort-order convention for fields.
 
@@ -290,7 +289,7 @@ Gravitee Access Management is an identity and access management (IAM) platform s
 
 - For backend changes, **prefer TDD**: write tests first, then implement.
 - Implement bottom-up by dependency: **Repository → Service → Resource**.
-- Cover success **and error paths** when behaviour changes.
+- Cover success **and error paths** when behavior changes.
 - CREATE/UPDATE/DELETE tests **must verify audit logging**.
 
 ### Test Types Overview
@@ -417,7 +416,7 @@ The PR workflow (`pull_requests`) runs the following test jobs:
 
 **Repository testcontainer tests** run in a separate `testcontainer_tests` workflow, triggered when files under `gravitee-am-repository/`, `gravitee-am-reporter/`, `gravitee-am-dataplane/`, or `pom.xml` are modified. This tests against a matrix of MongoDB, Redis, PostgreSQL, MySQL, MariaDB, and MSSQL (current + minimum supported versions).
 
-### Step-by-Step Validation (Mandatory)
+### Step-by-Step Validation
 
 After each logical step:
 
@@ -446,7 +445,7 @@ Before marking work complete:
 
 ## 9. API Contracts and OpenAPI
 
-When API behaviour, endpoints, DTOs, or annotations change:
+When API behavior, endpoints, DTOs, or annotations change:
 
 1. Update the OpenAPI spec (`docs/mapi/openapi.yaml`).
 2. Regenerate the SDK/clients as required.

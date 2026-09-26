@@ -38,7 +38,6 @@ Return results in this structure:
    - [ ] Task 2: (e.g., Run `mvn openapi-generator:generate`)
    - [ ] Task 3: (e.g., Add audit log to `deleteUser`)
    
-   *Note: I can execute these tasks for you one by one if you say 'Proceed with Step X'.*
 
 ## Review checklist
 
@@ -57,7 +56,7 @@ Return results in this structure:
 - [ ] No commented-out code or debug statements
 
 **Code Quality:**
-- [ ] UK English for comments, logs, user-facing text
+- [ ] US English for comments, logs, user-facing text
 - [ ] Method/class visibility not widened without justification
 - [ ] Error handling preserves business intent (expected 4xx not wrapped into 5xx)
 - [ ] No redundant null checks (prefer `Optional` or `@NotNull`)
@@ -70,8 +69,8 @@ Return results in this structure:
 - [ ] Resources handle HTTP + permissions; Services handle business logic
 - [ ] No business logic leaking into Resource layer
 
-**Reactive Integrity (CRITICAL):**
-- [ ] **Strictly NO `blockingGet()`** or blocking calls in reactive paths
+**Reactive Integrity:**
+- [ ] No `blockingGet()` or other blocking calls in reactive paths
 - [ ] RxJava used correctly: `Single`/`Maybe` for I/O, `Completable` for side-effects
 - [ ] Reactive chains properly composed
 

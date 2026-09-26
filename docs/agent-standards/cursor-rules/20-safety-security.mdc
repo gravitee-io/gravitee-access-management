@@ -4,8 +4,6 @@ alwaysApply: true
 ---
 # Safety & Security
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Must Not
 
 - Invent endpoints, config keys, behaviours, or workflows not present in the codebase.

@@ -4,8 +4,6 @@ alwaysApply: true
 ---
 # Project Context: Gravitee Access Management (AM)
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Workspace Structure
 
 This workspace contains:
@@ -15,7 +13,7 @@ This workspace contains:
 
 ## Conventions
 
-- Use **UK English** for comments, logs, and user-facing text.
+- Use **US English** for comments, logs, and user-facing text.
 - Prefer existing patterns over inventing new ones; **search for similar implementations first**.
 - Keep changes small and reviewable; avoid unrelated refactors/reformatting.
 - Treat `@docs/agent-standards/commands.md` as the **canonical reference** for build/test/validation commands.
