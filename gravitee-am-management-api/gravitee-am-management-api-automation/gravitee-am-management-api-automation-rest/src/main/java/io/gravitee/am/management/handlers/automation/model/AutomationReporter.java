@@ -42,7 +42,7 @@ import java.util.Set;
         description = "A reporter managed under a domain by the Automation API. Reporters persist audit " +
                 "events to a backend. The key field is the stable, immutable identity used for idempotent " +
                 "create-or-update.")
-public class AutomationReporter {
+public class AutomationReporter implements DryRunResult {
 
     @NotNull
     @Size(min = 1, max = 255)

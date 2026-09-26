@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationIdentityProviderMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationIdentityProvider;
-import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
@@ -333,11 +332,6 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                 }))
                 .andThen(Single.defer(() -> identityProviderService.validateCreate(domain, newIdp, false)))
                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
-    }
-
-    private static AutomationIdentityProvider withErrors(AutomationIdentityProvider definition, Throwable ex) {
-        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
-        return definition;
     }
 
     private static String identityProviderId(Domain domain, AutomationIdentityProvider definition, String key) {

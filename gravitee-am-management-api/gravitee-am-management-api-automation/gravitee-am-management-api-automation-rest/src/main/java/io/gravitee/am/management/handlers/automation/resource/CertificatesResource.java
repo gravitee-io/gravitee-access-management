@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationCertificateMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
-import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
@@ -281,11 +280,6 @@ public class CertificatesResource extends AbstractAutomationResource {
         newCertificate.setId(certId);
         return certificateService.validateCreate(domain, newCertificate, false)
                 .map(AutomationCertificateMapper::toAutomationCertificate);
-    }
-
-    private static AutomationCertificate withErrors(AutomationCertificate definition, Throwable ex) {
-        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
-        return definition;
     }
 
     private static Single<AutomationCertificate> rejectIfImmutableFieldChanged(Certificate existing,

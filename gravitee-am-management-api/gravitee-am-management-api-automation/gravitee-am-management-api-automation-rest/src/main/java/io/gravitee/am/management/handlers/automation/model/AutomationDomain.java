@@ -66,7 +66,7 @@ import java.util.Set;
                 "immutable identity used for idempotent create-or-update. Certificates, identity providers, " +
                 "and reporters are not embedded; they are managed via the domain's sub-resource endpoints and " +
                 "referenced here by key.")
-public class AutomationDomain {
+public class AutomationDomain implements DryRunResult {
 
     @NotNull
     @Size(min = 1, max = 255)

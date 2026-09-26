@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationReporterMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
-import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -293,11 +292,6 @@ public class ReportersResource extends AbstractAutomationResource {
         return reporterPluginService.checkPluginDeployment(definition.getType())
                 .andThen(Single.defer(() -> reporterService.validateCreate(reference, newReporter, false)))
                 .map(AutomationReporterMapper::toAutomationReporter);
-    }
-
-    private static AutomationReporter withErrors(AutomationReporter definition, Throwable ex) {
-        definition.setDryRunErrors(List.of(DryRunError.error(ex.getMessage())));
-        return definition;
     }
 
     private static Single<AutomationReporter> rejectIfImmutableFieldChanged(Reporter existing,
