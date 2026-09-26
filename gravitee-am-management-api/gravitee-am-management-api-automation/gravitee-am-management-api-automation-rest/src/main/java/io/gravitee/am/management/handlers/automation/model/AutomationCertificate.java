@@ -37,7 +37,7 @@ import java.util.List;
 @Schema(name = "AutomationCertificate", title = "Certificate",
         description = "A certificate managed under a domain by the Automation API. The key field is the " +
                 "stable, immutable identity used for idempotent create-or-update.")
-public class AutomationCertificate {
+public class AutomationCertificate implements DryRunResult {
 
     @NotNull
     @Size(min = 1, max = 255)
