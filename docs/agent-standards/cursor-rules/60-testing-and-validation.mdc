@@ -4,8 +4,6 @@ alwaysApply: true
 ---
 # Testing & Validation
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Testing Approach
 
 - For backend changes, **prefer TDD**: tests first, then implementation.
