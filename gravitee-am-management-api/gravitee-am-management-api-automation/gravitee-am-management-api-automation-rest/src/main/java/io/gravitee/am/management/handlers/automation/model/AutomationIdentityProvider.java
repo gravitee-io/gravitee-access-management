@@ -38,7 +38,7 @@ import java.util.Map;
 @Schema(name = "AutomationIdentityProvider", title = "Identity provider",
         description = "An identity provider managed under a domain by the Automation API. The key field is " +
                 "the stable, immutable identity used for idempotent create-or-update.")
-public class AutomationIdentityProvider {
+public class AutomationIdentityProvider implements DryRunResult {
 
     @NotNull
     @Size(min = 1, max = 255)
