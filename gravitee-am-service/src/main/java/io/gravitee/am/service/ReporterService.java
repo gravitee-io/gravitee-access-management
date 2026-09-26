@@ -54,7 +54,17 @@ public interface ReporterService {
 
     Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system);
 
+    /**
+     * Run every create validation and return the reporter that would be created, without persisting it.
+     */
+    Single<Reporter> validateCreate(Reference reference, NewReporter newReporter, boolean system);
+
     Single<Reporter> update(Reference reference, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader);
+
+    /**
+     * Run every update validation and return the reporter as it would be updated, without persisting it.
+     */
+    Single<Reporter> validateUpdate(Reference reference, String id, UpdateReporter updateReporter, boolean isUpgrader);
 
     /**
      * Deletes the reporter specified by {@code reporterId}.
