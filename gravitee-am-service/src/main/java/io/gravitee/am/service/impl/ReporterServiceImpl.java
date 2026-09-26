@@ -175,7 +175,18 @@ public class ReporterServiceImpl implements ReporterService {
     @Override
     public Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system) {
         log.debug("Create a new reporter {} for {}", newReporter, reference);
+        return validateCreate(reference, newReporter, system)
+                .flatMap(reporter -> reporterRepository.create(reporter)
+                        .flatMap(createdReporter -> {
+                            // create event for sync process
+                            Event event = new Event(Type.REPORTER, new Payload(createdReporter.getId(), createdReporter.getReference(), Action.CREATE));
+                            return eventService.create(event).flatMap(e -> Single.just(createdReporter));
+                        })
+                        .onErrorResumeNext(this::toCreateError));
+    }
 
+    @Override
+    public Single<Reporter> validateCreate(Reference reference, NewReporter newReporter, boolean system) {
         var now = new Date();
         if (reference.type() != ReferenceType.ORGANIZATION && newReporter.isInherited()) {
             return Single.error(new ReporterConfigurationException("Only organization reporters can be inherited"));
@@ -214,20 +225,16 @@ public class ReporterServiceImpl implements ReporterService {
                 .andThen(validateConfiguration(newReporter, system))
                 .andThen(validateAttributeMappings(newReporter.getAttributeMappings(), newReporter.getAttributeMappingEventTypes()))
                 .andThen(Single.defer(() -> checkReporterConfiguration(reporter)
-                        .flatMap(ignore -> reporterRepository.create(reporter))
-                        .flatMap(createdReporter -> {
-                            // create event for sync process
-                            Event event = new Event(Type.REPORTER, new Payload(createdReporter.getId(), createdReporter.getReference(), Action.CREATE));
-                            return eventService.create(event).flatMap(e -> Single.just(createdReporter));
-                        })
-                        .onErrorResumeNext(ex -> {
-                            log.error("An error occurs while trying to create a reporter", ex);
-                            String message = "An error occurs while trying to create a reporter. ";
-                            if (ex instanceof ReporterConfigurationException) {
-                                message += ex.getMessage();
-                            }
-                            return Single.error(new TechnicalManagementException(message, ex));
-                        })));
+                        .onErrorResumeNext(this::toCreateError)));
+    }
+
+    private Single<Reporter> toCreateError(Throwable ex) {
+        log.error("An error occurs while trying to create a reporter", ex);
+        String message = "An error occurs while trying to create a reporter. ";
+        if (ex instanceof ReporterConfigurationException) {
+            message += ex.getMessage();
+        }
+        return Single.error(new TechnicalManagementException(message, ex));
     }
 
     private Completable validateAttributeMappings(List<ReporterAttributeMapping> attributeMappings, Set<String> eventTypes) {
@@ -251,18 +258,11 @@ public class ReporterServiceImpl implements ReporterService {
     public Single<Reporter> update(Reference reference, String reporterId, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
         log.debug("Update a reporter {} for {}", reporterId, reference);
 
-        return reporterRepository.findById(reporterId)
-                .switchIfEmpty(Single.error(new ReporterNotFoundException(reporterId)))
-                .flatMap(oldReporter -> {
-                    // 'type' is immutable for an existing reporter
-                    if (updateReporter.getType() != null && !updateReporter.getType().isBlank()
-                            && !updateReporter.getType().equals(oldReporter.getType())) {
-                        return Single.error(new InvalidParameterException("Reporter type cannot be changed"));
-                    }
-                    final Completable licenseCheck = oldReporter.isSystem() || isUpgrader
-                            ? Completable.complete()
-                            : pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_REPORTER, oldReporter.getType());
-                    return licenseCheck.andThen(Single.defer(() -> doUpdate(updateReporter, oldReporter, isUpgrader)));
+        return validateUpdate(reference, reporterId, updateReporter, isUpgrader)
+                .flatMap(reporterToUpdate -> reporterRepository.update(reporterToUpdate))
+                .flatMap(reporter -> {
+                    Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
+                    return eventService.create(event).flatMap(e -> Single.just(reporter));
                 })
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to update a reporter", ex);
@@ -277,7 +277,24 @@ public class ReporterServiceImpl implements ReporterService {
                 });
     }
 
-    private Single<Reporter> doUpdate(UpdateReporter updateReporter, Reporter oldReporter, boolean isUpgrader) {
+    @Override
+    public Single<Reporter> validateUpdate(Reference reference, String reporterId, UpdateReporter updateReporter, boolean isUpgrader) {
+        return reporterRepository.findById(reporterId)
+                .switchIfEmpty(Single.error(new ReporterNotFoundException(reporterId)))
+                .flatMap(oldReporter -> {
+                    // 'type' is immutable for an existing reporter
+                    if (updateReporter.getType() != null && !updateReporter.getType().isBlank()
+                            && !updateReporter.getType().equals(oldReporter.getType())) {
+                        return Single.error(new InvalidParameterException("Reporter type cannot be changed"));
+                    }
+                    final Completable licenseCheck = oldReporter.isSystem() || isUpgrader
+                            ? Completable.complete()
+                            : pluginLicenseGate.check(reference, PluginLicenseGate.TYPE_REPORTER, oldReporter.getType());
+                    return licenseCheck.andThen(Single.defer(() -> prepareUpdate(updateReporter, oldReporter, isUpgrader)));
+                });
+    }
+
+    private Single<Reporter> prepareUpdate(UpdateReporter updateReporter, Reporter oldReporter, boolean isUpgrader) {
         Reporter reporterToUpdate = new Reporter(oldReporter);
         reporterToUpdate.setEnabled(updateReporter.isEnabled());
 
@@ -313,13 +330,7 @@ public class ReporterServiceImpl implements ReporterService {
         // as reporter may be system reporter so on the UI config is empty.
         validationService.validate(reporterToUpdate.getType(), reporterToUpdate.getConfiguration());
 
-        return checkReporterConfiguration(reporterToUpdate)
-                .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
-                        .flatMap(reporter -> {
-                            Event event = new Event(Type.REPORTER, new Payload(reporter.getId(), reporter.getReference(), Action.UPDATE));
-                            return eventService.create(event).flatMap(e -> Single.just(reporter));
-
-                        }));
+        return checkReporterConfiguration(reporterToUpdate);
     }
 
     @Override

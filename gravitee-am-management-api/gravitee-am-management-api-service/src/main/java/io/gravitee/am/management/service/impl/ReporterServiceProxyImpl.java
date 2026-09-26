@@ -128,6 +128,21 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
+    public Single<Reporter> validateCreate(Reference reference, NewReporter newReporter, boolean system) {
+        return reporterService.validateCreate(reference, newReporter, system)
+                .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
+    public Single<Reporter> validateUpdate(Reference reference, String id, UpdateReporter updateReporter, boolean isUpgrader) {
+        return reporterService.findById(id)
+                .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
+                .flatMap(oldReporter -> updateSensitiveData(updateReporter, oldReporter))
+                .flatMap(reporterToUpdate -> reporterService.validateUpdate(reference, id, reporterToUpdate, isUpgrader))
+                .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
     public Completable delete(String reporterId, User principal, boolean removeSystemReporter) {
         return reporterService.delete(reporterId, principal, removeSystemReporter);
     }
