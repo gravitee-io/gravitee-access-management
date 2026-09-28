@@ -22,11 +22,13 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
+import io.gravitee.am.service.model.UpdateCertificate;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -37,6 +39,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,7 +51,22 @@ import static org.mockito.Mockito.when;
 class CertificatesResourceTest extends AutomationJerseySpringTest {
 
     private static final String DOMAIN_KEY = "customer-auth";
+    private static final String KEYSTORE_CONFIG = "{\"content\":\"keystore.p12\",\"storepass\":\"store-secret\",\"keypass\":\"key-secret\",\"alias\":\"am\"}";
+    private static final String MASKED_KEYSTORE_CONFIG = "{\"content\":\"********\",\"storepass\":\"********\",\"keypass\":\"********\",\"alias\":\"am\"}";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
+
+    private void maskSensitiveData() {
+        doAnswer(invocation -> {
+            Certificate masked = new Certificate(invocation.getArgument(0));
+            masked.setConfiguration(MASKED_KEYSTORE_CONFIG);
+            return Single.just(masked);
+        }).when(certificateServiceProxy).filterSensitiveData(any());
+    }
+
+    private static Certificate withConfiguration(Certificate certificate, String configuration) {
+        certificate.setConfiguration(configuration);
+        return certificate;
+    }
 
     private Domain domain() {
         Domain domain = new Domain();
@@ -116,7 +135,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         String certId = AutomationIds.certificateId(domainId, "my-cert");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
-        when(certificateService.create(any(Domain.class), any(), any(), eq(false)))
+        when(certificateServiceProxy.create(any(Domain.class), any(), any()))
                 .thenReturn(Single.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(certificatesTarget(DOMAIN_KEY), definition("my-cert", false));
@@ -138,7 +157,102 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         assertEquals(200, response.getStatus());
         assertTrue(readEntity(response, AutomationCertificate.class).isSystem());
         // The payload path must never run for a system create.
-        verify(certificateService, never()).create(any(Domain.class), any(), any(), eq(true));
+        verify(certificateServiceProxy, never()).create(any(Domain.class), any(), any());
+    }
+
+    @Test
+    void list_masks_sensitive_configuration() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(withConfiguration(cert("id-a", "alpha", false, ManagedBy.AUTOMATION_API), KEYSTORE_CONFIG)));
+        maskSensitiveData();
+
+        Response response = certificatesTarget(DOMAIN_KEY).request().get();
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_KEYSTORE_CONFIG,
+                readListEntity(response, AutomationCertificate.class).get(0).getConfiguration());
+    }
+
+    @Test
+    void put_creates_system_and_masks_its_configuration() {
+        String certId = AutomationIds.certificateId(domainId, "sys-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        when(certificateService.createSystem(any(Domain.class), eq(certId), eq("sys-cert"), any()))
+                .thenReturn(Single.just(withConfiguration(cert(certId, "sys-cert", true, ManagedBy.AUTOMATION_API), KEYSTORE_CONFIG)));
+        maskSensitiveData();
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), systemDefinition("sys-cert"));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_KEYSTORE_CONFIG, readEntity(response, AutomationCertificate.class).getConfiguration());
+    }
+
+    @Test
+    void put_system_no_op_masks_its_configuration() {
+        String certId = AutomationIds.certificateId(domainId, "sys-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(withConfiguration(cert(certId, "sys-cert", true, ManagedBy.AUTOMATION_API), KEYSTORE_CONFIG)));
+        maskSensitiveData();
+
+        Response response = put(certificatesTarget(DOMAIN_KEY), systemDefinition("sys-cert"));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_KEYSTORE_CONFIG, readEntity(response, AutomationCertificate.class).getConfiguration());
+    }
+
+    @Test
+    void put_create_rejects_a_masked_sensitive_value() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        maskSensitiveData();
+
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration(MASKED_KEYSTORE_CONFIG);
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("configuration/content"));
+        verify(certificateServiceProxy, never()).create(any(Domain.class), any(), any());
+    }
+
+    @Test
+    void put_create_validates_the_configuration_before_checking_for_masked_values() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(eq("javakeystore-am-certificate"), anyString());
+
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration("{not json");
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("not valid"));
+        verify(certificateServiceProxy, never()).filterSensitiveData(any());
+        verify(certificateServiceProxy, never()).create(any(Domain.class), any(), any());
+    }
+
+    @Test
+    void put_update_passes_masked_values_to_the_service_unchanged() {
+        String certId = AutomationIds.certificateId(domainId, "my-cert");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId)))
+                .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
+        when(certificateServiceProxy.update(any(Domain.class), eq(certId), any(), any()))
+                .thenReturn(Single.just(withConfiguration(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API), MASKED_KEYSTORE_CONFIG)));
+
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration(MASKED_KEYSTORE_CONFIG);
+        Response response = put(certificatesTarget(DOMAIN_KEY), def);
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<UpdateCertificate> captor = ArgumentCaptor.forClass(UpdateCertificate.class);
+        verify(certificateServiceProxy).update(any(Domain.class), eq(certId), captor.capture(), any());
+        assertEquals(MASKED_KEYSTORE_CONFIG, captor.getValue().getConfiguration());
+        assertEquals(MASKED_KEYSTORE_CONFIG, readEntity(response, AutomationCertificate.class).getConfiguration());
     }
 
     @Test
@@ -152,8 +266,8 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Response response = put(certificatesTarget(DOMAIN_KEY), systemDefinition("sys-cert"));
 
         assertEquals(200, response.getStatus());
-        verify(certificateService, never()).update(any(Domain.class), anyString(), any(), any());
-        verify(certificateService, never()).create(any(Domain.class), any(), any(), eq(true));
+        verify(certificateServiceProxy, never()).update(any(Domain.class), anyString(), any(), any());
+        verify(certificateServiceProxy, never()).create(any(Domain.class), any(), any());
         verify(certificateService, never()).createSystem(any(Domain.class), anyString(), anyString(), any());
     }
 
@@ -171,7 +285,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Response response = put(certificatesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(certificateService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(certificateServiceProxy, never()).create(any(Domain.class), any(), any());
     }
 
     @Test
@@ -180,7 +294,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId)))
                 .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
-        when(certificateService.update(any(Domain.class), eq(certId), any(), any()))
+        when(certificateServiceProxy.update(any(Domain.class), eq(certId), any(), any()))
                 .thenReturn(Single.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(certificatesTarget(DOMAIN_KEY), definition("my-cert", false));
@@ -192,7 +306,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
     void put_create_propagates_invalid_configuration_as_400() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
-        when(certificateService.create(any(Domain.class), any(), any(), eq(false)))
+        when(certificateServiceProxy.create(any(Domain.class), any(), any()))
                 .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         AutomationCertificate def = definition("my-cert", false);
@@ -201,7 +315,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Response response = put(certificatesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(certificateService).create(any(Domain.class), any(), any(), eq(false));
+        verify(certificateServiceProxy).create(any(Domain.class), any(), any());
     }
 
     @Test
@@ -218,7 +332,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Response response = put(certificatesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(certificateService, never()).update(any(Domain.class), eq(certId), any(), any());
+        verify(certificateServiceProxy, never()).update(any(Domain.class), eq(certId), any(), any());
     }
 
     @Test
@@ -227,13 +341,13 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId)))
                 .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
-        when(certificateService.update(any(Domain.class), eq(certId), any(), any()))
+        when(certificateServiceProxy.update(any(Domain.class), eq(certId), any(), any()))
                 .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         Response response = put(certificatesTarget(DOMAIN_KEY), definition("my-cert", false));
 
         assertEquals(400, response.getStatus());
-        verify(certificateService).update(any(Domain.class), eq(certId), any(), any());
+        verify(certificateServiceProxy).update(any(Domain.class), eq(certId), any(), any());
     }
 
     @Test
@@ -251,7 +365,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class)
                 .contains("Field 'configuration' is required for a non-system certificate"));
-        verify(certificateService, never()).update(any(Domain.class), eq(certId), any(), any());
+        verify(certificateServiceProxy, never()).update(any(Domain.class), eq(certId), any(), any());
     }
 
     @Test
@@ -269,7 +383,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class)
                 .contains("The 'type' is immutable for an existing certificate"));
-        verify(certificateService, never()).update(any(Domain.class), eq(certId), any(), any());
+        verify(certificateServiceProxy, never()).update(any(Domain.class), eq(certId), any(), any());
     }
 
     @Test
@@ -334,7 +448,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         String certId = AutomationIds.certificateId(domainId, "my-cert");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
-        when(certificateService.validateCreate(any(Domain.class), any(), eq(false)))
+        when(certificateServiceProxy.validateCreate(any(Domain.class), any()))
                 .thenReturn(Single.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
@@ -350,7 +464,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
     void dryRun_create_invalid_body_returns_200_with_errors() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
-        when(certificateService.validateCreate(any(Domain.class), any(), eq(false)))
+        when(certificateServiceProxy.validateCreate(any(Domain.class), any()))
                 .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
@@ -363,12 +477,67 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void dryRun_create_reports_a_masked_sensitive_value_as_an_error() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        maskSensitiveData();
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration(MASKED_KEYSTORE_CONFIG);
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), def);
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertTrue(body.getDryRunErrors().get(0).message().contains("configuration/content"));
+        verify(certificateServiceProxy, never()).validateCreate(any(Domain.class), any());
+    }
+
+    @Test
+    void dryRun_create_validates_the_configuration_before_checking_for_masked_values() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(eq("javakeystore-am-certificate"), anyString());
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration("{not json");
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), def);
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertTrue(body.getDryRunErrors().get(0).message().contains("not valid"));
+        verify(certificateServiceProxy, never()).validateCreate(any(Domain.class), any());
+    }
+
+    @Test
+    void dryRun_error_response_masks_the_submitted_secret() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
+        when(certificateServiceProxy.validateCreate(any(Domain.class), any()))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
+        doAnswer(invocation -> {
+            Certificate masked = new Certificate(invocation.getArgument(0));
+            masked.setConfiguration(masked.getConfiguration().replace("store-secret", "********"));
+            return Single.just(masked);
+        }).when(certificateServiceProxy).filterSensitiveData(any());
+        AutomationCertificate def = definition("my-cert", false);
+        def.setConfiguration("{\"storepass\":\"store-secret\"}");
+
+        Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), def);
+
+        assertEquals(200, response.getStatus());
+        AutomationCertificate body = readEntity(response, AutomationCertificate.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals("{\"storepass\":\"********\"}", body.getConfiguration());
+    }
+
+    @Test
     void dryRun_update_existing_validates_without_persisting() {
         String certId = AutomationIds.certificateId(domainId, "my-cert");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId)))
                 .thenReturn(Flowable.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
-        when(certificateService.validateUpdate(any(Domain.class), eq(certId), any()))
+        when(certificateServiceProxy.validateUpdate(any(Domain.class), eq(certId), any()))
                 .thenReturn(Single.just(cert(certId, "my-cert", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("my-cert", false));
@@ -427,7 +596,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         Certificate brownfield = cert(brownfieldId, null, false, null);
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findById(eq(brownfieldId))).thenReturn(Maybe.just(brownfield));
-        when(certificateService.validateUpdate(any(Domain.class), eq(brownfieldId), any()))
+        when(certificateServiceProxy.validateUpdate(any(Domain.class), eq(brownfieldId), any()))
                 .thenReturn(Single.just(brownfield));
 
         Response response = put(certificatesTarget(DOMAIN_KEY).queryParam("dryRun", true), definition("id:" + brownfieldId, false));
@@ -446,6 +615,6 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals(1, readEntity(response, AutomationCertificate.class).getDryRunErrors().size());
-        verify(certificateService, never()).validateCreate(any(Domain.class), any(), anyBoolean());
+        verify(certificateServiceProxy, never()).validateCreate(any(Domain.class), any());
     }
 }

@@ -19,15 +19,18 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationReporterMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
 import io.gravitee.am.management.service.ReporterPluginService;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewReporter;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -72,7 +75,13 @@ public class ReportersResource extends AbstractAutomationResource {
     private ReporterService reporterService;
 
     @Autowired
+    private ReporterServiceProxy reporterServiceProxy;
+
+    @Autowired
     private ReporterPluginService reporterPluginService;
+
+    @Autowired
+    private PluginConfigurationValidationService validationService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -96,6 +105,7 @@ public class ReportersResource extends AbstractAutomationResource {
                         .filter(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(
                                 nullToEmpty(o1.getAutomationKey()), nullToEmpty(o2.getAutomationKey())))
+                        .concatMapSingle(reporterServiceProxy::filterSensitiveData)
                         .map(AutomationReporterMapper::toAutomationReporter)
                         .toList())
                 .subscribe(response::resume, response::resume);
@@ -190,14 +200,15 @@ public class ReportersResource extends AbstractAutomationResource {
         }
         if (existing.isSystem()) {
             // re-PUT is an idempotent no-op
-            return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
+            return reporterServiceProxy.filterSensitiveData(existing)
+                    .map(AutomationReporterMapper::toAutomationReporter);
         }
         Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
         if (rejection != null) {
             return rejection;
         }
         return reporterPluginService.checkPluginDeployment(definition.getType())
-                .andThen(reporterService.update(Reference.domain(domain.getId()), existing.getId(),
+                .andThen(reporterServiceProxy.update(Reference.domain(domain.getId()), existing.getId(),
                         AutomationReporterMapper.toUpdateReporter(definition), principal, false))
                 .map(AutomationReporterMapper::toAutomationReporter);
     }
@@ -210,7 +221,7 @@ public class ReportersResource extends AbstractAutomationResource {
             return conflictRejection;
         }
         if (definition.isSystem()) {
-            return reporterService.createSystem(reference, reporterId, key, principal)
+            return reporterServiceProxy.createSystem(reference, reporterId, key, principal)
                     .map(AutomationReporterMapper::toAutomationReporter);
         }
         Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
@@ -220,7 +231,9 @@ public class ReportersResource extends AbstractAutomationResource {
         AutomationNewReporter newReporter = AutomationReporterMapper.toNewReporter(definition);
         newReporter.setId(reporterId);
         return reporterPluginService.checkPluginDeployment(definition.getType())
-                .andThen(Single.defer(() -> reporterService.create(reference, newReporter, principal, false)))
+                .andThen(Completable.fromAction(() -> validationService.validate(definition.getType(), definition.getConfiguration())))
+                .andThen(rejectMaskedSensitiveValues(definition))
+                .andThen(Single.defer(() -> reporterServiceProxy.create(reference, newReporter, principal, false)))
                 .map(AutomationReporterMapper::toAutomationReporter);
     }
 
@@ -233,7 +246,7 @@ public class ReportersResource extends AbstractAutomationResource {
                     .andThen(resolver.resolveDomain(environmentId, domainRef))
                     .flatMap(domain -> resolver.resolveReporter(domain, reporterRef)
                             .flatMap(existing -> dryRunUpdate(domain, existing, definition, key)))
-                    .onErrorReturn(ex -> withErrors(definition, ex));
+                    .onErrorResumeNext(ex -> withMaskedConfiguration(definition).map(masked -> withErrors(masked, ex)));
         }
 
         final String domainId = AutomationIds.domainId(environmentId, domainRef);
@@ -250,7 +263,7 @@ public class ReportersResource extends AbstractAutomationResource {
                             ? dryRunUpdate(domain, match.get(), definition, key)
                             : dryRunCreate(reference, domain, allExisting, definition, key));
         })
-                .onErrorReturn(ex -> withErrors(definition, ex));
+                .onErrorResumeNext(ex -> withMaskedConfiguration(definition).map(masked -> withErrors(masked, ex)));
     }
 
     private Single<AutomationReporter> dryRunUpdate(Domain domain, Reporter existing,
@@ -260,14 +273,15 @@ public class ReportersResource extends AbstractAutomationResource {
             return immutableRejection;
         }
         if (existing.isSystem()) {
-            return Single.just(AutomationReporterMapper.toAutomationReporter(existing));
+            return reporterServiceProxy.filterSensitiveData(existing)
+                    .map(AutomationReporterMapper::toAutomationReporter);
         }
         Single<AutomationReporter> rejection = rejectIfMissingReporterFields(definition, key);
         if (rejection != null) {
             return rejection;
         }
         return reporterPluginService.checkPluginDeployment(definition.getType())
-                .andThen(Single.defer(() -> reporterService.validateUpdate(Reference.domain(domain.getId()), existing.getId(),
+                .andThen(Single.defer(() -> reporterServiceProxy.validateUpdate(Reference.domain(domain.getId()), existing.getId(),
                         AutomationReporterMapper.toUpdateReporter(definition), false)))
                 .map(AutomationReporterMapper::toAutomationReporter);
     }
@@ -290,7 +304,9 @@ public class ReportersResource extends AbstractAutomationResource {
         AutomationNewReporter newReporter = AutomationReporterMapper.toNewReporter(definition);
         newReporter.setId(reporterId);
         return reporterPluginService.checkPluginDeployment(definition.getType())
-                .andThen(Single.defer(() -> reporterService.validateCreate(reference, newReporter, false)))
+                .andThen(Completable.fromAction(() -> validationService.validate(definition.getType(), definition.getConfiguration())))
+                .andThen(rejectMaskedSensitiveValues(definition))
+                .andThen(Single.defer(() -> reporterServiceProxy.validateCreate(reference, newReporter, false)))
                 .map(AutomationReporterMapper::toAutomationReporter);
     }
 
@@ -323,6 +339,37 @@ public class ReportersResource extends AbstractAutomationResource {
                     "The domain already has a system reporter"));
         }
         return null;
+    }
+
+    /**
+     * Masks the definition's configuration for a dry-run error response; a configuration that cannot be
+     * masked is dropped.
+     */
+    private Single<AutomationReporter> withMaskedConfiguration(AutomationReporter definition) {
+        if (isBlank(definition.getConfiguration())) {
+            return Single.just(definition);
+        }
+        Reporter submitted = new Reporter();
+        submitted.setType(definition.getType());
+        submitted.setConfiguration(definition.getConfiguration());
+        return reporterServiceProxy.filterSensitiveData(submitted)
+                .map(masked -> masked.getConfiguration())
+                .onErrorReturnItem("")
+                .map(configuration -> {
+                    definition.setConfiguration(configuration.isEmpty() ? null : configuration);
+                    return definition;
+                });
+    }
+
+    private Completable rejectMaskedSensitiveValues(AutomationReporter definition) {
+        return Completable.defer(() -> {
+            Reporter submitted = new Reporter();
+            submitted.setType(definition.getType());
+            submitted.setConfiguration(definition.getConfiguration());
+            return reporterServiceProxy.filterSensitiveData(submitted)
+                    .flatMapCompletable(masked -> MaskedValueGuard.rejectMaskedSensitiveValues(
+                            definition.getConfiguration(), masked.getConfiguration()));
+        });
     }
 
     private static Single<AutomationReporter> rejectIfMissingReporterFields(AutomationReporter definition, String key) {

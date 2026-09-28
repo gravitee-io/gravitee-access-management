@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.mapper.AutomationReporterMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationReporter;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.permissions.Permission;
@@ -47,6 +48,9 @@ public class ReporterResource extends AbstractAutomationResource {
     @Autowired
     private ReporterService reporterService;
 
+    @Autowired
+    private ReporterServiceProxy reporterServiceProxy;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetReporter", summary = "Get a reporter",
@@ -68,6 +72,7 @@ public class ReporterResource extends AbstractAutomationResource {
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_REPORTER, Acl.READ)
                 .andThen(resolver.resolveDomain(environmentId, domainRef))
                 .flatMap(domain -> resolver.resolveReporter(domain, reporterRef)
+                        .flatMap(reporterServiceProxy::filterSensitiveData)
                         .map(AutomationReporterMapper::toAutomationReporter))
                 .subscribe(response::resume, response::resume);
     }

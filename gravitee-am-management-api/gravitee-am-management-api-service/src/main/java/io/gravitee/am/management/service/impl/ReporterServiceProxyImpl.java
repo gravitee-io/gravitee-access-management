@@ -152,7 +152,8 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
         return reporterService.notifyInheritedReporters(parentReference, affectedReference, action);
     }
 
-    private Single<Reporter> filterSensitiveData(Reporter reporter) {
+    @Override
+    public Single<Reporter> filterSensitiveData(Reporter reporter) {
         return reporterPluginService.getSchema(reporter.getType())
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
