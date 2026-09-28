@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP;
-import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -130,7 +129,6 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());
         openIDProviderMetadata.setIdTokenEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseAlg());
         openIDProviderMetadata.setIdTokenEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseEnc());
-        openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(Arrays.asList(CLIENT_SECRET_BASIC, CLIENT_SECRET_POST, PRIVATE_KEY_JWT, CLIENT_SECRET_JWT, TLS_CLIENT_AUTH, SELF_SIGNED_TLS_CLIENT_AUTH));
         openIDProviderMetadata.setClaimTypesSupported(Collections.singletonList(ClaimType.NORMAL));
         if (domain.useFapiBrazilProfile()) {
             openIDProviderMetadata.setClaimsSupported(Stream.of(StandardClaims.claims(), CustomClaims.claims(), Collections.singletonList(Claims.ACR), BRAZIL_CLAIMS).flatMap(c -> c.stream()).collect(Collectors.toList()));
