@@ -152,6 +152,21 @@ public class OpenIDDiscoveryServiceTest {
     }
 
     @Test
+    public void shouldContain_token_endpoint_auth_methods_supported() {
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertEquals(List.of(
+                        "client_secret_basic",
+                        "client_secret_post",
+                        "private_key_jwt",
+                        "none",
+                        "client_secret_jwt",
+                        "tls_client_auth",
+                        "self_signed_tls_client_auth",
+                        "spiffe_jwt"),
+                openIDProviderMetadata.getTokenEndpointAuthMethodsSupported());
+    }
+
+    @Test
     public void shouldContain_token_endpoint_auth_signing_alg_values_supported() {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg().containsAll(openIDProviderMetadata.getTokenEndpointAuthSigningAlgValuesSupported()));
