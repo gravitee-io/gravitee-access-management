@@ -16,9 +16,11 @@
 package io.gravitee.am.gateway.handler.common.policy;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.Policy;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.gravitee.am.gateway.policy.impl.PolicyChain;
 import io.gravitee.am.model.User;
@@ -26,6 +28,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.policy.api.PolicyResult;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -40,8 +43,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -157,5 +162,64 @@ public class RulesEngineTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete().assertNoErrors();
         assertSame(client, attributes.get("client"));
+    }
+
+    @Test
+    public void shouldCarryContextPolicyAuditDataWhenPolicyFailsWithoutIt() throws Exception {
+        Map<String, Object> auditData = Map.of("AUTHZEN", Map.of("decision", true));
+        when(executionContext.getAttribute(ConstantKeys.POLICY_AUDIT_DATA)).thenReturn(auditData);
+
+        PolicyChainException failure = fireFailing(PolicyResult.failure("DENIED", 403, "denied", Map.of("other", "value")));
+
+        assertEquals(auditData, failure.parameters().get(ConstantKeys.POLICY_AUDIT_DATA));
+        assertEquals("value", failure.parameters().get("other"));
+    }
+
+    @Test
+    public void shouldCarryContextPolicyAuditDataWhenPolicyFailsWithoutParameters() throws Exception {
+        Map<String, Object> auditData = Map.of("AUTHZEN", Map.of("decision", true));
+        when(executionContext.getAttribute(ConstantKeys.POLICY_AUDIT_DATA)).thenReturn(auditData);
+
+        PolicyChainException failure = fireFailing(PolicyResult.failure(403, "denied"));
+
+        assertEquals(auditData, failure.parameters().get(ConstantKeys.POLICY_AUDIT_DATA));
+    }
+
+    @Test
+    public void shouldKeepFailurePolicyAuditDataOverContext() throws Exception {
+        Map<String, Object> failureAuditData = Map.of("AUTHZEN", Map.of("decision", false));
+        when(executionContext.getAttribute(ConstantKeys.POLICY_AUDIT_DATA)).thenReturn(Map.of("AUTHZEN", Map.of("decision", true)));
+
+        PolicyChainException failure = fireFailing(PolicyResult.failure("DENIED", 403, "denied", Map.of(ConstantKeys.POLICY_AUDIT_DATA, failureAuditData)));
+
+        assertEquals(failureAuditData, failure.parameters().get(ConstantKeys.POLICY_AUDIT_DATA));
+    }
+
+    @Test
+    public void shouldNotAddParametersWhenContextHasNoPolicyAuditData() throws Exception {
+        PolicyChainException failure = fireFailing(PolicyResult.failure(403, "denied"));
+
+        assertNull(failure.parameters());
+    }
+
+    private PolicyChainException fireFailing(PolicyResult result) throws Exception {
+        Rule rule = mock(Rule.class);
+        when(rule.enabled()).thenReturn(true);
+        Policy policy = mock(Policy.class);
+        when(policy.isRunnable()).thenReturn(true);
+        PolicyChain policyChain = new PolicyChain(List.of(policy), executionContext);
+        doAnswer(invocation -> {
+            policyChain.failWith(result);
+            return null;
+        }).when(policy).execute(any(Object[].class));
+        when(policyPluginManager.create(any(), any())).thenReturn(policy);
+        when(policyChainProcessorFactory.create(any(), any())).thenReturn(policyChain);
+
+        AtomicReference<PolicyChainException> failure = new AtomicReference<>();
+        rulesEngine.fire(List.of(rule), executionContext)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(error -> error instanceof PolicyChainException policyChainException && failure.compareAndSet(null, policyChainException));
+        return failure.get();
     }
 }

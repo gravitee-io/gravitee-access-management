@@ -20,6 +20,7 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantAssertionTypes;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -29,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeExcep
 import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.impl.ExtensionGrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
@@ -50,6 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -111,6 +114,28 @@ public class CompositeTokenGranterTest {
                         "\"SCOPE\":\"read\"",
                         "\"RESOURCE\":\"https://mcp.example.com/api\"");
         assertThat(audit.getAccessPoint().getAlternativeId()).isEqualTo("client-id");
+    }
+
+    @Test
+    public void shouldRecordPolicyAuditDataWhenPolicyDenies() {
+        TokenRequest tokenRequest = tokenRequest(GrantType.CLIENT_CREDENTIALS);
+        Client client = client();
+        TokenGranter granter = mock(TokenGranter.class);
+        when(granter.handle(tokenRequest, client)).thenReturn(true);
+        PolicyChainException denial = new PolicyChainException("Access denied", 403, "AUTHZEN_DENIED",
+                Map.of(ConstantKeys.POLICY_AUDIT_DATA, Map.of("AUTHZEN", Map.of("decision", false))), null);
+        when(granter.grant(tokenRequest, client)).thenReturn(Single.error(denial));
+        compositeTokenGranter.addTokenGranter(GrantType.CLIENT_CREDENTIALS, granter);
+
+        compositeTokenGranter.grant(tokenRequest, client)
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertError(PolicyChainException.class);
+
+        Audit audit = captureTokenAudit();
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+        assertThat(audit.getOutcome().getMessage())
+                .contains("Access denied", "\"ADDITIONAL_DATA\":{\"AUTHZEN\":{\"decision\":false}}");
     }
 
     @Test
