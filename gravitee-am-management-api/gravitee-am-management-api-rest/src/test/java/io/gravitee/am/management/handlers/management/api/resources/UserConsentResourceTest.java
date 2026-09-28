@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
@@ -59,7 +60,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
         scopeApproval.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(mockDomain, scopeApproval.getId());
+        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findByIdAndUser(mockDomain, scopeApproval.getId(), mockUser.getFullId());
         doReturn(Single.just(new ApplicationEntity(mockClient))).when(consentApplicationEntityFactory).resolve(domainId, scopeApproval.getClientId());
 
         final Response response = target("domains")
@@ -72,6 +73,27 @@ public class UserConsentResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotGetUserConsent_notOwnedByUser() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Maybe.empty()).when(scopeApprovalService).findByIdAndUser(mockDomain, "consent-id", UserId.internal("user-id-1"));
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .path("user-id-1")
+                .path("consents")
+                .path("consent-id")
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test
