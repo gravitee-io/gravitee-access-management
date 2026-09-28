@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.resource.AutomationResourceResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
+import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
@@ -30,8 +31,10 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidatorImpl;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.ReporterPluginService;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -64,6 +67,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
@@ -75,6 +79,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -118,6 +123,15 @@ public abstract class AutomationJerseySpringTest {
     protected ReporterService reporterService;
 
     @Autowired
+    protected IdentityProviderServiceProxy identityProviderServiceProxy;
+
+    @Autowired
+    protected CertificateServiceProxy certificateServiceProxy;
+
+    @Autowired
+    protected ReporterServiceProxy reporterServiceProxy;
+
+    @Autowired
     protected ReporterPluginService reporterPluginService;
 
     @Autowired
@@ -150,6 +164,14 @@ public abstract class AutomationJerseySpringTest {
         reset(dataPlaneDefinitionService, provisionedDataPlaneLoader);
         when(provisionedDataPlaneLoader.activate(anyString())).thenReturn(Completable.complete());
         reset(trustDomainService);
+        // The proxies pass entities through unmasked unless a test stubs masking.
+        reset(identityProviderServiceProxy, certificateServiceProxy, reporterServiceProxy);
+        doAnswer(invocation -> Single.just(invocation.getArgument(0)))
+                .when(identityProviderServiceProxy).filterSensitiveData(any());
+        doAnswer(invocation -> Single.just(invocation.getArgument(0)))
+                .when(certificateServiceProxy).filterSensitiveData(any());
+        doAnswer(invocation -> Single.just(invocation.getArgument(0)))
+                .when(reporterServiceProxy).filterSensitiveData(any());
         when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
         // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
         // to exercise rejection paths, and those would otherwise leak across the shared singleton context.
@@ -200,9 +222,26 @@ public abstract class AutomationJerseySpringTest {
             return mock(CertificateService.class);
         }
 
+        // The proxy mocks below are also of these types.
         @Bean
+        @Primary
         public IdentityProviderService identityProviderService() {
             return mock(IdentityProviderService.class);
+        }
+
+        @Bean
+        public IdentityProviderServiceProxy identityProviderServiceProxy() {
+            return mock(IdentityProviderServiceProxy.class);
+        }
+
+        @Bean
+        public CertificateServiceProxy certificateServiceProxy() {
+            return mock(CertificateServiceProxy.class);
+        }
+
+        @Bean
+        public ReporterServiceProxy reporterServiceProxy() {
+            return mock(ReporterServiceProxy.class);
         }
 
         @Bean
@@ -211,6 +250,7 @@ public abstract class AutomationJerseySpringTest {
         }
 
         @Bean
+        @Primary
         public ReporterService reporterService() {
             return mock(ReporterService.class);
         }

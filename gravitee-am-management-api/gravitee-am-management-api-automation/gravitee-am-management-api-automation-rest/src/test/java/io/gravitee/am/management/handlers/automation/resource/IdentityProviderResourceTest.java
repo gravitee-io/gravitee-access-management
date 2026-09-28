@@ -24,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +82,23 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals(IDP_KEY, readEntity(response, AutomationIdentityProvider.class).getAutomationKey());
+    }
+
+    @Test
+    void get_masks_sensitive_configuration() {
+        IdentityProvider stored = idp(ManagedBy.AUTOMATION_API);
+        stored.setConfiguration("{\"clientSecret\":\"s3cr3t\"}");
+        IdentityProvider masked = new IdentityProvider(stored);
+        masked.setConfiguration("{\"clientSecret\":\"********\"}");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.just(stored));
+        when(identityProviderServiceProxy.filterSensitiveData(stored)).thenReturn(Single.just(masked));
+
+        Response response = getRequest();
+
+        assertEquals(200, response.getStatus());
+        assertEquals("{\"clientSecret\":\"********\"}",
+                readEntity(response, AutomationIdentityProvider.class).getConfiguration());
     }
 
     @Test
@@ -145,6 +163,23 @@ class IdentityProviderResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(204, response.getStatus());
         verify(identityProviderService, never()).delete(any(), anyString(), anyString(), any());
+    }
+
+    @Test
+    void get_by_id_masks_a_brownfield_idp_created_outside_the_automation_api() {
+        IdentityProvider stored = brownfieldIdp(domainId);
+        stored.setConfiguration("{\"password\":\"bind-secret\"}");
+        IdentityProvider masked = new IdentityProvider(stored);
+        masked.setConfiguration("{\"password\":\"********\"}");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(stored));
+        when(identityProviderServiceProxy.filterSensitiveData(stored)).thenReturn(Single.just(masked));
+
+        Response response = identitiesTarget(DOMAIN_KEY).path("id:" + BROWNFIELD_ID).request().get();
+
+        assertEquals(200, response.getStatus());
+        assertEquals("{\"password\":\"********\"}",
+                readEntity(response, AutomationIdentityProvider.class).getConfiguration());
     }
 
     private IdentityProvider brownfieldIdp(String referenceId) {

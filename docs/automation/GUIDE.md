@@ -151,7 +151,9 @@ returned document, `PUT` the whole document back. Consequences:
 - **Strict settings reconciliation:** a settings block omitted from the payload is reset to its
   domain-creation default — `null` for every block **except `oidc`**, which is reset to its standard
   default (it must never be null).
-- `GET` then `PUT` of the same payload is a lossless, idempotent round-trip.
+- `GET` then `PUT` of the same payload is a lossless, idempotent round-trip: the stored state is
+  unchanged, including the secrets masked in the `GET` response (see §7). The response is not a copy of
+  the request, because it masks those secrets again.
 
 ## 6. Cross-resource references
 
@@ -160,6 +162,28 @@ A domain references certificates and an identity provider by reference (`key` or
 `accountSettings.defaultIdentityProviderForRegistration`. References are **eventually consistent**: they
 may point to a resource that does not exist yet (any apply order works), and the reference is echoed back
 verbatim on `GET`. Use `id:<uuid>` here to reference a brownfield resource that has no key.
+
+## 7. Sensitive values
+
+An Identity Provider, Certificate or Reporter `configuration` can hold secrets: client secrets, bind
+passwords, keystore passwords and files, inline user passwords. The plugin flags which fields are
+sensitive, and the Automation API masks them exactly as the Management API does:
+
+- **Responses never contain a secret.** `GET`, list and `PUT` responses replace each sensitive value
+  with `********`. Secret references such as `{#secrets.get('/vault/...')}` are masked too.
+- **On update, `********` keeps the stored value.** A `PUT` that sends a sensitive field as `********`
+  (any run of asterisks) leaves that secret as it is, so a `GET`-edit-`PUT` never erases it. Send the
+  real value to change it.
+- **On create, `********` is rejected** with `400`, naming the field: there is no stored secret for it
+  to keep.
+- **Dry runs follow the same rules.** A dry-run response, including one that reports errors, masks
+  sensitive values, and a masked value on create is reported as a dry-run error.
+- **Secret drift cannot be detected.** A client comparing a `GET` against its manifest can compare every
+  field except the masked ones, so a secret changed outside the Automation API goes unnoticed until the
+  manifest is applied again.
+
+A new inline user sent with a masked password on update is stored with that literal value, as in the
+Management API, which keeps inline passwords by matching usernames.
 
 ---
 

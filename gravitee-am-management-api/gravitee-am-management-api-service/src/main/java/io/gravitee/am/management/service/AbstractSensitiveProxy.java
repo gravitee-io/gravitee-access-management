@@ -53,8 +53,8 @@ public abstract class AbstractSensitiveProxy {
     private static final String SENSITIVE_SCHEMA_KEY = "sensitive";
     private static final String SENSITIVE_URI_SCHEMA_KEY = "sensitive-uri";
 
-    protected static final String SENSITIVE_VALUE = "********";
-    protected static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
+    public static final String SENSITIVE_VALUE = "********";
+    public static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
 
     private static final String USERINFO_PATTERN_EXTRACTOR = "^(?:[^/]+://)?(?<userInfo>[^/@]+)@.*";
     private static final Pattern USER_INFO_PATTERN = Pattern.compile(USERINFO_PATTERN_EXTRACTOR);
