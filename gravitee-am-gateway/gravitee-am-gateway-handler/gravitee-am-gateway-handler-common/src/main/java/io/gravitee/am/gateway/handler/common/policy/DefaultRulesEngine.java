@@ -42,6 +42,7 @@ import io.vertx.rxjava3.impl.AsyncResultSingle;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -137,9 +138,24 @@ public class DefaultRulesEngine implements RulesEngine {
     private void executePolicyChain(List<Policy> policies, ExecutionContext executionContext, Handler<AsyncResult<ExecutionContext>> handler) {
         policyChainProcessorFactory
                 .create(policies, executionContext)
-                .handler(executionContext1 -> handler.handle(Future.succeededFuture(executionContext1)))
-                .errorHandler(processorFailure -> handler.handle(Future.failedFuture(new PolicyChainException(processorFailure.message(), processorFailure.statusCode(), processorFailure.key(), processorFailure.parameters(), processorFailure.contentType()))))
+                .handler(ctx -> handler.handle(Future.succeededFuture(ctx)))
+                .errorHandler(err -> handler.handle(Future.failedFuture(new PolicyChainException(
+                        err.message(),
+                        err.statusCode(),
+                        err.key(),
+                        withPolicyAuditData(err.parameters(), executionContext),
+                        err.contentType()))))
                 .handle(executionContext);
+    }
+
+    private static Map<String, Object> withPolicyAuditData(Map<String, Object> parameters, ExecutionContext executionContext) {
+        Object policyAuditData = executionContext.getAttribute(ConstantKeys.POLICY_AUDIT_DATA);
+        if (policyAuditData == null || (parameters != null && parameters.containsKey(ConstantKeys.POLICY_AUDIT_DATA))) {
+            return parameters;
+        }
+        Map<String, Object> enriched = parameters == null ? new HashMap<>() : new HashMap<>(parameters);
+        enriched.put(ConstantKeys.POLICY_AUDIT_DATA, policyAuditData);
+        return enriched;
     }
 
     private List<Policy> resolve(List<Rule> rules) {
