@@ -7,7 +7,10 @@ mongodb-replicaset:
   enabled: false
 
 repositories:
-  system-cluster: gateway
+  # Default identity providers store their users in the management database, which every node of every
+  # version reads the same way. With `gateway`, a 4.13 Management API puts them in the data plane database,
+  # which a 4.12 gateway does not read (AM-7788).
+  system-cluster: management
   management:
     type: mongodb
     mongodb:
