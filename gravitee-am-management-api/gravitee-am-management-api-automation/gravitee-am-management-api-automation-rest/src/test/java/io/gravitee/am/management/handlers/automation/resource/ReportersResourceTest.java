@@ -24,12 +24,14 @@ import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
+import io.gravitee.am.service.model.UpdateReporter;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -39,6 +41,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +55,21 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
     private static final String DOMAIN_KEY = "customer-auth";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
     private final Reference reference = Reference.domain(domainId);
+    private static final String JDBC_CONFIG = "{\"host\":\"db\",\"username\":\"am\",\"password\":\"db-secret\"}";
+    private static final String MASKED_JDBC_CONFIG = "{\"host\":\"db\",\"username\":\"am\",\"password\":\"********\"}";
+
+    private void maskSensitiveData() {
+        doAnswer(invocation -> {
+            Reporter masked = new Reporter(invocation.getArgument(0));
+            masked.setConfiguration(MASKED_JDBC_CONFIG);
+            return Single.just(masked);
+        }).when(reporterServiceProxy).filterSensitiveData(any());
+    }
+
+    private static Reporter withConfiguration(Reporter reporter, String configuration) {
+        reporter.setConfiguration(configuration);
+        return reporter;
+    }
 
     private Domain domain() {
         Domain domain = new Domain();
@@ -117,11 +136,90 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void list_masks_sensitive_configuration() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(withConfiguration(reporter("id-a", "alpha", false, ManagedBy.AUTOMATION_API), JDBC_CONFIG)));
+        maskSensitiveData();
+
+        Response response = reportersTarget(DOMAIN_KEY).request().get();
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_JDBC_CONFIG, readListEntity(response, AutomationReporter.class).get(0).getConfiguration());
+    }
+
+    @Test
+    void put_create_rejects_a_masked_sensitive_value() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        maskSensitiveData();
+
+        AutomationReporter def = definition("audit-db", false);
+        def.setConfiguration(MASKED_JDBC_CONFIG);
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("configuration/password"));
+        verify(reporterServiceProxy, never()).create(any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void put_create_validates_the_configuration_before_checking_for_masked_values() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
+        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
+                .when(validationService).validate(anyString(), eq("{not json"));
+
+        AutomationReporter def = definition("audit-db", false);
+        def.setConfiguration("{not json");
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("not valid"));
+        verify(reporterServiceProxy, never()).filterSensitiveData(any());
+        verify(reporterServiceProxy, never()).create(any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void put_update_passes_masked_values_to_the_service_unchanged() {
+        String reporterId = AutomationIds.reporterId(domainId, "audit-db");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(reporter(reporterId, "audit-db", false, ManagedBy.AUTOMATION_API)));
+        when(reporterServiceProxy.update(eq(reference), eq(reporterId), any(), any(), eq(false)))
+                .thenReturn(Single.just(withConfiguration(reporter(reporterId, "audit-db", false, ManagedBy.AUTOMATION_API), MASKED_JDBC_CONFIG)));
+
+        AutomationReporter def = definition("audit-db", false);
+        def.setConfiguration(MASKED_JDBC_CONFIG);
+        Response response = put(reportersTarget(DOMAIN_KEY), def);
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<UpdateReporter> captor = ArgumentCaptor.forClass(UpdateReporter.class);
+        verify(reporterServiceProxy).update(eq(reference), eq(reporterId), captor.capture(), any(), eq(false));
+        assertEquals(MASKED_JDBC_CONFIG, captor.getValue().getConfiguration());
+        assertEquals(MASKED_JDBC_CONFIG, readEntity(response, AutomationReporter.class).getConfiguration());
+    }
+
+    @Test
+    void put_system_no_op_masks_its_configuration() {
+        String reporterId = AutomationIds.reporterId(domainId, "sys-reporter");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(reference)))
+                .thenReturn(Flowable.just(withConfiguration(reporter(reporterId, "sys-reporter", true, ManagedBy.AUTOMATION_API), JDBC_CONFIG)));
+        maskSensitiveData();
+
+        Response response = put(reportersTarget(DOMAIN_KEY), systemDefinition("sys-reporter"));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_JDBC_CONFIG, readEntity(response, AutomationReporter.class).getConfiguration());
+    }
+
+    @Test
     void put_creates_when_absent() {
         String reporterId = AutomationIds.reporterId(domainId, "audit-log");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
-        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+        when(reporterServiceProxy.create(eq(reference), any(), any(), eq(false)))
                 .thenReturn(Single.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
@@ -135,7 +233,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         String reporterId = AutomationIds.reporterId(domainId, "sys-reporter");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
-        when(reporterService.createSystem(eq(reference), eq(reporterId), eq("sys-reporter"), any()))
+        when(reporterServiceProxy.createSystem(eq(reference), eq(reporterId), eq("sys-reporter"), any()))
                 .thenReturn(Single.just(reporter(reporterId, "sys-reporter", true, ManagedBy.AUTOMATION_API)));
 
         Response response = put(reportersTarget(DOMAIN_KEY), systemDefinition("sys-reporter"));
@@ -143,7 +241,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         assertEquals(200, response.getStatus());
         assertTrue(readEntity(response, AutomationReporter.class).isSystem());
         // The payload path must never run for a system create.
-        verify(reporterService, never()).create(eq(reference), any(), any(), eq(true));
+        verify(reporterServiceProxy, never()).create(eq(reference), any(), any(), eq(true));
     }
 
     @Test
@@ -157,9 +255,9 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), systemDefinition("sys-reporter"));
 
         assertEquals(200, response.getStatus());
-        verify(reporterService, never()).update(eq(reference), anyString(), any(), any(), anyBoolean());
-        verify(reporterService, never()).create(eq(reference), any(), any(), eq(true));
-        verify(reporterService, never()).createSystem(eq(reference), anyString(), anyString(), any());
+        verify(reporterServiceProxy, never()).update(eq(reference), anyString(), any(), any(), anyBoolean());
+        verify(reporterServiceProxy, never()).create(eq(reference), any(), any(), eq(true));
+        verify(reporterServiceProxy, never()).createSystem(eq(reference), anyString(), anyString(), any());
     }
 
     @Test
@@ -174,14 +272,14 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(reporterService, never()).create(eq(reference), any(), any(), eq(false));
+        verify(reporterServiceProxy, never()).create(eq(reference), any(), any(), eq(false));
     }
 
     @Test
     void put_rejects_non_system_database_reporter_type() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
-        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+        when(reporterServiceProxy.create(eq(reference), any(), any(), eq(false)))
                 .thenReturn(Single.error(new ReporterConfigurationException(
                         "Reporter type 'mongodb' cannot be created manually")));
 
@@ -207,7 +305,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(reporterService, never()).create(eq(reference), any(), any(), eq(false));
+        verify(reporterServiceProxy, never()).create(eq(reference), any(), any(), eq(false));
     }
 
     @Test
@@ -215,7 +313,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
         when(reporterPluginService.checkPluginDeployment(eq("reporter-am-file"))).thenReturn(Completable.complete());
-        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+        when(reporterServiceProxy.create(eq(reference), any(), any(), eq(false)))
                 .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         AutomationReporter def = definition("audit-log", false);
@@ -225,7 +323,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(400, response.getStatus());
         verify(reporterPluginService).checkPluginDeployment(eq("reporter-am-file"));
-        verify(reporterService).create(eq(reference), any(), any(), eq(false));
+        verify(reporterServiceProxy).create(eq(reference), any(), any(), eq(false));
     }
 
     @Test
@@ -233,7 +331,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         String reporterId = AutomationIds.reporterId(domainId, "audit-log");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
-        when(reporterService.create(eq(reference), any(), any(), eq(false)))
+        when(reporterServiceProxy.create(eq(reference), any(), any(), eq(false)))
                 .thenReturn(Single.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
@@ -248,7 +346,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference)))
                 .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
-        when(reporterService.update(eq(reference), eq(reporterId), any(), any(), eq(false)))
+        when(reporterServiceProxy.update(eq(reference), eq(reporterId), any(), any(), eq(false)))
                 .thenReturn(Single.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
 
         Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
@@ -270,7 +368,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         Response response = put(reportersTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(reporterService, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+        verify(reporterServiceProxy, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
     }
 
     @Test
@@ -280,14 +378,14 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         when(reporterService.findByReference(eq(reference)))
                 .thenReturn(Flowable.just(reporter(reporterId, "audit-log", false, ManagedBy.AUTOMATION_API)));
         when(reporterPluginService.checkPluginDeployment(eq("reporter-am-file"))).thenReturn(Completable.complete());
-        when(reporterService.update(eq(reference), eq(reporterId), any(), any(), eq(false)))
+        when(reporterServiceProxy.update(eq(reference), eq(reporterId), any(), any(), eq(false)))
                 .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         Response response = put(reportersTarget(DOMAIN_KEY), definition("audit-log", false));
 
         assertEquals(400, response.getStatus());
         verify(reporterPluginService).checkPluginDeployment(eq("reporter-am-file"));
-        verify(reporterService).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+        verify(reporterServiceProxy).update(eq(reference), eq(reporterId), any(), any(), eq(false));
     }
 
     @Test
@@ -305,7 +403,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class)
                 .contains("Field 'configuration' is required for a non-system reporter"));
-        verify(reporterService, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+        verify(reporterServiceProxy, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
     }
 
     @Test
@@ -324,7 +422,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         assertTrue(response.readEntity(String.class)
                 .contains("The 'type' is immutable for an existing reporter"));
         verify(reporterPluginService, never()).checkPluginDeployment(anyString());
-        verify(reporterService, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
+        verify(reporterServiceProxy, never()).update(eq(reference), eq(reporterId), any(), any(), eq(false));
     }
 
     @Test

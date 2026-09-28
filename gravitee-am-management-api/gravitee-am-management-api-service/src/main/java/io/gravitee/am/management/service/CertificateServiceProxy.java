@@ -40,4 +40,9 @@ public interface CertificateServiceProxy {
     Completable delete(String certificateId, User principal);
 
     Single<Certificate> rotate(Domain domain, User principal);
+
+    /**
+     * Returns a copy of the certificate with its sensitive configuration values masked.
+     */
+    Single<Certificate> filterSensitiveData(Certificate certificate);
 }

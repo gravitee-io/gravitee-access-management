@@ -25,6 +25,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.model.NewIdentityProvider;
+import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -43,6 +44,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,7 +56,23 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
 
     private static final String DOMAIN_KEY = "customer-auth";
     private static final String BROWNFIELD_ID = "11111111-2222-3333-4444-555555555555";
+    private static final String INLINE_CONFIG = "{\"users\":[{\"username\":\"alice\",\"password\":\"secret\"}]}";
+    private static final String MASKED_INLINE_CONFIG = "{\"users\":[{\"username\":\"alice\",\"password\":\"********\"}]}";
     private final String domainId = AutomationIds.domainId(ENV_ID, DOMAIN_KEY);
+
+    /** Stubs the proxy to mask every inline user's password. */
+    private void maskSensitiveData() {
+        doAnswer(invocation -> {
+            IdentityProvider masked = new IdentityProvider(invocation.getArgument(0));
+            masked.setConfiguration(masked.getConfiguration().replaceAll("\"password\":\"[^\"]*\"", "\"password\":\"********\""));
+            return Single.just(masked);
+        }).when(identityProviderServiceProxy).filterSensitiveData(any());
+    }
+
+    private static IdentityProvider withConfiguration(IdentityProvider idp, String configuration) {
+        idp.setConfiguration(configuration);
+        return idp;
+    }
 
     private Domain domain() {
         Domain domain = new Domain();
@@ -127,7 +145,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.empty());
-        when(identityProviderService.create(any(Domain.class), any(), any(), eq(false)))
+        when(identityProviderServiceProxy.create(any(Domain.class), any(), any(), eq(false)))
                 .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
 
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("dev-users"));
@@ -150,7 +168,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(false));
     }
 
     @Test
@@ -167,7 +185,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(false));
     }
 
     @Test
@@ -185,7 +203,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertTrue(response.readEntity(String.class)
                 .contains("Field 'configuration' is required for a non-system identity provider"));
         verify(validationService, never()).validate(any(), any());
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(false));
     }
 
     @Test
@@ -194,7 +212,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
-        when(identityProviderService.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
+        when(identityProviderServiceProxy.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
                 .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
 
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("dev-users"));
@@ -218,7 +236,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
     void put_by_id_updates_brownfield_idp_leaving_managed_by_and_key_untouched() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findById(eq(BROWNFIELD_ID))).thenReturn(Maybe.just(brownfieldIdp()));
-        when(identityProviderService.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), any(), eq(false)))
+        when(identityProviderServiceProxy.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), any(), eq(false)))
                 .thenReturn(Single.just(brownfieldIdp()));
 
         AutomationIdentityProvider def = definition("id:" + BROWNFIELD_ID);
@@ -226,8 +244,8 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         // the update model carries no automation key / managedBy, so the brownfield resource keeps both
-        verify(identityProviderService).update(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), any(), eq(false));
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderServiceProxy).update(eq(ReferenceType.DOMAIN), eq(domainId), eq(BROWNFIELD_ID), any(), any(), eq(false));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(false));
     }
 
     @Test
@@ -238,8 +256,8 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("id:" + BROWNFIELD_ID));
 
         assertEquals(404, response.getStatus());
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
-        verify(identityProviderService, never()).update(any(), anyString(), anyString(), any(), any(), anyBoolean());
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderServiceProxy, never()).update(any(), anyString(), anyString(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -256,7 +274,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(identityProviderService, never())
+        verify(identityProviderServiceProxy, never())
                 .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
     }
 
@@ -266,14 +284,12 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
-        doThrow(InvalidPluginConfigurationException.fromValidationError("not valid"))
-                .when(validationService).validate(eq("inline-am-idp"), anyString());
+        when(identityProviderServiceProxy.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
+                .thenReturn(Single.error(InvalidPluginConfigurationException.fromValidationError("not valid")));
 
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("dev-users"));
 
         assertEquals(400, response.getStatus());
-        verify(identityProviderService, never())
-                .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
     }
 
     @Test
@@ -294,7 +310,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertTrue(response.readEntity(String.class)
                 .contains("Field 'configuration' is required for a non-system identity provider"));
         verify(validationService, never()).validate(any(), any());
-        verify(identityProviderService, never())
+        verify(identityProviderServiceProxy, never())
                 .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
     }
 
@@ -315,7 +331,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
                 .contains("The 'type' is immutable for an existing identity provider 'dev-users'"));
         verify(identityProviderManager, never()).checkPluginDeployment(anyString());
         verify(validationService, never()).validate(anyString(), anyString());
-        verify(identityProviderService, never())
+        verify(identityProviderServiceProxy, never())
                 .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
     }
 
@@ -328,14 +344,14 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.empty());
         when(identityProviderManager.isExternalProvider(eq("inline-am-idp"))).thenReturn(true);
-        when(identityProviderService.create(any(Domain.class), any(), any(), eq(false)))
+        when(identityProviderServiceProxy.create(any(Domain.class), any(), any(), eq(false)))
                 .thenReturn(Single.just(idp(idpId, "social-login", ManagedBy.AUTOMATION_API)));
 
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("social-login"));
 
         assertEquals(200, response.getStatus());
         ArgumentCaptor<NewIdentityProvider> captor = ArgumentCaptor.forClass(NewIdentityProvider.class);
-        verify(identityProviderService).create(any(Domain.class), captor.capture(), any(), eq(false));
+        verify(identityProviderServiceProxy).create(any(Domain.class), captor.capture(), any(), eq(false));
         assertTrue(captor.getValue().isExternal());
     }
 
@@ -346,31 +362,129 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.empty());
         when(identityProviderManager.isExternalProvider(eq("inline-am-idp"))).thenReturn(false);
-        when(identityProviderService.create(any(Domain.class), any(), any(), eq(false)))
+        when(identityProviderServiceProxy.create(any(Domain.class), any(), any(), eq(false)))
                 .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
 
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("dev-users"));
 
         assertEquals(200, response.getStatus());
         ArgumentCaptor<NewIdentityProvider> captor = ArgumentCaptor.forClass(NewIdentityProvider.class);
-        verify(identityProviderService).create(any(Domain.class), captor.capture(), any(), eq(false));
+        verify(identityProviderServiceProxy).create(any(Domain.class), captor.capture(), any(), eq(false));
         assertFalse(captor.getValue().isExternal());
     }
 
     @Test
-    void put_update_validates_type_and_configuration() {
+    void put_update_checks_the_plugin_and_leaves_validation_to_the_service() {
         String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
-        when(identityProviderService.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
+        when(identityProviderServiceProxy.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
                 .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
 
         Response response = put(identitiesTarget(DOMAIN_KEY), definition("dev-users"));
 
         assertEquals(200, response.getStatus());
         verify(identityProviderManager).checkPluginDeployment(eq("inline-am-idp"));
-        verify(validationService).validate(eq("inline-am-idp"), eq("{}"));
+        verify(validationService, never()).validate(anyString(), anyString());
+    }
+
+    @Test
+    void list_masks_sensitive_configuration() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(withConfiguration(idp("id-a", "alpha", ManagedBy.AUTOMATION_API), INLINE_CONFIG)));
+        maskSensitiveData();
+
+        Response response = identitiesTarget(DOMAIN_KEY).request().get();
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_INLINE_CONFIG,
+                readListEntity(response, AutomationIdentityProvider.class).get(0).getConfiguration());
+    }
+
+    @Test
+    void put_update_passes_masked_values_to_the_service_unchanged() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+        when(identityProviderServiceProxy.update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false)))
+                .thenReturn(Single.just(withConfiguration(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API), MASKED_INLINE_CONFIG)));
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setConfiguration(MASKED_INLINE_CONFIG);
+        Response response = put(identitiesTarget(DOMAIN_KEY), def);
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<UpdateIdentityProvider> captor = ArgumentCaptor.forClass(UpdateIdentityProvider.class);
+        verify(identityProviderServiceProxy).update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), captor.capture(), any(), eq(false));
+        assertEquals(MASKED_INLINE_CONFIG, captor.getValue().getConfiguration());
+        assertEquals(MASKED_INLINE_CONFIG, readEntity(response, AutomationIdentityProvider.class).getConfiguration());
+    }
+
+    @Test
+    void put_create_rejects_a_masked_sensitive_value() {
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        maskSensitiveData();
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setConfiguration(MASKED_INLINE_CONFIG);
+        Response response = put(identitiesTarget(DOMAIN_KEY), def);
+
+        assertEquals(400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("configuration/users/0/password"));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void put_create_accepts_an_asterisk_in_a_field_that_is_not_sensitive() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        String configuration = "{\"users\":[{\"username\":\"*\",\"password\":\"secret\"}]}";
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        maskSensitiveData();
+        when(identityProviderServiceProxy.create(any(Domain.class), any(), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        AutomationIdentityProvider def = definition("dev-users");
+        def.setConfiguration(configuration);
+        Response response = put(identitiesTarget(DOMAIN_KEY), def);
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void put_creates_system_and_masks_its_configuration() {
+        String systemIdpId = AutomationIds.systemIdentityProviderId(domainId);
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(defaultIdentityProviderService.create(any(Domain.class), eq("sys-idp"), any()))
+                .thenReturn(Single.just(withConfiguration(idp(systemIdpId, "sys-idp", ManagedBy.AUTOMATION_API, true), INLINE_CONFIG)));
+        maskSensitiveData();
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), systemDefinition("sys-idp"));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_INLINE_CONFIG, readEntity(response, AutomationIdentityProvider.class).getConfiguration());
+    }
+
+    @Test
+    void put_system_no_op_masks_its_configuration() {
+        String systemIdpId = AutomationIds.systemIdentityProviderId(domainId);
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.just(withConfiguration(idp(systemIdpId, "sys-idp", ManagedBy.AUTOMATION_API, true), INLINE_CONFIG)));
+        maskSensitiveData();
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), systemDefinition("sys-idp"));
+
+        assertEquals(200, response.getStatus());
+        assertEquals(MASKED_INLINE_CONFIG, readEntity(response, AutomationIdentityProvider.class).getConfiguration());
     }
 
     @Test
@@ -387,7 +501,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertEquals(200, response.getStatus());
         assertTrue(readEntity(response, AutomationIdentityProvider.class).isSystem());
         // The payload path must never run for a system create.
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(true));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(true));
     }
 
     @Test
@@ -451,9 +565,9 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), systemDefinition("sys-idp"));
 
         assertEquals(200, response.getStatus());
-        verify(identityProviderService, never())
+        verify(identityProviderServiceProxy, never())
                 .update(eq(ReferenceType.DOMAIN), anyString(), anyString(), any(), any(), anyBoolean());
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(true));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(true));
         verify(defaultIdentityProviderService, never()).create(any(Domain.class), anyString(), any());
     }
 
@@ -482,7 +596,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         Response response = put(identitiesTarget(DOMAIN_KEY), def);
 
         assertEquals(400, response.getStatus());
-        verify(identityProviderService, never()).create(any(Domain.class), any(), any(), eq(false));
+        verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), eq(false));
     }
 
     @Test
@@ -500,7 +614,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class)
                 .contains("The 'system' flag is immutable for an existing identity provider 'dev-users'"));
-        verify(identityProviderService, never())
+        verify(identityProviderServiceProxy, never())
                 .update(eq(ReferenceType.DOMAIN), eq(domainId), eq(idpId), any(), any(), eq(false));
     }
 
@@ -519,7 +633,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class)
                 .contains("The 'system' flag is immutable for an existing identity provider 'sys-idp'"));
-        verify(identityProviderService, never())
+        verify(identityProviderServiceProxy, never())
                 .update(eq(ReferenceType.DOMAIN), anyString(), anyString(), any(), any(), anyBoolean());
     }
 
