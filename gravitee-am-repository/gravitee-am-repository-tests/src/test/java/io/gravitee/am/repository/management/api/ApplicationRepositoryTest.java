@@ -213,6 +213,28 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValue(s -> s.getId().equals(appCreated.getId()));
     }
 
+    @Test
+    public void testFindById_identityProvidersWithEqualPrioritiesAreOrderedByIdentity() {
+        Application app = new Application();
+        app.setName("testApp");
+        app.setDomain("testDomain");
+        app.setIdentityProviders(Stream.of("idp-b", "idp-a").map(identity -> {
+            var appIdp = new ApplicationIdentityProvider();
+            appIdp.setIdentity(identity);
+            appIdp.setPriority(0);
+            return appIdp;
+        }).collect(toCollection(TreeSet::new)));
+        Application appCreated = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(appCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> a.getIdentityProviders().stream().map(ApplicationIdentityProvider::getIdentity).toList()
+                .equals(List.of("idp-a", "idp-b")));
+    }
+
     private void assertEqualsTo(Application app, TestObserver<Application> testObserver) {
         testObserver.assertValue(a -> a.getName().equals(app.getName()));
         testObserver.assertValue(a -> a.getType().equals(app.getType()));

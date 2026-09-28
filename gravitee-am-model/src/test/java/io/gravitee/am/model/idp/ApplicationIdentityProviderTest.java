@@ -55,6 +55,35 @@ public class ApplicationIdentityProviderTest {
                 addedLowestFirst, addedHighestFirst);
     }
 
+    @Test
+    public void providersWithEqualPrioritiesAreOrderedByIdentityWhicheverOrderTheyWereAddedIn() {
+        assertEquals(List.of("idp-a", "idp-b"), identitiesOf(provider("idp-a", 0), provider("idp-b", 0)));
+        assertEquals(List.of("idp-a", "idp-b"), identitiesOf(provider("idp-b", 0), provider("idp-a", 0)));
+    }
+
+    @Test
+    public void providersWithNegativePrioritiesAreOrderedLastWhicheverOrderTheyWereAddedIn() {
+        List<String> expected = List.of("idp-low", "idp-high", "idp-neg-5", "idp-neg-1");
+
+        assertEquals(expected, identitiesOf(
+                provider("idp-neg-1", -1), provider("idp-low", 1), provider("idp-neg-5", -5), provider("idp-high", 9)));
+        assertEquals(expected, identitiesOf(
+                provider("idp-high", 9), provider("idp-neg-5", -5), provider("idp-low", 1), provider("idp-neg-1", -1)));
+    }
+
+    @Test
+    public void providersThatDifferOnlyBySelectionRuleAreBothKeptInAStableOrder() {
+        var withoutRule = provider("idp-a", 0);
+        var withRule = provider("idp-a", 0);
+        withRule.setSelectionRule("{#request.params['tenant'][0] == 'acme'}");
+
+        SortedSet<ApplicationIdentityProvider> addedWithoutRuleFirst = new TreeSet<>(List.of(withoutRule, withRule));
+        SortedSet<ApplicationIdentityProvider> addedWithRuleFirst = new TreeSet<>(List.of(withRule, withoutRule));
+
+        assertEquals(List.of(withoutRule, withRule), List.copyOf(addedWithoutRuleFirst));
+        assertEquals(List.of(withoutRule, withRule), List.copyOf(addedWithRuleFirst));
+    }
+
     private static ApplicationIdentityProvider provider(String identity, int priority) {
         var appIdp = new ApplicationIdentityProvider();
         appIdp.setIdentity(identity);
