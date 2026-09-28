@@ -4,8 +4,6 @@ alwaysApply: true
 ---
 # Backend Architecture (Java/RxJava/Vert.x)
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Layering
 
 - Respect layer order: **Repository → Service → Resource**.
