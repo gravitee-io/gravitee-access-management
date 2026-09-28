@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,14 @@ public final class OAuth2RequestParams {
 
     public static Map<String, Object> of(OAuth2Request oAuth2Request) {
         return of(oAuth2Request, null);
+    }
+
+    public static Map<String, Object> ofFailure(OAuth2Request oAuth2Request, Throwable failure) {
+        Map<String, Object> params = of(oAuth2Request);
+        if (failure instanceof PolicyChainException policyFailure && policyFailure.parameters() != null) {
+            putAdditionalData(params, policyFailure.parameters().get(ConstantKeys.POLICY_AUDIT_DATA));
+        }
+        return params;
     }
 
     public static Map<String, Object> of(OAuth2Request oAuth2Request, CertificateInfo certificateInfo) {
@@ -66,7 +75,7 @@ public final class OAuth2RequestParams {
             addTokenExchangeParams(params, oAuth2Request);
         }
 
-        addAdditionalData(params, oAuth2Request);
+        putAdditionalDataFromExecutionContext(params, oAuth2Request);
 
         return params;
     }
@@ -92,12 +101,21 @@ public final class OAuth2RequestParams {
         }
     }
 
-    private static void addAdditionalData(Map<String, Object> params, OAuth2Request oAuth2Request) {
+    private static void putAdditionalDataFromExecutionContext(Map<String, Object> params, OAuth2Request oAuth2Request) {
         Map<String, Object> executionContext = oAuth2Request.getExecutionContext();
-        if (executionContext != null
-                && executionContext.get(ConstantKeys.POLICY_AUDIT_DATA) instanceof Map<?, ?> additionalData
-                && !additionalData.isEmpty()) {
-            params.put(ADDITIONAL_DATA, new HashMap<>(additionalData));
+        if (executionContext != null) {
+            putAdditionalData(params, executionContext.get(ConstantKeys.POLICY_AUDIT_DATA));
+        }
+    }
+
+    private static void putAdditionalData(Map<String, Object> params, Object candidate) {
+        if (candidate instanceof Map<?, ?> additionalData && !additionalData.isEmpty()) {
+            Map<Object, Object> merged = new HashMap<>();
+            if (params.get(ADDITIONAL_DATA) instanceof Map<?, ?> existing) {
+                merged.putAll(existing);
+            }
+            merged.putAll(additionalData);
+            params.put(ADDITIONAL_DATA, merged);
         }
     }
 
