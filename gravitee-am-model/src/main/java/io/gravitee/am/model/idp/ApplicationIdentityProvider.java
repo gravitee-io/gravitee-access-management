@@ -16,13 +16,23 @@
 
 package io.gravitee.am.model.idp;
 
+import java.util.Comparator;
 import java.util.Objects;
+
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsFirst;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ApplicationIdentityProvider implements Comparable<ApplicationIdentityProvider> {
+
+    private static final Comparator<ApplicationIdentityProvider> ORDER = Comparator
+            .comparing((ApplicationIdentityProvider appIdp) -> appIdp.getPriority() < 0)
+            .thenComparingInt(ApplicationIdentityProvider::getPriority)
+            .thenComparing(ApplicationIdentityProvider::getIdentity, nullsFirst(naturalOrder()))
+            .thenComparing(ApplicationIdentityProvider::getSelectionRule, nullsFirst(naturalOrder()));
 
     private String identity;
     private String selectionRule;
@@ -67,12 +77,6 @@ public class ApplicationIdentityProvider implements Comparable<ApplicationIdenti
 
     @Override
     public int compareTo(ApplicationIdentityProvider o) {
-        if (this.equals(o)) {
-            return 0;
-        }
-        if (this.priority < 0 || this.priority >= o.priority) {
-            return 1;
-        }
-        return -1;
+        return ORDER.compare(this, o);
     }
 }
