@@ -5,8 +5,6 @@ globs: "gravitee-am-ui/**,**/*.component.ts,**/*.service.ts,**/*.module.ts,**/*.
 ---
 # Frontend (Angular/TypeScript)
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Structure
 
 - Place new files by matching existing feature/module structure; check similar features first.

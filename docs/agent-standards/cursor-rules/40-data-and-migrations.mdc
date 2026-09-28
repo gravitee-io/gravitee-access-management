@@ -5,8 +5,6 @@ globs: "**/*Repository*.java,**/repository/**,**/liquibase/**,**/*changelog*.xml
 ---
 # Data & Migrations
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Repository Patterns
 
 - Repository interfaces extend `CrudRepository<T, String>` unless established patterns differ.

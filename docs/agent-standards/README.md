@@ -60,7 +60,7 @@ Both tools share skills via symlinks:
 00-context.mdc          # Global (always on)
 10-workflow.mdc         # Global (always on)
 20-safety-security.mdc  # Global (always on)
-30-*.mdc                # Domain-specific (conditional)
+30-*.mdc                # Domain-specific (see each file's alwaysApply / globs)
 ```
 
 Numbers indicate loading order.
