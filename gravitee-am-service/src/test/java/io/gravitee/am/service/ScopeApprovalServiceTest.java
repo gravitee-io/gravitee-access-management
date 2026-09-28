@@ -47,18 +47,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-<<<<<<< HEAD
-=======
 import static org.junit.Assert.assertFalse;
->>>>>>> d7d2070 (fix: scope consent lookups to the requested user)
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
-<<<<<<< HEAD
 import static org.mockito.Mockito.timeout;
-=======
->>>>>>> d7d2070 (fix: scope consent lookups to the requested user)
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -255,7 +249,7 @@ public class ScopeApprovalServiceTest {
         when(scopeApprovalRepository.delete(CONSENT_ID)).thenReturn(Completable.complete());
         when(scopeApprovalRepository.findById(CONSENT_ID)).thenReturn(Maybe.just(scopeApproval));
 
-        TestObserver testObserver = scopeApprovalService.revokeByConsent(new Domain(DOMAIN_ID), UserId.internal("user-id"), CONSENT_ID, (domain, revokeToken) -> Completable.complete(), null).test();
+        TestObserver testObserver = scopeApprovalService.revokeByConsent(new Domain(DOMAIN_ID), UserId.internal("user-id"), CONSENT_ID, (domain, revokeToken) -> Completable.complete(), new DefaultUser("user-id")).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -343,7 +337,6 @@ public class ScopeApprovalServiceTest {
         testObserver.assertError(UserNotFoundException.class);
     }
 
-<<<<<<< HEAD
     @Test
     public void shouldRevokeByClient() {
         when(scopeApprovalRepository.deleteByDomainAndClient(DOMAIN_ID, "client-id")).thenReturn(Completable.complete());
@@ -369,11 +362,11 @@ public class ScopeApprovalServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
         verify(auditService, timeout(3_000).times(1)).report(any(UserConsentAuditBuilder.class));
-=======
+    }
+
     private static User user(String id) {
         User user = new User();
         user.setId(id);
         return user;
->>>>>>> d7d2070 (fix: scope consent lookups to the requested user)
     }
 }

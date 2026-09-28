@@ -20,11 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-<<<<<<< HEAD
-=======
 import io.gravitee.am.model.UserId;
-import io.gravitee.am.model.oauth2.Scope;
->>>>>>> d7d2070 (fix: scope consent lookups to the requested user)
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
@@ -64,14 +60,8 @@ public class UserConsentResourceTest extends JerseySpringTest {
         scopeApproval.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-<<<<<<< HEAD
-        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(mockDomain, scopeApproval.getId());
-        doReturn(Single.just(new ApplicationEntity(mockClient))).when(consentApplicationEntityFactory).resolve(domainId, scopeApproval.getClientId());
-=======
-        doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
-        doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
         doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findByIdAndUser(mockDomain, scopeApproval.getId(), mockUser.getFullId());
->>>>>>> d7d2070 (fix: scope consent lookups to the requested user)
+        doReturn(Single.just(new ApplicationEntity(mockClient))).when(consentApplicationEntityFactory).resolve(domainId, scopeApproval.getClientId());
 
         final Response response = target("domains")
                 .path(domainId)
