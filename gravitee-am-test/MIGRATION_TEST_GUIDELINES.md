@@ -22,9 +22,9 @@ The migration tool (`scripts/migration-test.mjs`) drives a K8s stack through the
 | 2 | `seed-alpha` | from | from | seeds covering the from version, label `alpha` |
 | 3 | `verify-alpha` | from | from | `specs/migration`, label `alpha` |
 | 4 | `upgrade-mapi` | **to** | from | – |
-| 5 | `seed-beta` | to | from | seeds covering the to version, label `beta` |
-| 6 | `verify-alpha`, `verify-beta` | to | from | `specs/migration` per label |
-| 7 | `upgrade-gw` | to | **to** | – |
+| 5 | `verify-alpha` | to | from | `specs/migration`, label `alpha` |
+| 6 | `upgrade-gw` | to | **to** | – |
+| 7 | `seed-beta` | to | to | seeds covering the to version, label `beta` |
 | 8 | `verify-alpha`, `verify-beta` | to | to | `specs/migration` per label |
 | 9 | `downgrade-gw` + verify both *(`--with-downgrade`)* | to | **from** | |
 | 10 | `downgrade-mapi` + verify both *(`--with-downgrade`)* | **from** | from | |
@@ -34,7 +34,11 @@ Consequences every test author must keep in mind:
 - There are two **channels** of data. `alpha` is seeded by the **from** version, `beta` by the
   **to** version. The same spec file verifies both, several times.
 - An assertion can face **old data on a new component** (alpha after an upgrade) and **new data on
-  an old component** (beta before `upgrade-gw`, or after a downgrade).
+  an old component** (beta after a downgrade).
+- The transition (Management API upgraded, gateways not yet) only asserts data that existed before
+  the upgrade. The to version's new write paths are only used once every node runs it, so `beta` is
+  seeded after `upgrade-gw`; what those writes must guarantee to an older component is that the
+  data is still readable after a downgrade (e.g. mirrored into the legacy representation).
 - Seeding always runs from the **current checkout**, never from the tag. A version seeds every data
   set whose declared version range covers it, compared on major.minor (`4.13.0-alpha.4` is 4.13).
   A version no data set covers fails the seed stage.
