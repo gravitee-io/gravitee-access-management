@@ -187,6 +187,21 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
 
     @Override
+    public Single<Certificate> validateCreate(Domain domain, NewCertificate newCertificate) {
+        return certificateService.validateCreate(domain, newCertificate, false)
+                .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
+    public Single<Certificate> validateUpdate(Domain domain, String id, UpdateCertificate updateCertificate) {
+        return certificateService.findById(id)
+                .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
+                .flatMap(oldCertificate -> updateSensitiveData(updateCertificate, oldCertificate))
+                .flatMap(certificateToUpdate -> certificateService.validateUpdate(domain, id, certificateToUpdate))
+                .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
     public Completable delete(String certificateId, User principal) {
         return certificateService.delete(certificateId, principal);
     }
@@ -196,7 +211,8 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
         return certificateService.rotate(domain, principal);
     }
 
-    private Single<Certificate> filterSensitiveData(Certificate cert) {
+    @Override
+    public Single<Certificate> filterSensitiveData(Certificate cert) {
         return certificatePluginService.getSchema(cert.getType())
                 .map(schema -> {
                     // Duplicate the object to avoid side effect

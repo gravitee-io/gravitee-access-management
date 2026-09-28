@@ -196,7 +196,8 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderService.findByCertificate(reference, id);
     }
 
-    private Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
+    @Override
+    public Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
         return identityProviderPluginService.getSchema(idp.getType())
                 .map(Optional::ofNullable)
                 .defaultIfEmpty(Optional.empty())

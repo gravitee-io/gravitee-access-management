@@ -18,14 +18,17 @@ package io.gravitee.am.management.handlers.automation.resource;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.automation.mapper.AutomationCertificateMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
+import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.model.AutomationNewCertificate;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -69,6 +72,12 @@ public class CertificatesResource extends AbstractAutomationResource {
     @Autowired
     private CertificateService certificateService;
 
+    @Autowired
+    private CertificateServiceProxy certificateServiceProxy;
+
+    @Autowired
+    private PluginConfigurationValidationService validationService;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationListCertificates", summary = "List a domain's certificates",
@@ -91,6 +100,7 @@ public class CertificatesResource extends AbstractAutomationResource {
                         .filter(certificate -> certificate.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(
                                 nullToEmpty(o1.getAutomationKey()), nullToEmpty(o2.getAutomationKey())))
+                        .concatMapSingle(certificateServiceProxy::filterSensitiveData)
                         .map(AutomationCertificateMapper::toAutomationCertificate)
                         .toList())
                 .subscribe(response::resume, response::resume);
@@ -184,13 +194,14 @@ public class CertificatesResource extends AbstractAutomationResource {
         }
         if (existing.isSystem()) {
             // re-PUT is an idempotent no-op
-            return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
+            return certificateServiceProxy.filterSensitiveData(existing)
+                    .map(AutomationCertificateMapper::toAutomationCertificate);
         }
         Single<AutomationCertificate> updateRejection = rejectIfMissingCertificateFields(definition, key);
         if (updateRejection != null) {
             return updateRejection;
         }
-        return certificateService.update(domain, existing.getId(),
+        return certificateServiceProxy.update(domain, existing.getId(),
                         AutomationCertificateMapper.toUpdateCertificate(definition), principal)
                 .map(AutomationCertificateMapper::toAutomationCertificate);
     }
@@ -204,6 +215,7 @@ public class CertificatesResource extends AbstractAutomationResource {
         }
         if (definition.isSystem()) {
             return certificateService.createSystem(domain, certId, key, principal)
+                    .flatMap(certificateServiceProxy::filterSensitiveData)
                     .map(AutomationCertificateMapper::toAutomationCertificate);
         }
         Single<AutomationCertificate> rejection = rejectIfMissingCertificateFields(definition, key);
@@ -212,7 +224,9 @@ public class CertificatesResource extends AbstractAutomationResource {
         }
         AutomationNewCertificate newCertificate = AutomationCertificateMapper.toNewCertificate(definition);
         newCertificate.setId(certId);
-        return certificateService.create(domain, newCertificate, principal, false)
+        return Completable.fromAction(() -> validationService.validate(definition.getType(), definition.getConfiguration()))
+                .andThen(rejectMaskedSensitiveValues(definition))
+                .andThen(Single.defer(() -> certificateServiceProxy.create(domain, newCertificate, principal)))
                 .map(AutomationCertificateMapper::toAutomationCertificate);
     }
 
@@ -225,7 +239,7 @@ public class CertificatesResource extends AbstractAutomationResource {
                     .andThen(resolver.resolveDomain(environmentId, domainRef))
                     .flatMap(domain -> resolver.resolveCertificate(domain, certRef)
                             .flatMap(existing -> dryRunUpdate(domain, existing, definition, key)))
-                    .onErrorReturn(ex -> withErrors(definition, ex));
+                    .onErrorResumeNext(ex -> withMaskedConfiguration(definition).map(masked -> withErrors(masked, ex)));
         }
 
         final String domainId = AutomationIds.domainId(environmentId, domainRef);
@@ -241,7 +255,7 @@ public class CertificatesResource extends AbstractAutomationResource {
                             ? dryRunUpdate(domain, match.get(), definition, key)
                             : dryRunCreate(domain, allExisting, definition, key));
         })
-                .onErrorReturn(ex -> withErrors(definition, ex));
+                .onErrorResumeNext(ex -> withMaskedConfiguration(definition).map(masked -> withErrors(masked, ex)));
     }
 
     private Single<AutomationCertificate> dryRunUpdate(Domain domain, Certificate existing,
@@ -251,13 +265,14 @@ public class CertificatesResource extends AbstractAutomationResource {
             return immutableRejection;
         }
         if (existing.isSystem()) {
-            return Single.just(AutomationCertificateMapper.toAutomationCertificate(existing));
+            return certificateServiceProxy.filterSensitiveData(existing)
+                    .map(AutomationCertificateMapper::toAutomationCertificate);
         }
         Single<AutomationCertificate> rejection = rejectIfMissingCertificateFields(definition, key);
         if (rejection != null) {
             return rejection;
         }
-        return certificateService.validateUpdate(domain, existing.getId(), AutomationCertificateMapper.toUpdateCertificate(definition))
+        return certificateServiceProxy.validateUpdate(domain, existing.getId(), AutomationCertificateMapper.toUpdateCertificate(definition))
                 .map(AutomationCertificateMapper::toAutomationCertificate);
     }
 
@@ -278,7 +293,9 @@ public class CertificatesResource extends AbstractAutomationResource {
         }
         AutomationNewCertificate newCertificate = AutomationCertificateMapper.toNewCertificate(definition);
         newCertificate.setId(certId);
-        return certificateService.validateCreate(domain, newCertificate, false)
+        return Completable.fromAction(() -> validationService.validate(definition.getType(), definition.getConfiguration()))
+                .andThen(rejectMaskedSensitiveValues(definition))
+                .andThen(Single.defer(() -> certificateServiceProxy.validateCreate(domain, newCertificate)))
                 .map(AutomationCertificateMapper::toAutomationCertificate);
     }
 
@@ -311,6 +328,37 @@ public class CertificatesResource extends AbstractAutomationResource {
                     "The domain already has a system certificate"));
         }
         return null;
+    }
+
+    /**
+     * Masks the definition's configuration for a dry-run error response; a configuration that cannot be
+     * masked is dropped.
+     */
+    private Single<AutomationCertificate> withMaskedConfiguration(AutomationCertificate definition) {
+        if (isBlank(definition.getConfiguration())) {
+            return Single.just(definition);
+        }
+        Certificate submitted = new Certificate();
+        submitted.setType(definition.getType());
+        submitted.setConfiguration(definition.getConfiguration());
+        return certificateServiceProxy.filterSensitiveData(submitted)
+                .map(masked -> masked.getConfiguration())
+                .onErrorReturnItem("")
+                .map(configuration -> {
+                    definition.setConfiguration(configuration.isEmpty() ? null : configuration);
+                    return definition;
+                });
+    }
+
+    private Completable rejectMaskedSensitiveValues(AutomationCertificate definition) {
+        return Completable.defer(() -> {
+            Certificate submitted = new Certificate();
+            submitted.setType(definition.getType());
+            submitted.setConfiguration(definition.getConfiguration());
+            return certificateServiceProxy.filterSensitiveData(submitted)
+                    .flatMapCompletable(masked -> MaskedValueGuard.rejectMaskedSensitiveValues(
+                            definition.getConfiguration(), masked.getConfiguration()));
+        });
     }
 
     private static Single<AutomationCertificate> rejectIfMissingCertificateFields(AutomationCertificate definition, String key) {

@@ -15,11 +15,18 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IdentityProviderServiceProxy extends IdentityProviderService {
+
+    /**
+     * Returns a copy of the identity provider with its sensitive configuration values masked.
+     */
+    Single<IdentityProvider> filterSensitiveData(IdentityProvider identityProvider);
 }

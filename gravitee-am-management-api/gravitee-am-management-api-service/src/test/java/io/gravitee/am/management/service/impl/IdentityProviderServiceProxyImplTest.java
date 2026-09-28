@@ -108,6 +108,17 @@ class IdentityProviderServiceProxyImplTest {
     }
 
     @Test
+    void shouldMaskACopyAndLeaveTheGivenIdentityProviderUntouched() {
+        var idp = buildIdp("{\"secret\":\"value\"}");
+        when(identityProviderPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        var masked = service.filterSensitiveData(idp).blockingGet();
+
+        assertThat(maskedSecret(masked.getConfiguration())).isEqualTo("********");
+        assertThat(idp.getConfiguration()).isEqualTo("{\"secret\":\"value\"}");
+    }
+
+    @Test
     void shouldUpdateIdentityProviderAndMaskConfiguration() {
         reset(auditService);
         var principal = mock(User.class);
