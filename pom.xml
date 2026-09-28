@@ -114,14 +114,14 @@
         <commons-cli.version>1.4</commons-cli.version>
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
-        <liquibase.version>4.31.1</liquibase.version>
+        <liquibase.version>4.33.0</liquibase.version>
 
         <!-- R2DBC dependencies -->
-        <spring-data-r2dbc.version>3.4.5</spring-data-r2dbc.version>
+        <spring-data-r2dbc.version>3.4.13</spring-data-r2dbc.version>
         <reactor-adapter.version>3.5.4</reactor-adapter.version>
-        <reactor-core.version>3.7.5</reactor-core.version>
-        <reactor.version>3.7.5</reactor.version>
-        <reactor-netty.version>1.2.11</reactor-netty.version>
+        <reactor-core.version>3.7.19</reactor-core.version>
+        <reactor.version>3.7.19</reactor.version>
+        <reactor-netty.version>1.2.18</reactor-netty.version>
 
         <!--
         JDBC driver version, used by TestContainer.
