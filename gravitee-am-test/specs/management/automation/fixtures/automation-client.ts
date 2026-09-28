@@ -63,8 +63,8 @@ export class AutomationClient {
     return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/identities`, this.headers());
   }
 
-  putIdentity(domainKey: string, definition: object) {
-    return performPut(automationUrl(), `${envPath()}/domains/${domainKey}/identities`, definition, this.headers());
+  putIdentity(domainKey: string, definition: object, query = '') {
+    return performPut(automationUrl(), `${envPath()}/domains/${domainKey}/identities${query}`, definition, this.headers());
   }
 
   getIdentity(domainKey: string, identityKey: string) {

@@ -15,10 +15,18 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ReporterServiceProxy extends ReporterService {}
+public interface ReporterServiceProxy extends ReporterService {
+
+    /**
+     * Returns a copy of the reporter with its sensitive configuration values masked.
+     */
+    Single<Reporter> filterSensitiveData(Reporter reporter);
+}

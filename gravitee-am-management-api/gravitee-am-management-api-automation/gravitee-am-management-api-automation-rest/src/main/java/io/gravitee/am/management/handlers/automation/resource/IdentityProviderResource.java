@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.mapper.AutomationIdentityProviderMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationIdentityProvider;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
@@ -47,6 +48,9 @@ public class IdentityProviderResource extends AbstractAutomationResource {
     @Autowired
     private IdentityProviderService identityProviderService;
 
+    @Autowired
+    private IdentityProviderServiceProxy identityProviderServiceProxy;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetIdentityProvider", summary = "Get an identity provider",
@@ -68,6 +72,7 @@ public class IdentityProviderResource extends AbstractAutomationResource {
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)
                 .andThen(resolver.resolveDomain(environmentId, domainRef))
                 .flatMap(domain -> resolver.resolveIdentityProvider(domain, identityRef)
+                        .flatMap(identityProviderServiceProxy::filterSensitiveData)
                         .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider))
                 .subscribe(response::resume, response::resume);
     }

@@ -37,7 +37,16 @@ public interface CertificateServiceProxy {
 
     Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal);
 
+    Single<Certificate> validateCreate(Domain domain, NewCertificate newCertificate);
+
+    Single<Certificate> validateUpdate(Domain domain, String id, UpdateCertificate updateCertificate);
+
     Completable delete(String certificateId, User principal);
 
     Single<Certificate> rotate(Domain domain, User principal);
+
+    /**
+     * Returns a copy of the certificate with its sensitive configuration values masked.
+     */
+    Single<Certificate> filterSensitiveData(Certificate certificate);
 }

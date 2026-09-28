@@ -188,6 +188,36 @@ class CertificateServiceProxyImplTest {
         assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
     }
 
+    @Test
+    void shouldValidateUpdateWithTheStoredSecretAndMaskTheResult() {
+        var domain = new Domain();
+        domain.setId(TEST_DOMAIN);
+        var update = new UpdateCertificate();
+        update.setName("updated");
+        update.setType("cert");
+        update.setConfiguration("{\"storepass\":\"********\"}");
+
+        var existing = minimalCert();
+        existing.setId("cert-id");
+        existing.setType("cert");
+        existing.setConfiguration("{\"storepass\":\"stored-secret\"}");
+        when(certService.findById("cert-id")).thenReturn(Maybe.just(existing));
+        when(certPluginService.getSchema(anyString()))
+                .thenReturn(Maybe.just("{\"properties\":{\"storepass\":{\"type\":\"string\",\"sensitive\":true}}}"));
+        when(certService.validateUpdate(eq(domain), eq("cert-id"), any())).thenAnswer(invocation -> {
+            var validated = new Certificate(existing);
+            validated.setConfiguration(invocation.<UpdateCertificate>getArgument(2).getConfiguration());
+            return Single.just(validated);
+        });
+
+        var result = certificateServiceProxy().validateUpdate(domain, "cert-id", update).blockingGet();
+
+        ArgumentCaptor<UpdateCertificate> validated = ArgumentCaptor.forClass(UpdateCertificate.class);
+        verify(certService).validateUpdate(eq(domain), eq("cert-id"), validated.capture());
+        assertThat(validated.getValue().getConfiguration()).isEqualTo("{\"storepass\":\"stored-secret\"}");
+        assertThat(result.getConfiguration()).isEqualTo("{\"storepass\":\"********\"}");
+    }
+
     private CertificateServiceProxyImpl certificateServiceProxy() {
         return new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, auditService, objectMapper, settings);
     }

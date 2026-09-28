@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.mapper.AutomationCertificateMapper;
 import io.gravitee.am.management.handlers.automation.model.AutomationCertificate;
+import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
@@ -46,6 +47,9 @@ public class CertificateResource extends AbstractAutomationResource {
     @Autowired
     private CertificateService certificateService;
 
+    @Autowired
+    private CertificateServiceProxy certificateServiceProxy;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "automationGetCertificate", summary = "Get a certificate",
@@ -67,6 +71,7 @@ public class CertificateResource extends AbstractAutomationResource {
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.READ)
                 .andThen(resolver.resolveDomain(environmentId, domainRef))
                 .flatMap(domain -> resolver.resolveCertificate(domain, certRef)
+                        .flatMap(certificateServiceProxy::filterSensitiveData)
                         .map(AutomationCertificateMapper::toAutomationCertificate))
                 .subscribe(response::resume, response::resume);
     }
