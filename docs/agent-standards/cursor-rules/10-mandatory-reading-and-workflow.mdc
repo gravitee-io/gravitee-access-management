@@ -4,8 +4,6 @@ alwaysApply: true
 ---
 # Workflow
 
-> This rule is the source of truth for Cursor agent behaviour. Templates and commands are supporting references.
-
 ## Before Any Implementation
 
 - Produce a short plan (goal + steps + files + tests + validation criteria).
