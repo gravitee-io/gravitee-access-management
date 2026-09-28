@@ -45,22 +45,25 @@ supported and fail fast — use a plain tag.
 2. **k8s:setup** – (K8s only) Create namespace, deploy DB (MongoDB or PostgreSQL), create auth/license secrets; skip for Docker Compose.
 3. **deploy-from** – Deploy AM at “from” tag (K8s: 1 Management API + 2 Gateways; Docker: 1 API + 1 Gateway). K8s starts port-forwards.
 4. **seed-alpha** – Seed deterministic data for the “from” minor version (creates the alpha domain).
-5. **verify-all-alpha** – Verify the alpha domain on the full “from” stack.
+5. **verify-alpha** – Verify the alpha domain on the full “from” stack.
 6. **upgrade-mapi** – Upgrade Management API to “to” tag.
-7. **seed-beta** – Seed deterministic data for the “to” minor version (creates the beta domain).
-8. **verify-mapi-alpha** – Verify the alpha domain with MAPI on “to”, Gateways still on “from”.
-9. **verify-mapi-beta** – Verify the beta domain with MAPI on “to”, Gateways still on “from”.
-10. **upgrade-gw** – Upgrade Gateways to “to” tag.
-11. **verify-all-alpha** – Verify the alpha domain on the full “to” stack.
-12. **verify-all-beta** – Verify the beta domain on the full “to” stack.
+7. **verify-alpha** – Verify the alpha domain with MAPI on “to”, Gateways still on “from”.
+8. **upgrade-gw** – Upgrade Gateways to “to” tag.
+9. **seed-beta** – Seed deterministic data for the “to” minor version (creates the beta domain).
+10. **verify-alpha** – Verify the alpha domain on the full “to” stack.
+11. **verify-beta** – Verify the beta domain on the full “to” stack.
+
+The beta channel is seeded only once every node runs the “to” tag: while the Management API is upgraded
+and the Gateways are not, only data that existed before the upgrade is asserted. Data written with the
+“to” tag's own methods is read by an older Gateway only after a downgrade, below.
 
 #### Optional with `--with-downgrade`
 1. **downgrade-gw** – Downgrade Gateways back to “from” tag.
-2. **verify-all-alpha** – Verify the alpha domain (Gateways on “from”, MAPI still on “to”).
-3. **verify-all-beta** – Verify the beta domain (Gateways on “from”, MAPI still on “to”).
+2. **verify-alpha** – Verify the alpha domain (Gateways on “from”, MAPI still on “to”).
+3. **verify-beta** – Verify the beta domain (Gateways on “from”, MAPI still on “to”).
 4. **downgrade-mapi** – Downgrade Management API back to “from” tag.
-5. **verify-all-alpha** – Verify the alpha domain on the full “from” stack.
-6. **verify-all-beta** – Verify the beta domain on the full “from” stack.
+5. **verify-alpha** – Verify the alpha domain on the full “from” stack.
+6. **verify-beta** – Verify the beta domain on the full “from” stack.
 
 > For ad-hoc, single-stage debugging there is also a generic **verify** stage which asserts the channel from `--test-label` (default: `alpha`). It is not part of the default pipeline.
 
@@ -138,7 +141,7 @@ Clean, run K8s setup (DB + namespace + secrets), deploy “from” version. No c
 ```
 
 ### Run full migration
-Runs all stages (clean → setup → deploy-from → seed-alpha → verify-all-alpha → upgrade-mapi → seed-beta → verify-mapi-alpha/beta → upgrade-gw → verify-all-alpha/beta, and optionally downgrade stages). Floating tags (e.g. `latest`, `4.11`) are resolved automatically.
+Runs all stages (clean → setup → deploy-from → seed-alpha → verify-alpha → upgrade-mapi → verify-alpha → upgrade-gw → seed-beta → verify-alpha/beta, and optionally downgrade stages). Floating tags (e.g. `latest`, `4.11`) are resolved automatically.
 ```bash
 ./scripts/migration-test.mjs --provider k8s run
 ./scripts/migration-test.mjs --provider k8s run --db-type postgres --with-downgrade
@@ -187,7 +190,7 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 
 **`--stage <name>`** runs **only that one stage** instead of the full pipeline. Use it to re-run or debug a single step without redoing earlier stages.
 
-- **Without `--stage`:** the tool runs the full list of stages (clean → k8s:setup → deploy-from → … → verify-all-beta, and optionally the downgrade stages if you pass `--with-downgrade`).
+- **Without `--stage`:** the tool runs the full list of stages (clean → k8s:setup → deploy-from → … → verify-beta, and optionally the downgrade stages if you pass `--with-downgrade`).
 - **With `--stage <name>`:** only the stage you name runs; no other stages run.
 
 **Valid stage names:**
@@ -198,20 +201,18 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 | `k8s:setup` | (K8s only) Create namespace, deploy DB (Mongo/Postgres), create auth secrets. Skipped for Docker Compose. |
 | `deploy-from` | Deploy AM at `--from-tag` (e.g. 4.10.0). K8s also starts port-forwards. |
 | `seed-alpha` | Seed deterministic data for the “from” minor version (alpha domain). Starts port-forwards if not already up. *(alias: `seed`)* |
-| `verify-all-alpha` | Verify the **`--from-tag`** (alpha) domain. |
-| `verify-all-beta` | Verify the **`--to-tag`** (beta) domain. |
+| `verify-alpha` | Verify the **`--from-tag`** (alpha) domain. |
+| `verify-beta` | Verify the **`--to-tag`** (beta) domain. |
 | `upgrade-mapi` | Upgrade Management API (and UI) to `--to-tag`. |
 | `seed-beta` | Seed deterministic data for the “to” minor version (beta domain). Floating `--to-tag` values are resolved before this stage runs. *(alias: `seed-upgrade`)* |
-| `verify-mapi-alpha` | Verify the **`--from-tag`** (alpha) domain after MAPI upgrade (Gateways still on “from”). |
-| `verify-mapi-beta` | Verify the **`--to-tag`** (beta) domain after MAPI upgrade (Gateways still on “from”). |
 | `upgrade-gw` | Upgrade Gateways to `--to-tag`. |
 | `downgrade-mapi` | Downgrade MAPI back to `--from-tag`. |
 | `downgrade-gw` | Downgrade Gateways back to `--from-tag`. |
 | `verify` | Generic ad-hoc verify (not in the default pipeline); asserts the channel from `--test-label` (default: `alpha`). |
 
-> `verify-all-alpha` / `verify-all-beta` are reused at several points in the pipeline (initial alpha, post-full-upgrade, and post-downgrade). The stage name picks **which** seeded domain is asserted (`alpha` → `--from-tag`, `beta` → `--to-tag`), independent of where it runs.
+> `verify-alpha` / `verify-beta` are reused at several points in the pipeline (initial alpha, post-MAPI-upgrade, post-full-upgrade, and post-downgrade). The stage name picks **which** seeded domain is asserted (`alpha` → `--from-tag`, `beta` → `--to-tag`), independent of where it runs.
 
-**Caveat:** `--stage` does **not** run previous stages. If you use `--stage verify-all-alpha`, the tool assumes the cluster is already set up and the relevant version is deployed (e.g. you ran `deploy-from`/`upgrade-*` earlier or used `setup`). It is mainly for re-running or debugging one step in an already-prepared environment. Single verify stages start the port-forwards themselves.
+**Caveat:** `--stage` does **not** run previous stages. If you use `--stage verify-alpha`, the tool assumes the cluster is already set up and the relevant version is deployed (e.g. you ran `deploy-from`/`upgrade-*` earlier or used `setup`). It is mainly for re-running or debugging one step in an already-prepared environment. Single verify stages start the port-forwards themselves.
 
 **Examples:**
 
@@ -220,10 +221,10 @@ Requires `CIRCLECI_TOKEN`. Sends parameters (from-tag, to-tag, db-type, provider
 ./scripts/migration-test.mjs run --provider k8s --stage deploy-from
 
 # Only verify the alpha (from-tag) domain (assumes env already deployed)
-./scripts/migration-test.mjs run --provider k8s --stage verify-all-alpha
+./scripts/migration-test.mjs run --provider k8s --stage verify-alpha
 
-# Only verify the beta (to-tag) domain (assumes MAPI already upgraded + seed-beta run)
-./scripts/migration-test.mjs run --provider k8s --to-tag 4.11.8 --stage verify-mapi-beta
+# Only verify the beta (to-tag) domain (assumes the stack already upgraded + seed-beta run)
+./scripts/migration-test.mjs run --provider k8s --to-tag 4.11.8 --stage verify-beta
 
 # Ad-hoc: verify a specific seeded channel via --test-label (alpha or beta)
 ./scripts/migration-test.mjs run --provider k8s --stage verify --test-label beta
@@ -257,7 +258,7 @@ Seed and verify through the orchestrator so the version (`--version`)/label/`AM_
 ./scripts/migration-test.mjs run --provider k8s --to-tag 4.11.8 --stage seed-beta
 
 # Verify an already-seeded channel (alpha = from-tag, beta = to-tag)
-./scripts/migration-test.mjs run --provider k8s --stage verify-all-alpha
+./scripts/migration-test.mjs run --provider k8s --stage verify-alpha
 ```
 
 When running through the migration tool, `AM_MIGRATION_TEST_LABEL` is set automatically per stage (`alpha` for `*-alpha` stages, `beta` for `*-beta` stages; ad-hoc generic verify stages use `--test-label`, default `alpha`).
@@ -373,7 +374,7 @@ See also `docs/agent-standards/commands.md` for canonical build/test and migrati
 
 ## Next steps
 
-- **Fix Docker Compose** – Make the Docker Compose provider functional so the full migration flow (clean → setup → deploy-from → seed → verify-all-alpha → … → verify-all-beta) runs with `--provider docker-compose`. Requires fixing compose file, env, and provider logic to align with the K8s flow.
+- **Fix Docker Compose** – Make the Docker Compose provider functional so the full migration flow (clean → setup → deploy-from → seed-alpha → verify-alpha → … → verify-beta) runs with `--provider docker-compose`. Requires fixing compose file, env, and provider logic to align with the K8s flow.
 - **Fix Jest/K8s environment** – Resolve remaining environment or wiring issues so Jest tests (gravitee-am-test) run reliably against the K8s-deployed AM (management and gateway specs, URLs, ports, dataplane IDs, timeouts). Aim for the full suite (or a well-defined subset) to pass without manual tweaks.
 - **Integrate Gatling performance tests** – Consider integrating the existing Gatling performance tests into the migration flow: use them for data seeding (organisations, applications, users, tokens) before migration runs, and extend the scope of Gatling scenarios to cover migration-specific cases (e.g. upgrade/downgrade behaviour, schema compatibility). Prefer this over creating a new test project dedicated to the migration tool.
 - **Add a `teardown` command** – Add a new command (e.g. `teardown`) that removes the entire Kind cluster (e.g. `kind delete cluster --name am-migration`), so users can fully tear down the K8s environment from the tool instead of running Kind commands manually.

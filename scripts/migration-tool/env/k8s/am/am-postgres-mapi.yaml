@@ -1,5 +1,9 @@
 # MAPI override (PostgreSQL). Use with: helm -f am-postgres-common.yaml -f am-postgres-mapi.yaml
 api:
+  # One replica per component: the chart's default autoscaler scales on memory, which an AM JVM
+  # always exceeds, and 3 replicas of each component exhaust the database connections.
+  autoscaling:
+    enabled: false
   enabled: true
   replicaCount: 1
   image:
@@ -13,6 +17,8 @@ gateway:
   enabled: false
 
 ui:
+  autoscaling:
+    enabled: false
   replicaCount: 1
   image:
     repository: graviteeio/am-management-ui

@@ -258,11 +258,13 @@ const commands = {
             'deploy-from',
             'seed-alpha',
             'verify-alpha',
+            // Transition (Management API upgraded, gateways not yet): only the data that existed before
+            // the upgrade is asserted. The to-tag's own write paths are only used once every node runs
+            // it, so the beta channel is seeded after the gateways are upgraded.
             'upgrade-mapi',
-            'seed-beta',
             'verify-alpha',
-            'verify-beta',
             'upgrade-gw',
+            'seed-beta',
             'verify-alpha',
             'verify-beta',
             ...(options.withDowngrade
@@ -310,13 +312,13 @@ function printHelp() {
     console.log('  --seed-worktree   Seed each tag from a git worktree of that tag instead of the current checkout');
     console.log('  --keep-worktrees  Do not delete the .worktrees/seed-<ref> dirs after the run (debugging)');
     console.log('\nSeeding source:');
-    console.log('  By default every tag is seeded from the current checkout, with the seed module of the tag\'s');
-    console.log('  major.minor (4.13.0-alpha.4 -> versions/4.13; no fallback). With --seed-worktree each tag is');
-    console.log('  seeded from a git worktree of that tag (its own SDK + scripts; npm ci once per worktree);');
-    console.log('  tags predating the migration-seeding framework then fall back to the current checkout.');
+    console.log('  By default every tag is seeded from the current checkout: every data set whose version range covers');
+    console.log('  the tag\'s major.minor (4.13.0-alpha.4 -> 4.13). With --seed-worktree each tag is seeded from a git');
+    console.log('  worktree of that tag (its own SDK + scripts; npm ci once per worktree); tags predating the');
+    console.log('  migration-seeding framework then fall back to the current checkout.');
     console.log('\nStages (default pipeline order):');
-    console.log('  clean, k8s:setup, deploy-from, seed-alpha, verify-alpha, upgrade-mapi, seed-beta,');
-    console.log('  verify-alpha, verify-beta, upgrade-gw, verify-alpha, verify-beta');
+    console.log('  clean, k8s:setup, deploy-from, seed-alpha, verify-alpha, upgrade-mapi, verify-alpha,');
+    console.log('  upgrade-gw, seed-beta, verify-alpha, verify-beta');
     console.log('  (+ with --with-downgrade: downgrade-gw, verify-alpha, verify-beta, downgrade-mapi, verify-alpha, verify-beta)');
     console.log('  alpha = the --from-tag seeded domain; beta = the --to-tag seeded domain');
     console.log('  aliases: seed → seed-alpha, seed-upgrade → seed-beta');
