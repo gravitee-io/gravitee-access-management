@@ -78,6 +78,7 @@ public interface ClientAuthenticationMethod {
                 CLIENT_SECRET_BASIC,
                 CLIENT_SECRET_POST,
                 PRIVATE_KEY_JWT,
+                NONE,
                 CLIENT_SECRET_JWT,
                 TLS_CLIENT_AUTH,
                 SELF_SIGNED_TLS_CLIENT_AUTH);
