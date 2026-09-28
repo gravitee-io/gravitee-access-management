@@ -230,7 +230,6 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
 
     }
 
-<<<<<<< HEAD
     @Override
     public Completable revokeByClient(Domain domain, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor) {
         LOGGER.debug("Revoke approvals for domain: {}, client: {}", domain, clientId);
@@ -252,13 +251,13 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while revoking scope approvals for domain: %s, client: %s", domain, clientId), ex));
                 });
-=======
+    }
+
     private static boolean isOwnedBy(ScopeApproval scopeApproval, UserId userId) {
         UserId owner = scopeApproval.getUserId();
         if (owner.id() != null && owner.id().equals(userId.id())) {
             return true;
         }
         return owner.hasExternal() && owner.externalId().equals(userId.externalId()) && owner.source().equals(userId.source());
->>>>>>> d7d2070 (fix: scope consent lookups to the requested user)
     }
 }
