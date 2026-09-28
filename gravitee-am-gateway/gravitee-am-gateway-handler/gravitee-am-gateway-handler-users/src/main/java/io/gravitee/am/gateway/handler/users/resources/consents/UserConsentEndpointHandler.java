@@ -21,10 +21,12 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.users.service.DomainUserConsentService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -43,8 +45,11 @@ public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandl
      * Retrieve specific consent for a user
      */
     public void get(RoutingContext context) {
+        final String userIdParam = context.request().getParam("userId");
         final String consentId = context.request().getParam("consentId");
         userService.consent(consentId)
+                .filter(consent -> userIdParamMatchConsentOwner(consent, userIdParam))
+                .switchIfEmpty(Maybe.error(() -> new ScopeApprovalNotFoundException(consentId)))
                 .subscribe(
                         scopeApproval -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
