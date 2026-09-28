@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -66,7 +67,7 @@ class OAuth2RequestParamsTest {
     }
 
     @Test
-    void shouldAddAdditionalDataToAuditParams() {
+    void shouldPutAdditionalDataFromExecutionContextToAuditParams() {
         TokenRequest request = new TokenRequest();
         request.setGrantType(GrantType.CLIENT_CREDENTIALS);
         Map<String, Object> additionalData = Map.of("AUTHZEN", Map.of("decision", true));
@@ -89,6 +90,47 @@ class OAuth2RequestParamsTest {
 
         request.setExecutionContext(null);
         assertTrue(OAuth2RequestParams.of(request).containsKey("GRANT_TYPE"));
+    }
+
+    @Test
+    void shouldAddPolicyAuditDataFromPolicyChainFailure() {
+        TokenRequest request = new TokenRequest();
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        Map<String, Object> additionalData = Map.of("AUTHZEN", Map.of("decision", false));
+        PolicyChainException failure = new PolicyChainException("denied", 403, "AUTHZEN_DENIED",
+                Map.of(ConstantKeys.POLICY_AUDIT_DATA, additionalData), null);
+
+        Map<String, Object> params = OAuth2RequestParams.ofFailure(request, failure);
+
+        assertEquals(additionalData, params.get(OAuth2RequestParams.ADDITIONAL_DATA));
+    }
+
+    @Test
+    void shouldMergeFailurePolicyAuditDataOverExecutionContext() {
+        TokenRequest request = new TokenRequest();
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        request.getExecutionContext().put(ConstantKeys.POLICY_AUDIT_DATA,
+                Map.of("PRE", Map.of("value", 1), "AUTHZEN", Map.of("decision", true)));
+        PolicyChainException failure = new PolicyChainException("denied", 403, "AUTHZEN_DENIED",
+                Map.of(ConstantKeys.POLICY_AUDIT_DATA, Map.of("AUTHZEN", Map.of("decision", false))), null);
+
+        Map<String, Object> params = OAuth2RequestParams.ofFailure(request, failure);
+
+        assertEquals(Map.of("PRE", Map.of("value", 1), "AUTHZEN", Map.of("decision", false)),
+                params.get(OAuth2RequestParams.ADDITIONAL_DATA));
+    }
+
+    @Test
+    void shouldSkipAdditionalDataWhenFailureCarriesNone() {
+        TokenRequest request = new TokenRequest();
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+
+        assertFalse(OAuth2RequestParams.ofFailure(request, new InvalidGrantException("invalid"))
+                .containsKey(OAuth2RequestParams.ADDITIONAL_DATA));
+        assertFalse(OAuth2RequestParams.ofFailure(request, new PolicyChainException("denied", 403, "KEY", null, null))
+                .containsKey(OAuth2RequestParams.ADDITIONAL_DATA));
+        assertFalse(OAuth2RequestParams.ofFailure(request, new PolicyChainException("denied", 403, "KEY", Map.of(ConstantKeys.POLICY_AUDIT_DATA, Map.of()), null))
+                .containsKey(OAuth2RequestParams.ADDITIONAL_DATA));
     }
 
     private Map<String, Object> recordedParameters(Audit audit) {
