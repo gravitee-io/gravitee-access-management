@@ -23,6 +23,7 @@ import io.gravitee.am.model.ManagedBy;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -82,6 +83,22 @@ class CertificateResourceTest extends AutomationJerseySpringTest {
         AutomationCertificate body = readEntity(response, AutomationCertificate.class);
         assertEquals(CERT_KEY, body.getAutomationKey());
         assertTrue(body.isSystem(), "system certificate must be projected as system:true");
+    }
+
+    @Test
+    void get_masks_sensitive_configuration() {
+        Certificate stored = cert(false, ManagedBy.AUTOMATION_API);
+        stored.setConfiguration("{\"storepass\":\"store-secret\"}");
+        Certificate masked = new Certificate(stored);
+        masked.setConfiguration("{\"storepass\":\"********\"}");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(certificateService.findByDomain(anyString())).thenReturn(Flowable.just(stored));
+        when(certificateServiceProxy.filterSensitiveData(stored)).thenReturn(Single.just(masked));
+
+        Response response = getRequest();
+
+        assertEquals(200, response.getStatus());
+        assertEquals("{\"storepass\":\"********\"}", readEntity(response, AutomationCertificate.class).getConfiguration());
     }
 
     @Test

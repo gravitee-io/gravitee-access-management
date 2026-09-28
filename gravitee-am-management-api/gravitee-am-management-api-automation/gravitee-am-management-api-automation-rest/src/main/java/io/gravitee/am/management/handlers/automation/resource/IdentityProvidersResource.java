@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.automation.model.AutomationIdentityPro
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -77,6 +78,9 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
     private IdentityProviderService identityProviderService;
 
     @Autowired
+    private IdentityProviderServiceProxy identityProviderServiceProxy;
+
+    @Autowired
     private DefaultIdentityProviderService defaultIdentityProviderService;
 
     @Autowired
@@ -107,6 +111,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                         .filter(idp -> idp.isManagedBy(ManagedBy.AUTOMATION_API))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(
                                 nullToEmpty(o1.getAutomationKey()), nullToEmpty(o2.getAutomationKey())))
+                        .concatMapSingle(identityProviderServiceProxy::filterSensitiveData)
                         .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider)
                         .toList())
                 .subscribe(response::resume, response::resume);
@@ -198,7 +203,8 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         }
         if (existing.isSystem()) {
             // re-PUT is an idempotent no-op
-            return Single.just(AutomationIdentityProviderMapper.toAutomationIdentityProvider(existing));
+            return identityProviderServiceProxy.filterSensitiveData(existing)
+                    .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
         }
         // 'type' is an immutable identity attribute; reject a change early
         if (!isBlank(definition.getType()) && !definition.getType().equals(existing.getType())) {
@@ -210,10 +216,9 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
         if (rejection != null) {
             return rejection;
         }
+        // The proxy swaps each masked value for the stored secret before the service validates the configuration.
         return identityProviderManager.checkPluginDeployment(definition.getType())
-                .andThen(Completable.fromAction(() ->
-                        validationService.validate(definition.getType(), definition.getConfiguration())))
-                .andThen(Single.defer(() -> identityProviderService.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
+                .andThen(Single.defer(() -> identityProviderServiceProxy.update(ReferenceType.DOMAIN, domain.getId(), existing.getId(),
                         AutomationIdentityProviderMapper.toUpdateIdentityProvider(definition), principal, false)))
                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
     }
@@ -240,6 +245,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             return defaultIdentityProviderService.create(domain, key, principal)
                     .flatMap(created -> reconcileDomainReference(domain, key, created.getId())
                             .andThen(Single.just(created)))
+                    .flatMap(identityProviderServiceProxy::filterSensitiveData)
                     .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
         }
         Single<AutomationIdentityProvider> rejection = rejectIfMissingIdentityProviderFields(definition, key);
@@ -254,8 +260,20 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
                     // 'external' is intrinsic to the plugin type; derive it from the plugin descriptor
                     newIdp.setExternal(identityProviderManager.isExternalProvider(definition.getType()));
                 }))
-                .andThen(Single.defer(() -> identityProviderService.create(domain, newIdp, principal, false)))
+                .andThen(rejectMaskedSensitiveValues(definition))
+                .andThen(Single.defer(() -> identityProviderServiceProxy.create(domain, newIdp, principal, false)))
                 .map(AutomationIdentityProviderMapper::toAutomationIdentityProvider);
+    }
+
+    private Completable rejectMaskedSensitiveValues(AutomationIdentityProvider definition) {
+        return Completable.defer(() -> {
+            IdentityProvider submitted = new IdentityProvider();
+            submitted.setType(definition.getType());
+            submitted.setConfiguration(definition.getConfiguration());
+            return identityProviderServiceProxy.filterSensitiveData(submitted)
+                    .flatMapCompletable(masked -> MaskedValueGuard.rejectMaskedSensitiveValues(
+                            definition.getConfiguration(), masked.getConfiguration()));
+        });
     }
 
     private static Single<AutomationIdentityProvider> rejectIfMissingIdentityProviderFields(AutomationIdentityProvider definition, String key) {

@@ -24,6 +24,7 @@ import io.gravitee.am.model.Reporter;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -85,6 +86,22 @@ class ReporterResourceTest extends AutomationJerseySpringTest {
 
     private Response getRequest() {
         return reportersTarget(DOMAIN_KEY).path(REPORTER_KEY).request().get();
+    }
+
+    @Test
+    void get_masks_sensitive_configuration() {
+        Reporter stored = reporter(false, ManagedBy.AUTOMATION_API);
+        stored.setConfiguration("{\"password\":\"db-secret\"}");
+        Reporter masked = new Reporter(stored);
+        masked.setConfiguration("{\"password\":\"********\"}");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(reporterService.findByReference(eq(Reference.domain(domainId)))).thenReturn(Flowable.just(stored));
+        when(reporterServiceProxy.filterSensitiveData(stored)).thenReturn(Single.just(masked));
+
+        Response response = getRequest();
+
+        assertEquals(200, response.getStatus());
+        assertEquals("{\"password\":\"********\"}", readEntity(response, AutomationReporter.class).getConfiguration());
     }
 
     @Test

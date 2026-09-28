@@ -196,7 +196,8 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
         return certificateService.rotate(domain, principal);
     }
 
-    private Single<Certificate> filterSensitiveData(Certificate cert) {
+    @Override
+    public Single<Certificate> filterSensitiveData(Certificate cert) {
         return certificatePluginService.getSchema(cert.getType())
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
