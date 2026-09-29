@@ -38,6 +38,7 @@ beforeAll(async () => {
       { tokenType: 'ACCESS_TOKEN', claimName: 'tenant', claimValue: 'acme' },
       { tokenType: 'ID_TOKEN', claimName: 'tenant', claimValue: 'acme' },
     ],
+    silentReAuthentication: true,
   });
   jwks = createRemoteJWKSet(new URL(fixture.oidc.jwks_uri));
 });
@@ -77,6 +78,24 @@ describe('Lightweight JWT - ID token', () => {
     const { payload } = await jwtVerify(tokens.id_token, jwks, { issuer: fixture.oidc.issuer, audience: fixture.clientId });
 
     expect(payload.sub).toEqual(decodeToken(tokens.access_token).payload.sub);
+  });
+});
+
+describe('Lightweight JWT - id_token_hint', () => {
+  it('should silently re-authenticate the user from a lightweight ID token', async () => {
+    const hint = (await fixture.passwordGrant(SCOPE)).id_token;
+    expect(claimNames(hint)).toEqual(LIGHTWEIGHT_ID_TOKEN_CLAIMS);
+
+    const location = await fixture.silentAuthorize(hint);
+    const tokens = await fixture.exchangeCode(location);
+
+    expect(decodeToken(tokens.id_token).payload.sub).toEqual(decodeToken(hint).payload.sub);
+  });
+
+  it('should answer login_required when the id_token_hint does not identify a user', async () => {
+    const location = await fixture.silentAuthorize('not-an-id-token');
+
+    expect(new URL(location).searchParams.get('error')).toEqual('login_required');
   });
 });
 
