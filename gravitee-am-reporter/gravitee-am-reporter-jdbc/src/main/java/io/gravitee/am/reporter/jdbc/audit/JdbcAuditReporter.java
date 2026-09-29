@@ -65,6 +65,7 @@ import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -801,7 +802,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             };
 
             // Initialize schema and bulk processor
+            // another node can create the same tables at the same time, and PostgreSQL then fails
+            // one of the CREATE ... IF NOT EXISTS; the retry finds the tables and skips the script
             template.getDatabaseClient().inConnection(resultFunction)
+                    .retryWhen(Retry.backoff(3, Duration.ofMillis(500))
+                            .doBeforeRetry(signal -> log.debug("Retry the creation of the {} audit tables", auditsTable, signal.failure())))
                     .doOnError(error -> log.error("Unable to initialize Database", error))
                     .doOnSuccess(rowsUpdated -> {
 
