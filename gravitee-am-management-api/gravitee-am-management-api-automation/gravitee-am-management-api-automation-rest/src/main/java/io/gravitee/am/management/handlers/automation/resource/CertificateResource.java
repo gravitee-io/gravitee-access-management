@@ -94,7 +94,7 @@ public class CertificateResource extends AbstractAutomationResource {
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.DELETE)
                 .andThen(resolver.resolveDomainMaybe(environmentId, domainRef))
                 .flatMap(domain -> resolver.resolveCertificateMaybe(domain, certRef))
-                .flatMapCompletable(certificate -> certificateService.delete(certificate.getId(), principal))
+                .flatMapCompletable(certificate -> certificateService.deleteAutomationManaged(certificate.getId(), principal))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
