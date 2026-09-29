@@ -24,6 +24,8 @@ import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import { AutomationDomainFixture, setupAutomationDomainFixture } from './fixtures/automation-domain-fixture';
 import { buildAutomationCertificateDef, buildAutomationDomainDef, buildSystemAutomationDef } from './fixtures/automation-definitions';
+import { getDomain, listDomains } from '@management-commands/domain-management-commands';
+import { getAllCertificates } from '@management-commands/certificate-management-commands';
 
 setup(120000);
 
@@ -92,10 +94,7 @@ describe('Automation API - Certificates (resource under a domain)', () => {
   it('should update the certificate via a second PUT (idempotent)', async () => {
     const { key } = await createCertificate();
 
-    const response = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildAutomationCertificateDef({ key, name: 'Renamed cert' }),
-    );
+    const response = await fixture.client.putCertificate(fixture.domainKey, buildAutomationCertificateDef({ key, name: 'Renamed cert' }));
     expect(response.status).toBe(200);
     expect(response.body.name).toEqual('Renamed cert');
   });
@@ -111,10 +110,7 @@ describe('Automation API - Certificates (resource under a domain)', () => {
   });
 
   it('should reject an invalid key pattern (400)', async () => {
-    const response = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildAutomationCertificateDef({ key: 'Invalid Key!' }),
-    );
+    const response = await fixture.client.putCertificate(fixture.domainKey, buildAutomationCertificateDef({ key: 'Invalid Key!' }));
     expect(response.status).toBe(400);
   });
 
@@ -170,10 +166,7 @@ describe('Automation API - System certificate', () => {
     const { key } = await createSystemCertificate();
 
     // the cert was created with system:true; PUT it again as non-system -> rejected (immutable)
-    const response = await fixture.client.putCertificate(
-      fixture.domainKey,
-      buildAutomationCertificateDef({ key, system: false }),
-    );
+    const response = await fixture.client.putCertificate(fixture.domainKey, buildAutomationCertificateDef({ key, system: false }));
     expect(response.status).toBe(400);
   });
 
@@ -225,5 +218,34 @@ describe('Automation API - Domain SAML certificate reference (by key)', () => {
     const put = await fixture.client.putDomain(buildAutomationDomainDef({ key: fixture.domainKey }));
     expect(put.status).toBe(200);
     expect(put.body.saml ?? null).toBeNull();
+  });
+});
+
+describe('Automation API - Domain fallback certificate reference (by key)', () => {
+  const domainDefinition = (certificateKey: string) =>
+    buildAutomationDomainDef({ key: fixture.domainKey, certificateSettings: { fallbackCertificate: certificateKey } });
+
+  it('should delete a certificate the domain names as its fallback', async () => {
+    const { key } = await createCertificate();
+    expect((await fixture.client.putDomain(domainDefinition(key))).status).toBe(200);
+
+    const deleted = await fixture.client.deleteCertificate(fixture.domainKey, key);
+
+    expect(deleted.status).toBe(204);
+    expect((await fixture.client.getCertificate(fixture.domainKey, key)).status).toBe(404);
+    expect((await fixture.client.getDomain(fixture.domainKey)).body.certificateSettings.fallbackCertificate).toEqual(key);
+  });
+
+  it('should resolve the fallback reference to a certificate re-created with the same key', async () => {
+    const { key } = await createCertificate();
+    expect((await fixture.client.putDomain(domainDefinition(key))).status).toBe(200);
+    expect((await fixture.client.deleteCertificate(fixture.domainKey, key)).status).toBe(204);
+
+    const { response: recreated } = await createCertificate({ key, name: 'Re-created fallback' });
+
+    expect(recreated.status).toBe(200);
+    const [domain] = (await listDomains(fixture.accessToken, { q: `Automation Domain ${fixture.domainKey}` })).data;
+    const certificate = (await getAllCertificates(domain.id, fixture.accessToken)).find((c) => c.name === 'Re-created fallback');
+    expect((await getDomain(domain.id, fixture.accessToken)).certificateSettings.fallbackCertificate).toEqual(certificate.id);
   });
 });
