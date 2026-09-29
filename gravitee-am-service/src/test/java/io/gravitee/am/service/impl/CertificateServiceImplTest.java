@@ -306,6 +306,68 @@ class CertificateServiceImplTest {
     }
 
     @Test
+    void shouldDeleteAutomationManagedCertificateTheDomainNamesAsFallbackByKey() {
+        Certificate cert = automationCertificate("fallback-cert-id", "signing");
+        stubUnusedCertificate(cert, fallbackDomain("fallback-cert-id", "signing"));
+        Mockito.when(certificateRepository.delete("fallback-cert-id")).thenReturn(Completable.complete());
+        Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> observer = service.deleteAutomationManaged("fallback-cert-id", new DefaultUser()).test();
+
+        observer.assertComplete();
+        Mockito.verify(certificateRepository).delete("fallback-cert-id");
+    }
+
+    @Test
+    void shouldRefuseToDeleteAutomationManagedCertificateTheDomainNamesAsFallbackById() {
+        Certificate cert = automationCertificate("fallback-cert-id", "signing");
+        stubUnusedCertificate(cert, fallbackDomain("fallback-cert-id", null));
+
+        TestObserver<Void> observer = service.deleteAutomationManaged("fallback-cert-id", new DefaultUser()).test();
+
+        observer.assertError(CertificateIsFallbackException.class);
+        Mockito.verify(certificateRepository, Mockito.never()).delete(any());
+    }
+
+    @Test
+    void shouldRefuseToDeleteAutomationManagedCertificateUsedByAnApplication() {
+        Certificate cert = automationCertificate("fallback-cert-id", "signing");
+        Mockito.when(certificateRepository.findById("fallback-cert-id")).thenReturn(Maybe.just(cert));
+        Mockito.when(applicationService.findByCertificate("fallback-cert-id")).thenReturn(Flowable.just(new Application()));
+
+        TestObserver<Void> observer = service.deleteAutomationManaged("fallback-cert-id", new DefaultUser()).test();
+
+        observer.assertError(CertificateWithApplicationsException.class);
+        Mockito.verify(certificateRepository, Mockito.never()).delete(any());
+    }
+
+    private static Certificate automationCertificate(String id, String automationKey) {
+        Certificate cert = new Certificate();
+        cert.setId(id);
+        cert.setAutomationKey(automationKey);
+        cert.setDomain("domainId");
+        return cert;
+    }
+
+    private static Domain fallbackDomain(String fallbackCertificateId, String fallbackCertificateKey) {
+        CertificateSettings certSettings = new CertificateSettings();
+        certSettings.setFallbackCertificate(fallbackCertificateId);
+        certSettings.setFallbackCertificateKey(fallbackCertificateKey);
+        Domain domain = new Domain();
+        domain.setId("domainId");
+        domain.setCertificateSettings(certSettings);
+        return domain;
+    }
+
+    private void stubUnusedCertificate(Certificate cert, Domain domain) {
+        Mockito.when(certificateRepository.findById(cert.getId())).thenReturn(Maybe.just(cert));
+        Mockito.when(applicationService.findByCertificate(cert.getId())).thenReturn(Flowable.empty());
+        Mockito.when(protectedResourceService.findByCertificate(cert.getId())).thenReturn(Flowable.empty());
+        Mockito.when(identityProviderService.findByDomain("domainId")).thenReturn(Flowable.empty());
+        Mockito.when(domainRepository.findById("domainId")).thenReturn(Maybe.just(domain));
+    }
+
+    @Test
     void update_normalizes_embedded_file_to_filename_in_stored_config() throws Exception {
         // Use a real ObjectMapper so the embedded-file normalization is exercised faithfully.
         ReflectionTestUtils.setField(service, "objectMapper", new ObjectMapper());

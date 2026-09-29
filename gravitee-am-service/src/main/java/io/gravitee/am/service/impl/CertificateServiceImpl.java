@@ -27,6 +27,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
@@ -514,11 +515,16 @@ public class CertificateServiceImpl implements CertificateService {
                 });
     }
 
-    private Single<Certificate> checkFallbackUsage(Certificate certificate) {
+    private Single<Certificate> checkFallbackUsage(Certificate certificate, boolean allowFallbackReferenceByKey) {
         return domainRepository.findById(certificate.getDomain())
                 .flatMap(domain -> {
-                    if (domain.getCertificateSettings() != null
-                            && certificate.getId().equals(domain.getCertificateSettings().getFallbackCertificate())) {
+                    CertificateSettings settings = domain.getCertificateSettings();
+                    boolean referencedByKey = allowFallbackReferenceByKey
+                            && settings != null
+                            && certificate.getAutomationKey() != null
+                            && certificate.getAutomationKey().equals(settings.getFallbackCertificateKey());
+                    if (settings != null && !referencedByKey
+                            && certificate.getId().equals(settings.getFallbackCertificate())) {
                         return Maybe.error(new CertificateIsFallbackException());
                     }
                     return Maybe.just(certificate);
@@ -528,13 +534,22 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Completable delete(String certificateId, User principal, boolean force) {
+        return delete(certificateId, principal, force, false);
+    }
+
+    @Override
+    public Completable deleteAutomationManaged(String certificateId, User principal) {
+        return delete(certificateId, principal, false, true);
+    }
+
+    private Completable delete(String certificateId, User principal, boolean force, boolean allowFallbackReferenceByKey) {
         log.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
                 .flatMapSingle(certificate -> force ? Single.just(certificate) : checkApplicationsUsage(certificate)
                                 .flatMap(this::checkIdentityProviderUsage)
                                 .flatMap(this::checkProtectedResourceUsage)
-                                .flatMap(this::checkFallbackUsage))
+                                .flatMap(checked -> checkFallbackUsage(checked, allowFallbackReferenceByKey)))
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));

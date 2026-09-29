@@ -162,6 +162,9 @@ A domain references certificates and an identity provider by reference (`key` or
 `accountSettings.defaultIdentityProviderForRegistration`. References are **eventually consistent**: they
 may point to a resource that does not exist yet (any apply order works), and the reference is echoed back
 verbatim on `GET`. Use `id:<uuid>` here to reference a brownfield resource that has no key.
+A resource the domain references by `key` can also be deleted first (any destroy order works): the
+reference stays and resolves again once a resource with that key is created. A certificate referenced by
+`id:` as the fallback, or used by an application, identity provider or protected resource, cannot be deleted.
 
 ## 7. Sensitive values
 

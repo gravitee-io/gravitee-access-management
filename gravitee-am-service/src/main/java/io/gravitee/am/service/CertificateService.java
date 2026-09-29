@@ -91,6 +91,11 @@ public interface CertificateService {
 
     Completable delete(String certificateId, User principal, boolean force);
 
+    /**
+     * Like {@link #delete(String, User)}, except the domain may still name the certificate as its fallback by key.
+     */
+    Completable deleteAutomationManaged(String certificateId, User principal);
+
     Completable updateExpirationDate(String certificateId, Date expirationDate);
 
     default Single<Certificate> create(Domain domain, NewCertificate newCertificate, boolean isSystem) {
