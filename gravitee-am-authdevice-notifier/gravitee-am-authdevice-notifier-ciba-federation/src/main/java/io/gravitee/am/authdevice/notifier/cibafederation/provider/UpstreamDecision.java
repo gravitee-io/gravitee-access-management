@@ -29,8 +29,14 @@ final class UpstreamDecision {
         return switch (result.kind()) {
             case PENDING, SLOW_DOWN -> Optional.empty();
             case ERROR -> {
-                log.warn("CIBA-FED upstream rejected tid={} error={}", tid, result.error());
-                yield Optional.of(rejected(tid));
+                // Only the user's denial is terminal: any other upstream error ends as expired_token at the
+                // gateway's expiry rather than telling the client the user denied.
+                if ("access_denied".equals(result.error())) {
+                    log.warn("CIBA-FED upstream rejected tid={} error={}", tid, result.error());
+                    yield Optional.of(rejected(tid));
+                }
+                log.warn("CIBA-FED upstream error tid={} error={}; treating as pending", tid, result.error());
+                yield Optional.empty();
             }
             case TOKEN -> Optional.of(fromToken(tid, relayedAdHash, result, identityProviderId));
         };

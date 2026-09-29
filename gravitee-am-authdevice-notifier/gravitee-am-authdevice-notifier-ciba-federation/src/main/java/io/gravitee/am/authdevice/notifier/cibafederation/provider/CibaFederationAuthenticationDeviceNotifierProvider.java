@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -51,7 +50,6 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
     private ConsentRelayStrategy consentStrategy;
     private HintDecorationStrategy hintStrategy;
     private ConsentRelayContext consentRelayContext;
-    private final Set<String> checksInFlight = ConcurrentHashMap.newKeySet();
     private boolean wired;
 
     public CibaFederationAuthenticationDeviceNotifierProvider() {}
@@ -176,30 +174,24 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
     @Override
     public Single<Optional<ADUserResponse>> checkStatus(ADStatusRequest request) {
         final String tid = request.transactionId();
-        final Map<String, Object> state = request.externalInformation() == null ? Map.of() : request.externalInformation();
+        final Map<String, Object> state = request.externalInformation();
         if (!(state.get(UPSTREAM_AUTH_REQ_ID) instanceof String upstreamAuthReqId)) {
             log.error("CIBA-FED no upstream auth_req_id recorded for tid={}; failing closed", tid);
             return Single.just(Optional.of(new ADUserResponse(tid, null, false)));
         }
         final String relayedAdHash = state.get(RELAYED_AD_HASH) instanceof String h ? h : null;
         return Single.defer(() -> {
-            ensureWired();
-            // One upstream poll per transaction at a time on this node: a concurrent client poll
-            // must not consume the upstream grant twice.
-            if (!checksInFlight.add(tid)) {
-                return Single.just(Optional.<ADUserResponse>empty());
-            }
             final FederatedConnection conn = Objects.requireNonNull(request.connection(),
                     "FederatedConnection must be supplied by the gateway");
             final String resourceAudience = configuration != null ? configuration.getResourceAudience() : null;
             return discoveryResolver.resolve(conn.wellKnownUri())
                     .flatMap(metadata -> cibaClientFactory.create(conn, resourceAudience, metadata).pollToken(upstreamAuthReqId))
-                    .map(result -> UpstreamDecision.of(tid, relayedAdHash, result, getIdentityProviderId().orElse(null)))
-                    .onErrorReturn(error -> {
-                        log.warn("CIBA-FED upstream poll failed tid={}: {}", tid, error.getMessage());
-                        return Optional.empty();
-                    })
-                    .doFinally(() -> checksInFlight.remove(tid));
+                    .map(result -> UpstreamDecision.of(tid, relayedAdHash, result, getIdentityProviderId().orElse(null)));
+        }).onErrorReturn(error -> {
+            log.warn("CIBA-FED upstream poll failed tid={} upstream_auth_req_id={} cause={}; treating as pending",
+                    tid, upstreamAuthReqId, error.toString());
+            log.debug("CIBA-FED upstream poll failure tid={}", tid, error);
+            return Optional.empty();
         });
     }
 

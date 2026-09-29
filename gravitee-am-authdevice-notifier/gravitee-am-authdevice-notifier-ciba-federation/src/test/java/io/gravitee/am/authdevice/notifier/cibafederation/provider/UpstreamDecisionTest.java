@@ -74,8 +74,16 @@ class UpstreamDecisionTest {
     }
 
     @Test
-    void error_rejects() {
+    void access_denied_rejects() {
         var result = new CibaClient.PollResult(CibaClient.PollKind.ERROR, null, null, null, "access_denied");
         assertFalse(UpstreamDecision.of("tid1", RELAYED_HASH, result, "idp").orElseThrow().isValidated());
+    }
+
+    @Test
+    void any_other_upstream_error_has_no_decision() {
+        for (String error : new String[]{"invalid_grant", "expired_token", "invalid_client", "too_many_requests", "503"}) {
+            var result = new CibaClient.PollResult(CibaClient.PollKind.ERROR, null, null, null, error);
+            assertEquals(Optional.empty(), UpstreamDecision.of("tid1", RELAYED_HASH, result, "idp"), error);
+        }
     }
 }

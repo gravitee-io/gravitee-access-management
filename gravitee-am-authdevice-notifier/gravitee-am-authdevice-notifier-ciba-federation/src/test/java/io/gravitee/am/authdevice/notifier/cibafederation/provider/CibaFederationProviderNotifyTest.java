@@ -388,28 +388,21 @@ class CibaFederationProviderNotifyTest {
     }
 
     @Test
+    void checkStatus_synchronous_failure_has_no_decision() {
+        OidcDiscoveryResolver throwing = mock(OidcDiscoveryResolver.class);
+        when(throwing.resolve(any())).thenThrow(new IllegalStateException("resolver not ready"));
+        var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest((conn, aud, meta) -> acmeAuth, throwing, null, null);
+        Map<String, Object> state = Map.of(CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1");
+
+        assertTrue(p.checkStatus(statusRequest(state)).blockingGet().isEmpty());
+        assertTrue(provider.checkStatus(new ADStatusRequest("tid1", state, null)).blockingGet().isEmpty());
+    }
+
+    @Test
     void checkStatus_without_upstream_handle_fails_closed() {
         Optional<ADUserResponse> decision = provider.checkStatus(statusRequest(Map.of())).blockingGet();
 
         assertFalse(decision.orElseThrow().isValidated());
         verifyNoInteractions(acmeAuth);
-    }
-
-    @Test
-    void checkStatus_polls_upstream_once_while_a_check_is_in_flight() {
-        var upstream = io.reactivex.rxjava3.subjects.SingleSubject.<CibaClient.PollResult>create();
-        when(acmeAuth.pollToken("R1")).thenReturn(upstream);
-        var state = Map.<String, Object>of(CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1");
-
-        var first = provider.checkStatus(statusRequest(state)).test();
-        var concurrent = provider.checkStatus(statusRequest(state)).test();
-        concurrent.assertValue(Optional.empty());
-        upstream.onSuccess(new CibaClient.PollResult(CibaClient.PollKind.PENDING, null, null, null, "authorization_pending"));
-        first.assertValue(Optional.empty());
-
-        when(acmeAuth.pollToken("R1")).thenReturn(Single.just(new CibaClient.PollResult(
-                CibaClient.PollKind.PENDING, null, null, null, "authorization_pending")));
-        provider.checkStatus(statusRequest(state)).blockingGet();
-        verify(acmeAuth, times(2)).pollToken("R1");
     }
 }

@@ -182,6 +182,23 @@ class CibaFederationIntegrationTest {
         assertFalse(provider.checkStatus(status).blockingGet().orElseThrow().isValidated());
     }
 
+    @Test
+    void notify_then_polls_have_no_decision_when_upstream_returns_a_malformed_200() {
+        for (String body : new String[]{"", "<html>bad gateway</html>"}) {
+            acmeAuth.resetAll();
+            stubUpstream("malformed", "R12", body);
+            CibaClient upstream = upstreamClient();
+            var provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
+                    (conn, aud, meta) -> upstream, stubResolver(), null, null);
+
+            var resp = provider.notify(notification("tid12", "acme|u12")).blockingGet();
+            ADStatusRequest status = persisted("tid12", resp.getExtraData());
+
+            assertTrue(provider.checkStatus(status).blockingGet().isEmpty());
+            assertTrue(provider.checkStatus(status).blockingGet().isEmpty(), body);
+        }
+    }
+
     /** Tiny unsigned JWT: base64url({"alg":"none"}) + "." + base64url({"sub":...}) + "." (empty sig). */
     private static String unsignedJwt(String sub) {
         var enc = Base64.getUrlEncoder().withoutPadding();
