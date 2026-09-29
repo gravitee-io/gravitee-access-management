@@ -36,7 +36,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -97,6 +101,24 @@ class ProvisionedDataPlaneManagerTest {
 
         verify(provisionedDataPlaneLoader).publish(definition);
         verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
+    }
+
+    /**
+     * The node that served the provisioning request can read its own event back while that request
+     * is still registering the data plane.
+     */
+    @Test
+    void shouldRegisterUnderTheLockTheProvisioningRequestTakes() throws Exception {
+        when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
+        var locked = new AtomicBoolean();
+        doAnswer(invocation -> {
+            locked.set(Thread.holdsLock(provisionedDataPlaneLoader));
+            return null;
+        }).when(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
+
+        manager.onEvent(event(DataPlaneEvent.DEPLOY, "dp-1"));
+
+        assertThat(locked).isTrue();
     }
 
     /**

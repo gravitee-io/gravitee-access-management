@@ -100,9 +100,12 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
                 .doOnSuccess(definition -> {
-                    if (!isServing(definition)) {
-                        deactivate(dataPlaneId);
-                        activate(definition, storage);
+                    // the node's own sync event can arrive before markServing, so both check and rebuild under one lock
+                    synchronized (this) {
+                        if (!isServing(definition)) {
+                            deactivate(dataPlaneId);
+                            activate(definition, storage);
+                        }
                     }
                 })
                 // fires only when findById completes empty
