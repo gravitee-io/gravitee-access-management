@@ -19,10 +19,6 @@ import { decodeToken, setupTokenIdentityFixture, TokenIdentityFixture } from './
 
 setup(200000);
 
-/**
- * Every route into a custom claim, and custom claims named after claims only AM sets,
- * are removed from a lightweight access token.
- */
 const SCOPE = 'openid email profile';
 const ROLE = 'lightweight-role';
 const GROUP = 'lightweight-group';

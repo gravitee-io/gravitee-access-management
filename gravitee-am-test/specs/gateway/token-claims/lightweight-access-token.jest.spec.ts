@@ -19,9 +19,6 @@ import { decodeToken, setupTokenIdentityFixture, TokenIdentityFixture } from './
 
 setup(200000);
 
-/**
- * With Lightweight JWT enabled, the access token returned to the client only keeps the reserved protocol claims.
- */
 const SCOPE = 'openid email profile';
 const LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = ['aud', 'client_id', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
 

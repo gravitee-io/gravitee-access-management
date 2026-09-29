@@ -130,8 +130,8 @@ export interface TokenIdentityFixture extends Fixture {
   /** Calls /oidc/userinfo with the supplied access token. */
   userinfo: (accessTokenValue: string) => Promise<Record<string, any>>;
   /**
-   * Patches the Lightweight JWT setting, then waits until a fresh access token reflects it:
-   * the gateway client lags the domain `lastSync`. `probeClaim` is a custom claim the setting removes.
+   * Patches the Lightweight JWT setting, then polls until a fresh access token reflects it.
+   * `probeClaim` is a custom claim the setting removes.
    */
   setLightweightJwt: (enabled: boolean, probeClaim: string) => Promise<void>;
 }
@@ -382,6 +382,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
         patchApplication(startedDomain.id, accessToken, { settings: { oauth: { lightweightJwtSettings: { enabled } } } }, app.id),
       );
 
+      // the gateway client can lag the domain lastSync by a few seconds
       const deadline = Date.now() + 15_000;
       for (;;) {
         const probe = await passwordGrantFor(user, 'openid');
