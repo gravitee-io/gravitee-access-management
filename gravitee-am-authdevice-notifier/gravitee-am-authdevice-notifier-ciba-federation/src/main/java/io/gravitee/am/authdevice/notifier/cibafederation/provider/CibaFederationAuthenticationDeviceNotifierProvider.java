@@ -21,37 +21,28 @@ import io.gravitee.am.authdevice.notifier.api.model.*;
 import io.gravitee.am.authdevice.notifier.cibafederation.CibaFederationAuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.authdevice.notifier.cibafederation.provider.spring.CibaFederationProviderSpringConfiguration;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.core.Vertx;
-import io.vertx.rxjava3.ext.web.client.WebClient;
+import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.util.StringUtils.hasText;
 
+@CustomLog
 @Import(CibaFederationProviderSpringConfiguration.class)
 public class CibaFederationAuthenticationDeviceNotifierProvider
         implements AuthenticationDeviceNotifierProvider, IdentityProviderDependent, InitializingBean {
 
-    public static final String TRANSACTION_ID = "tid";
-    public static final String STATE = "state";
-    public static final String CALLBACK_VALIDATE = "validated";
-    public static final String ID_TOKEN = "id_token";
-    public static final String ACCESS_TOKEN = "access_token";
+    static final String UPSTREAM_AUTH_REQ_ID = "ciba_federation_auth_req_id";
+    static final String RELAYED_AD_HASH = "ciba_federation_relayed_ad_hash";
 
     @Autowired(required = false) private CibaFederationAuthenticationDeviceNotifierConfiguration configuration;
-    @Autowired(required = false) @Qualifier("cibaFederationWebClient") private WebClient webClient;
-    @Autowired(required = false) private Vertx vertx;
     @Autowired(required = false) private CibaClientFactory cibaClientFactory;
     @Autowired(required = false) private ConsentRelayStrategyRegistry consentRelayStrategyRegistry;
     @Autowired(required = false) private OidcDiscoveryResolver discoveryResolver;
@@ -60,9 +51,7 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
     private ConsentRelayStrategy consentStrategy;
     private HintDecorationStrategy hintStrategy;
     private ConsentRelayContext consentRelayContext;
-    private PendingAuthStore store;
-    private AuthorizationPoller poller;
-    private int maxLifetimeSeconds;
+    private final Set<String> checksInFlight = ConcurrentHashMap.newKeySet();
     private boolean wired;
 
     public CibaFederationAuthenticationDeviceNotifierProvider() {}
@@ -75,13 +64,11 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
     /** Test seam — inject collaborators directly, supplying the per-request client via a stub factory. */
     static CibaFederationAuthenticationDeviceNotifierProvider forTest(
             CibaClientFactory cibaClientFactory, OidcDiscoveryResolver discoveryResolver,
-            ConsentRelayStrategy consentStrategy, HintDecorationStrategy hintStrategy,
-            PendingAuthStore store, AuthorizationPoller poller, Vertx vertx, int maxLifetimeSeconds) {
+            ConsentRelayStrategy consentStrategy, HintDecorationStrategy hintStrategy) {
         var p = new CibaFederationAuthenticationDeviceNotifierProvider();
         p.cibaClientFactory = cibaClientFactory; p.discoveryResolver = discoveryResolver;
         p.consentStrategy = consentStrategy; p.hintStrategy = hintStrategy;
-        p.store = store; p.poller = poller; p.vertx = vertx;
-        p.maxLifetimeSeconds = maxLifetimeSeconds; p.wired = true;
+        p.wired = true;
         p.consentRelayContext = new ConsentRelayContext(null);
         p.configuration = new CibaFederationAuthenticationDeviceNotifierConfiguration();
         return p;
@@ -123,12 +110,6 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         this.consentStrategy = selectStrategy(configuration.getConsentRelayStrategy(), consentRelayStrategyRegistry);
         this.hintStrategy = selectHintStrategy(configuration.getHintDecorationStrategy(), hintDecorationStrategyRegistry);
         this.consentRelayContext = new ConsentRelayContext(configuration.getRecipientDisplayName());
-        this.store = new PendingAuthStore();
-        var callbackClient = new GatewayCallbackClient(webClient, configuration.getCallbackClientId(),
-                configuration.getCallbackClientSecret(), configuration.getCallbackClientAuthMethod());
-        // callbackUrl is per request: notify() threads it through PendingAuthStore.Pending, so the poller takes none.
-        this.poller = new AuthorizationPoller(callbackClient, store, () -> Instant.now().getEpochSecond());
-        this.maxLifetimeSeconds = configuration.getMaxLifetimeSeconds() == null ? 120 : configuration.getMaxLifetimeSeconds();
         this.wired = true;
     }
 
@@ -149,9 +130,7 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
     }
 
     /** Fail closed at bind: a CIBA-federation notifier is intrinsically IdP-dependent and must
-     *  not deploy without a configured identityProviderId, nor without a usable callback client
-     *  configuration (id, secret, a supported client-authentication method and, when set, an
-     *  http(s) callbackUrl with a host). */
+     *  not deploy without a configured identityProviderId. */
     @Override
     public void afterPropertiesSet() {
         if (configuration == null) {
@@ -161,43 +140,6 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         if (id == null || id.isBlank()) {
             throw new IllegalStateException("CIBA federation notifier requires identityProviderId");
         }
-        if (isBlank(configuration.getCallbackClientId())) {
-            throw new IllegalStateException("CIBA federation notifier requires callbackClientId");
-        }
-        if (isBlank(configuration.getCallbackClientSecret())) {
-            throw new IllegalStateException("CIBA federation notifier requires callbackClientSecret");
-        }
-        if (!ClientAuthentication.isSupported(configuration.getCallbackClientAuthMethod())) {
-            throw new IllegalStateException(ClientAuthentication.unsupportedMessage(configuration.getCallbackClientAuthMethod()));
-        }
-        if (!isBlank(configuration.getCallbackUrl())) {
-            validateCallbackUrl(configuration.getCallbackUrl());
-        }
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
-    }
-
-    private static void validateCallbackUrl(String url) {
-        final URL parsed;
-        try {
-            parsed = new URI(url).toURL();
-        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-            throw invalidCallbackUrl(url);
-        }
-        if (hasText(parsed.getUserInfo())) {
-            throw new IllegalStateException("CIBA federation notifier callbackUrl must not contain user-info");
-        }
-        final boolean http = "http".equals(parsed.getProtocol()) || "https".equals(parsed.getProtocol());
-        final boolean validPort = parsed.getPort() == -1 || (parsed.getPort() > 0 && parsed.getPort() <= 65535);
-        if (!http || parsed.getHost().isEmpty() || !validPort) {
-            throw invalidCallbackUrl(url);
-        }
-    }
-
-    private static IllegalStateException invalidCallbackUrl(String url) {
-        return new IllegalStateException("CIBA federation notifier callbackUrl must be an http(s) URL with a host, got: " + url);
     }
 
     @Override
@@ -206,9 +148,6 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         final FederatedConnection conn = Objects.requireNonNull(request.getConnection(),
                 "FederatedConnection must be supplied by the gateway");
         final String tid = Objects.requireNonNull(request.getTransactionId(), "transactionId must not be null");
-        final String configuredCallbackUrl = configuration.getCallbackUrl();
-        final String callbackUrl = hasText(configuredCallbackUrl) ? configuredCallbackUrl
-                : Objects.requireNonNull(request.getCallbackUrl(), "callbackUrl must be supplied by the gateway on ADNotificationRequest");
         final java.util.List<java.util.Map<String, Object>> rar = request.getAuthorizationDetails();
         final String scope = conn.scope();
         final String resourceAudience = configuration.getResourceAudience();
@@ -224,26 +163,48 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
             final CibaClient cibaClient = cibaClientFactory.create(conn, resourceAudience, metadata);
             return cibaClient.bcAuthorize(hints, scope, request.getMessage(), relayedRar)
                     .map(res -> {
-                        long expiresAt = Instant.now().getEpochSecond() + Math.min(res.expiresInSeconds(), maxLifetimeSeconds);
-                        final String adHashPreSend = relayedRar == null ? null : CrossWitness.hash(relayedRar);
-                        store.put(new PendingAuthStore.Pending(tid, request.getState(), res.authReqId(),
-                                res.intervalSeconds(), expiresAt, adHashPreSend, callbackUrl));
-                        poller.schedule(vertx, tid, res.intervalSeconds(), cibaClient);
-                        return new ADNotificationResponse(tid);
+                        final ADNotificationResponse response = new ADNotificationResponse(tid);
+                        response.getExtraData().put(UPSTREAM_AUTH_REQ_ID, res.authReqId());
+                        if (relayedRar != null) {
+                            response.getExtraData().put(RELAYED_AD_HASH, CrossWitness.hash(relayedRar));
+                        }
+                        return response;
                     });
         });
     }
 
     @Override
-    public Single<Optional<ADUserResponse>> extractUserResponse(ADCallbackContext callbackContext) {
-        final String state = callbackContext.getParam(STATE);
-        final String tid = callbackContext.getParam(TRANSACTION_ID);
-        final String validated = callbackContext.getParam(CALLBACK_VALIDATE);
-        if (!hasText(state) || !hasText(tid) || !hasText(validated)) {
-            return Single.just(Optional.empty());
+    public Single<Optional<ADUserResponse>> checkStatus(ADStatusRequest request) {
+        final String tid = request.transactionId();
+        final Map<String, Object> state = request.externalInformation() == null ? Map.of() : request.externalInformation();
+        if (!(state.get(UPSTREAM_AUTH_REQ_ID) instanceof String upstreamAuthReqId)) {
+            log.error("CIBA-FED no upstream auth_req_id recorded for tid={}; failing closed", tid);
+            return Single.just(Optional.of(new ADUserResponse(tid, null, false)));
         }
-        return Single.just(Optional.of(new ADUserResponse(tid, state, Boolean.parseBoolean(validated),
-                callbackContext.getParam(ID_TOKEN), callbackContext.getParam(ACCESS_TOKEN),
-                getIdentityProviderId().orElse(null))));
+        final String relayedAdHash = state.get(RELAYED_AD_HASH) instanceof String h ? h : null;
+        return Single.defer(() -> {
+            ensureWired();
+            // One upstream poll per transaction at a time on this node: a concurrent client poll
+            // must not consume the upstream grant twice.
+            if (!checksInFlight.add(tid)) {
+                return Single.just(Optional.<ADUserResponse>empty());
+            }
+            final FederatedConnection conn = Objects.requireNonNull(request.connection(),
+                    "FederatedConnection must be supplied by the gateway");
+            final String resourceAudience = configuration != null ? configuration.getResourceAudience() : null;
+            return discoveryResolver.resolve(conn.wellKnownUri())
+                    .flatMap(metadata -> cibaClientFactory.create(conn, resourceAudience, metadata).pollToken(upstreamAuthReqId))
+                    .map(result -> UpstreamDecision.of(tid, relayedAdHash, result, getIdentityProviderId().orElse(null)))
+                    .onErrorReturn(error -> {
+                        log.warn("CIBA-FED upstream poll failed tid={}: {}", tid, error.getMessage());
+                        return Optional.empty();
+                    })
+                    .doFinally(() -> checksInFlight.remove(tid));
+        });
+    }
+
+    @Override
+    public Single<Optional<ADUserResponse>> extractUserResponse(ADCallbackContext callbackContext) {
+        return Single.just(Optional.empty());
     }
 }

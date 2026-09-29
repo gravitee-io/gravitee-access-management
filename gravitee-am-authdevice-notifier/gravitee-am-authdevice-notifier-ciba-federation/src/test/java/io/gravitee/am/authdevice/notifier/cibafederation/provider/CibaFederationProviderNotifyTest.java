@@ -17,7 +17,9 @@ package io.gravitee.am.authdevice.notifier.cibafederation.provider;
 
 import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.authdevice.notifier.api.model.ADStatusRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.authdevice.notifier.api.model.FederatedConnection;
 import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
 import io.gravitee.am.authdevice.notifier.cibafederation.CibaFederationAuthenticationDeviceNotifierConfiguration;
 import io.reactivex.rxjava3.core.Single;
@@ -75,34 +77,36 @@ class CibaFederationProviderNotifyTest {
         return r;
     }
 
-    CibaClient acmeAuth; ConsentRelayStrategy consentStrategy; PendingAuthStore store; AuthorizationPoller poller;
+    static final FederatedConnection CONNECTION = new FederatedConnection(
+            "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration");
+
+    CibaClient acmeAuth; ConsentRelayStrategy consentStrategy;
     CibaFederationAuthenticationDeviceNotifierProvider provider;
 
     @BeforeEach void init() {
         acmeAuth = mock(CibaClient.class);
         consentStrategy = null; // blank config → raw relay (no transform)
-        store = new PendingAuthStore();
-        poller = mock(AuthorizationPoller.class);
         when(acmeAuth.bcAuthorize(any(), any(), any(), any()))
                 .thenReturn(Single.just(new CibaClient.BcAuthorizeResult("R1", 120, 5)));
         provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud, meta) -> acmeAuth, stubResolver(), consentStrategy, /*hintStrategy*/ null,
-                store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), consentStrategy, /*hintStrategy*/ null);
+    }
+
+    static ADStatusRequest statusRequest(Map<String, Object> state) {
+        return new ADStatusRequest("tid1", state, CONNECTION);
     }
 
     @Test
     void notify_relays_hint_verbatim_and_consent_via_configured_strategy() {
         // Proves notify() threads a configured (non-blank) strategy through consentStrategy.relay(rar, ctx)
-        // end-to-end (hint verbatim, consent relayed, store + poller wired). The raw-vs-applied seam itself
+        // end-to-end (hint verbatim, consent relayed, upstream handle recorded). The raw-vs-applied seam itself
         // (blank -> unchanged, selected -> transformed) is covered by the two seam tests below, so this
         // stays a stateless identity double rather than a vendor transform.
         provider = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud, meta) -> acmeAuth, stubResolver(), new TestStrategy(), /*hintStrategy*/ null,
-                store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), new TestStrategy(), /*hintStrategy*/ null);
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tid1"); req.setState("stateJwt"); req.setLoginHint("acme|u1");
         req.setScopes(Set.of("openid")); req.setMessage("Approve?");
-        req.setCallbackUrl("http://gw/ciba/callback");
         req.setAuthorizationDetails(List.of(Map.of("type", "fdx_v1.0",
                 "consentRequest", Map.of("durationType", "ONE_TIME",
                         "resources", List.of(Map.of("dataClusters", List.of("ACCOUNT_BASIC")))))));
@@ -118,12 +122,9 @@ class CibaFederationProviderNotifyTest {
         assertEquals("acme|u1", hints.getValue().loginHint());
         assertNull(hints.getValue().loginHintToken());
         assertTrue(CrossWitness.canonical(rar.getValue()).contains("fdx_v1.0"));
-        PendingAuthStore.Pending p = store.get("tid1");
-        assertNotNull(p);
-        assertEquals("R1", p.authReqId());
-        assertNotNull(p.adHashPreSend());
-        assertEquals("http://gw/ciba/callback", p.callbackUrl());
-        verify(poller).schedule(any(), eq("tid1"), eq(5), any());
+        assertEquals("R1", resp.getExtraData().get(CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID));
+        assertEquals(CrossWitness.hash(rar.getValue()),
+                resp.getExtraData().get(CibaFederationAuthenticationDeviceNotifierProvider.RELAYED_AD_HASH));
     }
 
     /** Seam case 1/2 — blank strategy (as wired by {@code init()}: consentStrategy == null) relays
@@ -136,7 +137,6 @@ class CibaFederationProviderNotifyTest {
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidBlank"); req.setState("s"); req.setLoginHint("acme|u1");
         req.setScopes(Set.of("openid")); req.setMessage("Approve?");
-        req.setCallbackUrl("http://gw/ciba/callback");
         req.setAuthorizationDetails(inputRar);
         req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
                 "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
@@ -153,15 +153,13 @@ class CibaFederationProviderNotifyTest {
     @Test
     void selected_strategy_transforms_before_relay() {
         var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud, meta) -> acmeAuth, stubResolver(), new TaggingTestStrategy(), /*hintStrategy*/ null,
-                store, poller, /*vertx*/ null, /*maxLifetimeSeconds*/ 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), new TaggingTestStrategy(), /*hintStrategy*/ null);
         var inputRar = List.of(Map.<String, Object>of("type", "fdx_v1.0",
                 "consentRequest", Map.of("durationType", "ONE_TIME",
                         "resources", List.of(Map.of("dataClusters", List.of("ACCOUNT_BASIC"))))));
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidApplied"); req.setState("s"); req.setLoginHint("acme|u1");
         req.setScopes(Set.of("openid")); req.setMessage("Approve?");
-        req.setCallbackUrl("http://gw/ciba/callback");
         req.setAuthorizationDetails(inputRar);
         req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
                 "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
@@ -177,13 +175,12 @@ class CibaFederationProviderNotifyTest {
     }
 
     @Test
-    void notify_propagates_bcauthorize_error_and_stores_nothing() {
+    void notify_propagates_bcauthorize_error() {
         when(acmeAuth.bcAuthorize(any(), any(), any(), any()))
                 .thenReturn(io.reactivex.rxjava3.core.Single.error(new IllegalStateException("bc-authorize failed: invalid_client")));
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidX"); req.setState("s"); req.setLoginHint("acme|u1");
         req.setScopes(java.util.Set.of("openid"));
-        req.setCallbackUrl("http://gw/ciba/callback");
         req.setAuthorizationDetails(java.util.List.of(java.util.Map.of("type", "fdx_v1.0",
                 "consentRequest", java.util.Map.of("durationType", "ONE_TIME",
                         "resources", java.util.List.of(java.util.Map.of("dataClusters", java.util.List.of("ACCOUNT_BASIC")))))));
@@ -191,15 +188,12 @@ class CibaFederationProviderNotifyTest {
                 "cid", "secret", "openid profile email", "https://idp.acme.example/.well-known/openid-configuration"));
 
         assertThrows(Exception.class, () -> provider.notify(req).blockingGet());
-        assertNull(store.get("tidX"));
-        verify(poller, never()).schedule(any(), anyString(), anyInt(), any());
     }
 
     @Test
     void notify_uses_connection_bundle_scope_from_request_not_config() {
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tid1"); req.setState("stateJwt"); req.setLoginHint("acme|u1"); req.setMessage("Approve?");
-        req.setCallbackUrl("http://gw/ciba/callback");
         req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
                 "cid", "secret", "openid profile email phone", "https://idp.acme.example/.well-known/openid-configuration"));
         provider.notify(req).blockingGet();
@@ -207,44 +201,6 @@ class CibaFederationProviderNotifyTest {
         verify(acmeAuth).bcAuthorize(hints.capture(), eq("openid profile email phone"), eq("Approve?"), any());
         assertEquals("acme|u1", hints.getValue().loginHint());
         assertNull(hints.getValue().loginHintToken());
-    }
-
-    @Test
-    void extractUserResponse_returns_present_with_all_fields() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        provider.setConfiguration(cfg);
-
-        MultiMap params = MultiMap.caseInsensitiveMultiMap()
-                .set(CibaFederationAuthenticationDeviceNotifierProvider.TRANSACTION_ID, "tid1")
-                .set(CibaFederationAuthenticationDeviceNotifierProvider.STATE, "stateJwt")
-                .set(CibaFederationAuthenticationDeviceNotifierProvider.CALLBACK_VALIDATE, "true")
-                .set(CibaFederationAuthenticationDeviceNotifierProvider.ID_TOKEN, "eyJ.id.tok")
-                .set(CibaFederationAuthenticationDeviceNotifierProvider.ACCESS_TOKEN, "eyJ.at.tok");
-        ADCallbackContext ctx = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), params);
-
-        Optional<ADUserResponse> result = provider.extractUserResponse(ctx).blockingGet();
-
-        assertTrue(result.isPresent());
-        ADUserResponse resp = result.get();
-        assertEquals("tid1", resp.getTid());
-        assertEquals("stateJwt", resp.getState());
-        assertTrue(resp.isValidated());
-        assertEquals("eyJ.id.tok", resp.getIdToken());
-        assertEquals("eyJ.at.tok", resp.getAccessToken());
-        assertEquals("idp-acme", resp.getIdentityProviderId(),
-                "extractUserResponse must stamp the notifier's configured identityProviderId onto the response");
-    }
-
-    @Test
-    void extractUserResponse_returns_empty_when_required_params_missing() {
-        MultiMap params = MultiMap.caseInsensitiveMultiMap()
-                .set(CibaFederationAuthenticationDeviceNotifierProvider.STATE, "stateJwt");
-        ADCallbackContext ctx = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), params);
-
-        Optional<ADUserResponse> result = provider.extractUserResponse(ctx).blockingGet();
-
-        assertFalse(result.isPresent());
     }
 
     /** capabilities() must return exactly {AUTHORIZATION_DETAILS} — post-E3, federation dependency is
@@ -294,178 +250,12 @@ class CibaFederationProviderNotifyTest {
     }
 
     @Test
-    public void config_binding_fails_closed_when_callback_client_id_absent() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId(null);
-        cfg.setCallbackClientSecret("s");
-        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.setConfiguration(cfg);
-        assertThrows(IllegalStateException.class, p::afterPropertiesSet);
-    }
-
-    @Test
-    public void config_binding_fails_closed_when_callback_client_secret_absent() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId("cbid");
-        cfg.setCallbackClientSecret("  ");
-        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.setConfiguration(cfg);
-        assertThrows(IllegalStateException.class, p::afterPropertiesSet);
-    }
-
-    @Test
-    public void config_binding_fails_closed_when_callback_auth_method_unsupported() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId("cbid");
-        cfg.setCallbackClientSecret("cbsec");
-        cfg.setCallbackClientAuthMethod("private_key_jwt");
-        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.setConfiguration(cfg);
-        assertThrows(IllegalStateException.class, p::afterPropertiesSet);
-    }
-
-    @Test
     public void config_binding_succeeds_for_valid_config() {
         CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
         cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId("cbid");
-        cfg.setCallbackClientSecret("cbsec");
-        cfg.setCallbackClientAuthMethod("client_secret_basic");
         CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
         p.setConfiguration(cfg);
         assertDoesNotThrow(p::afterPropertiesSet);
-    }
-
-    @Test
-    public void config_binding_fails_closed_when_callback_url_is_not_an_absolute_http_url() {
-        for (String invalid : new String[]{"localhost:8092/d/oidc/ciba/authenticate/callback",
-                "/d/oidc/ciba/authenticate/callback", "ftp://gw/d/oidc/ciba/authenticate/callback", "http://",
-                "http://gw/d/oidc/ciba/authenticate/callback ", "http://gw/d/oidc/ciba/authenticate/callback\n",
-                "http://:8092/d/oidc/ciba/authenticate/callback", "http://@/d/oidc/ciba/authenticate/callback",
-                "http://gw:abc/d/oidc/ciba/authenticate/callback", "http://gw:0/d/oidc/ciba/authenticate/callback",
-                "http://gw:99999/d/oidc/ciba/authenticate/callback"}) {
-            CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-            cfg.setIdentityProviderId("idp-acme");
-            cfg.setCallbackClientId("cbid");
-            cfg.setCallbackClientSecret("cbsec");
-            cfg.setCallbackUrl(invalid);
-            CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-            p.setConfiguration(cfg);
-            IllegalStateException e = assertThrows(IllegalStateException.class, p::afterPropertiesSet, invalid);
-            assertTrue(e.getMessage().contains(invalid), "the error names the rejected value: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void config_binding_fails_closed_without_echoing_a_callback_url_with_user_info() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId("cbid");
-        cfg.setCallbackClientSecret("cbsec");
-        cfg.setCallbackUrl("http://user:s3cret@gw/d/oidc/ciba/authenticate/callback");
-        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.setConfiguration(cfg);
-        IllegalStateException e = assertThrows(IllegalStateException.class, p::afterPropertiesSet);
-        assertFalse(e.getMessage().contains("s3cret"), e.getMessage());
-    }
-
-    @Test
-    public void config_binding_succeeds_with_configured_callback_url() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId("cbid");
-        cfg.setCallbackClientSecret("cbsec");
-        cfg.setCallbackUrl("http://localhost:8092/d/oidc/ciba/authenticate/callback");
-        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.setConfiguration(cfg);
-        assertDoesNotThrow(p::afterPropertiesSet);
-    }
-
-    @Test
-    public void config_binding_succeeds_with_a_callback_url_whose_host_has_an_underscore() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackClientId("cbid");
-        cfg.setCallbackClientSecret("cbsec");
-        cfg.setCallbackUrl("http://am_gateway:8092/d/oidc/ciba/authenticate/callback");
-        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
-        p.setConfiguration(cfg);
-        assertDoesNotThrow(p::afterPropertiesSet);
-    }
-
-    @Test
-    void notify_posts_to_configured_callback_url_instead_of_request_url() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackUrl("http://localhost:8092/d/oidc/ciba/authenticate/callback");
-        provider.setConfiguration(cfg);
-        ADNotificationRequest req = new ADNotificationRequest();
-        req.setTransactionId("tidCfg"); req.setState("s"); req.setLoginHint("acme|u1");
-        req.setScopes(Set.of("openid"));
-        req.setCallbackUrl("https://mtls.gw.example/d/oidc/ciba/authenticate/callback");
-        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
-                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
-
-        provider.notify(req).blockingGet();
-
-        assertEquals("http://localhost:8092/d/oidc/ciba/authenticate/callback", store.get("tidCfg").callbackUrl());
-    }
-
-    @Test
-    void notify_uses_configured_callback_url_when_the_request_carries_none() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackUrl("http://localhost:8092/d/oidc/ciba/authenticate/callback");
-        provider.setConfiguration(cfg);
-        ADNotificationRequest req = new ADNotificationRequest();
-        req.setTransactionId("tidNoReqUrl"); req.setState("s"); req.setLoginHint("acme|u1");
-        req.setScopes(Set.of("openid"));
-        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
-                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
-
-        provider.notify(req).blockingGet();
-
-        assertEquals("http://localhost:8092/d/oidc/ciba/authenticate/callback", store.get("tidNoReqUrl").callbackUrl());
-    }
-
-    @Test
-    void notify_uses_request_callback_url_when_configured_callback_url_is_blank() {
-        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
-        cfg.setIdentityProviderId("idp-acme");
-        cfg.setCallbackUrl("  ");
-        provider.setConfiguration(cfg);
-        ADNotificationRequest req = new ADNotificationRequest();
-        req.setTransactionId("tidBlankCfg"); req.setState("s"); req.setLoginHint("acme|u1");
-        req.setScopes(Set.of("openid"));
-        req.setCallbackUrl("https://gw.example/d/oidc/ciba/authenticate/callback");
-        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
-                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
-
-        provider.notify(req).blockingGet();
-
-        assertEquals("https://gw.example/d/oidc/ciba/authenticate/callback", store.get("tidBlankCfg").callbackUrl());
-    }
-
-    /** notify() threads request.getCallbackUrl() into PendingAuthStore.Pending so the poller uses the per-tid URL. */
-    @Test
-    void notify_threads_callbackUrl_from_request_into_pending_store() {
-        String expectedCbUrl = "http://gw/ciba/my-domain/callback";
-        ADNotificationRequest req = new ADNotificationRequest();
-        req.setTransactionId("tidCb"); req.setState("s"); req.setLoginHint("acme|u1");
-        req.setScopes(Set.of("openid")); req.setMessage("Approve?");
-        req.setCallbackUrl(expectedCbUrl);
-        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
-                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
-
-        provider.notify(req).blockingGet();
-
-        PendingAuthStore.Pending p = store.get("tidCb");
-        assertNotNull(p, "pending entry must be present after notify");
-        assertEquals(expectedCbUrl, p.callbackUrl(),
-                "callbackUrl in PendingAuthStore.Pending must match request.getCallbackUrl()");
     }
 
     /** notify() must obtain the downstream CIBA client from the injected CibaClientFactory, passing the
@@ -475,8 +265,7 @@ class CibaFederationProviderNotifyTest {
         CibaClientFactory factory = mock(CibaClientFactory.class);
         when(factory.create(any(), any(), any())).thenReturn(acmeAuth);
         var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                factory, stubResolver(), new TestStrategy(), /*hintStrategy*/ null,
-                new PendingAuthStore(), mock(AuthorizationPoller.class), null, 120);
+                factory, stubResolver(), new TestStrategy(), /*hintStrategy*/ null);
         CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
         cfg.setIdentityProviderId("idp-acme");
         cfg.setResourceAudience("https://api.example");
@@ -486,7 +275,7 @@ class CibaFederationProviderNotifyTest {
                 "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration");
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidF"); req.setState("s"); req.setLoginHint("acme|u1");
-        req.setScopes(Set.of("openid")); req.setCallbackUrl("http://gw/ciba/callback");
+        req.setScopes(Set.of("openid"));
         req.setConnection(conn);
 
         p.notify(req).blockingGet();
@@ -496,11 +285,10 @@ class CibaFederationProviderNotifyTest {
 
     @Test void selected_hint_strategy_decorates_using_discovery_issuer() {
         var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud, meta) -> acmeAuth, stubResolver(), null, new WrappingHintStrategy(),
-                store, poller, null, 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), null, new WrappingHintStrategy());
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidH"); req.setState("s"); req.setLoginHint("acme|u1");
-        req.setScopes(Set.of("openid")); req.setMessage("Approve?"); req.setCallbackUrl("http://gw/cb");
+        req.setScopes(Set.of("openid")); req.setMessage("Approve?");
         req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
                 "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
         p.notify(req).blockingGet();
@@ -511,12 +299,117 @@ class CibaFederationProviderNotifyTest {
 
     @Test void no_hint_fails_closed() {
         var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(
-                (conn, aud, meta) -> acmeAuth, stubResolver(), null, null, store, poller, null, 120);
+                (conn, aud, meta) -> acmeAuth, stubResolver(), null, null);
         ADNotificationRequest req = new ADNotificationRequest();
         req.setTransactionId("tidN"); req.setState("s"); // no hint set
-        req.setScopes(Set.of("openid")); req.setCallbackUrl("http://gw/cb");
+        req.setScopes(Set.of("openid"));
         req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
                 "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
         assertThrows(IllegalStateException.class, () -> p.notify(req).blockingGet());
+    }
+
+    @Test
+    void notify_without_rar_records_only_the_upstream_handle() {
+        ADNotificationRequest req = new ADNotificationRequest();
+        req.setTransactionId("tid1"); req.setState("s"); req.setLoginHint("acme|u1");
+        req.setScopes(Set.of("openid"));
+        req.setConnection(CONNECTION);
+
+        var resp = provider.notify(req).blockingGet();
+
+        assertEquals(Map.of(CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1"), resp.getExtraData());
+    }
+
+    @Test
+    void extractUserResponse_ignores_callbacks() {
+        MultiMap params = MultiMap.caseInsensitiveMultiMap()
+                .set("tid", "tid1").set("state", "stateJwt").set("validated", "true").set("id_token", "eyJ.id.tok");
+        ADCallbackContext ctx = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), params);
+
+        assertFalse(provider.extractUserResponse(ctx).blockingGet().isPresent());
+    }
+
+    @Test
+    void checkStatus_pending_upstream_has_no_decision() {
+        when(acmeAuth.pollToken("R1")).thenReturn(Single.just(new CibaClient.PollResult(
+                CibaClient.PollKind.PENDING, null, null, null, "authorization_pending")));
+
+        Optional<ADUserResponse> decision = provider.checkStatus(statusRequest(Map.of(
+                CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1"))).blockingGet();
+
+        assertTrue(decision.isEmpty());
+    }
+
+    @Test
+    void checkStatus_token_approves_with_federated_identity() {
+        var rar = List.of(Map.<String, Object>of("type", "x"));
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        provider.setConfiguration(cfg);
+        when(acmeAuth.pollToken("R1")).thenReturn(Single.just(new CibaClient.PollResult(
+                CibaClient.PollKind.TOKEN, "AT", "id.tok", rar, null)));
+
+        ADUserResponse decision = provider.checkStatus(statusRequest(Map.of(
+                CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1",
+                CibaFederationAuthenticationDeviceNotifierProvider.RELAYED_AD_HASH, CrossWitness.hash(rar)))).blockingGet().orElseThrow();
+
+        assertTrue(decision.isValidated());
+        assertEquals("tid1", decision.getTid());
+        assertEquals("id.tok", decision.getIdToken());
+        assertEquals("AT", decision.getAccessToken());
+        assertEquals("idp-acme", decision.getIdentityProviderId());
+    }
+
+    @Test
+    void checkStatus_builds_client_from_connection_and_configured_audience() {
+        CibaClientFactory factory = mock(CibaClientFactory.class);
+        when(factory.create(any(), any(), any())).thenReturn(acmeAuth);
+        when(acmeAuth.pollToken("R1")).thenReturn(Single.just(new CibaClient.PollResult(
+                CibaClient.PollKind.PENDING, null, null, null, "authorization_pending")));
+        var p = CibaFederationAuthenticationDeviceNotifierProvider.forTest(factory, stubResolver(), null, null);
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setResourceAudience("https://api.example");
+        p.setConfiguration(cfg);
+
+        p.checkStatus(statusRequest(Map.of(CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1"))).blockingGet();
+
+        verify(factory).create(eq(CONNECTION), eq("https://api.example"), any());
+    }
+
+    @Test
+    void checkStatus_upstream_failure_has_no_decision_so_the_client_polls_again() {
+        when(acmeAuth.pollToken("R1")).thenReturn(Single.error(new IllegalStateException("connection reset")));
+
+        Optional<ADUserResponse> decision = provider.checkStatus(statusRequest(Map.of(
+                CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1"))).blockingGet();
+
+        assertTrue(decision.isEmpty());
+    }
+
+    @Test
+    void checkStatus_without_upstream_handle_fails_closed() {
+        Optional<ADUserResponse> decision = provider.checkStatus(statusRequest(Map.of())).blockingGet();
+
+        assertFalse(decision.orElseThrow().isValidated());
+        verifyNoInteractions(acmeAuth);
+    }
+
+    @Test
+    void checkStatus_polls_upstream_once_while_a_check_is_in_flight() {
+        var upstream = io.reactivex.rxjava3.subjects.SingleSubject.<CibaClient.PollResult>create();
+        when(acmeAuth.pollToken("R1")).thenReturn(upstream);
+        var state = Map.<String, Object>of(CibaFederationAuthenticationDeviceNotifierProvider.UPSTREAM_AUTH_REQ_ID, "R1");
+
+        var first = provider.checkStatus(statusRequest(state)).test();
+        var concurrent = provider.checkStatus(statusRequest(state)).test();
+        concurrent.assertValue(Optional.empty());
+        upstream.onSuccess(new CibaClient.PollResult(CibaClient.PollKind.PENDING, null, null, null, "authorization_pending"));
+        first.assertValue(Optional.empty());
+
+        when(acmeAuth.pollToken("R1")).thenReturn(Single.just(new CibaClient.PollResult(
+                CibaClient.PollKind.PENDING, null, null, null, "authorization_pending")));
+        provider.checkStatus(statusRequest(state)).blockingGet();
+        verify(acmeAuth, times(2)).pollToken("R1");
     }
 }

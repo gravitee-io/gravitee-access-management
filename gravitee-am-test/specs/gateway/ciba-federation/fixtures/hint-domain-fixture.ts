@@ -59,30 +59,6 @@ const isCibaTokenGrantedResponse = (res: any): boolean => {
   throw new Error(`Unexpected CIBA token response: HTTP ${res.status} ${JSON.stringify(res.body)}`);
 };
 
-async function createCallbackApplication(domainId: string, accessToken: string): Promise<{ clientId: string; clientSecret: string }> {
-  const created = await createApplication(domainId, accessToken, {
-    name: uniqueName('ciba-fed-callback', true),
-    type: 'WEB',
-    redirectUris: ['https://callback.example.com/callback'],
-  });
-  const clientSecret: string = created.settings.oauth.clientSecret;
-  const updated = await updateApplication(
-    domainId,
-    accessToken,
-    {
-      settings: {
-        oauth: {
-          redirectUris: ['https://callback.example.com/callback'],
-          // GatewayCallbackClient authenticates with client_id/client_secret as form params (client_secret_post).
-          tokenEndpointAuthMethod: 'client_secret_post',
-        },
-      },
-    },
-    created.id,
-  );
-  return { clientId: updated.settings.oauth.clientId, clientSecret };
-}
-
 async function createHintApplication(domainId: string, accessToken: string): Promise<{ clientId: string; clientSecret: string }> {
   const created = await createApplication(domainId, accessToken, {
     name: uniqueName('ciba-fed-hint-client', true),
@@ -135,8 +111,6 @@ export const setupHintDomain = async (accessToken: string, targetDomain: TargetD
       }),
     });
 
-    const callbackApp = await createCallbackApplication(domain.id, accessToken);
-
     const notifierResponse = await performPost(
       `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/${domain.id}/auth-device-notifiers`,
       '',
@@ -145,8 +119,6 @@ export const setupHintDomain = async (accessToken: string, targetDomain: TargetD
         name: 'ciba-federation-notifier',
         configuration: JSON.stringify({
           identityProviderId: federationIdp.id,
-          callbackClientId: callbackApp.clientId,
-          callbackClientSecret: callbackApp.clientSecret,
         }),
       },
       { 'Content-type': 'application/json', Authorization: `Bearer ${accessToken}` },

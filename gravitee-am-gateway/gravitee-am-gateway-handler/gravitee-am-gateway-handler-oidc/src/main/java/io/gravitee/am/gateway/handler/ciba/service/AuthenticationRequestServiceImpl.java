@@ -16,10 +16,13 @@
 package io.gravitee.am.gateway.handler.ciba.service;
 
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
+import io.gravitee.am.authdevice.notifier.api.IdentityProviderDependent;
 import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
+import io.gravitee.am.authdevice.notifier.api.model.ADStatusRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.authdevice.notifier.api.model.FederatedConnection;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestExpiredException;
@@ -37,7 +40,10 @@ import io.gravitee.am.gateway.handler.manager.authdevice.notifier.Authentication
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
@@ -136,34 +142,72 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     }
 
     @Override
-    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client) {
+    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client, Request request) {
         log.debug("Search for authentication request with id {} for client {}", authReqId, client.getClientId());
         return this.authRequestRepository.findById(authReqId)
                 .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
-                .flatMap(request -> {
-                    if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
+                .flatMap(authRequest -> {
+                    if ((authRequest.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
                         return Single.error(new AuthenticationRequestExpiredException());
                     }
-                    if (!client.getClientId().equals(request.getClientId())) {
-                        return Single.error(new InvalidGrantException(String.format("Invalid client: auth_req_id '%s' issued to client '%s' cannot be used by client '%s'", authReqId, request.getClientId(), client.getClientId())));
+                    if (!client.getClientId().equals(authRequest.getClientId())) {
+                        return Single.error(new InvalidGrantException(String.format("Invalid client: auth_req_id '%s' issued to client '%s' cannot be used by client '%s'", authReqId, authRequest.getClientId(), client.getClientId())));
                     }
-                    switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
-                        case ONGOING:
-                            // Check if the request interval is respected by the client
-                            // if the client request to often the endpoint, throws a SlowDown error
-                            // otherwise, update the last Access date before sending the pending exception
-                            final int interval = domain.getOidc().getCibaSettings().getTokenReqInterval();
-                            if (request.getLastAccessAt().toInstant().plusSeconds(interval).isAfter(Instant.now())) {
-                                return Single.error(new SlowDownException());
-                            }
-                            request.setLastAccessAt(new Date());
-                            return this.authRequestRepository.update(request).flatMap(__ -> Single.error(new AuthorizationPendingException()));
-                        case REJECTED:
-                            return this.authRequestRepository.delete(authReqId).toSingle(() -> { throw new AuthorizationRejectedException(); });
-                        default:
-                            return this.authRequestRepository.delete(authReqId).toSingle(() -> request);
+                    if (AuthenticationRequestStatus.valueOf(authRequest.getStatus()) == AuthenticationRequestStatus.ONGOING) {
+                        return poll(domain, authRequest, request);
                     }
+                    return conclude(authRequest);
                 });
+    }
+
+    private Single<CibaAuthRequest> poll(Domain domain, CibaAuthRequest authRequest, Request request) {
+        // Check if the request interval is respected by the client
+        // if the client request to often the endpoint, throws a SlowDown error
+        // otherwise, update the last Access date before asking the notifier for a decision
+        final int interval = domain.getOidc().getCibaSettings().getTokenReqInterval();
+        if (authRequest.getLastAccessAt().toInstant().plusSeconds(interval).isAfter(Instant.now())) {
+            return Single.error(new SlowDownException());
+        }
+        authRequest.setLastAccessAt(new Date());
+        return this.authRequestRepository.update(authRequest)
+                .flatMap(saved -> checkStatus(saved)
+                        .flatMap(decision -> decision.isPresent()
+                                ? completeOrReject(saved, decision.get(), request).flatMap(this::conclude)
+                                : Single.error(new AuthorizationPendingException())));
+    }
+
+    private Single<CibaAuthRequest> completeOrReject(CibaAuthRequest authRequest, ADUserResponse decision, Request request) {
+        // Once the notifier has decided, the upstream grant is spent: a failed completion cannot be retried.
+        return complete(authRequest, decision, request)
+                .onErrorResumeNext(error -> {
+                    log.warn("CIBA completion failed for auth_req_id {}; rejecting the request", authRequest.getId(), error);
+                    return this.authRequestRepository.updateStatus(authRequest.getId(), AuthenticationRequestStatus.REJECTED.name())
+                            .doOnError(persistError -> log.error("CIBA could not persist the rejection of auth_req_id {}",
+                                    authRequest.getId(), persistError));
+                });
+    }
+
+    private Single<Optional<ADUserResponse>> checkStatus(CibaAuthRequest authRequest) {
+        final AuthenticationDeviceNotifierProvider notifier = authRequest.getDeviceNotifierId() == null ? null
+                : this.notifierManager.getAuthDeviceNotifierProvider(authRequest.getDeviceNotifierId());
+        if (notifier == null) {
+            if (authRequest.getDeviceNotifierId() != null) {
+                log.warn("CIBA device notifier {} of auth_req_id {} is not deployed; the request stays pending",
+                        authRequest.getDeviceNotifierId(), authRequest.getId());
+            }
+            return Single.just(Optional.empty());
+        }
+        return federatedConnection(notifier)
+                .map(connection -> new ADStatusRequest(authRequest.getExternalTrxId(), authRequest.getExternalInformation(), connection))
+                .defaultIfEmpty(new ADStatusRequest(authRequest.getExternalTrxId(), authRequest.getExternalInformation(), null))
+                .flatMap(notifier::checkStatus);
+    }
+
+    private Single<CibaAuthRequest> conclude(CibaAuthRequest authRequest) {
+        if (AuthenticationRequestStatus.valueOf(authRequest.getStatus()) == AuthenticationRequestStatus.REJECTED) {
+            return this.authRequestRepository.delete(authRequest.getId()).toSingle(() -> { throw new AuthorizationRejectedException(); });
+        }
+        return this.authRequestRepository.delete(authRequest.getId()).toSingle(() -> authRequest);
     }
 
     @Override
@@ -188,7 +232,40 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
             return Single.error(new InvalidRequestException("No authentication device notifier defined"));
         }
 
-        return notifier.notify(adRequest);
+        return federatedConnection(notifier)
+                .map(connection -> {
+                    adRequest.setConnection(connection);
+                    return adRequest;
+                })
+                .defaultIfEmpty(adRequest)
+                .flatMap(notifier::notify);
+    }
+
+    private Maybe<FederatedConnection> federatedConnection(AuthenticationDeviceNotifierProvider notifier) {
+        final String idpId = (notifier instanceof IdentityProviderDependent dep) ? dep.getIdentityProviderId().orElse(null) : null;
+        if (idpId == null) {
+            return Maybe.empty();
+        }
+        if (this.identityProviderManager.getIdentityProvider(idpId) == null) {
+            log.warn("CIBA federation identity provider {} not found", idpId);
+            return Maybe.error(new InvalidRequestException("CIBA federation identity provider is unavailable"));
+        }
+        return this.identityProviderManager.get(idpId)
+                .switchIfEmpty(Maybe.defer(() -> {
+                    log.warn("CIBA federation identity provider {} is not deployed", idpId);
+                    return Maybe.error(new InvalidRequestException("CIBA federation identity provider is unavailable"));
+                }))
+                .map(AuthenticationRequestServiceImpl::toFederatedConnection);
+    }
+
+    static FederatedConnection toFederatedConnection(AuthenticationProvider provider) {
+        if (!(provider instanceof OpenIDConnectAuthenticationProvider<?> oidc)) {
+            throw new InvalidRequestException("CIBA federation IdP is not an OpenID Connect provider");
+        }
+        OpenIDConnectIdentityProviderConfiguration cfg = oidc.getConfiguration();
+        String scope = (cfg.getScopes() != null) ? String.join(" ", cfg.getScopes()) : "";
+        return new FederatedConnection(cfg.getClientId(), cfg.getClientSecret(), scope, cfg.getWellKnownUri(),
+                cfg.getClientAuthenticationMethod());
     }
 
     @Override
@@ -198,14 +275,12 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                 .filter(Optional::isPresent).firstElement()
                 .switchIfEmpty(Maybe.error(InvalidRequestException::new))
                 .map(Optional::get)
-                .flatMapSingle(userResponse -> {
-                    final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
-                    return this.jwtService.decode(userResponse.getState(), STATE)
-                            .flatMap(jwtState -> this.clientLookupService.findByClientId(jwtState.getAud())
-                                    .switchIfEmpty(Single.error(InvalidClientException::new))
-                                    .flatMap(client -> verifyState(userResponse, client)
-                                            .flatMap(verified -> updateRequestStatus(verified.getJti(), status, userResponse, request))));
-                }).ignoreElement();
+                .flatMapSingle(userResponse -> this.jwtService.decode(userResponse.getState(), STATE)
+                        .flatMap(jwtState -> this.clientLookupService.findByClientId(jwtState.getAud())
+                                .switchIfEmpty(Single.error(InvalidClientException::new))
+                                .flatMap(client -> verifyState(userResponse, client)
+                                        .flatMap(verified -> updateRequestStatus(verified.getJti(), userResponse, request)))))
+                .ignoreElement();
     }
 
     private Single<JWT> verifyState(ADUserResponse userResponse, Client client) {
@@ -223,40 +298,42 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                 });
     }
 
-    private Single<CibaAuthRequest> updateRequestStatus(String reqExtId, String status, ADUserResponse userResponse, Request request) {
+    private Single<CibaAuthRequest> updateRequestStatus(String reqExtId, ADUserResponse userResponse, Request request) {
         return this.authRequestRepository.findByExternalId(reqExtId)
                 .switchIfEmpty(Single.error(() -> new InvalidRequestException("Invalid CIBA State")))
-                .flatMap(cibaRequest -> {
-                    boolean success = AuthenticationRequestStatus.SUCCESS.name().equals(status);
-                    final String idpId = success ? userResponse.getIdentityProviderId() : null;
-                    if (idpId == null) {
-                        // non-federated, rejected, or response carries no IdP -> status-only
-                        return this.authRequestRepository.updateStatus(cibaRequest.getId(), status);
+                .flatMap(cibaRequest -> complete(cibaRequest, userResponse, request));
+    }
+
+    private Single<CibaAuthRequest> complete(CibaAuthRequest cibaRequest, ADUserResponse userResponse, Request request) {
+        final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
+        final String idpId = userResponse.isValidated() ? userResponse.getIdentityProviderId() : null;
+        if (idpId == null) {
+            // non-federated, rejected, or response carries no IdP -> status-only
+            return this.authRequestRepository.updateStatus(cibaRequest.getId(), status);
+        }
+        final AuthenticationContext authContext = new SimpleAuthenticationContext();
+        return this.identityProviderManager.get(idpId)
+                .switchIfEmpty(Single.error(() -> new InvalidRequestException("CIBA federation IdP not available: " + idpId)))
+                .flatMap(provider -> provider.retrieveUserFromTokenResponse(
+                                userResponse.getAccessToken(), userResponse.getIdToken(), authContext)
+                        .switchIfEmpty(Single.error(() -> new InvalidRequestException("CIBA federation: empty user from IdP"))))
+                .flatMap(principal -> {
+                    if (!(principal instanceof io.gravitee.am.identityprovider.api.DefaultUser du)) {
+                        return Single.error(new InvalidRequestException("CIBA federation: IdP returned non-DefaultUser principal"));
                     }
-                    final AuthenticationContext authContext = new SimpleAuthenticationContext();
-                    return this.identityProviderManager.get(idpId)
-                            .switchIfEmpty(Single.error(() -> new InvalidRequestException("CIBA federation IdP not available: " + idpId)))
-                            .flatMap(provider -> provider.retrieveUserFromTokenResponse(
-                                            userResponse.getAccessToken(), userResponse.getIdToken(), authContext)
-                                    .switchIfEmpty(Single.error(() -> new InvalidRequestException("CIBA federation: empty user from IdP"))))
-                            .flatMap(principal -> {
-                                if (!(principal instanceof io.gravitee.am.identityprovider.api.DefaultUser du)) {
-                                    return Single.error(new InvalidRequestException("CIBA federation: IdP returned non-DefaultUser principal"));
-                                }
-                                java.util.Map<String, Object> info = du.getAdditionalInformation() != null
-                                        ? new java.util.HashMap<>(du.getAdditionalInformation()) : new java.util.HashMap<>();
-                                info.put("source", idpId);
-                                du.setAdditionalInformation(info);
-                                // Completion is an authentication event: connect() (UserAuthenticationServiceImpl#create0)
-                                // derives lastIdentityUsed from source and records loggedAt/loginsCount when
-                                // afterAuthentication=true — no need to plant last_identity by hand.
-                                return this.userAuthenticationManager.connect(du, null, request, true);
-                            })
-                            .flatMap(localUser -> {
-                                cibaRequest.setSubject(localUser.getId());
-                                return this.authRequestRepository.update(cibaRequest)
-                                        .flatMap(saved -> this.authRequestRepository.updateStatus(saved.getId(), status));
-                            });
+                    java.util.Map<String, Object> info = du.getAdditionalInformation() != null
+                            ? new java.util.HashMap<>(du.getAdditionalInformation()) : new java.util.HashMap<>();
+                    info.put("source", idpId);
+                    du.setAdditionalInformation(info);
+                    // Completion is an authentication event: connect() (UserAuthenticationServiceImpl#create0)
+                    // derives lastIdentityUsed from source and records loggedAt/loginsCount when
+                    // afterAuthentication=true — no need to plant last_identity by hand.
+                    return this.userAuthenticationManager.connect(du, null, request, true);
+                })
+                .flatMap(localUser -> {
+                    cibaRequest.setSubject(localUser.getId());
+                    return this.authRequestRepository.update(cibaRequest)
+                            .flatMap(saved -> this.authRequestRepository.updateStatus(saved.getId(), status));
                 });
     }
 }

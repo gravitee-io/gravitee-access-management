@@ -18,7 +18,7 @@ package io.gravitee.am.authdevice.notifier.cibafederation.provider.spring;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 import java.nio.file.*;
-import java.util.regex.Pattern;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SchemaFormJsonTest {
@@ -27,55 +27,19 @@ class SchemaFormJsonTest {
         String raw = Files.readString(Path.of("src/main/resources/schemas/schema-form.json"));
         JsonObject schema = new JsonObject(raw);
         JsonObject props = schema.getJsonObject("properties");
-        for (String f : new String[]{"identityProviderId","resourceAudience","callbackClientId","callbackClientSecret",
-                "recipientDisplayName","maxLifetimeSeconds","consentRelayStrategy"}) {
+        for (String f : new String[]{"identityProviderId","resourceAudience","recipientDisplayName","consentRelayStrategy"}) {
             assertNotNull(props.getJsonObject(f), "missing schema property: " + f);
         }
-        for (String removed : new String[]{"callbackBaseUrl","pollIntervalCapSeconds"}) {
+        for (String removed : new String[]{"callbackBaseUrl","pollIntervalCapSeconds","callbackUrl","callbackClientId",
+                "callbackClientSecret","callbackClientAuthMethod","maxLifetimeSeconds"}) {
             assertNull(props.getJsonObject(removed), "schema must not contain removed property: " + removed);
         }
-        assertTrue(schema.getJsonArray("required").contains("identityProviderId"));
-        assertTrue(schema.getJsonArray("required").contains("callbackClientId"));
-        assertTrue(schema.getJsonArray("required").contains("callbackClientSecret"));
+        assertEquals(List.of("identityProviderId"), schema.getJsonArray("required").getList());
 
         JsonObject strat = props.getJsonObject("consentRelayStrategy");
         assertEquals("string", strat.getString("type"));
         assertFalse(strat.containsKey("enum"), "consentRelayStrategy must not be an enum (open, module-contributed ids)");
         assertFalse(strat.containsKey("default"), "blank = raw relay; no default");
-    }
-
-    @Test
-    void schema_declares_callback_client_auth_method_enum() throws Exception {
-        String raw = Files.readString(Path.of("src/main/resources/schemas/schema-form.json"));
-        JsonObject schema = new JsonObject(raw);
-        JsonObject props = schema.getJsonObject("properties");
-
-        JsonObject authMethod = props.getJsonObject("callbackClientAuthMethod");
-        assertNotNull(authMethod, "schema must declare callbackClientAuthMethod");
-        assertEquals("client_secret_post", authMethod.getString("default"));
-        assertTrue(authMethod.getJsonArray("enum").contains("client_secret_basic"),
-                "schema must offer client_secret_basic");
-    }
-
-    @Test
-    void schema_declares_optional_callback_url_property() throws Exception {
-        String raw = Files.readString(Path.of("src/main/resources/schemas/schema-form.json"));
-        JsonObject schema = new JsonObject(raw);
-        JsonObject callbackUrl = schema.getJsonObject("properties").getJsonObject("callbackUrl");
-
-        assertNotNull(callbackUrl, "schema-form.json must expose callbackUrl so the notifier UI renders it");
-        assertEquals("string", callbackUrl.getString("type"));
-        Pattern pattern = Pattern.compile(callbackUrl.getString("pattern"));
-        assertTrue(pattern.matcher("http://localhost:8092/d/oidc/ciba/authenticate/callback").matches(),
-                "the console matches the pattern against the whole value");
-        assertTrue(pattern.matcher("http://am_gateway:8092/d/oidc/ciba/authenticate/callback").matches());
-        assertTrue(pattern.matcher("").matches(), "blank = URL derived by the gateway");
-        for (String invalid : new String[]{"http://", "http://:8092/d/oidc/ciba/authenticate/callback",
-                "localhost:8092/d/oidc/ciba/authenticate/callback", "http://gw/d/oidc/ciba/authenticate/callback ",
-                "http://gw/d/oidc/ciba/authenticate/callback\n"}) {
-            assertFalse(pattern.matcher(invalid).find(), invalid);
-        }
-        assertFalse(schema.getJsonArray("required").contains("callbackUrl"), "blank = URL derived by the gateway");
     }
 
     @Test

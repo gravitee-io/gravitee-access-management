@@ -70,8 +70,8 @@ public class CibaFederationProviderSpringConfiguration {
     @Bean
     @Qualifier("cibaFederationWebClient")
     public WebClient cibaFederationWebClient(WebClientBuilder webClientBuilder) {
-        // No fixed endpoint: the client uses absolute URLs (discovery doc + resolved OP endpoints + the
-        // gateway callback), so scheme/TLS follow each absolute URL. The builder still applies node-level
+        // No fixed endpoint: the client uses absolute URLs (discovery doc + resolved OP endpoints),
+        // so scheme/TLS follow each absolute URL. The builder still applies node-level
         // TLS/HTTP options from gravitee.yml.
         WebClientOptions options = new WebClientOptions().setUserAgent("Gravitee.io-AM-CIBA-Federation/1");
         return webClientBuilder.createWebClient(vertx, options);

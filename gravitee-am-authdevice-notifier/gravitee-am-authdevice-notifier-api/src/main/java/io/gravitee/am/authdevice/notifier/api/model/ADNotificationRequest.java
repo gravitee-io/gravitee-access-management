@@ -54,7 +54,6 @@ public class ADNotificationRequest {
     private String message;
     private RoutingContext context;
     private FederatedConnection connection;
-    private String callbackUrl;
 
     private TemplateEngine templateEngine;
 

@@ -15,15 +15,18 @@
  */
 package io.gravitee.am.authdevice.notifier.api.model;
 
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-class ADNotificationRequestTest {
-    @Test
-    void carries_federated_connection_bundle() {
-        ADNotificationRequest req = new ADNotificationRequest();
-        req.setConnection(new FederatedConnection("cid", "secret", "openid profile email", "https://idp.acme.example/.well-known/openid-configuration"));
-        assertEquals("cid", req.getConnection().clientId());
-        assertEquals("openid profile email", req.getConnection().scope());
+/**
+ * {@code externalInformation} carries the {@code extraData} that {@code notify()} returned, merged with the
+ * gateway's own entries for the request. {@code connection} is null for a notifier that does not federate.
+ */
+public record ADStatusRequest(String transactionId, Map<String, Object> externalInformation, FederatedConnection connection) {
+
+    public ADStatusRequest {
+        // Not Map.copyOf: persisted JSON may hold null values.
+        externalInformation = externalInformation == null ? Map.of() : Collections.unmodifiableMap(new HashMap<>(externalInformation));
     }
 }
