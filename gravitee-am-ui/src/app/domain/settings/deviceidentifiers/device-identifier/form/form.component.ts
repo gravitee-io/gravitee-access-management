@@ -15,6 +15,8 @@
  */
 import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 
+import { MaterialCheckboxHintComponent } from '../../../../../components/json-schema-form/material-checkbox-hint.component';
+
 @Component({
   selector: 'device-identifier-form',
   templateUrl: './form.component.html',
@@ -28,6 +30,9 @@ export class DeviceIdentifierFormComponent implements OnChanges {
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm = false;
   data: any = {};
+  customWidgets = {
+    checkbox: MaterialCheckboxHintComponent,
+  };
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.deviceIdentifierSchema) {

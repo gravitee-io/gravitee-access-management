@@ -208,6 +208,7 @@ import { ExtensionGrantFormComponent } from './domain/settings/extension-grants/
 import { ExtensionGrantCreationStep1Component } from './domain/settings/extension-grants/creation/steps/step1/step1.component';
 import { ExtensionGrantCreationStep2Component } from './domain/settings/extension-grants/creation/steps/step2/step2.component';
 import { MaterialFileComponent } from './components/json-schema-form/material-file.component';
+import { MaterialCheckboxHintComponent } from './components/json-schema-form/material-checkbox-hint.component';
 import { MaterialCertificateComponent } from './components/json-schema-form/material-certificate-component';
 import { ManagementComponent } from './settings/management/management.component';
 import { ManagementGeneralComponent } from './settings/management/general/general.component';
@@ -647,6 +648,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopeCreationComponent,
     ScopeComponent,
     MaterialFileComponent,
+    MaterialCheckboxHintComponent,
     MaterialMultiselectComponent,
     MultiselectListComponent,
     ReporterAttributeMappingsComponent,

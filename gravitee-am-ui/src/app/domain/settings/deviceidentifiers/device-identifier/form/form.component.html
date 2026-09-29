@@ -19,6 +19,7 @@
   *ngIf="displayForm"
   [schema]="deviceIdentifierSchema"
   [data]="data"
+  [widgets]="customWidgets"
   [options]="{ formDefaults: { orderable: false }, addSubmit: false }"
   (isValid)="isValid($event)"
   (onChanges)="onChanges($event)"
