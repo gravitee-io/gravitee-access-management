@@ -102,6 +102,15 @@ export class TokensComponent implements OnInit {
     this.modelChanged();
   }
 
+  isLightweightJwtEnabled(): boolean {
+    return !!this.oauthSettings.lightweightJwtSettings?.enabled;
+  }
+
+  toggleLightweightJwt(event) {
+    this.oauthSettings.lightweightJwtSettings = { ...this.oauthSettings.lightweightJwtSettings, enabled: event.checked };
+    this.modelChanged();
+  }
+
   claimsIsEmpty() {
     return this.oauthSettings.tokenCustomClaims.length === 0;
   }

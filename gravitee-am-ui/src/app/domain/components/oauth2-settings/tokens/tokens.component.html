@@ -104,6 +104,25 @@
         </div>
       </div>
 
+      <div class="gv-form-section" *ngIf="context === 'Application'">
+        <div class="gv-form-section-title">
+          <h5>Lightweight JWT</h5>
+          <small>Restrict the access token returned to the client to the reserved protocol claims.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            data-testid="lightweight-jwt-toggle"
+            (change)="toggleLightweightJwt($event)"
+            [checked]="isLightweightJwtEnabled()"
+            [disabled]="readonly"
+          >
+            Enable Lightweight JWT
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Only the reserved protocol claims are kept.</mat-hint>
+        </div>
+      </div>
+
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <div fxLayout="row" style="align-items: center">
