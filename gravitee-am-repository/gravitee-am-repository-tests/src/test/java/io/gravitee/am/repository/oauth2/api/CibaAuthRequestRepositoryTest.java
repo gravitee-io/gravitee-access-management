@@ -19,12 +19,15 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -132,7 +135,8 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertValue(req -> req.getStatus().equals("ONGOING"));
         observer.assertNoErrors();
 
-        repository.updateStatus(authRequest.getId(), "SUCCESS").test().awaitDone(10, TimeUnit.SECONDS);
+        repository.updateStatus(authRequest.getId(), "SUCCESS").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(req -> req.getStatus().equals("SUCCESS") && req.getId().equals(id));
         observer = repository.findById(id).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
@@ -141,6 +145,112 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertValueCount(1);
         observer.assertValue(req -> req.getStatus().equals("SUCCESS"));
         observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldUpdateLastAccessAt_whenStatusMatchesAndAccessedBeforeCutoff() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setLastAccessAt(new Date(System.currentTimeMillis() - 10_000));
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
+        final Date now = new Date();
+
+        TestObserver<Boolean> observer = repository.updateLastAccessAt(id, "ONGOING", new Date(now.getTime() - 5_000), now).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(true);
+        assertEquals(now.getTime(), repository.findById(id).blockingGet().getLastAccessAt().getTime());
+    }
+
+    @Test
+    public void shouldUpdateLastAccessAt_whenAccessedExactlyAtCutoff() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        final Date lastAccess = new Date(System.currentTimeMillis() - 10_000);
+        authRequest.setLastAccessAt(lastAccess);
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
+
+        TestObserver<Boolean> observer = repository.updateLastAccessAt(id, "ONGOING", new Date(lastAccess.getTime()), new Date()).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(true);
+    }
+
+    @Test
+    public void shouldNotUpdateLastAccessAt_whenAccessedAfterCutoff() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        final Date lastAccess = new Date(System.currentTimeMillis() - 1_000);
+        authRequest.setLastAccessAt(lastAccess);
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
+        final Date now = new Date();
+
+        TestObserver<Boolean> observer = repository.updateLastAccessAt(id, "ONGOING", new Date(now.getTime() - 5_000), now).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(false);
+        assertEquals(lastAccess.getTime(), repository.findById(id).blockingGet().getLastAccessAt().getTime());
+    }
+
+    @Test
+    public void shouldNotUpdateLastAccessAt_whenStatusDiffers_andKeepStatus() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setLastAccessAt(new Date(System.currentTimeMillis() - 10_000));
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
+        repository.updateStatus(id, "SUCCESS").test().awaitDone(10, TimeUnit.SECONDS);
+        final Date now = new Date();
+
+        TestObserver<Boolean> observer = repository.updateLastAccessAt(id, "ONGOING", new Date(now.getTime() - 5_000), now).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(false);
+        assertEquals("SUCCESS", repository.findById(id).blockingGet().getStatus());
+    }
+
+    @Test
+    public void shouldNotUpdateLastAccessAt_whenUnknownId() {
+        final Date now = new Date();
+
+        TestObserver<Boolean> observer = repository.updateLastAccessAt("unknown-id", "ONGOING", new Date(now.getTime() - 5_000), now).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(false);
+    }
+
+    @Test
+    public void shouldUpdateLastAccessAt_evenWhenExpired() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setLastAccessAt(new Date(System.currentTimeMillis() - 10_000));
+        authRequest.setExpireAt(new Date(System.currentTimeMillis() - 1_000));
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
+        final Date now = new Date();
+
+        TestObserver<Boolean> observer = repository.updateLastAccessAt(id, "ONGOING", new Date(now.getTime() - 5_000), now).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertValue(true);
+    }
+
+    @Test
+    public void shouldLetExactlyOneConcurrentUpdateLastAccessAtWin() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setLastAccessAt(new Date(System.currentTimeMillis() - 10_000));
+        repository.create(authRequest).test().awaitDone(10, TimeUnit.SECONDS);
+        final Date now = new Date();
+        final Date cutoff = new Date(now.getTime() - 5_000);
+
+        List<Boolean> results = Flowable.range(0, 8)
+                .flatMapSingle(i -> repository.updateLastAccessAt(id, "ONGOING", cutoff, new Date(now.getTime() + i))
+                        .subscribeOn(Schedulers.io()))
+                .toList()
+                .blockingGet();
+
+        assertEquals(8, results.size());
+        assertEquals(1, results.stream().filter(Boolean::booleanValue).count());
+        assertTrue(repository.findById(id).blockingGet().getLastAccessAt().getTime() >= now.getTime());
     }
 
     private CibaAuthRequest buildCibaAuthRequest(String id) {

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.oauth2.oidc;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcCibaAuthRequest;
+import io.gravitee.am.repository.jdbc.provider.common.DateHelper;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.reactivex.rxjava3.core.Completable;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -95,6 +97,19 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
                 Update.update("status", status),
                 JdbcCibaAuthRequest.class);
         return monoToSingle(action).flatMap(i -> findById(authReqId).toSingle())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Boolean> updateLastAccessAt(String id, String expectedStatus, Date notAccessedSince, Date now) {
+        LOGGER.debug("Update lastAccessAt of CibaAuthRequest {} if {} and not accessed since {}", id, expectedStatus, notAccessedSince);
+        final Mono<Long> action = getTemplate().update(
+                Query.query(where("id").is(id)
+                        .and("status").is(expectedStatus)
+                        .and("last_access_at").lessThanOrEquals(DateHelper.toLocalDateTime(notAccessedSince))),
+                Update.update("last_access_at", DateHelper.toLocalDateTime(now)),
+                JdbcCibaAuthRequest.class);
+        return monoToSingle(action).map(count -> count == 1)
                 .observeOn(Schedulers.computation());
     }
 

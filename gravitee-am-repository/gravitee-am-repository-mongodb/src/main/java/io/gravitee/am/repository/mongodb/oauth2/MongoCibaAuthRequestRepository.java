@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.lte;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -54,6 +55,8 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
 
     private static final String FIELD_EXPIRE_AT = "expire_at";
     private static final String FIELD_EXTERNAL_ID = "ext_transaction_id";
+    // Persisted key carries a historical typo; renaming it would orphan existing documents.
+    private static final String FIELD_LAST_ACCESS_AT = "last_acess_at";
 
     @PostConstruct
     public void init() {
@@ -103,6 +106,15 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     public Single<CibaAuthRequest> updateStatus(String authReqId, String status) {
         return Single.fromPublisher(cibaAuthRequestCollection.updateOne(and(eq(FIELD_ID, authReqId)), Updates.set("status", status)))
                 .flatMap(updateResult -> findById(authReqId).toSingle())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Boolean> updateLastAccessAt(String id, String expectedStatus, Date notAccessedSince, Date now) {
+        return Single.fromPublisher(cibaAuthRequestCollection.updateOne(
+                        and(eq(FIELD_ID, id), eq("status", expectedStatus), lte(FIELD_LAST_ACCESS_AT, notAccessedSince)),
+                        Updates.set(FIELD_LAST_ACCESS_AT, now)))
+                .map(result -> result.getMatchedCount() == 1)
                 .observeOn(Schedulers.computation());
     }
 
