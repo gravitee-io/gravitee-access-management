@@ -27,13 +27,13 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- * Restricts the JWT access token returned to the client to the reserved protocol claims.
+ * Restricts the JWT access token and the ID token returned to the client to the reserved protocol claims.
  * @export
  * @interface ApplicationLightweightJwtSettings
  */
 export interface ApplicationLightweightJwtSettings {
   /**
-   * Whether the access token returned to the client only contains the reserved protocol claims.
+   * Whether the access token and the ID token returned to the client only contain the reserved protocol claims.
    * @type {boolean}
    * @memberof ApplicationLightweightJwtSettings
    */
