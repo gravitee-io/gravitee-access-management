@@ -1653,7 +1653,7 @@ public class TokenServiceImplTest {
         verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
         assertThat(jwtCaptor.getAllValues().get(0)).containsOnlyKeys(
                 Claims.ISS, Claims.SUB, Claims.GIO_INTERNAL_SUB, Claims.AUD, Claims.DOMAIN, Claims.IAT, Claims.EXP, Claims.JTI,
-                Claims.SCOPE, Claims.CLIENT_ID, Claims.CLAIMS, "authorization_details");
+                Claims.SCOPE, Claims.CLIENT_ID, Claims.CLAIMS, "authorization_details", "permissions");
         assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme");
     }
 
@@ -1690,24 +1690,26 @@ public class TokenServiceImplTest {
         client.setTokenCustomClaims(List.of(
                 TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.ACT, "spoofed-actor"),
                 TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.CNF, "spoofed-cnf"),
-                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.DOMAIN, "spoofed-domain")));
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.DOMAIN, "spoofed-domain"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "permissions", "spoofed-permissions")));
         setupCustomClaimMocks(request);
 
         executeTokenCreation(request, client, createUser("user"));
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
-        assertThat(jwtCaptor.getValue()).doesNotContainKeys(Claims.ACT, Claims.CNF)
+        assertThat(jwtCaptor.getValue()).doesNotContainKeys(Claims.ACT, Claims.CNF, "permissions")
                 .containsEntry(Claims.DOMAIN, "test-domain");
     }
 
     @Test
-    public void lightweightJwt_dropsUmaPermissionsFromAccessToken() {
+    public void lightweightJwt_keepsUmaPermissionsInAccessToken() {
         OAuth2Request request = authorizationCodeRequest();
         request.setSubject("user");
         request.setSupportRefreshToken(false);
         request.setGrantType(GrantType.UMA);
-        request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1").setResourceScopes(List.of("read"))));
+        List<PermissionRequest> permissions = List.of(new PermissionRequest().setResourceId("rs-1").setResourceScopes(List.of("read")));
+        request.setPermissions(permissions);
 
         Client client = lightweightClient(true);
         setupCustomClaimMocks(request);
@@ -1716,7 +1718,7 @@ public class TokenServiceImplTest {
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
-        assertThat(jwtCaptor.getValue()).doesNotContainKey("permissions");
+        assertThat(jwtCaptor.getValue()).containsEntry("permissions", permissions).doesNotContainKey("tenant");
     }
 
     @Test

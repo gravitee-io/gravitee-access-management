@@ -95,11 +95,11 @@ public class TokenServiceImpl implements TokenService {
     // gis, domain and claims_request_parameter are internal claims the gateway reads back from the access token
     private static final Set<String> LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = Set.of(
             Claims.ISS, Claims.SUB, Claims.EXP, Claims.IAT, Claims.JTI, Claims.SCOPE, Claims.CLIENT_ID, Claims.AUD,
-            Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS,
+            Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, PERMISSIONS,
             Claims.GIO_INTERNAL_SUB, Claims.DOMAIN, Claims.CLAIMS);
     // kept claims that only AM sets: a custom claim must not supply them in a lightweight token
     private static final Set<String> LIGHTWEIGHT_AM_ONLY_CLAIMS = Set.of(
-            Claims.ACT, Claims.CNF, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, Claims.CLAIMS, Claims.DOMAIN);
+            Claims.ACT, Claims.CNF, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, PERMISSIONS, Claims.CLAIMS, Claims.DOMAIN);
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
