@@ -65,6 +65,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 import static io.gravitee.am.common.oidc.idtoken.Claims.ACR;
+import static io.gravitee.am.common.oidc.idtoken.Claims.AUTH_TIME;
+import static io.gravitee.am.common.oidc.idtoken.Claims.NONCE;
 import static io.gravitee.am.gateway.handler.common.spring.CommonConfiguration.FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY;
 
 /**
@@ -75,6 +77,12 @@ import static io.gravitee.am.gateway.handler.common.spring.CommonConfiguration.F
 public class IDTokenServiceImpl implements IDTokenService {
 
     private static final String DEFAULT_DIGEST_ALGORITHM = "SHA-512";
+    // gis is an internal claim the gateway reads back from an id_token_hint
+    private static final Set<String> LIGHTWEIGHT_ID_TOKEN_CLAIMS = Set.of(
+            Claims.ISS, Claims.SUB, Claims.AUD, Claims.EXP, Claims.IAT, AUTH_TIME, NONCE, ACR, Claims.CLIENT_PROFILE,
+            Claims.GIO_INTERNAL_SUB);
+    // kept claims that only AM sets: a custom claim must not supply them in a lightweight token
+    private static final Set<String> LIGHTWEIGHT_AM_ONLY_CLAIMS = Set.of(AUTH_TIME, NONCE, ACR, Claims.CLIENT_PROFILE);
 
     @Autowired
     private Domain domain;
@@ -253,13 +261,31 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // 4. Enhance ID token with custom claims
-        enhanceIDToken(idToken, client.getTokenCustomClaims(), executionContext);
+        enhanceIDToken(idToken, idTokenCustomClaims(client), executionContext);
 
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
             idToken.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
         }
 
+        // the hash claims (at_hash, c_hash, s_hash) are added at signing, after this filter
+        if (isLightweightJwt(client)) {
+            idToken.keySet().retainAll(LIGHTWEIGHT_ID_TOKEN_CLAIMS);
+        }
+
         return idToken;
+    }
+
+    private static boolean isLightweightJwt(Client client) {
+        return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
+    }
+
+    private static List<TokenClaim> idTokenCustomClaims(Client client) {
+        if (!isLightweightJwt(client) || client.getTokenCustomClaims() == null) {
+            return client.getTokenCustomClaims();
+        }
+        return client.getTokenCustomClaims().stream()
+                .filter(claim -> !LIGHTWEIGHT_AM_ONLY_CLAIMS.contains(claim.getClaimName()))
+                .toList();
     }
 
     /**

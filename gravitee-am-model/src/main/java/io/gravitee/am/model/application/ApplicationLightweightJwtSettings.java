@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(title = "Application Lightweight JWT settings",
-        description = "Restricts the JWT access token returned to the client to the reserved protocol claims.")
+        description = "Restricts the JWT access token and the ID token returned to the client to the reserved protocol claims.")
 public class ApplicationLightweightJwtSettings {
 
     @Schema(description = "Whether Lightweight JWT is enabled.", defaultValue = "false")

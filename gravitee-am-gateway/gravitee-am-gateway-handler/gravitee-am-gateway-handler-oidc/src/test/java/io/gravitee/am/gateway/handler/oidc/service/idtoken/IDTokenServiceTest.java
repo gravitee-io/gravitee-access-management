@@ -35,6 +35,7 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceIm
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -55,6 +56,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -73,6 +75,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -957,5 +960,143 @@ public class IDTokenServiceTest {
         assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.ACT));
         assertEquals("ai_agent hosted_delegated", captured.get(io.gravitee.am.common.jwt.Claims.CLIENT_PROFILE));
         assertFalse(captured.containsKey(io.gravitee.am.common.jwt.Claims.SUB_PROFILE));
+    }
+
+    @Test
+    public void lightweightJwt_keepsOnlyReservedClaimsInIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        Client client = lightweightClient(true);
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertEquals(Set.of(Claims.ISS, Claims.SUB, Claims.GIO_INTERNAL_SUB, Claims.AUD, Claims.IAT, Claims.EXP,
+                Claims.AUTH_TIME, Claims.NONCE), idToken.keySet());
+        assertEquals("n-123", idToken.get(Claims.NONCE));
+    }
+
+    @Test
+    public void lightweightJwt_keepsCibaAcrInIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        oAuth2Request.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY, List.of("urn:acr:silver", "urn:acr:gold"));
+        Client client = lightweightClient(true);
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertEquals("urn:acr:gold", idToken.get(Claims.ACR));
+    }
+
+    @Test
+    public void lightweightJwt_keepsAgentClientProfileInIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        Client client = lightweightClient(true);
+        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
+        client.setAgentType(io.gravitee.am.model.application.AgentType.USER_EMBEDDED);
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertEquals("ai_agent user_embedded", idToken.get(Claims.CLIENT_PROFILE));
+    }
+
+    @Test
+    public void lightweightJwt_dropsCustomClaimsNamedAfterConditionalReservedClaims() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        oAuth2Request.parameters().remove("nonce");
+        Client client = lightweightClient(true);
+        client.setTokenCustomClaims(List.of(
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.NONCE, "spoofed-nonce"),
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.AUTH_TIME, "spoofed-auth-time"),
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.ACR, "spoofed-acr"),
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.CLIENT_PROFILE, "spoofed-profile")));
+        User user = loggedInUser();
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, user);
+
+        assertEquals(user.getLoggedAt().getTime() / 1000L, idToken.get(Claims.AUTH_TIME));
+        assertFalse(idToken.containsKey(Claims.NONCE));
+        assertFalse(idToken.containsKey(Claims.ACR));
+        assertFalse(idToken.containsKey(Claims.CLIENT_PROFILE));
+    }
+
+    @Test
+    public void lightweightJwt_keepsHybridFlowHashClaimsInIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        oAuth2Request.getContext().put(Claims.C_HASH, "authorization-code");
+        oAuth2Request.getContext().put(Claims.AT_HASH, "access-token");
+        Client client = lightweightClient(true);
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertTrue(idToken.containsKey(Claims.C_HASH));
+        assertTrue(idToken.containsKey(Claims.AT_HASH));
+    }
+
+    @Test
+    public void lightweightJwtDisabled_keepsProfileAndCustomClaimsInIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        Client client = lightweightClient(false);
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertEquals("gravitee", idToken.get(StandardClaims.ADDRESS));
+        assertEquals("acme", idToken.get("tenant"));
+    }
+
+    private OAuth2Request lightweightRequest() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Set.of("openid", "email", "profile"));
+        oAuth2Request.setSubject("subject");
+        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
+        requestParameters.add("nonce", "n-123");
+        requestParameters.add("claims", "{\"id_token\":{\"address\":{\"essential\":true}}}");
+        oAuth2Request.setParameters(requestParameters);
+        return oAuth2Request;
+    }
+
+    private Client lightweightClient(boolean lightweightJwtEnabled) {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setCertificate("client-certificate");
+        client.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ID_TOKEN, "tenant", "acme")));
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(lightweightJwtEnabled).build());
+        return client;
+    }
+
+    private User loggedInUser() {
+        User user = createUser();
+        user.setLoggedAt(new Date());
+        return user;
+    }
+
+    private void stubSubjectWithInternalSub() {
+        doAnswer(invocation -> {
+            JWT jwt = invocation.getArgument(0);
+            jwt.setSub("user-sub");
+            jwt.setInternalSub("idp:user");
+            return null;
+        }).when(subjectManager).updateJWT(any(), any());
+    }
+
+    private JWT createIdToken(OAuth2Request oAuth2Request, Client client, User user) {
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine templateEngine = mock(TemplateEngine.class);
+        lenient().when(templateEngine.getValue(anyString(), eq(Object.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+        when(openIDDiscoveryService.getIssuer(any())).thenReturn("https://auth.example.com");
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(anyString())).thenReturn(Maybe.just(createCert(certificateProvider, "client-certificate")));
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("payload"));
+        ((IDTokenServiceImpl) idTokenService).setObjectMapper(objectMapper);
+
+        idTokenService.create(oAuth2Request, client, user, executionContext).test().assertComplete();
+
+        return jwtCaptor.getValue();
     }
 }
