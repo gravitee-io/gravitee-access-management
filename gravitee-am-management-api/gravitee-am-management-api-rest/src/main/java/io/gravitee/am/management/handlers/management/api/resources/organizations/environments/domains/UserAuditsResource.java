@@ -21,7 +21,6 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.handlers.management.api.resources.utils.FilterUtils;
 import io.gravitee.am.management.service.AuditService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -92,7 +91,7 @@ public class UserAuditsResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
                 .andThen(auditService.search(domain, queryBuilder.build(), param.getPage(), param.getSize()))
-                .flatMap(auditPage -> hasPermission(authenticatedUser, ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_AUDIT, Acl.READ)
+                .flatMap(auditPage -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_AUDIT, Acl.READ)
                         .map(hasPermission -> {
                             if (hasPermission) {
                                 return auditPage;
