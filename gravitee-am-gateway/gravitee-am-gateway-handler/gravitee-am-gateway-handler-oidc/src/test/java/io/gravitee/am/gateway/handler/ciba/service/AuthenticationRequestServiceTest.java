@@ -156,27 +156,42 @@ public class AuthenticationRequestServiceTest {
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(SlowDownException.class);
-        verify(requestRepository, never()).update(any());
+        verify(requestRepository, never()).updateLastAccessAt(any(), any(), any(), any());
         verify(notifierManager, never()).getAuthDeviceNotifierProvider(any());
+    }
+
+    @Test
+    public void shouldNotRetrieve_requestOfAnotherClient_beforeClaimingOrAskingTheNotifier() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        request.setClientId("other-client");
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(InvalidGrantException.class);
+
+        verify(requestRepository, never()).updateLastAccessAt(any(), any(), any(), any());
+        verify(notifierManager, never()).getAuthDeviceNotifierProvider(any());
+        verify(requestRepository, never()).delete(any());
     }
 
     @Test
     public void shouldRetrieve_Pending() {
         CibaAuthRequest request = new CibaAuthRequest();
+        request.setId("reqid");
         request.setLastAccessAt(new Date(Instant.now().minusSeconds(6).toEpochMilli()));
         request.setStatus(AuthenticationRequestStatus.ONGOING.name());
         request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
         request.setClientId(client.getClientId());
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
-        when(requestRepository.update(any())).thenReturn(Single.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain, "reqid", client, tokenRequest).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(AuthorizationPendingException.class);
 
-        verify(requestRepository).update(request);
+        verify(requestRepository, never()).update(any());
     }
 
     @Test
@@ -693,7 +708,7 @@ public class AuthenticationRequestServiceTest {
         final ArgumentCaptor<ADStatusRequest> captor = ArgumentCaptor.forClass(ADStatusRequest.class);
         when(notifier.checkStatus(captor.capture())).thenReturn(Single.just(Optional.empty()));
         when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
-        when(requestRepository.update(any())).thenReturn(Single.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
 
         service.retrieve(domain, "reqid", client, tokenRequest).test()
                 .awaitDone(10, TimeUnit.SECONDS).assertError(AuthorizationPendingException.class);
@@ -703,6 +718,7 @@ public class AuthenticationRequestServiceTest {
         assertEquals("cid", captor.getValue().connection().clientId());
         verify(requestRepository, never()).updateStatus(any(), any());
         verify(requestRepository, never()).delete(any());
+        verify(requestRepository, never()).update(any());
     }
 
     @Test
@@ -722,6 +738,7 @@ public class AuthenticationRequestServiceTest {
         when(userAuthenticationManager.connect(any(), isNull(), eq(tokenRequest), eq(true))).thenReturn(Single.just(local));
         when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
         when(requestRepository.update(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
         when(requestRepository.updateStatus("reqid", "SUCCESS")).thenAnswer(inv -> {
             request.setStatus("SUCCESS");
             return Single.just(request);
@@ -733,6 +750,9 @@ public class AuthenticationRequestServiceTest {
 
         observer.assertValue(r -> "local-uuid-1".equals(r.getSubject()));
         assertEquals(IDP, principal.getAdditionalInformation().get("source"));
+        final ArgumentCaptor<CibaAuthRequest> updated = ArgumentCaptor.forClass(CibaAuthRequest.class);
+        verify(requestRepository).update(updated.capture());
+        assertEquals("local-uuid-1", updated.getValue().getSubject());
         verify(requestRepository).delete("reqid");
     }
 
@@ -744,7 +764,7 @@ public class AuthenticationRequestServiceTest {
         final ArgumentCaptor<ADStatusRequest> captor = ArgumentCaptor.forClass(ADStatusRequest.class);
         when(notifier.checkStatus(captor.capture())).thenReturn(Single.just(Optional.of(new ADUserResponse("tid-1", null, false))));
         when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
-        when(requestRepository.update(any())).thenReturn(Single.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
         when(requestRepository.updateStatus("reqid", "REJECTED")).thenAnswer(inv -> {
             request.setStatus("REJECTED");
             return Single.just(request);
@@ -774,7 +794,7 @@ public class AuthenticationRequestServiceTest {
         when(oidc.retrieveUserFromTokenResponse(any(), any(), any()))
                 .thenReturn(Maybe.error(new io.gravitee.am.common.exception.authentication.BadCredentialsException("bad sig")));
         when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
-        when(requestRepository.update(any())).thenReturn(Single.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
         when(requestRepository.updateStatus("reqid", "REJECTED")).thenAnswer(inv -> {
             request.setStatus("REJECTED");
             return Single.just(request);
@@ -787,6 +807,186 @@ public class AuthenticationRequestServiceTest {
         verify(userAuthenticationManager, never()).connect(any(), any(), any(), anyBoolean());
         verify(requestRepository, never()).updateStatus(any(), eq("SUCCESS"));
         verify(requestRepository).delete("reqid");
+    }
+
+    @Test
+    public void shouldStayPending_whenNotifierKeepsDefaultCheckStatus() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final AuthenticationDeviceNotifierProvider notifier = mock(AuthenticationDeviceNotifierProvider.class, CALLS_REAL_METHODS);
+        when(notifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(notifier);
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(AuthorizationPendingException.class);
+
+        verify(requestRepository, never()).updateStatus(any(), any());
+        verify(requestRepository, never()).delete(any());
+        verify(requestRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldStayPending_whenNotifierIsNotDeployed() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        when(notifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(null);
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(AuthorizationPendingException.class);
+
+        verify(requestRepository, never()).updateStatus(any(), any());
+        verify(requestRepository, never()).delete(any());
+    }
+
+    @Test
+    public void shouldPropagate_andLeaveStatus_whenNotifierErrors() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final AuthenticationDeviceNotifierProvider notifier = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(notifier);
+        final IllegalStateException failure = new IllegalStateException("notifier down");
+        when(notifier.checkStatus(any())).thenReturn(Single.error(failure));
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(failure);
+
+        verify(requestRepository, never()).updateStatus(any(), any());
+        verify(requestRepository, never()).delete(any());
+    }
+
+    @Test
+    public void shouldReject_whenConnectFailsAfterNotifierApproves() {
+        final String IDP = "idp-1";
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final AuthenticationDeviceNotifierProvider notifier = federatedNotifier(IDP);
+        when(notifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(notifier);
+        when(identityProviderManager.getIdentityProvider(IDP)).thenReturn(new IdentityProvider());
+        final OpenIDConnectAuthenticationProvider oidc = oidcProvider("cid", "https://op.example.test/.well-known/openid-configuration");
+        when(identityProviderManager.get(IDP)).thenReturn(Maybe.just((AuthenticationProvider) oidc));
+        when(notifier.checkStatus(any())).thenReturn(Single.just(Optional.of(
+                new ADUserResponse("tid-1", null, true, "id-tok", "acc-tok", IDP))));
+        when(oidc.retrieveUserFromTokenResponse(eq("acc-tok"), eq("id-tok"), any()))
+                .thenReturn(Maybe.just(new io.gravitee.am.identityprovider.api.DefaultUser("acme|9")));
+        when(userAuthenticationManager.connect(any(), isNull(), eq(tokenRequest), eq(true)))
+                .thenReturn(Single.error(new IllegalStateException("pre-connect policy failed")));
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
+        when(requestRepository.updateStatus("reqid", "REJECTED")).thenAnswer(inv -> {
+            request.setStatus("REJECTED");
+            return Single.just(request);
+        });
+        when(requestRepository.delete("reqid")).thenReturn(Completable.complete());
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(AuthorizationRejectedException.class);
+
+        verify(requestRepository, never()).updateStatus(any(), eq("SUCCESS"));
+        verify(requestRepository).delete("reqid");
+    }
+
+    @Test
+    public void shouldSlowDown_whenClaimLostAndStillOngoing() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(false));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(SlowDownException.class);
+
+        verify(notifierManager, never()).getAuthDeviceNotifierProvider(any());
+        verify(requestRepository, never()).delete(any());
+    }
+
+    @Test
+    public void shouldInvalidGrant_whenClaimLostAndRequestGone() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request), Maybe.empty());
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(false));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(InvalidGrantException.class);
+
+        verify(notifierManager, never()).getAuthDeviceNotifierProvider(any());
+    }
+
+    @Test
+    public void shouldConcludeSuccess_whenClaimLostAndRequestApproved() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final CibaAuthRequest approved = ongoingRequest("reqid");
+        approved.setStatus(AuthenticationRequestStatus.SUCCESS.name());
+        approved.setSubject("local-uuid-1");
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request), Maybe.just(approved));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(false));
+        when(requestRepository.delete("reqid")).thenReturn(Completable.complete());
+
+        final TestObserver<CibaAuthRequest> observer = service.retrieve(domain, "reqid", client, tokenRequest).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertValue(r -> "local-uuid-1".equals(r.getSubject()));
+        verify(notifierManager, never()).getAuthDeviceNotifierProvider(any());
+        verify(requestRepository).delete("reqid");
+    }
+
+    @Test
+    public void shouldConcludeRejection_whenClaimLostAndRequestRejected() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final CibaAuthRequest rejected = ongoingRequest("reqid");
+        rejected.setStatus(AuthenticationRequestStatus.REJECTED.name());
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request), Maybe.just(rejected));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(false));
+        when(requestRepository.delete("reqid")).thenReturn(Completable.complete());
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(AuthorizationRejectedException.class);
+
+        verify(requestRepository).delete("reqid");
+    }
+
+    @Test
+    public void shouldPropagate_whenClaimLostAndReReadFails() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final IllegalStateException failure = new IllegalStateException("db down");
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request), Maybe.error(failure));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(false));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(failure);
+    }
+
+    @Test
+    public void shouldPropagate_andLeaveStatus_whenFederationIdpMissingOnPoll() {
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final AuthenticationDeviceNotifierProvider notifier = federatedNotifier("idp-gone");
+        when(notifierManager.getAuthDeviceNotifierProvider("n1")).thenReturn(notifier);
+        when(identityProviderManager.getIdentityProvider("idp-gone")).thenReturn(null);
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), any(), any())).thenReturn(Single.just(true));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(e -> e instanceof InvalidRequestException && !e.getMessage().contains("idp-gone"));
+
+        verify(notifier, never()).checkStatus(any());
+        verify(requestRepository, never()).updateStatus(any(), any());
+        verify(requestRepository, never()).delete(any());
+    }
+
+    @Test
+    public void shouldClaimWithOneNow_forOneSecondInterval() {
+        cibaSettings.setTokenReqInterval(1);
+        final CibaAuthRequest request = ongoingRequest("reqid");
+        final ArgumentCaptor<Date> notAccessedSince = ArgumentCaptor.forClass(Date.class);
+        final ArgumentCaptor<Date> now = ArgumentCaptor.forClass(Date.class);
+        when(requestRepository.findById("reqid")).thenReturn(Maybe.just(request));
+        when(requestRepository.updateLastAccessAt(eq("reqid"), eq("ONGOING"), notAccessedSince.capture(), now.capture()))
+                .thenReturn(Single.just(true));
+
+        service.retrieve(domain, "reqid", client, tokenRequest).test()
+                .awaitDone(10, TimeUnit.SECONDS).assertError(AuthorizationPendingException.class);
+
+        assertEquals(1_000L, now.getValue().getTime() - notAccessedSince.getValue().getTime());
     }
 
     @Test
@@ -832,7 +1032,8 @@ public class AuthenticationRequestServiceTest {
         final ADNotificationRequest adRequest = new ADNotificationRequest();
         adRequest.setDeviceNotifierId("n1");
 
-        service.notify(adRequest).test().awaitDone(10, TimeUnit.SECONDS).assertError(InvalidRequestException.class);
+        service.notify(adRequest).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(e -> e instanceof InvalidRequestException && !e.getMessage().contains("idp-missing"));
 
         verify(notifier, never()).notify(any());
     }

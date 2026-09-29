@@ -161,19 +161,33 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     }
 
     private Single<CibaAuthRequest> poll(Domain domain, CibaAuthRequest authRequest, Request request) {
-        // Check if the request interval is respected by the client
-        // if the client request to often the endpoint, throws a SlowDown error
-        // otherwise, update the last Access date before asking the notifier for a decision
         final int interval = domain.getOidc().getCibaSettings().getTokenReqInterval();
-        if (authRequest.getLastAccessAt().toInstant().plusSeconds(interval).isAfter(Instant.now())) {
+        final Instant now = Instant.now();
+        final Instant notAccessedSince = now.minusSeconds(interval);
+        if (authRequest.getLastAccessAt().toInstant().isAfter(notAccessedSince)) {
             return Single.error(new SlowDownException());
         }
-        authRequest.setLastAccessAt(new Date());
-        return this.authRequestRepository.update(authRequest)
-                .flatMap(saved -> checkStatus(saved)
-                        .flatMap(decision -> decision.isPresent()
-                                ? completeOrReject(saved, decision.get(), request).flatMap(this::conclude)
-                                : Single.error(new AuthorizationPendingException())));
+        return this.authRequestRepository.updateLastAccessAt(authRequest.getId(), AuthenticationRequestStatus.ONGOING.name(),
+                        Date.from(notAccessedSince), Date.from(now))
+                .flatMap(claimed -> claimed
+                        ? askNotifier(authRequest, Date.from(now), request)
+                        : resolveLostClaim(authRequest.getId()));
+    }
+
+    private Single<CibaAuthRequest> askNotifier(CibaAuthRequest authRequest, Date polledAt, Request request) {
+        authRequest.setLastAccessAt(polledAt);
+        return checkStatus(authRequest)
+                .flatMap(decision -> decision.isPresent()
+                        ? completeOrReject(authRequest, decision.get(), request).flatMap(this::conclude)
+                        : Single.error(new AuthorizationPendingException()));
+    }
+
+    private Single<CibaAuthRequest> resolveLostClaim(String authReqId) {
+        return this.authRequestRepository.findById(authReqId)
+                .switchIfEmpty(Single.error(() -> new InvalidGrantException(authReqId)))
+                .flatMap(current -> AuthenticationRequestStatus.valueOf(current.getStatus()) == AuthenticationRequestStatus.ONGOING
+                        ? Single.error(new SlowDownException())
+                        : conclude(current));
     }
 
     private Single<CibaAuthRequest> completeOrReject(CibaAuthRequest authRequest, ADUserResponse decision, Request request) {
