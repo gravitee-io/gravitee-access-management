@@ -18451,12 +18451,18 @@ components:
             \ claims."
         defaultAllowedAlgorithms:
           type: array
+          default:
+          - RS256
+          - RS384
+          - RS512
+          - ES256
+          - ES384
+          - ES512
+          - EdDSA
           description: Default allowlist of signature algorithms accepted for SPIFFE
             JWT validation.
           items:
             type: string
-            description: Default allowlist of signature algorithms accepted for SPIFFE
-              JWT validation.
         enabled:
           type: boolean
           default: false

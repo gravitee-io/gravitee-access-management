@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oidc;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
@@ -88,7 +89,8 @@ public class SpiffeDomainSettings {
     /**
      * Default algorithm allowlist; {@code none} and HMAC are always rejected.
      */
-    @Schema(description = "Default allowlist of signature algorithms accepted for SPIFFE JWT validation.")
+    @ArraySchema(arraySchema = @Schema(description = "Default allowlist of signature algorithms accepted for SPIFFE JWT validation.",
+            defaultValue = "[\"RS256\",\"RS384\",\"RS512\",\"ES256\",\"ES384\",\"ES512\",\"EdDSA\"]"))
     private List<String> defaultAllowedAlgorithms = DEFAULT_ALLOWED_ALGORITHMS;
 
     public SpiffeDomainSettings() {
