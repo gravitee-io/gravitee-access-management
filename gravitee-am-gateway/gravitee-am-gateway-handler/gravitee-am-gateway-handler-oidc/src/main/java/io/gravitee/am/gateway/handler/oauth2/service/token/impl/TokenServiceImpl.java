@@ -97,9 +97,6 @@ public class TokenServiceImpl implements TokenService {
             Claims.ISS, Claims.SUB, Claims.EXP, Claims.IAT, Claims.JTI, Claims.SCOPE, Claims.CLIENT_ID, Claims.AUD,
             Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, PERMISSIONS,
             Claims.GIO_INTERNAL_SUB, Claims.DOMAIN, Claims.CLAIMS);
-    // kept claims that only AM sets: a custom claim must not supply them in a lightweight token
-    private static final Set<String> LIGHTWEIGHT_AM_ONLY_CLAIMS = Set.of(
-            Claims.ACT, Claims.CNF, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, PERMISSIONS, Claims.CLAIMS, Claims.DOMAIN);
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
@@ -597,8 +594,9 @@ public class TokenServiceImpl implements TokenService {
         if (!isLightweightJwt(client) || client.getTokenCustomClaims() == null) {
             return client.getTokenCustomClaims();
         }
+        // the other custom claims still reach the refresh token, then the lightweight filter removes them
         return client.getTokenCustomClaims().stream()
-                .filter(claim -> !LIGHTWEIGHT_AM_ONLY_CLAIMS.contains(claim.getClaimName()))
+                .filter(claim -> !LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.contains(claim.getClaimName()))
                 .toList();
     }
 

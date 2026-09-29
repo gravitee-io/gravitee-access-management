@@ -1681,7 +1681,7 @@ public class TokenServiceImplTest {
     }
 
     @Test
-    public void lightweightJwt_dropsCustomClaimsNamedAfterFlowReservedClaims() {
+    public void lightweightJwt_dropsCustomClaimsNamedAfterKeptClaims() {
         OAuth2Request request = authorizationCodeRequest();
         request.setSubject("user");
         request.setSupportRefreshToken(false);
@@ -1691,7 +1691,10 @@ public class TokenServiceImplTest {
                 TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.ACT, "spoofed-actor"),
                 TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.CNF, "spoofed-cnf"),
                 TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.DOMAIN, "spoofed-domain"),
-                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "permissions", "spoofed-permissions")));
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "permissions", "spoofed-permissions"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.SUB, "spoofed-sub"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.ISS, "spoofed-iss"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.SCOPE, "spoofed-scope")));
         setupCustomClaimMocks(request);
 
         executeTokenCreation(request, client, createUser("user"));
@@ -1699,7 +1702,10 @@ public class TokenServiceImplTest {
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
         assertThat(jwtCaptor.getValue()).doesNotContainKeys(Claims.ACT, Claims.CNF, "permissions")
-                .containsEntry(Claims.DOMAIN, "test-domain");
+                .containsEntry(Claims.DOMAIN, "test-domain")
+                .doesNotContainValue("spoofed-sub")
+                .doesNotContainValue("spoofed-iss")
+                .doesNotContainValue("spoofed-scope");
     }
 
     @Test
