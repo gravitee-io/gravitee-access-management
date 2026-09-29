@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
@@ -105,6 +106,8 @@ public class PatchApplicationOAuthSettings {
     private Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings;
 
     private Optional<ApplicationCrossAppAccessSettings> crossAppAccessSettings;
+
+    private Optional<ApplicationLightweightJwtSettings> lightweightJwtSettings;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -618,6 +621,14 @@ public class PatchApplicationOAuthSettings {
         this.crossAppAccessSettings = crossAppAccessSettings;
     }
 
+    public Optional<ApplicationLightweightJwtSettings> getLightweightJwtSettings() {
+        return lightweightJwtSettings;
+    }
+
+    public void setLightweightJwtSettings(Optional<ApplicationLightweightJwtSettings> lightweightJwtSettings) {
+        this.lightweightJwtSettings = lightweightJwtSettings;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -687,6 +698,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setOptInScopeSelection, this.getOptInScopeSelection());
         SetterUtils.safeSet(toPatch::setTokenExchangeOAuthSettings, this.getTokenExchangeOAuthSettings());
         SetterUtils.safeSet(toPatch::setCrossAppAccessSettings, this.getCrossAppAccessSettings());
+        SetterUtils.safeSet(toPatch::setLightweightJwtSettings, this.getLightweightJwtSettings());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

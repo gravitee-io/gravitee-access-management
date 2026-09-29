@@ -36,6 +36,7 @@ import io.gravitee.am.model.application.SAMLAssertionAttribute;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
 import io.gravitee.am.model.common.Page;
@@ -284,6 +285,8 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                     && "rs-1".equals(crossAppAccess.getResourceServers().get(0).getResourceServerId())
                     && "calendar-client".equals(crossAppAccess.getResourceServers().get(0).getClientId());
         });
+        testObserver.assertValue(a -> a.getSettings().getOauth().getLightweightJwtSettings() != null
+                && a.getSettings().getOauth().getLightweightJwtSettings().isEnabled());
     }
 
     private static Application buildApplication() {
@@ -351,6 +354,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                         .clientId("calendar-client")
                         .build()))
                 .build());
+        oauth.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
 
         final AccountSettings account = new AccountSettings();
         account.setResetPasswordInvalidateTokens(true);

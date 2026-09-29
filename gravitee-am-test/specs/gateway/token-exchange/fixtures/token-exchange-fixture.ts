@@ -188,6 +188,7 @@ export interface TokenExchangeFixtureConfig {
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   tokenCustomClaims?: TokenClaim[];
+  lightweightJwtSettings?: { enabled: boolean };
   allowedSubjectTokenTypes?: string[];
   // Delegation settings
   allowImpersonation?: boolean;
@@ -213,6 +214,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       grantTypes = TOKEN_EXCHANGE_TEST.DEFAULT_GRANT_TYPES,
       scopes = TOKEN_EXCHANGE_TEST.DEFAULT_SCOPES,
       tokenCustomClaims,
+      lightweightJwtSettings,
       allowedSubjectTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
       allowedRequestedTokenTypes = TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
       allowImpersonation = true,
@@ -254,6 +256,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
           grantTypes,
           scopeSettings: scopes,
           tokenCustomClaims,
+          ...(lightweightJwtSettings ? { lightweightJwtSettings } : {}),
         },
       },
       identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),

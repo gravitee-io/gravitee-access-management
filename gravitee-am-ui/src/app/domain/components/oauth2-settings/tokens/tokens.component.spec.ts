@@ -106,4 +106,31 @@ describe('TokensComponent', () => {
     component.modelChanged();
     expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ idJagValiditySeconds: 120 }));
   });
+  it('shouldShowLightweightJwtToggleForApplication', () => {
+    createFixture({});
+
+    expect(fixture.nativeElement.querySelector('[data-testid="lightweight-jwt-toggle"]')).toBeTruthy();
+  });
+
+  it('shouldHideLightweightJwtToggleForMcpServer', () => {
+    createFixture({}, 'McpServer');
+
+    expect(fixture.nativeElement.querySelector('[data-testid="lightweight-jwt-toggle"]')).toBeNull();
+  });
+
+  it('shouldReportLightweightJwtDisabledByDefault', () => {
+    createFixture({});
+
+    expect(component.isLightweightJwtEnabled()).toBe(false);
+  });
+
+  it('shouldEmitLightweightJwtSettingsWhenToggled', () => {
+    createFixture({});
+    const emitted = jest.fn();
+    component.settingsChange.subscribe(emitted);
+
+    component.toggleLightweightJwt({ checked: true });
+
+    expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ lightweightJwtSettings: { enabled: true } }));
+  });
 });

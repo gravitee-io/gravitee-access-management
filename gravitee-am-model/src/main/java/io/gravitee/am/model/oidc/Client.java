@@ -314,6 +314,8 @@ public class Client implements Cloneable, Resource {
 
     private ApplicationCrossAppAccessSettings crossAppAccessSettings;
 
+    private ApplicationLightweightJwtSettings lightweightJwtSettings;
+
     private SecretExpirationSettings secretExpirationSettings;
 
     private AgentType agentType;
@@ -427,6 +429,7 @@ public class Client implements Cloneable, Resource {
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
+        this.lightweightJwtSettings = other.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(other.lightweightJwtSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
@@ -1323,6 +1326,14 @@ public class Client implements Cloneable, Resource {
 
     public void setCrossAppAccessSettings(ApplicationCrossAppAccessSettings crossAppAccessSettings) {
         this.crossAppAccessSettings = crossAppAccessSettings;
+    }
+
+    public ApplicationLightweightJwtSettings getLightweightJwtSettings() {
+        return lightweightJwtSettings;
+    }
+
+    public void setLightweightJwtSettings(ApplicationLightweightJwtSettings lightweightJwtSettings) {
+        this.lightweightJwtSettings = lightweightJwtSettings;
     }
 
     public int getIdJagValiditySeconds() {

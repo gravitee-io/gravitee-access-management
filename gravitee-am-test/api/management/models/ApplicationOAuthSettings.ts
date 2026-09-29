@@ -33,6 +33,13 @@ import {
   ApplicationCrossAppAccessSettingsToJSON,
   ApplicationCrossAppAccessSettingsToJSONTyped,
 } from './ApplicationCrossAppAccessSettings';
+import type { ApplicationLightweightJwtSettings } from './ApplicationLightweightJwtSettings';
+import {
+  ApplicationLightweightJwtSettingsFromJSON,
+  ApplicationLightweightJwtSettingsFromJSONTyped,
+  ApplicationLightweightJwtSettingsToJSON,
+  ApplicationLightweightJwtSettingsToJSONTyped,
+} from './ApplicationLightweightJwtSettings';
 import type { TokenClaim } from './TokenClaim';
 import { TokenClaimFromJSON, TokenClaimFromJSONTyped, TokenClaimToJSON, TokenClaimToJSONTyped } from './TokenClaim';
 import type { JWKSet } from './JWKSet';
@@ -270,6 +277,12 @@ export interface ApplicationOAuthSettings {
    * @memberof ApplicationOAuthSettings
    */
   jwksUri?: string;
+  /**
+   *
+   * @type {ApplicationLightweightJwtSettings}
+   * @memberof ApplicationOAuthSettings
+   */
+  lightweightJwtSettings?: ApplicationLightweightJwtSettings;
   /**
    *
    * @type {string}
@@ -568,6 +581,8 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
     initiateLoginUri: json['initiateLoginUri'] == null ? undefined : json['initiateLoginUri'],
     jwks: json['jwks'] == null ? undefined : JWKSetFromJSON(json['jwks']),
     jwksUri: json['jwksUri'] == null ? undefined : json['jwksUri'],
+    lightweightJwtSettings:
+      json['lightweightJwtSettings'] == null ? undefined : ApplicationLightweightJwtSettingsFromJSON(json['lightweightJwtSettings']),
     logoUri: json['logoUri'] == null ? undefined : json['logoUri'],
     optInScopeSelection: json['optInScopeSelection'] == null ? undefined : json['optInScopeSelection'],
     policyUri: json['policyUri'] == null ? undefined : json['policyUri'],
@@ -659,6 +674,7 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
     initiateLoginUri: value['initiateLoginUri'],
     jwks: JWKSetToJSON(value['jwks']),
     jwksUri: value['jwksUri'],
+    lightweightJwtSettings: ApplicationLightweightJwtSettingsToJSON(value['lightweightJwtSettings']),
     logoUri: value['logoUri'],
     optInScopeSelection: value['optInScopeSelection'],
     policyUri: value['policyUri'],

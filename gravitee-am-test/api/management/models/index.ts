@@ -41,6 +41,7 @@ export * from './ApplicationCrossAppAccessSettings';
 export * from './ApplicationEntity';
 export * from './ApplicationFactorSettings';
 export * from './ApplicationIdentityProvider';
+export * from './ApplicationLightweightJwtSettings';
 export * from './ApplicationOAuthSettings';
 export * from './ApplicationPage';
 export * from './ApplicationSAMLSettings';
