@@ -266,19 +266,19 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // the hash claims (at_hash, c_hash, s_hash) are added at signing, after this filter
-        if (isLightweightJwt(client)) {
+        if (isLightweightJwtEnabled(client)) {
             idToken.keySet().retainAll(LIGHTWEIGHT_ID_TOKEN_CLAIMS);
         }
 
         return idToken;
     }
 
-    private static boolean isLightweightJwt(Client client) {
+    private static boolean isLightweightJwtEnabled(Client client) {
         return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
     }
 
     private static List<TokenClaim> idTokenCustomClaims(Client client) {
-        if (!isLightweightJwt(client) || client.getTokenCustomClaims() == null) {
+        if (!isLightweightJwtEnabled(client) || client.getTokenCustomClaims() == null) {
             return client.getTokenCustomClaims();
         }
         return client.getTokenCustomClaims().stream()
