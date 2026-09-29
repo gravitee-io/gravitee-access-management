@@ -1914,14 +1914,14 @@ components:
         authReqExpiry:
           type: integer
           format: int32
+          default: 600
           description: "Default validity period, in seconds, of the issued auth_req_id."
-          example: 600
         bindingMessageLength:
           type: integer
           format: int32
+          default: 256
           description: Maximum number of characters accepted for the binding_message
             parameter.
-          example: 256
         enabled:
           type: boolean
           default: false
@@ -1930,10 +1930,10 @@ components:
         tokenReqInterval:
           type: integer
           format: int32
+          default: 5
           description: "Minimum delay, in seconds, that a client must wait between\
             \ two polls of the token endpoint for the same auth_req_id (POLL or PING\
             \ delivery mode)."
-          example: 5
       title: CIBA settings
     AutomationCertificate:
       type: object
@@ -2165,6 +2165,7 @@ components:
           $ref: "#/components/schemas/AutomationAccountSettings"
         alertEnabled:
           type: boolean
+          default: false
           description: Whether alerting is enabled for the domain.
         certificateSettings:
           $ref: "#/components/schemas/AutomationCertificateSettings"
@@ -2304,15 +2305,13 @@ components:
           readOnly: true
         domainWhitelist:
           type: array
+          default: []
           description: "Email domains allowed to authenticate through this identity\
             \ provider. When set, users whose email domain is not listed are rejected."
           example:
           - example.com
           items:
             type: string
-            description: "Email domains allowed to authenticate through this identity\
-              \ provider. When set, users whose email domain is not listed are rejected."
-            example: "[\"example.com\"]"
         dryRunErrors:
           type: array
           description: Validation errors returned when dryRun is true. Absent when
@@ -2324,14 +2323,9 @@ components:
           type: object
           additionalProperties:
             type: array
-            description: "Group mapper: assigns AM groups based on provider attribute\
-              \ values. Each entry maps a group to the user attribute expressions\
-              \ that grant it."
             items:
               type: string
-              description: "Group mapper: assigns AM groups based on provider attribute\
-                \ values. Each entry maps a group to the user attribute expressions\
-                \ that grant it."
+          default: {}
           description: "Group mapper: assigns AM groups based on provider attribute\
             \ values. Each entry maps a group to the user attribute expressions that\
             \ grant it."
@@ -2349,9 +2343,7 @@ components:
           type: object
           additionalProperties:
             type: string
-            description: "Attribute mappers: maps provider claims to AM user profile\
-              \ attributes."
-            example: "{\"sub\":\"username\",\"email\":\"email\"}"
+          default: {}
           description: "Attribute mappers: maps provider claims to AM user profile\
             \ attributes."
           example:
@@ -2367,14 +2359,9 @@ components:
           type: object
           additionalProperties:
             type: array
-            description: "Role mapper: assigns AM roles based on provider attribute\
-              \ values. Each entry maps a role to the user attribute expressions that\
-              \ grant it."
             items:
               type: string
-              description: "Role mapper: assigns AM roles based on provider attribute\
-                \ values. Each entry maps a role to the user attribute expressions\
-                \ that grant it."
+          default: {}
           description: "Role mapper: assigns AM roles based on provider attribute\
             \ values. Each entry maps a role to the user attribute expressions that\
             \ grant it."
@@ -2986,12 +2973,18 @@ components:
             \ claims."
         defaultAllowedAlgorithms:
           type: array
+          default:
+          - RS256
+          - RS384
+          - RS512
+          - ES256
+          - ES384
+          - ES512
+          - EdDSA
           description: Default allowlist of signature algorithms accepted for SPIFFE
             JWT validation.
           items:
             type: string
-            description: Default allowlist of signature algorithms accepted for SPIFFE
-              JWT validation.
         enabled:
           type: boolean
           default: false
