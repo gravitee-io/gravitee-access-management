@@ -271,7 +271,7 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setBackchannelTokenDeliveryMode(client.getBackchannelTokenDeliveryMode());
         oAuthSettings.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
         // token exchange and Lightweight JWT settings are not part of the DCR contract, so carry the stored
-        // values over rather than dropping them on every registration update or secret renewal
+        // values over on registration updates and secret renewals
         oAuthSettings.setTokenExchangeOAuthSettings(client.getTokenExchangeOAuthSettings());
         oAuthSettings.setLightweightJwtSettings(client.getLightweightJwtSettings());
 
