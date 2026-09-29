@@ -36,6 +36,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.ETAG_DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -129,11 +130,22 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
                         log.debug("Remember device cookie '{}' removal for clientID '{}': {}",
                                 rememberDeviceCookiName, client.getClientId(),
                                 removedCookie != null ? "invalidated, Max-Age=0 will be sent" : "no-op, cookie absent from the jar");
-                        return extractDeviceId(routingContext);
+                        return extractFallbackDeviceId(routingContext, client);
                     });
         } else {
-            return extractDeviceId(routingContext);
+            return extractFallbackDeviceId(routingContext, client);
         }
+    }
+
+    private Maybe<String> extractFallbackDeviceId(RoutingContext routingContext, Client client) {
+        if (routingContext.session() != null && deviceIdentifierManager.useEtagBasedDeviceIdentifier(client)) {
+            final String etagDeviceId = routingContext.session().get(ETAG_DEVICE_ID);
+            if (!isNullOrEmpty(etagDeviceId)) {
+                log.debug("Remember device identifier for clientID '{}' resolved from ETag", client.getClientId());
+                return Maybe.just(etagDeviceId);
+            }
+        }
+        return extractDeviceId(routingContext);
     }
 
     private Maybe<String> extractDeviceId(RoutingContext routingContext) {

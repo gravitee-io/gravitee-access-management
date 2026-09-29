@@ -27,7 +27,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_ETAG_CLIENT_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -158,4 +160,48 @@ public class DeviceIdentifierManagerTest {
         verify(deviceIdentifierProvider, times(1)).addConfigurationVariables(any(), any());
     }
 
+    @Test
+    public void shouldExposeEtagClientIdWhenProviderUsesEtag() {
+        var client = activeRememberDeviceClient();
+        org.mockito.Mockito.when(deviceIdentifierProvider.useEtagToKeepIdentifier()).thenReturn(true);
+
+        var map = cut.getTemplateVariables(client);
+
+        assertEquals("client-id", map.get(REMEMBER_DEVICE_ETAG_CLIENT_ID));
+    }
+
+    @Test
+    public void shouldNotExposeEtagClientIdWhenProviderDoesNotUseEtag() {
+        var map = cut.getTemplateVariables(activeRememberDeviceClient());
+
+        assertFalse(map.containsKey(REMEMBER_DEVICE_ETAG_CLIENT_ID));
+    }
+
+    @Test
+    public void shouldUseEtagOnlyWhenProviderUsesCookieAndEtag() {
+        var client = activeRememberDeviceClient();
+        org.mockito.Mockito.when(deviceIdentifierProvider.useEtagToKeepIdentifier()).thenReturn(true);
+        assertFalse(cut.useEtagBasedDeviceIdentifier(client));
+
+        org.mockito.Mockito.when(deviceIdentifierProvider.useCookieToKeepIdentifier()).thenReturn(true);
+        assertTrue(cut.useEtagBasedDeviceIdentifier(client));
+    }
+
+    @Test
+    public void shouldNotUseEtagWithoutDeviceIdentifier() {
+        assertFalse(cut.useEtagBasedDeviceIdentifier(new Client()));
+        assertFalse(cut.useEtagBasedDeviceIdentifier(null));
+    }
+
+    private static Client activeRememberDeviceClient() {
+        var client = new Client();
+        client.setClientId("client-id");
+        final MFASettings mfaSettings = new MFASettings();
+        final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+        rememberDevice.setActive(true);
+        rememberDevice.setDeviceIdentifierId(REMEMBER_DEVICE_ID);
+        mfaSettings.setRememberDevice(rememberDevice);
+        client.setMfaSettings(mfaSettings);
+        return client;
+    }
 }

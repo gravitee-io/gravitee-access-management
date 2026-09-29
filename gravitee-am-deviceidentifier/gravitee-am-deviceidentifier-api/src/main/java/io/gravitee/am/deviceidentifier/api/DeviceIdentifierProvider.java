@@ -30,4 +30,8 @@ public interface DeviceIdentifierProvider extends AmPluginProvider {
     default boolean useCookieToKeepIdentifier() {
         return false;
     }
+
+    default boolean useEtagToKeepIdentifier() {
+        return false;
+    }
 }

@@ -284,6 +284,8 @@ public interface ConstantKeys {
     String LINKED_ACCOUNT_ID_CONTEXT_KEY = "linkedAccountId";
 
     String DEFAULT_REMEMBER_DEVICE_COOKIE_NAME = "GRAVITEE_IO_REMEMBER_DEVICE";
+    String REMEMBER_DEVICE_ETAG_CLIENT_ID = "rememberDeviceEtagClientId";
+    String ETAG_DEVICE_ID = "etagDeviceId";
     String DEFAULT_REMEMBER_ME_COOKIE_NAME = "GRAVITEE_IO_REMEMBER_ME";
     String USER_ID_KEY = "userId";
 

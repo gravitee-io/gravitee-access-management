@@ -16,8 +16,14 @@
 package io.gravitee.am.deviceidentifier.cookie;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author GraviteeSource Team
  */
-public class CookieDeviceIdentifierConfiguration implements DeviceIdentifierConfiguration {}
+@Getter
+@Setter
+public class CookieDeviceIdentifierConfiguration implements DeviceIdentifierConfiguration {
+    private boolean useEtag;
+}

@@ -44,8 +44,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_ETAG_CLIENT_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE;
 import static java.lang.Boolean.TRUE;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import lombok.CustomLog;
@@ -184,6 +186,9 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
             var provider = this.providers.get(rememberDeviceSettings.getDeviceIdentifierId());
             if(nonNull(provider) && nonNull(rememberDevice)) {
                 provider.addConfigurationVariables(variables, rememberDevice.getConfiguration());
+                if (provider.useEtagToKeepIdentifier()) {
+                    variables.put(REMEMBER_DEVICE_ETAG_CLIENT_ID, client.getClientId());
+                }
             }
         }
         return variables;
@@ -198,6 +203,16 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     public boolean useCookieBasedDeviceIdentifier(Client client) {
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         return this.providers.get(rememberDeviceSettings.getDeviceIdentifierId()).useCookieToKeepIdentifier();
+    }
+
+    @Override
+    public boolean useEtagBasedDeviceIdentifier(Client client) {
+        var rememberDeviceSettings = getRememberDeviceSettings(client);
+        if (isNull(rememberDeviceSettings) || isNullOrEmpty(rememberDeviceSettings.getDeviceIdentifierId())) {
+            return false;
+        }
+        var provider = this.providers.get(rememberDeviceSettings.getDeviceIdentifierId());
+        return nonNull(provider) && provider.useCookieToKeepIdentifier() && provider.useEtagToKeepIdentifier();
     }
 
     /**

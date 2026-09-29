@@ -60,6 +60,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOST
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.rememberdevice.RememberDeviceEtagEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeGetEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengePostEndpoint;
@@ -204,6 +205,7 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
+    public static final String PATH_REMEMBER_DEVICE_ETAG = "/remember-device/etag.js";
     private static final String PASSWORD_HISTORY = "/passwordHistory";
 
     @Autowired
@@ -544,6 +546,10 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(deviceIdentifierHandler)
                 .handler(new RememberedLoginRedirectToAuthorizeHandler());
 
+        rootRouter.get(PATH_REMEMBER_DEVICE_ETAG)
+                .handler(clientRequestParseHandler)
+                .handler(new RememberDeviceEtagEndpoint(deviceIdentifierManager, jwtService, rememberDeviceCookieName));
+
         // MFA route
         Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
 
@@ -847,6 +853,8 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_LOGIN)
                 .handler(sessionHandler);
         router.route(PATH_REMEMBERED_LOGIN)
+                .handler(sessionHandler);
+        router.route(PATH_REMEMBER_DEVICE_ETAG)
                 .handler(sessionHandler);
         router
                 .route(PATH_LOGIN_CALLBACK)

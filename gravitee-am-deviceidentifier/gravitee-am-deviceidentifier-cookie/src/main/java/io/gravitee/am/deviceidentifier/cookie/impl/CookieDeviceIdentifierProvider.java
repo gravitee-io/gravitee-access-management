@@ -19,6 +19,8 @@ package io.gravitee.am.deviceidentifier.cookie.impl;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.deviceidentifier.cookie.CookieDeviceIdentifier;
+import io.gravitee.am.deviceidentifier.cookie.CookieDeviceIdentifierConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +34,8 @@ import lombok.CustomLog;
 @CustomLog
 public class CookieDeviceIdentifierProvider implements DeviceIdentifierProvider {
 
+    @Autowired
+    private CookieDeviceIdentifierConfiguration configuration;
 
     @Override
     public void addConfigurationVariables(Map<String, Object> variables, String configuration) {
@@ -45,5 +49,10 @@ public class CookieDeviceIdentifierProvider implements DeviceIdentifierProvider 
     @Override
     public boolean useCookieToKeepIdentifier() {
         return true;
+    }
+
+    @Override
+    public boolean useEtagToKeepIdentifier() {
+        return nonNull(configuration) && configuration.isUseEtag();
     }
 }

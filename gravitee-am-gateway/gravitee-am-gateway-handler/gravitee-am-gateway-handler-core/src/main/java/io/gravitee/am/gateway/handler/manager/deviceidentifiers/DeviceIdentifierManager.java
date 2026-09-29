@@ -27,4 +27,5 @@ import java.util.Map;
 public interface DeviceIdentifierManager extends Service {
     Map<String, ?> getTemplateVariables(Client client);
     boolean useCookieBasedDeviceIdentifier(Client client);
+    boolean useEtagBasedDeviceIdentifier(Client client);
 }

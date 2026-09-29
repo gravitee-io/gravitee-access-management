@@ -166,6 +166,7 @@
 </script>
 
 <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:src="@{assets/js/device-type-v1.js}"></script>
+<script th:if="${rememberDeviceIsActive && rememberDeviceEtagClientId != null}" th:src="@{remember-device/etag.js(client_id=${rememberDeviceEtagClientId})}"></script>
 <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:attr="nonce=${script_inline_nonce}">
     const deviceId = "[[${cookieDeviceIdentifier}]]" ;
 

@@ -1,5 +1,12 @@
 {
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:am:deviceidentifier:cookie",
-  "properties" : {}
+  "properties" : {
+    "useEtag" : {
+      "title" : "Also store device identifier in ETag",
+      "type" : "boolean",
+      "default" : false,
+      "description" : "Keep a copy of the device identifier in the browser HTTP cache (ETag) so the device is still recognized when cookies are cleared. The identifier is stored on first visit, before the end user consents to remember the device; make sure this is covered by your privacy policy. Custom login forms must load the remember-device/etag.js script."
+    }
+  }
 }

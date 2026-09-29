@@ -43,6 +43,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_C
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.ETAG_DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
@@ -319,5 +320,63 @@ public class DeviceIdentifierHandlerTest {
         handler.handle(spyRoutingContext);
 
         verify(deviceService, times(1)).deviceExists(any(), anyString(), eq(user.getFullId()), anyString(), anyString());
+    }
+
+    @Test
+    public void shouldResolveDeviceIdFromEtagWhenCookieMissing() {
+        givenActiveRememberDeviceWithUser();
+        spyRoutingContext.session().put(ETAG_DEVICE_ID, "etag-device-id");
+        spyRoutingContext.putParam(DEVICE_ID, "param-device-id");
+        when(deviceIdentifierManager.useCookieBasedDeviceIdentifier(any())).thenReturn(true);
+        when(deviceIdentifierManager.useEtagBasedDeviceIdentifier(any())).thenReturn(true);
+        doReturn(Single.just(false)).when(deviceService).deviceExists(any(), anyString(), any(), anyString(), anyString());
+
+        handler.handle(spyRoutingContext);
+
+        verify(deviceService).deviceExists(any(), anyString(), any(), anyString(), eq("etag-device-id"));
+        Assert.assertTrue(spyRoutingContext.session().get(DEVICE_ALREADY_EXISTS_KEY));
+    }
+
+    @Test
+    public void shouldPreferCookieOverEtag() {
+        givenActiveRememberDeviceWithUser();
+        spyRoutingContext.session().put(ETAG_DEVICE_ID, "etag-device-id");
+        final var request = (DummyHttpRequest) spyRoutingContext.request().getDelegate();
+        request.putCookie(Cookie.cookie(DEFAULT_REMEMBER_DEVICE_COOKIE_NAME, "cookie-jwt"));
+        JWT jwt = new JWT();
+        jwt.setJti("cookie-device-id");
+        doReturn(Single.just(jwt)).when(jwtService).decodeAndVerify(anyString(), any(Client.class), any());
+        when(deviceIdentifierManager.useCookieBasedDeviceIdentifier(any())).thenReturn(true);
+        doReturn(Single.just(false)).when(deviceService).deviceExists(any(), anyString(), any(), anyString(), anyString());
+
+        handler.handle(spyRoutingContext);
+
+        verify(deviceService).deviceExists(any(), anyString(), any(), anyString(), eq("cookie-device-id"));
+    }
+
+    @Test
+    public void shouldIgnoreEtagWhenDisabled() {
+        givenActiveRememberDeviceWithUser();
+        spyRoutingContext.session().put(ETAG_DEVICE_ID, "etag-device-id");
+        spyRoutingContext.putParam(DEVICE_ID, "param-device-id");
+        when(deviceIdentifierManager.useCookieBasedDeviceIdentifier(any())).thenReturn(true);
+        doReturn(Single.just(true)).when(deviceService).deviceExists(any(), anyString(), any(), anyString(), anyString());
+
+        handler.handle(spyRoutingContext);
+
+        verify(deviceService).deviceExists(any(), anyString(), any(), anyString(), eq("param-device-id"));
+    }
+
+    private void givenActiveRememberDeviceWithUser() {
+        final MFASettings mfaSettings = new MFASettings();
+        final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+        rememberDevice.setActive(true);
+        rememberDevice.setDeviceIdentifierId(deviceIdentifierId);
+        mfaSettings.setRememberDevice(rememberDevice);
+        client.setMfaSettings(mfaSettings);
+        spyRoutingContext.put(CLIENT_CONTEXT_KEY, client);
+        final User user = new User();
+        user.setId(userId);
+        spyRoutingContext.put(USER_CONTEXT_KEY, user);
     }
 }
