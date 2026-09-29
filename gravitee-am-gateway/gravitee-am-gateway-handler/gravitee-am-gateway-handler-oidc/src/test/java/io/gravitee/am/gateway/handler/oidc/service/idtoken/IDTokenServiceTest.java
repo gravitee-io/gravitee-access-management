@@ -1001,7 +1001,7 @@ public class IDTokenServiceTest {
     }
 
     @Test
-    public void lightweightJwt_dropsCustomClaimsNamedAfterConditionalReservedClaims() {
+    public void lightweightJwt_dropsCustomClaimsNamedAfterKeptClaims() {
         OAuth2Request oAuth2Request = lightweightRequest();
         oAuth2Request.parameters().remove("nonce");
         Client client = lightweightClient(true);
@@ -1009,7 +1009,9 @@ public class IDTokenServiceTest {
                 TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.NONCE, "spoofed-nonce"),
                 TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.AUTH_TIME, "spoofed-auth-time"),
                 TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.ACR, "spoofed-acr"),
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.CLIENT_PROFILE, "spoofed-profile")));
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.CLIENT_PROFILE, "spoofed-profile"),
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.SUB, "spoofed-sub"),
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.ISS, "spoofed-iss")));
         User user = loggedInUser();
         stubSubjectWithInternalSub();
 
@@ -1019,6 +1021,8 @@ public class IDTokenServiceTest {
         assertFalse(idToken.containsKey(Claims.NONCE));
         assertFalse(idToken.containsKey(Claims.ACR));
         assertFalse(idToken.containsKey(Claims.CLIENT_PROFILE));
+        assertFalse(idToken.containsValue("spoofed-sub"));
+        assertFalse(idToken.containsValue("spoofed-iss"));
     }
 
     @Test

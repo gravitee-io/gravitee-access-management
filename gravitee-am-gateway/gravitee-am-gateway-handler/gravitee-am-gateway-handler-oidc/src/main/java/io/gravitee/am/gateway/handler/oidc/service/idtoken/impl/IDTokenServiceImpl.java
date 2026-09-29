@@ -81,8 +81,6 @@ public class IDTokenServiceImpl implements IDTokenService {
     private static final Set<String> LIGHTWEIGHT_ID_TOKEN_CLAIMS = Set.of(
             Claims.ISS, Claims.SUB, Claims.AUD, Claims.EXP, Claims.IAT, AUTH_TIME, NONCE, ACR, Claims.CLIENT_PROFILE,
             Claims.GIO_INTERNAL_SUB);
-    // kept claims that only AM sets: a custom claim must not supply them in a lightweight token
-    private static final Set<String> LIGHTWEIGHT_AM_ONLY_CLAIMS = Set.of(AUTH_TIME, NONCE, ACR, Claims.CLIENT_PROFILE);
 
     @Autowired
     private Domain domain;
@@ -284,7 +282,7 @@ public class IDTokenServiceImpl implements IDTokenService {
             return client.getTokenCustomClaims();
         }
         return client.getTokenCustomClaims().stream()
-                .filter(claim -> !LIGHTWEIGHT_AM_ONLY_CLAIMS.contains(claim.getClaimName()))
+                .filter(claim -> !LIGHTWEIGHT_ID_TOKEN_CLAIMS.contains(claim.getClaimName()))
                 .toList();
     }
 
