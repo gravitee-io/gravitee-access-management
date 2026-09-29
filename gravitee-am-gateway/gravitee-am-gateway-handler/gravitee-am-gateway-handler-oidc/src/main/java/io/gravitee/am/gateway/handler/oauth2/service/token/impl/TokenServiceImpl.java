@@ -92,6 +92,14 @@ public class TokenServiceImpl implements TokenService {
 
     private static final String PERMISSIONS = "permissions";
     private static final String AUTHORIZATION_DETAILS = "authorization_details";
+    // gis, domain and claims_request_parameter are internal claims the gateway reads back from the access token
+    private static final Set<String> LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = Set.of(
+            Claims.ISS, Claims.SUB, Claims.EXP, Claims.IAT, Claims.JTI, Claims.SCOPE, Claims.CLIENT_ID, Claims.AUD,
+            Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS,
+            Claims.GIO_INTERNAL_SUB, Claims.DOMAIN, Claims.CLAIMS);
+    // kept claims that only AM sets: a custom claim must not supply them in a lightweight token
+    private static final Set<String> LIGHTWEIGHT_AM_ONLY_CLAIMS = Set.of(
+            Claims.ACT, Claims.CNF, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, Claims.CLAIMS, Claims.DOMAIN);
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
@@ -230,6 +238,10 @@ public class TokenServiceImpl implements TokenService {
 
                     // create JWT refresh token
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
+                    // filter after the refresh token copied the access token claims
+                    if (isLightweightJwt(client)) {
+                        accessToken.keySet().retainAll(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
+                    }
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
                     return Single.zip(
@@ -534,7 +546,7 @@ public class TokenServiceImpl implements TokenService {
         }
 
         // set custom claims
-        enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
+        enhanceJWT(jwt, accessTokenCustomClaims(client), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         // Token Exchange (RFC 8693) - set "act" claim for delegation scenarios
         if (request.isDelegation() && request.getActClaim() != null) {
@@ -575,6 +587,19 @@ public class TokenServiceImpl implements TokenService {
         setResources(request, jwt);
 
         return jwt;
+    }
+
+    private static boolean isLightweightJwt(Client client) {
+        return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
+    }
+
+    private static List<TokenClaim> accessTokenCustomClaims(Client client) {
+        if (!isLightweightJwt(client) || client.getTokenCustomClaims() == null) {
+            return client.getTokenCustomClaims();
+        }
+        return client.getTokenCustomClaims().stream()
+                .filter(claim -> !LIGHTWEIGHT_AM_ONLY_CLAIMS.contains(claim.getClaimName()))
+                .toList();
     }
 
     // act.sub is the counterpart to the token's top-level sub. In user-bound flows the top-level sub

@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -196,6 +197,29 @@ public class PatchApplicationTest {
         Application result = patch.patch(toPatch);
 
         assertTrue(result.getSettings().getOauth().isDpopBoundAccessTokens());
+    }
+
+    @Test
+    public void patch_applies_lightweightJwtSettings_when_present() {
+        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
+        oauthPatch.setLightweightJwtSettings(Optional.of(ApplicationLightweightJwtSettings.builder().enabled(true).build()));
+
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setOauth(Optional.of(oauthPatch));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(settingsPatch));
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        ApplicationOAuthSettings existingOauth = new ApplicationOAuthSettings();
+        assertNull("lightweightJwtSettings shall default to null", existingOauth.getLightweightJwtSettings());
+        appSettings.setOauth(existingOauth);
+        toPatch.setSettings(appSettings);
+
+        Application result = patch.patch(toPatch);
+
+        assertTrue(result.getSettings().getOauth().getLightweightJwtSettings().isEnabled());
     }
 
     @Test

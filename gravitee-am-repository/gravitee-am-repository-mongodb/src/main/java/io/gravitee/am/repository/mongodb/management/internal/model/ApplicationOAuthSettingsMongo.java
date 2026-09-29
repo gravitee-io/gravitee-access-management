@@ -106,6 +106,7 @@ public class ApplicationOAuthSettingsMongo {
 
     private TokenExchangeOAuthSettingsMongo tokenExchangeOAuthSettings;
     private ApplicationCrossAppAccessSettingsMongo crossAppAccessSettings;
+    private ApplicationLightweightJwtSettingsMongo lightweightJwtSettings;
 
     public String getClientId() {
         return clientId;
@@ -705,5 +706,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setCrossAppAccessSettings(ApplicationCrossAppAccessSettingsMongo crossAppAccessSettings) {
         this.crossAppAccessSettings = crossAppAccessSettings;
+    }
+
+    public ApplicationLightweightJwtSettingsMongo getLightweightJwtSettings() {
+        return lightweightJwtSettings;
+    }
+
+    public void setLightweightJwtSettings(ApplicationLightweightJwtSettingsMongo lightweightJwtSettings) {
+        this.lightweightJwtSettings = lightweightJwtSettings;
     }
 }

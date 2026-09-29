@@ -13160,6 +13160,16 @@ components:
           format: int32
         selectionRule:
           type: string
+    ApplicationLightweightJwtSettings:
+      type: object
+      description: Restricts the JWT access token returned to the client to the reserved
+        protocol claims.
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether Lightweight JWT is enabled.
+      title: Application Lightweight JWT settings
     ApplicationOAuthSettings:
       type: object
       properties:
@@ -13252,6 +13262,8 @@ components:
           $ref: "#/components/schemas/JWKSet"
         jwksUri:
           type: string
+        lightweightJwtSettings:
+          $ref: "#/components/schemas/ApplicationLightweightJwtSettings"
         logoUri:
           type: string
         optInScopeSelection:
@@ -16839,6 +16851,8 @@ components:
           $ref: "#/components/schemas/JWKSet"
         jwksUri:
           type: string
+        lightweightJwtSettings:
+          $ref: "#/components/schemas/ApplicationLightweightJwtSettings"
         logoUri:
           type: string
         optInScopeSelection:

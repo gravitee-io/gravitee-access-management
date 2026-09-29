@@ -339,6 +339,9 @@ public class ApplicationOAuthSettings {
             + "Cross App Access disabled.")
     private ApplicationCrossAppAccessSettings crossAppAccessSettings;
 
+    @Schema(description = "Lightweight JWT settings. Absent means Lightweight JWT disabled.")
+    private ApplicationLightweightJwtSettings lightweightJwtSettings;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -418,6 +421,7 @@ public class ApplicationOAuthSettings {
         this.optInScopeSelection = other.optInScopeSelection;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
+        this.lightweightJwtSettings = other.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(other.lightweightJwtSettings) : null;
     }
 
     public String getClientId() {
@@ -1045,6 +1049,14 @@ public class ApplicationOAuthSettings {
         this.crossAppAccessSettings = crossAppAccessSettings;
     }
 
+    public ApplicationLightweightJwtSettings getLightweightJwtSettings() {
+        return lightweightJwtSettings;
+    }
+
+    public void setLightweightJwtSettings(ApplicationLightweightJwtSettings lightweightJwtSettings) {
+        this.lightweightJwtSettings = lightweightJwtSettings;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -1117,5 +1129,6 @@ public class ApplicationOAuthSettings {
         client.setOptInScopeSelection(this.optInScopeSelection);
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
         client.setCrossAppAccessSettings(this.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(this.crossAppAccessSettings) : null);
+        client.setLightweightJwtSettings(this.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(this.lightweightJwtSettings) : null);
     }
 }

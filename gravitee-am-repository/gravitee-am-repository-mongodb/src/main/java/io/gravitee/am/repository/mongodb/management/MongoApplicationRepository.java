@@ -70,6 +70,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.SAMLAssertion
 import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationCrossAppAccessSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationLightweightJwtSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserInfoClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
@@ -624,6 +625,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 TokenExchangeOAuthSettingsMongo.convert(other.getTokenExchangeOAuthSettings()));
         applicationOAuthSettingsMongo.setCrossAppAccessSettings(
                 ApplicationCrossAppAccessSettingsMongo.convert(other.getCrossAppAccessSettings()));
+        applicationOAuthSettingsMongo.setLightweightJwtSettings(
+                ApplicationLightweightJwtSettingsMongo.convert(other.getLightweightJwtSettings()));
 
         return applicationOAuthSettingsMongo;
     }
@@ -719,6 +722,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 other.getTokenExchangeOAuthSettings() != null ? other.getTokenExchangeOAuthSettings().convert() : null);
         applicationOAuthSettings.setCrossAppAccessSettings(
                 other.getCrossAppAccessSettings() != null ? other.getCrossAppAccessSettings().convert() : null);
+        applicationOAuthSettings.setLightweightJwtSettings(
+                other.getLightweightJwtSettings() != null ? other.getLightweightJwtSettings().convert() : null);
 
         return applicationOAuthSettings;
     }

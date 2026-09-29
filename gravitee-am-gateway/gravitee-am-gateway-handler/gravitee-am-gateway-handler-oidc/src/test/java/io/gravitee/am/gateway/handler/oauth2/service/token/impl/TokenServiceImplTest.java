@@ -38,7 +38,12 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.AgentType;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
+import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
@@ -47,6 +52,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
@@ -75,6 +81,10 @@ import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -1616,5 +1626,144 @@ public class TokenServiceImplTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Expected ClientTokenAuditBuilder in audit reports"))
                 .build(new ObjectMapper());
+    }
+
+    @Test
+    public void lightweightJwt_keepsOnlyReservedClaimsInAccessToken_andFullClaimsInRefreshToken() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1")));
+        request.setAuthorizationDetails(List.of(Map.of("type", "fdx_v1.0")));
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(io.gravitee.am.common.oidc.Parameters.CLAIMS, "{\"userinfo\":{\"email\":null}}");
+        request.setParameters(parameters);
+
+        Client client = lightweightClient(true);
+        setupCustomClaimMocks(request);
+        doAnswer(invocation -> {
+            JWT jwt = invocation.getArgument(0);
+            jwt.setSub("user-sub");
+            jwt.setInternalSub("user-gis");
+            return null;
+        }).when(subjectManager).updateJWT(any(), any());
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).containsOnlyKeys(
+                Claims.ISS, Claims.SUB, Claims.GIO_INTERNAL_SUB, Claims.AUD, Claims.DOMAIN, Claims.IAT, Claims.EXP, Claims.JTI,
+                Claims.SCOPE, Claims.CLIENT_ID, Claims.CLAIMS, "authorization_details");
+        assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme");
+    }
+
+    @Test
+    public void lightweightJwt_keepsConditionalReservedClaimsInAccessToken() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSupportRefreshToken(false);
+        request.setGrantType(GrantType.CLIENT_CREDENTIALS);
+        request.setConfirmationMethodX5S256("the-cert-thumbprint");
+        request.setResources(Set.of("https://api.example.com"));
+
+        Client client = lightweightClient(true);
+        client.setAppType(ApplicationType.AGENT);
+        client.setAgentType(AgentType.AUTONOMOUS);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, null);
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        JWT accessToken = jwtCaptor.getValue();
+        assertThat(accessToken).containsKeys(Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE)
+                .doesNotContainKeys("tenant", Claims.SUB_PROFILE);
+        assertThat((List<String>) accessToken.get(Claims.AUD)).containsExactly("https://api.example.com");
+    }
+
+    @Test
+    public void lightweightJwt_dropsCustomClaimsNamedAfterFlowReservedClaims() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setSupportRefreshToken(false);
+
+        Client client = lightweightClient(true);
+        client.setTokenCustomClaims(List.of(
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.ACT, "spoofed-actor"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.CNF, "spoofed-cnf"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.DOMAIN, "spoofed-domain")));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getValue()).doesNotContainKeys(Claims.ACT, Claims.CNF)
+                .containsEntry(Claims.DOMAIN, "test-domain");
+    }
+
+    @Test
+    public void lightweightJwt_dropsUmaPermissionsFromAccessToken() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setSupportRefreshToken(false);
+        request.setGrantType(GrantType.UMA);
+        request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1").setResourceScopes(List.of("read"))));
+
+        Client client = lightweightClient(true);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getValue()).doesNotContainKey("permissions");
+    }
+
+    @Test
+    public void lightweightJwtDisabled_keepsCustomClaimsInAccessToken() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setSupportRefreshToken(false);
+        request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1")));
+
+        Client client = lightweightClient(false);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getValue()).containsEntry("tenant", "acme").containsKey("permissions");
+    }
+
+    private OAuth2Request authorizationCodeRequest() {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap<>());
+        request.setClientId("lightweight-client");
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setSupportRefreshToken(true);
+        request.setScopes(Set.of("read"));
+        request.setOrigin("https://auth.example.com");
+        return request;
+    }
+
+    private void setupCustomClaimMocks(OAuth2Request request) {
+        when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
+        when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
+        when(tokenManager.storeTokens(any(), any())).thenReturn(Completable.complete());
+        TemplateEngine templateEngine = Mockito.mock(TemplateEngine.class);
+        when(templateEngine.getValue(anyString(), eq(Object.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ExecutionContext executionContext = spy(new SimpleExecutionContext(request, null));
+        doReturn(templateEngine).when(executionContext).getTemplateEngine();
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+    }
+
+    private Client lightweightClient(boolean lightweightJwtEnabled) {
+        Client client = createClient("lightweight-client");
+        client.setDomain("test-domain");
+        client.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "tenant", "acme")));
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(lightweightJwtEnabled).build());
+        return client;
     }
 }
