@@ -54,6 +54,7 @@ models/ApplicationAdvancedSettings.ts
 models/ApplicationEntity.ts
 models/ApplicationFactorSettings.ts
 models/ApplicationIdentityProvider.ts
+models/ApplicationLightweightJwtSettings.ts
 models/ApplicationOAuthSettings.ts
 models/ApplicationPage.ts
 models/ApplicationSAMLSettings.ts

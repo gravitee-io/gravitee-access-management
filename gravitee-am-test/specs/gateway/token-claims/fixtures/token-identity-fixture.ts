@@ -20,13 +20,21 @@ import { IdentityProvider } from '@management-models/IdentityProvider';
 import {
   createDomain,
   DomainOidcConfig,
+  getDomainFlows,
   safeDeleteDomain,
   startDomain,
+  updateDomainFlows,
   waitForDomainStart,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
-import { buildCreateAndTestUser, createUser } from '@management-commands/user-management-commands';
+import { addRolesToUser, buildCreateAndTestUser, createUser } from '@management-commands/user-management-commands';
+import { patchApplication } from '@management-commands/application-management-commands';
+import { createRole } from '@management-commands/role-management-commands';
+import { addGroupMember, createGroup } from '@management-commands/group-management-commands';
+import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { FlowEntityTypeEnum } from '../../../../api/management/models';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import { performGet, performPost, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
@@ -121,6 +129,11 @@ export interface TokenIdentityFixture extends Fixture {
   authorizationCodeFlow: (additionalParams?: string) => Promise<Record<string, any>>;
   /** Calls /oidc/userinfo with the supplied access token. */
   userinfo: (accessTokenValue: string) => Promise<Record<string, any>>;
+  /**
+   * Patches the Lightweight JWT setting, then waits until a fresh access token reflects it:
+   * the gateway client lags the domain `lastSync`. `probeClaim` is a custom claim the setting removes.
+   */
+  setLightweightJwt: (enabled: boolean, probeClaim: string) => Promise<void>;
 }
 
 /**
@@ -163,6 +176,14 @@ export interface TokenIdentityOptions {
    * a scope the domain already knows about.
    */
   extraScopes?: { scope: string; defaultScope: boolean }[];
+  /** Application-level Lightweight JWT settings. */
+  lightweightJwtSettings?: { enabled: boolean };
+  /** Name of a domain role assigned to the primary user. */
+  userRole?: string;
+  /** Name of a domain group the primary user belongs to. */
+  userGroup?: string;
+  /** Groovy script run in the TOKEN pre flow. */
+  tokenPreScript?: string;
 }
 
 /**
@@ -218,6 +239,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
           ],
           ...(options.tokenCustomClaims ? { tokenCustomClaims: options.tokenCustomClaims } : {}),
           ...(options.userinfoCustomClaims ? { userinfoCustomClaims: options.userinfoCustomClaims } : {}),
+          ...(options.lightweightJwtSettings ? { lightweightJwtSettings: options.lightweightJwtSettings } : {}),
         },
         advanced: { skipConsent: true },
       },
@@ -256,6 +278,29 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       preRegistration: false,
       additionalInformation: LEAKY_PROFILE_CLAIMS,
     });
+
+    if (options.userRole) {
+      const role = await createRole(domain.id, accessToken, { name: options.userRole, assignableType: 'DOMAIN' });
+      await addRolesToUser(domain.id, accessToken, user.id, [role.id]);
+    }
+    if (options.userGroup) {
+      const group = await createGroup(domain.id, accessToken, { name: options.userGroup, description: options.userGroup });
+      await addGroupMember(domain.id, accessToken, group.id, user.id);
+    }
+    if (options.tokenPreScript) {
+      const flows = await getDomainFlows(domain.id, accessToken);
+      lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Token, 'pre', [
+        {
+          name: 'Groovy',
+          policy: 'groovy',
+          description: '',
+          condition: '',
+          enabled: true,
+          configuration: JSON.stringify({ onRequestScript: options.tokenPreScript }),
+        },
+      ]);
+      await updateDomainFlows(domain.id, accessToken, flows);
+    }
 
     await startDomain(domain.id, accessToken);
     const started = await waitForDomainStart(domain);
@@ -332,6 +377,24 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       return response.body;
     };
 
+    const setLightweightJwt = async (enabled: boolean, probeClaim: string) => {
+      await waitForSyncAfter(startedDomain.id, () =>
+        patchApplication(startedDomain.id, accessToken, { settings: { oauth: { lightweightJwtSettings: { enabled } } } }, app.id),
+      );
+
+      const deadline = Date.now() + 15_000;
+      for (;;) {
+        const probe = await passwordGrantFor(user, 'openid');
+        if (probeClaim in decodeToken(probe.access_token).payload !== enabled) {
+          return;
+        }
+        if (Date.now() > deadline) {
+          throw new Error(`gateway still not serving lightweightJwtSettings.enabled=${enabled} after 15s`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    };
+
     return {
       accessToken,
       domain: startedDomain,
@@ -348,6 +411,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       refreshGrant,
       authorizationCodeFlow,
       userinfo,
+      setLightweightJwt,
       cleanUp: async () => {
         if (domain?.id) {
           await safeDeleteDomain(domain.id, accessToken);
