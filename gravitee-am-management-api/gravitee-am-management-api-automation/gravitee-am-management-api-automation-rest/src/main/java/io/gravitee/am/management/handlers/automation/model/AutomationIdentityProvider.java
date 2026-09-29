@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.automation.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -82,20 +83,23 @@ public class AutomationIdentityProvider implements DryRunResult {
     private String configuration;
 
     @Schema(description = "Attribute mappers: maps provider claims to AM user profile attributes.",
-            example = "{\"sub\":\"username\",\"email\":\"email\"}")
+            example = "{\"sub\":\"username\",\"email\":\"email\"}", defaultValue = "{}",
+            additionalPropertiesSchema = String.class)
     private Map<String, String> mappers;
 
     @Schema(description = "Role mapper: assigns AM roles based on provider attribute values. Each entry maps " +
-            "a role to the user attribute expressions that grant it.")
+            "a role to the user attribute expressions that grant it.", defaultValue = "{}",
+            additionalPropertiesSchema = String[].class)
     private Map<String, String[]> roleMapper;
 
     @Schema(description = "Group mapper: assigns AM groups based on provider attribute values. Each entry maps " +
-            "a group to the user attribute expressions that grant it.")
+            "a group to the user attribute expressions that grant it.", defaultValue = "{}",
+            additionalPropertiesSchema = String[].class)
     private Map<String, String[]> groupMapper;
 
-    @Schema(description = "Email domains allowed to authenticate through this identity provider. When set, " +
-            "users whose email domain is not listed are rejected.",
-            example = "[\"example.com\"]")
+    @ArraySchema(arraySchema = @Schema(description = "Email domains allowed to authenticate through this identity " +
+            "provider. When set, users whose email domain is not listed are rejected.",
+            example = "[\"example.com\"]", defaultValue = "[]"))
     private List<String> domainWhitelist;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")

@@ -38,13 +38,13 @@ public class AutomationCIBASettings {
             defaultValue = "false")
     private boolean enabled;
 
-    @Schema(description = "Default validity period, in seconds, of the issued auth_req_id.", example = "600")
+    @Schema(description = "Default validity period, in seconds, of the issued auth_req_id.", defaultValue = "600")
     private int authReqExpiry = io.gravitee.am.model.oidc.CIBASettings.DEFAULT_EXPIRY_IN_SEC;
 
     @Schema(description = "Minimum delay, in seconds, that a client must wait between two polls of the token " +
-            "endpoint for the same auth_req_id (POLL or PING delivery mode).", example = "5")
+            "endpoint for the same auth_req_id (POLL or PING delivery mode).", defaultValue = "5")
     private int tokenReqInterval = io.gravitee.am.model.oidc.CIBASettings.DEFAULT_INTERVAL_IN_SEC;
 
-    @Schema(description = "Maximum number of characters accepted for the binding_message parameter.", example = "256")
+    @Schema(description = "Maximum number of characters accepted for the binding_message parameter.", defaultValue = "256")
     private int bindingMessageLength = io.gravitee.am.model.oidc.CIBASettings.DEFAULT_MSG_LENGTH;
 }
