@@ -92,6 +92,9 @@ export const LEAKY_PROFILE_CLAIMS = {
 /** Sorted claim names of a lightweight access token when the flow sets no optional claim. */
 export const LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = ['aud', 'client_id', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
 
+/** Sorted claim names of a lightweight refresh token when the flow sets no optional claim. */
+export const LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS = ['aud', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
+
 /** Sorted claim names of a lightweight ID token when the flow sets no optional claim. */
 export const LIGHTWEIGHT_ID_TOKEN_CLAIMS = ['aud', 'auth_time', 'exp', 'gis', 'iat', 'iss', 'sub'];
 
