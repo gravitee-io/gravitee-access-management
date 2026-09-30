@@ -35,7 +35,9 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceIm
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -904,8 +906,8 @@ public class IDTokenServiceTest {
         Client client = new Client();
         client.setClientId("agent-client-id");
         client.setCertificate("client-certificate");
-        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
-        client.setAgentType(io.gravitee.am.model.application.AgentType.USER_EMBEDDED);
+        client.setAppType(ApplicationType.AGENT);
+        client.setAgentType(AgentType.USER_EMBEDDED);
 
         io.gravitee.am.gateway.certificate.CertificateProvider clientCert = createCert(certificateProvider, "client-certificate");
         ExecutionContext executionContext = mock(ExecutionContext.class);
@@ -937,8 +939,8 @@ public class IDTokenServiceTest {
         Client client = new Client();
         client.setClientId("blueprint-client-id");
         client.setCertificate("client-certificate");
-        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
-        client.setAgentType(io.gravitee.am.model.application.AgentType.HOSTED_DELEGATED);
+        client.setAppType(ApplicationType.AGENT);
+        client.setAgentType(AgentType.HOSTED_DELEGATED);
         client.setAgentInstanceId("agent-instance-001");
 
         io.gravitee.am.gateway.certificate.CertificateProvider clientCert = createCert(certificateProvider, "client-certificate");
@@ -991,8 +993,8 @@ public class IDTokenServiceTest {
     public void lightweightJwt_keepsAgentClientProfileInIdToken() {
         OAuth2Request oAuth2Request = lightweightRequest();
         Client client = lightweightClient(true);
-        client.setAppType(io.gravitee.am.model.application.ApplicationType.AGENT);
-        client.setAgentType(io.gravitee.am.model.application.AgentType.USER_EMBEDDED);
+        client.setAppType(ApplicationType.AGENT);
+        client.setAgentType(AgentType.USER_EMBEDDED);
         stubSubjectWithInternalSub();
 
         JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());

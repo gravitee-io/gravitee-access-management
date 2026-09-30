@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -106,5 +108,17 @@ public class ClientTest {
         assertTrue("same redirect uris values",safeClient.getRedirectUris().containsAll(from.getRedirectUris()));
         assertNull("client secret should be null", safeClient.getClientSecret());
         assertTrue("list of client secrets should be empty", safeClient.getClientSecrets().isEmpty());
+    }
+
+    @Test
+    public void testIsLightweightJwtEnabled() {
+        Client client = new Client();
+        assertFalse(client.isLightweightJwtEnabled());
+
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(false).build());
+        assertFalse(client.isLightweightJwtEnabled());
+
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
+        assertTrue(client.isLightweightJwtEnabled());
     }
 }

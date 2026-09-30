@@ -236,7 +236,7 @@ public class TokenServiceImpl implements TokenService {
                     // create JWT refresh token
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // filter after the refresh token copied the access token claims
-                    if (isLightweightJwtEnabled(client)) {
+                    if (client.isLightweightJwtEnabled()) {
                         accessToken.keySet().retainAll(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
                     }
                     // encode and sign JWT tokens
@@ -584,10 +584,6 @@ public class TokenServiceImpl implements TokenService {
         setResources(request, jwt);
 
         return jwt;
-    }
-
-    private static boolean isLightweightJwtEnabled(Client client) {
-        return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
     }
 
     // act.sub is the counterpart to the token's top-level sub. In user-bound flows the top-level sub
