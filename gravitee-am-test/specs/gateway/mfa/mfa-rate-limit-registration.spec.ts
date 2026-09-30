@@ -46,6 +46,7 @@ import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-comma
 import { uniqueName } from '@utils-commands/misc';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { withRetry } from '@utils-commands/retry';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 
 setup(200000);
 
@@ -279,8 +280,7 @@ beforeAll(async () => {
     post: [],
   });
 
-  await updateApplicationFlows(domain.id, accessToken, application.id, flows);
-  await waitForDomainSync(domain.id);
+  await waitForSyncAfter(domain.id, () => updateApplicationFlows(domain.id, accessToken, application.id, flows));
   // After flow update, gateway may briefly redeploy routes — wait for routing to be live.
   await waitForOidcReady(domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
 
