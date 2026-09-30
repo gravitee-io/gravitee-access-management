@@ -31,7 +31,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionAnyTokenService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.el.ExecutionContextTokenEnhancer;
@@ -70,7 +70,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -112,7 +111,7 @@ public class TokenServiceImpl implements TokenService {
     private TokenManager tokenManager;
 
     @Autowired
-    private IntrospectionTokenFacade introspectionTokenFacade;
+    private IntrospectionAnyTokenService introspectionTokenService;
 
     @Autowired
     private AuditService auditService;
@@ -163,51 +162,29 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<Token> introspect(String token, TokenTypeHint hint) {
-        switch (hint) {
-            case REFRESH_TOKEN:
-                return introspectAsRefreshTokenFirst(token, null);
-            case ACCESS_TOKEN:
-                return introspectAsAccessTokenFirst(token, null);
-            default:
-                return Maybe.empty();
-        }
+        return introspect(token, hint, null);
     }
 
     @Override
     public Maybe<Token> introspect(String token, TokenTypeHint hint, String callerClientId) {
-        switch (hint) {
-            case REFRESH_TOKEN:
-                return introspectAsRefreshTokenFirst(token, callerClientId);
-            case ACCESS_TOKEN:
-                return introspectAsAccessTokenFirst(token, callerClientId);
-            default:
-                return Maybe.empty();
-        }
+        return switch (hint) {
+            case REFRESH_TOKEN -> introspectAs(token, REFRESH_TOKEN, callerClientId);
+            case ACCESS_TOKEN -> introspectAs(token, ACCESS_TOKEN, callerClientId);
+            default -> Maybe.empty();
+        };
     }
 
     @Override
     public Maybe<Token> introspect(String token, String callerClientId) {
-        return introspectAsAccessTokenFirst(token, callerClientId);
+        return introspectAs(token, ACCESS_TOKEN, callerClientId);
     }
 
-    private Maybe<Token> introspectAsAccessTokenFirst(String token, String callerClientId) {
-        return introspectAsAccessToken(token, callerClientId)
-                .switchIfEmpty(introspectAsRefreshToken(token, callerClientId));
-    }
-
-    private Maybe<Token> introspectAsRefreshTokenFirst(String token, String callerClientId) {
-        return introspectAsRefreshToken(token, callerClientId)
-                .switchIfEmpty(introspectAsAccessToken(token, callerClientId));
-    }
-
-    private Maybe<Token> introspectAsAccessToken(String token, String callerClientId) {
-        return introspectionTokenFacade.introspectAccessToken(token, callerClientId)
-                .map(result -> convertAccessToken(result.jwt(), result.clientId()));
-    }
-
-    private Maybe<Token> introspectAsRefreshToken(String token, String callerClientId) {
-        return introspectionTokenFacade.introspectRefreshToken(token, callerClientId)
-                .map(result -> convertRefreshToken(result.jwt(), result.clientId()));
+    private Maybe<Token> introspectAs(String token, JWTService.TokenType hint, String callerClientId) {
+        return introspectionTokenService.introspect(token, hint, callerClientId)
+                .onErrorResumeWith(Maybe.empty())
+                .map(result -> result.tokenType() == REFRESH_TOKEN
+                        ? convertRefreshToken(result.jwt(), result.clientId())
+                        : convertAccessToken(result.jwt(), result.clientId()));
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
@@ -35,7 +36,7 @@ public class IntrospectionAccessTokenService extends BaseIntrospectionTokenServi
                                            ProtectedResourceManager protectedResourceManager,
                                            Environment environment,
                                            TokenRepository tokenRepository) {
-        super(ACCESS_TOKEN, jwtService, clientLookupService, protectedResourceManager, environment);
+        super(jwtService, clientLookupService, protectedResourceManager, environment);
         this.tokenRepository = tokenRepository;
     }
 
@@ -45,7 +46,7 @@ public class IntrospectionAccessTokenService extends BaseIntrospectionTokenServi
     }
 
     @Override
-    public Maybe<IntrospectionResult> introspect(String token, boolean offlineVerification, String callerClientId) {
-        return introspectToken(token, offlineVerification, callerClientId);
+    public Maybe<JWT> introspect(String token, boolean offlineVerification) {
+        return introspectToken(token, ACCESS_TOKEN, offlineVerification, null).map(IntrospectionResult::jwt);
     }
 }

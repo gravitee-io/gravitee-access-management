@@ -91,6 +91,15 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
     }
 
     @Override
+    public Maybe<Token> findByJti(String jti) {
+        LOGGER.debug("findByJti({})", jti);
+        return spring.findNotExpiredByJti(jti, LocalDateTime.now(UTC))
+                .map(this::toToken)
+                .doOnError(error -> LOGGER.error("Unable to retrieve Token", error))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<RefreshToken> findRefreshTokenByJti(String jti) {
         LOGGER.debug("findRefreshTokenByJti({})", jti);
         return spring.findNotExpiredRefreshTokenByJti(jti, LocalDateTime.now(UTC))
@@ -252,6 +261,10 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
                 .matching(Query.query(where("expire_at").lessThan(now))).all())
                 .doOnError(error -> LOGGER.error("Unable to purge access tokens", error))
                 .observeOn(Schedulers.computation());
+    }
+
+    private Token toToken(JdbcToken entity) {
+        return TokenType.REFRESH_TOKEN.name().equals(entity.getType()) ? toRefreshToken(entity) : toAccessToken(entity);
     }
 
     private AccessToken toAccessToken(JdbcToken entity) {

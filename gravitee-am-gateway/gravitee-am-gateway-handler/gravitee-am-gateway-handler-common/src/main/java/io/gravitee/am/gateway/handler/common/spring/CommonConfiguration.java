@@ -69,10 +69,9 @@ import io.gravitee.am.gateway.handler.common.jwt.InMemoryJWTCache;
 import io.gravitee.am.gateway.handler.common.jwt.JWTCache;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
-import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionAccessTokenService;
-import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionRefreshTokenService;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionAnyTokenService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
@@ -430,18 +429,11 @@ public class CommonConfiguration {
     }
 
     @Bean
-    @Qualifier("RefreshTokenIntrospection")
-    public IntrospectionTokenService introspectionRefreshTokenService(JWTService jwtService,
-                                                                      @Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
-                                                                      ProtectedResourceManager protectedResourceManager,
-                                                                      BackwardCompatibleTokenRepository tokenRepository) {
-        return new IntrospectionRefreshTokenService(jwtService, clientLookupService, protectedResourceManager, environment, tokenRepository);
-    }
-
-    @Bean
-    public IntrospectionTokenFacade introspectionTokenFacade(@Qualifier("AccessTokenIntrospection") IntrospectionTokenService accessTokenIntrospectionService,
-                                                             @Qualifier("RefreshTokenIntrospection") IntrospectionTokenService refreshTokenIntrospectionService) {
-        return new IntrospectionTokenFacade(accessTokenIntrospectionService, refreshTokenIntrospectionService);
+    public IntrospectionAnyTokenService introspectionAnyTokenService(JWTService jwtService,
+                                                                     @Qualifier("complexClientLookupService") ClientLookupService clientLookupService,
+                                                                     ProtectedResourceManager protectedResourceManager,
+                                                                     BackwardCompatibleTokenRepository tokenRepository) {
+        return new IntrospectionAnyTokenService(jwtService, clientLookupService, protectedResourceManager, environment, tokenRepository);
     }
 
     @Bean

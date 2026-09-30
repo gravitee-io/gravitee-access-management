@@ -19,9 +19,12 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.*;
 
 public interface TokenRepository extends ExpiredDataSweeper {
+
+    Maybe<Token> findByJti(String jti);
 
     Maybe<RefreshToken> findRefreshTokenByJti(String jti);
     Single<RefreshToken> create(RefreshToken refreshToken);
