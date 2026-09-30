@@ -25,6 +25,7 @@ import { buildKafkaReporterConfig } from '../../reporters/fixtures/kafka-reporte
 export const SENSITIVE_VALUES_TEST = {
   MASK: '********',
   PASSWORD: 'Sensitive-P@ssw0rd',
+  MASKED_URI: 'mongodb://am:********@localhost:27017/gravitee-am',
 } as const;
 
 export const newKey = (prefix: string) => uniqueName(prefix, true).toLowerCase();
@@ -37,6 +38,23 @@ export const buildSecretKafkaReporterDef = (key: string, password: string) =>
     key,
     configuration: JSON.stringify({ ...buildKafkaReporterConfig(), username: 'am', password }),
   });
+
+export const buildMongoIdpDef = (key: string, uri: string) => ({
+  key,
+  name: `Automation mongo IdP ${key}`,
+  type: 'mongo-am-idp',
+  configuration: JSON.stringify({
+    uri,
+    enableCredentials: false,
+    database: 'gravitee-am',
+    usersCollection: 'idp_users',
+    findUserByUsernameQuery: '{username: ?}',
+    findUserByEmailQuery: '{email: ?}',
+    usernameField: 'username',
+    passwordField: 'password',
+    passwordEncoder: 'BCrypt',
+  }),
+});
 
 export const configurationOf = (body: { configuration: string }) => JSON.parse(body.configuration);
 

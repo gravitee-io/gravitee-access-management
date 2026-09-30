@@ -197,6 +197,15 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
+    public Completable rejectMaskedSensitiveValues(Certificate certificate) {
+        return rejectMaskedSensitiveValues(certificate.getConfiguration(), configuration -> {
+            var probe = new Certificate(certificate);
+            probe.setConfiguration(configuration);
+            return filterSensitiveData(probe).map(Certificate::getConfiguration);
+        });
+    }
+
+    @Override
     public Single<Certificate> filterSensitiveData(Certificate cert) {
         return certificatePluginService.getSchema(cert.getType())
                 .map(schema -> {

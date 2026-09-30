@@ -19,19 +19,25 @@ package io.gravitee.am.management.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Strings;
 import io.gravitee.am.model.PluginConfigurableEntity;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.model.PluginConfigurableUpdate;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,11 +59,13 @@ public abstract class AbstractSensitiveProxy {
     private static final String SENSITIVE_SCHEMA_KEY = "sensitive";
     private static final String SENSITIVE_URI_SCHEMA_KEY = "sensitive-uri";
 
-    public static final String SENSITIVE_VALUE = "********";
-    public static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
+    protected static final String SENSITIVE_VALUE = "********";
+    protected static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
 
     private static final String USERINFO_PATTERN_EXTRACTOR = "^(?:[^/]+://)?(?<userInfo>[^/@]+)@.*";
     private static final Pattern USER_INFO_PATTERN = Pattern.compile(USERINFO_PATTERN_EXTRACTOR);
+
+    private static final ObjectMapper MASKED_VALUE_MAPPER = new ObjectMapper();
 
     /**
      * Parse a user-supplied plugin configuration, surfacing a missing or malformed configuration as a
@@ -173,6 +181,121 @@ public abstract class AbstractSensitiveProxy {
             }
         }
         return result;
+    }
+
+    /**
+     * Errors with {@link InvalidParameterException} naming the first sensitive field that holds the mask, bare or
+     * as a URI password. {@code mask} returns a configuration as this proxy masks it.
+     */
+    protected Completable rejectMaskedSensitiveValues(String configuration, Function<String, Single<String>> mask) {
+        return Completable.defer(() -> {
+            if (Strings.isNullOrEmpty(configuration)) {
+                return Completable.complete();
+            }
+            final JsonNode submitted;
+            try {
+                submitted = MASKED_VALUE_MAPPER.readTree(configuration);
+            } catch (JsonProcessingException e) {
+                // Plugin validation rejects malformed JSON.
+                return Completable.complete();
+            }
+            final String placeholder = UUID.randomUUID().toString();
+            final JsonNode probe = submitted.deepCopy();
+            if (!replaceMaskedValues(probe, placeholder)) {
+                return Completable.complete();
+            }
+            return mask.apply(probe.toString())
+                    .flatMapCompletable(masked -> findMaskedSensitiveValue(probe, MASKED_VALUE_MAPPER.readTree(masked), placeholder, "")
+                            .map(path -> Completable.error(maskedValueError(path, submitted.at(path))))
+                            .orElseGet(Completable::complete));
+        });
+    }
+
+    /**
+     * Replaces, in place, each value or URI password that is the mask with the placeholder.
+     *
+     * @return whether anything was replaced
+     */
+    private boolean replaceMaskedValues(JsonNode node, String placeholder) {
+        boolean replaced = false;
+        if (node instanceof ObjectNode object) {
+            Iterator<Entry<String, JsonNode>> fields = object.fields();
+            while (fields.hasNext()) {
+                Entry<String, JsonNode> field = fields.next();
+                if (field.getValue().isTextual()) {
+                    Optional<String> probed = probedValue(field.getValue().asText(), placeholder);
+                    if (probed.isPresent()) {
+                        field.setValue(TextNode.valueOf(probed.get()));
+                        replaced = true;
+                    }
+                } else {
+                    replaced |= replaceMaskedValues(field.getValue(), placeholder);
+                }
+            }
+        } else if (node.isArray()) {
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode item = node.get(i);
+                if (item.isTextual()) {
+                    Optional<String> probed = probedValue(item.asText(), placeholder);
+                    if (probed.isPresent()) {
+                        ((ArrayNode) node).set(i, TextNode.valueOf(probed.get()));
+                        replaced = true;
+                    }
+                } else {
+                    replaced |= replaceMaskedValues(item, placeholder);
+                }
+            }
+        }
+        return replaced;
+    }
+
+    private Optional<String> probedValue(String value, String placeholder) {
+        if (SENSITIVE_VALUE_PATTERN.matcher(value.trim()).matches()) {
+            return Optional.of(placeholder);
+        }
+        return extractPasswordFromUriUserInfo(value)
+                .filter(password -> SENSITIVE_VALUE_PATTERN.matcher(password).matches())
+                .map(password -> value.replaceFirst(quote(password + "@"), placeholder + "@"));
+    }
+
+    /**
+     * @return the JSON pointer of the first probed value the masking replaced, if any
+     */
+    private static Optional<String> findMaskedSensitiveValue(JsonNode probe, JsonNode masked, String placeholder, String path) {
+        if (probe == null || masked == null) {
+            return Optional.empty();
+        }
+        if (probe.isTextual()) {
+            return probe.asText().contains(placeholder) && masked.isTextual() && !masked.asText().contains(placeholder)
+                    ? Optional.of(path) : Optional.empty();
+        }
+        if (probe.isArray()) {
+            for (int i = 0; i < probe.size(); i++) {
+                Optional<String> found = findMaskedSensitiveValue(probe.get(i), masked.get(i), placeholder, path + "/" + i);
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+        } else if (probe.isObject()) {
+            Iterator<Entry<String, JsonNode>> fields = probe.fields();
+            while (fields.hasNext()) {
+                Entry<String, JsonNode> field = fields.next();
+                Optional<String> found = findMaskedSensitiveValue(field.getValue(), masked.get(field.getKey()), placeholder,
+                        path + "/" + field.getKey().replace("~", "~0").replace("/", "~1"));
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static InvalidParameterException maskedValueError(String path, JsonNode submitted) {
+        String problem = SENSITIVE_VALUE_PATTERN.matcher(submitted.asText().trim()).matches()
+                ? "holds the masked value '" + SENSITIVE_VALUE + "'"
+                : "holds a masked password";
+        return new InvalidParameterException("Field 'configuration" + path + "' " + problem
+                + "; supply the secret itself. A masked value only keeps an existing secret when updating");
     }
 
     protected boolean isSensitive(Entry<String, JsonNode> entry) {

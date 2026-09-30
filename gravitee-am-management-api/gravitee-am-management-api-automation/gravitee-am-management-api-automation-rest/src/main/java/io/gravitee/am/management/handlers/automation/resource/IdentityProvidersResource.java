@@ -270,9 +270,7 @@ public class IdentityProvidersResource extends AbstractAutomationResource {
             IdentityProvider submitted = new IdentityProvider();
             submitted.setType(definition.getType());
             submitted.setConfiguration(definition.getConfiguration());
-            return identityProviderServiceProxy.filterSensitiveData(submitted)
-                    .flatMapCompletable(masked -> MaskedValueGuard.rejectMaskedSensitiveValues(
-                            definition.getConfiguration(), masked.getConfiguration()));
+            return identityProviderServiceProxy.rejectMaskedSensitiveValues(submitted);
         });
     }
 

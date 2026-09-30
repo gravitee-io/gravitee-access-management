@@ -18,6 +18,7 @@ import { setup } from '../../test-fixture';
 import { buildAutomationCertificateDef } from './fixtures/automation-definitions';
 import {
   configurationOf,
+  buildMongoIdpDef,
   buildSecretInlineIdpDef,
   buildSecretKafkaReporterDef,
   newKey,
@@ -28,7 +29,7 @@ import {
 
 setup(120000);
 
-const { MASK, PASSWORD } = SENSITIVE_VALUES_TEST;
+const { MASK, MASKED_URI, PASSWORD } = SENSITIVE_VALUES_TEST;
 
 let fixture: SensitiveValuesFixture;
 
@@ -79,6 +80,18 @@ describe('Automation API - sensitive values in identity providers', () => {
 
     expect(response.status).toBe(400);
     expect(JSON.stringify(response.body)).toContain('configuration/users/0/password');
+    expect((await fixture.client.getIdentity(fixture.domainKey, key)).status).toBe(404);
+  });
+});
+
+describe('Automation API - masked passwords in connection URIs', () => {
+  it('should reject an identity provider whose URI carries a masked password on create (400)', async () => {
+    const key = newKey('secreturi');
+
+    const response = await fixture.putIdentity(buildMongoIdpDef(key, MASKED_URI));
+
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(response.body)).toContain("'configuration/uri' holds a masked password");
     expect((await fixture.client.getIdentity(fixture.domainKey, key)).status).toBe(404);
   });
 });

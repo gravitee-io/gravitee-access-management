@@ -136,7 +136,7 @@ public abstract class AutomationJerseySpringTest {
         // (e.g. "delete was never called") scoped to the test at hand.
         clearInvocations(permissionService, domainService, certificateService, identityProviderService,
                 defaultIdentityProviderService, reporterService);
-        // The proxies pass entities through unmasked unless a test stubs masking.
+        // The proxies pass entities through unmasked and accept every configuration unless a test stubs otherwise.
         reset(identityProviderServiceProxy, certificateServiceProxy, reporterServiceProxy);
         doAnswer(invocation -> Single.just(invocation.getArgument(0)))
                 .when(identityProviderServiceProxy).filterSensitiveData(any());
@@ -144,6 +144,9 @@ public abstract class AutomationJerseySpringTest {
                 .when(certificateServiceProxy).filterSensitiveData(any());
         doAnswer(invocation -> Single.just(invocation.getArgument(0)))
                 .when(reporterServiceProxy).filterSensitiveData(any());
+        when(identityProviderServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.complete());
+        when(certificateServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.complete());
+        when(reporterServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.complete());
         // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
         // to exercise rejection paths, and those would otherwise leak across the shared singleton context.
         reset(reporterPluginService, identityProviderManager, validationService);
