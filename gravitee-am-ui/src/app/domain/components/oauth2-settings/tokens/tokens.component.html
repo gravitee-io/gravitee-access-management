@@ -106,7 +106,12 @@
 
       <div class="gv-form-section" *ngIf="context === 'Application'">
         <div class="gv-form-section-title">
-          <h5>Lightweight JWT</h5>
+          <div fxLayout="row" style="align-items: center">
+            <h5 style="margin: 0">Lightweight JWT</h5>
+            <button mat-icon-button data-testid="lightweight-jwt-info" (click)="openLightweightJwtDialog($event)">
+              <mat-icon>info_outline</mat-icon>
+            </button>
+          </div>
           <small>Restrict the access token and the ID token returned to the client to the reserved protocol claims.</small>
           <mat-divider></mat-divider>
         </div>
@@ -119,14 +124,7 @@
           >
             Enable Lightweight JWT
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%"
-            >The access token keeps iss, sub, aud, exp, iat, jti, scope and client_id. It also keeps cnf, act, client_profile, permissions
-            and authorization_details when the flow sets them, and the internal claims gis, domain and claims_request_parameter.</mat-hint
-          >
-          <mat-hint style="font-size: 75%"
-            >The ID token keeps iss, sub, aud, exp, iat and auth_time. It also keeps nonce, acr, client_profile, at_hash, c_hash and s_hash
-            when the flow sets them, and the internal claim gis.</mat-hint
-          >
+          <mat-hint style="font-size: 75%">Custom claims are removed unless they are named after a kept claim.</mat-hint>
         </div>
       </div>
 

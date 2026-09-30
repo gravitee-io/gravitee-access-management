@@ -20,6 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { LightweightJwtInfoDialogComponent } from '../dialog/lightweight-jwt-info.component';
 
 import { TokensComponent } from './tokens.component';
 
@@ -132,5 +133,13 @@ describe('TokensComponent', () => {
     component.toggleLightweightJwt({ checked: true });
 
     expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ lightweightJwtSettings: { enabled: true } }));
+  });
+
+  it('shouldOpenLightweightJwtClaimsDialogFromInfoButton', () => {
+    createFixture({});
+
+    fixture.nativeElement.querySelector('[data-testid="lightweight-jwt-info"]').click();
+
+    expect(TestBed.inject(MatDialog).open).toHaveBeenCalledWith(LightweightJwtInfoDialogComponent, {});
   });
 });

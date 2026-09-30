@@ -19,6 +19,7 @@ import { find, findIndex, remove } from 'lodash';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { ClaimsInfoDialogComponent } from '../dialog/claims-info.component';
+import { LightweightJwtInfoDialogComponent } from '../dialog/lightweight-jwt-info.component';
 import { MIN_ID_JAG_VALIDITY_SECONDS } from '../cross-app-access/cross-app-access.types';
 
 @Component({
@@ -122,6 +123,11 @@ export class TokensComponent implements OnInit {
   openDialog(event) {
     event.preventDefault();
     this.dialog.open(ClaimsInfoDialogComponent, {});
+  }
+
+  openLightweightJwtDialog(event) {
+    event.preventDefault();
+    this.dialog.open(LightweightJwtInfoDialogComponent, {});
   }
 
   addUserInfoClaim(claim) {
