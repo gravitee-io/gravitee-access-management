@@ -65,7 +65,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version ]
+    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version, integration-tests ]
     default: pull_requests
   gio_product:
     type: enum
@@ -194,6 +194,105 @@ commands:
           channel: C0336B2E96K
           event: pass
           template: basic_success_1
+  # Pair of commands for workflow pre-steps/post-steps: the token is loaded ahead of the job steps, as a failed
+  # step skips every step after it but slack/notify, which always runs.
+  load-slack-token-on-schedule:
+    steps:
+      - when:
+          condition:
+            equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+          steps:
+            - keeper/env-export:
+                secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
+                var-name: SLACK_ACCESS_TOKEN
+  notify-failure-on-schedule:
+    steps:
+      - when:
+          condition:
+            equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+          steps:
+            - slack/notify:
+                channel: C0336B2E96K
+                event: fail
+                mentions: "@am_team"
+                template: basic_fail_1
+
+  compute-azure-latest-tag:
+    description: Export TAG_LATEST, the tag of the latest AM images of the current branch in the Azure registry
+    steps:
+      - run:
+          name: Compute the latest tag of the branch Docker images
+          command: |
+            # Sanitize branch name to match Docker tag format: /[\w][\w.-]{0,127}/
+            TAG_LATEST=$(echo "${CIRCLE_BRANCH}" | sed -E 's/[^a-zA-Z0-9._-]+/-/g' | sed -E 's/^[.-]+//' | cut -c1-119)-latest
+            echo "export TAG_LATEST=${TAG_LATEST}" >> $BASH_ENV
+            echo "TAG_LATEST=${TAG_LATEST}"
+
+  prepare-am-images:
+    description: Build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+    parameters:
+      am_images:
+        type: enum
+        enum: [ build, pull ]
+      with_ui:
+        description: also prepare the Console UI image
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition:
+            equal: [ build, << parameters.am_images >> ]
+          steps:
+            - run:
+                name: Build stack
+                command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+            - when:
+                condition: << parameters.with_ui >>
+                steps:
+                  - run:
+                      name: Build UI image
+                      command: npm --prefix docker/local-stack run stack:init:build:ui
+      - when:
+          condition:
+            equal: [ pull, << parameters.am_images >> ]
+          steps:
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+            - compute-azure-latest-tag
+            - run:
+                name: Pull the latest AM images of the branch from the Azure registry
+                command: |
+                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+                  # docker compose names the images it builds <project>-<service>, the project being dev, the directory
+                  # of the first compose file. Under these names, the stack starts the pulled images and builds nothing.
+                  IMAGES="am-gateway=dev-gateway am-management-api=dev-management"
+                  if [ "<< parameters.with_ui >>" = "true" ]; then
+                    IMAGES="${IMAGES} am-management-ui=dev-webui"
+                  fi
+                  for IMAGE in ${IMAGES}; do
+                    SOURCE="graviteeio.azurecr.io/${IMAGE%%=*}:${TAG_LATEST}"
+                    if ! docker pull "${SOURCE}"; then
+                      echo "Could not pull ${SOURCE}." >&2
+                      echo "The registry holds the images of master and of the maintenance branches. Those of another branch" >&2
+                      echo "are published by the build-docker-image label on its pull request, or by gio_action=publish-images-azure-registry." >&2
+                      exit 1
+                    fi
+                    docker tag "${SOURCE}" "${IMAGE#*=}"
+                    echo "${IMAGE#*=} is $(docker image inspect --format '{{index .RepoDigests 0}}' "${SOURCE}")"
+                  done
+
+  build-ciba-image-tar:
+    description: Build the CIBA delegated-service image as ~/ciba-image.tar, which the jest jobs docker-load
+    steps:
+      - run:
+          name: Build CIBA delegated-service image tar
+          command: |
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -DskipTests -Djib.from.platforms=linux/amd64 -Djib.container.format=Docker -f gravitee-am-ciba-delegated-service/pom.xml package jib:buildTar
+            cp ./gravitee-am-ciba-delegated-service/target/jib-image.tar ~/ciba-image.tar
 
   install-jdk-25:
     description: Install JDK 25 on machine executor
@@ -590,10 +689,31 @@ jobs:
             mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true deploy -DskipTests
       - save-maven-job-cache:
           jobName: build_branch_nexus
+  # Integration tests run on pulled images, without the process_pull_request job that builds the CIBA image tar
+  build_ciba_image:
+    executor:
+      name: openjdk
+      class: medium
+      version: "25.0.1"
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - azure-artifacts-token
+      - build-ciba-image-tar
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - ./ciba-image.tar
   run_jest_tests_mongo:
     parameters:
       mongo_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -616,9 +736,8 @@ jobs:
       - run:
           name: Load prebuilt CIBA image
           command: docker load -i /tmp/workspace/ciba-image.tar
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
@@ -655,6 +774,11 @@ jobs:
     parameters:
       psql_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -678,9 +802,8 @@ jobs:
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
@@ -714,6 +837,11 @@ jobs:
     parameters:
       mongo_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -737,9 +865,8 @@ jobs:
       - run:
           name: Create CIBA image
           command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up cloud stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:cloud:mongo
@@ -765,6 +892,11 @@ jobs:
     parameters:
       psql_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -789,9 +921,8 @@ jobs:
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up cloud stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:cloud:psql
@@ -817,6 +948,11 @@ jobs:
     parameters:
       mongo_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -840,9 +976,8 @@ jobs:
       - run:
           name: Create CIBA image
           command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up stack with Keycloak and Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:keycloak:mongo
@@ -869,6 +1004,11 @@ jobs:
     parameters:
       mongo_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -895,12 +1035,9 @@ jobs:
       - run:
           name: Create CIBA image
           command: npm --prefix docker/local-stack run stack:init:ciba
-      - run:
-          name: Build stack (gateway + management)
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Build UI image
-          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
+          with_ui: true
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:mongo
@@ -924,6 +1061,11 @@ jobs:
     parameters:
       psql_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -952,12 +1094,9 @@ jobs:
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
-      - run:
-          name: Build stack (gateway + management)
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Build UI image
-          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
+          with_ui: true
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:psql
@@ -981,6 +1120,11 @@ jobs:
     parameters:
       mongo_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -1007,12 +1151,9 @@ jobs:
       - run:
           name: Create CIBA image
           command: npm --prefix docker/local-stack run stack:init:ciba
-      - run:
-          name: Build stack (gateway + management)
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Build UI image
-          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
+          with_ui: true
       - run:
           name: Spin up cloud stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:cloud:mongo
@@ -1041,6 +1182,11 @@ jobs:
     parameters:
       psql_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -1069,12 +1215,9 @@ jobs:
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
-      - run:
-          name: Build stack (gateway + management)
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
-      - run:
-          name: Build UI image
-          command: npm --prefix docker/local-stack run stack:init:build:ui
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
+          with_ui: true
       - run:
           name: Spin up cloud stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:pw:setup:cloud:psql
@@ -1103,6 +1246,11 @@ jobs:
     parameters:
       mongo_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -1122,9 +1270,8 @@ jobs:
       - run:
           name: Create CIBA image
           command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up stack with Mongo << parameters.mongo_version >>
           command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:mongo
@@ -1144,6 +1291,11 @@ jobs:
     parameters:
       psql_version:
         type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
     machine:
       image: ubuntu-2204:2024.04.4
       docker_layer_caching: true
@@ -1166,9 +1318,8 @@ jobs:
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
-      - run:
-          name: Build stack
-          command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
       - run:
           name: Spin up stack with Postgres << parameters.psql_version >>
           command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:psql
@@ -1270,12 +1421,8 @@ jobs:
             export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
             echo "export TAG=$TAG" >> $BASH_ENV
             echo $TAG > /tmp/docker-tag.txt
-
-            # create a latest tag for the given branch to avoid flooding AquaSec project
-            # Sanitize branch name to match Docker tag format: /[\w][\w.-]{0,127}/
-            export TAG_LATEST=$(echo "${CIRCLE_BRANCH}" | sed -E 's/[^a-zA-Z0-9._-]+/-/g' | sed -E 's/^[.-]+//' | cut -c1-119)-latest
-            
-            echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
+      # create a latest tag for the given branch to avoid flooding AquaSec project; the integration tests pull it
+      - compute-azure-latest-tag
       - create_docker_context
       - azure-artifacts-token
       - run:
@@ -1631,13 +1778,9 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
-      - run:
-          name: Build CIBA delegated-service image tar
-          # build the CIBA image once here (reactor already warm from the install above) as a tar,
-          # so downstream jest jobs docker-load it instead of each rebuilding it from source
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -DskipTests -Djib.from.platforms=linux/amd64 -Djib.container.format=Docker -f gravitee-am-ciba-delegated-service/pom.xml package jib:buildTar
-            cp ./gravitee-am-ciba-delegated-service/target/jib-image.tar ~/ciba-image.tar
+      # build the CIBA image once here (reactor already warm from the install above) as a tar,
+      # so downstream jest jobs docker-load it instead of each rebuilding it from source
+      - build-ciba-image-tar
       - persist_to_workspace:
           root: ~/
           paths:
@@ -2863,3 +3006,156 @@ workflows:
           context: cicd-orchestrator
           requires:
             - build
+
+  # On demand (API, GitHub action, CircleCI schedule): the test suites of the branch against the latest AM images
+  # the Azure registry holds for that branch. A scheduled run alerts the AM team on Slack when a job fails.
+  integration_tests:
+    when:
+      equal: [ integration-tests, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - setup:
+          context: cicd-orchestrator
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+      - build_ciba_image:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+      - run_jest_tests_mongo:
+          context: cicd-orchestrator
+          requires:
+            - build_ciba_image
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_jest_tests_psql:
+          context: cicd-orchestrator
+          requires:
+            - build_ciba_image
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
+      - run_jest_tests_cloud_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_jest_tests_cloud_psql:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
+      - run_jest_tests_keycloak_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_playwright_tests_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_playwright_tests_psql:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
+      - run_playwright_tests_cloud_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_playwright_tests_cloud_psql:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
+      - run_postman_tests_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_postman_tests_psql:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
