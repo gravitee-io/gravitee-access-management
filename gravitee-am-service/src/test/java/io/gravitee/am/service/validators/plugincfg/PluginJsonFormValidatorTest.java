@@ -152,6 +152,35 @@ class PluginJsonFormValidatorTest {
         Assertions.assertFalse(captured.replace("\\}", "").contains("}"), "unescaped '}' present: " + captured);
     }
 
+    @Test
+    void shouldBeValidWhenTypeIsNull() {
+        registry.put(new PluginConfigurationValidator("id", SCHEMA, new JsonSchemaValidatorImpl()));
+
+        boolean result = jsonFormValidator.isValid(new TestPayload(null, "{}"), mock(ConstraintValidatorContext.class));
+
+        Assertions.assertTrue(result);
+    }
+
+    @Test
+    void shouldBeValidWhenTypeIsBlank() {
+        registry.put(new PluginConfigurationValidator(" ", SCHEMA, new JsonSchemaValidatorImpl()));
+
+        boolean result = jsonFormValidator.isValid(new TestPayload(" ", "{}"), mock(ConstraintValidatorContext.class));
+
+        Assertions.assertTrue(result);
+    }
+
+    @Test
+    void shouldBeValidWhenConfigurationIsNull() {
+        registry.put(new PluginConfigurationValidator("id", SCHEMA, new JsonSchemaValidatorImpl()));
+        var ctx = mock(ConstraintValidatorContext.class);
+
+        boolean result = jsonFormValidator.isValid(new TestPayload("id", null), ctx);
+
+        Assertions.assertTrue(result);
+        Mockito.verifyNoInteractions(ctx);
+    }
+
     @SneakyThrows
     private static String loadResource(String name) {
         try (InputStream input = CertificateServiceTest.class.getClassLoader().getResourceAsStream(name)) {

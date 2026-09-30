@@ -22,6 +22,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,9 @@ public class PluginJsonFormValidator implements ConstraintValidator<PluginJsonFo
 
     @Override
     public boolean isValid(PluginConfigurationPayload newPluginInstance, ConstraintValidatorContext ctx) {
+        if (!StringUtils.hasText(newPluginInstance.getType()) || newPluginInstance.getConfiguration() == null) {
+            return true;
+        }
         return pluginValidatorsRegistry.get(newPluginInstance.getType())
                 .map(validator -> validator.validate(newPluginInstance.getConfiguration()))
                 .map(result -> processResult(result, ctx))
