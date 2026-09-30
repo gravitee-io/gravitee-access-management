@@ -57,6 +57,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Query;
@@ -802,10 +803,10 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             };
 
             // Initialize schema and bulk processor
-            // another node can create the same tables at the same time, and PostgreSQL then fails
-            // one of the CREATE ... IF NOT EXISTS; the retry finds the tables and skips the script
+            // PostgreSQL fails one of two concurrent CREATE ... IF NOT EXISTS for the same table
             template.getDatabaseClient().inConnection(resultFunction)
                     .retryWhen(Retry.backoff(3, Duration.ofMillis(500))
+                            .filter(DataIntegrityViolationException.class::isInstance)
                             .doBeforeRetry(signal -> log.debug("Retry the creation of the {} audit tables", auditsTable, signal.failure())))
                     .doOnError(error -> log.error("Unable to initialize Database", error))
                     .doOnSuccess(rowsUpdated -> {
