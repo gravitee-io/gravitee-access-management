@@ -17,6 +17,7 @@ parameters:
         release-version,
         release-alpha-version,
         release-hotfix-version,
+        integration-tests,
       ]
     default: pull_requests
   gio_product:
@@ -103,14 +104,17 @@ orbs:
 
 jobs:
   # Wrapper so workflow-level when is applied by CircleCI (continuation/continue orb does not accept when).
-  migration-continuation:
+  continuation:
+    parameters:
+      configuration_path:
+        type: string
     docker:
       - image: cimg/base:stable
     steps:
       - checkout
-      # Do not pass parameters: pipeline already has migration_test_* from trigger; passing them again causes "Conflicting pipeline parameters".
+      # Do not pass parameters: pipeline already has them from trigger; passing them again causes "Conflicting pipeline parameters".
       - continuation/continue:
-          configuration_path: .circleci/workflows-migration.yml
+          configuration_path: << parameters.configuration_path >>
 
 workflows:
   # When migration is requested: one workflow, one job (no job-level when).
@@ -119,11 +123,27 @@ workflows:
       not:
         equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
     jobs:
-      - migration-continuation
+      - continuation:
+          name: migration-continuation
+          configuration_path: .circleci/workflows-migration.yml
+  # When integration tests are requested: continue with workflows.yml without path-filtering, whose mapping
+  # would also start the testcontainer tests when the branch changes a repository module.
+  integration-tests-continuation-workflow:
+    when:
+      and:
+        - equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
+        - equal: [ integration-tests, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - continuation:
+          name: integration-tests-continuation
+          configuration_path: .circleci/workflows.yml
   # Otherwise: path-filtering then continue with workflows.yml.
   standard-workflow:
     when:
-      equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
+      and:
+        - equal: [ "", << pipeline.parameters.migration_test_from_tag >> ]
+        - not:
+            equal: [ integration-tests, << pipeline.parameters.gio_action >> ]
     jobs:
       - path-filtering/filter:
           name: "Standard CI"
