@@ -17,7 +17,11 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,6 +70,33 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
             "      }\n" +
             "    }\n" +
             "  }";
+
+    private static final String PROBED_SCHEMA = """
+            {
+              "type": "object",
+              "properties": {
+                "uri": { "type": "string", "sensitive-uri": true },
+                "password": { "type": "string", "sensitive": true },
+                "label": { "type": "string" },
+                "callbackUri": { "type": "string" }
+              }
+            }
+            """;
+
+    private static final String NESTED_SCHEMA = """
+            {
+              "type": "object",
+              "properties": {
+                "ldapConfig": {
+                  "type": "object",
+                  "properties": {
+                    "url": { "type": "string" },
+                    "password": { "type": "string", "sensitive": true }
+                  }
+                }
+              }
+            }
+            """;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -264,6 +295,127 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
         updateSensitiveData(newConfig, oldConfig, schema, (uriToUpdate) -> {
             // the final value must be the uri with password present into the old value
             assertUriEquals("URI should be updated with null uri", null, uriToUpdate);
+        });
+    }
+
+    @Test
+    public void shouldReject_URI_withMaskedPassword() {
+        rejectMasked("{\"uri\": \"" + URI_WITH_MASKED_PWD + "\"}")
+                .test()
+                .assertError(error -> error instanceof InvalidParameterException
+                        && error.getMessage().contains("'configuration/uri' holds a masked password"));
+    }
+
+    @Test
+    public void shouldReject_URI_withMaskedPassword_ofAnyLength() {
+        rejectMasked("{\"uri\": \"mongodb://user:***@hostname/dbname\"}")
+                .test()
+                .assertError(error -> error.getMessage().contains("configuration/uri"));
+    }
+
+    @Test
+    public void shouldReject_maskedSensitiveValue() {
+        rejectMasked("{\"password\": \"" + SENSITIVE_VALUE + "\"}")
+                .test()
+                .assertError(error -> error instanceof InvalidParameterException
+                        && error.getMessage().contains("'configuration/password' holds the masked value '********'"));
+    }
+
+    @Test
+    public void shouldAccept_URI_withPassword() {
+        rejectMasked("{\"uri\": \"" + URI_WITH_CREDENTIALS + "\"}").test().assertComplete();
+    }
+
+    @Test
+    public void shouldAccept_URI_withoutPassword() {
+        rejectMasked("{\"uri\": \"" + URI_WITH_USERNAME + "\"}").test().assertComplete();
+    }
+
+    @Test
+    public void shouldAccept_URI_withoutUserinfo() {
+        rejectMasked("{\"uri\": \"" + URI_WITHOUT_USERINFO + "\"}").test().assertComplete();
+    }
+
+    @Test
+    public void shouldAccept_realSensitiveValue() {
+        rejectMasked("{\"password\": \"s3cr3t\"}").test().assertComplete();
+    }
+
+    @Test
+    public void shouldAccept_maskInFieldsThatAreNotSensitive() {
+        rejectMasked("{\"label\": \"" + SENSITIVE_VALUE + "\", \"callbackUri\": \"" + URI_WITH_MASKED_PWD + "\"}")
+                .test()
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldAccept_maskInFieldTheMaskingDrops() {
+        rejectMaskedSensitiveValues("{\"password\": \"" + SENSITIVE_VALUE + "\"}", configuration -> Single.just("{}"))
+                .test()
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldAccept_malformedConfiguration() {
+        rejectMasked("{not json").test().assertComplete();
+    }
+
+    @Test
+    public void shouldReject_withThePathOfAMaskedValueInsideAnArray() {
+        String configuration = "{\"users\":[{\"username\":\"alice\",\"password\":\"s3cr3t\"},{\"username\":\"bob\",\"password\":\"***\"}]}";
+
+        rejectMaskedSensitiveValues(configuration, this::maskInlineUserPasswords)
+                .test()
+                .assertError(error -> error.getMessage().contains("'configuration/users/1/password'"));
+    }
+
+    @Test
+    public void shouldReject_withThePathOfAMaskedValueInsideANestedObject() {
+        String configuration = "{\"ldapConfig\":{\"url\":\"ldap://ldap:389\",\"password\":\"" + SENSITIVE_VALUE + "\"}}";
+
+        rejectMaskedSensitiveValues(configuration, probe -> Single.fromCallable(() -> {
+            JsonNode node = objectMapper.readTree(probe);
+            filterNestedSensitiveData(objectMapper.readTree(NESTED_SCHEMA), node, "/properties/ldapConfig", "/ldapConfig");
+            return node.toString();
+        }))
+                .test()
+                .assertError(error -> error.getMessage().contains("'configuration/ldapConfig/password' holds the masked value"));
+    }
+
+    @Test
+    public void shouldReject_withAnEscapedPathForAFieldNameHoldingSlashOrTilde() {
+        rejectMaskedSensitiveValues("{\"client/secret~1\":\"" + SENSITIVE_VALUE + "\"}", probe -> Single.just("{\"client/secret~1\":\"********\"}"))
+                .test()
+                .assertError(error -> error.getMessage().contains("'configuration/client~1secret~01'"));
+    }
+
+    @Test
+    public void shouldReject_withThePathOfAMaskedStringInsideAnArray() {
+        rejectMaskedSensitiveValues("{\"keys\":[\"k1\",\"" + SENSITIVE_VALUE + "\"]}", probe -> Single.just("{\"keys\":[\"********\",\"********\"]}"))
+                .test()
+                .assertError(error -> error.getMessage().contains("'configuration/keys/1' holds the masked value"));
+    }
+
+    @Test
+    public void shouldReject_theFirstMaskedValueInDocumentOrder() {
+        rejectMasked("{\"uri\": \"" + URI_WITH_MASKED_PWD + "\", \"password\": \"" + SENSITIVE_VALUE + "\"}")
+                .test()
+                .assertError(error -> error.getMessage().contains("'configuration/uri'"));
+    }
+
+    private Completable rejectMasked(String configuration) {
+        return rejectMaskedSensitiveValues(configuration, probe -> Single.fromCallable(() -> {
+            String[] masked = {probe};
+            filterSensitiveData(objectMapper.readTree(PROBED_SCHEMA), objectMapper.readTree(probe), maskedConfig -> masked[0] = maskedConfig);
+            return masked[0];
+        }));
+    }
+
+    private Single<String> maskInlineUserPasswords(String configuration) {
+        return Single.fromCallable(() -> {
+            JsonNode node = objectMapper.readTree(configuration);
+            node.get("users").forEach(user -> ((ObjectNode) user).put("password", SENSITIVE_VALUE));
+            return node.toString();
         });
     }
 

@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.ReporterService;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -29,4 +30,10 @@ public interface ReporterServiceProxy extends ReporterService {
      * Returns a copy of the reporter with its sensitive configuration values masked.
      */
     Single<Reporter> filterSensitiveData(Reporter reporter);
+
+    /**
+     * Errors with {@link io.gravitee.am.service.exception.InvalidParameterException} when a sensitive value in
+     * the reporter's configuration is the mask.
+     */
+    Completable rejectMaskedSensitiveValues(Reporter reporter);
 }

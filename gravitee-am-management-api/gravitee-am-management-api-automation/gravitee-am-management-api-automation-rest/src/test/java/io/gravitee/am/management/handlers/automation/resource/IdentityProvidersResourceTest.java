@@ -23,6 +23,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -42,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -430,7 +432,8 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
                 .thenReturn(Flowable.empty());
-        maskSensitiveData();
+        when(identityProviderServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.error(
+                new InvalidParameterException("Field 'configuration/users/0/password' holds the masked value '********'")));
 
         AutomationIdentityProvider def = definition("dev-users");
         def.setConfiguration(MASKED_INLINE_CONFIG);
@@ -439,24 +442,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class).contains("configuration/users/0/password"));
         verify(identityProviderServiceProxy, never()).create(any(Domain.class), any(), any(), anyBoolean());
-    }
-
-    @Test
-    void put_create_accepts_an_asterisk_in_a_field_that_is_not_sensitive() {
-        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
-        String configuration = "{\"users\":[{\"username\":\"*\",\"password\":\"secret\"}]}";
-        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
-        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
-                .thenReturn(Flowable.empty());
-        maskSensitiveData();
-        when(identityProviderServiceProxy.create(any(Domain.class), any(), any(), eq(false)))
-                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
-
-        AutomationIdentityProvider def = definition("dev-users");
-        def.setConfiguration(configuration);
-        Response response = put(identitiesTarget(DOMAIN_KEY), def);
-
-        assertEquals(200, response.getStatus());
+        verify(identityProviderServiceProxy).rejectMaskedSensitiveValues(argThat(submitted -> MASKED_INLINE_CONFIG.equals(submitted.getConfiguration())));
     }
 
     @Test
@@ -729,7 +715,8 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
     void dryRun_create_reports_a_masked_sensitive_value_as_an_error() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId))).thenReturn(Flowable.empty());
-        maskSensitiveData();
+        when(identityProviderServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.error(
+                new InvalidParameterException("Field 'configuration/users/0/password' holds the masked value '********'")));
         AutomationIdentityProvider def = definition("dev-users");
         def.setConfiguration(MASKED_INLINE_CONFIG);
 
@@ -739,6 +726,7 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         AutomationIdentityProvider body = readEntity(response, AutomationIdentityProvider.class);
         assertTrue(body.getDryRunErrors().get(0).message().contains("configuration/users/0/password"));
         verify(identityProviderServiceProxy, never()).validateCreate(any(Domain.class), any(), anyBoolean());
+        verify(identityProviderServiceProxy).rejectMaskedSensitiveValues(argThat(submitted -> MASKED_INLINE_CONFIG.equals(submitted.getConfiguration())));
     }
 
     @Test

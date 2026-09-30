@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -29,4 +30,10 @@ public interface IdentityProviderServiceProxy extends IdentityProviderService {
      * Returns a copy of the identity provider with its sensitive configuration values masked.
      */
     Single<IdentityProvider> filterSensitiveData(IdentityProvider identityProvider);
+
+    /**
+     * Errors with {@link io.gravitee.am.service.exception.InvalidParameterException} when a sensitive value in
+     * the identity provider's configuration is the mask.
+     */
+    Completable rejectMaskedSensitiveValues(IdentityProvider identityProvider);
 }
