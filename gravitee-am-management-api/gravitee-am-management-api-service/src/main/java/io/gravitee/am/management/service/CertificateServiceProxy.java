@@ -45,4 +45,10 @@ public interface CertificateServiceProxy {
      * Returns a copy of the certificate with its sensitive configuration values masked.
      */
     Single<Certificate> filterSensitiveData(Certificate certificate);
+
+    /**
+     * Errors with {@link io.gravitee.am.service.exception.InvalidParameterException} when a sensitive value in
+     * the certificate's configuration is the mask.
+     */
+    Completable rejectMaskedSensitiveValues(Certificate certificate);
 }

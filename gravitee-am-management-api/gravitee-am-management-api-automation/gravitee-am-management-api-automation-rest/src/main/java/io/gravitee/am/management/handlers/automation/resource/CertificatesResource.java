@@ -237,9 +237,7 @@ public class CertificatesResource extends AbstractAutomationResource {
             Certificate submitted = new Certificate();
             submitted.setType(definition.getType());
             submitted.setConfiguration(definition.getConfiguration());
-            return certificateServiceProxy.filterSensitiveData(submitted)
-                    .flatMapCompletable(masked -> MaskedValueGuard.rejectMaskedSensitiveValues(
-                            definition.getConfiguration(), masked.getConfiguration()));
+            return certificateServiceProxy.rejectMaskedSensitiveValues(submitted);
         });
     }
 

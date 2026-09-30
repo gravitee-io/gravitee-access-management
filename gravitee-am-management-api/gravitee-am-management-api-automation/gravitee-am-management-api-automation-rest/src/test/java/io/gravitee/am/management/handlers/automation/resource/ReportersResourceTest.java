@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
@@ -38,6 +39,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -152,7 +154,8 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
     void put_create_rejects_a_masked_sensitive_value() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(reporterService.findByReference(eq(reference))).thenReturn(Flowable.empty());
-        maskSensitiveData();
+        when(reporterServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.error(
+                new InvalidParameterException("Field 'configuration/password' holds the masked value '********'")));
 
         AutomationReporter def = definition("audit-db", false);
         def.setConfiguration(MASKED_JDBC_CONFIG);
@@ -161,6 +164,7 @@ class ReportersResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class).contains("configuration/password"));
         verify(reporterServiceProxy, never()).create(any(), any(), any(), anyBoolean());
+        verify(reporterServiceProxy).rejectMaskedSensitiveValues(argThat(submitted -> MASKED_JDBC_CONFIG.equals(submitted.getConfiguration())));
     }
 
     @Test

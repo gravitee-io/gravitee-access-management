@@ -25,6 +25,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewReporter;
@@ -266,6 +267,27 @@ class ReporterServiceProxyImplTest {
         ArgumentCaptor<AuditBuilder<?>> captor = ArgumentCaptor.forClass(AuditBuilder.class);
         verify(auditService).report(captor.capture());
         return captor.getValue().build(objectMapper);
+    }
+
+    @Test
+    void shouldRejectAMaskedPasswordInAUri() {
+        var reporter = buildReporter("{\"uri\":\"mongodb://am:********@localhost:27017/gravitee\"}");
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just("""
+                {
+                  "type": "object",
+                  "properties": {
+                    "uri": {
+                      "type": "string",
+                      "sensitive-uri": true
+                    }
+                  }
+                }
+                """));
+
+        service.rejectMaskedSensitiveValues(reporter)
+                .test()
+                .assertError(error -> error instanceof InvalidParameterException
+                        && error.getMessage().contains("'configuration/uri' holds a masked password"));
     }
 
     private Reporter buildReporter(String configuration) {

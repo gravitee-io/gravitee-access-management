@@ -26,6 +26,7 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
@@ -59,6 +60,18 @@ class IdentityProviderServiceProxyImplTest {
                 "secret": {
                   "type": "string",
                   "sensitive": true
+                }
+              }
+            }
+            """;
+
+    private static final String URI_SCHEMA = """
+            {
+              "type": "object",
+              "properties": {
+                "uri": {
+                  "type": "string",
+                  "sensitive-uri": true
                 }
               }
             }
@@ -264,6 +277,36 @@ class IdentityProviderServiceProxyImplTest {
         service.findById(ReferenceType.DOMAIN, "domain", "idp-id")
                 .test()
                 .assertValue(idp -> "{}".equals(idp.getConfiguration()));
+    }
+
+    @Test
+    void shouldRejectAMaskedInlineUserPassword() {
+        var idp = buildIdp("{\"users\":[{\"username\":\"alice\",\"password\":\"********\"}]}");
+        idp.setType("inline-am-idp");
+        when(identityProviderPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        service.rejectMaskedSensitiveValues(idp)
+                .test()
+                .assertError(error -> error instanceof InvalidParameterException
+                        && error.getMessage().contains("'configuration/users/0/password'"));
+    }
+
+    @Test
+    void shouldRejectAMaskedPasswordInAUri() {
+        var idp = buildIdp("{\"uri\":\"mongodb://am:********@localhost:27017/gravitee\"}");
+        when(identityProviderPluginService.getSchema(anyString())).thenReturn(Maybe.just(URI_SCHEMA));
+
+        service.rejectMaskedSensitiveValues(idp)
+                .test()
+                .assertError(error -> error instanceof InvalidParameterException
+                        && error.getMessage().contains("'configuration/uri' holds a masked password"));
+    }
+
+    @Test
+    void shouldAcceptAConfigurationWithoutAMask() {
+        service.rejectMaskedSensitiveValues(buildIdp("{\"secret\":\"value\"}"))
+                .test()
+                .assertComplete();
     }
 
     private Audit captureAudit() {
