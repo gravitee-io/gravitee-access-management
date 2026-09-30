@@ -56,6 +56,30 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByDomainAndApplicationAndUser_externalUserIdentity() {
+        Device createdDevice = repository.create(buildDevice()).blockingGet();
+        UserId userId = new UserId(createdDevice.getUserId().id(), "external-id", "external-source");
+
+        repository.findByDomainAndClientAndUser(createdDevice.getReferenceId(), userId)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValueCount(1);
+    }
+
+    @Test
+    public void testNotFindByDomainAndApplicationAndUser_otherInternalIdSameExternalIdentity() {
+        Device createdDevice = repository.create(buildDevice()).blockingGet();
+        UserId userId = new UserId("other-user", "external-id", "external-source");
+
+        repository.findByDomainAndClientAndUser(createdDevice.getReferenceId(), userId)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertNoValues();
+    }
+
+    @Test
     public void testNotFindByDomainAndApplicationAndUser_expired() {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device createdDevice = repository.create(device).blockingGet();
