@@ -18,8 +18,10 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
+import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -99,5 +101,17 @@ public class ExtensionGrantResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("extensionGrants").path(extensionGrantId).request().get();
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotUpdateWhenTypeIsMissing() {
+        UpdateExtensionGrant updateExtensionGrant = new UpdateExtensionGrant();
+        updateExtensionGrant.setName("extensionGrant-name");
+        updateExtensionGrant.setConfiguration("{}");
+
+        final Response response = target("domains").path("domain-id").path("extensionGrants").path("extensionGrant-id")
+                .request().put(Entity.json(updateExtensionGrant));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertEquals("{\"message\":\"[type: must not be blank]\",\"http_status\":400}", response.readEntity(String.class));
     }
 }
