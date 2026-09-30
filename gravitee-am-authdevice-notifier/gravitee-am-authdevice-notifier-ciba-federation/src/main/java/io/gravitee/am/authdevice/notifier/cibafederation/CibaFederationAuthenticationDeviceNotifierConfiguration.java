@@ -31,6 +31,8 @@ public class CibaFederationAuthenticationDeviceNotifierConfiguration implements 
     // The Gravitee AM identity provider (IdP) that this notifier federates to. Used by the gateway to
     // resolve the OIDC connection bundle (clientId/secret/wellKnownUri/scope) per request.
     private String identityProviderId;
+    // Blank/absent = the callback URL the gateway derives from the incoming bc-authorize request.
+    private String callbackUrl;
     private String callbackClientId;
     private String callbackClientSecret;
     // How the notifier authenticates the completion callback to the AM gateway callback endpoint.

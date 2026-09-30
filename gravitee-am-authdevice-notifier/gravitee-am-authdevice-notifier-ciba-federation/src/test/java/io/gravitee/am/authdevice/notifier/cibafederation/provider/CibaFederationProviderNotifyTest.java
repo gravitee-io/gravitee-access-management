@@ -339,6 +339,116 @@ class CibaFederationProviderNotifyTest {
         assertDoesNotThrow(p::afterPropertiesSet);
     }
 
+    @Test
+    public void config_binding_fails_closed_when_callback_url_is_not_an_absolute_http_url() {
+        for (String invalid : new String[]{"localhost:8092/d/oidc/ciba/authenticate/callback",
+                "/d/oidc/ciba/authenticate/callback", "ftp://gw/d/oidc/ciba/authenticate/callback", "http://",
+                "http://gw/d/oidc/ciba/authenticate/callback ", "http://gw/d/oidc/ciba/authenticate/callback\n",
+                "http://:8092/d/oidc/ciba/authenticate/callback", "http://@/d/oidc/ciba/authenticate/callback",
+                "http://gw:abc/d/oidc/ciba/authenticate/callback", "http://gw:0/d/oidc/ciba/authenticate/callback",
+                "http://gw:99999/d/oidc/ciba/authenticate/callback"}) {
+            CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+            cfg.setIdentityProviderId("idp-acme");
+            cfg.setCallbackClientId("cbid");
+            cfg.setCallbackClientSecret("cbsec");
+            cfg.setCallbackUrl(invalid);
+            CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
+            p.setConfiguration(cfg);
+            IllegalStateException e = assertThrows(IllegalStateException.class, p::afterPropertiesSet, invalid);
+            assertTrue(e.getMessage().contains(invalid), "the error names the rejected value: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void config_binding_fails_closed_without_echoing_a_callback_url_with_user_info() {
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setCallbackClientId("cbid");
+        cfg.setCallbackClientSecret("cbsec");
+        cfg.setCallbackUrl("http://user:s3cret@gw/d/oidc/ciba/authenticate/callback");
+        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
+        p.setConfiguration(cfg);
+        IllegalStateException e = assertThrows(IllegalStateException.class, p::afterPropertiesSet);
+        assertFalse(e.getMessage().contains("s3cret"), e.getMessage());
+    }
+
+    @Test
+    public void config_binding_succeeds_with_configured_callback_url() {
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setCallbackClientId("cbid");
+        cfg.setCallbackClientSecret("cbsec");
+        cfg.setCallbackUrl("http://localhost:8092/d/oidc/ciba/authenticate/callback");
+        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
+        p.setConfiguration(cfg);
+        assertDoesNotThrow(p::afterPropertiesSet);
+    }
+
+    @Test
+    public void config_binding_succeeds_with_a_callback_url_whose_host_has_an_underscore() {
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setCallbackClientId("cbid");
+        cfg.setCallbackClientSecret("cbsec");
+        cfg.setCallbackUrl("http://am_gateway:8092/d/oidc/ciba/authenticate/callback");
+        CibaFederationAuthenticationDeviceNotifierProvider p = new CibaFederationAuthenticationDeviceNotifierProvider();
+        p.setConfiguration(cfg);
+        assertDoesNotThrow(p::afterPropertiesSet);
+    }
+
+    @Test
+    void notify_posts_to_configured_callback_url_instead_of_request_url() {
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setCallbackUrl("http://localhost:8092/d/oidc/ciba/authenticate/callback");
+        provider.setConfiguration(cfg);
+        ADNotificationRequest req = new ADNotificationRequest();
+        req.setTransactionId("tidCfg"); req.setState("s"); req.setLoginHint("acme|u1");
+        req.setScopes(Set.of("openid"));
+        req.setCallbackUrl("https://mtls.gw.example/d/oidc/ciba/authenticate/callback");
+        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
+                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
+
+        provider.notify(req).blockingGet();
+
+        assertEquals("http://localhost:8092/d/oidc/ciba/authenticate/callback", store.get("tidCfg").callbackUrl());
+    }
+
+    @Test
+    void notify_uses_configured_callback_url_when_the_request_carries_none() {
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setCallbackUrl("http://localhost:8092/d/oidc/ciba/authenticate/callback");
+        provider.setConfiguration(cfg);
+        ADNotificationRequest req = new ADNotificationRequest();
+        req.setTransactionId("tidNoReqUrl"); req.setState("s"); req.setLoginHint("acme|u1");
+        req.setScopes(Set.of("openid"));
+        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
+                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
+
+        provider.notify(req).blockingGet();
+
+        assertEquals("http://localhost:8092/d/oidc/ciba/authenticate/callback", store.get("tidNoReqUrl").callbackUrl());
+    }
+
+    @Test
+    void notify_uses_request_callback_url_when_configured_callback_url_is_blank() {
+        CibaFederationAuthenticationDeviceNotifierConfiguration cfg = new CibaFederationAuthenticationDeviceNotifierConfiguration();
+        cfg.setIdentityProviderId("idp-acme");
+        cfg.setCallbackUrl("  ");
+        provider.setConfiguration(cfg);
+        ADNotificationRequest req = new ADNotificationRequest();
+        req.setTransactionId("tidBlankCfg"); req.setState("s"); req.setLoginHint("acme|u1");
+        req.setScopes(Set.of("openid"));
+        req.setCallbackUrl("https://gw.example/d/oidc/ciba/authenticate/callback");
+        req.setConnection(new io.gravitee.am.authdevice.notifier.api.model.FederatedConnection(
+                "cid", "secret", "openid", "https://idp.acme.example/.well-known/openid-configuration"));
+
+        provider.notify(req).blockingGet();
+
+        assertEquals("https://gw.example/d/oidc/ciba/authenticate/callback", store.get("tidBlankCfg").callbackUrl());
+    }
+
     /** notify() threads request.getCallbackUrl() into PendingAuthStore.Pending so the poller uses the per-tid URL. */
     @Test
     void notify_threads_callbackUrl_from_request_into_pending_store() {
