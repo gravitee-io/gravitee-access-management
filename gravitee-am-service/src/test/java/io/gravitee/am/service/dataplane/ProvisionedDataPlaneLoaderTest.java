@@ -266,10 +266,6 @@ class ProvisionedDataPlaneLoaderTest {
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://h:27017/db");
     }
 
-    /**
-     * The node that served the provisioning request reads its own sync event back, and that event
-     * rebuilds the data plane when it lands before the version is recorded.
-     */
     @Test
     void should_register_a_definition_provisioned_after_startup_under_the_lock_the_sync_event_takes() {
         when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
@@ -286,6 +282,22 @@ class ProvisionedDataPlaneLoaderTest {
                 .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
 
         loader.activate("dp-1").test().assertComplete();
+
+        assertThat(locked).isTrue();
+    }
+
+    @Test
+    void should_deactivate_under_the_lock_the_sync_event_takes() {
+        var loader = loader();
+        var registry = mock(DataPlaneRegistry.class);
+        loader.setRegistry(registry);
+        var locked = new AtomicBoolean();
+        doAnswer(invocation -> {
+            locked.set(Thread.holdsLock(loader));
+            return null;
+        }).when(registry).unregister("dp-1");
+
+        loader.deactivate("dp-1");
 
         assertThat(locked).isTrue();
     }

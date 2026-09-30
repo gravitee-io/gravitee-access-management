@@ -82,8 +82,6 @@ public class ProvisionedDataPlaneManager extends AbstractService<ProvisionedData
     }
 
     private void register(DataPlaneDefinition definition) {
-        // the node that served the provisioning request reads its own event back, possibly while that
-        // request is still registering, so this takes the lock the request path holds
         synchronized (provisionedDataPlaneLoader) {
             if (provisionedDataPlaneLoader.isServing(definition)) {
                 log.debug("Data plane [{}] is already served at this version, ignoring the event", definition.getId());

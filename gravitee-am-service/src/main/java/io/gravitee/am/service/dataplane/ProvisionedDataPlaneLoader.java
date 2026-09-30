@@ -100,7 +100,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
 
         return dataPlaneDefinitionRepository.findById(dataPlaneId)
                 .doOnSuccess(definition -> {
-                    // the node's own sync event can arrive before markServing, so both check and rebuild under one lock
+                    // ProvisionedDataPlaneManager registers the same ids from sync events under this lock
                     synchronized (this) {
                         if (!isServing(definition)) {
                             deactivate(dataPlaneId);
@@ -119,7 +119,7 @@ public class ProvisionedDataPlaneLoader implements DataPlaneLoader {
      * Stops this node serving the data plane: its provider is closed and the id is left free for
      * whatever claims it next.
      */
-    public void deactivate(String dataPlaneId) {
+    public synchronized void deactivate(String dataPlaneId) {
         var registry = registryRef.get();
         if (registry != null) {
             registry.unregister(dataPlaneId);

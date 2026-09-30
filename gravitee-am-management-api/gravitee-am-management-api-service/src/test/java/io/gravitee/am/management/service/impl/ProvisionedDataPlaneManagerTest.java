@@ -103,10 +103,6 @@ class ProvisionedDataPlaneManagerTest {
         verify(dataPlaneRegistry).registerProvisioned(DESCRIPTION);
     }
 
-    /**
-     * The node that served the provisioning request can read its own event back while that request
-     * is still registering the data plane.
-     */
     @Test
     void shouldRegisterUnderTheLockTheProvisioningRequestTakes() throws Exception {
         when(dataPlaneDefinitionRepository.findById("dp-1")).thenReturn(Maybe.just(definition()));
