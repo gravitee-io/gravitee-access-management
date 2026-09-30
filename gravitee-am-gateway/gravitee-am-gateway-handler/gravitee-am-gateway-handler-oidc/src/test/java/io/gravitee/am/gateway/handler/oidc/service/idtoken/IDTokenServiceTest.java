@@ -1001,28 +1001,18 @@ public class IDTokenServiceTest {
     }
 
     @Test
-    public void lightweightJwt_dropsCustomClaimsNamedAfterKeptClaims() {
+    public void lightweightJwt_keepsCustomClaimsNamedAfterKeptClaims() {
         OAuth2Request oAuth2Request = lightweightRequest();
-        oAuth2Request.parameters().remove("nonce");
         Client client = lightweightClient(true);
         client.setTokenCustomClaims(List.of(
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.NONCE, "spoofed-nonce"),
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.AUTH_TIME, "spoofed-auth-time"),
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.ACR, "spoofed-acr"),
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.CLIENT_PROFILE, "spoofed-profile"),
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.SUB, "spoofed-sub"),
-                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.ISS, "spoofed-iss")));
-        User user = loggedInUser();
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.SUB, "custom-sub"),
+                TokenClaim.of(TokenTypeHint.ID_TOKEN, Claims.ACR, "custom-acr")));
         stubSubjectWithInternalSub();
 
-        JWT idToken = createIdToken(oAuth2Request, client, user);
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
 
-        assertEquals(user.getLoggedAt().getTime() / 1000L, idToken.get(Claims.AUTH_TIME));
-        assertFalse(idToken.containsKey(Claims.NONCE));
-        assertFalse(idToken.containsKey(Claims.ACR));
-        assertFalse(idToken.containsKey(Claims.CLIENT_PROFILE));
-        assertFalse(idToken.containsValue("spoofed-sub"));
-        assertFalse(idToken.containsValue("spoofed-iss"));
+        assertEquals("custom-sub", idToken.get(Claims.SUB));
+        assertEquals("custom-acr", idToken.get(Claims.ACR));
     }
 
     @Test

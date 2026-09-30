@@ -543,7 +543,7 @@ public class TokenServiceImpl implements TokenService {
         }
 
         // set custom claims
-        enhanceJWT(jwt, accessTokenCustomClaims(client), TokenTypeHint.ACCESS_TOKEN, executionContext);
+        enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         // Token Exchange (RFC 8693) - set "act" claim for delegation scenarios
         if (request.isDelegation() && request.getActClaim() != null) {
@@ -588,15 +588,6 @@ public class TokenServiceImpl implements TokenService {
 
     private static boolean isLightweightJwtEnabled(Client client) {
         return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
-    }
-
-    private static List<TokenClaim> accessTokenCustomClaims(Client client) {
-        if (!isLightweightJwtEnabled(client) || client.getTokenCustomClaims() == null) {
-            return client.getTokenCustomClaims();
-        }
-        return client.getTokenCustomClaims().stream()
-                .filter(claim -> !LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.contains(claim.getClaimName()))
-                .toList();
     }
 
     // act.sub is the counterpart to the token's top-level sub. In user-bound flows the top-level sub

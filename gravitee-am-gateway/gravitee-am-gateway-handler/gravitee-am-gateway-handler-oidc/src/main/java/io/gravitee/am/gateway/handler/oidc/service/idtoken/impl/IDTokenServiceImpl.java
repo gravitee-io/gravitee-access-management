@@ -259,7 +259,7 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // 4. Enhance ID token with custom claims
-        enhanceIDToken(idToken, idTokenCustomClaims(client), executionContext);
+        enhanceIDToken(idToken, client.getTokenCustomClaims(), executionContext);
 
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
             idToken.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
@@ -275,15 +275,6 @@ public class IDTokenServiceImpl implements IDTokenService {
 
     private static boolean isLightweightJwtEnabled(Client client) {
         return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
-    }
-
-    private static List<TokenClaim> idTokenCustomClaims(Client client) {
-        if (!isLightweightJwtEnabled(client) || client.getTokenCustomClaims() == null) {
-            return client.getTokenCustomClaims();
-        }
-        return client.getTokenCustomClaims().stream()
-                .filter(claim -> !LIGHTWEIGHT_ID_TOKEN_CLAIMS.contains(claim.getClaimName()))
-                .toList();
     }
 
     /**
