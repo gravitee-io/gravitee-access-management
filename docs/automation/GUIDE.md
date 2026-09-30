@@ -170,10 +170,11 @@ passwords, keystore passwords and files, inline user passwords. The plugin flags
 sensitive, and the Automation API masks them exactly as the Management API does:
 
 - **Responses never contain a secret.** `GET`, list and `PUT` responses replace each sensitive value
-  with `********`. Secret references such as `{#secrets.get('/vault/...')}` are masked too.
+  with `********`. Secret references such as `{#secrets.get('/vault/...')}` are masked too. In a
+  connection URI, only the password is masked: `mongodb://user:********@host/db`.
 - **On update, `********` keeps the stored value.** A `PUT` that sends a sensitive field as `********`
-  (any run of asterisks) leaves that secret as it is, so a `GET`-edit-`PUT` never erases it. Send the
-  real value to change it.
+  (any run of asterisks), or a URI with `********` as its password, leaves that secret as it is, so a
+  `GET`-edit-`PUT` never erases it. Send the real value to change it.
 - **On create, `********` is rejected** with `400`, naming the field: there is no stored secret for it
   to keep.
 - **Dry runs follow the same rules.** A dry-run response, including one that reports errors, masks
