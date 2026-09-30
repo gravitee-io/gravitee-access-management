@@ -43,6 +43,12 @@ export class LightweightJwtInfoDialogComponent {
       whenSet: ['nonce', 'acr', 'client_profile', 'at_hash', 'c_hash', 's_hash'],
       internal: ['gis'],
     },
+    {
+      token: 'Refresh token',
+      always: ['iss', 'sub', 'aud', 'exp', 'iat', 'jti', 'scope'],
+      whenSet: ['cnf', 'act', 'client_profile', 'permissions', 'authorization_details', 'orig_resources'],
+      internal: ['gis', 'domain'],
+    },
   ];
 
   constructor(public dialogRef: MatDialogRef<LightweightJwtInfoDialogComponent>) {}

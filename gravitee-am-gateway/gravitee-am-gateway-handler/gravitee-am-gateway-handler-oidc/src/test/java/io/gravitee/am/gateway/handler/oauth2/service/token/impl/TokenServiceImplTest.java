@@ -1629,7 +1629,7 @@ public class TokenServiceImplTest {
     }
 
     @Test
-    public void lightweightJwt_keepsOnlyReservedClaimsInAccessToken_andFullClaimsInRefreshToken() {
+    public void lightweightJwt_keepsOnlyReservedClaimsInAccessAndRefreshTokens() {
         OAuth2Request request = authorizationCodeRequest();
         request.setSubject("user");
         request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1")));
@@ -1654,7 +1654,26 @@ public class TokenServiceImplTest {
         assertThat(jwtCaptor.getAllValues().get(0)).containsOnlyKeys(
                 Claims.ISS, Claims.SUB, Claims.GIO_INTERNAL_SUB, Claims.AUD, Claims.DOMAIN, Claims.IAT, Claims.EXP, Claims.JTI,
                 Claims.SCOPE, Claims.CLIENT_ID, Claims.CLAIMS, "authorization_details", "permissions");
-        assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme");
+        assertThat(jwtCaptor.getAllValues().get(1)).containsOnlyKeys(
+                Claims.ISS, Claims.SUB, Claims.GIO_INTERNAL_SUB, Claims.AUD, Claims.DOMAIN, Claims.IAT, Claims.EXP, Claims.JTI,
+                Claims.SCOPE, "authorization_details", "permissions");
+    }
+
+    @Test
+    public void lightweightJwt_keepsOrigResourcesAndDpopBindingInRefreshToken() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setResources(Set.of("https://api.example.com"));
+        request.setConfirmationMethodJkt("the-jkt");
+
+        Client client = lightweightClient(true);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(1)).containsKeys(Claims.ORIG_RESOURCES, Claims.CNF).doesNotContainKey("tenant");
     }
 
     @Test
@@ -1720,10 +1739,9 @@ public class TokenServiceImplTest {
     }
 
     @Test
-    public void lightweightJwtDisabled_keepsCustomClaimsInAccessToken() {
+    public void lightweightJwtDisabled_keepsCustomClaimsInAccessAndRefreshTokens() {
         OAuth2Request request = authorizationCodeRequest();
         request.setSubject("user");
-        request.setSupportRefreshToken(false);
         request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1")));
 
         Client client = lightweightClient(false);
@@ -1732,8 +1750,9 @@ public class TokenServiceImplTest {
         executeTokenCreation(request, client, createUser("user"));
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
-        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
-        assertThat(jwtCaptor.getValue()).containsEntry("tenant", "acme").containsKey("permissions");
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).containsEntry("tenant", "acme").containsKey("permissions");
+        assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme");
     }
 
     private OAuth2Request authorizationCodeRequest() {
