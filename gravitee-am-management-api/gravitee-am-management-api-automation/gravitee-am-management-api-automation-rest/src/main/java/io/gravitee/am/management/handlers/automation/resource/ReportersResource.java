@@ -366,9 +366,7 @@ public class ReportersResource extends AbstractAutomationResource {
             Reporter submitted = new Reporter();
             submitted.setType(definition.getType());
             submitted.setConfiguration(definition.getConfiguration());
-            return reporterServiceProxy.filterSensitiveData(submitted)
-                    .flatMapCompletable(masked -> MaskedValueGuard.rejectMaskedSensitiveValues(
-                            definition.getConfiguration(), masked.getConfiguration()));
+            return reporterServiceProxy.rejectMaskedSensitiveValues(submitted);
         });
     }
 

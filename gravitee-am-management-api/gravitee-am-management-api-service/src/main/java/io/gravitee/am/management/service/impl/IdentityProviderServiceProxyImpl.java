@@ -197,6 +197,15 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     @Override
+    public Completable rejectMaskedSensitiveValues(IdentityProvider identityProvider) {
+        return rejectMaskedSensitiveValues(identityProvider.getConfiguration(), configuration -> {
+            var probe = new IdentityProvider(identityProvider);
+            probe.setConfiguration(configuration);
+            return filterSensitiveData(probe).map(IdentityProvider::getConfiguration);
+        });
+    }
+
+    @Override
     public Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
         return identityProviderPluginService.getSchema(idp.getType())
                 .map(Optional::ofNullable)
