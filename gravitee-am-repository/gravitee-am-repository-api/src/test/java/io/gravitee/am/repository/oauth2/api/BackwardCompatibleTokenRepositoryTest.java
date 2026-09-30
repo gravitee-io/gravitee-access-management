@@ -18,6 +18,7 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -45,6 +46,82 @@ public class BackwardCompatibleTokenRepositoryTest {
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Test
+    public void shouldNotFallbackToLegacyRepositoriesByJtiWhenDisabled() {
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+
+        BackwardCompatibleTokenRepository repository = new BackwardCompatibleTokenRepository(
+                tokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                false);
+
+        TestObserver<Token> observer = repository.findByJti("jti").test();
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertNoValues();
+
+        verify(accessTokenRepository, never()).findByToken(anyString());
+        verify(refreshTokenRepository, never()).findByToken(anyString());
+    }
+
+    @Test
+    public void shouldReturnPrimaryTokenByJtiWithoutQueryingLegacy() {
+        RefreshToken primaryToken = new RefreshToken();
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.just(primaryToken));
+        when(accessTokenRepository.findByToken("jti")).thenReturn(Maybe.just(new AccessToken()));
+        when(refreshTokenRepository.findByToken("jti")).thenReturn(Maybe.just(new RefreshToken()));
+
+        BackwardCompatibleTokenRepository repository = new BackwardCompatibleTokenRepository(
+                tokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                true);
+
+        TestObserver<Token> observer = repository.findByJti("jti").test();
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(primaryToken);
+    }
+
+    @Test
+    public void shouldFallbackToLegacyAccessTokenByJtiWhenEnabled() {
+        AccessToken legacyToken = new AccessToken();
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+        when(accessTokenRepository.findByToken("jti")).thenReturn(Maybe.just(legacyToken));
+        when(refreshTokenRepository.findByToken("jti")).thenReturn(Maybe.just(new RefreshToken()));
+
+        BackwardCompatibleTokenRepository repository = new BackwardCompatibleTokenRepository(
+                tokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                true);
+
+        TestObserver<Token> observer = repository.findByJti("jti").test();
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(legacyToken);
+    }
+
+    @Test
+    public void shouldFallbackToLegacyRefreshTokenByJtiWhenEnabled() {
+        RefreshToken legacyToken = new RefreshToken();
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+        when(accessTokenRepository.findByToken("jti")).thenReturn(Maybe.empty());
+        when(refreshTokenRepository.findByToken("jti")).thenReturn(Maybe.just(legacyToken));
+
+        BackwardCompatibleTokenRepository repository = new BackwardCompatibleTokenRepository(
+                tokenRepository,
+                accessTokenRepository,
+                refreshTokenRepository,
+                true);
+
+        TestObserver<Token> observer = repository.findByJti("jti").test();
+        observer.assertComplete();
+        observer.assertNoErrors();
+        observer.assertValue(legacyToken);
+    }
 
     // --- findRefreshTokenByJti ---
 

@@ -27,6 +27,9 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface SpringTokenRepository extends RxJava3CrudRepository<JdbcToken, String> {
+    @Query("select * from tokens a where a.token = :jti and (a.expire_at > :now or a.expire_at is null)")
+    Maybe<JdbcToken> findNotExpiredByJti(@Param("jti") String jti, @Param("now")LocalDateTime now);
+
     @Query("select * from tokens a where a.token = :jti and a.type = 'ACCESS_TOKEN' and (a.expire_at > :now or a.expire_at is null)")
     Maybe<JdbcToken> findNotExpiredAccessTokenByJti(@Param("jti") String jti, @Param("now")LocalDateTime now);
 

@@ -20,6 +20,7 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author GraviteeSource Team
@@ -77,6 +79,60 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
         refreshObserver.assertComplete();
         refreshObserver.assertValueCount(1);
         refreshObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldFindAccessTokenByJtiWithoutType() {
+        AccessToken accessToken = newAccessToken("any-type-at-" + shortSuffix(), "domain-id", "client-id", "user-id");
+        accessToken.setAuthorizationCode("any-type-code");
+        accessToken.setRefreshToken("any-type-rt");
+        tokenRepository.create(accessToken).ignoreElement().blockingAwait();
+
+        Token token = tokenRepository.findByJti(accessToken.getToken()).blockingGet();
+
+        assertTrue(token instanceof AccessToken);
+        AccessToken storedAccessToken = (AccessToken) token;
+        assertEquals(accessToken.getId(), storedAccessToken.getId());
+        assertEquals("client-id", storedAccessToken.getClient());
+        assertEquals("any-type-code", storedAccessToken.getAuthorizationCode());
+        assertEquals("any-type-rt", storedAccessToken.getRefreshToken());
+    }
+
+    @Test
+    public void shouldFindRefreshTokenByJtiWithoutType() {
+        RefreshToken refreshToken = newRefreshToken("any-type-rt-" + shortSuffix(), "domain-id", "client-id", "user-id");
+        tokenRepository.create(refreshToken).ignoreElement().blockingAwait();
+
+        Token token = tokenRepository.findByJti(refreshToken.getToken()).blockingGet();
+
+        assertTrue(token instanceof RefreshToken);
+        RefreshToken storedRefreshToken = (RefreshToken) token;
+        assertEquals(refreshToken.getId(), storedRefreshToken.getId());
+        assertEquals("client-id", storedRefreshToken.getClient());
+    }
+
+    @Test
+    public void shouldNotFindUnknownTokenByJti() {
+        TestObserver<Token> observer = tokenRepository.findByJti("unknown-jti").test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldNotFindExpiredTokenByJti() {
+        AccessToken accessToken = newAccessToken("expired-at-" + shortSuffix(), null, null, null);
+        accessToken.setExpireAt(new Date(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1)));
+        tokenRepository.create(accessToken).ignoreElement().blockingAwait();
+
+        TestObserver<Token> observer = tokenRepository.findByJti(accessToken.getToken()).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoValues();
+        observer.assertNoErrors();
     }
 
     @Test
