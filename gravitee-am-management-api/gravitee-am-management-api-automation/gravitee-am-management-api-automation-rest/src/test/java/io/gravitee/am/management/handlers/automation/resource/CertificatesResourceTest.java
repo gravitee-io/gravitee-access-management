@@ -21,8 +21,10 @@ import io.gravitee.am.management.handlers.automation.model.DryRunError;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.model.UpdateCertificate;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -36,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -207,7 +210,8 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
     void put_create_rejects_a_masked_sensitive_value() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
-        maskSensitiveData();
+        when(certificateServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.error(
+                new InvalidParameterException("Field 'configuration/content' holds the masked value '********'")));
 
         AutomationCertificate def = definition("my-cert", false);
         def.setConfiguration(MASKED_KEYSTORE_CONFIG);
@@ -216,6 +220,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         assertEquals(400, response.getStatus());
         assertTrue(response.readEntity(String.class).contains("configuration/content"));
         verify(certificateServiceProxy, never()).create(any(Domain.class), any(), any());
+        verify(certificateServiceProxy).rejectMaskedSensitiveValues(argThat(submitted -> MASKED_KEYSTORE_CONFIG.equals(submitted.getConfiguration())));
     }
 
     @Test
@@ -480,7 +485,8 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
     void dryRun_create_reports_a_masked_sensitive_value_as_an_error() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(eq(domainId))).thenReturn(Flowable.empty());
-        maskSensitiveData();
+        when(certificateServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.error(
+                new InvalidParameterException("Field 'configuration/content' holds the masked value '********'")));
         AutomationCertificate def = definition("my-cert", false);
         def.setConfiguration(MASKED_KEYSTORE_CONFIG);
 
@@ -490,6 +496,7 @@ class CertificatesResourceTest extends AutomationJerseySpringTest {
         AutomationCertificate body = readEntity(response, AutomationCertificate.class);
         assertTrue(body.getDryRunErrors().get(0).message().contains("configuration/content"));
         verify(certificateServiceProxy, never()).validateCreate(any(Domain.class), any());
+        verify(certificateServiceProxy).rejectMaskedSensitiveValues(argThat(submitted -> MASKED_KEYSTORE_CONFIG.equals(submitted.getConfiguration())));
     }
 
     @Test

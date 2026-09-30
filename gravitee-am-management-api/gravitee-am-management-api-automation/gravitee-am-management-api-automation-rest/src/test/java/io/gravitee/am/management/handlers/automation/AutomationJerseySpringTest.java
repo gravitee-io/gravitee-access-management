@@ -164,7 +164,7 @@ public abstract class AutomationJerseySpringTest {
         reset(dataPlaneDefinitionService, provisionedDataPlaneLoader);
         when(provisionedDataPlaneLoader.activate(anyString())).thenReturn(Completable.complete());
         reset(trustDomainService);
-        // The proxies pass entities through unmasked unless a test stubs masking.
+        // The proxies pass entities through unmasked and accept every configuration unless a test stubs otherwise.
         reset(identityProviderServiceProxy, certificateServiceProxy, reporterServiceProxy);
         doAnswer(invocation -> Single.just(invocation.getArgument(0)))
                 .when(identityProviderServiceProxy).filterSensitiveData(any());
@@ -172,6 +172,9 @@ public abstract class AutomationJerseySpringTest {
                 .when(certificateServiceProxy).filterSensitiveData(any());
         doAnswer(invocation -> Single.just(invocation.getArgument(0)))
                 .when(reporterServiceProxy).filterSensitiveData(any());
+        when(identityProviderServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.complete());
+        when(certificateServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.complete());
+        when(reporterServiceProxy.rejectMaskedSensitiveValues(any())).thenReturn(Completable.complete());
         when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
         // Fully reset the validation mocks (not just their invocations): tests add throwing/erroring stubs
         // to exercise rejection paths, and those would otherwise leak across the shared singleton context.

@@ -153,6 +153,15 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
+    public Completable rejectMaskedSensitiveValues(Reporter reporter) {
+        return rejectMaskedSensitiveValues(reporter.getConfiguration(), configuration -> {
+            var probe = new Reporter(reporter);
+            probe.setConfiguration(configuration);
+            return filterSensitiveData(probe).map(Reporter::getConfiguration);
+        });
+    }
+
+    @Override
     public Single<Reporter> filterSensitiveData(Reporter reporter) {
         return reporterPluginService.getSchema(reporter.getType())
                 .map(Optional::ofNullable)
