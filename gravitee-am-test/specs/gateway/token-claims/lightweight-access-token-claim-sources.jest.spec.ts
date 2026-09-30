@@ -15,14 +15,13 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { decodeToken, setupTokenIdentityFixture, TokenIdentityFixture } from './fixtures/token-identity-fixture';
+import { decodeToken, LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, setupTokenIdentityFixture, TokenIdentityFixture } from './fixtures/token-identity-fixture';
 
 setup(200000);
 
 const SCOPE = 'openid email profile';
 const ROLE = 'lightweight-role';
 const GROUP = 'lightweight-group';
-const LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = ['aud', 'client_id', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
 
 let fixture: TokenIdentityFixture;
 

@@ -16,12 +16,16 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { decodeToken, setupTokenIdentityFixture, TokenIdentityFixture } from './fixtures/token-identity-fixture';
+import {
+  decodeToken,
+  LIGHTWEIGHT_ID_TOKEN_CLAIMS,
+  setupTokenIdentityFixture,
+  TokenIdentityFixture,
+} from './fixtures/token-identity-fixture';
 
 setup(200000);
 
 const SCOPE = 'openid email profile';
-const LIGHTWEIGHT_ID_TOKEN_CLAIMS = ['aud', 'auth_time', 'exp', 'gis', 'iat', 'iss', 'sub'];
 
 let fixture: TokenIdentityFixture;
 let jwks: ReturnType<typeof createRemoteJWKSet>;
