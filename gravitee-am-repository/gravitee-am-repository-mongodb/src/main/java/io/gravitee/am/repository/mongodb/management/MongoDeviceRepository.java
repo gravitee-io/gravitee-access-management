@@ -31,10 +31,12 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
@@ -147,5 +149,12 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
                 .setCreatedAt(device.getCreatedAt())
                 .setExpiresAt(device.getExpiresAt())
         ).orElse(null);
+    }
+
+    /** Devices are stored with the internal user id only. */
+    @Override
+    protected Bson userIdMatches(UserId user) {
+        Objects.requireNonNull(user.id(), "internal user id");
+        return eq(FIELD_USER_ID, user.id());
     }
 }
