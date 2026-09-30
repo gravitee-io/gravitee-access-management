@@ -65,6 +65,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
 import static io.gravitee.am.common.oidc.idtoken.Claims.ACR;
+import static io.gravitee.am.common.oidc.idtoken.Claims.AUTH_TIME;
+import static io.gravitee.am.common.oidc.idtoken.Claims.NONCE;
 import static io.gravitee.am.gateway.handler.common.spring.CommonConfiguration.FALLBACK_TO_HMAC_SIGNATURE_CONFIG_PROPERTY;
 
 /**
@@ -75,6 +77,10 @@ import static io.gravitee.am.gateway.handler.common.spring.CommonConfiguration.F
 public class IDTokenServiceImpl implements IDTokenService {
 
     private static final String DEFAULT_DIGEST_ALGORITHM = "SHA-512";
+    // gis is an internal claim the gateway reads back from an id_token_hint
+    private static final Set<String> LIGHTWEIGHT_ID_TOKEN_CLAIMS = Set.of(
+            Claims.ISS, Claims.SUB, Claims.AUD, Claims.EXP, Claims.IAT, AUTH_TIME, NONCE, ACR, Claims.CLIENT_PROFILE,
+            Claims.GIO_INTERNAL_SUB);
 
     @Autowired
     private Domain domain;
@@ -257,6 +263,11 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         if (client.isAgentApplication() && client.getAgentType() != null && idToken.get(Claims.CLIENT_PROFILE) == null) {
             idToken.put(Claims.CLIENT_PROFILE, ClientProfile.AI_AGENT + " " + client.getAgentType().name().toLowerCase());
+        }
+
+        // the hash claims (at_hash, c_hash, s_hash) are added at signing, after this filter
+        if (client.isLightweightJwtEnabled()) {
+            idToken.keySet().retainAll(LIGHTWEIGHT_ID_TOKEN_CLAIMS);
         }
 
         return idToken;

@@ -13162,8 +13162,8 @@ components:
           type: string
     ApplicationLightweightJwtSettings:
       type: object
-      description: Restricts the JWT access token returned to the client to the reserved
-        protocol claims.
+      description: Restricts the JWT access token and the ID token returned to the
+        client to the reserved protocol claims.
       properties:
         enabled:
           type: boolean

@@ -236,7 +236,7 @@ public class TokenServiceImpl implements TokenService {
                     // create JWT refresh token
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // filter after the refresh token copied the access token claims
-                    if (isLightweightJwt(client)) {
+                    if (client.isLightweightJwtEnabled()) {
                         accessToken.keySet().retainAll(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
                     }
                     // encode and sign JWT tokens
@@ -543,7 +543,7 @@ public class TokenServiceImpl implements TokenService {
         }
 
         // set custom claims
-        enhanceJWT(jwt, accessTokenCustomClaims(client), TokenTypeHint.ACCESS_TOKEN, executionContext);
+        enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         // Token Exchange (RFC 8693) - set "act" claim for delegation scenarios
         if (request.isDelegation() && request.getActClaim() != null) {
@@ -584,20 +584,6 @@ public class TokenServiceImpl implements TokenService {
         setResources(request, jwt);
 
         return jwt;
-    }
-
-    private static boolean isLightweightJwt(Client client) {
-        return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
-    }
-
-    private static List<TokenClaim> accessTokenCustomClaims(Client client) {
-        if (!isLightweightJwt(client) || client.getTokenCustomClaims() == null) {
-            return client.getTokenCustomClaims();
-        }
-        // the other custom claims still reach the refresh token, then the lightweight filter removes them
-        return client.getTokenCustomClaims().stream()
-                .filter(claim -> !LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.contains(claim.getClaimName()))
-                .toList();
     }
 
     // act.sub is the counterpart to the token's top-level sub. In user-bound flows the top-level sub

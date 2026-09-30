@@ -516,6 +516,7 @@ import { TokensComponent } from './domain/components/oauth2-settings/tokens/toke
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { CreateUserinfoClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { ClaimsInfoDialogComponent } from './domain/components/oauth2-settings/dialog/claims-info.component';
+import { LightweightJwtInfoDialogComponent } from './domain/components/oauth2-settings/dialog/lightweight-jwt-info.component';
 import { DomainGrantTypesResolver } from './resolvers/domain-grant-types.resolver';
 import { TokenExchangeSettingsComponent } from './domain/settings/oauth/token-exchange/token-exchange-settings/token-exchange-settings.component';
 import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions-resolver.service';
@@ -686,6 +687,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     McpServerSettingsComponent,
     ScopeSelectionComponent,
     ClaimsInfoDialogComponent,
+    LightweightJwtInfoDialogComponent,
     CreateClaimComponent,
     CreateUserinfoClaimComponent,
     RoleSelectionComponent,

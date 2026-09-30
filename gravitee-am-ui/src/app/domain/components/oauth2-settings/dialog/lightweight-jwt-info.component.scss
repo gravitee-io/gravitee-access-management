@@ -1,0 +1,33 @@
+.lightweight-jwt-claims {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid rgb(0 0 0 / 12%);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    color: grey;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  tbody th {
+    white-space: nowrap;
+  }
+
+  td {
+    max-width: 200px;
+  }
+
+  code {
+    display: inline-block;
+    margin: 0 6px 4px 0;
+    font-size: 12px;
+  }
+}

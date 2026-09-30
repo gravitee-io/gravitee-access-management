@@ -106,8 +106,18 @@
 
       <div class="gv-form-section" *ngIf="context === 'Application'">
         <div class="gv-form-section-title">
-          <h5>Lightweight JWT</h5>
-          <small>Restrict the access token returned to the client to the reserved protocol claims.</small>
+          <div fxLayout="row" style="align-items: center">
+            <h5 style="margin: 0">Lightweight JWT</h5>
+            <button
+              mat-icon-button
+              aria-label="Lightweight JWT claims"
+              data-testid="lightweight-jwt-info"
+              (click)="openLightweightJwtDialog($event)"
+            >
+              <mat-icon>info_outline</mat-icon>
+            </button>
+          </div>
+          <small>Restrict the access token and the ID token returned to the client to the reserved protocol claims.</small>
           <mat-divider></mat-divider>
         </div>
         <div fxLayout="column">
@@ -119,10 +129,7 @@
           >
             Enable Lightweight JWT
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%"
-            >The access token keeps iss, sub, aud, exp, iat, jti, scope and client_id. It also keeps cnf, act, client_profile, permissions
-            and authorization_details when the flow sets them, and the internal claims gis, domain and claims_request_parameter.</mat-hint
-          >
+          <mat-hint style="font-size: 75%">Custom claims are removed unless they are named after a kept claim.</mat-hint>
         </div>
       </div>
 
@@ -130,7 +137,7 @@
         <div class="gv-form-section-title">
           <div fxLayout="row" style="align-items: center">
             <h5 style="margin: 0">Custom claims</h5>
-            <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
+            <button mat-icon-button aria-label="Custom claims" (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
           </div>
           <small>You can add custom claims to the tokens by picking attributes from the execution context.</small>
           <mat-divider></mat-divider>
@@ -219,7 +226,7 @@
         <div class="gv-form-section-title">
           <div fxLayout="row" style="align-items: center">
             <h5 style="margin: 0">Userinfo claims</h5>
-            <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
+            <button mat-icon-button aria-label="Userinfo claims" (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
           </div>
           <small
             >Claims returned from the OIDC <span class="code">/userinfo</span> endpoint. Use these to expose user-profile attributes from

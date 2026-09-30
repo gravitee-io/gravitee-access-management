@@ -1336,6 +1336,10 @@ public class Client implements Cloneable, Resource {
         this.lightweightJwtSettings = lightweightJwtSettings;
     }
 
+    public boolean isLightweightJwtEnabled() {
+        return lightweightJwtSettings != null && lightweightJwtSettings.isEnabled();
+    }
+
     public int getIdJagValiditySeconds() {
         return idJagValiditySeconds;
     }

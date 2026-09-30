@@ -15,12 +15,11 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { decodeToken, setupTokenIdentityFixture, TokenIdentityFixture } from './fixtures/token-identity-fixture';
+import { decodeToken, LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, setupTokenIdentityFixture, TokenIdentityFixture } from './fixtures/token-identity-fixture';
 
 setup(200000);
 
 const SCOPE = 'openid email profile';
-const LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = ['aud', 'client_id', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
 
 let fixture: TokenIdentityFixture;
 
@@ -31,10 +30,7 @@ function claimNames(token: string): string[] {
 beforeAll(async () => {
   fixture = await setupTokenIdentityFixture({
     lightweightJwtSettings: { enabled: true },
-    tokenCustomClaims: [
-      { tokenType: 'ACCESS_TOKEN', claimName: 'tenant', claimValue: 'acme' },
-      { tokenType: 'ID_TOKEN', claimName: 'tenant', claimValue: 'acme' },
-    ],
+    tokenCustomClaims: [{ tokenType: 'ACCESS_TOKEN', claimName: 'tenant', claimValue: 'acme' }],
     userinfoCustomClaims: [{ claimName: 'tenant', claimValue: 'acme' }],
   });
 });
@@ -74,12 +70,6 @@ describe('Lightweight JWT - other tokens and endpoints are unchanged', () => {
     const tokens = await fixture.passwordGrant(SCOPE);
 
     expect(decodeToken(tokens.refresh_token).payload.tenant).toEqual('acme');
-  });
-
-  it('should keep the custom claim in the ID token', async () => {
-    const tokens = await fixture.passwordGrant(SCOPE);
-
-    expect(decodeToken(tokens.id_token).payload.tenant).toEqual('acme');
   });
 
   it('should answer UserInfo with the profile and custom claims for a lightweight access token', async () => {
