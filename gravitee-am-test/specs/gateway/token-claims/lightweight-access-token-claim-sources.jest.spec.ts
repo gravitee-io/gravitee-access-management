@@ -42,8 +42,8 @@ beforeAll(async () => {
       { tokenType: 'ACCESS_TOKEN', claimName: 'user_roles', claimValue: "{#context.attributes['user'].roles}" },
       { tokenType: 'ACCESS_TOKEN', claimName: 'user_groups', claimValue: "{#context.attributes['user'].groups}" },
       { tokenType: 'ACCESS_TOKEN', claimName: 'pre_token', claimValue: "{#context.attributes['preTokenValue']}" },
-      { tokenType: 'ACCESS_TOKEN', claimName: 'act', claimValue: 'spoofed-actor' },
-      { tokenType: 'ACCESS_TOKEN', claimName: 'cnf', claimValue: 'spoofed-cnf' },
+      { tokenType: 'ACCESS_TOKEN', claimName: 'act', claimValue: 'custom-actor' },
+      { tokenType: 'ACCESS_TOKEN', claimName: 'cnf', claimValue: 'custom-cnf' },
     ],
   });
 });
@@ -64,8 +64,8 @@ describe('Lightweight JWT claim sources - disabled', () => {
       tenant: 'acme',
       department: 'engineering',
       pre_token: 'from-pre-token',
-      act: 'spoofed-actor',
-      cnf: 'spoofed-cnf',
+      act: 'custom-actor',
+      cnf: 'custom-cnf',
     });
     expect(payload.user_roles).toEqual([ROLE]);
     expect(payload.user_groups).toHaveLength(1);
@@ -73,11 +73,12 @@ describe('Lightweight JWT claim sources - disabled', () => {
 });
 
 describe('Lightweight JWT claim sources - enabled', () => {
-  it('should remove the custom claims from every source', async () => {
+  it('should keep only the custom claims named after a kept claim', async () => {
     await fixture.setLightweightJwt(true, 'tenant');
 
     const payload = decodeToken((await fixture.passwordGrant(SCOPE)).access_token).payload;
 
-    expect(Object.keys(payload).sort()).toEqual(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
+    expect(Object.keys(payload).sort()).toEqual([...LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, 'act', 'cnf'].sort());
+    expect(payload).toMatchObject({ act: 'custom-actor', cnf: 'custom-cnf' });
   });
 });
