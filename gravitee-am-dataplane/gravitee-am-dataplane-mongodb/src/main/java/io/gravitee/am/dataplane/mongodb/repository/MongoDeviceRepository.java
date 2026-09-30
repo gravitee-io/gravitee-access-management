@@ -32,22 +32,22 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.DEFAULT_USER_FIELDS;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.userIdMatches;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -81,7 +81,7 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
 
     @Override
     public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, UserId user) {
-        var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), userIdMatches(user, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date()));
+        var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), internalUserIdMatches(user), gte(FIELD_EXPIRES_AT, new Date()));
         var devicePublisher = rememberDeviceMongoCollection.find(query);
         return Flowable.fromPublisher(devicePublisher).map(this::convert)
                 .observeOn(Schedulers.computation());
@@ -93,7 +93,7 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
             ReferenceType referenceType, String referenceId, String client, UserId user, String deviceIdentifierId, String deviceId) {
         var query = and(
                 eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_CLIENT, client), userIdMatches(user, DEFAULT_USER_FIELDS), eq(FIELD_DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(FIELD_DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
+                eq(FIELD_CLIENT, client), internalUserIdMatches(user), eq(FIELD_DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(FIELD_DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
         return Observable.fromPublisher(rememberDeviceMongoCollection.find(query).first()).firstElement().map(this::convert)
                 .observeOn(Schedulers.computation());
     }
@@ -155,5 +155,11 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
                 .setCreatedAt(device.getCreatedAt())
                 .setExpiresAt(device.getExpiresAt())
         ).orElse(null);
+    }
+
+    /** Devices are stored with the internal user id only. */
+    private static Bson internalUserIdMatches(UserId user) {
+        Objects.requireNonNull(user.id(), "internal user id");
+        return eq(FIELD_USER_ID, user.id());
     }
 }
