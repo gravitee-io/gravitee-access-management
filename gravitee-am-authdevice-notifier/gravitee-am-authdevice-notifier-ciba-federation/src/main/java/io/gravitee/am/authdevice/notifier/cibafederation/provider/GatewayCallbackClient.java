@@ -41,7 +41,7 @@ public class GatewayCallbackClient {
         return ClientAuthentication.applied(client.postAbs(callbackUrl), form, clientAuthMethod, clientId, clientSecret)
                 .rxSendForm(form).flatMapCompletable(resp ->
             resp.statusCode() != 200
-                ? Completable.error(new IllegalStateException("callback rejected: " + resp.statusCode()))
+                ? Completable.error(new IllegalStateException("callback to " + callbackUrl + " rejected: " + resp.statusCode()))
                 : Completable.complete());
     }
 }

@@ -55,8 +55,9 @@ class GatewayCallbackClientTest {
     void errors_when_callback_rejects() {
         wm.stubFor(post(urlEqualTo("/cb")).willReturn(aResponse().withStatus(400)));
         var c = new GatewayCallbackClient(WebClient.create(vertx), "cbid", "cbsecret", "client_secret_post");
-        assertThrows(Exception.class, () ->
-                c.postCallback("http://localhost:" + wm.port() + "/cb", "s", "t", false, null, null).blockingAwait());
+        String url = "http://localhost:" + wm.port() + "/cb";
+        Exception e = assertThrows(Exception.class, () -> c.postCallback(url, "s", "t", false, null, null).blockingAwait());
+        assertTrue(e.getMessage().contains(url) && e.getMessage().contains("400"), e.getMessage());
     }
 
     @Test

@@ -28,6 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -121,8 +125,7 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         this.store = new PendingAuthStore();
         var callbackClient = new GatewayCallbackClient(webClient, configuration.getCallbackClientId(),
                 configuration.getCallbackClientSecret(), configuration.getCallbackClientAuthMethod());
-        // callbackUrl is not a static config value; it is provided per-request via ADNotificationRequest
-        // and threaded through PendingAuthStore.Pending so the poller can use the correct URL per tid.
+        // callbackUrl is per request: notify() threads it through PendingAuthStore.Pending, so the poller takes none.
         this.poller = new AuthorizationPoller(callbackClient, store, () -> Instant.now().getEpochSecond());
         this.maxLifetimeSeconds = configuration.getMaxLifetimeSeconds() == null ? 120 : configuration.getMaxLifetimeSeconds();
         this.wired = true;
@@ -146,7 +149,8 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
 
     /** Fail closed at bind: a CIBA-federation notifier is intrinsically IdP-dependent and must
      *  not deploy without a configured identityProviderId, nor without a usable callback client
-     *  configuration (id, secret, and a supported client-authentication method). */
+     *  configuration (id, secret, a supported client-authentication method and, when set, an
+     *  http(s) callbackUrl with a host). */
     @Override
     public void afterPropertiesSet() {
         if (configuration == null) {
@@ -165,10 +169,34 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         if (!ClientAuthentication.isSupported(configuration.getCallbackClientAuthMethod())) {
             throw new IllegalStateException(ClientAuthentication.unsupportedMessage(configuration.getCallbackClientAuthMethod()));
         }
+        if (!isBlank(configuration.getCallbackUrl())) {
+            requireCallbackUrl(configuration.getCallbackUrl());
+        }
     }
 
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
+    }
+
+    private static void requireCallbackUrl(String url) {
+        final URL parsed;
+        try {
+            parsed = new URI(url).toURL();
+        } catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw invalidCallbackUrl(url);
+        }
+        if (hasText(parsed.getUserInfo())) {
+            throw new IllegalStateException("CIBA federation notifier callbackUrl must not contain user-info");
+        }
+        final boolean http = "http".equals(parsed.getProtocol()) || "https".equals(parsed.getProtocol());
+        final boolean validPort = parsed.getPort() == -1 || (parsed.getPort() > 0 && parsed.getPort() <= 65535);
+        if (!http || parsed.getHost().isEmpty() || !validPort) {
+            throw invalidCallbackUrl(url);
+        }
+    }
+
+    private static IllegalStateException invalidCallbackUrl(String url) {
+        return new IllegalStateException("CIBA federation notifier callbackUrl must be an http(s) URL with a host, got: " + url);
     }
 
     @Override
@@ -177,8 +205,9 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         final FederatedConnection conn = Objects.requireNonNull(request.getConnection(),
                 "FederatedConnection must be supplied by the gateway");
         final String tid = Objects.requireNonNull(request.getTransactionId(), "transactionId must not be null");
-        final String callbackUrl = Objects.requireNonNull(request.getCallbackUrl(),
-                "callbackUrl must be supplied by the gateway on ADNotificationRequest");
+        final String configuredCallbackUrl = configuration != null ? configuration.getCallbackUrl() : null;
+        final String callbackUrl = hasText(configuredCallbackUrl) ? configuredCallbackUrl
+                : Objects.requireNonNull(request.getCallbackUrl(), "callbackUrl must be supplied by the gateway on ADNotificationRequest");
         final java.util.List<java.util.Map<String, Object>> rar = request.getAuthorizationDetails();
         final String scope = conn.scope();
         final String resourceAudience = configuration != null ? configuration.getResourceAudience() : null;
