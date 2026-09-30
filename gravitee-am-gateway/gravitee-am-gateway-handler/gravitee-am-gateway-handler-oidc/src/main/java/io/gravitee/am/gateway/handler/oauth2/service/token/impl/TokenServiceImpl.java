@@ -75,6 +75,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.utils.ConstantKeys.DPOP_AUTH_SCHEME;
@@ -97,6 +99,8 @@ public class TokenServiceImpl implements TokenService {
             Claims.ISS, Claims.SUB, Claims.EXP, Claims.IAT, Claims.JTI, Claims.SCOPE, Claims.CLIENT_ID, Claims.AUD,
             Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, PERMISSIONS,
             Claims.GIO_INTERNAL_SUB, Claims.DOMAIN, Claims.CLAIMS);
+    private static final Set<String> LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS = Stream.concat(
+            LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.stream(), Stream.of(Claims.ORIG_RESOURCES)).collect(Collectors.toUnmodifiableSet());
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
@@ -238,6 +242,9 @@ public class TokenServiceImpl implements TokenService {
                     // filter after the refresh token copied the access token claims
                     if (client.isLightweightJwtEnabled()) {
                         accessToken.keySet().retainAll(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
+                        if (refreshToken != null) {
+                            refreshToken.keySet().retainAll(LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS);
+                        }
                     }
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
