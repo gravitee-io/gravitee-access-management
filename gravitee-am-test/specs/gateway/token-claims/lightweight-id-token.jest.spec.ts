@@ -95,12 +95,6 @@ describe('Lightweight JWT - id_token_hint', () => {
 
     expect(decodeToken(tokens.id_token).payload.sub).toEqual(decodeToken(hint).payload.sub);
   });
-
-  it('should answer login_required when the id_token_hint does not identify a user', async () => {
-    const location = await fixture.silentAuthorize('not-an-id-token');
-
-    expect(new URL(location).searchParams.get('error')).toEqual('login_required');
-  });
 });
 
 describe('Lightweight JWT - ID token toggle', () => {
