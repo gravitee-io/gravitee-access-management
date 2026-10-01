@@ -33,6 +33,7 @@ import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -65,6 +66,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CertificateServiceProxyImplTest {
     public static final String TEST_DOMAIN = "testDomain";
+    private static final String SENSITIVE_STOREPASS_SCHEMA = "{\"properties\":{\"storepass\":{\"type\":\"string\",\"sensitive\":true}}}";
     private final Random random = new Random(1337);
     private final RandomStringGenerator randomIdGen = new RandomStringGenerator.Builder()
             .usingRandom(random::nextInt)
@@ -216,6 +218,41 @@ class CertificateServiceProxyImplTest {
         verify(certService).validateUpdate(eq(domain), eq("cert-id"), validated.capture());
         assertThat(validated.getValue().getConfiguration()).isEqualTo("{\"storepass\":\"stored-secret\"}");
         assertThat(result.getConfiguration()).isEqualTo("{\"storepass\":\"********\"}");
+    }
+
+    @Test
+    void shouldOmitAnUnsetSecretFromTheCreatedCertificateButMaskItInTheAudit() {
+        var domain = new Domain();
+        domain.setId(TEST_DOMAIN);
+        var newCertificate = new NewCertificate();
+        newCertificate.setType("cert");
+        newCertificate.setConfiguration("{}");
+        var created = minimalCert();
+        created.setType("cert");
+        created.setConfiguration("{}");
+        when(certService.create(eq(domain), eq(newCertificate), any(), eq(false))).thenReturn(Single.just(created));
+        when(certPluginService.getSchema(anyString())).thenReturn(Maybe.just(SENSITIVE_STOREPASS_SCHEMA));
+
+        var proxy = certificateServiceProxy();
+        proxy.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var result = proxy.create(domain, newCertificate, mock(User.class)).blockingGet();
+
+        assertThat(result.getConfiguration()).isEqualTo("{}");
+        assertThat(captureAudit().getOutcome().getMessage()).contains("********");
+    }
+
+    @Test
+    void shouldOmitAStoredNullSecretWhenMaskingPresentValuesOnly() {
+        var certificate = minimalCert();
+        certificate.setType("cert");
+        certificate.setConfiguration("{\"storepass\":null}");
+        when(certPluginService.getSchema(anyString())).thenReturn(Maybe.just(SENSITIVE_STOREPASS_SCHEMA));
+
+        var proxy = certificateServiceProxy();
+        proxy.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var masked = proxy.filterSensitiveData(certificate).blockingGet();
+
+        assertThat(masked.getConfiguration()).isEqualTo("{}");
     }
 
     private CertificateServiceProxyImpl certificateServiceProxy() {

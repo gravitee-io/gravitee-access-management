@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
 import io.gravitee.am.model.Reference;
@@ -97,6 +98,48 @@ class ReporterServiceProxyImplTest {
 
         assertThat(result.getId()).isEqualTo("rep-id");
         assertThat(maskedSecret(result.getConfiguration())).isEqualTo("********");
+    }
+
+    @Test
+    void shouldOmitAnUnsetSecretFromTheCreatedReporterButMaskItInTheAudit() {
+        reset(auditService);
+        var principal = mock(User.class);
+        var reference = Reference.domain("domain");
+        var newReporter = new NewReporter();
+        newReporter.setType("console");
+        newReporter.setConfiguration("{}");
+        when(reporterService.create(reference, newReporter, principal, false)).thenReturn(Single.just(buildReporter("{}")));
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        service.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var result = service.create(reference, newReporter, principal, false).blockingGet();
+
+        assertThat(result.getConfiguration()).isEqualTo("{}");
+        assertThat(captureAudit().getOutcome().getMessage()).contains("********");
+    }
+
+    @Test
+    void shouldOmitAnUnsetSecretFromTheCreatedSystemReporter() {
+        reset(auditService);
+        var principal = mock(User.class);
+        var reference = Reference.domain("domain");
+        when(reporterService.createSystem(reference, "rep-id", "default", principal)).thenReturn(Single.just(buildReporter("{}")));
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        service.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var result = service.createSystem(reference, "rep-id", "default", principal).blockingGet();
+
+        assertThat(result.getConfiguration()).isEqualTo("{}");
+    }
+
+    @Test
+    void shouldOmitAStoredNullSecretWhenMaskingPresentValuesOnly() {
+        when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        service.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var masked = service.filterSensitiveData(buildReporter("{\"secret\":null}")).blockingGet();
+
+        assertThat(masked.getConfiguration()).isEqualTo("{}");
     }
 
     @Test

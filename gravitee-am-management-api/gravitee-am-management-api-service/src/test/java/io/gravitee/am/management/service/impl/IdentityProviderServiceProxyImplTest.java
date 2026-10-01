@@ -20,6 +20,8 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
+import io.gravitee.am.management.service.MaskingMode;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -107,6 +109,51 @@ class IdentityProviderServiceProxyImplTest {
 
         assertThat(result.getId()).isEqualTo("idp-id");
         assertThat(maskedSecret(result.getConfiguration())).isEqualTo("********");
+    }
+
+    @Test
+    void shouldOmitAnUnsetSecretFromTheCreatedIdentityProviderButMaskItInTheAudit() {
+        reset(auditService);
+        var principal = mock(User.class);
+        var domain = new Domain("domain");
+        var newIdp = new NewIdentityProvider();
+        newIdp.setType("mock-idp");
+        newIdp.setConfiguration("{}");
+        when(identityProviderService.create(domain, newIdp, principal, false)).thenReturn(Single.just(buildIdp("{}")));
+        when(identityProviderPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        service.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var result = service.create(domain, newIdp, principal, false).blockingGet();
+
+        assertThat(result.getConfiguration()).isEqualTo("{}");
+        assertThat(captureAudit().getOutcome().getMessage()).contains("********");
+    }
+
+    @Test
+    void shouldOmitAnUnsetSecretFromTheUpdatedIdentityProvider() {
+        reset(auditService);
+        var principal = mock(User.class);
+        var update = new UpdateIdentityProvider();
+        update.setType("mock-idp");
+        update.setConfiguration("{}");
+        when(identityProviderService.findById("idp-id")).thenReturn(Maybe.just(buildIdp("{}")));
+        when(identityProviderPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+        when(identityProviderService.update(ReferenceType.DOMAIN, "domain", "idp-id", update, principal, false)).thenReturn(Single.just(buildIdp("{}")));
+
+        service.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var result = service.update(ReferenceType.DOMAIN, "domain", "idp-id", update, principal, false).blockingGet();
+
+        assertThat(result.getConfiguration()).isEqualTo("{}");
+    }
+
+    @Test
+    void shouldOmitAStoredNullSecretWhenMaskingPresentValuesOnly() {
+        when(identityProviderPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
+
+        service.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        var masked = service.filterSensitiveData(buildIdp("{\"secret\":null}")).blockingGet();
+
+        assertThat(masked.getConfiguration()).isEqualTo("{}");
     }
 
     @Test
