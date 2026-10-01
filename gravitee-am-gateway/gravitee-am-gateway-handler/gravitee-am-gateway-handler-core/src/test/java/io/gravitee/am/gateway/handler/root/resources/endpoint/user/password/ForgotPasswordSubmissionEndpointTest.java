@@ -24,6 +24,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -108,6 +109,30 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
         });
 
         when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email@test.com")), eq(client), any(User.class))).thenReturn(Completable.error(new UserNotFoundException("email@test.com")));
+
+        testRequest(
+                HttpMethod.POST, "/forgotPassword?client_id=client-id",
+                req -> postEmail(req, "email@test.com"),
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldCompleteWhenUserLinkedToExternalIDP() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email@test.com")), eq(client), any(User.class))).thenReturn(Completable.error(new UserInvalidException("email@test.com")));
 
         testRequest(
                 HttpMethod.POST, "/forgotPassword?client_id=client-id",
