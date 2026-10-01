@@ -15,13 +15,24 @@
  */
 package io.gravitee.am.plugins.handlers.api.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SchemaRegistryConfig;
+import com.networknt.schema.dialect.Dialect;
+import com.networknt.schema.dialect.Draft7;
+import com.networknt.schema.keyword.AnnotationKeyword;
 import io.gravitee.json.validation.InvalidJsonException;
 import io.gravitee.json.validation.JsonSchemaValidator;
-import org.everit.json.schema.Schema;
-import org.everit.json.schema.ValidationException;
-import org.everit.json.schema.loader.SchemaLoader;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Reports every violation of the schema. {@link io.gravitee.json.validation.JsonSchemaValidatorImpl} instead drops a property the
@@ -35,43 +46,50 @@ import org.json.JSONObject;
  */
 public class StrictJsonSchemaValidator implements JsonSchemaValidator {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    // the schema forms of the plugins carry the legacy "id" keyword
+    private static final Dialect DRAFT_7_WITH_ID = Dialect.builder(Draft7.getInstance())
+            .keyword(new AnnotationKeyword("id"))
+            .build();
+    // the messages are returned to the caller, they must not depend on the locale of the JVM
+    private static final SchemaRegistry SCHEMA_REGISTRY = SchemaRegistry.withDefaultDialect(DRAFT_7_WITH_ID,
+            builder -> builder.schemaRegistryConfig(SchemaRegistryConfig.builder().locale(Locale.ENGLISH).build()));
+
     @Override
     public String validate(String schema, String json) {
-        JSONObject schemaJson = new JSONObject(schema);
-        Schema validator = SchemaLoader.builder()
-                .schemaJson(schemaJson)
-                .draftV7Support()
-                .build()
-                .load()
-                .build();
-        JSONObject configuration = new JSONObject(json);
-        unsetDeclaredNulls(schemaJson, configuration);
         try {
-            validator.validate(configuration);
-        } catch (ValidationException e) {
-            throw new InvalidJsonException(String.join(", ", e.getAllMessages()));
+            JsonNode schemaJson = MAPPER.readTree(schema);
+            JsonNode configuration = MAPPER.readTree(json);
+            unsetDeclaredNulls(schemaJson, configuration);
+            List<Error> errors = SCHEMA_REGISTRY.getSchema(schemaJson).validate(configuration);
+            if (!errors.isEmpty()) {
+                throw new InvalidJsonException(errors.stream().map(Error::toString).collect(Collectors.joining(", ")));
+            }
+        } catch (JsonProcessingException e) {
+            throw new InvalidJsonException(e.getMessage(), e);
         }
         return json;
     }
 
-    private static void unsetDeclaredNulls(JSONObject schema, Object value) {
-        if (value instanceof JSONObject object) {
-            JSONObject declared = schema.optJSONObject("properties");
-            if (declared == null) {
+    private static void unsetDeclaredNulls(JsonNode schema, JsonNode value) {
+        if (value instanceof ObjectNode object) {
+            JsonNode declared = schema.path("properties");
+            if (!declared.isObject()) {
                 return;
             }
-            for (String key : declared.keySet()) {
-                if (!object.has(key)) {
-                    continue;
+            declared.fieldNames().forEachRemaining(key -> {
+                JsonNode property = object.get(key);
+                if (property == null) {
+                    return;
                 }
-                if (JSONObject.NULL.equals(object.get(key))) {
+                if (property.isNull()) {
                     object.remove(key);
-                } else if (declared.optJSONObject(key) != null) {
-                    unsetDeclaredNulls(declared.getJSONObject(key), object.get(key));
+                } else if (declared.get(key).isObject()) {
+                    unsetDeclaredNulls(declared.get(key), property);
                 }
-            }
-        } else if (value instanceof JSONArray array && schema.optJSONObject("items") != null) {
-            array.forEach(item -> unsetDeclaredNulls(schema.getJSONObject("items"), item));
+            });
+        } else if (value instanceof ArrayNode array && schema.path("items").isObject()) {
+            array.forEach(item -> unsetDeclaredNulls(schema.get("items"), item));
         }
     }
 }

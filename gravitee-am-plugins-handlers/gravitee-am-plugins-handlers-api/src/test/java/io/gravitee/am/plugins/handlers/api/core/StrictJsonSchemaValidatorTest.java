@@ -116,6 +116,6 @@ class StrictJsonSchemaValidatorTest {
         InvalidJsonException ex = assertThrows(InvalidJsonException.class,
                 () -> validator.validate(SCHEMA, "{\"host\":\"mongo\",\"port\":99999,\"bogus\":\"x\"}"));
 
-        assertTrue(ex.getMessage().contains("bogus") && ex.getMessage().contains("99999"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("bogus") && ex.getMessage().contains("port"), ex.getMessage());
     }
 }
