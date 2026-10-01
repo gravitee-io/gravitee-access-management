@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
@@ -100,6 +104,11 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
             SignatureAlgorithm.HS256,
             SignatureAlgorithm.HS384,
             SignatureAlgorithm.HS512};
+    private static final JOSEObjectType[] ALLOWED_ASSERTION_TYPES = new JOSEObjectType[]{
+            JOSEObjectType.JWT,
+            new JOSEObjectType("at+jwt"),
+            new JOSEObjectType("application/at+jwt"),
+            null};
 
     private static final Map<Integer, String> OPENSSH_KEY_LENGHTS = Map.of(
             104, "secp256r1",
@@ -216,7 +225,12 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
             }
         }
         Assert.notNull(keyProcessor, "A key processor must be set");
-        return keyProcessor.create(signatureAlgorithm);
+        return acceptingAssertionTypes(keyProcessor.create(signatureAlgorithm));
+    }
+
+    private static <C extends SecurityContext> JWTProcessor<C> acceptingAssertionTypes(ConfigurableJWTProcessor<C> processor) {
+        processor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(ALLOWED_ASSERTION_TYPES));
+        return processor;
     }
 
     /**
