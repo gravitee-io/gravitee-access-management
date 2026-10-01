@@ -82,35 +82,49 @@ beforeAll(async () => {
   await delay(6000);
 });
 
-function useSecret(application: any, openIdConfiguration: any, clientSecret: string, expectedResult: number) {
+/**
+ * Asks the gateway for a token with the given secret and asserts the outcome.
+ *
+ * Awaiting matters: the previous version discarded the request, so a wrong status surfaced as an
+ * unhandled rejection after the test had already passed. A rejected secret is also checked for
+ * `invalid_client`, otherwise a 401 from an unrelated cause counts as a pass.
+ */
+async function useSecret(application: any, openIdConfiguration: any, clientSecret: string, expectedResult: number) {
   const redirect_uri = application.settings.oauth.redirectUris[0];
-  performPost(
+  const response = await performPost(
     openIdConfiguration.token_endpoint,
     `?grant_type=client_credentials&redirect_uri=${redirect_uri}&clientId=${application.settings.oauth.clientId}`,
     null,
     {
       Authorization: 'Basic ' + getBase64BasicAuth(application.settings.oauth.clientId, clientSecret),
     },
-  ).expect(expectedResult);
+  );
+  expect(response.status).toEqual(expectedResult);
+  if (expectedResult === 200) {
+    expect(response.body.access_token).toBeDefined();
+  } else {
+    expect(response.body.error).toEqual('invalid_client');
+  }
+  return response;
 }
 
 describe('Multiple secrets', () => {
   it('use secret', async () => {
-    useSecret(application, openIdConfiguration, application.settings.oauth.clientSecret, 200);
+    await useSecret(application, openIdConfiguration, application.settings.oauth.clientSecret, 200);
   });
 
   it('rotate secrets', async () => {
     const rotatedSecret = await renewClientSecret(domain.id, accessToken, application.id, application.secrets[0].id);
     await delay(6000); // wait for sync
-    useSecret(application, openIdConfiguration, application.settings.oauth.clientSecret, 400);
-    useSecret(application, openIdConfiguration, rotatedSecret.secret, 200);
+    await useSecret(application, openIdConfiguration, application.settings.oauth.clientSecret, 401);
+    await useSecret(application, openIdConfiguration, rotatedSecret.secret, 200);
   });
   it('Create new secret', async () => {
     const createdSecret = await createClientSecret(domain.id, accessToken, application.id, {
       name: 'test',
     });
     await delay(6000); // wait for sync
-    useSecret(application, openIdConfiguration, createdSecret.secret, 200);
+    await useSecret(application, openIdConfiguration, createdSecret.secret, 200);
   });
   it('Create more than 10 secrets', async () => {
     for (let i = 0; i < 8; i++) {
@@ -152,7 +166,7 @@ describe('Multiple secrets', () => {
     await deleteClientSecret(domain.id, accessToken, application.id, clientSecrets[3].id);
     await deleteClientSecret(domain.id, accessToken, application.id, clientSecrets[2].id);
     await deleteClientSecret(domain.id, accessToken, application.id, clientSecrets[1].id);
-    useSecret(application, openIdConfiguration, clientSecrets[9].secret, 400);
+    await useSecret(application, openIdConfiguration, clientSecrets[9].secret, 401);
   });
   it('Remove last secret', async () => {
     const clientSecrets = await listClientSecrets(domain.id, accessToken, application.id);
@@ -424,7 +438,7 @@ describe('Usage expired secrets', () => {
     const now = Date.now();
     assetTime(now + 5000, clientSecret.expiresAt, 1000);
     await delay(6000); //wait to expire
-    useSecret(application, openIdConfiguration, clientSecret.secret, 400);
+    await useSecret(application, openIdConfiguration, clientSecret.secret, 401);
   });
 });
 
