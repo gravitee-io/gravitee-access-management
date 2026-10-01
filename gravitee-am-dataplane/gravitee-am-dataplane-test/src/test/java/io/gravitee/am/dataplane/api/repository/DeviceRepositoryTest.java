@@ -55,6 +55,52 @@ public class DeviceRepositoryTest extends AbstractDataPlaneTest {
     }
 
     @Test
+    public void testFindByDomainAndApplicationAndUser_externalUserIdentity() {
+        Device createdDevice = repository.create(buildDevice()).blockingGet();
+        UserId userId = new UserId(createdDevice.getUserId().id(), "external-id", "external-source");
+
+        repository.findByDomainAndClientAndUser(createdDevice.getReferenceId(), userId)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValueCount(1);
+
+        repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
+                        createdDevice.getReferenceId(),
+                        createdDevice.getClient(),
+                        userId,
+                        createdDevice.getDeviceIdentifierId(),
+                        createdDevice.getDeviceId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(device -> device.getId().equals(createdDevice.getId()));
+    }
+
+    @Test
+    public void testNotFindByDomainAndApplicationAndUser_otherInternalIdSameExternalIdentity() {
+        Device createdDevice = repository.create(buildDevice()).blockingGet();
+        UserId userId = new UserId("other-user", "external-id", "external-source");
+
+        repository.findByDomainAndClientAndUser(createdDevice.getReferenceId(), userId)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertNoValues();
+
+        repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
+                        createdDevice.getReferenceId(),
+                        createdDevice.getClient(),
+                        userId,
+                        createdDevice.getDeviceIdentifierId(),
+                        createdDevice.getDeviceId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertNoValues();
+    }
+
+    @Test
     public void testNotFindByDomainAndApplicationAndUser_expired() {
         Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
         Device createdDevice = repository.create(device).blockingGet();

@@ -149,7 +149,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private ClientTokenAuditBuilder denialAudit(TokenRequest tokenRequest, Client client, Throwable error) {
         return AuditBuilder.builder(ClientTokenAuditBuilder.class)
                 .tokenActor(client)
-                .withParams(() -> OAuth2RequestParams.of(tokenRequest))
+                .withParams(() -> OAuth2RequestParams.ofFailure(tokenRequest, error))
                 .throwable(error);
     }
 

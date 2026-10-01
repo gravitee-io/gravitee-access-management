@@ -18,7 +18,9 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.jwt.CertificateInfo;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,12 +32,21 @@ public final class OAuth2RequestParams {
 
     public static final String SIGNING_CERTIFICATE_ID = "SIGNING_CERTIFICATE_ID";
     public static final String SIGNING_CERTIFICATE_NAME = "SIGNING_CERTIFICATE_NAME";
+    public static final String ADDITIONAL_DATA = "ADDITIONAL_DATA";
 
     private OAuth2RequestParams() {
     }
 
     public static Map<String, Object> of(OAuth2Request oAuth2Request) {
         return of(oAuth2Request, null);
+    }
+
+    public static Map<String, Object> ofFailure(OAuth2Request oAuth2Request, Throwable failure) {
+        Map<String, Object> params = of(oAuth2Request);
+        if (failure instanceof PolicyChainException policyFailure && policyFailure.parameters() != null) {
+            putAdditionalData(params, policyFailure.parameters().get(ConstantKeys.POLICY_AUDIT_DATA));
+        }
+        return params;
     }
 
     public static Map<String, Object> of(OAuth2Request oAuth2Request, CertificateInfo certificateInfo) {
@@ -64,6 +75,8 @@ public final class OAuth2RequestParams {
             addTokenExchangeParams(params, oAuth2Request);
         }
 
+        putAdditionalDataFromExecutionContext(params, oAuth2Request);
+
         return params;
     }
 
@@ -85,6 +98,24 @@ public final class OAuth2RequestParams {
         if (oAuth2Request.isDelegation()) {
             putFirstPresent(params, Parameters.ACTOR_TOKEN, oAuth2Request.getActorTokenId());
             putFirstPresent(params, Parameters.ACTOR_TOKEN_TYPE, oAuth2Request.getActorTokenType());
+        }
+    }
+
+    private static void putAdditionalDataFromExecutionContext(Map<String, Object> params, OAuth2Request oAuth2Request) {
+        Map<String, Object> executionContext = oAuth2Request.getExecutionContext();
+        if (executionContext != null) {
+            putAdditionalData(params, executionContext.get(ConstantKeys.POLICY_AUDIT_DATA));
+        }
+    }
+
+    private static void putAdditionalData(Map<String, Object> params, Object candidate) {
+        if (candidate instanceof Map<?, ?> additionalData && !additionalData.isEmpty()) {
+            Map<Object, Object> merged = new HashMap<>();
+            if (params.get(ADDITIONAL_DATA) instanceof Map<?, ?> existing) {
+                merged.putAll(existing);
+            }
+            merged.putAll(additionalData);
+            params.put(ADDITIONAL_DATA, merged);
         }
     }
 

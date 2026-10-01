@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.spring;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.common.oauth2.impl.DelegatingInternalClientTokenIssuer;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
@@ -43,6 +44,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenManagerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.InternalClientTokenIssuerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
@@ -61,6 +63,8 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.DomainReadService;
 import java.util.List;
 
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
@@ -84,6 +88,16 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public TokenService tokenService() {
         return new TokenServiceImpl();
+    }
+
+    @Bean
+    public InternalClientTokenIssuerImpl internalClientTokenIssuer(TokenService tokenService,
+                                                                   Domain domain,
+                                                                   DomainReadService domainReadService,
+                                                                   DelegatingInternalClientTokenIssuer delegatingInternalClientTokenIssuer) {
+        InternalClientTokenIssuerImpl internalClientTokenIssuer = new InternalClientTokenIssuerImpl(tokenService, domain, domainReadService);
+        delegatingInternalClientTokenIssuer.bind(internalClientTokenIssuer);
+        return internalClientTokenIssuer;
     }
 
     @Bean

@@ -89,6 +89,15 @@ export const LEAKY_PROFILE_CLAIMS = {
   leak_probe_marker: 'leak-probe-copied',
 } as const;
 
+/** Sorted claim names of a lightweight access token when the flow sets no optional claim. */
+export const LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = ['aud', 'client_id', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
+
+/** Sorted claim names of a lightweight refresh token when the flow sets no optional claim. */
+export const LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS = ['aud', 'domain', 'exp', 'gis', 'iat', 'iss', 'jti', 'scope', 'sub'];
+
+/** Sorted claim names of a lightweight ID token when the flow sets no optional claim. */
+export const LIGHTWEIGHT_ID_TOKEN_CLAIMS = ['aud', 'auth_time', 'exp', 'gis', 'iat', 'iss', 'sub'];
+
 /**
  * A decoded JWT payload plus the raw token it came from, so a failing assertion
  * can report both the claim and the token that produced it.
@@ -127,6 +136,10 @@ export interface TokenIdentityFixture extends Fixture {
    * `additionalParams` is appended to the authorize request (e.g. `nonce=...`).
    */
   authorizationCodeFlow: (additionalParams?: string) => Promise<Record<string, any>>;
+  /** Calls /oauth/authorize with prompt=none and the id_token_hint, without a session cookie, and returns the redirect location. */
+  silentAuthorize: (idTokenHint: string) => Promise<string>;
+  /** Exchanges the code in an authorize redirect location at the token endpoint. */
+  exchangeCode: (location: string) => Promise<Record<string, any>>;
   /** Calls /oidc/userinfo with the supplied access token. */
   userinfo: (accessTokenValue: string) => Promise<Record<string, any>>;
   /**
@@ -178,6 +191,8 @@ export interface TokenIdentityOptions {
   extraScopes?: { scope: string; defaultScope: boolean }[];
   /** Application-level Lightweight JWT settings. */
   lightweightJwtSettings?: { enabled: boolean };
+  /** Lets prompt=none with an id_token_hint authenticate the user without a session. */
+  silentReAuthentication?: boolean;
   /** Name of a domain role assigned to the primary user. */
   userRole?: string;
   /** Name of a domain group the primary user belongs to. */
@@ -240,6 +255,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
           ...(options.tokenCustomClaims ? { tokenCustomClaims: options.tokenCustomClaims } : {}),
           ...(options.userinfoCustomClaims ? { userinfoCustomClaims: options.userinfoCustomClaims } : {}),
           ...(options.lightweightJwtSettings ? { lightweightJwtSettings: options.lightweightJwtSettings } : {}),
+          ...(options.silentReAuthentication ? { silentReAuthentication: true } : {}),
         },
         advanced: { skipConsent: true },
       },
@@ -343,6 +359,20 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       return response.body;
     };
 
+    const silentAuthorize = async (idTokenHint: string) => {
+      const params =
+        `?response_type=code&prompt=none&scope=openid&state=silent` +
+        `&client_id=${app.settings.oauth.clientId}&redirect_uri=${TOKEN_IDENTITY_TEST.REDIRECT_URI}` +
+        `&id_token_hint=${idTokenHint}`;
+      const response = await performGet(oidc.authorization_endpoint, params).expect(302);
+      return response.headers['location'];
+    };
+
+    const exchangeCode = async (location: string) => {
+      const response = await requestToken(app, oidc, { headers: { location } });
+      return response.body;
+    };
+
     /**
      * A user is created before the domain starts, but the gateway does not always
      * serve the stored profile on the very first authentication - the attributes can
@@ -411,6 +441,8 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       passwordGrantFor,
       refreshGrant,
       authorizationCodeFlow,
+      silentAuthorize,
+      exchangeCode,
       userinfo,
       setLightweightJwt,
       cleanUp: async () => {

@@ -75,6 +75,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.utils.ConstantKeys.DPOP_AUTH_SCHEME;
@@ -97,6 +99,8 @@ public class TokenServiceImpl implements TokenService {
             Claims.ISS, Claims.SUB, Claims.EXP, Claims.IAT, Claims.JTI, Claims.SCOPE, Claims.CLIENT_ID, Claims.AUD,
             Claims.CNF, Claims.ACT, Claims.CLIENT_PROFILE, AUTHORIZATION_DETAILS, PERMISSIONS,
             Claims.GIO_INTERNAL_SUB, Claims.DOMAIN, Claims.CLAIMS);
+    private static final Set<String> LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS = Stream.concat(
+            LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.stream(), Stream.of(Claims.ORIG_RESOURCES)).collect(Collectors.toUnmodifiableSet());
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
@@ -236,8 +240,11 @@ public class TokenServiceImpl implements TokenService {
                     // create JWT refresh token
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // filter after the refresh token copied the access token claims
-                    if (isLightweightJwt(client)) {
+                    if (client.isLightweightJwtEnabled()) {
                         accessToken.keySet().retainAll(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
+                        if (refreshToken != null) {
+                            refreshToken.keySet().retainAll(LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS);
+                        }
                     }
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
@@ -543,7 +550,7 @@ public class TokenServiceImpl implements TokenService {
         }
 
         // set custom claims
-        enhanceJWT(jwt, accessTokenCustomClaims(client), TokenTypeHint.ACCESS_TOKEN, executionContext);
+        enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         // Token Exchange (RFC 8693) - set "act" claim for delegation scenarios
         if (request.isDelegation() && request.getActClaim() != null) {
@@ -584,20 +591,6 @@ public class TokenServiceImpl implements TokenService {
         setResources(request, jwt);
 
         return jwt;
-    }
-
-    private static boolean isLightweightJwt(Client client) {
-        return client.getLightweightJwtSettings() != null && client.getLightweightJwtSettings().isEnabled();
-    }
-
-    private static List<TokenClaim> accessTokenCustomClaims(Client client) {
-        if (!isLightweightJwt(client) || client.getTokenCustomClaims() == null) {
-            return client.getTokenCustomClaims();
-        }
-        // the other custom claims still reach the refresh token, then the lightweight filter removes them
-        return client.getTokenCustomClaims().stream()
-                .filter(claim -> !LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.contains(claim.getClaimName()))
-                .toList();
     }
 
     // act.sub is the counterpart to the token's top-level sub. In user-bound flows the top-level sub
