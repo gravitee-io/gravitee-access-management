@@ -58,7 +58,8 @@ public class AutomationCertificate {
 
     @Schema(description = "Plugin-specific configuration as a JSON-encoded string. Its shape is defined by " +
             "the selected certificate type." +
-            " Sensitive values, as flagged by the plugin, are returned as ******** in every response. " +
+            " Sensitive values, as flagged by the plugin, are returned as ******** in every response; an unset " +
+            "sensitive value is omitted. " +
             "Sending ******** back on update keeps the stored value; sending it on create is rejected." +
             " The uploaded keystore file is masked too; sending ******** back keeps it.",
             example = "{\"jks\":{\"content\":\"...\",\"name\":\"keystore.jks\"},\"storepass\":\"secret\",\"alias\":\"mykey\",\"keypass\":\"secret\"}")

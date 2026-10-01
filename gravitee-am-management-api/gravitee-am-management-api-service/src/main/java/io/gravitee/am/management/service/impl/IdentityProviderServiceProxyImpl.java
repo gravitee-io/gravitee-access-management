@@ -24,6 +24,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -115,8 +116,9 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     @Override
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal, system)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(new Reference(referenceType, referenceId)).identityProvider(identityProvider1)))
+                .flatMap(created -> filterSensitiveData(created, MaskingMode.ALWAYS)
+                        .doOnSuccess(audited -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(new Reference(referenceType, referenceId)).identityProvider(audited)))
+                        .flatMap(audited -> maskedForResponse(created, audited)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
@@ -132,12 +134,13 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderService.findById(id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
                 .doOnError(err -> auditService.report(audit.get().throwable(err)))
-                .flatMap(oldIdP -> filterSensitiveData(oldIdP)
+                .flatMap(oldIdP -> filterSensitiveData(oldIdP, MaskingMode.ALWAYS)
                         .doOnError(err -> auditService.report(audit.get().throwable(err)))
                         .flatMap(safeOldIdp -> updateSensitiveData(updateIdentityProvider, oldIdP)
                                 .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal, isUpgrader))
-                                .flatMap(this::filterSensitiveData)
-                                .doOnSuccess(updated -> auditService.report(audit.get().oldValue(safeOldIdp).identityProvider(updated)))
+                                .flatMap(updated -> filterSensitiveData(updated, MaskingMode.ALWAYS)
+                                        .doOnSuccess(audited -> auditService.report(audit.get().oldValue(safeOldIdp).identityProvider(audited)))
+                                        .flatMap(audited -> maskedForResponse(updated, audited)))
                                 .doOnError(err -> auditService.report(audit.get().oldValue(safeOldIdp).throwable(err)))
                         )
                 );
@@ -146,8 +149,10 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     @Override
     public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
-        return identityProviderService.create(domain, newIdentityProvider, principal, system)                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
+        return identityProviderService.create(domain, newIdentityProvider, principal, system)
+                .flatMap(created -> filterSensitiveData(created, MaskingMode.ALWAYS)
+                        .doOnSuccess(audited -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(audited)))
+                        .flatMap(audited -> maskedForResponse(created, audited)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(domain.asReference()).throwable(throwable)));
     }
 
@@ -187,6 +192,14 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     @Override
     public Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
+        return filterSensitiveData(idp, getMaskingMode());
+    }
+
+    private Single<IdentityProvider> maskedForResponse(IdentityProvider stored, IdentityProvider maskedAlways) {
+        return getMaskingMode() == MaskingMode.ALWAYS ? Single.just(maskedAlways) : filterSensitiveData(stored);
+    }
+
+    private Single<IdentityProvider> filterSensitiveData(IdentityProvider idp, MaskingMode mode) {
         return identityProviderPluginService.getSchema(idp.getType())
                 .map(Optional::ofNullable)
                 .defaultIfEmpty(Optional.empty())
@@ -199,14 +212,15 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
                         if (KERBEROS_AM_IDP.equals(filteredEntity.getType())) {
                             this.filterNestedSensitiveData(schemaNode, configurationNode,
                                     "/properties/ldapConfig",
-                                    "/ldapConfig"
+                                    "/ldapConfig",
+                                    mode
                             );
                         }
                         // We enforce sensitive data filtering on Inline User Passwords
                         if (INLINE_AM_IDP.equals(filteredEntity.getType())) {
                             filterSensitiveInlineIdpData(configurationNode);
                         }
-                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration, mode);
                     } else {
                         // not schema for the IDP, remove all the configuration to avoid sensitive data leak
                         // this case may happen when the plugin zip file has been removed from the plugins directory

@@ -26,6 +26,7 @@ export const SENSITIVE_VALUES_TEST = {
   MASK: '********',
   PASSWORD: 'Sensitive-P@ssw0rd',
   MASKED_URI: 'mongodb://am:********@localhost:27017/gravitee-am',
+  URI_WITHOUT_PASSWORD: 'mongodb://localhost:27017/gravitee-am',
 } as const;
 
 export const newKey = (prefix: string) => uniqueName(prefix, true).toLowerCase();
