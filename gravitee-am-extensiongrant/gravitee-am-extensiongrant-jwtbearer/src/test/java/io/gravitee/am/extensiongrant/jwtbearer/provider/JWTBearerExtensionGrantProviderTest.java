@@ -18,8 +18,10 @@ package io.gravitee.am.extensiongrant.jwtbearer.provider;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantRequest;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
@@ -777,6 +779,65 @@ public class JWTBearerExtensionGrantProviderTest {
         testObserver.assertComplete()
                 .assertNoErrors()
                 .assertValue(Objects::nonNull);
+    }
+
+    @Test
+    public void shouldGrantWithAtJwtTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final ExtensionGrantRequest grantRequest = request(hs256Assertion("at+jwt"));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(result -> "1234567890".equals(result.endUser().getId()));
+    }
+
+    @Test
+    public void shouldGrantWithApplicationAtJwtTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final ExtensionGrantRequest grantRequest = request(hs256Assertion("application/at+jwt"));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(result -> "1234567890".equals(result.endUser().getId()));
+    }
+
+    @Test
+    public void shouldGrantWithoutTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final ExtensionGrantRequest grantRequest = request(hs256Assertion(null));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(result -> "1234567890".equals(result.endUser().getId()));
+    }
+
+    @Test
+    public void shouldRejectUnsupportedTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final ExtensionGrantRequest grantRequest = request(hs256Assertion("dpop+jwt"));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(grantRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertError(error -> error instanceof InvalidGrantException
+                && "JOSE header typ (type) dpop+jwt not allowed".equals(error.getMessage()));
+    }
+
+    private static String hs256Assertion(String typ) throws Exception {
+        SignedJWT jwt = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.HS256).type(typ == null ? null : new JOSEObjectType(typ)).build(),
+                new JWTClaimsSet.Builder().subject("1234567890").build());
+        jwt.sign(new MACSigner(HMAC_256_SECRET.getBytes()));
+        return jwt.serialize();
     }
 
     /**
