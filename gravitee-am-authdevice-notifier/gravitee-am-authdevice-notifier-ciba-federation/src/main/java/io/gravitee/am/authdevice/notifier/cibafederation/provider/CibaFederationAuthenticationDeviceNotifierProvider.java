@@ -83,6 +83,7 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         p.store = store; p.poller = poller; p.vertx = vertx;
         p.maxLifetimeSeconds = maxLifetimeSeconds; p.wired = true;
         p.consentRelayContext = new ConsentRelayContext(null);
+        p.configuration = new CibaFederationAuthenticationDeviceNotifierConfiguration();
         return p;
     }
 
@@ -170,7 +171,7 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
             throw new IllegalStateException(ClientAuthentication.unsupportedMessage(configuration.getCallbackClientAuthMethod()));
         }
         if (!isBlank(configuration.getCallbackUrl())) {
-            requireCallbackUrl(configuration.getCallbackUrl());
+            validateCallbackUrl(configuration.getCallbackUrl());
         }
     }
 
@@ -178,7 +179,7 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         return s == null || s.isBlank();
     }
 
-    private static void requireCallbackUrl(String url) {
+    private static void validateCallbackUrl(String url) {
         final URL parsed;
         try {
             parsed = new URI(url).toURL();
@@ -205,12 +206,12 @@ public class CibaFederationAuthenticationDeviceNotifierProvider
         final FederatedConnection conn = Objects.requireNonNull(request.getConnection(),
                 "FederatedConnection must be supplied by the gateway");
         final String tid = Objects.requireNonNull(request.getTransactionId(), "transactionId must not be null");
-        final String configuredCallbackUrl = configuration != null ? configuration.getCallbackUrl() : null;
+        final String configuredCallbackUrl = configuration.getCallbackUrl();
         final String callbackUrl = hasText(configuredCallbackUrl) ? configuredCallbackUrl
                 : Objects.requireNonNull(request.getCallbackUrl(), "callbackUrl must be supplied by the gateway on ADNotificationRequest");
         final java.util.List<java.util.Map<String, Object>> rar = request.getAuthorizationDetails();
         final String scope = conn.scope();
-        final String resourceAudience = configuration != null ? configuration.getResourceAudience() : null;
+        final String resourceAudience = configuration.getResourceAudience();
         // Y flow: resolve provider metadata once (issuer + endpoints), PREPARE (both IdP-adapter
         // transforms) with it, then hand a fully-formed request to pure transport.
         return discoveryResolver.resolve(conn.wellKnownUri()).flatMap(metadata -> {
