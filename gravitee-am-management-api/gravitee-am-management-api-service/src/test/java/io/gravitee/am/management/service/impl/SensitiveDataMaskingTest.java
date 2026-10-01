@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
+import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -417,6 +418,52 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
             node.get("users").forEach(user -> ((ObjectNode) user).put("password", SENSITIVE_VALUE));
             return node.toString();
         });
+    }
+
+    @Test
+    public void shouldMaskAbsentSensitiveValue_whenMaskingAlways() throws Exception {
+        assertMasked(MaskingMode.ALWAYS, "{\"label\":\"x\"}", "{\"label\":\"x\",\"password\":\"" + SENSITIVE_VALUE + "\"}");
+    }
+
+    @Test
+    public void shouldOmitAbsentSensitiveValues_whenMaskingPresentOnly() throws Exception {
+        assertMasked(MaskingMode.PRESENT_ONLY, "{\"label\":\"x\"}", "{\"label\":\"x\"}");
+    }
+
+    @Test
+    public void shouldOmitNullSensitiveValues_whenMaskingPresentOnly() throws Exception {
+        assertMasked(MaskingMode.PRESENT_ONLY, "{\"label\":\"x\",\"password\":null,\"uri\":null}", "{\"label\":\"x\"}");
+    }
+
+    @Test
+    public void shouldKeepEmptySensitiveValue_whenMaskingPresentOnly() throws Exception {
+        assertMasked(MaskingMode.PRESENT_ONLY, "{\"password\":\"\"}", "{\"password\":\"\"}");
+    }
+
+    @Test
+    public void shouldMaskSetSensitiveValue_whenMaskingPresentOnly() throws Exception {
+        assertMasked(MaskingMode.PRESENT_ONLY, "{\"password\":\"secret\"}", "{\"password\":\"" + SENSITIVE_VALUE + "\"}");
+    }
+
+    @Test
+    public void shouldMaskOnlyTheUriPassword_whenMaskingPresentOnly() throws Exception {
+        assertMasked(MaskingMode.PRESENT_ONLY, "{\"uri\":\"" + URI_WITH_CREDENTIALS + "\"}", "{\"uri\":\"" + URI_WITH_MASKED_PWD + "\"}");
+        assertMasked(MaskingMode.PRESENT_ONLY, "{\"uri\":\"" + URI_WITH_USERNAME + "\"}", "{\"uri\":\"" + URI_WITH_USERNAME + "\"}");
+    }
+
+    @Test
+    public void shouldOmitAbsentNestedSensitiveValue_whenMaskingPresentOnly() throws Exception {
+        JsonNode config = objectMapper.readTree("{\"ldapConfig\":{\"url\":\"ldap://ldap:389\"}}");
+
+        filterNestedSensitiveData(objectMapper.readTree(NESTED_SCHEMA), config, "/properties/ldapConfig", "/ldapConfig", MaskingMode.PRESENT_ONLY);
+
+        assertEquals(objectMapper.readTree("{\"ldapConfig\":{\"url\":\"ldap://ldap:389\"}}"), config);
+    }
+
+    private void assertMasked(MaskingMode mode, String configuration, String expected) throws Exception {
+        String[] masked = new String[1];
+        filterSensitiveData(objectMapper.readTree(PROBED_SCHEMA), objectMapper.readTree(configuration), maskedConfig -> masked[0] = maskedConfig, mode);
+        assertEquals(objectMapper.readTree(expected), objectMapper.readTree(masked[0]));
     }
 
     private void assertUriEquals(String message, String expectedValue, String processedConfig) {

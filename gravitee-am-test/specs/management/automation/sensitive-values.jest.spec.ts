@@ -15,7 +15,9 @@
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
-import { buildAutomationCertificateDef } from './fixtures/automation-definitions';
+import { listDomains } from '@management-commands/domain-management-commands';
+import { getAllIdps, getIdp, updateIdp } from '@management-commands/idp-management-commands';
+import { buildAutomationCertificateDef, buildAutomationReporterDef } from './fixtures/automation-definitions';
 import {
   configurationOf,
   buildMongoIdpDef,
@@ -29,7 +31,7 @@ import {
 
 setup(120000);
 
-const { MASK, MASKED_URI, PASSWORD } = SENSITIVE_VALUES_TEST;
+const { MASK, MASKED_URI, PASSWORD, URI_WITHOUT_PASSWORD } = SENSITIVE_VALUES_TEST;
 
 let fixture: SensitiveValuesFixture;
 
@@ -93,6 +95,62 @@ describe('Automation API - masked passwords in connection URIs', () => {
     expect(response.status).toBe(400);
     expect(JSON.stringify(response.body)).toContain("'configuration/uri' holds a masked password");
     expect((await fixture.client.getIdentity(fixture.domainKey, key)).status).toBe(404);
+  });
+});
+
+describe('Automation API - unset sensitive values', () => {
+  const putMongoIdp = async (key: string) => {
+    const response = await fixture.putIdentity(buildMongoIdpDef(key, URI_WITHOUT_PASSWORD));
+    expect(response.status).toBe(200);
+    return response;
+  };
+
+  it('should omit an unset secret from an identity provider', async () => {
+    const key = newKey('unsetidp');
+
+    const put = await putMongoIdp(key);
+    const get = await fixture.client.getIdentity(fixture.domainKey, key);
+
+    [put, get].forEach(({ body }) => {
+      expect(configurationOf(body)).not.toHaveProperty('passwordCredentials');
+      expect(configurationOf(body).uri).toEqual(URI_WITHOUT_PASSWORD);
+    });
+  });
+
+  it('should keep omitting an unset secret once its GET response is applied back', async () => {
+    const key = newKey('unsetidp');
+    await putMongoIdp(key);
+    const { body } = await fixture.client.getIdentity(fixture.domainKey, key);
+
+    const applied = await fixture.putIdentity({ key, name: body.name, type: body.type, configuration: body.configuration });
+
+    expect(applied.status).toBe(200);
+    expect(configurationOf((await fixture.client.getIdentity(fixture.domainKey, key)).body)).not.toHaveProperty('passwordCredentials');
+  });
+
+  it('should omit a secret the Management API stored as null', async () => {
+    const key = newKey('unsetidp');
+    const { body } = await putMongoIdp(key);
+    const [domain] = (await listDomains(fixture.accessToken, { q: `Automation Domain ${fixture.domainKey}` })).data;
+    const idp = (await getAllIdps(domain.id, fixture.accessToken)).find((candidate) => candidate.name === body.name);
+    const managed = await getIdp(domain.id, fixture.accessToken, idp.id);
+    expect(JSON.parse(managed.configuration).passwordCredentials).toEqual(MASK);
+
+    await updateIdp(
+      domain.id,
+      fixture.accessToken,
+      { name: managed.name, type: managed.type, configuration: managed.configuration },
+      idp.id,
+    );
+
+    expect(configurationOf((await fixture.client.getIdentity(fixture.domainKey, key)).body)).not.toHaveProperty('passwordCredentials');
+  });
+
+  it('should omit an unset secret from a reporter', async () => {
+    const response = await fixture.putReporter(buildAutomationReporterDef({ key: newKey('unsetrep') }));
+
+    expect(response.status).toBe(200);
+    expect(configurationOf(response.body)).not.toHaveProperty('password');
   });
 });
 

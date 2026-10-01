@@ -21,6 +21,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
@@ -150,11 +151,12 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     @Override
     public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal) {
         return certificateService.create(domain, newCertificate, principal, false)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.CERTIFICATE_CREATED)
-                        .certificate(certificate)))
+                .flatMap(created -> filterSensitiveData(created, MaskingMode.ALWAYS)
+                        .doOnSuccess(audited -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.CERTIFICATE_CREATED)
+                                .certificate(audited)))
+                        .flatMap(audited -> maskedForResponse(created, audited)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.CERTIFICATE_CREATED)
@@ -174,12 +176,13 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
         return certificateService.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .doOnError(err -> auditService.report(audit.get().throwable(err)))
-                .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
+                .flatMap(oldCertificate -> filterSensitiveData(oldCertificate, MaskingMode.ALWAYS)
                         .doOnError(err -> auditService.report(audit.get().throwable(err)))
                         .flatMap(safeOldCert -> updateSensitiveData(updateCertificate, oldCertificate)
                                 .flatMap(certificateToUpdate -> certificateService.update(domain, id, certificateToUpdate, principal))
-                                .flatMap(this::filterSensitiveData)
-                                .doOnSuccess(updated -> auditService.report(audit.get().oldValue(safeOldCert).certificate(updated)))
+                                .flatMap(updated -> filterSensitiveData(updated, MaskingMode.ALWAYS)
+                                        .doOnSuccess(audited -> auditService.report(audit.get().oldValue(safeOldCert).certificate(audited)))
+                                        .flatMap(audited -> maskedForResponse(updated, audited)))
                                 .doOnError(err -> auditService.report(audit.get().oldValue(safeOldCert).throwable(err)))
                         )
                 );
@@ -207,13 +210,21 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
     @Override
     public Single<Certificate> filterSensitiveData(Certificate cert) {
+        return filterSensitiveData(cert, getMaskingMode());
+    }
+
+    private Single<Certificate> maskedForResponse(Certificate stored, Certificate maskedAlways) {
+        return getMaskingMode() == MaskingMode.ALWAYS ? Single.just(maskedAlways) : filterSensitiveData(stored);
+    }
+
+    private Single<Certificate> filterSensitiveData(Certificate cert, MaskingMode mode) {
         return certificatePluginService.getSchema(cert.getType())
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new Certificate(cert);
                     var schemaNode = objectMapper.readTree(schema);
                     var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration, mode);
                     return filteredEntity;
                 })
                 .switchIfEmpty(Single.fromSupplier(() -> {

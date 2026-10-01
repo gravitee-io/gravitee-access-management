@@ -20,6 +20,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
+import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
@@ -89,16 +90,18 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     @Override
     public Single<Reporter> create(Reference reference, NewReporter newReporter, User principal, boolean system) {
         return reporterService.create(reference, newReporter, principal, system)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
+                .flatMap(created -> filterSensitiveData(created, MaskingMode.ALWAYS)
+                        .doOnSuccess(audited -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(audited)))
+                        .flatMap(audited -> maskedForResponse(created, audited)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reference(reference).throwable(throwable)));
     }
 
     @Override
     public Single<Reporter> createSystem(Reference reference, String id, String automationKey, User principal) {
         return reporterService.createSystem(reference, id, automationKey, principal)
-                .flatMap(this::filterSensitiveData)
-                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
+                .flatMap(created -> filterSensitiveData(created, MaskingMode.ALWAYS)
+                        .doOnSuccess(audited -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(audited)))
+                        .flatMap(audited -> maskedForResponse(created, audited)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reference(reference).throwable(throwable)));
     }
 
@@ -115,13 +118,14 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
                 .doOnError(throwable -> auditService.report(baseAudit.get().throwable(throwable)))
                 .flatMap(oldReporter ->
-                        filterSensitiveData(oldReporter)
+                        filterSensitiveData(oldReporter, MaskingMode.ALWAYS)
                                 .doOnError(throwable -> auditService.report(baseAudit.get().throwable(throwable)))
                                 .flatMap(safeOldReporter ->
                                         updateSensitiveData(updateReporter, oldReporter)
                                                 .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal, isUpgrader))
-                                                .flatMap(this::filterSensitiveData)
-                                                .doOnSuccess(updatedReporter -> auditService.report(baseAudit.get().oldValue(safeOldReporter).reporter(updatedReporter)))
+                                                .flatMap(updated -> filterSensitiveData(updated, MaskingMode.ALWAYS)
+                                                        .doOnSuccess(audited -> auditService.report(baseAudit.get().oldValue(safeOldReporter).reporter(audited)))
+                                                        .flatMap(audited -> maskedForResponse(updated, audited)))
                                                 .doOnError(throwable -> auditService.report(baseAudit.get().oldValue(safeOldReporter).throwable(throwable)))
                                 )
                 );
@@ -148,6 +152,14 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
 
     @Override
     public Single<Reporter> filterSensitiveData(Reporter reporter) {
+        return filterSensitiveData(reporter, getMaskingMode());
+    }
+
+    private Single<Reporter> maskedForResponse(Reporter stored, Reporter maskedAlways) {
+        return getMaskingMode() == MaskingMode.ALWAYS ? Single.just(maskedAlways) : filterSensitiveData(stored);
+    }
+
+    private Single<Reporter> filterSensitiveData(Reporter reporter, MaskingMode mode) {
         return reporterPluginService.getSchema(reporter.getType())
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
@@ -158,7 +170,7 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
                     if (schema.isPresent()) {
                         var schemaNode = objectMapper.readTree(schema.get());
                         var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
-                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration, mode);
                     } else {
                         // not schema , remove all the configuration to avoid sensitive data leak
                         // this case may happen when the plugin zip file has been removed from the plugins directory
