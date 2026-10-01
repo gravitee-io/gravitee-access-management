@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
@@ -808,6 +813,69 @@ public class JWTBearerExtensionGrantProviderTest {
     /**
      * Test RSA-PSS with SHA-512 (PS512) using SSH public key format.
      */
+    @Test
+    public void shouldGrantWithAtJwtTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", hs256Assertion("at+jwt")));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(user -> "1234567890".equals(user.getId()));
+    }
+
+    @Test
+    public void shouldGrantWithApplicationAtJwtTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", hs256Assertion("application/at+jwt")));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(user -> "1234567890".equals(user.getId()));
+    }
+
+    @Test
+    public void shouldGrantWithoutTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", hs256Assertion(null)));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertComplete()
+                .assertNoErrors()
+                .assertValue(user -> "1234567890".equals(user.getId()));
+    }
+
+    @Test
+    public void shouldRejectUnsupportedTyp() throws Exception {
+        when(jwtBearerTokenGranterConfiguration.getPublicKey()).thenReturn(HMAC_256_SECRET);
+
+        final TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setRequestParameters(Map.of("assertion", hs256Assertion("dpop+jwt")));
+
+        var testObserver = jwtBearerExtensionGrantProvider.grant(tokenRequest).test();
+        testObserver.await(10, TimeUnit.SECONDS);
+        testObserver.assertError(error -> error instanceof InvalidGrantException
+                && "JOSE header typ (type) dpop+jwt not allowed".equals(error.getMessage()));
+    }
+
+    private static String hs256Assertion(String typ) throws Exception {
+        SignedJWT jwt = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.HS256).type(typ == null ? null : new JOSEObjectType(typ)).build(),
+                new JWTClaimsSet.Builder().subject("1234567890").build());
+        jwt.sign(new MACSigner(HMAC_256_SECRET.getBytes()));
+        return jwt.serialize();
+    }
+
     @Test
     public void must_grant_with_ps512_ssh_key() throws Exception {
         when(jwtBearerTokenGranterConfiguration.getPublicKeyResolver()).thenReturn(JWTBearerExtensionGrantConfiguration.KeyResolver.GIVEN_KEY);
