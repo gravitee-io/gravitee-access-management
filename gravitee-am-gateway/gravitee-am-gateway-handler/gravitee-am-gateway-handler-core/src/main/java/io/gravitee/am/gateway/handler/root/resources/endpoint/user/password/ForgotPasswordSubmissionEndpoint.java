@@ -28,6 +28,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.MultiMap;
@@ -76,7 +77,9 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
                             resetCookieSession(context);
                             // we don't want to expose potential security leaks such as guessing existing users
                             // the actual error continue to be stored in the audit logs
-                            if (error instanceof UserNotFoundException || error instanceof AccountStatusException) {
+                            if (error instanceof UserNotFoundException ||
+                                    error instanceof UserInvalidException ||
+                                    error instanceof AccountStatusException) {
                                 queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
                                 redirectToPage(context, queryParams);
                             } else if (error instanceof EnforceUserIdentityException) {
