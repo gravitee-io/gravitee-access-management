@@ -15,13 +15,26 @@
  */
 package io.gravitee.am.management.handlers.automation.spring;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.automation.resource.AutomationResourceResolver;
 import io.gravitee.am.management.handlers.automation.spring.security.AutomationSecurityConfiguration;
+import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.MaskingMode;
+import io.gravitee.am.management.service.ReporterServiceProxy;
+import io.gravitee.am.management.service.impl.CertificateServiceProxyImpl;
+import io.gravitee.am.management.service.impl.IdentityProviderServiceProxyImpl;
+import io.gravitee.am.management.service.impl.ReporterServiceProxyImpl;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -53,5 +66,35 @@ public class AutomationConfiguration {
             DataPlaneDefinitionService dataPlaneDefinitionService) {
         return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
                 dataPlaneDefinitionService);
+    }
+
+    // Each proxy bean takes the name of the management API's, which it hides in this context.
+
+    @Bean
+    public IdentityProviderServiceProxy identityProviderServiceProxyImpl() {
+        var proxy = new IdentityProviderServiceProxyImpl();
+        proxy.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        return proxy;
+    }
+
+    @Bean
+    public CertificateServiceProxy certificateServiceProxyImpl(CertificateService certificateService,
+            IdentityProviderService identityProviderService,
+            ApplicationService applicationService,
+            CertificatePluginService certificatePluginService,
+            AuditService auditService,
+            ObjectMapper objectMapper,
+            @Qualifier("certificateNotifierSettings") NotifierSettings certificateNotifierSettings) {
+        var proxy = new CertificateServiceProxyImpl(certificateService, identityProviderService, applicationService,
+                certificatePluginService, auditService, objectMapper, certificateNotifierSettings);
+        proxy.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        return proxy;
+    }
+
+    @Bean
+    public ReporterServiceProxy reporterServiceProxyImpl() {
+        var proxy = new ReporterServiceProxyImpl();
+        proxy.setMaskingMode(MaskingMode.PRESENT_ONLY);
+        return proxy;
     }
 }

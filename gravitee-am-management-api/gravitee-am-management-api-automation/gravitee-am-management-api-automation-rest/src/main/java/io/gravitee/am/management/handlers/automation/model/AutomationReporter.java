@@ -64,7 +64,8 @@ public class AutomationReporter implements DryRunResult {
 
     @Schema(description = "Plugin-specific configuration as a JSON-encoded string. Its shape is defined by " +
             "the selected reporter type." +
-            " Sensitive values, as flagged by the plugin, are returned as ******** in every response. " +
+            " Sensitive values, as flagged by the plugin, are returned as ******** in every response; an unset " +
+            "sensitive value is omitted. " +
             "Sending ******** back on update keeps the stored value; sending it on create is rejected.",
             example = "{\"bootstrapServers\":\"kafka:9092\",\"topic\":\"audit\"}")
     private String configuration;
