@@ -67,6 +67,19 @@ public abstract class AbstractSensitiveProxy {
 
     private static final ObjectMapper MASKED_VALUE_MAPPER = new ObjectMapper();
 
+    private MaskingMode maskingMode = MaskingMode.ALWAYS;
+
+    /**
+     * How this proxy masks the entities it returns; audit events are always masked {@link MaskingMode#ALWAYS}.
+     */
+    public MaskingMode getMaskingMode() {
+        return maskingMode;
+    }
+
+    public void setMaskingMode(MaskingMode maskingMode) {
+        this.maskingMode = maskingMode;
+    }
+
     /**
      * Parse a user-supplied plugin configuration, surfacing a missing or malformed configuration as a
      * {@link InvalidPluginConfigurationException}.
@@ -87,10 +100,25 @@ public abstract class AbstractSensitiveProxy {
             JsonNode configurationNode,
             Consumer<String> configurationSetter
     ) {
+        filterSensitiveData(schemaNode, configurationNode, configurationSetter, MaskingMode.ALWAYS);
+    }
+
+    protected void filterSensitiveData(
+            JsonNode schemaNode,
+            JsonNode configurationNode,
+            Consumer<String> configurationSetter,
+            MaskingMode mode
+    ) {
         if (schemaNode.has(PROPERTIES_SCHEMA_KEY) && configurationNode.isObject()) {
             var properties = schemaNode.get(PROPERTIES_SCHEMA_KEY).fields();
             properties.forEachRemaining(entry -> {
-                if (isSensitive(entry)) {
+                final JsonNode value = configurationNode.get(entry.getKey());
+                if (mode == MaskingMode.PRESENT_ONLY && (isSensitive(entry) || isSensitiveUri(entry))
+                        && (value == null || value.isNull())) {
+                    ((ObjectNode) configurationNode).remove(entry.getKey());
+                    return;
+                }
+                if (isSensitive(entry) && (mode == MaskingMode.ALWAYS || !isEmptyText(value))) {
                     ((ObjectNode) configurationNode).put(entry.getKey(), SENSITIVE_VALUE);
                 }
                 if (isSensitiveUri(entry) && configurationNode.get(entry.getKey()) instanceof TextNode) {
@@ -110,12 +138,22 @@ public abstract class AbstractSensitiveProxy {
             String nestedSchemaPath,
             String nestedConfigPath
     ) {
+        filterNestedSensitiveData(schemaNode, configurationNode, nestedSchemaPath, nestedConfigPath, MaskingMode.ALWAYS);
+    }
+
+    protected void filterNestedSensitiveData(
+            JsonNode schemaNode,
+            JsonNode configurationNode,
+            String nestedSchemaPath,
+            String nestedConfigPath,
+            MaskingMode mode
+    ) {
         var nestedSchemaNode = schemaNode.at(nestedSchemaPath);
         var nestedConfigNode = configurationNode.at(nestedConfigPath);
         // We use an empty Consumer because we only update the nested object
         // The update will be made at top level config
         this.filterSensitiveData(nestedSchemaNode, nestedConfigNode, str -> {
-        });
+        }, mode);
     }
 
     protected void updateSensitiveData(
@@ -296,6 +334,10 @@ public abstract class AbstractSensitiveProxy {
                 : "holds a masked password";
         return new InvalidParameterException("Field 'configuration" + path + "' " + problem
                 + "; supply the secret itself. A masked value only keeps an existing secret when updating");
+    }
+
+    private static boolean isEmptyText(JsonNode value) {
+        return value.isTextual() && value.asText().isEmpty();
     }
 
     protected boolean isSensitive(Entry<String, JsonNode> entry) {

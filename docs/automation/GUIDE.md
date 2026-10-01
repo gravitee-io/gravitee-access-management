@@ -167,11 +167,14 @@ verbatim on `GET`. Use `id:<uuid>` here to reference a brownfield resource that 
 
 An Identity Provider, Certificate or Reporter `configuration` can hold secrets: client secrets, bind
 passwords, keystore passwords and files, inline user passwords. The plugin flags which fields are
-sensitive, and the Automation API masks them exactly as the Management API does:
+sensitive, and the Automation API masks them:
 
 - **Responses never contain a secret.** `GET`, list and `PUT` responses replace each sensitive value
-  with `********`. Secret references such as `{#secrets.get('/vault/...')}` are masked too. In a
-  connection URI, only the password is masked: `mongodb://user:********@host/db`.
+  that is set with `********`. Secret references such as `{#secrets.get('/vault/...')}` are masked too.
+  In a connection URI, only the password is masked: `mongodb://user:********@host/db`.
+- **An unset secret reads back unset.** A sensitive field that is absent or `null` is left out of the
+  response, and an empty one is returned empty, so a `GET` matches a manifest that omits an optional
+  secret. The Management API returns `********` for these fields.
 - **On update, `********` keeps the stored value.** A `PUT` that sends a sensitive field as `********`
   (any run of asterisks), or a URI with `********` as its password, leaves that secret as it is, so a
   `GET`-edit-`PUT` never erases it. Send the real value to change it.
