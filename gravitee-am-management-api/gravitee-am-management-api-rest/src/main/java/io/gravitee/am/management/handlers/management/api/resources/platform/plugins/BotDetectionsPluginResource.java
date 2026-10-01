@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Bot Detection")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "bot-detection")})
 public class BotDetectionsPluginResource {
 
     @Context

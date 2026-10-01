@@ -37,7 +37,7 @@ import jakarta.ws.rs.core.Response;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Bot Detection")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "bot-detection")})
 public class BotDetectionPluginResource {
 
     @Context

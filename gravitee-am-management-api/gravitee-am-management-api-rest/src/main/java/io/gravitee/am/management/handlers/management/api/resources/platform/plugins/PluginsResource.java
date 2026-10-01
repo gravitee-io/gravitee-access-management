@@ -25,7 +25,7 @@ import jakarta.ws.rs.core.Context;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin")})
+@Tags({@Tag(name= "plugin")})
 public class PluginsResource {
 
     @Context

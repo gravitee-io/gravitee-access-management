@@ -55,7 +55,7 @@ import java.net.URI;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "bot detection")
+@Tag(name = "bot-detection")
 public class BotDetectionsResource extends AbstractResource {
 
     @Context

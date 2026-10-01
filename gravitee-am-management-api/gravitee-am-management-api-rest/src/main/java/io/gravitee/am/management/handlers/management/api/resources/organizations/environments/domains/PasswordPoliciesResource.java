@@ -65,7 +65,7 @@ import static java.util.Comparator.nullsLast;
  * @author Rafal PODLES (rafal.podles at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "Password Policy")
+@Tag(name = "password-policy")
 @Slf4j
 public class PasswordPoliciesResource extends AbstractDomainResource {
 

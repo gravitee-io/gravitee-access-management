@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "dataPlane")
+@Tag(name = "data-plane")
 public class DataPlanesResource extends AbstractResource {
 
     @Autowired

@@ -37,7 +37,7 @@ import jakarta.ws.rs.core.Response;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Device Identifier")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "device-identifier")})
 public class DeviceIdentifierPluginResource {
 
     @Context

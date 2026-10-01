@@ -55,7 +55,8 @@ import java.net.URI;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "device identifiers")
+@Tag(name = "device-identifiers", description = "Deprecated, use 'device-identifier'")
+@Tag(name = "device-identifier")
 public class DeviceIdentifiersResource extends AbstractResource {
 
     @Context

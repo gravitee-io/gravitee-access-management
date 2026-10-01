@@ -57,7 +57,7 @@ import java.net.URI;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "identity provider")
+@Tag(name = "identity-provider")
 public class IdentityProvidersResource extends AbstractResource {
 
     @Context

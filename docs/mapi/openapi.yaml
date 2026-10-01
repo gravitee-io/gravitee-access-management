@@ -23,40 +23,34 @@ servers:
 security:
 - gravitee-auth: []
 tags:
-- name: Authentication Device Notifier
-- name: Bot Detection
-- name: Certificate
-- name: Device Identifier
-- name: Extension Grant
-- name: Factor
-- name: Identity Provider
-- name: Newsletter
-- name: Notifier
-- name: Password Policy
-- name: Plugin
-- name: Policy
-- name: Reporter
-- name: Resource
 - name: alerts
 - name: application
 - name: audit
-- name: bot detection
+- name: authentication-device-notifier
+- name: bot-detection
 - name: certificate
+- name: data-plane
 - name: data-sources
-- name: dataPlane
-- name: device identifiers
+- name: device-identifier
+- name: device-identifiers
+  description: "Deprecated, use 'device-identifier'"
 - name: devices
 - name: dictionary
 - name: domain
 - name: email
 - name: entrypoints
-- name: extension grant
+- name: extension-grant
 - name: factor
 - name: flow
 - name: form
 - name: group
-- name: identity provider
+- name: identity-provider
+- name: newsletter
+- name: notifier
+- name: password-policy
 - name: platform
+- name: plugin
+- name: policy
 - name: preview
 - name: reporter
 - name: resource
@@ -65,7 +59,7 @@ tags:
 - name: sharding-tags
 - name: theme
 - name: user
-- name: user notifications
+- name: user-notifications
 paths:
   /organizations/{organizationId}/audits:
     get:
@@ -319,7 +313,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/data-planes:
     get:
       tags:
-      - dataPlane
+      - data-plane
       summary: List of data planes
       description: "List all the data planes accessible to the current user. User\
         \ must have DATA_PLANE[READ] permission on the specified environment or organization"
@@ -2616,7 +2610,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers:
     get:
       tags:
-      - Authentication Device Notifier
+      - authentication-device-notifier
       - domain
       summary: List registered Authentication Device Notifiers for a security domain
       description: "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission\
@@ -2655,7 +2649,7 @@ paths:
           description: Internal server error
     post:
       tags:
-      - Authentication Device Notifier
+      - authentication-device-notifier
       - domain
       summary: Create an Authentication Device Notifier
       description: "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission\
@@ -2693,7 +2687,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers/{authDeviceNotifier}:
     get:
       tags:
-      - Authentication Device Notifier
+      - authentication-device-notifier
       - domain
       summary: Get an Authentication Device Notifier
       description: "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission\
@@ -2733,7 +2727,7 @@ paths:
           description: Internal server error
     put:
       tags:
-      - Authentication Device Notifier
+      - authentication-device-notifier
       - domain
       summary: Update an Authentication Device Notifier
       description: "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission\
@@ -2779,7 +2773,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - Authentication Device Notifier
+      - authentication-device-notifier
       - domain
       summary: Delete an Authentication Device Notifier
       description: "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission\
@@ -2816,7 +2810,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections:
     get:
       tags:
-      - bot detection
+      - bot-detection
       - domain
       summary: List registered bot detections for a security domain
       description: "User must have the DOMAIN_BOT_DETECTION[LIST] permission on the\
@@ -2854,7 +2848,7 @@ paths:
           description: Internal server error
     post:
       tags:
-      - bot detection
+      - bot-detection
       - domain
       summary: Create a bot detection
       description: "User must have the DOMAIN_BOT_DETECTION[CREATE] permission on\
@@ -2896,7 +2890,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections/{botDetection}:
     get:
       tags:
-      - bot detection
+      - bot-detection
       - domain
       summary: Get a bot detection
       description: "User must have the DOMAIN_BOT_DETECTION[READ] permission on the\
@@ -2935,7 +2929,7 @@ paths:
           description: Internal server error
     put:
       tags:
-      - bot detection
+      - bot-detection
       - domain
       summary: Update a bot detection
       description: "User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on\
@@ -2981,7 +2975,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - bot detection
+      - bot-detection
       - domain
       summary: Delete a bot detection
       description: "User must have the DOMAIN_BOT_DETECTION[DELETE] permission on\
@@ -3340,7 +3334,8 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers:
     get:
       tags:
-      - device identifiers
+      - device-identifiers
+      - device-identifier
       - domain
       summary: List registered device identifiers for a security domain
       description: "User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission\
@@ -3378,7 +3373,8 @@ paths:
           description: Internal server error
     post:
       tags:
-      - device identifiers
+      - device-identifiers
+      - device-identifier
       - domain
       summary: Create a device identifier
       description: "User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission\
@@ -3420,7 +3416,8 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}:
     get:
       tags:
-      - device identifiers
+      - device-identifiers
+      - device-identifier
       - domain
       summary: Get a Device identifier
       description: "User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on\
@@ -3460,7 +3457,8 @@ paths:
           description: Internal server error
     put:
       tags:
-      - device identifiers
+      - device-identifiers
+      - device-identifier
       - domain
       summary: Update a Device identifier
       description: "User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission\
@@ -3506,7 +3504,8 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - device identifiers
+      - device-identifiers
+      - device-identifier
       - domain
       summary: Delete a Device identifier
       description: "User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission\
@@ -3758,7 +3757,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants:
     get:
       tags:
-      - extension grant
+      - extension-grant
       - domain
       summary: List registered extension grants for a security domain
       description: "User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on\
@@ -3796,7 +3795,7 @@ paths:
           description: Internal server error
     post:
       tags:
-      - extension grant
+      - extension-grant
       - domain
       summary: Create a extension grant
       description: "User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on\
@@ -3838,7 +3837,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants/{extensionGrant}:
     get:
       tags:
-      - extension grant
+      - extension-grant
       - domain
       summary: Get a extension grant
       description: "User must have the DOMAIN_EXTENSION_GRANT[READ] permission on\
@@ -3878,7 +3877,7 @@ paths:
           description: Internal server error
     put:
       tags:
-      - extension grant
+      - extension-grant
       - domain
       summary: Update an extension grant
       description: "User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on\
@@ -3924,7 +3923,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - extension grant
+      - extension-grant
       - domain
       summary: Delete a extension grant
       description: "User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on\
@@ -5279,7 +5278,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/identities:
     get:
       tags:
-      - identity provider
+      - identity-provider
       - domain
       summary: List registered identity providers for a security domain
       description: "User must have the DOMAIN_IDENTITY_PROVIDER[LIST] permission on\
@@ -5321,7 +5320,7 @@ paths:
           description: Internal server error
     post:
       tags:
-      - identity provider
+      - identity-provider
       - domain
       summary: Create an identity provider
       description: "User must have the DOMAIN_IDENTITY_PROVIDER[CREATE] permission\
@@ -5363,7 +5362,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/identities/{identity}:
     get:
       tags:
-      - identity provider
+      - identity-provider
       - domain
       summary: Get an identity provider
       description: "User must have the DOMAIN_IDENTITY_PROVIDER[READ] permission on\
@@ -5403,7 +5402,7 @@ paths:
           description: Internal server error
     put:
       tags:
-      - identity provider
+      - identity-provider
       - domain
       summary: Update an identity provider
       description: "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission\
@@ -5449,7 +5448,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - identity provider
+      - identity-provider
       - domain
       summary: Delete an identity provider
       description: "User must have the DOMAIN_IDENTITY_PROVIDER[DELETE] permission\
@@ -5488,7 +5487,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/identities/{identity}/password-policy:
     put:
       tags:
-      - identity provider
+      - identity-provider
       - domain
       summary: Assign password policy to identity provider
       description: "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission\
@@ -5675,7 +5674,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies:
     get:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       summary: List registered password policies for a security domain
       description: "User must have the DOMAIN_SETTINGS[READ] permission on the specified\
@@ -5711,7 +5710,7 @@ paths:
           description: Internal server error
     post:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       summary: Create a password policy
       description: "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified\
@@ -5752,7 +5751,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies/activePolicy:
     get:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       operationId: getEffectivePasswordPolicy
       parameters:
@@ -5783,7 +5782,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies/{policy}:
     get:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       summary: Read a password policy
       description: "User must have the DOMAIN_SETTINGS[READ] permission on the specified\
@@ -5822,7 +5821,7 @@ paths:
           description: Internal server error
     put:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       summary: Update a password policy
       description: "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified\
@@ -5867,7 +5866,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       summary: Delete a password policy
       description: "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified\
@@ -5903,7 +5902,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies/{policy}/default:
     post:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       summary: Set default policy
       description: "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified\
@@ -5943,7 +5942,7 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/password-policies/{policy}/evaluate:
     post:
       tags:
-      - Password Policy
+      - password-policy
       - domain
       operationId: evaluatePolicy
       parameters:
@@ -8760,7 +8759,7 @@ paths:
   /organizations/{organizationId}/identities:
     get:
       tags:
-      - identity provider
+      - identity-provider
       summary: List registered identity providers of the organization
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission\
         \ on the specified organization. Each returned identity provider is filtered\
@@ -8789,7 +8788,7 @@ paths:
           description: Internal server error
     post:
       tags:
-      - identity provider
+      - identity-provider
       summary: Create an identity provider for the organization
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission\
         \ on the specified organization"
@@ -8814,7 +8813,7 @@ paths:
   /organizations/{organizationId}/identities/{identity}:
     get:
       tags:
-      - identity provider
+      - identity-provider
       summary: Get an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission\
         \ on the specified organization"
@@ -8841,7 +8840,7 @@ paths:
           description: Internal server error
     put:
       tags:
-      - identity provider
+      - identity-provider
       summary: Update an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission\
         \ on the specified organization"
@@ -8874,7 +8873,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-      - identity provider
+      - identity-provider
       summary: Delete an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission\
         \ on the specified organization"
@@ -9910,8 +9909,8 @@ paths:
   /platform/plugins/auth-device-notifiers:
     get:
       tags:
-      - Plugin
-      - Authentication Device Notifier
+      - plugin
+      - authentication-device-notifier
       - platform
       summary: List authentication device notifier plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -9931,8 +9930,8 @@ paths:
   /platform/plugins/auth-device-notifiers/{authDeviceNotifierId}:
     get:
       tags:
-      - Plugin
-      - Authentication Device Notifier
+      - plugin
+      - authentication-device-notifier
       - platform
       summary: Get a Authentication Device Notifier plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -9951,8 +9950,8 @@ paths:
   /platform/plugins/auth-device-notifiers/{authDeviceNotifierId}/schema:
     get:
       tags:
-      - Plugin
-      - Authentication Device Notifier
+      - plugin
+      - authentication-device-notifier
       - platform
       summary: Get an Authentication Device Notifier plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -9971,8 +9970,8 @@ paths:
   /platform/plugins/bot-detections:
     get:
       tags:
-      - Plugin
-      - Bot Detection
+      - plugin
+      - bot-detection
       - platform
       summary: List bot detection plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -9985,8 +9984,8 @@ paths:
   /platform/plugins/bot-detections/{botDetection}:
     get:
       tags:
-      - Plugin
-      - Bot Detection
+      - plugin
+      - bot-detection
       - platform
       summary: Get a Bot Detection plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10005,8 +10004,8 @@ paths:
   /platform/plugins/bot-detections/{botDetection}/schema:
     get:
       tags:
-      - Plugin
-      - Bot Detection
+      - plugin
+      - bot-detection
       - platform
       summary: Get a Bot Detection plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10025,8 +10024,8 @@ paths:
   /platform/plugins/certificates:
     get:
       tags:
-      - Plugin
-      - Certificate
+      - plugin
+      - certificate
       - platform
       summary: List certificate plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10039,8 +10038,8 @@ paths:
   /platform/plugins/certificates/{certificate}:
     get:
       tags:
-      - Plugin
-      - Certificate
+      - plugin
+      - certificate
       - platform
       summary: Get an certificate plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10059,8 +10058,8 @@ paths:
   /platform/plugins/certificates/{certificate}/schema:
     get:
       tags:
-      - Plugin
-      - Certificate
+      - plugin
+      - certificate
       - platform
       summary: Get an certificate's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10079,8 +10078,8 @@ paths:
   /platform/plugins/device-identifiers:
     get:
       tags:
-      - Plugin
-      - Device Identifier
+      - plugin
+      - device-identifier
       - platform
       summary: List device identifier plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10093,8 +10092,8 @@ paths:
   /platform/plugins/device-identifiers/{deviceIdentifier}:
     get:
       tags:
-      - Plugin
-      - Device Identifier
+      - plugin
+      - device-identifier
       - platform
       summary: Get a device identifier plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10113,8 +10112,8 @@ paths:
   /platform/plugins/device-identifiers/{deviceIdentifier}/schema:
     get:
       tags:
-      - Plugin
-      - Device Identifier
+      - plugin
+      - device-identifier
       - platform
       summary: Get a device identifier plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10133,8 +10132,8 @@ paths:
   /platform/plugins/extensionGrants:
     get:
       tags:
-      - Plugin
-      - Extension Grant
+      - plugin
+      - extension-grant
       - platform
       summary: List extension grant plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10147,8 +10146,8 @@ paths:
   /platform/plugins/extensionGrants/{extensionGrant}:
     get:
       tags:
-      - Plugin
-      - Extension Grant
+      - plugin
+      - extension-grant
       - platform
       summary: Get an extension grant plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10167,8 +10166,8 @@ paths:
   /platform/plugins/extensionGrants/{extensionGrant}/schema:
     get:
       tags:
-      - Plugin
-      - Extension Grant
+      - plugin
+      - extension-grant
       - platform
       summary: Get an extension grant plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10187,8 +10186,8 @@ paths:
   /platform/plugins/factors:
     get:
       tags:
-      - Plugin
-      - Factor
+      - plugin
+      - factor
       - platform
       summary: List factor plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10201,8 +10200,8 @@ paths:
   /platform/plugins/factors/{factor}:
     get:
       tags:
-      - Plugin
-      - Factor
+      - plugin
+      - factor
       - platform
       summary: Get a factor plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10221,8 +10220,8 @@ paths:
   /platform/plugins/factors/{factor}/schema:
     get:
       tags:
-      - Plugin
-      - Factor
+      - plugin
+      - factor
       - platform
       summary: Get a factor plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10241,8 +10240,8 @@ paths:
   /platform/plugins/identities:
     get:
       tags:
-      - Plugin
-      - Identity Provider
+      - plugin
+      - identity-provider
       - platform
       summary: List identity provider plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10270,8 +10269,8 @@ paths:
   /platform/plugins/identities/{identity}:
     get:
       tags:
-      - Plugin
-      - Identity Provider
+      - plugin
+      - identity-provider
       - platform
       summary: Get an identity provider
       description: There is no particular permission needed. User must be authenticated.
@@ -10290,8 +10289,8 @@ paths:
   /platform/plugins/identities/{identity}/schema:
     get:
       tags:
-      - Plugin
-      - Identity Provider
+      - plugin
+      - identity-provider
       - platform
       summary: Get an identity provider plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10310,8 +10309,8 @@ paths:
   /platform/plugins/notifiers:
     get:
       tags:
-      - Plugin
-      - Notifier
+      - plugin
+      - notifier
       - platform
       summary: List all available notifier plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10337,8 +10336,8 @@ paths:
   /platform/plugins/notifiers/{notifierId}:
     get:
       tags:
-      - Plugin
-      - Notifier
+      - plugin
+      - notifier
       - platform
       summary: Get a notifier
       description: There is no particular permission needed. User must be authenticated.
@@ -10367,8 +10366,8 @@ paths:
   /platform/plugins/notifiers/{notifierId}/schema:
     get:
       tags:
-      - Plugin
-      - Notifier
+      - plugin
+      - notifier
       - platform
       summary: Get a notifier plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10397,8 +10396,8 @@ paths:
   /platform/plugins/policies:
     get:
       tags:
-      - Plugin
-      - Policy
+      - plugin
+      - policy
       - platform
       summary: List policy plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10418,8 +10417,8 @@ paths:
   /platform/plugins/policies/{policy}:
     get:
       tags:
-      - Plugin
-      - Policy
+      - plugin
+      - policy
       - platform
       summary: Get a policy plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10438,8 +10437,8 @@ paths:
   /platform/plugins/policies/{policy}/documentation:
     get:
       tags:
-      - Plugin
-      - Policy
+      - plugin
+      - policy
       - platform
       summary: Get a policy plugin's documentation
       operationId: getDocumentation
@@ -10457,8 +10456,8 @@ paths:
   /platform/plugins/policies/{policy}/schema:
     get:
       tags:
-      - Plugin
-      - Policy
+      - plugin
+      - policy
       - platform
       summary: Get a policy plugin's schema
       operationId: getSchema_7
@@ -10476,8 +10475,8 @@ paths:
   /platform/plugins/reporters:
     get:
       tags:
-      - Plugin
-      - Reporter
+      - plugin
+      - reporter
       - platform
       summary: List reporter plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10490,8 +10489,8 @@ paths:
   /platform/plugins/reporters/{reporter}:
     get:
       tags:
-      - Plugin
-      - Reporter
+      - plugin
+      - reporter
       - platform
       summary: Get a reporter plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10510,8 +10509,8 @@ paths:
   /platform/plugins/reporters/{reporter}/schema:
     get:
       tags:
-      - Plugin
-      - Reporter
+      - plugin
+      - reporter
       - platform
       summary: Get a reporter plugin's schema
       operationId: getSchema_8
@@ -10529,8 +10528,8 @@ paths:
   /platform/plugins/resources:
     get:
       tags:
-      - Plugin
-      - Resource
+      - plugin
+      - resource
       - platform
       summary: List resource plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10550,8 +10549,8 @@ paths:
   /platform/plugins/resources/{resource}:
     get:
       tags:
-      - Plugin
-      - Resource
+      - plugin
+      - resource
       - platform
       summary: Get a resource plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10570,8 +10569,8 @@ paths:
   /platform/plugins/resources/{resource}/schema:
     get:
       tags:
-      - Plugin
-      - Resource
+      - plugin
+      - resource
       - platform
       summary: Get a resource plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10629,7 +10628,7 @@ paths:
   /user/newsletter/_subscribe:
     post:
       tags:
-      - Newsletter
+      - newsletter
       - user
       summary: Subscribe to the newsletter the authenticated user
       operationId: subscribeNewsletter
@@ -10655,7 +10654,7 @@ paths:
   /user/newsletter/taglines:
     get:
       tags:
-      - Newsletter
+      - newsletter
       - user
       summary: Get taglines to display in the newsletter
       operationId: getTaglines
@@ -10671,7 +10670,7 @@ paths:
   /user/notifications:
     get:
       tags:
-      - user notifications
+      - user-notifications
       - user
       summary: List notifications received by the current user
       operationId: listNotifications
@@ -10689,7 +10688,7 @@ paths:
   /user/notifications/{notificationId}/acknowledge:
     post:
       tags:
-      - user notifications
+      - user-notifications
       - user
       summary: Mark User notification as read
       operationId: markAsRead

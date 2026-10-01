@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Authentication Device Notifier")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "authentication-device-notifier")})
 public class AuthenticationDeviceNotifiersPluginResource {
 
     @Context
