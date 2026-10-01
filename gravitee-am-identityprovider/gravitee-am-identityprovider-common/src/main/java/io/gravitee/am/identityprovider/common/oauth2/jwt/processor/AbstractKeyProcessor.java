@@ -20,7 +20,6 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.identityprovider.api.oidc.jwt.JWKSourceResolver;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyProcessor;
@@ -36,7 +35,7 @@ public abstract class AbstractKeyProcessor<C extends SecurityContext> implements
     private JWKSourceResolver<C> jwkSourceResolver;
 
     @Override
-    public JWTProcessor<C> create(SignatureAlgorithm signature) {
+    public ConfigurableJWTProcessor<C> create(SignatureAlgorithm signature) {
         JWKSource<C> jwkSource = jwkSourceResolver.resolve();
         ConfigurableJWTProcessor<C> jwtProcessor = new DefaultJWTProcessor<>();
         jwtProcessor.setJWSKeySelector(jwsKeySelector(jwkSource, signature));
