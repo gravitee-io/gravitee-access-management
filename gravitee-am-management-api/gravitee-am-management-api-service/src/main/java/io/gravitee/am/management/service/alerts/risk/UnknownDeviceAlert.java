@@ -61,5 +61,7 @@ public class UnknownDeviceAlert extends RiskAssessmentAlert {
         this.setFilters(singletonList(domainFilter));
 
         this.setDampening(Dampening.strictCount(DEFAULT_DAMPENING));
+        this.setCreatedAt(alertTrigger.getCreatedAt());
+        this.setUpdatedAt(alertTrigger.getUpdatedAt());
     }
 }

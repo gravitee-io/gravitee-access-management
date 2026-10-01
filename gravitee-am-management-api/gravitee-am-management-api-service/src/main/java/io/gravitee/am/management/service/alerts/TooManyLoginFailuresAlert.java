@@ -63,7 +63,8 @@ public class TooManyLoginFailuresAlert extends Trigger {
                 .greaterThanOrEquals(threshold)
                 .sampleSize(sampleSize)
                 .build()));
-
+        this.setCreatedAt(alertTrigger.getCreatedAt());
+        this.setUpdatedAt(alertTrigger.getUpdatedAt());
         // For now we only support alert at domain level.
         final StringCondition domainFilter = StringCondition.equals(PROPERTY_DOMAIN, alertTrigger.getReferenceId()).build();
         this.setFilters(singletonList(domainFilter));
