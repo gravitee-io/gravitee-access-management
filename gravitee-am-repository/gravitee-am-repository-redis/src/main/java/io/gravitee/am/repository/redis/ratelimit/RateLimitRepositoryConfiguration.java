@@ -48,4 +48,9 @@ public class RateLimitRepositoryConfiguration {
     ) {
         return new RedisRateLimitRepository(redisClient, operationTimeout);
     }
+
+    @Bean
+    public RedisTokenBucketRateLimitRepository redisTokenBucketRateLimitRepository() {
+        return new RedisTokenBucketRateLimitRepository();
+    }
 }
