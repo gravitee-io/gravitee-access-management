@@ -16,143 +16,282 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp;
 
 import io.vertx.core.http.HttpServerResponse;
-import org.junit.Before;
-import org.junit.Test;
+import io.vertx.ext.web.handler.HttpException;
+import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static io.gravitee.am.common.utils.ConstantKeys.CSP_SCRIPT_INLINE_NONCE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class CspHandlerImplTest {
+/**
+ * @author GraviteeSource Team
+ */
+class CspHandlerImplTest {
 
     private static final String CSP_HEADER = "Content-Security-Policy";
     private static final String CSP_REPORT_ONLY_HEADER = "Content-Security-Policy-Report-Only";
 
-    private io.vertx.rxjava3.ext.web.RoutingContext rxRoutingContext;
-    private HttpServerResponse response;
+    @Test
+    void shouldSendDefaultPolicy() throws IOException {
+        var handler = new CspHandlerImpl(null, defaultDirectives(), true);
 
-    @Before
-    public void setUp() {
-        response = mock(HttpServerResponse.class);
-        final io.vertx.ext.web.RoutingContext coreRoutingContext = mock(io.vertx.ext.web.RoutingContext.class);
-        when(coreRoutingContext.response()).thenReturn(response);
+        var exchange = Exchange.handledBy(handler);
 
-        rxRoutingContext = mock(io.vertx.rxjava3.ext.web.RoutingContext.class);
-        when(rxRoutingContext.getDelegate()).thenReturn(coreRoutingContext);
-    }
-
-    private String handleAndCaptureHeader(CspHandlerImpl handler, String headerName) {
-        handler.handle(rxRoutingContext);
-
-        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(response).putHeader(eq(headerName), captor.capture());
-        return captor.getValue();
+        assertThat(exchange.header(CSP_HEADER)).isEqualTo("default-src 'self' 'self'; "
+                + "script-src 'self' https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js "
+                + "https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs-pro@3/dist/fp.min.js *.gstatic.com *.google.com "
+                + "'nonce-" + exchange.nonce() + "'; "
+                + "img-src 'self' data:; "
+                + "style-src 'self' 'unsafe-inline'; "
+                + "frame-ancestors 'none'; "
+                + "frame-src 'self' https://www.google.com");
     }
 
     @Test
-    public void shouldResolveDuplicateDirectivesLastWinsInsteadOfThrowing() {
-        final CspHandlerImpl handler = new CspHandlerImpl(
-                false, List.of("script-src 'self'", "script-src 'none'"), false);
+    void shouldAppendRequestNonceToConfiguredScriptSrc() {
+        var handler = new CspHandlerImpl(false, List.of("script-src 'self' https://cdn.example.com;"), true);
 
-        final String policy = handleAndCaptureHeader(handler, CSP_HEADER);
+        var exchange = Exchange.handledBy(handler);
 
-        assertTrue(policy, policy.contains("script-src 'none'"));
-        assertEquals("script-src should appear once", 1, countOccurrences(policy, "script-src"));
+        assertThat(exchange.nonce()).hasSize(CspHandlerImpl.NONCE_LENGTH);
+        assertThat(exchange.header(CSP_HEADER))
+                .isEqualTo("default-src 'self'; script-src 'self' https://cdn.example.com 'nonce-" + exchange.nonce() + "'");
+        verify(exchange.context).next();
     }
 
     @Test
-    public void shouldResolveDuplicatesAcrossDifferentCasing() {
-        final CspHandlerImpl handler = new CspHandlerImpl(
-                false, List.of("Script-Src 'self'", "script-src 'none'"), false);
+    void shouldAddScriptSrcWithRequestNonce_whenNoneConfigured() {
+        var handler = new CspHandlerImpl(false, List.of("img-src 'self' data:;"), true);
 
-        final String policy = handleAndCaptureHeader(handler, CSP_HEADER);
+        var exchange = Exchange.handledBy(handler);
 
-        assertEquals("script-src should appear once", 1, countOccurrences(policy, "script-src"));
-        assertTrue(policy, policy.contains("'none'"));
+        assertThat(exchange.header(CSP_HEADER))
+                .isEqualTo("default-src 'self'; img-src 'self' data:; script-src 'nonce-" + exchange.nonce() + "'");
     }
 
     @Test
-    public void shouldEmitDirectivesWithoutAValue() {
-        final CspHandlerImpl handler = new CspHandlerImpl(
-                false, List.of("default-src 'self'", "upgrade-insecure-requests"), false);
+    void shouldAddScriptSrcWithRequestNonce_whenNoDirectives() {
+        var handler = new CspHandlerImpl(null, null, true);
 
-        final String policy = handleAndCaptureHeader(handler, CSP_HEADER);
+        var exchange = Exchange.handledBy(handler);
 
-        assertTrue(policy, policy.contains("upgrade-insecure-requests"));
+        assertThat(exchange.header(CSP_HEADER))
+                .isEqualTo("default-src 'self'; script-src 'nonce-" + exchange.nonce() + "'");
     }
 
     @Test
-    public void shouldTreatTrailingSemicolonAsOptional() {
-        final CspHandlerImpl withSemicolon = new CspHandlerImpl(false, List.of("default-src 'self';"), false);
-        final String policy = handleAndCaptureHeader(withSemicolon, CSP_HEADER);
+    void shouldQuoteBareKeyword() {
+        var handler = new CspHandlerImpl(false, List.of("script-src self"), true);
 
-        assertTrue(policy, policy.contains("default-src 'self'"));
-        assertEquals("value must not keep the trailing semicolon", 0, countOccurrences(policy, "'self';"));
+        var exchange = Exchange.handledBy(handler);
+
+        assertThat(exchange.header(CSP_HEADER))
+                .isEqualTo("default-src 'self'; script-src 'self' 'nonce-" + exchange.nonce() + "'");
     }
 
     @Test
-    public void shouldApplyNonceToMixedCaseScriptSrcWithoutDuplicatingIt() {
-        final CspHandlerImpl handler = new CspHandlerImpl(
-                false, List.of("Script-Src 'self'"), true);
+    void shouldNotAccumulateNoncesAcrossRequests() {
+        var handler = new CspHandlerImpl(false, List.of("script-src 'self';"), true);
 
-        final String policy = handleAndCaptureHeader(handler, CSP_HEADER);
+        var first = Exchange.handledBy(handler);
+        var second = Exchange.handledBy(handler);
+
+        assertThat(second.nonce()).isNotEqualTo(first.nonce());
+        assertThat(second.header(CSP_HEADER))
+                .isEqualTo("default-src 'self'; script-src 'self' 'nonce-" + second.nonce() + "'");
+    }
+
+    @Test
+    void shouldSendConfiguredPolicyWithoutNonce_whenInlineNonceDisabled() {
+        var handler = new CspHandlerImpl(false, List.of("script-src 'self';"), false);
+
+        var exchange = Exchange.handledBy(handler);
+
+        assertThat(exchange.header(CSP_HEADER)).isEqualTo("default-src 'self'; script-src 'self'");
+        verify(exchange.context, never()).put(eq(CSP_SCRIPT_INLINE_NONCE), any());
+        verify(exchange.context).next();
+    }
+
+    @Test
+    void shouldUseReportOnlyHeader_whenReportOnlyWithReportUri() {
+        var handler = new CspHandlerImpl(true, List.of("report-uri https://csp.example.com/report;"), true);
+
+        var exchange = Exchange.handledBy(handler);
+
+        assertThat(exchange.header(CSP_REPORT_ONLY_HEADER))
+                .isEqualTo("default-src 'self'; report-uri https://csp.example.com/report; script-src 'nonce-" + exchange.nonce() + "'");
+        verify(exchange.response, never()).putHeader(eq(CSP_HEADER), anyString());
+        verify(exchange.context).next();
+    }
+
+    @Test
+    void shouldFailWith500_whenReportOnlyWithoutReportTarget() {
+        var handler = new CspHandlerImpl(true, List.of("script-src 'self';"), true);
+
+        var exchange = Exchange.handledBy(handler);
+
+        var failure = ArgumentCaptor.forClass(Throwable.class);
+        verify(exchange.context).fail(failure.capture());
+        assertThat(failure.getValue()).isInstanceOf(HttpException.class);
+        assertThat(((HttpException) failure.getValue()).getStatusCode()).isEqualTo(500);
+        verify(exchange.response, never()).putHeader(anyString(), anyString());
+        verify(exchange.context, never()).next();
+    }
+
+    @Test
+    void shouldResolveDuplicateDirectivesLastWinsInsteadOfThrowing() {
+        var handler = new CspHandlerImpl(false, List.of("script-src 'self'", "script-src 'none'"), false);
+
+        var policy = Exchange.handledBy(handler).header(CSP_HEADER);
+
+        assertThat(policy).contains("script-src 'none'");
+        assertThat(policy.toLowerCase(Locale.ROOT)).containsOnlyOnce("script-src");
+    }
+
+    @Test
+    void shouldResolveDuplicatesAcrossDifferentCasing() {
+        var handler = new CspHandlerImpl(false, List.of("Script-Src 'self'", "script-src 'none'"), false);
+
+        var policy = Exchange.handledBy(handler).header(CSP_HEADER);
+
+        assertThat(policy.toLowerCase(Locale.ROOT)).containsOnlyOnce("script-src");
+        assertThat(policy).contains("'none'");
+    }
+
+    @Test
+    void shouldEmitDirectivesWithoutAValue() {
+        var handler = new CspHandlerImpl(false, List.of("default-src 'self'", "upgrade-insecure-requests"), false);
+
+        var policy = Exchange.handledBy(handler).header(CSP_HEADER);
+
+        assertThat(policy).contains("upgrade-insecure-requests");
+    }
+
+    @Test
+    void shouldTreatTrailingSemicolonAsOptional() {
+        var handler = new CspHandlerImpl(false, List.of("default-src 'self';"), false);
+
+        var policy = Exchange.handledBy(handler).header(CSP_HEADER);
+
+        assertThat(policy).contains("default-src 'self'").doesNotContain("'self';");
+    }
+
+    @Test
+    void shouldApplyNonceToMixedCaseScriptSrcWithoutDuplicatingIt() {
+        var handler = new CspHandlerImpl(false, List.of("Script-Src 'self'"), true);
+
+        var policy = Exchange.handledBy(handler).header(CSP_HEADER);
 
         // Two script-src entries would make the browser discard the second, silently dropping the nonce.
-        assertEquals("script-src should appear once", 1, countOccurrences(policy, "script-src"));
-        assertTrue(policy, policy.contains("'self'"));
-        assertTrue(policy, policy.contains("'nonce-"));
+        assertThat(policy.toLowerCase(Locale.ROOT)).containsOnlyOnce("script-src");
+        assertThat(policy).contains("'self'", "'nonce-");
     }
 
     @Test
-    public void shouldNotAccumulateNoncesAcrossRequests() {
-        final CspHandlerImpl handler = new CspHandlerImpl(false, List.of("script-src 'self'"), true);
+    void shouldUseReportOnlyHeaderWhenReportOnly() {
+        var handler = new CspHandlerImpl(true, List.of("default-src 'self'", "report-uri /csp-reports"), false);
 
-        handler.handle(rxRoutingContext);
-        handler.handle(rxRoutingContext);
+        var policy = Exchange.handledBy(handler).header(CSP_REPORT_ONLY_HEADER);
 
-        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(response, org.mockito.Mockito.times(2)).putHeader(eq(CSP_HEADER), captor.capture());
-
-        final String secondPolicy = captor.getAllValues().get(1);
-        assertEquals("only one nonce should be present", 1, countOccurrences(secondPolicy, "'nonce-"));
+        assertThat(policy).contains("report-uri /csp-reports");
     }
 
     @Test
-    public void shouldUseReportOnlyHeaderWhenReportOnly() {
-        final CspHandlerImpl handler = new CspHandlerImpl(
-                true, List.of("default-src 'self'", "report-uri /csp-reports"), false);
+    void shouldIgnoreBlankEntries() {
+        var handler = new CspHandlerImpl(false, Arrays.asList("default-src 'self'", "", "   ", ";"), false);
 
-        final String policy = handleAndCaptureHeader(handler, CSP_REPORT_ONLY_HEADER);
+        var policy = Exchange.handledBy(handler).header(CSP_HEADER);
 
-        assertTrue(policy, policy.contains("report-uri /csp-reports"));
+        assertThat(policy).contains("default-src 'self'");
     }
 
     @Test
-    public void shouldIgnoreBlankEntries() {
-        final CspHandlerImpl handler = new CspHandlerImpl(
-                false, java.util.Arrays.asList("default-src 'self'", "", "   ", ";"), false);
+    void shouldSendEachRequestItsOwnNonce_whenHandledConcurrently() throws Exception {
+        final int threads = 8;
+        final int requestsPerThread = 2_000;
+        var handler = new CspHandlerImpl(false, List.of("script-src 'self';"), true);
+        var start = new CyclicBarrier(threads);
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            List<Future<List<String>>> results = new ArrayList<>();
+            for (int t = 0; t < threads; t++) {
+                Callable<List<String>> task = () -> {
+                    List<String> mismatches = new ArrayList<>();
+                    start.await(10, TimeUnit.SECONDS);
+                    for (int i = 0; i < requestsPerThread; i++) {
+                        var exchange = Exchange.handledBy(handler);
+                        var expected = "default-src 'self'; script-src 'self' 'nonce-" + exchange.nonce() + "'";
+                        var actual = exchange.header(CSP_HEADER);
+                        if (!expected.equals(actual)) {
+                            mismatches.add("expected <" + expected + "> but was <" + actual + ">");
+                        }
+                    }
+                    return mismatches;
+                };
+                results.add(executor.submit(task));
+            }
 
-        final String policy = handleAndCaptureHeader(handler, CSP_HEADER);
-
-        assertTrue(policy, policy.contains("default-src 'self'"));
-    }
-
-    private static int countOccurrences(String haystack, String needle) {
-        final String lowerHaystack = haystack.toLowerCase(Locale.ROOT);
-        final String lowerNeedle = needle.toLowerCase(Locale.ROOT);
-        int count = 0;
-        int index = lowerHaystack.indexOf(lowerNeedle);
-        while (index >= 0) {
-            count++;
-            index = lowerHaystack.indexOf(lowerNeedle, index + lowerNeedle.length());
+            List<String> mismatches = new ArrayList<>();
+            for (Future<List<String>> result : results) {
+                mismatches.addAll(result.get(60, TimeUnit.SECONDS));
+            }
+            assertThat(mismatches).isEmpty();
+        } finally {
+            executor.shutdownNow();
         }
-        return count;
+    }
+
+    private static List<String> defaultDirectives() throws IOException {
+        try (var reader = new BufferedReader(new InputStreamReader(
+                CspHandlerImpl.class.getClassLoader().getResourceAsStream("default-csp-directives.properties"), StandardCharsets.UTF_8))) {
+            return reader.lines().toList();
+        }
+    }
+
+    private static final class Exchange {
+        private final io.vertx.ext.web.RoutingContext context = mock(io.vertx.ext.web.RoutingContext.class);
+        private final HttpServerResponse response = mock(HttpServerResponse.class);
+
+        static Exchange handledBy(CspHandlerImpl handler) {
+            var exchange = new Exchange();
+            when(exchange.context.response()).thenReturn(exchange.response);
+            handler.handle(RoutingContext.newInstance(exchange.context));
+            return exchange;
+        }
+
+        String nonce() {
+            var nonce = ArgumentCaptor.forClass(Object.class);
+            verify(context).put(eq(CSP_SCRIPT_INLINE_NONCE), nonce.capture());
+            return (String) nonce.getValue();
+        }
+
+        String header(String name) {
+            var value = ArgumentCaptor.forClass(String.class);
+            verify(response).putHeader(eq(name), value.capture());
+            return value.getValue();
+        }
     }
 }
