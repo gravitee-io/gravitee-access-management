@@ -573,7 +573,7 @@ commands:
 jobs:
   setup:
     docker:
-      - image: cimg/openjdk:25.0.3
+      - image: cimg/openjdk:25.0.4
     resource_class: small
     steps:
       - keeper/install
@@ -633,7 +633,7 @@ jobs:
             - .gravitee.settings.xml
   build:
     docker:
-      - image: cimg/openjdk:25.0.3
+      - image: cimg/openjdk:25.0.4
     resource_class: large
     steps:
       - attach_workspace:
@@ -1387,7 +1387,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:25.0.3
+      - image: cimg/openjdk:25.0.4
     resource_class: small
     steps:
       - checkout
@@ -1512,7 +1512,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:25.0.3
+      - image: cimg/openjdk:25.0.4
     resource_class: large
     steps:
       - attach_workspace:
@@ -1537,7 +1537,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:25.0.3
+      - image: cimg/openjdk:25.0.4
     resource_class: small
     steps:
       - attach_workspace:
