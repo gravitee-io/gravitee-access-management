@@ -1321,6 +1321,12 @@
                                             <type>zip</type>
                                         </artifactItem>
                                         <artifactItem>
+                                            <groupId>com.graviteesource.am.policy</groupId>
+                                            <artifactId>gravitee-am-policy-authzen</artifactId>
+                                            <version>${gravitee-am-policy-authzen.version}</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+                                        <artifactItem>
                                             <groupId>com.graviteesource.am.authorizationengine.openfga</groupId>
                                             <artifactId>gravitee-am-authorizationengine-openfga</artifactId>
                                             <version>${gravitee-am-authorizationengine-openfga.version}</version>

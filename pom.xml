@@ -184,6 +184,7 @@
         <gravitee-am-resource-twilio.version>1.2.0</gravitee-am-resource-twilio.version>
         <gravitee-am-policy-mfa-challenge.version>2.0.0</gravitee-am-policy-mfa-challenge.version>
         <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
+        <gravitee-am-policy-authzen.version>1.0.0-alpha.1</gravitee-am-policy-authzen.version>
         <gravitee-am-certificate-aws.version>4.0.0</gravitee-am-certificate-aws.version>
         <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.6</gravitee-am-authorizationengine-openfga.version>
         <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.8</gravitee-am-gateway-handler-authzen.version>
