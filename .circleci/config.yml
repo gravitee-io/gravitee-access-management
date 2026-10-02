@@ -11,7 +11,6 @@ parameters:
         publish_docker_images,
         pull_requests,
         release_notes_am,
-        publish_maven_central,
         release_helm,
         publish-images-azure-registry,
         release-version,
