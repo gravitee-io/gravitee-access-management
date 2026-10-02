@@ -38,32 +38,25 @@ import static java.util.Objects.nonNull;
 public class CspHandlerImpl implements CSPHandler {
     public static final int NONCE_LENGTH = 32;
     public static final String NONCE_PREFIX = "'nonce-";
-    public static final String NONCE_SUFIX = "'";
+    public static final String NONCE_SUFFIX = "'";
     public static final String SCRIPT_SRC_DIRECTIVE = "script-src";
     private final boolean scriptInlineNonce;
-    private final io.vertx.rxjava3.ext.web.handler.CSPHandler delegate;
-
-    private String staticScriptSrcDirective;
+    private final boolean reportOnly;
+    private final Map<String, String> directives;
 
     public CspHandlerImpl(Boolean isReportOnly, List<String> directives, boolean scriptInlineNonce) {
-        // adds "default-src": "self" as default configuration
-        this.delegate = io.vertx.rxjava3.ext.web.handler.CSPHandler.create().setReportOnly(TRUE.equals(isReportOnly));
+        this.reportOnly = TRUE.equals(isReportOnly);
         this.scriptInlineNonce = scriptInlineNonce;
-        addDirectives(directives);
+        this.directives = nonNull(directives) ? buildDirectivesMap(directives) : Map.of();
     }
 
-    private void addDirectives(List<String> directives) {
-        if (nonNull(directives) && !directives.isEmpty()) {
-            final Map<String, String> mapOfDirectives = buildDirectivesMap(directives);
-
-            if (mapOfDirectives.containsKey(SCRIPT_SRC_DIRECTIVE)) {
-                this.staticScriptSrcDirective = mapOfDirectives.get(SCRIPT_SRC_DIRECTIVE);
-            }
-
-            mapOfDirectives.entrySet().stream()
-                    .filter(e -> !e.getKey().isEmpty())
-                    .forEach(e -> this.delegate.addDirective(e.getKey(), e.getValue()));
-        }
+    private io.vertx.rxjava3.ext.web.handler.CSPHandler newDelegate() {
+        // adds "default-src": "self" as default configuration
+        final var delegate = io.vertx.rxjava3.ext.web.handler.CSPHandler.create().setReportOnly(this.reportOnly);
+        this.directives.entrySet().stream()
+                .filter(e -> !e.getKey().isEmpty())
+                .forEach(e -> delegate.addDirective(e.getKey(), e.getValue()));
+        return delegate;
     }
 
     private Map<String, String> buildDirectivesMap(List<String> directives) {
@@ -79,13 +72,13 @@ public class CspHandlerImpl implements CSPHandler {
 
     @Override
     public void handle(RoutingContext event) {
+        // one delegate per request, as each carries its own nonce
+        final var delegate = newDelegate();
         if (this.scriptInlineNonce) {
             final String nonce = SecureRandomString.randomAlphaNumeric(NONCE_LENGTH);
             event.put(CSP_SCRIPT_INLINE_NONCE, nonce);
-            // reset the scriptDirective to avoid accumulation of nonce values
-            this.delegate.setDirective(SCRIPT_SRC_DIRECTIVE, this.staticScriptSrcDirective);
-            this.delegate.addDirective(SCRIPT_SRC_DIRECTIVE, NONCE_PREFIX + nonce + NONCE_SUFIX);
+            delegate.addDirective(SCRIPT_SRC_DIRECTIVE, NONCE_PREFIX + nonce + NONCE_SUFFIX);
         }
-        this.delegate.handle(event);
+        delegate.handle(event);
     }
 }
