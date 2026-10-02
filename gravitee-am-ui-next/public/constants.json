@@ -1,0 +1,9 @@
+{
+    "baseURL": "/management",
+    "gamma": {
+        "consoleUrl": "http://localhost:4200",
+        "apiUrl": "/gamma",
+        "organizationId": "DEFAULT",
+        "environmentHrid": "default"
+    }
+}
