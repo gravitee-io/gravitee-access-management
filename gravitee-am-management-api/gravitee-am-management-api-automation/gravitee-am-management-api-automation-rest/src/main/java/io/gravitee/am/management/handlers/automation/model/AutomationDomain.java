@@ -94,7 +94,7 @@ public class AutomationDomain implements DryRunResult {
             "cross-domain token introspection.", defaultValue = "false")
     private boolean master;
 
-    @Schema(description = "Whether alerting is enabled for the domain.")
+    @Schema(description = "Whether alerting is enabled for the domain.", defaultValue = "false")
     private Boolean alertEnabled;
 
     @NotNull
