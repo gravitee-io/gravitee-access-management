@@ -55,7 +55,7 @@ import java.net.URI;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "extension grant")
+@Tag(name = "extension-grant")
 public class ExtensionGrantsResource extends AbstractResource {
 
     @Context

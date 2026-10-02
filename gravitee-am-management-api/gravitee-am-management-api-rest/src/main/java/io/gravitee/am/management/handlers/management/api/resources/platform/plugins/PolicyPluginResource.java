@@ -38,7 +38,7 @@ import jakarta.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Policy")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "policy")})
 public class PolicyPluginResource {
 
     @Context

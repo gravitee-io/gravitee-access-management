@@ -29,7 +29,7 @@ import { ThemeApi } from '@management-apis/ThemeApi';
 import { FormApi } from '@management-apis/FormApi';
 import { FactorApi } from '@management-apis/FactorApi';
 import { ResourceApi } from '@management-apis/ResourceApi';
-import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
+import { DeviceIdentifierApi } from '@management-apis/DeviceIdentifierApi';
 import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
 import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
@@ -108,7 +108,7 @@ export function getResourceApi(accessToken) {
 }
 
 export function getDeviceIdentifiersApi(accessToken) {
-  return new DeviceIdentifiersApi(createAccessTokenConfig(accessToken));
+  return new DeviceIdentifierApi(createAccessTokenConfig(accessToken));
 }
 
 export function getExtensionApi(accessToken) {

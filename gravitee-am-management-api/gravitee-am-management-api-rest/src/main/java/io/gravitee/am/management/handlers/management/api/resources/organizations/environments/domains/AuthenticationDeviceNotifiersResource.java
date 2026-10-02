@@ -55,7 +55,7 @@ import java.net.URI;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tag(name = "Authentication Device Notifier")
+@Tag(name = "authentication-device-notifier")
 public class AuthenticationDeviceNotifiersResource extends AbstractResource {
 
     @Context

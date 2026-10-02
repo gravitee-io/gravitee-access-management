@@ -61,7 +61,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @author GraviteeSource Team
  */
 @Slf4j
-@Tag(name = "Password Policy")
+@Tag(name = "password-policy")
 public class PasswordPolicyResource extends AbstractDomainResource {
 
     @Autowired

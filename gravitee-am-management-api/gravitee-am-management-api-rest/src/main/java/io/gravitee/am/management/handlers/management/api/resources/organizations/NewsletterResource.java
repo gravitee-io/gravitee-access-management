@@ -54,7 +54,7 @@ import java.util.Map;
  * @author Titouan COMPIEGGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Newsletter")})
+@Tags({@Tag(name= "newsletter")})
 public class NewsletterResource extends AbstractResource {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(NewsletterResource.class);

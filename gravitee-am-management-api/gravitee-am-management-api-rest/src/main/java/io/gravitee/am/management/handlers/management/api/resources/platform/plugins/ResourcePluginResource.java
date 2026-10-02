@@ -37,7 +37,7 @@ import jakarta.ws.rs.core.Response;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Resource")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "resource")})
 public class ResourcePluginResource {
 
     @Context

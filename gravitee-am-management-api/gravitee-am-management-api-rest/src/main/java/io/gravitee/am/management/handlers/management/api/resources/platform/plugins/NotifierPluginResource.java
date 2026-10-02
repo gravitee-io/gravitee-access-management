@@ -42,7 +42,7 @@ import jakarta.ws.rs.core.Response;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Notifier")})
+@Tags({@Tag(name= "plugin"), @Tag(name= "notifier")})
 public class NotifierPluginResource {
 
     @Context

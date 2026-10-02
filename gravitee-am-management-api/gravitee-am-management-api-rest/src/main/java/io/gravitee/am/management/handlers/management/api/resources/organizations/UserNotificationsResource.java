@@ -52,7 +52,7 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "user notifications")})
+@Tags({@Tag(name= "user-notifications")})
 public class UserNotificationsResource extends AbstractResource {
     private final Logger logger = LoggerFactory.getLogger(UserNotificationsResource.class);
 

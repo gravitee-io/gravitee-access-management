@@ -27,8 +27,40 @@
 /* eslint-disable */
 
 import * as runtime from '../runtime';
+import {
+  DeviceIdentifier,
+  DeviceIdentifierFromJSON,
+  DeviceIdentifierToJSON,
+  NewDeviceIdentifier,
+  NewDeviceIdentifierFromJSON,
+  NewDeviceIdentifierToJSON,
+  UpdateDeviceIdentifier,
+  UpdateDeviceIdentifierFromJSON,
+  UpdateDeviceIdentifierToJSON,
+} from '../models';
+
+export interface CreateDeviceIdentifierRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  newDeviceIdentifier: NewDeviceIdentifier;
+}
+
+export interface DeleteDeviceIdentifierRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  deviceIdentifier: string;
+}
 
 export interface Get28Request {
+  deviceIdentifier: string;
+}
+
+export interface GetDeviceIdentifierRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
   deviceIdentifier: string;
 }
 
@@ -36,10 +68,179 @@ export interface GetSchema3Request {
   deviceIdentifier: string;
 }
 
+export interface ListDeviceIdentifiersRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+}
+
+export interface UpdateDeviceIdentifierRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  deviceIdentifier: string;
+  updateDeviceIdentifier: UpdateDeviceIdentifier;
+}
+
 /**
  *
  */
 export class DeviceIdentifierApi extends runtime.BaseAPI {
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
+   * Create a device identifier
+   */
+  async createDeviceIdentifierRaw(
+    requestParameters: CreateDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<DeviceIdentifier>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.newDeviceIdentifier === null || requestParameters.newDeviceIdentifier === undefined) {
+      throw new runtime.RequiredError(
+        'newDeviceIdentifier',
+        'Required parameter requestParameters.newDeviceIdentifier was null or undefined when calling createDeviceIdentifier.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewDeviceIdentifierToJSON(requestParameters.newDeviceIdentifier),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DeviceIdentifierFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
+   * Create a device identifier
+   */
+  async createDeviceIdentifier(
+    requestParameters: CreateDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<DeviceIdentifier> {
+    const response = await this.createDeviceIdentifierRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization
+   * Delete a Device identifier
+   */
+  async deleteDeviceIdentifierRaw(
+    requestParameters: DeleteDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
+      throw new runtime.RequiredError(
+        'deviceIdentifier',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling deleteDeviceIdentifier.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'deviceIdentifier'}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization
+   * Delete a Device identifier
+   */
+  async deleteDeviceIdentifier(
+    requestParameters: DeleteDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteDeviceIdentifierRaw(requestParameters, initOverrides);
+  }
+
   /**
    * There is no particular permission needed. User must be authenticated.
    * Get a device identifier plugin
@@ -89,6 +290,83 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
    */
   async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.get28Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
+   * Get a Device identifier
+   */
+  async getDeviceIdentifierRaw(
+    requestParameters: GetDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<DeviceIdentifier>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
+      throw new runtime.RequiredError(
+        'deviceIdentifier',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling getDeviceIdentifier.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'deviceIdentifier'}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DeviceIdentifierFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
+   * Get a Device identifier
+   */
+  async getDeviceIdentifier(
+    requestParameters: GetDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<DeviceIdentifier> {
+    const response = await this.getDeviceIdentifierRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**
@@ -178,5 +456,161 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
    */
   async list27(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.list27Raw(initOverrides);
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
+   * List registered device identifiers for a security domain
+   */
+  async listDeviceIdentifiersRaw(
+    requestParameters: ListDeviceIdentifiersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<DeviceIdentifier>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listDeviceIdentifiers.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listDeviceIdentifiers.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listDeviceIdentifiers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DeviceIdentifierFromJSON));
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
+   * List registered device identifiers for a security domain
+   */
+  async listDeviceIdentifiers(
+    requestParameters: ListDeviceIdentifiersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<DeviceIdentifier>> {
+    const response = await this.listDeviceIdentifiersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
+   * Update a Device identifier
+   */
+  async updateDeviceIdentifierRaw(
+    requestParameters: UpdateDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<DeviceIdentifier>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling updateDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
+      throw new runtime.RequiredError(
+        'deviceIdentifier',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling updateDeviceIdentifier.',
+      );
+    }
+
+    if (requestParameters.updateDeviceIdentifier === null || requestParameters.updateDeviceIdentifier === undefined) {
+      throw new runtime.RequiredError(
+        'updateDeviceIdentifier',
+        'Required parameter requestParameters.updateDeviceIdentifier was null or undefined when calling updateDeviceIdentifier.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'deviceIdentifier'}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateDeviceIdentifierToJSON(requestParameters.updateDeviceIdentifier),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DeviceIdentifierFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
+   * Update a Device identifier
+   */
+  async updateDeviceIdentifier(
+    requestParameters: UpdateDeviceIdentifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<DeviceIdentifier> {
+    const response = await this.updateDeviceIdentifierRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 }
