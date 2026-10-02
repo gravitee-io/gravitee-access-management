@@ -88,7 +88,7 @@ public class CibaStrategy implements GrantStrategy {
             return Single.error(new InvalidRequestException("Missing parameter: auth_req_id"));
         }
 
-        return authenticationRequestService.retrieve(domain, authReqId, client)
+        return authenticationRequestService.retrieve(domain, authReqId, client, request)
                 .flatMap(cibaRequest -> processCibaRequest(request, client, domain, cibaRequest, authReqId));
     }
 
