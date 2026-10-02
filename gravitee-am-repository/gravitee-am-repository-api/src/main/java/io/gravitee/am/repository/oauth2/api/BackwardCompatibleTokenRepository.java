@@ -18,6 +18,7 @@ package io.gravitee.am.repository.oauth2.api;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.am.repository.oauth2.model.Token;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -31,6 +32,16 @@ public class BackwardCompatibleTokenRepository implements TokenRepository {
     private final RefreshTokenRepository refreshTokenRepository;
 
     private final boolean maintainLegacyTokenRepositories;
+
+    @Override
+    public Maybe<Token> findByJti(String jti) {
+        Maybe<Token> byJti = tokenRepository.findByJti(jti);
+        if (maintainLegacyTokenRepositories) {
+            byJti = byJti.switchIfEmpty(accessTokenRepository.findByToken(jti).map(Token.class::cast))
+                    .switchIfEmpty(refreshTokenRepository.findByToken(jti).map(Token.class::cast));
+        }
+        return byJti;
+    }
 
     @Override
     public Maybe<RefreshToken> findRefreshTokenByJti(String jti) {

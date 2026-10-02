@@ -64,6 +64,17 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
     }
 
     @Override
+    public Maybe<Token> findByJti(String jti) {
+        return Observable
+                .fromPublisher(tokenCollection.find(and(
+                        eq(FIELD_JTI, jti),
+                        or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
+                .firstElement()
+                .map(this::convertToToken)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<RefreshToken> findRefreshTokenByJti(String token) {
         return Observable
                 .fromPublisher(tokenCollection.find(and(
@@ -225,6 +236,10 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         tokenMongo.setParentJtis(token.getAllParentJtis());
         tokenMongo.setJkt(token.getJkt());
         return tokenMongo;
+    }
+
+    private Token convertToToken(TokenMongo tokenMongo) {
+        return tokenMongo.getType() == TokenType.REFRESH_TOKEN ? convertToRefreshToken(tokenMongo) : convertToAccessToken(tokenMongo);
     }
 
     private AccessToken convertToAccessToken(TokenMongo tokenMongo) {

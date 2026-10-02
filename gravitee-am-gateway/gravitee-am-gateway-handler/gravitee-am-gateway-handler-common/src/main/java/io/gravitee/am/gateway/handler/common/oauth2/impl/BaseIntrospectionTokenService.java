@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.am.repository.oauth2.model.Token;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Completable;
@@ -56,16 +57,13 @@ abstract class BaseIntrospectionTokenService {
     private final JWTService jwtService;
     private final ClientLookupService clientLookupService;
     private final ProtectedResourceManager protectedResourceManager;
-    private final TokenType tokenType;
     private final boolean isLegacyRfc8707Enabled;
     private final int offlineVerificationTimerSeconds;
     
-    BaseIntrospectionTokenService(TokenType tokenType,
-                                  JWTService jwtService,
+    BaseIntrospectionTokenService(JWTService jwtService,
                                   ClientLookupService clientLookupService,
                                   ProtectedResourceManager protectedResourceManager,
                                   Environment environment) {
-        this.tokenType = tokenType;
         this.jwtService = jwtService;
         this.clientLookupService = clientLookupService;
         this.protectedResourceManager = protectedResourceManager;
@@ -75,26 +73,26 @@ abstract class BaseIntrospectionTokenService {
 
     protected abstract Maybe<? extends Token> findByToken(String token);
 
-    protected Maybe<IntrospectionResult> introspectToken(String token, boolean offlineVerification, String callerClientId) {
-        return jwtService.decode(token, tokenType)
+    protected Maybe<IntrospectionResult> introspectToken(String token, TokenType hint, boolean offlineVerification, String callerClientId) {
+        return jwtService.decode(token, hint)
                 .flatMap(jwt -> validateAudienceAndGetCertificateId(jwt, callerClientId)
-                        .flatMap(certificateId -> jwtService.decodeAndVerify(token, Maybe.just(certificateId), tokenType)))
+                        .flatMap(certificateId -> jwtService.decodeAndVerify(token, Maybe.just(certificateId), hint)))
                 .toMaybe()
                 .flatMap(jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled
                     // or if the token has just been created (could not be in database so far because of async database storing process delay)
                     if (offlineVerification || Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + offlineVerificationTimerSeconds))) {
-                        return Maybe.just(new IntrospectionResult(jwt, null));
+                        return Maybe.just(new IntrospectionResult(jwt, null, hint));
                     }
 
                     // check if token is not revoked
                     return findByToken(jwt.getJti())
                             .switchIfEmpty(Maybe.error(() -> new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
-                            .map(accessToken -> {
-                                if (accessToken.getExpireAt().before(new Date())) {
+                            .map(storedToken -> {
+                                if (storedToken.getExpireAt().before(new Date())) {
                                     throw new InvalidTokenException("The token expired", "Token with JTI [" + jwt.getJti() + "] is expired", jwt);
                                 }
-                                return new IntrospectionResult(jwt, accessToken.getClient());
+                                return new IntrospectionResult(jwt, storedToken.getClient(), storedTokenType(storedToken));
                             });
                 })
                 .onErrorResumeNext(ex -> {
@@ -123,6 +121,10 @@ abstract class BaseIntrospectionTokenService {
                     }
                     return Maybe.error(ex);
                 });
+    }
+
+    private static TokenType storedTokenType(Token storedToken) {
+        return storedToken instanceof RefreshToken ? TokenType.REFRESH_TOKEN : TokenType.ACCESS_TOKEN;
     }
 
     private Single<String> validateAudienceAndGetCertificateId(JWT jwt, String callerClientId) {

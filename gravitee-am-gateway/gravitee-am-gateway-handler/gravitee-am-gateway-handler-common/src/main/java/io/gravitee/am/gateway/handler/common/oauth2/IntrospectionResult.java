@@ -16,11 +16,12 @@
 package io.gravitee.am.gateway.handler.common.oauth2;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType;
 
 /**
  * Encapsulates the result of a token introspection, including the verified JWT
  * and optional metadata retrieved from the persistence layer (such as the
  * original client identifier).
  */
-public record IntrospectionResult(JWT jwt, String clientId) {
+public record IntrospectionResult(JWT jwt, String clientId, TokenType tokenType) {
 }
