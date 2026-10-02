@@ -65,7 +65,7 @@ executors:
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_maven_central, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version, integration-tests ]
+    enum: [ release, publish_rpms, publish_docker_images, pull_requests, release_notes_am, release_helm , publish-images-azure-registry, release-version, release-alpha-version, release-hotfix-version, integration-tests ]
     default: pull_requests
   gio_product:
     type: enum
@@ -671,24 +671,6 @@ jobs:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
-  deploy-snapshot-on-nexus:
-    docker:
-      - image: cimg/openjdk:25.0.3
-    resource_class: medium+
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - checkout:
-          method: full
-      - restore-maven-job-cache:
-          jobName: build_branch_nexus
-      - azure-artifacts-token
-      - run:
-          name: "Maven Package and deploy to Nexus Snapshots"
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml -Dlicense.skip=true deploy -DskipTests
-      - save-maven-job-cache:
-          jobName: build_branch_nexus
   # Integration tests run on pulled images, without the process_pull_request job that builds the CIBA image tar
   build_ciba_image:
     executor:
@@ -2069,47 +2051,6 @@ jobs:
                     ]
                   }
 
-  publish_maven_packages_to_maven_central:
-    description: Publish maven artifacts to maven central (Sonatype Nexus)
-    parameters:
-      dry_run:
-        type: boolean
-        default: true
-        description: "Running in dry run mode means no docker push (Defaults to true)"
-      graviteeio_version:
-        type: string
-        default: ''
-        description: "Gravitee.io Release version number (semver) ?"
-    executor:
-      name: openjdk
-      class: xlarge
-      version: "25.0.1"
-    environment:
-      DRY_RUN: << parameters.dry_run >>
-      GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
-    steps:
-      - checkout
-      - restore-maven-job-cache:
-          jobName: releaseV2
-      - attach_workspace:
-          at: /tmp
-      - prepare-gpg
-      - azure-artifacts-token
-      - run:
-          name: Maven Test, Package, and Deploy to Nexus Staging
-          command: |
-            git checkout "${GRAVITEEIO_VERSION}"
-            
-            if [ "${DRY_RUN}" == "false" ]; then
-              echo "# --->>> NO IT IS NOT A DRY RUN => deploy"
-              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
-            else
-              echo "# --->>> THIS IS A DRY RUN => install only"
-              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release install -DskipTests=true
-            fi;
-      - notify-on-failure
-      - notify-on-success
-
   build_n_push_am_ce_job:
     description: This Orb Job performs the docker build and publish for the am_ce dockerfile
     parameters:
@@ -2477,13 +2418,6 @@ workflows:
           context: cicd-orchestrator
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - publish_maven_packages_to_maven_central:
-          name: publish maven packages
-          context: cicd-orchestrator
-          dry_run: << pipeline.parameters.dry_run >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - notify-release-complete:
           name: notify release complete
           context: cicd-orchestrator
@@ -2524,13 +2458,6 @@ workflows:
           context: cicd-orchestrator
           requires:
             - publish docker images
-      - publish_maven_packages_to_maven_central:
-          name: publish maven packages
-          context: cicd-orchestrator
-          dry_run: << pipeline.parameters.dry_run >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - notify-release-complete:
           name: notify release complete
           context: cicd-orchestrator
@@ -2571,13 +2498,6 @@ workflows:
           context: cicd-orchestrator
           requires:
             - publish docker images
-      - publish_maven_packages_to_maven_central:
-          name: publish maven packages
-          context: cicd-orchestrator
-          dry_run: << pipeline.parameters.dry_run >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - notify-release-complete:
           name: notify release complete
           context: cicd-orchestrator
@@ -2792,16 +2712,6 @@ workflows:
                 - master
                 - /^\d\.\d+\.x$/
 
-      - deploy-snapshot-on-nexus:
-          context: cicd-orchestrator
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - master
-                - /^\d\.\d+\.x$/
-
       - publish-images-azure-registry:
           context: cicd-orchestrator
           requires:
@@ -2876,20 +2786,6 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           hotfix_version: << pipeline.parameters.hotfix_version >>
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
-
-  publish_maven_central:
-    when:
-      equal: [ publish_maven_central, << pipeline.parameters.gio_action >> ]
-    jobs:
-      - setup:
-          context: cicd-orchestrator
-      - publish_maven_packages_to_maven_central:
-          context: cicd-orchestrator
-          name: publish maven packages to nexus
-          requires:
-            - setup
-          dry_run: << pipeline.parameters.dry_run >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
 
   publish_rpms:
     when:
