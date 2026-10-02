@@ -378,7 +378,7 @@ class DataPlaneDefinitionServiceTest {
         NewDataPlaneDefinition payload = payload();
         payload.setConfiguration(readTree("{\"mongodb\": {\"dbname\": \"acme\", \"host\": \"mongo\", \"port\": 27017, \"bogus\": \"x\"}}"));
 
-        assertRejected(payload, InvalidParameterException.class, "configuration.mongodb is not valid: #: extraneous key [bogus] is not permitted");
+        assertRejected(payload, InvalidParameterException.class, "configuration.mongodb is not valid: : property 'bogus' is not defined in the schema");
     }
 
     @Test
