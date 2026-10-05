@@ -682,6 +682,58 @@ class StrategyGranterAdapterTest {
                 "authorizationDetails should be null (absent) when CibaData carries no RAR — no NPE");
     }
 
+    @Test
+    void shouldMapExtensionGrantResourceGrantedOntoOAuth2Request() {
+        assertTrue(grantExtension(true).isResourceGranted());
+    }
+
+    @Test
+    void shouldLeaveResourceGrantedUnsetWhenExtensionGrantGrantsNoResource() {
+        assertFalse(grantExtension(false).isResourceGranted());
+    }
+
+    private OAuth2Request grantExtension(boolean resourceGranted) {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+
+        User user = new User();
+        user.setId("user-id");
+
+        TokenCreationRequest creationRequest = new TokenCreationRequest(
+                "client-id",
+                "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                Set.of("calendar.read"),
+                user,
+                new GrantData.ExtensionGrantData("ext-id", "urn:ietf:params:oauth:grant-type:jwt-bearer", Map.of(), "idp-id", resourceGranted),
+                false,
+                Set.of("https://mcp.example.com/calendar"),
+                Set.of(),
+                HttpRequestInfo.from(tokenRequest),
+                tokenRequest.getAdditionalParameters(),
+                tokenRequest.getContext(),
+                Map.of()
+        );
+
+        when(strategy.process(eq(tokenRequest), eq(client), eq(domain)))
+                .thenReturn(Single.just(creationRequest));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(executionContext.getAttributes()).thenReturn(new HashMap<>());
+
+        when(rulesEngine.fire(eq(ExtensionPoint.PRE_TOKEN), any(OAuth2Request.class), any(), eq(client), eq(user), any()))
+                .thenReturn(Single.just(executionContext));
+        when(rulesEngine.fire(eq(ExtensionPoint.POST_TOKEN), any(), any(), eq(client), eq(user), any()))
+                .thenReturn(Single.just(executionContext));
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), eq(client), eq(user)))
+                .thenReturn(Single.just(new AccessToken("extension-token")));
+
+        adapter.grant(tokenRequest, client).blockingGet();
+
+        return oAuth2RequestCaptor.getValue();
+    }
+
 
     @Test
     void dpop_opportunisticBinding_setsJktWhenProofPresent() {

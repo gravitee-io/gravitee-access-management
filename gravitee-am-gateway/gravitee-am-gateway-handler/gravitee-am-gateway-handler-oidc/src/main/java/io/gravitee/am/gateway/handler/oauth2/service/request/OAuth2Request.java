@@ -112,6 +112,8 @@ public class OAuth2Request extends BaseRequest {
 
     private IdJagTarget idJagTarget;
 
+    private boolean resourceGranted;
+
     /**
      * Boolean indicates if the current request support OAuth 2.0 Refresh Token
      */
@@ -237,6 +239,7 @@ public class OAuth2Request extends BaseRequest {
         this.allParentJtis = other.allParentJtis;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
         this.idJagTarget = other.idJagTarget;
+        this.resourceGranted = other.resourceGranted;
         this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 
         //BaseRequest
