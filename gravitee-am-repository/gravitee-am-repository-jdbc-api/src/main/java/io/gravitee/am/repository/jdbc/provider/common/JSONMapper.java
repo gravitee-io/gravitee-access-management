@@ -64,6 +64,18 @@ public class JSONMapper {
         return result;
     }
 
+    public static <T> T toBean(String json, Class<T> beanClass, DeserializationFeature... features)  {
+        T result = null;
+        if (json != null) {
+            try {
+                result = mapper.readerFor(beanClass).withFeatures(features).readValue(json);
+            } catch (JsonProcessingException e) {
+                throw new JsonMapperException("Unable to instantiate Bean " + beanClass.getName(), e);
+            }
+        }
+        return result;
+    }
+
     public static <T> T toCollectionOfBean(String json, TypeReference typeRef)  {
         T result = null;
         if (json != null) {

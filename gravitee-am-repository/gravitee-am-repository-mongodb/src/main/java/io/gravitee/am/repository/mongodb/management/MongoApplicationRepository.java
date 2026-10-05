@@ -81,6 +81,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -113,6 +115,7 @@ import static java.util.stream.Collectors.toSet;
 @Component
 public class MongoApplicationRepository extends AbstractManagementMongoRepository implements ApplicationRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(MongoApplicationRepository.class);
     private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
     private static final String FIELD_APPLICATION_IDENTITY_PROVIDERS = "identityProviders";
     private static final String FIELD_IDENTITY = "identity";
@@ -775,11 +778,22 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return riskAssessment.convert();
     }
 
-    private static List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
+    static List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
         if (mongoTokenClaims == null) {
             return null;
         }
-        return mongoTokenClaims.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
+        return mongoTokenClaims.stream()
+                .filter(MongoApplicationRepository::isKnownTokenType)
+                .map(MongoApplicationRepository::convert)
+                .collect(Collectors.toList());
+    }
+
+    private static boolean isKnownTokenType(TokenClaimMongo claim) {
+        if (TokenTypeHint.toOptional(claim.getTokenType()).isPresent()) {
+            return true;
+        }
+        log.warn("Ignoring token custom claim with unknown token type claimName={} tokenType={}", claim.getClaimName(), claim.getTokenType());
+        return false;
     }
 
     private static List<TokenClaimMongo> getMongoTokenClaims(List<TokenClaim> tokenClaims) {

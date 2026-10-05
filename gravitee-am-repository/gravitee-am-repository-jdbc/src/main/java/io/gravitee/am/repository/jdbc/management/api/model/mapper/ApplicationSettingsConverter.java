@@ -15,15 +15,21 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model.mapper;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.github.dozermapper.core.DozerConverter;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ApplicationSettingsConverter extends DozerConverter<ApplicationSettings, String> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationSettingsConverter.class);
 
     public ApplicationSettingsConverter() {
         super(ApplicationSettings.class, String.class);
@@ -36,6 +42,18 @@ public class ApplicationSettingsConverter extends DozerConverter<ApplicationSett
 
     @Override
     public ApplicationSettings convertFrom(String s, ApplicationSettings bean) {
-        return JSONMapper.toBean(s,ApplicationSettings.class);
+        ApplicationSettings settings = JSONMapper.toBean(s, ApplicationSettings.class, DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
+        if (settings != null && settings.getOauth() != null && settings.getOauth().getTokenCustomClaims() != null) {
+            settings.getOauth().getTokenCustomClaims().removeIf(this::hasUnknownTokenType);
+        }
+        return settings;
+    }
+
+    private boolean hasUnknownTokenType(TokenClaim claim) {
+        if (claim.getTokenType() != null) {
+            return false;
+        }
+        LOGGER.warn("Ignoring token custom claim with unknown token type claimName={}", claim.getClaimName());
+        return true;
     }
 }
