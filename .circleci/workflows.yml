@@ -1958,7 +1958,6 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - publish docker images
-            - publish maven packages
 
   release-alpha-version:
     when:
@@ -1998,7 +1997,6 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - publish docker images
-            - publish maven packages
 
   release-hotfix-version:
     when:
@@ -2038,7 +2036,6 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - publish docker images
-            - publish maven packages
 
             # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
   pull_requests:
