@@ -222,6 +222,26 @@ class ExtensionGrantStrategyTest {
     }
 
     @Test
+    void shouldMarkTheResourceAsGrantedWhenThePluginGrantsOne() {
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(new ExtensionGrantResult(new DefaultUser("alice"), null, Map.of(), List.of(),
+                "https://mcp.example.com/calendar", null)));
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertTrue(((GrantData.ExtensionGrantData) result.grantData()).resourceGranted());
+    }
+
+    @Test
+    void shouldNotMarkTheResourceAsGrantedWhenThePluginGrantsNone() {
+        tokenRequest.setResources(Set.of("https://mcp.example.com/calendar"));
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(ExtensionGrantResult.endUser(new DefaultUser("alice"))));
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertFalse(((GrantData.ExtensionGrantData) result.grantData()).resourceGranted());
+    }
+
+    @Test
     void shouldKeepTheRequestedResourcesAndScopesWhenThePluginGrantsNone() {
         tokenRequest.setResources(Set.of("https://mcp.example.com/calendar"));
         tokenRequest.setScopes(Set.of("calendar.read"));
