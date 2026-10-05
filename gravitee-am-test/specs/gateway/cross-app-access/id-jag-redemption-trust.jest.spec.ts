@@ -16,7 +16,9 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { setup } from '../../test-fixture';
+import { uniqueName } from '@utils-commands/misc';
 import {
+  decodeToken,
   ID_JAG_JOSE_TYPE,
   IdJagRedemptionFixture,
   JWT_BEARER_GRANT,
@@ -27,7 +29,16 @@ setup(600000);
 
 let fixture: IdJagRedemptionFixture;
 
+const AUDIENCE_REFUSAL = 'Assertion audience must name only this domain';
+
 const errorOf = (response: any) => response.body.error;
+
+const descriptionOf = (response: any) => response.body.error_description;
+
+const issuerSignedAssertionFor = async (aud: unknown) => {
+  const claims = decodeToken(await fixture.agent.assertion());
+  return fixture.issuerSignedAssertion({ ...claims, aud, jti: uniqueName('jti', true) });
+};
 
 const formHeaders = { 'Content-type': 'application/x-www-form-urlencoded' };
 
@@ -100,6 +111,44 @@ describe('ID-JAG redemption', () => {
       const response = await fixture.agent.redeem(assertion).expect(400);
 
       expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe(AUDIENCE_REFUSAL);
+    });
+
+    it('should redeem an assertion whose audience array names only this domain', async () => {
+      const assertion = await issuerSignedAssertionFor([fixture.resourceOidc.issuer]);
+
+      await fixture.agent.redeem(assertion).expect(200);
+    });
+
+    it('should refuse an assertion whose audience names another server besides this domain', async () => {
+      const assertion = await issuerSignedAssertionFor([fixture.strangerAudience, fixture.resourceOidc.issuer]);
+
+      const response = await fixture.agent.redeem(assertion).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe(AUDIENCE_REFUSAL);
+      expect(response.body.access_token).toBeUndefined();
+    });
+
+    it('should refuse an assertion whose audience names this domain twice', async () => {
+      const assertion = await issuerSignedAssertionFor([fixture.resourceOidc.issuer, fixture.resourceOidc.issuer]);
+
+      const response = await fixture.agent.redeem(assertion).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe(AUDIENCE_REFUSAL);
+    });
+
+    it('should audit a refused audience without echoing the audience values', async () => {
+      const assertion = await issuerSignedAssertionFor([fixture.strangerAudience, fixture.resourceOidc.issuer]);
+
+      const since = Date.now();
+      await fixture.agent.redeem(assertion).expect(400);
+
+      const audit = await fixture.awaitTokenAudit('FAILURE', (detail) => JSON.stringify(detail).includes(AUDIENCE_REFUSAL), since);
+      expect(audit.type).toBe('TOKEN_CREATED');
+      expect(JSON.stringify(audit)).not.toContain(fixture.strangerAudience);
+      expect(JSON.stringify(audit)).not.toContain(assertion);
     });
 
     it('should refuse an assertion minted for another client', async () => {
