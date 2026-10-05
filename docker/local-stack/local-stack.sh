@@ -105,6 +105,7 @@ LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
 WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0; WANT_LDAP=0
 WANT_CHAOS=0             # --chaos: interpose toxiproxy on AM's outbound connections
+WANT_AE=0                # --alert-engine: Gravitee Alert Engine, wired to both planes
 
 want_set() { # want_set <name> <value>
   case "$1" in
@@ -112,6 +113,7 @@ want_set() { # want_set <name> <value>
     openfga) WANT_OPENFGA="$2" ;; kafka) WANT_KAFKA="$2" ;; mtls) WANT_MTLS="$2" ;;
     spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; keycloak) WANT_KEYCLOAK="$2" ;;
     ldap) WANT_LDAP="$2" ;;
+    alert-engine) WANT_AE="$2" ;;
     *) return 1 ;;
   esac
 }
@@ -149,12 +151,16 @@ SERVICES
   --ldap               start OpenLDAP on :1389, seeded with dc=gravitee,dc=io
                        (needed by the LDAP identity-provider tests)
   --with a,b,...       opt-in extras individually:
-                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,keycloak,ldap
+                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,keycloak,ldap,
+                       alert-engine
   --keycloak           start Keycloak on :8180 as a third-party SAML IdP
                        (realms saml-test / saml-test-2 imported at start-up)
   --cloud              managed-cloud mode: start the cockpit mock and point the
                        management API at it (console/cloud command path, e.g.
                        Cockpit access points -> entrypoints)
+  --alert-engine       start Gravitee Alert Engine on :8072 and connect the gateway
+                       and the management API to it (domain alerts and their
+                       notifiers; needed by the alert-engine jest suite)
 
 FAULT INJECTION
   --chaos              route AM's outbound connections through toxiproxy so they can
@@ -196,6 +202,7 @@ URLs / credentials once up:
   Gateway        http://localhost:8092
   Management API http://localhost:8093/management
   Console UI     http://localhost:4200      (with --ui / --full)
+  Alert Engine   http://localhost:8072      (with --alert-engine)
   Mailbox (UI)   http://localhost:5080
   Admin login    admin / adminadmin   (org/env: DEFAULT)
 EOF
@@ -229,6 +236,7 @@ while [ $# -gt 0 ]; do
     --cloud)     WANT_CLOUD=1; shift ;;
     --chaos)     WANT_CHAOS=1; shift ;;
     --keycloak)  WANT_KEYCLOAK=1; shift ;;
+    --alert-engine) WANT_AE=1; shift ;;
     --build)     BUILD_MODE="force"; shift ;;
     --quick|--no-build) BUILD_MODE="skip"; shift ;;
     --license)   LICENSE_FILE="${2:?--license needs a path}"; shift 2 ;;
@@ -269,6 +277,7 @@ ALL_FILES=(
   -f "$DEV/docker-compose-ldap.yml"
   -f "$DEV/docker-compose.spire.yml"
   -f "$DEV/docker-compose.cloud.yml"
+  -f "$DEV/docker-compose.alert-engine.yml"
   -f "$DEV/docker-compose.images.yml"
   -f "$DEV/docker-compose.chaos.yml"
   -f "$DEV/docker-compose.chaos.mongo.yml"
@@ -291,6 +300,7 @@ build_compose_files() {
   if [ "$WANT_SPIRE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.spire.yml"); fi
   if [ "$WANT_CLOUD" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.cloud.yml"); fi
   if [ "$WANT_KEYCLOAK" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.keycloak.yml"); fi
+  if [ "$WANT_AE" -eq 1 ]; then COMPOSE_FILES+=(-f "$DEV/docker-compose.alert-engine.yml"); fi
   # Chaos must follow the db/cloud overlays it redirects — compose applies files in order.
   if [ "$WANT_CHAOS" -eq 1 ]; then
     COMPOSE_FILES+=(-f "$DEV/docker-compose.chaos.yml")
@@ -317,6 +327,7 @@ build_service_list() {
   [ "$WANT_LDAP" -eq 1 ]     && SERVICES+=(openldap openldap-init)
   [ "$WANT_CLOUD" -eq 1 ]    && SERVICES+=(cockpit-mock)
   [ "$WANT_KEYCLOAK" -eq 1 ] && SERVICES+=(keycloak)
+  [ "$WANT_AE" -eq 1 ]       && SERVICES+=(alert-engine)
   [ "$WANT_CHAOS" -eq 1 ]    && SERVICES+=(toxiproxy)
   if [ "$WANT_SPIRE" -eq 1 ]; then
     SERVICES+=(spire-perms-init spire-server spire-bootstrap spire-agent spire-oidc)
@@ -337,6 +348,10 @@ export_env() {
   [ -n "$REGISTRY" ] && export AM_REGISTRY="$REGISTRY"
   export AM_VERSION='*'                       # build-arg glob for source images
   export GRAVITEE_LICENSE_KEY="${GRAVITEE_LICENSE_KEY:-}"  # referenced by the CI overlay; blank in dev
+  # ...and by the Alert Engine overlay, which has no license mount: hand it the dev license.
+  if [ "$WANT_AE" -eq 1 ] && [ -z "$GRAVITEE_LICENSE_KEY" ] && [ -f "$DEV/license/gravitee-universe-v4.key" ]; then
+    GRAVITEE_LICENSE_KEY="$(base64 < "$DEV/license/gravitee-universe-v4.key" | tr -d '\n')"
+  fi
   export JDBC_PLUGINS="${JDBC_PLUGINS:-}"                  # referenced by the postgres overlay
   if [ "$DB" = "psql" ]; then export JDBC_PLUGINS="./plugins/jdbc"; fi
   return 0   # never let a trailing false test become the function's exit status (set -e)
@@ -542,6 +557,7 @@ print_ready() {
   printf '  Management API http://localhost:8093/management\n'
   [ "$WANT_UI" -eq 1 ] && printf '  Console UI     http://localhost:4200\n'
   [ "$WANT_KEYCLOAK" -eq 1 ] && printf '  Keycloak       http://localhost:8180  (admin/admin)\n'
+  [ "$WANT_AE" -eq 1 ] && printf '  Alert Engine   http://localhost:8072  (technical API on :18072, admin/adminadmin)\n'
   [ "$WANT_CHAOS" -eq 1 ] && printf '  Toxiproxy API  http://localhost:8474  (./local-stack.sh chaos status)\n'
   printf '  Mailbox        http://localhost:5080\n'
   printf '  Admin login    admin / adminadmin   (org/env: DEFAULT)\n'
