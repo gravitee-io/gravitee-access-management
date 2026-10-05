@@ -160,8 +160,8 @@ public class ExtensionGrantStrategy implements GrantStrategy {
 
         return extensionGrantProvider.grant(createExtensionGrantRequest(request, client))
                 .flatMap(grantResult -> resolveUser(request, client, grantResult)
-                        .map(user -> grantedAccess(createTokenCreationRequest(request, client, user, resolveSource(grantResult.identityProvider())), grantResult)))
-                .switchIfEmpty(Single.fromCallable(() -> createTokenCreationRequest(request, client, null, resolveSource(null))))
+                        .map(user -> grantedAccess(createTokenCreationRequest(request, client, user, resolveSource(grantResult.identityProvider()), grantResult.resource() != null), grantResult)))
+                .switchIfEmpty(Single.fromCallable(() -> createTokenCreationRequest(request, client, null, resolveSource(null), false)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof InvalidGrantException
                             || ex instanceof UnauthorizedClientException
@@ -271,7 +271,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
     }
 
     private TokenCreationRequest createTokenCreationRequest(
-            TokenRequest request, Client client, User user, String source) {
+            TokenRequest request, Client client, User user, String source, boolean resourceGranted) {
 
         boolean supportRefresh = supportsRefreshToken(client);
 
@@ -286,6 +286,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 extensionGrant.getGrantType(),
                 additionalClaims,
                 source,
+                resourceGranted,
                 supportRefresh
         );
     }

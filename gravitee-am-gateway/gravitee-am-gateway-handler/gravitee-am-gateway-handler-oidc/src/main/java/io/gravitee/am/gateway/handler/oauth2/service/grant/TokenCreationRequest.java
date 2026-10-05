@@ -313,6 +313,7 @@ public record TokenCreationRequest(
             String extensionGrantType,
             Map<String, Object> additionalClaims,
             String userSource,
+            boolean resourceGranted,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(
@@ -320,7 +321,7 @@ public record TokenCreationRequest(
                 extensionGrantType,
                 original.getScopes(),
                 user,
-                new GrantData.ExtensionGrantData(extensionGrantId, extensionGrantType, additionalClaims, userSource),
+                new GrantData.ExtensionGrantData(extensionGrantId, extensionGrantType, additionalClaims, userSource, resourceGranted),
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),

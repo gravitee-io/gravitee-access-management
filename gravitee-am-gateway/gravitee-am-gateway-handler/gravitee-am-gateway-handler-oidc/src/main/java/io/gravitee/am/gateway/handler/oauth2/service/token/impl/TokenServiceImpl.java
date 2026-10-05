@@ -77,6 +77,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.gravitee.am.common.oauth2.Parameters.RESOURCE;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.common.utils.ConstantKeys.DPOP_AUTH_SCHEME;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
@@ -434,6 +435,10 @@ public class TokenServiceImpl implements TokenService {
         List<Map<String, Object>> authorizationDetails = oAuth2Request.getAuthorizationDetails();
         if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
             token.getAdditionalInformation().put(AUTHORIZATION_DETAILS, authorizationDetails);
+        }
+        Set<String> resources = oAuth2Request.getResources();
+        if (oAuth2Request.isResourceGranted() && resources != null && resources.size() == 1) {
+            token.getAdditionalInformation().put(RESOURCE, resources.iterator().next());
         }
         // set refresh token
         Optional.ofNullable(encodedRefreshToken).map(EncodedJWT::encodedToken).ifPresent(token::setRefreshToken);

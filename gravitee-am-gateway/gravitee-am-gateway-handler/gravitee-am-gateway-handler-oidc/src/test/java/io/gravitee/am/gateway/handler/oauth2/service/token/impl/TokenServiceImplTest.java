@@ -1379,6 +1379,71 @@ public class TokenServiceImplTest {
         });
     }
 
+    @Test
+    public void shouldReturnTheGrantedResourceAndScopeInTheTokenResponse() {
+        OAuth2Request request = extensionGrantRequest(true, Set.of("https://mcp.example.com/calendar"));
+
+        Token token = createPassingThroughEnhancer(request);
+
+        assertThat(token.getAdditionalInformation()).containsEntry("resource", "https://mcp.example.com/calendar");
+        assertThat(token.getScope()).isEqualTo("calendar.read");
+        assertThat(captureAccessTokenJWT().get("aud")).asList().containsExactly("https://mcp.example.com/calendar");
+    }
+
+    @Test
+    public void shouldReturnTheGrantedResourceInStrictResponseMode() {
+        tokenService.setStrictResponse(true);
+        OAuth2Request request = extensionGrantRequest(true, Set.of("https://mcp.example.com/calendar"));
+
+        Token token = createPassingThroughEnhancer(request);
+
+        assertThat(token.getAdditionalInformation()).containsEntry("resource", "https://mcp.example.com/calendar");
+    }
+
+    @Test
+    public void shouldNotReturnAResourceWhenNoneWasGranted() {
+        OAuth2Request request = extensionGrantRequest(false, Set.of("https://mcp.example.com/calendar"));
+
+        Token token = createPassingThroughEnhancer(request);
+
+        assertThat(token.getAdditionalInformation()).doesNotContainKey("resource");
+    }
+
+    @Test
+    public void shouldNotReturnAResourceWhenPoliciesLeaveSeveral() {
+        OAuth2Request request = extensionGrantRequest(true, Set.of("https://mcp.example.com/calendar", "https://mcp.example.com/mail"));
+
+        Token token = createPassingThroughEnhancer(request);
+
+        assertThat(token.getAdditionalInformation()).doesNotContainKey("resource");
+    }
+
+    private OAuth2Request extensionGrantRequest(boolean resourceGranted, Set<String> resources) {
+        OAuth2Request request = new OAuth2Request();
+        request.setParameters(new LinkedMultiValueMap());
+        request.setClientId("xaa-client");
+        request.setGrantType(GrantType.JWT_BEARER);
+        request.setSupportRefreshToken(false);
+        request.setScopes(Set.of("calendar.read"));
+        request.setOrigin("https://auth.example.com");
+        request.setResources(resources);
+        request.setResourceGranted(resourceGranted);
+        return request;
+    }
+
+    private Token createPassingThroughEnhancer(OAuth2Request request) {
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+        return executeTokenCreation(request, createClient(request.getClientId()), createUser("user-xaa")).values().get(0);
+    }
+
+    private JWT captureAccessTokenJWT() {
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(1)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        return jwtCaptor.getValue();
+    }
+
 
     @Test
     public void shouldRecordRequestContextWhenTokenCreationFails() {
