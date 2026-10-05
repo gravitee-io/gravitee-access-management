@@ -15,12 +15,15 @@
  */
 import { describe, expect } from '@jest/globals';
 import { randomBytes } from 'crypto';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import * as forge from 'node-forge';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, safeDeleteDomain, startDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { getAllIdps, createIdp } from '@management-commands/idp-management-commands';
-import { getAllCertificates } from '@management-commands/certificate-management-commands';
+import { createCertificate, getAllCertificates } from '@management-commands/certificate-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
 import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
 import { createExtensionGrant } from '@management-commands/extension-grant-commands';
@@ -37,6 +40,7 @@ import { Application } from '@management-models/Application';
 import { User } from '@management-models/User';
 import { Fixture } from '../../../test-fixture';
 import { createTrustedDomain } from '../../../management/domain/fixtures/cross-app-access-fixture';
+import { createBundledPKCS12CertificateRequest } from '../../../management/certificates/fixtures/certificates-fixture';
 import { createTrustedIssuerKeyMaterial } from '../../token-exchange/fixtures/trusted-issuer-jwt-helper';
 import { TOKEN_EXCHANGE_TEST } from '../../token-exchange/fixtures/token-exchange-fixture';
 import { ID_JAG_JOSE_TYPE, ID_JAG_TOKEN_TYPE } from '../../token-exchange/fixtures/id-jag-fixture';
@@ -134,6 +138,7 @@ export interface IdJagRedemptionFixture extends Fixture {
   selfIssuedAssertion: () => Promise<string>;
   craftAssertion: (claims: Record<string, unknown>, options?: CraftOptions) => string;
   craftedClaims: (overrides?: Record<string, unknown>) => Record<string, unknown>;
+  issuerSignedAssertion: (claims: Record<string, unknown>) => Promise<string>;
   awaitTokenAudit: (status: 'SUCCESS' | 'FAILURE', matches: (detail: any) => boolean, since?: number) => Promise<any>;
 }
 
@@ -144,6 +149,18 @@ export const decodeToken = (token: string): any => jwt.decode(token);
 export const audiencesOf = (payload: any): string[] => (Array.isArray(payload.aud) ? payload.aud : [payload.aud]);
 
 export const scopesOf = (scope: string): string[] => (scope ? scope.split(' ').sort() : []);
+
+const bundledPkcs12PrivateKey = (): forge.pki.rsa.PrivateKey => {
+  const der = readFileSync(join(__dirname, '../../../management/certificates/fixtures/test.p12'), 'binary');
+  const keystore = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(der), 'changeit');
+  const keyBagType = forge.pki.oids.pkcs8ShroudedKeyBag;
+  return keystore.getBags({ bagType: keyBagType })[keyBagType][0].key as forge.pki.rsa.PrivateKey;
+};
+
+const jwkModulusOf = (key: forge.pki.rsa.PrivateKey): string => {
+  const hex = key.n.toString(16);
+  return Buffer.from(hex.length % 2 ? `0${hex}` : hex, 'hex').toString('base64url');
+};
 
 export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixtureConfig = {}): Promise<IdJagRedemptionFixture> => {
   const accessToken = await requestAdminAccessToken();
@@ -278,6 +295,7 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
   const issuerDefaultIdp = issuerIdps.values().next().value;
   const issuerCertificates = await getAllCertificates(issuerDomain.id, accessToken);
   const issuerCertificate = issuerCertificates[0].id;
+  await createCertificate(issuerDomain.id, accessToken, createBundledPKCS12CertificateRequest());
 
   const issuerApp = (name: string, targetClientId: string, tokenCustomClaims: Record<string, unknown>[] = []) =>
     createIdJagIssuerApp(name, issuerDomain, accessToken, {
@@ -415,6 +433,18 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
     });
   };
 
+  const issuerKey = bundledPkcs12PrivateKey();
+  const issuerSignedAssertion = async (claims: Record<string, unknown>) => {
+    const jwksUri = new URL(issuerOidc.jwks_uri);
+    const jwks = await request(jwksUri.origin).get(jwksUri.pathname).expect(200);
+    const publishedKey = jwks.body.keys.find((key: any) => key.n === jwkModulusOf(issuerKey));
+    expect(publishedKey).toBeDefined();
+    return jwt.sign(claims, forge.pki.privateKeyToPem(issuerKey), {
+      algorithm: 'RS256',
+      header: { alg: 'RS256', typ: ID_JAG_JOSE_TYPE, kid: publishedKey.kid },
+    });
+  };
+
   const selfIssuedAssertion = async () => {
     expect(resourceOidc.issuer).toBe(selfIssuer);
     const scope = `openid ${RESOURCE_SCOPE.read}`;
@@ -478,6 +508,7 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
     selfIssuedAssertion,
     craftAssertion,
     craftedClaims,
+    issuerSignedAssertion,
     awaitTokenAudit,
     cleanUp: async () => {
       await safeDeleteDomain(issuerDomain.id, accessToken);
