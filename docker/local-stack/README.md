@@ -104,12 +104,43 @@ docker login graviteeio.azurecr.io
 | `--ui` | + Console UI (`:4200`) — needed for playwright & manual Console work |
 | `--full` | UI + wiremock + ciba + openfga + kafka + mtls (the jest-gateway + playwright union) |
 | `--cloud` | cockpit mock; management API in managed-cloud mode (Cockpit command path) |
-| `--with a,b,…` | opt-in individually: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud` |
+| `--alert-engine` | + Gravitee Alert Engine (`:8072`), gateway and management API connected to it — see [Alert Engine](#alert-engine) |
+| `--with a,b,…` | opt-in individually: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,alert-engine` |
 | `--db mongo\|psql` | choose the backend database (default `mongo`) |
 | `--chaos` | + toxiproxy, interposed on AM's outbound connections — see [Fault injection](#fault-injection) |
 
 SPIRE is only needed by the env-guarded gateway tests (`RUN_SPIRE_TESTS=true`); start it with
 `--with spire`.
+
+## Alert Engine
+
+`--alert-engine` starts [Gravitee Alert Engine](https://documentation.gravitee.io/alert-engine)
+and connects both planes to it, so domain alerts work end to end: the management API pushes
+each domain's alert triggers and notifiers, the gateway pushes the authentication events, and
+Alert Engine evaluates them and sends the notifications itself. It is off unless you ask for
+it, and is not part of `--full`.
+
+```bash
+./local-stack.sh up --alert-engine
+npm --prefix gravitee-am-test run ci:alert-engine
+
+./local-stack.sh up --db psql --alert-engine
+REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:alert-engine
+```
+
+- Alert Engine is an EE component and uses the same license as AM. The overlay passes it as
+  `GRAVITEE_LICENSE_KEY` (base64), which `local-stack.sh` derives from
+  `dev/license/gravitee-universe-v4.key` and the CI jobs export from the vault.
+- The image is `graviteeio/ae-engine`, `3.0.2` by default; set `AE_VERSION` (in `dev/.env`)
+  to run another one, e.g. alongside an older `--version` of AM.
+- The "too many login failures" alert is a failure *rate* over a time window, evaluated once a
+  minimum number of logins has been seen. The product defaults (1000 logins over 10 minutes)
+  are sized for production traffic, so this overlay shrinks them on the management API to
+  **5 logins over 10 seconds** (`alerts.too_many_login_failures.sampleSize` / `.window`); the
+  threshold stays at 10 % of failures.
+- Notifiers are executed by Alert Engine, not by AM, so a webhook notifier must use an address
+  reachable from the Alert Engine container — `http://wiremock:8080/...` for the bundled
+  WireMock, whose request journal is then readable on `http://localhost:8181/__admin/requests`.
 
 ## Fault injection
 
@@ -239,6 +270,7 @@ for source-built and `--version` images.
 | Management node | http://localhost:18093/_node | health/metrics |
 | Console UI | http://localhost:4200 | with `--ui` / `--full` |
 | Cockpit mock | http://localhost:8085 | with `--cloud` |
+| Alert Engine | http://localhost:8072 | with `--alert-engine`; node API on `:18072/_node` (`admin` / `adminadmin`) |
 | Mailbox (fake SMTP) | http://localhost:5080 | SMTP on `:5025` |
 | WireMock | http://localhost:8181 | SFR/CIMD mocks |
 | MongoDB / PostgreSQL | `:27017` / `:5432` | per `--db` |
@@ -258,6 +290,9 @@ REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel   
 
 # Cloud / Cockpit command specs (needs --cloud, distinct from --full)
 npm --prefix gravitee-am-test run ci:cloud
+
+# Alert notification specs (needs --alert-engine)
+npm --prefix gravitee-am-test run ci:alert-engine
 
 # Playwright (needs --ui / --full)
 npm --prefix gravitee-am-test run pw            # interactive

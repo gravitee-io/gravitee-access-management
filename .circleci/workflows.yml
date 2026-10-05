@@ -982,6 +982,109 @@ jobs:
           when: always
           command: npm --prefix docker/local-stack run stack:down
 
+  run_jest_tests_alert_engine_mongo:
+    parameters:
+      mongo_version:
+        type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: mongodb
+      GIO_MAX_MEM: 512m
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout:
+          method: full
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
+      - run:
+          name: Spin up stack with Alert Engine and Mongo << parameters.mongo_version >>
+          command: MONGO_VERSION=<< parameters.mongo_version >> npm --prefix docker/local-stack run stack:ci:setup:alert-engine:mongo
+      - run:
+          name: Check stack health before Alert Engine tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18072/_node/health'
+      - run:
+          name: Run Alert Engine Jest tests
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-alert-engine.xml npm --prefix gravitee-am-test run ci:alert-engine
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
+  run_jest_tests_alert_engine_psql:
+    parameters:
+      psql_version:
+        type: string
+      am_images:
+        description: build the AM images from the workspace zips, or pull the latest ones of the branch from the Azure registry
+        type: enum
+        enum: [ build, pull ]
+        default: build
+    machine:
+      image: ubuntu-2204:2024.04.4
+      docker_layer_caching: true
+    resource_class: large
+    environment:
+      REPOSITORY_TYPE: jdbc
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
+          var-name: GRAVITEE_LICENSE_KEY
+      - run:
+          name: Install test module dependencies
+          command: npm --prefix gravitee-am-test install
+      - run:
+          name: Prepare JDBC plugins
+          command: npm --prefix docker/local-stack run stack:init:plugins:psql
+      - prepare-am-images:
+          am_images: << parameters.am_images >>
+      - run:
+          name: Spin up stack with Alert Engine and Postgres << parameters.psql_version >>
+          command: JDBC_PLUGINS=./plugins/jdbc POSTGRES_VERSION=<< parameters.psql_version >> npm --prefix docker/local-stack run stack:ci:setup:alert-engine:psql
+      - run:
+          name: Check stack health before Alert Engine tests
+          command: |
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18093/_node/health?probes=jetty-http-server,management-repository'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18092/_node/health?probes=http-server,security-domain-sync'
+            curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null -u admin:adminadmin 'http://localhost:18072/_node/health'
+      - run:
+          name: Run Alert Engine Jest tests
+          command: JEST_RETRIES=2 JEST_JUNIT_OUTPUT_NAME=junit-alert-engine.xml REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:alert-engine
+      - store_test_results:
+          path: gravitee-am-test/jest-reports/junit
+      - store_artifacts:
+          path: gravitee-am-test/jest-reports
+          destination: jest-reports
+      - run:
+          name: Stop
+          when: always
+          command: npm --prefix docker/local-stack run stack:down
+
   run_playwright_tests_mongo:
     parameters:
       mongo_version:
@@ -2618,6 +2721,20 @@ workflows:
           matrix:
             parameters:
               mongo_version: ["8.2"]
+      - run_jest_tests_alert_engine_mongo:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_jest_tests_alert_engine_psql:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
       - run_playwright_tests_mongo:
           context: cicd-orchestrator
           requires:
@@ -2987,6 +3104,30 @@ workflows:
           matrix:
             parameters:
               mongo_version: ["8.2"]
+      - run_jest_tests_alert_engine_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              mongo_version: ["8.2"]
+      - run_jest_tests_alert_engine_psql:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          am_images: pull
+          pre-steps:
+            - load-slack-token-on-schedule
+          post-steps:
+            - notify-failure-on-schedule
+          matrix:
+            parameters:
+              psql_version: ["18.4"]
       - run_playwright_tests_mongo:
           context: cicd-orchestrator
           requires:
