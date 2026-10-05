@@ -130,6 +130,7 @@ public sealed interface GrantData permits
             String extensionGrantId,
             String extensionGrantType,
             Map<String, Object> additionalClaims,
-            String userSource
+            String userSource,
+            boolean resourceGranted
     ) implements GrantData {}
 }

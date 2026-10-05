@@ -58,6 +58,16 @@ describe('ID-JAG redemption', () => {
       expect(audiencesOf(decodeToken(response.body.access_token))).toContain(fixture.mcpResource);
     });
 
+    it('should return the granted resource and scope in the token response', async () => {
+      const assertion = await fixture.agent.assertion();
+
+      const response = await fixture.agent.redeem(assertion, scopeParam(RESOURCE_SCOPE.read)).expect(200);
+
+      expect(response.body.resource).toBe(fixture.mcpResource);
+      expect(audiencesOf(decodeToken(response.body.access_token))).toEqual([response.body.resource]);
+      expect(scopesOf(response.body.scope)).toEqual([RESOURCE_SCOPE.read]);
+    });
+
     it('should issue the token for the local user the assertion subject binds to', async () => {
       const assertion = await fixture.agent.assertion();
 
