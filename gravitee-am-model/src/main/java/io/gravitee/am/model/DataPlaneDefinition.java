@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.Date;
@@ -27,6 +28,7 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 @Data
+@NoArgsConstructor
 public class DataPlaneDefinition implements Managed {
 
     private String id;
@@ -51,4 +53,17 @@ public class DataPlaneDefinition implements Managed {
     private Date createdAt;
 
     private Date updatedAt;
+
+    public DataPlaneDefinition(DataPlaneDefinition other) {
+        this.id = other.id;
+        this.name = other.name;
+        this.type = other.type;
+        this.gatewayUrl = other.gatewayUrl;
+        this.organizationId = other.organizationId;
+        this.environmentId = other.environmentId;
+        this.configuration = other.configuration;
+        this.managedBy = other.managedBy;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
+    }
 }
