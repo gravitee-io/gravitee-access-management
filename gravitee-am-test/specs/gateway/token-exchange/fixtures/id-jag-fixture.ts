@@ -25,9 +25,10 @@ import { createTrustedDomain, updateTrustedDomain } from '../../../management/do
 import { getAllCertificates } from '@management-commands/certificate-management-commands';
 import { updateApplication } from '@management-commands/application-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
+import { createProtectedResource } from '@management-commands/protected-resources-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { applicationBase64Token } from '@gateway-commands/utils';
+import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { retryUntil } from '@utils-commands/retry';
@@ -39,6 +40,7 @@ import { ID_TOKEN_TYPE, TOKEN_EXCHANGE_TEST } from './token-exchange-fixture';
 
 export const ID_JAG_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id-jag';
 export const ID_JAG_JOSE_TYPE = 'oauth-id-jag+jwt';
+export const MCP_SERVER_RESOURCE = 'https://mcp.acme.com';
 
 export interface IdJagResourceServer {
   id: string;
@@ -57,9 +59,11 @@ export interface IdJagFixture {
   calendar: IdJagResourceServer;
   mail: IdJagResourceServer;
   trustDomainId: string;
+  mcpServerBasicAuth: string;
   subjectTokens: (scope?: string) => Promise<{ accessToken: string; idToken: string; expiresIn: number }>;
+  accessTokenFor: (resource: string) => Promise<string>;
   otherApplicationIdToken: () => Promise<string>;
-  requestIdJag: (subjectToken: string, extraParams?: string, subjectTokenType?: string) => request.Test;
+  requestIdJag: (subjectToken: string, extraParams?: string, subjectTokenType?: string, clientBasicAuth?: string) => request.Test;
   setCrossAppAccess: (
     crossAppAccessSettings: Record<string, unknown>,
     idJagValiditySeconds?: number,
@@ -166,6 +170,23 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
 
+  const mcpServer = await createProtectedResource(domain.id, accessToken, {
+    name: uniqueName('mcp-server', true),
+    type: 'MCP_SERVER',
+    resourceIdentifiers: [MCP_SERVER_RESOURCE],
+    settings: {
+      oauth: {
+        grantTypes: ['client_credentials', 'urn:ietf:params:oauth:grant-type:token-exchange'],
+        idJagValiditySeconds: 300,
+        crossAppAccessSettings: {
+          enabled: true,
+          resourceServers: [{ trustDomainId: trustDomain.id, resourceServerId: calendar.id, clientId: 'mcp-at-acme-calendar' }],
+        },
+      },
+    },
+  });
+  const mcpServerBasicAuth = getBase64BasicAuth(mcpServer.clientId, mcpServer.clientSecret);
+
   const startedDomain = await startDomain(domain.id, accessToken);
   const oidcResponse = await waitForOidcReady(startedDomain.hrid, { timeoutMs: 30000, intervalMs: 500 });
   expect(oidcResponse.status).toBe(200);
@@ -187,6 +208,17 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     return { accessToken: response.body.access_token, idToken: response.body.id_token, expiresIn: response.body.expires_in };
   };
 
+  const accessTokenFor = async (resource: string): Promise<string> => {
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=password&username=${user.username}&password=${TOKEN_EXCHANGE_TEST.USER_PASSWORD}` +
+        `&scope=openid%20profile&resource=${encodeURIComponent(resource)}`,
+      { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${basicAuth}` },
+    ).expect(200);
+    return response.body.access_token;
+  };
+
   const otherApplicationIdToken = async (): Promise<string> => {
     const response = await performPost(
       oidc.token_endpoint,
@@ -200,7 +232,12 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     return response.body.id_token;
   };
 
-  const requestIdJag = (subjectToken: string, extraParams = '', subjectTokenType = ID_TOKEN_TYPE): request.Test =>
+  const requestIdJag = (
+    subjectToken: string,
+    extraParams = '',
+    subjectTokenType = ID_TOKEN_TYPE,
+    clientBasicAuth = basicAuth,
+  ): request.Test =>
     performPost(
       oidc.token_endpoint,
       '',
@@ -209,7 +246,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
         `&subject_token_type=${subjectTokenType}` +
         `&requested_token_type=${ID_JAG_TOKEN_TYPE}` +
         extraParams,
-      { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${basicAuth}` },
+      { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${clientBasicAuth}` },
     );
 
   const setCrossAppAccess = async (
@@ -294,7 +331,9 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
     calendar,
     mail,
     trustDomainId: trustDomain.id,
+    mcpServerBasicAuth,
     subjectTokens,
+    accessTokenFor,
     otherApplicationIdToken,
     requestIdJag,
     setCrossAppAccess,

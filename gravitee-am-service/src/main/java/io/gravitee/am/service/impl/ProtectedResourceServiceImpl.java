@@ -54,6 +54,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
+import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import org.apache.commons.lang3.StringUtils;
@@ -115,6 +116,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     private ScopeService scopeService;
     @Autowired
     private CertificateService certificateService;
+    @Autowired
+    private ApplicationCrossAppAccessValidator crossAppAccessValidator;
 
     @Override
     public Maybe<ProtectedResource> findById(String id) {
@@ -194,7 +197,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
                 .andThen(checkResourceIdentifierUniqueness(domain.getId(), toCreate.getResourceIdentifiers()))
                 .andThen(setDefaultCertificate(toCreate))
-                .flatMap(resource -> doCreate(resource, principal, domain))
+                .flatMap(resource -> validateCrossAppAccessSettings(resource).andThen(Single.defer(() -> doCreate(resource, principal, domain))))
                 .map(res -> ProtectedResourceSecret.from(res, rawSecret));
     }
 
@@ -365,8 +368,15 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldResource.getResourceIdentifiers(), resource.getResourceIdentifiers()))
                 .andThen(validateFeatureScopes(domain.getId(), resource))
                 .andThen(validateCertificate(resource))
+                .andThen(validateCrossAppAccessSettings(resource))
                 .andThen(Single.defer(() -> doUpdate(resource, oldResource, principal, domain)))
                 .map(ProtectedResourcePrimaryData::of);
+    }
+
+    private Completable validateCrossAppAccessSettings(ProtectedResource resource) {
+        return Completable.defer(() -> crossAppAccessValidator.validate(resource.getSettings().getOauth())
+                .map(error -> Completable.error(new InvalidProtectedResourceException(error)))
+                .orElseGet(Completable::complete));
     }
 
     private Completable checkFeatureKeyUniqueness(ProtectedResource resource) {

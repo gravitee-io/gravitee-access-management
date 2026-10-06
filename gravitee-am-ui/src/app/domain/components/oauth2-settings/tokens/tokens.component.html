@@ -80,13 +80,7 @@
               />
               <mat-hint>ID token</mat-hint>
             </mat-form-field>
-            <mat-form-field
-              *ngIf="context !== 'McpServer'"
-              class="token-validity-field"
-              appearance="outline"
-              floatLabel="always"
-              [fxFlex]="validityFieldFlex"
-            >
+            <mat-form-field class="token-validity-field" appearance="outline" floatLabel="always" [fxFlex]="validityFieldFlex">
               <mat-icon matPrefix>timer</mat-icon>
               <input
                 matInput
