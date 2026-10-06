@@ -57,9 +57,9 @@ describe('TokensComponent', () => {
     expect(component.claimTokenTypes).toEqual(['id_token', 'access_token', 'id_jag']);
   });
 
-  it('shouldOfferAccessTokenOnlyForMcpServer', () => {
+  it('shouldOfferAccessTokenAndIdJagForMcpServer', () => {
     createFixture({ crossAppAccessSettings: { enabled: true } }, 'McpServer');
-    expect(component.claimTokenTypes).toEqual(['access_token']);
+    expect(component.claimTokenTypes).toEqual(['access_token', 'id_jag']);
   });
 
   it('shouldKeepClaimTokenTypesReferenceStableBetweenReads', () => {
@@ -93,10 +93,12 @@ describe('TokensComponent', () => {
     expect(fixture.nativeElement.querySelector('input[name="idJagValidity"]')).toBeTruthy();
   });
 
-  it('shouldHideIdJagValidityForMcpServer', () => {
+  it('shouldRenderAccessTokenAndIdJagValidityFieldsForMcpServer', () => {
     createFixture({ idJagValiditySeconds: 300 }, 'McpServer');
 
-    expect(fixture.nativeElement.querySelector('input[name="idJagValidity"]')).toBeNull();
+    const names = Array.from(fixture.nativeElement.querySelectorAll('input[type="number"]')).map((input: any) => input.name);
+
+    expect(names).toEqual(['accessTokenValidity', 'idJagValidity']);
   });
 
   it('shouldEmitIdJagValidityOnChange', () => {

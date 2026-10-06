@@ -17,7 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { setup } from '../../test-fixture';
-import { ID_JAG_JOSE_TYPE, ID_JAG_TOKEN_TYPE, IdJagFixture, setupIdJagFixture } from './fixtures/id-jag-fixture';
+import { ID_JAG_JOSE_TYPE, ID_JAG_TOKEN_TYPE, IdJagFixture, MCP_SERVER_RESOURCE, setupIdJagFixture } from './fixtures/id-jag-fixture';
 import { ACCESS_TOKEN_TYPE } from './fixtures/token-exchange-fixture';
 
 setup(300000);
@@ -368,5 +368,35 @@ describe('ID-JAG issuance - lax validation also accepts an access token', () => 
       .expect(200);
 
     expect(response.body.issued_token_type).toBe(ID_JAG_TOKEN_TYPE);
+  });
+});
+
+describe('ID-JAG issuance - an MCP server exchanges the access token addressed to it', () => {
+  beforeAll(async () => {
+    await fixture.setIdJagLaxValidation(true);
+  });
+
+  afterAll(async () => {
+    await fixture.setIdJagLaxValidation(false);
+  });
+
+  it('should issue an ID-JAG to an MCP server from an access token whose audience is that MCP server', async () => {
+    const accessToken = await fixture.accessTokenFor(MCP_SERVER_RESOURCE);
+    expect(decode(accessToken).payload.aud).toBe(MCP_SERVER_RESOURCE);
+
+    const response = await fixture.requestIdJag(accessToken, calendarWith(), ACCESS_TOKEN_TYPE, fixture.mcpServerBasicAuth).expect(200);
+    const { payload } = decode(response.body.access_token);
+
+    expect(response.body.issued_token_type).toBe(ID_JAG_TOKEN_TYPE);
+    expect(payload.client_id).toBe('mcp-at-acme-calendar');
+    expect(payload.resource).toBe(fixture.calendar.resource);
+  });
+
+  it('should refuse an MCP server an access token addressed to the application', async () => {
+    const { accessToken } = await fixture.subjectTokens();
+
+    const response = await fixture.requestIdJag(accessToken, calendarWith(), ACCESS_TOKEN_TYPE, fixture.mcpServerBasicAuth).expect(400);
+
+    expect(errorOf(response)).toBe('invalid_request');
   });
 });

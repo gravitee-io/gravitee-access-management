@@ -56,7 +56,7 @@ export class TokensComponent implements OnInit {
     this.oauthSettings = this.oauthSettings || {};
     this.oauthSettings.tokenCustomClaims = this.oauthSettings.tokenCustomClaims || [];
     this.oauthSettings.userinfoCustomClaims = this.oauthSettings.userinfoCustomClaims || [];
-    this.claimTokenTypes = this.context === 'McpServer' ? ['access_token'] : ['id_token', 'access_token', 'id_jag'];
+    this.claimTokenTypes = this.context === 'McpServer' ? ['access_token', 'id_jag'] : ['id_token', 'access_token', 'id_jag'];
 
     this.initCustomClaims();
     this.initUserInfoCustomClaims();
