@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.AgentApplicationConstraints;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
@@ -951,6 +952,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), application.clientId())
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
+                .flatMap(app -> validateCrossAppAccessEnablement(domain, null, app))
                 .flatMap(this::validateApplicationAuthMethod)
                 // set default certificate
                 .flatMap(this::setDefaultCertificate)
@@ -1005,6 +1007,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return validateApplicationMetadata(applicationToUpdate, fromUpdateType)
                 // validate identity providers
                 .flatMap(this::validateApplicationIdentityProviders)
+                .flatMap(app -> validateCrossAppAccessEnablement(currentApplication, app))
                 .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication))
                 // update application
                 .flatMap(applicationRepository::update)
@@ -1164,6 +1167,35 @@ public class ApplicationServiceImpl implements ApplicationService {
         return crossAppAccessValidator.validate(application.getSettings().getOauth())
                 .<Single<Application>>map(error -> Single.error(new InvalidClientMetadataException(error)))
                 .orElseGet(() -> Single.just(application));
+    }
+
+    private Single<Application> validateCrossAppAccessEnablement(Application currentApplication, Application application) {
+        if (!isCrossAppAccessEnabled(application) || isCrossAppAccessEnabled(currentApplication)) {
+            return Single.just(application);
+        }
+        return domainReadService.findById(application.getDomain())
+                .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
+                .flatMap(domain -> validateCrossAppAccessEnablement(domain, currentApplication, application));
+    }
+
+    private Single<Application> validateCrossAppAccessEnablement(Domain domain, Application currentApplication, Application application) {
+        if (!isCrossAppAccessEnabled(application) || isCrossAppAccessEnabled(currentApplication) || allowsIdJagRequestedTokenType(domain)) {
+            return Single.just(application);
+        }
+        return Single.error(new InvalidClientMetadataException("Cross App Access requires the domain token exchange settings to allow the ID-JAG requested token type"));
+    }
+
+    private static boolean isCrossAppAccessEnabled(Application application) {
+        return application != null
+                && application.getSettings() != null
+                && application.getSettings().getOauth() != null
+                && application.getSettings().getOauth().getCrossAppAccessSettings() != null
+                && application.getSettings().getOauth().getCrossAppAccessSettings().isEnabled();
+    }
+
+    private static boolean allowsIdJagRequestedTokenType(Domain domain) {
+        return domain.getTokenExchangeSettings() != null
+                && domain.getTokenExchangeSettings().getAllowedRequestedTokenTypes().contains(TokenType.ID_JAG);
     }
 
     /**
