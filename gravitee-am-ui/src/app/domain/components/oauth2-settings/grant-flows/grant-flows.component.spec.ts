@@ -95,6 +95,12 @@ describe('GrantFlowsComponent', () => {
     expect(component.tokenEndpointAuthMethods.some((method) => method.value === 'client_secret_jwt')).toBe(true);
   });
 
+  it('shouldRenderCrossAppAccessSettingsInMcpServerContext', () => {
+    createFixtureWithMcpContext([TOKEN_EXCHANGE_GRANT_TYPE]);
+
+    expect(fixture.nativeElement.querySelector('app-cross-app-access-settings')).toBeTruthy();
+  });
+
   it('should expose MCP_SERVER_CONTEXT and CLIENT_CREDENTIALS_GRANT_TYPE constants', () => {
     expect(component.MCP_SERVER_CONTEXT).toBe('McpServer');
     expect(component.CLIENT_CREDENTIALS_GRANT_TYPE).toBe('client_credentials');
@@ -269,9 +275,9 @@ describe('GrantFlowsComponent', () => {
         expect(warnings(TEXT)).toHaveLength(0);
       });
 
-      it('should warn only on token exchange section in MCP server context', () => {
+      it('should warn on token exchange and cross app access sections in MCP server context', () => {
         createFixtureWithMcpContext([]);
-        expect(warnings(TEXT)).toHaveLength(1);
+        expect(warnings(TEXT)).toHaveLength(2);
       });
     });
 

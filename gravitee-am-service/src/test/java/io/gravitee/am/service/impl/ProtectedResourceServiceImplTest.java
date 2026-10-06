@@ -29,6 +29,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SecretExpirationSettings;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
+import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -53,6 +55,7 @@ import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -62,6 +65,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -126,6 +130,9 @@ public class ProtectedResourceServiceImplTest {
     @Mock
     private CertificateService certificateService;
 
+    @Spy
+    private ApplicationCrossAppAccessValidator crossAppAccessValidator = new ApplicationCrossAppAccessValidator();
+
     @InjectMocks
     private ProtectedResourceServiceImpl service;
 
@@ -163,6 +170,21 @@ public class ProtectedResourceServiceImplTest {
         resource.setType("MCP_SERVER");
         resource.setResourceIdentifiers(List.of("https://onet.pl"));
         return resource;
+    }
+
+    private ApplicationSettings crossAppAccessSettings(String rowClientId) {
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setCrossAppAccessSettings(ApplicationCrossAppAccessSettings.builder()
+                .enabled(true)
+                .resourceServers(List.of(ApplicationCrossAppAccessResourceServer.builder()
+                        .trustDomainId("trust-domain-id")
+                        .resourceServerId("resource-server-id")
+                        .clientId(rowClientId)
+                        .build()))
+                .build());
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oauth);
+        return settings;
     }
 
     private UpdateMcpTool createUpdateMcpTool(String key, String description, List<String> scopes) {
@@ -1164,5 +1186,90 @@ public class ProtectedResourceServiceImplTest {
             // Check that defaults were applied for missing fields
             res.getSettings().getOauth().getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)
         ));
+    }
+
+    // ========== CROSS APP ACCESS Tests ==========
+
+    @Test
+    public void shouldNotCreateProtectedResourceWhenCrossAppAccessSettingsInvalid() {
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID)).thenReturn(Completable.complete());
+        when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.just(DEFAULT_CERTIFICATE));
+        NewProtectedResource newResource = createNewProtectedResource();
+        newResource.setSettings(crossAppAccessSettings(" "));
+
+        service.create(createDomain(), createUser(), newResource)
+                .test()
+                .assertError(e -> e instanceof InvalidProtectedResourceException
+                        && e.getMessage().contains("crossAppAccessSettings.resourceServers entries must have a non-blank clientId"));
+
+        verify(repository, never()).create(any());
+    }
+
+    @Test
+    public void shouldUpdateProtectedResourceWithCrossAppAccessSettings() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("Name");
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(new ArrayList<>());
+        updateRequest.setSettings(crossAppAccessSettings("rs-client-id"));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
+                .test()
+                .assertComplete();
+
+        verify(repository).update(argThat(res -> {
+            ApplicationCrossAppAccessSettings xaa = res.getSettings().getOauth().getCrossAppAccessSettings();
+            return xaa.isEnabled() && xaa.getResourceServers().getFirst().getClientId().equals("rs-client-id");
+        }));
+    }
+
+    @Test
+    public void shouldNotUpdateProtectedResourceWhenCrossAppAccessSettingsInvalid() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("Name");
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(new ArrayList<>());
+        updateRequest.setSettings(crossAppAccessSettings(null));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
+                .test()
+                .assertError(e -> e instanceof InvalidProtectedResourceException
+                        && e.getMessage().contains("crossAppAccessSettings.resourceServers entries must have a non-blank clientId"));
+
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldNotPatchProtectedResourceWhenIdJagValidityTooLow() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        ApplicationSettings settings = crossAppAccessSettings("rs-client-id");
+        settings.getOauth().setIdJagValiditySeconds(0);
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setSettings(Optional.of(settings));
+
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
+                .test()
+                .assertError(e -> e instanceof InvalidProtectedResourceException
+                        && e.getMessage().contains("idJagValiditySeconds must be at least 1"));
+
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
     }
 }

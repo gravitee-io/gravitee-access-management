@@ -35,6 +35,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.Validat
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdJagSettings;
 import io.gravitee.am.model.KeyResolutionMethod;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
@@ -2788,6 +2789,76 @@ public class TokenExchangeServiceImplTest {
                     .hasMessageContaining("subject_token was not issued to this client");
         }
 
+        private static final String MCP_SERVER = "https://mcp.acme.com";
+
+        private Client protectedResourceClientWithRows(ApplicationCrossAppAccessResourceServer... rows) {
+            Client client = clientWithRows(rows);
+            client.setId("protected-resource-id");
+            ProtectedResource protectedResource = new ProtectedResource();
+            protectedResource.setId("protected-resource-id");
+            protectedResource.setClientId("client-id");
+            protectedResource.setResourceIdentifiers(List.of(MCP_SERVER));
+            lenient().when(protectedResourceManager.get("protected-resource-id")).thenReturn(protectedResource);
+            return client;
+        }
+
+        @Test
+        void shouldAcceptAnAccessTokenAddressedToTheRequestingProtectedResourceWithLaxValidation() {
+            service = createService(List.of(new FixedSubjectTokenValidator("mcp-client", List.of(MCP_SERVER))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            var result = service.exchange(idJagRequest(laxAccessTokenParameters(), CALENDAR),
+                    protectedResourceClientWithRows(row("rs-calendar", "acme-calendar-client")), laxDomainAllowingIdJag()).blockingGet();
+
+            assertThat(result.issuedTokenType()).isEqualTo(TokenType.ID_JAG);
+        }
+
+        @Test
+        void shouldRefuseAnAccessTokenAddressedToTheRequestingProtectedResourceWithoutLaxValidation() {
+            service = createService(List.of(new FixedSubjectTokenValidator("mcp-client", List.of(MCP_SERVER))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(laxAccessTokenParameters(), CALENDAR),
+                    protectedResourceClientWithRows(row("rs-calendar", "acme-calendar-client")), domainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token_type must be id_token");
+        }
+
+        @Test
+        void shouldRefuseAnAccessTokenAddressedToAnotherResourceWithLaxValidation() {
+            service = createService(List.of(new FixedSubjectTokenValidator("mcp-client", List.of("https://other.acme.com"))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(laxAccessTokenParameters(), CALENDAR),
+                    protectedResourceClientWithRows(row("rs-calendar", "acme-calendar-client")), laxDomainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token was not issued to this client");
+        }
+
+        @Test
+        void shouldRefuseAnAccessTokenAddressedToAProtectedResourceWhenAnApplicationRequests() {
+            service = createService(List.of(new FixedSubjectTokenValidator("mcp-client", List.of(MCP_SERVER))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+            Client application = clientWithRows(row("rs-calendar", "acme-calendar-client"));
+            application.setId("application-id");
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(laxAccessTokenParameters(), CALENDAR),
+                    application, laxDomainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token was not issued to this client");
+        }
+
+        @Test
+        void shouldRefuseAnIdTokenAddressedToTheRequestingProtectedResource() {
+            service = createService(List.of(new FixedIdTokenValidator(List.of(MCP_SERVER))));
+            trustDomainWith(resourceServer("rs-calendar", CALENDAR));
+
+            assertThatThrownBy(() -> service.exchange(idJagRequest(idJagParameters(AUDIENCE), CALENDAR),
+                    protectedResourceClientWithRows(row("rs-calendar", "acme-calendar-client")), laxDomainAllowingIdJag()).blockingGet())
+                    .isInstanceOf(InvalidRequestException.class)
+                    .hasMessageContaining("subject_token was not issued to this client");
+        }
+
         @Test
         void shouldRefuseASubjectTokenCarryingNoAudience() {
             service = createService(List.of(new FixedIdTokenValidator(List.of())));
@@ -3029,13 +3100,19 @@ public class TokenExchangeServiceImplTest {
     private static class FixedSubjectTokenValidator implements TokenValidator {
 
         private final String clientId;
+        private final List<String> audience;
 
         FixedSubjectTokenValidator() {
             this(null);
         }
 
         FixedSubjectTokenValidator(String clientId) {
+            this(clientId, null);
+        }
+
+        FixedSubjectTokenValidator(String clientId, List<String> audience) {
             this.clientId = clientId;
+            this.audience = audience;
         }
 
         @Override
@@ -3043,6 +3120,7 @@ public class TokenExchangeServiceImplTest {
             return Single.just(ValidatedToken.builder()
                     .subject("subject")
                     .clientId(clientId)
+                    .audience(audience)
                     .scopes(Set.of("openid"))
                     .expiration(Date.from(Instant.now().plusSeconds(60)))
                     .tokenType(TokenType.ACCESS_TOKEN)

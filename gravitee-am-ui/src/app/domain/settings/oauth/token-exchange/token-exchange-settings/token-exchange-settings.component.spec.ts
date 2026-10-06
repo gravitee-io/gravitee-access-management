@@ -127,6 +127,15 @@ describe('TokenExchangeSettingsComponent', () => {
     expect(idJagRequiredWarning(fixture)).toBeNull();
   });
 
+  it('shouldRenderIdJagLaxValidationInCrossAppAccessSection', () => {
+    const fixture = fixtureFor({ id: 'domain-5', tokenExchangeSettings: { enabled: true } });
+
+    const section: HTMLElement = fixture.nativeElement.querySelector('[data-testid="crossAppAccessSection"]');
+
+    expect(section.querySelector('h5').textContent.trim()).toEqual('Cross App Access');
+    expect(section.querySelector('[data-testid="idJagLaxValidation"]')).toBeTruthy();
+  });
+
   it('shouldDefaultIdJagLaxValidationToFalseWhenIdJagSettingsAreMissing', () => {
     expect(component.domain.tokenExchangeSettings.idJagSettings).toEqual({ laxValidation: false });
   });

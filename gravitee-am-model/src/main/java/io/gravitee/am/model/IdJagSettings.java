@@ -24,8 +24,9 @@ import lombok.NoArgsConstructor;
 @Schema(title = "ID-JAG settings", description = "ID-JAG issuance behavior of token exchange.")
 public class IdJagSettings {
 
-    @Schema(description = "Lax validation: also accept an access token issued to the requesting client as the " +
-            "subject token. By default only an ID token is accepted.", defaultValue = "false")
+    @Schema(description = "Lax validation: also accept an access token as the subject token. By default only an ID " +
+            "token is accepted. The access token must be issued to the requesting client or, when an MCP server " +
+            "requests, have that MCP server as audience.", defaultValue = "false")
     private boolean laxValidation = false;
 
     public IdJagSettings(IdJagSettings other) {
