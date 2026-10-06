@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResource
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
@@ -348,26 +349,48 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
         return validateSubjectToken(request.subjectToken(), request.subjectTokenType(), domain, client)
                 .flatMap(subjectToken -> request.idJagTarget() == null
                         ? Single.just(subjectToken)
-                        : validateIssuedToClient(subjectToken, client));
+                        : validateIssuedToClient(subjectToken, client, domain.getTokenExchangeSettings()));
     }
 
     /**
      * Per draft-ietf-oauth-identity-assertion-authz-grant-04 section 4.3.3, the assertion must have been
      * issued to the client authenticating the request.
      */
-    private static Single<ValidatedToken> validateIssuedToClient(ValidatedToken subjectToken, Client client) {
-        if (!isIssuedTo(subjectToken, client.getClientId())) {
+    private Single<ValidatedToken> validateIssuedToClient(ValidatedToken subjectToken, Client client, TokenExchangeSettings settings) {
+        if (!isIssuedTo(subjectToken, client, settings)) {
             return Single.error(new InvalidRequestException("subject_token was not issued to this client"));
         }
         return Single.just(subjectToken);
     }
 
-    private static boolean isIssuedTo(ValidatedToken subjectToken, String clientId) {
+    private boolean isIssuedTo(ValidatedToken subjectToken, Client client, TokenExchangeSettings settings) {
         if (TokenType.ACCESS_TOKEN.equals(subjectToken.getTokenType())) {
-            return clientId.equals(subjectToken.getClientId());
+            return isAccessTokenIssuedTo(subjectToken, client, settings);
         }
         List<String> audience = subjectToken.getAudience();
-        return audience != null && audience.contains(clientId);
+        return audience != null && audience.contains(client.getClientId());
+    }
+
+    private boolean isAccessTokenIssuedTo(ValidatedToken subjectToken, Client client, TokenExchangeSettings settings) {
+        if (client.getClientId().equals(subjectToken.getClientId())) {
+            return true;
+        }
+        if (!settings.getIdJagSettings().isLaxValidation()) {
+            return false;
+        }
+        return isAddressedToProtectedResource(subjectToken, client);
+    }
+
+    private boolean isAddressedToProtectedResource(ValidatedToken subjectToken, Client client) {
+        List<String> audience = subjectToken.getAudience();
+        if (client.getId() == null || audience == null || audience.isEmpty()) {
+            return false;
+        }
+        ProtectedResource protectedResource = protectedResourceManager.get(client.getId());
+        return protectedResource != null
+                && client.getClientId().equals(protectedResource.getClientId())
+                && protectedResource.getResourceIdentifiers() != null
+                && audience.stream().anyMatch(protectedResource.getResourceIdentifiers()::contains);
     }
 
     private Single<ValidatedToken> validateSubjectToken(String token, String tokenType, Domain domain, Client client) {

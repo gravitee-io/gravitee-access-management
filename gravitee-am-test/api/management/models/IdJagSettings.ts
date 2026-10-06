@@ -33,7 +33,7 @@ import { mapValues } from '../runtime';
  */
 export interface IdJagSettings {
   /**
-   * Lax validation: also accept an access token issued to the requesting client as the subject token. By default only an ID token is accepted.
+   * Lax validation: also accept an access token as the subject token. By default only an ID token is accepted. The access token must be issued to the requesting client or, when an MCP server requests, have that MCP server as audience.
    * @type {boolean}
    * @memberof IdJagSettings
    */
