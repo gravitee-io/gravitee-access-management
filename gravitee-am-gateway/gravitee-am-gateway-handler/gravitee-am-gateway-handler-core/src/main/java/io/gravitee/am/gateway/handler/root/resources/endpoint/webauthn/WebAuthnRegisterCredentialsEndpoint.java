@@ -86,6 +86,14 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
                 return;
             }
 
+            // flow-integrity check: the registration ceremony must have been reached
+            // through GET /webauthn/register, the only route carrying the PRE_WEBAUTHN_REGISTER policy chain
+            if (!Boolean.TRUE.equals(session.get(ConstantKeys.WEBAUTHN_REGISTER_FLOW_ONGOING_KEY))) {
+                log.warn("WebAuthn registration flow was not initiated through the registration page, aborting credentials creation.");
+                ctx.fail(403);
+                return;
+            }
+
             // get authenticated user
             User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 

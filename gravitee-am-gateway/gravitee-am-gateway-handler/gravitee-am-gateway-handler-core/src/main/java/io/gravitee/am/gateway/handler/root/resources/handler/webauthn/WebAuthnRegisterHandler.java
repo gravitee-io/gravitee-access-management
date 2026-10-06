@@ -114,6 +114,14 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
             return;
         }
 
+        // flow-integrity check: the registration ceremony must have been reached
+        // through GET /webauthn/register, the only route carrying the PRE_WEBAUTHN_REGISTER policy chain
+        if (!Boolean.TRUE.equals(session.get(ConstantKeys.WEBAUTHN_REGISTER_FLOW_ONGOING_KEY))) {
+            log.warn("WebAuthn registration flow was not initiated through the registration page, aborting registration.");
+            ctx.fail(403);
+            return;
+        }
+
         // get authenticated user
         User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 
@@ -175,6 +183,14 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
             return;
         }
 
+        // flow-integrity check: the registration ceremony must have been reached
+        // through GET /webauthn/register, the only route carrying the PRE_WEBAUTHN_REGISTER policy chain
+        if (!Boolean.TRUE.equals(session.get(ConstantKeys.WEBAUTHN_REGISTER_FLOW_ONGOING_KEY))) {
+            log.warn("WebAuthn registration flow was not initiated through the registration page, aborting registration.");
+            ctx.fail(403);
+            return;
+        }
+
         final User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
         final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String username = session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
@@ -204,6 +220,8 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                                     ctx.fail(401);
                                     return;
                                 }
+                                // consume the one-time flow-integrity marker now that the ceremony completed successfully
+                                session.remove(ConstantKeys.WEBAUTHN_REGISTER_FLOW_ONGOING_KEY);
                                 // keep the webauthn action into session to be able to do distinction
                                 // between login or registration action
                                 session.put(PASSWORDLESS_AUTH_ACTION_KEY, PASSWORDLESS_AUTH_ACTION_VALUE_REGISTER);
