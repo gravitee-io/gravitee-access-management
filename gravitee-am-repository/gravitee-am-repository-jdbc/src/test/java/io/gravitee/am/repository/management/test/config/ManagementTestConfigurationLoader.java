@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.repository.management.test.config;
 
+import io.gravitee.am.repository.encryption.EncryptingRepositoryBeanPostProcessor;
 import io.gravitee.am.repository.jdbc.common.AbstractTestRepositoryConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 
 /**
@@ -30,4 +33,8 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
         "io.gravitee.am.repository.jdbc.common"})
 public class ManagementTestConfigurationLoader extends AbstractTestRepositoryConfiguration {
 
+    @Bean
+    public static EncryptingRepositoryBeanPostProcessor encryptingRepositoryBeanPostProcessor(Environment environment) {
+        return new EncryptingRepositoryBeanPostProcessor(environment);
+    }
 }

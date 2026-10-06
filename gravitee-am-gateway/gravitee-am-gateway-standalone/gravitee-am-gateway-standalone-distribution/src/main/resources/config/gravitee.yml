@@ -405,6 +405,12 @@ repositories:
   # For more information about MongoDB configuration, please have a look to:
   # - http://api.mongodb.org/java/current/com/mongodb/MongoClientOptions.html
   management:
+    # Encrypts the configuration of reporters and identity providers stored in the management
+    # repository (AES-256-GCM). Values stored before the secret is set stay readable in clear text
+    # and are encrypted on their next update. The Management API and the Gateway must use the same
+    # secret; losing it makes the stored configurations unreadable.
+    #encryption:
+    #  secret: change-me
     type: mongodb
     mongodb:
       dbname: ${ds.mongodb.dbname}

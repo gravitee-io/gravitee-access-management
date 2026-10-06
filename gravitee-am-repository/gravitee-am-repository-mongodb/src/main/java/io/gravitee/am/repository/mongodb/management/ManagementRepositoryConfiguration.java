@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
+import io.gravitee.am.repository.encryption.EncryptingRepositoryBeanPostProcessor;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ConnectionProvider;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.net.URI;
 
@@ -39,6 +41,14 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     @Autowired
     private ConnectionProvider<MongoClient, MongoConnectionConfiguration> connectionProvider;
+
+    /**
+     * Static so the post processor is created before the repositories it wraps.
+     */
+    @Bean
+    public static EncryptingRepositoryBeanPostProcessor encryptingRepositoryBeanPostProcessor(Environment environment) {
+        return new EncryptingRepositoryBeanPostProcessor(environment);
+    }
 
     @Bean(name = "managementMongoTemplate")
     public MongoDatabase mongoOperations() {

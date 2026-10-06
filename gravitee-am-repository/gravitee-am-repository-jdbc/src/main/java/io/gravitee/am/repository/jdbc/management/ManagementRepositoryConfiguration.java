@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management;
 
 import io.gravitee.am.repository.Scope;
+import io.gravitee.am.repository.encryption.EncryptingRepositoryBeanPostProcessor;
 import io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
@@ -49,6 +51,14 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
+
+    /**
+     * Static so the post processor is created before the repositories it wraps.
+     */
+    @Bean
+    public static EncryptingRepositoryBeanPostProcessor encryptingRepositoryBeanPostProcessor(Environment environment) {
+        return new EncryptingRepositoryBeanPostProcessor(environment);
+    }
 
     @Override
     @Bean
