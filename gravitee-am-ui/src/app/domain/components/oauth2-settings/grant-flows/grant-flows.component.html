@@ -120,12 +120,16 @@
         [oauthSettings]="oauthSettings"
         [domainId]="domainId"
         [readonly]="readonly"
-        [disabled]="!isTokenExchangeFlowSelected() || !isTokenExchangeEnabledAtDomain()"
+        [disabled]="isTokenExchangeRequired() || isIdJagRequestedTokenTypeRequired()"
         (settingsChange)="modelChanged()"
       >
-        <div *ngIf="!isTokenExchangeFlowSelected() || !isTokenExchangeEnabledAtDomain()" class="grant-flow-required">
+        <div *ngIf="isTokenExchangeRequired()" class="grant-flow-required">
           <mat-icon svgIcon="gio:alert-circle"></mat-icon>
           Token Exchange grant flow required
+        </div>
+        <div *ngIf="isIdJagRequestedTokenTypeRequired()" class="grant-flow-required">
+          <mat-icon svgIcon="gio:alert-circle"></mat-icon>
+          ID-JAG requested token type required in domain Token Exchange settings
         </div>
       </app-cross-app-access-settings>
 

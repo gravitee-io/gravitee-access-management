@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -25,6 +26,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.TokenExchangeSettings;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.Form;
@@ -1067,6 +1069,86 @@ public class ApplicationServiceTest {
         testObserver.assertError(err -> err instanceof InvalidClientMetadataException
                 && err.getMessage().equals("idJagValiditySeconds must be at least 1"));
         verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidateCreate_cross_app_access_without_id_jag_requested_token_type() {
+        Application toCreate = appWithCrossAppAccess(300, crossAppAccessMapping("rs-1", "client-1"));
+        toCreate.getSettings().getOauth().setClientId(CLIENT_ID);
+        toCreate.getSettings().getOauth().setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        toCreate.setType(ApplicationType.SERVICE);
+        toCreate.getSettings().getOauth().setResponseTypes(List.of());
+        when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        TestObserver<Application> testObserver = applicationService.create(domainAllowingRequestedTokenTypes(TokenType.ACCESS_TOKEN), toCreate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("Cross App Access requires the domain token exchange settings to allow the ID-JAG requested token type"));
+        verify(applicationRepository, never()).create(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidateUpdate_cross_app_access_enabled_without_id_jag_requested_token_type() {
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(emptyAppWithDomain()));
+        when(domainService.findById(any())).thenReturn(Maybe.just(domainAllowingRequestedTokenTypes(TokenType.ACCESS_TOKEN)));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        TestObserver<Application> testObserver = applicationService.update(clientCredentialsAppWithCrossAppAccess()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("Cross App Access requires the domain token exchange settings to allow the ID-JAG requested token type"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldUpdate_cross_app_access_enabled_with_id_jag_requested_token_type() {
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(emptyAppWithDomain()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(domainService.findById(any())).thenReturn(Maybe.just(domainAllowingRequestedTokenTypes(TokenType.ACCESS_TOKEN, TokenType.ID_JAG)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        TestObserver<Application> testObserver = applicationService.update(clientCredentialsAppWithCrossAppAccess()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        verify(applicationRepository).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldUpdate_cross_app_access_already_enabled_without_id_jag_requested_token_type() {
+        when(applicationRepository.findById(any())).thenReturn(Maybe.just(clientCredentialsAppWithCrossAppAccess()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(domainService.findById(any())).thenReturn(Maybe.just(domainAllowingRequestedTokenTypes(TokenType.ACCESS_TOKEN)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+
+        TestObserver<Application> testObserver = applicationService.update(clientCredentialsAppWithCrossAppAccess()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        verify(applicationRepository).update(any(Application.class));
+    }
+
+    private static Application clientCredentialsAppWithCrossAppAccess() {
+        Application application = appWithCrossAppAccess(300, crossAppAccessMapping("rs-1", "client-1"));
+        application.setId("my-client");
+        application.getSettings().getOauth().setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        application.setType(ApplicationType.SERVICE);
+        application.getSettings().getOauth().setResponseTypes(List.of());
+        return application;
+    }
+
+    private static Domain domainAllowingRequestedTokenTypes(String... requestedTokenTypes) {
+        TokenExchangeSettings tokenExchangeSettings = new TokenExchangeSettings();
+        tokenExchangeSettings.setEnabled(true);
+        tokenExchangeSettings.setAllowedRequestedTokenTypes(List.of(requestedTokenTypes));
+        Domain domain = new Domain(DOMAIN.getId());
+        domain.setTokenExchangeSettings(tokenExchangeSettings);
+        return domain;
     }
 
     private static ApplicationCrossAppAccessResourceServer crossAppAccessMapping(String resourceServerId, String clientId) {
