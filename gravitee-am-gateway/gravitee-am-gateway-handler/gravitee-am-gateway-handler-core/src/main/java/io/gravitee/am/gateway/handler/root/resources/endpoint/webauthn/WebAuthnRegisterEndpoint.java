@@ -110,6 +110,10 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
                 routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domainDataPlane.getDomain().getWebAuthnSettings().getAuthenticatorAttachment().getValue());
             }
 
+            // mark the registration ceremony as reached through GET /webauthn/register,
+            // the only route carrying the PRE_WEBAUTHN_REGISTER policy chain
+            routingContext.session().put(ConstantKeys.WEBAUTHN_REGISTER_FLOW_ONGOING_KEY, true);
+
             // render the webauthn register page
             this.renderPage(routingContext, generateData(routingContext, domainDataPlane.getDomain(), client), client, logger, "Unable to render WebAuthn register page");
         } catch (Exception ex) {
