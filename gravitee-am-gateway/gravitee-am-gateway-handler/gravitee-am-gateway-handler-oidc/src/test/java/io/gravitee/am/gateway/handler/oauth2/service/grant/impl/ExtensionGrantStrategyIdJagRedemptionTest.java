@@ -35,6 +35,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -750,6 +751,53 @@ class ExtensionGrantStrategyIdJagRedemptionTest {
     }
 
     @Test
+    void shouldRefuseAssertionCarryingAuthorizationDetails() {
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(Claims.AUTHORIZATION_DETAILS, List.of(Map.of("type", "payment_initiation")));
+        givenVerifiedAssertion(claims);
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(invalidAuthorizationDetails("Assertion authorization_details type is not supported"));
+    }
+
+    @Test
+    void shouldRedeemAssertionCarryingEmptyAuthorizationDetails() {
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(Claims.AUTHORIZATION_DETAILS, List.of());
+        givenVerifiedAssertion(claims);
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(idJagAssertion()), client, domain).blockingGet();
+
+        assertEquals("alice", creationRequest.resourceOwner().getId());
+    }
+
+    @Test
+    void shouldIgnoreAuthorizationDetailsOfAssertionThatIsNotAnIdJag() {
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(Claims.AUTHORIZATION_DETAILS, List.of(Map.of("type", "payment_initiation")));
+        givenVerifiedAssertion(claims);
+
+        TokenCreationRequest creationRequest = strategy.process(redemptionRequest(plainJwtAssertion()), client, domain).blockingGet();
+
+        assertEquals("alice", creationRequest.resourceOwner().getId());
+    }
+
+    @Test
+    void shouldRefuseAuthorizationDetailsBeforeBindingTheUser() {
+        extensionGrant.setUserExists(true);
+        Map<String, Object> claims = verifiedClaims();
+        claims.put(Claims.AUTHORIZATION_DETAILS, List.of(Map.of("type", "payment_initiation")));
+        givenVerifiedAssertion(claims);
+
+        strategy.process(redemptionRequest(idJagAssertion()), client, domain)
+                .test()
+                .assertError(InvalidAuthorizationDetailsException.class);
+
+        verifyNoInteractions(userService, userAuthenticationManager, identityProviderManager);
+    }
+
+    @Test
     void shouldIssueAccessTokenAddressedToTheResolvedResourceWithTheGrantedScopes() {
         givenVerifiedAssertion(verifiedClaims());
         givenResourceToolScopes(MCP_SERVER, Set.of("calendar.read", "calendar.write"));
@@ -882,6 +930,10 @@ class ExtensionGrantStrategyIdJagRedemptionTest {
 
     private static Predicate<Throwable> invalidTarget(String description) {
         return error -> error instanceof InvalidResourceException && description.equals(error.getMessage());
+    }
+
+    private static Predicate<Throwable> invalidAuthorizationDetails(String description) {
+        return error -> error instanceof InvalidAuthorizationDetailsException && description.equals(error.getMessage());
     }
 
     private static Predicate<Throwable> invalidScope(String description) {

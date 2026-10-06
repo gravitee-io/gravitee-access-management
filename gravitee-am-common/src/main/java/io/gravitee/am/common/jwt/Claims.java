@@ -140,6 +140,8 @@ public interface Claims {
 
     String AUD_SUB = "aud_sub";
 
+    String AUTHORIZATION_DETAILS = "authorization_details";
+
     /**
      * RFC 8693 Token Exchange - Actor claim for delegation scenarios.
      * Contains a JSON object with claims identifying the actor (at minimum "sub").

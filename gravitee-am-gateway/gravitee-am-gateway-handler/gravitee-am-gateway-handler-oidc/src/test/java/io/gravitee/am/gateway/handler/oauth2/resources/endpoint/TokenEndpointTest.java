@@ -19,11 +19,13 @@ import io.gravitee.am.common.exception.uma.UmaException;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.response.OAuth2ErrorResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -31,6 +33,7 @@ import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.json.Json;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.auth.impl.UserImpl;
@@ -219,6 +222,27 @@ public class TokenEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:ietf:params:oauth:grant-type:uma-ticket",
                 HttpStatusCode.FORBIDDEN_403, "Forbidden");
+    }
+
+    @Test
+    public void shouldRenderAuthorizationDetailsRefusalAsBadRequest() throws Exception {
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAuthorizedGrantTypes(Arrays.asList(GrantType.JWT_BEARER));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(tokenGranter.grant(any(TokenRequest.class), any(VertxHttpServerResponse.class), any(io.gravitee.am.model.oidc.Client.class)))
+                .thenReturn(Single.error(new InvalidAuthorizationDetailsException("Assertion authorization_details type is not supported")));
+        OAuth2ErrorResponse expected = new OAuth2ErrorResponse("invalid_authorization_details");
+        expected.setDescription("Assertion authorization_details type is not supported");
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer",
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", Json.encodePrettily(expected));
     }
 
 }

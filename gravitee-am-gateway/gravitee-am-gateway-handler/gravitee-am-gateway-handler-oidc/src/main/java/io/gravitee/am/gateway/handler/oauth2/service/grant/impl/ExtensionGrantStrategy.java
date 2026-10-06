@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -36,6 +37,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.binding.UserBindingResolver
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -62,6 +64,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.CustomLog;
 
+import static io.gravitee.am.extensiongrant.api.ExtensionGrantAssertionTypes.isIdJag;
+
 /**
  * Strategy for OAuth 2.0 Extension Grants.
  * Handles custom grant types implemented via plugins.
@@ -84,6 +88,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
     private final Domain domain;
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final UserBindingResolver userBindingResolver;
+    private final AuthorizationDetailsValidator authorizationDetailsValidator;
     @Setter
     private Date minDate;
 
@@ -122,6 +127,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         this.subjectManager = subjectManager;
         this.domain = domain;
         this.userBindingResolver = new UserBindingResolver(userService);
+        this.authorizationDetailsValidator = new AuthorizationDetailsValidator();
         this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
@@ -158,13 +164,16 @@ public class ExtensionGrantStrategy implements GrantStrategy {
         log.debug("Processing extension grant request for client: {}, grant type: {}",
                 client.getClientId(), extensionGrant.getGrantType());
 
-        return extensionGrantProvider.grant(createExtensionGrantRequest(request, client))
+        ExtensionGrantRequest grantRequest = createExtensionGrantRequest(request, client);
+        return extensionGrantProvider.grant(grantRequest)
+                .map(grantResult -> validateAuthorizationDetails(grantRequest, grantResult))
                 .flatMap(grantResult -> resolveUser(request, client, grantResult)
                         .map(user -> grantedAccess(createTokenCreationRequest(request, client, user, resolveSource(grantResult.identityProvider())), grantResult)))
                 .switchIfEmpty(Single.fromCallable(() -> createTokenCreationRequest(request, client, null, resolveSource(null))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof InvalidGrantException
                             || ex instanceof UnauthorizedClientException
+                            || ex instanceof InvalidAuthorizationDetailsException
                             || ex instanceof InvalidResourceException
                             || ex instanceof InvalidScopeException) {
                         return Single.error(ex);
@@ -178,6 +187,13 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                     String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
                     return Single.error(new InvalidGrantException(msg, ex));
                 });
+    }
+
+    private ExtensionGrantResult validateAuthorizationDetails(ExtensionGrantRequest grantRequest, ExtensionGrantResult grantResult) {
+        if (isIdJag(grantRequest)) {
+            authorizationDetailsValidator.validate(grantResult.verifiedClaims().get(Claims.AUTHORIZATION_DETAILS));
+        }
+        return grantResult;
     }
 
     private static TokenCreationRequest grantedAccess(TokenCreationRequest creationRequest, ExtensionGrantResult grantResult) {

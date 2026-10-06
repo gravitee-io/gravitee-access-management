@@ -35,10 +35,12 @@ const errorOf = (response: any) => response.body.error;
 
 const descriptionOf = (response: any) => response.body.error_description;
 
-const issuerSignedAssertionFor = async (aud: unknown) => {
+const issuerSignedAssertionWith = async (overrides: Record<string, unknown>) => {
   const claims = decodeToken(await fixture.agent.assertion());
-  return fixture.issuerSignedAssertion({ ...claims, aud, jti: uniqueName('jti', true) });
+  return fixture.issuerSignedAssertion({ ...claims, ...overrides, jti: uniqueName('jti', true) });
 };
+
+const issuerSignedAssertionFor = (aud: unknown) => issuerSignedAssertionWith({ aud });
 
 const formHeaders = { 'Content-type': 'application/x-www-form-urlencoded' };
 
@@ -157,6 +159,35 @@ describe('ID-JAG redemption', () => {
       const response = await fixture.impostor.redeem(assertion).expect(400);
 
       expect(errorOf(response)).toBe('invalid_grant');
+    });
+  });
+
+  describe('authorization details are not supported', () => {
+    it('should refuse an assertion carrying authorization details', async () => {
+      const assertion = await issuerSignedAssertionWith({ authorization_details: [{ type: 'payment_initiation' }] });
+
+      const response = await fixture.agent.redeem(assertion).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_authorization_details');
+      expect(descriptionOf(response)).toBe('Assertion authorization_details type is not supported');
+      expect(response.body.access_token).toBeUndefined();
+    });
+
+    it('should refuse an assertion whose authorization details are not an array', async () => {
+      const assertion = await issuerSignedAssertionWith({ authorization_details: { type: 'payment_initiation' } });
+
+      const response = await fixture.agent.redeem(assertion).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_authorization_details');
+      expect(descriptionOf(response)).toBe('Assertion authorization_details is malformed');
+    });
+
+    it('should redeem an assertion carrying empty authorization details', async () => {
+      const assertion = await issuerSignedAssertionWith({ authorization_details: [] });
+
+      const response = await fixture.agent.redeem(assertion).expect(200);
+
+      expect(response.body.access_token).toBeDefined();
     });
   });
 
