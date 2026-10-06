@@ -121,6 +121,7 @@ public interface ConstantKeys {
 
     // Passwordless keys.
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
+    String WEBAUTHN_REGISTER_FLOW_ONGOING_KEY = "webAuthnRegisterFlowOngoing";
     String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
     String WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY = "webAuthnCredentialInternalId";
     String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
