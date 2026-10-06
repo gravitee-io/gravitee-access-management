@@ -20,6 +20,7 @@ jest.mock('@gravitee/ui-components/src/lib/utils', () => ({
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { DomainStoreService } from '../../../../stores/domain.store';
@@ -29,6 +30,8 @@ import { GrantFlowsComponent } from './grant-flows.component';
 
 /** Token exchange grant type URI (component uses private constant). */
 const TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
+const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
+const ID_JAG_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id-jag';
 
 describe('GrantFlowsComponent', () => {
   let component: GrantFlowsComponent;
@@ -38,7 +41,7 @@ describe('GrantFlowsComponent', () => {
   function defaultDomainCurrent(): Record<string, unknown> {
     return {
       id: 'domain-id',
-      tokenExchangeSettings: { enabled: true },
+      tokenExchangeSettings: { enabled: true, allowedRequestedTokenTypes: [ACCESS_TOKEN_TYPE, ID_JAG_TOKEN_TYPE] },
       oidc: { cibaSettings: { enabled: false } },
     };
   }
@@ -269,6 +272,41 @@ describe('GrantFlowsComponent', () => {
       it('should warn only on token exchange section in MCP server context', () => {
         createFixtureWithMcpContext([]);
         expect(warnings(TEXT)).toHaveLength(1);
+      });
+    });
+
+    describe('id-jag requested token type', () => {
+      const TEXT = 'ID-JAG requested token type required';
+
+      function crossAppAccessDisabled(): boolean {
+        fixture.detectChanges();
+        return fixture.debugElement.query(By.css('app-cross-app-access-settings')).properties['disabled'];
+      }
+
+      beforeEach(() => select(TOKEN_EXCHANGE_GRANT_TYPE));
+
+      it('should warn and disable cross app access when domain does not allow id-jag requested token type', () => {
+        mockDomainStoreService.current = {
+          ...defaultDomainCurrent(),
+          tokenExchangeSettings: { enabled: true, allowedRequestedTokenTypes: [ACCESS_TOKEN_TYPE] },
+        };
+        expect(warnings(TEXT)).toHaveLength(1);
+        expect(crossAppAccessDisabled()).toBe(true);
+      });
+
+      it('should not warn and enable cross app access when domain allows id-jag requested token type', () => {
+        expect(warnings(TEXT)).toHaveLength(0);
+        expect(crossAppAccessDisabled()).toBe(false);
+      });
+
+      it('should not warn when token exchange grant flow is missing', () => {
+        component.grantTypes.find((g) => g.value === TOKEN_EXCHANGE_GRANT_TYPE)!.checked = false;
+        mockDomainStoreService.current = {
+          ...defaultDomainCurrent(),
+          tokenExchangeSettings: { enabled: true, allowedRequestedTokenTypes: [ACCESS_TOKEN_TYPE] },
+        };
+        expect(warnings(TEXT)).toHaveLength(0);
+        expect(crossAppAccessDisabled()).toBe(true);
       });
     });
 

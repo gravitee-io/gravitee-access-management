@@ -16,10 +16,12 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { patchDomain, safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { createApplication, getApplication, updateApplication } from '@management-commands/application-management-commands';
 import { listCrossAppAccessResourceServers } from '@management-commands/cross-app-access-management-commands';
 import { createTrustedIssuerKeyMaterial } from '../../gateway/token-exchange/fixtures/trusted-issuer-jwt-helper';
+import { TOKEN_EXCHANGE_TEST } from '../../gateway/token-exchange/fixtures/token-exchange-fixture';
+import { ID_JAG_TOKEN_TYPE } from '../../gateway/token-exchange/fixtures/id-jag-fixture';
 import { setup } from '../../test-fixture';
 import { createTrustedDomain } from './fixtures/cross-app-access-fixture';
 
@@ -42,10 +44,24 @@ const oauthSettings = (crossAppAccessSettings: Record<string, unknown>, idJagVal
   },
 });
 
+const allowIdJag = (allowed: boolean) =>
+  patchDomain(domain.id, accessToken, {
+    tokenExchangeSettings: {
+      enabled: true,
+      allowImpersonation: true,
+      allowDelegation: false,
+      allowedSubjectTokenTypes: TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_SUBJECT_TOKEN_TYPES,
+      allowedRequestedTokenTypes: allowed
+        ? [...TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES, ID_JAG_TOKEN_TYPE]
+        : TOKEN_EXCHANGE_TEST.DEFAULT_ALLOWED_REQUESTED_TOKEN_TYPES,
+    },
+  });
+
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   const created = await setupDomainForTest(uniqueName('xaa-app', true), { accessToken, waitForStart: true });
   domain = created.domain;
+  await allowIdJag(true);
 
   const trustedDomain = await createTrustedDomain(domain.id, accessToken, {
     name: uniqueName('xaa-app-authority'),
@@ -237,5 +253,64 @@ describe('Cross App Access - the management API rejects an invalid application b
 
   it('should reject an ID-JAG validity below one second', async () => {
     await rejects({ enabled: true, resourceServers: [] }, 0);
+  });
+});
+
+describe('Cross App Access - enabling requires the domain to allow the ID-JAG requested token type', () => {
+  const resourceServers = () => [
+    { trustDomainId: calendarTrustDomainId, resourceServerId: calendarResourceServerId, clientId: 'calendar-client' },
+  ];
+  let enabledApplication: any;
+  let disabledApplication: any;
+
+  beforeAll(async () => {
+    enabledApplication = await createApplication(domain.id, accessToken, {
+      name: 'xaa-app-enabled',
+      type: 'WEB',
+      clientId: 'xaa-app-enabled',
+      clientSecret: 'xaa-app-enabled',
+      redirectUris: ['https://callback'],
+    });
+    await updateApplication(
+      domain.id,
+      accessToken,
+      oauthSettings({ enabled: true, resourceServers: resourceServers() }) as any,
+      enabledApplication.id,
+    );
+    disabledApplication = await createApplication(domain.id, accessToken, {
+      name: 'xaa-app-disabled',
+      type: 'WEB',
+      clientId: 'xaa-app-disabled',
+      clientSecret: 'xaa-app-disabled',
+      redirectUris: ['https://callback'],
+    });
+    await allowIdJag(false);
+  });
+
+  afterAll(async () => {
+    await allowIdJag(true);
+  });
+
+  it('should reject enabling Cross App Access', async () => {
+    await expect(
+      updateApplication(
+        domain.id,
+        accessToken,
+        oauthSettings({ enabled: true, resourceServers: resourceServers() }) as any,
+        disabledApplication.id,
+      ),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should keep saving an application that already has Cross App Access enabled', async () => {
+    await updateApplication(
+      domain.id,
+      accessToken,
+      oauthSettings({ enabled: true, resourceServers: resourceServers() }, 60) as any,
+      enabledApplication.id,
+    );
+
+    const reloaded = await getApplication(domain.id, accessToken, enabledApplication.id);
+    expect((reloaded as any).settings.oauth.idJagValiditySeconds).toBe(60);
   });
 });
