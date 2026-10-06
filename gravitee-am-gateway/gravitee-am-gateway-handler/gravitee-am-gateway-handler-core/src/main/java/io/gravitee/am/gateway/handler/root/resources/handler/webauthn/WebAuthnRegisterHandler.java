@@ -111,6 +111,12 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
             return;
         }
 
+        if (webAuthnRegistrationRequiresStrongAuth(ctx)) {
+            log.warn("WebAuthn registration rejected: user has an active factor but has not completed strong authentication.");
+            ctx.fail(403);
+            return;
+        }
+
         // get authenticated user
         User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
 
@@ -171,6 +177,12 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         if (ctx.user() == null) {
             log.warn("User must be authenticated to register WebAuthn credentials.");
             ctx.fail(401);
+            return;
+        }
+
+        if (webAuthnRegistrationRequiresStrongAuth(ctx)) {
+            log.warn("WebAuthn registration rejected: user has an active factor but has not completed strong authentication.");
+            ctx.fail(403);
             return;
         }
 

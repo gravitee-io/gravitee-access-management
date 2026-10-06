@@ -640,7 +640,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterCredentialsEndpoint(domainDataPlane, webAuthn));
+                .handler(new WebAuthnRegisterCredentialsEndpoint(domainDataPlane, factorManager, webAuthn));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_SUCCESS)
                 .handler(clientRequestParseHandler)
                 .handler(new WebAuthnRegisterSuccessEndpoint(thymeleafTemplateEngine, credentialService, domainDataPlane));
