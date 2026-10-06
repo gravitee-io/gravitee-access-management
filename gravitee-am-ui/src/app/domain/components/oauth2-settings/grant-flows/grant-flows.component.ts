@@ -61,6 +61,7 @@ export class GrantFlowsComponent implements OnInit {
 
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
+  private ID_JAG_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id-jag';
   private UMA_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:uma-ticket';
 
   tokenEndpointAuthMethods: any[] = [
@@ -224,6 +225,18 @@ export class GrantFlowsComponent implements OnInit {
 
   isTokenExchangeEnabledAtDomain(): boolean {
     return this.domainStore.current?.tokenExchangeSettings?.enabled === true;
+  }
+
+  isIdJagRequestedTokenTypeAllowedAtDomain(): boolean {
+    return this.domainStore.current?.tokenExchangeSettings?.allowedRequestedTokenTypes?.includes(this.ID_JAG_TOKEN_TYPE) === true;
+  }
+
+  isTokenExchangeRequired(): boolean {
+    return !this.isTokenExchangeFlowSelected() || !this.isTokenExchangeEnabledAtDomain();
+  }
+
+  isIdJagRequestedTokenTypeRequired(): boolean {
+    return !this.isTokenExchangeRequired() && !this.isIdJagRequestedTokenTypeAllowedAtDomain();
   }
 
   isTokenExchangeInherited(): boolean {
