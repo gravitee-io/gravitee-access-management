@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
@@ -180,6 +181,20 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
 
         final Factor factor = factorManager.getFactor(factorId);
         return factor != null && factor.is(FIDO2);
+    }
+
+    protected boolean webAuthnRegistrationRequiresStrongAuth(RoutingContext ctx) {
+        if (isEnrollingFido2Factor(ctx)) {
+            return false;
+        }
+        if (MfaUtils.isUserStronglyAuth(ctx.session())) {
+            return false;
+        }
+        return ctx.user() != null && MfaUtils.hasActivatedNonRecoveryFactor(getAuthenticatedEndUser(ctx), factorManager);
+    }
+
+    private static User getAuthenticatedEndUser(RoutingContext ctx) {
+        return ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
     }
 
     protected Optional<EnrolledFactorSecurity> getEnrolledFido2FactorSecurity(io.gravitee.am.model.User endUser) {

@@ -30,6 +30,8 @@ import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
@@ -44,6 +46,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_STOP;
 import static io.gravitee.am.model.MfaEnrollType.CONDITIONAL;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
@@ -56,6 +59,17 @@ public class MfaUtils {
 
     public static boolean isUserStronglyAuth(Session session) {
         return TRUE.equals(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY));
+    }
+
+    public static boolean hasActivatedNonRecoveryFactor(User user, FactorManager factorManager) {
+        if (user == null || user.getFactors() == null) {
+            return false;
+        }
+        return user.getFactors().stream()
+                .filter(enrolledFactor -> ACTIVATED.equals(enrolledFactor.getStatus()))
+                .map(EnrolledFactor::getFactorId)
+                .map(factorManager::getFactor)
+                .anyMatch(factor -> factor != null && !factor.is(FactorType.RECOVERY_CODE));
     }
 
     public static StepUpAuthenticationSettings getMfaStepUp(Client client) {

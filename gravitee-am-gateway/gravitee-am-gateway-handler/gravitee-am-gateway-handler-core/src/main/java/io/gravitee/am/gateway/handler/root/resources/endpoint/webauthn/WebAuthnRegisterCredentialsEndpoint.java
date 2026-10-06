@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.DomainDataPlane;
@@ -44,8 +45,9 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterCredentialsEndpoint.class);
     private final WebAuthn webAuthn;
 
-    public WebAuthnRegisterCredentialsEndpoint(DomainDataPlane domainDataPlane, WebAuthn webAuthn) {
+    public WebAuthnRegisterCredentialsEndpoint(DomainDataPlane domainDataPlane, FactorManager factorManager, WebAuthn webAuthn) {
         setDomainDataplane(domainDataPlane);
+        setFactorManager(factorManager);
         this.webAuthn = webAuthn;
     }
 
@@ -82,6 +84,12 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
             if (isEmptyString(webauthnRegister, "name") ||
                     isEmptyString(webauthnRegister, "displayName")) {
                 ctx.fail(400);
+                return;
+            }
+
+            if (webAuthnRegistrationRequiresStrongAuth(ctx)) {
+                logger.warn("WebAuthn registration rejected: user has an active factor but has not completed strong authentication.");
+                ctx.fail(403);
                 return;
             }
 

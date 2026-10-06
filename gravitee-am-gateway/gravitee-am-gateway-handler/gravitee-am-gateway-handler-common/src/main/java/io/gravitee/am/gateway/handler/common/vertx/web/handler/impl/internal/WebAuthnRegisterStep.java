@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -84,9 +85,17 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
                 flow.doNext(routingContext);
                 return;
             }
+            if (!MfaUtils.isUserStronglyAuth(session) && MfaUtils.hasActivatedNonRecoveryFactor(endUser(routingContext), factorManager)) {
+                flow.doNext(routingContext);
+                return;
+            }
             // else go to the WebAuthn registration page
             flow.exit(this);
         }
+    }
+
+    private static User endUser(RoutingContext ctx) {
+        return ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) ctx.user().getDelegate()).getUser();
     }
 
     private boolean isEnrollingFido2Factor(RoutingContext ctx) {
