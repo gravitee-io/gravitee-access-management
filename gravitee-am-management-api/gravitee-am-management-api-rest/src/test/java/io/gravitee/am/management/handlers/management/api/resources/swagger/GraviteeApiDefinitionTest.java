@@ -15,14 +15,21 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.swagger;
 
+import io.gravitee.am.management.handlers.management.api.resources.organizations.CurrentUserResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.OrganizationsResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.PlatformResource;
+import io.swagger.v3.jaxrs2.Reader;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.tags.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -97,5 +104,18 @@ class GraviteeApiDefinitionTest {
         assertThat(additional).isInstanceOf(Schema.class);
         assertThat(((Schema<?>) additional).getType()).isEqualTo("integer");
         assertThat(((Schema<?>) additional).getFormat()).isEqualTo("int64");
+    }
+
+    @Test
+    void shouldNotExposeTagsDifferingOnlyByCase() {
+        OpenAPI openAPI = new Reader(new OpenAPI()).read(Set.of(
+                OrganizationsResource.class,
+                PlatformResource.class,
+                CurrentUserResource.class,
+                GraviteeApiDefinition.class));
+
+        List<String> tags = openAPI.getTags().stream().map(Tag::getName).map(String::toLowerCase).toList();
+
+        assertThat(tags).isNotEmpty().doesNotHaveDuplicates();
     }
 }
