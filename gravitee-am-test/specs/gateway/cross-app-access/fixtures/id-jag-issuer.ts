@@ -93,6 +93,7 @@ export const exchangeForIdJag = async (
   audience: string,
   resource: string,
   scope: string,
+  extraHeaders: Record<string, string> = {},
 ): Promise<string> => {
   const body =
     `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
@@ -105,6 +106,7 @@ export const exchangeForIdJag = async (
   const response = await performPost(tokenEndpoint, '', body, {
     'Content-type': 'application/x-www-form-urlencoded',
     Authorization: `Basic ${applicationBase64Token(application)}`,
+    ...extraHeaders,
   }).expect(200);
   return response.body.access_token;
 };
