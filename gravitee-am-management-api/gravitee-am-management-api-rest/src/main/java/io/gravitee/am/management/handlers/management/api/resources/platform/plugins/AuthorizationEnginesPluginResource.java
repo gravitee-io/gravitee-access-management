@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Authorization Engine")})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "authorization engine")})
 public class AuthorizationEnginesPluginResource {
 
     @Context
