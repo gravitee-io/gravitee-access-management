@@ -18,6 +18,8 @@ package io.gravitee.am.service.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 /**
  * Extends NewIdentityProvider with fields for declarative IDP management via the Automation API.
  *
@@ -29,4 +31,10 @@ import lombok.Setter;
 public class AutomationNewIdentityProvider extends NewIdentityProvider {
 
     private String automationKey;
+
+    private Map<String, String> mappers;
+
+    private Map<String, String[]> roleMapper;
+
+    private Map<String, String[]> groupMapper;
 }
