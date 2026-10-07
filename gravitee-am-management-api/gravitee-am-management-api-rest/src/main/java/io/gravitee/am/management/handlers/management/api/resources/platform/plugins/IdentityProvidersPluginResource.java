@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name = "Plugin"), @Tag(name = "Identity Provider")})
+@Tags({@Tag(name = "Plugin"), @Tag(name = "identity provider")})
 public class IdentityProvidersPluginResource {
 
     public static final String GRAVITEE_AM_IDP = "gravitee-am-idp";
