@@ -24,19 +24,11 @@ security:
 - gravitee-auth: []
 tags:
 - name: Authentication Device Notifier
-- name: Authorization Engine
-- name: Bot Detection
-- name: Certificate
 - name: Device Identifier
-- name: Extension Grant
-- name: Factor
-- name: Identity Provider
 - name: Notifier
 - name: Password Policy
 - name: Plugin
 - name: Policy
-- name: Reporter
-- name: Resource
 - name: alerts
 - name: application
 - name: audit
@@ -11565,7 +11557,7 @@ paths:
       summary: List authorization engine plugins
       tags:
       - Plugin
-      - Authorization Engine
+      - authorization engine
       - platform
   /platform/plugins/authorization-engines/{authorizationEngine}:
     get:
@@ -11585,7 +11577,7 @@ paths:
       summary: Get an authorization engine plugin
       tags:
       - Plugin
-      - Authorization Engine
+      - authorization engine
       - platform
   /platform/plugins/authorization-engines/{authorizationEngine}/schema:
     get:
@@ -11605,7 +11597,7 @@ paths:
       summary: Get an authorization engine plugin's schema
       tags:
       - Plugin
-      - Authorization Engine
+      - authorization engine
       - platform
   /platform/plugins/bot-detections:
     get:
@@ -11619,7 +11611,7 @@ paths:
       summary: List bot detection plugins
       tags:
       - Plugin
-      - Bot Detection
+      - bot detection
       - platform
   /platform/plugins/bot-detections/{botDetection}:
     get:
@@ -11639,7 +11631,7 @@ paths:
       summary: Get a Bot Detection plugin
       tags:
       - Plugin
-      - Bot Detection
+      - bot detection
       - platform
   /platform/plugins/bot-detections/{botDetection}/schema:
     get:
@@ -11659,7 +11651,7 @@ paths:
       summary: Get a Bot Detection plugin's schema
       tags:
       - Plugin
-      - Bot Detection
+      - bot detection
       - platform
   /platform/plugins/certificates:
     get:
@@ -11673,7 +11665,7 @@ paths:
       summary: List certificate plugins
       tags:
       - Plugin
-      - Certificate
+      - certificate
       - platform
   /platform/plugins/certificates/{certificate}:
     get:
@@ -11693,7 +11685,7 @@ paths:
       summary: Get an certificate plugin
       tags:
       - Plugin
-      - Certificate
+      - certificate
       - platform
   /platform/plugins/certificates/{certificate}/schema:
     get:
@@ -11713,7 +11705,7 @@ paths:
       summary: Get an certificate's schema
       tags:
       - Plugin
-      - Certificate
+      - certificate
       - platform
   /platform/plugins/device-identifiers:
     get:
@@ -11781,7 +11773,7 @@ paths:
       summary: List extension grant plugins
       tags:
       - Plugin
-      - Extension Grant
+      - extension grant
       - platform
   /platform/plugins/extensionGrants/{extensionGrant}:
     get:
@@ -11801,7 +11793,7 @@ paths:
       summary: Get an extension grant plugin
       tags:
       - Plugin
-      - Extension Grant
+      - extension grant
       - platform
   /platform/plugins/extensionGrants/{extensionGrant}/schema:
     get:
@@ -11821,7 +11813,7 @@ paths:
       summary: Get an extension grant plugin's schema
       tags:
       - Plugin
-      - Extension Grant
+      - extension grant
       - platform
   /platform/plugins/factors:
     get:
@@ -11835,7 +11827,7 @@ paths:
       summary: List factor plugins
       tags:
       - Plugin
-      - Factor
+      - factor
       - platform
   /platform/plugins/factors/{factor}:
     get:
@@ -11855,7 +11847,7 @@ paths:
       summary: Get a factor plugin
       tags:
       - Plugin
-      - Factor
+      - factor
       - platform
   /platform/plugins/factors/{factor}/schema:
     get:
@@ -11875,7 +11867,7 @@ paths:
       summary: Get a factor plugin's schema
       tags:
       - Plugin
-      - Factor
+      - factor
       - platform
   /platform/plugins/identities:
     get:
@@ -11904,7 +11896,7 @@ paths:
       summary: List identity provider plugins
       tags:
       - Plugin
-      - Identity Provider
+      - identity provider
       - platform
   /platform/plugins/identities/{identity}:
     get:
@@ -11924,7 +11916,7 @@ paths:
       summary: Get an identity provider
       tags:
       - Plugin
-      - Identity Provider
+      - identity provider
       - platform
   /platform/plugins/identities/{identity}/schema:
     get:
@@ -11944,7 +11936,7 @@ paths:
       summary: Get an identity provider plugin's schema
       tags:
       - Plugin
-      - Identity Provider
+      - identity provider
       - platform
   /platform/plugins/notifiers:
     get:
@@ -12124,7 +12116,7 @@ paths:
       summary: List reporter plugins
       tags:
       - Plugin
-      - Reporter
+      - reporter
       - platform
   /platform/plugins/reporters/{reporter}:
     get:
@@ -12144,7 +12136,7 @@ paths:
       summary: Get a reporter plugin
       tags:
       - Plugin
-      - Reporter
+      - reporter
       - platform
   /platform/plugins/reporters/{reporter}/schema:
     get:
@@ -12163,7 +12155,7 @@ paths:
       summary: Get a reporter plugin's schema
       tags:
       - Plugin
-      - Reporter
+      - reporter
       - platform
   /platform/plugins/resources:
     get:
@@ -12184,7 +12176,7 @@ paths:
       summary: List resource plugins
       tags:
       - Plugin
-      - Resource
+      - resource
       - platform
   /platform/plugins/resources/{resource}:
     get:
@@ -12204,7 +12196,7 @@ paths:
       summary: Get a resource plugin
       tags:
       - Plugin
-      - Resource
+      - resource
       - platform
   /platform/plugins/resources/{resource}/schema:
     get:
@@ -12224,7 +12216,7 @@ paths:
       summary: Get a resource plugin's schema
       tags:
       - Plugin
-      - Resource
+      - resource
       - platform
   /platform/roles/{role}:
     get:
