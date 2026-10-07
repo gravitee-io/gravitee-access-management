@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 @CustomLog
 public class IdJagServiceImpl implements IdJagService {
 
-    private static final Set<String> RESERVED_CLAIMS = Set.of(Claims.ISS, Claims.AUD, Claims.CLIENT_ID, Claims.JTI, Claims.EXP, Claims.IAT);
+    private static final Set<String> RESERVED_CLAIMS = Set.of(Claims.ISS, Claims.AUD, Claims.CLIENT_ID, Claims.JTI, Claims.EXP, Claims.IAT, Claims.CNF);
 
     @Autowired
     private JWTService jwtService;
@@ -93,6 +93,10 @@ public class IdJagServiceImpl implements IdJagService {
 
         if (oAuth2Request.isDelegation() && oAuth2Request.getActClaim() != null) {
             assertion.put(Claims.ACT, oAuth2Request.getActClaim());
+        }
+
+        if (oAuth2Request.getConfirmationMethodJkt() != null) {
+            assertion.setConfirmationMethod(Map.of(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, oAuth2Request.getConfirmationMethodJkt()));
         }
 
         List<TokenClaim> customClaims = idJagCustomClaims(client);
