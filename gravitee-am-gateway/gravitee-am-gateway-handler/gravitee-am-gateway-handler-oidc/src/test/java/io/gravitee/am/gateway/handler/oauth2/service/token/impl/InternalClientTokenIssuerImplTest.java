@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.oauth2.InternalClientTokenIssuer.IssuedToken;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.Domain;
@@ -40,6 +41,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,6 +59,7 @@ class InternalClientTokenIssuerImplTest {
     void shouldIssueClientCredentialsTokenWithDefaultScopes() {
         Client client = new Client();
         client.setClientId("pdp-client");
+        client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
         ApplicationScopeSettings defaultScope = new ApplicationScopeSettings();
         defaultScope.setScope("pdp:evaluate");
         defaultScope.setDefaultScope(true);
@@ -84,6 +87,7 @@ class InternalClientTokenIssuerImplTest {
     void shouldStripTrailingSlashFromDomainUrl() {
         Client client = new Client();
         client.setClientId("pdp-client");
+        client.setAuthorizedGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(new AccessToken("token-1")));
         when(domainReadService.buildUrl(same(domain), eq(""))).thenReturn("https://am.example.com/domain/");
 
@@ -92,5 +96,31 @@ class InternalClientTokenIssuerImplTest {
         ArgumentCaptor<OAuth2Request> tokenRequest = ArgumentCaptor.forClass(OAuth2Request.class);
         verify(tokenService).create(tokenRequest.capture(), same(client), isNull());
         assertEquals("https://am.example.com/domain", tokenRequest.getValue().getOrigin());
+    }
+
+    @Test
+    void shouldRefuseClientWithoutClientCredentialsGrant() {
+        Client client = new Client();
+        client.setClientId("nocc-client");
+        client.setAuthorizedGrantTypes(List.of(GrantType.AUTHORIZATION_CODE));
+
+        new InternalClientTokenIssuerImpl(tokenService, domain, domainReadService).issue(client)
+                .test()
+                .assertError(UnauthorizedClientException.class);
+
+        verifyNoInteractions(tokenService, domainReadService);
+    }
+
+    @Test
+    void shouldRefuseClientWithoutGrantTypes() {
+        Client client = new Client();
+        client.setClientId("nocc-client");
+        client.setAuthorizedGrantTypes(null);
+
+        new InternalClientTokenIssuerImpl(tokenService, domain, domainReadService).issue(client)
+                .test()
+                .assertError(UnauthorizedClientException.class);
+
+        verifyNoInteractions(tokenService, domainReadService);
     }
 }
