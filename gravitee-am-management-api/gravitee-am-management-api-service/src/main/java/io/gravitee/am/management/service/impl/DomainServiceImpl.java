@@ -631,6 +631,12 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Single<Domain> validateSettings(Domain domain) {
+        return Completable.defer(() -> validateDomain(domain))
+                .andThen(Single.just(domain));
+    }
+
+    @Override
     public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
         log.debug("Update an existing domain: {}", domain);
         return validateUpdate(domainId, domain, validateReferences)

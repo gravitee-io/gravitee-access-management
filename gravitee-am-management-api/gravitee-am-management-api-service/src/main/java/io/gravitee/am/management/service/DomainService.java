@@ -58,6 +58,12 @@ public interface DomainService extends DomainReadService {
 
     Single<Domain> validateCreate(String organizationId, String environmentId, NewDomain newDomain);
 
+    /**
+     * Validate the settings a domain carries, as {@link #validateUpdate} does but without requiring the
+     * domain to be persisted, so the full desired state of a domain can be checked before it is created.
+     */
+    Single<Domain> validateSettings(Domain domain);
+
     Single<Domain> update(String domainId, Domain domain, boolean validateReferences);
 
     Single<Domain> validateUpdate(String domainId, Domain domain, boolean validateReferences);
