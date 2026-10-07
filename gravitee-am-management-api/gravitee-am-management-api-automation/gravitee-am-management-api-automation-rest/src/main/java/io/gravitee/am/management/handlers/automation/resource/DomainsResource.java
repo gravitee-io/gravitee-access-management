@@ -174,14 +174,9 @@ public class DomainsResource extends AbstractAutomationResource {
                         .switchIfEmpty(Single.defer(() ->
                                 checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
                                         .andThen(Single.defer(() -> {
-                                            AutomationNewDomain newDomain = new AutomationNewDomain();
-                                            newDomain.setId(domainId);
-                                            newDomain.setAutomationKey(key);
-                                            newDomain.setName(definition.getName());
-                                            newDomain.setPath(definition.getPath());
-                                            newDomain.setDescription(definition.getDescription());
-                                            newDomain.setDataPlaneId(definition.getDataPlaneId());
-                                            return domainService.create(organizationId, environmentId, newDomain, principal);
+                                            AutomationNewDomain newDomain = newDomain(definition, domainId, key);
+                                            return validateNewDomain(organizationId, environmentId, newDomain, definition)
+                                                    .flatMap(validated -> domainService.create(organizationId, environmentId, newDomain, principal));
                                         }))))
                         .flatMap(domain -> applyAndRespond(domain, definition, principal)))
                 .subscribe(response::resume, response::resume);
@@ -218,6 +213,28 @@ public class DomainsResource extends AbstractAutomationResource {
     private Single<AutomationDomain> dryRunCreate(
             String organizationId, String environmentId,
             AutomationDomain definition, String domainId, String key) {
+        return validateNewDomain(organizationId, environmentId, newDomain(definition, domainId, key), definition)
+                .map(AutomationDomainMapper::toAutomationDomain)
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    /**
+     * Validates the whole desired state of a domain that does not exist yet: the creation rules, then the
+     * settings {@link #applyAndRespond} writes once the domain is created. Creation and settings are two
+     * separate writes, so checking both upfront keeps an invalid definition from leaving a bare domain behind.
+     */
+    private Single<Domain> validateNewDomain(String organizationId, String environmentId,
+            AutomationNewDomain newDomain, AutomationDomain definition) {
+        return domainService.validateCreate(organizationId, environmentId, newDomain)
+                .flatMap(domain -> {
+                    // a domain not created yet has no identity provider to resolve a key reference against
+                    AutomationDomainMapper.applyTo(definition, domain, List.of());
+                    return trustedIssuerProjection.validate(domain.getTokenExchangeSettings())
+                            .andThen(Single.defer(() -> domainService.validateSettings(domain)));
+                });
+    }
+
+    private static AutomationNewDomain newDomain(AutomationDomain definition, String domainId, String key) {
         AutomationNewDomain newDomain = new AutomationNewDomain();
         newDomain.setId(domainId);
         newDomain.setAutomationKey(key);
@@ -225,9 +242,7 @@ public class DomainsResource extends AbstractAutomationResource {
         newDomain.setPath(definition.getPath());
         newDomain.setDescription(definition.getDescription());
         newDomain.setDataPlaneId(definition.getDataPlaneId());
-        return domainService.validateCreate(organizationId, environmentId, newDomain)
-                .map(AutomationDomainMapper::toAutomationDomain)
-                .onErrorReturn(ex -> withErrors(definition, ex));
+        return newDomain;
     }
 
     private Single<AutomationDomain> dryRunUpdate(

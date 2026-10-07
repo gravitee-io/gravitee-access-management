@@ -38,6 +38,7 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 import java.util.List;
 
@@ -48,6 +49,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
@@ -87,6 +90,14 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         return in;
     }
 
+    private AutomationDomain definitionWithPostLogoutRedirectUri(String key, String postLogoutRedirectUri) {
+        AutomationDomain in = definition(key);
+        AutomationOidcSettings oidc = new AutomationOidcSettings();
+        oidc.setPostLogoutRedirectUris(List.of(postLogoutRedirectUri));
+        in.setOidc(oidc);
+        return in;
+    }
+
     @Test
     void list_returns_domains_sorted() {
         when(domainService.findAllByEnvironment(ORG_ID, ENV_ID))
@@ -106,6 +117,8 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
         Domain created = domain(domainId, "customer-auth");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
         when(domainService.create(eq(ORG_ID), eq(ENV_ID), any(), any()))
                 .thenReturn(Single.just(created));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
@@ -154,6 +167,8 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         AutomationDomain definition = definition("customer-auth");
         definition.setDataPlaneId(null);
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), argThat(newDomain -> newDomain.getDataPlaneId() == null)))
+                .thenReturn(Single.just(created));
         when(domainService.create(eq(ORG_ID), eq(ENV_ID), argThat(newDomain -> newDomain.getDataPlaneId() == null), any()))
                 .thenReturn(Single.just(created));
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
@@ -304,17 +319,50 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
         when(domainService.update(eq(domainId), any(Domain.class), eq(false)))
                 .thenReturn(Single.error(new InvalidRedirectUriException("post_logout_redirect_uri : not a uri is malformed")));
-        AutomationDomain definition = definition("bad-oidc-uri");
-        AutomationOidcSettings oidc = new AutomationOidcSettings();
-        oidc.setPostLogoutRedirectUris(List.of("not a uri"));
-        definition.setOidc(oidc);
 
-        Response response = put(domainsTarget(), definition);
+        Response response = put(domainsTarget(), definitionWithPostLogoutRedirectUri("bad-oidc-uri", "not a uri"));
 
         assertEquals(400, response.getStatus());
         ErrorEntity error = readEntity(response, ErrorEntity.class);
         assertEquals("post_logout_redirect_uri : not a uri is malformed", error.getMessage());
         assertEquals(400, error.getHttpCode());
+    }
+
+    @Test
+    void put_validates_the_whole_definition_before_creating_the_domain() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain created = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+        when(domainService.create(eq(ORG_ID), eq(ENV_ID), any(), any())).thenReturn(Single.just(created));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false))).thenReturn(Single.just(created));
+
+        Response response = put(domainsTarget(),
+                definitionWithPostLogoutRedirectUri("customer-auth", "https://app.example.com/logout"));
+
+        assertEquals(200, response.getStatus());
+        InOrder validatedThenCreated = inOrder(domainService);
+        validatedThenCreated.verify(domainService).validateSettings(argThat(domain ->
+                List.of("https://app.example.com/logout").equals(domain.getOidc().getPostLogoutRedirectUris())));
+        validatedThenCreated.verify(domainService).create(eq(ORG_ID), eq(ENV_ID), any(), any());
+    }
+
+    @Test
+    void put_does_not_create_a_domain_whose_settings_are_invalid() {
+        String domainId = AutomationIds.domainId(ENV_ID, "bad-new-oidc-uri");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "bad-new-oidc-uri")));
+        doReturn(Single.error(new InvalidRedirectUriException("post_logout_redirect_uri : not a uri is malformed")))
+                .when(domainService).validateSettings(any(Domain.class));
+
+        Response response = put(domainsTarget(), definitionWithPostLogoutRedirectUri("bad-new-oidc-uri", "not a uri"));
+
+        assertEquals(400, response.getStatus());
+        assertEquals("post_logout_redirect_uri : not a uri is malformed", readEntity(response, ErrorEntity.class).getMessage());
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
     }
 
     // --- dry-run tests ---
@@ -409,6 +457,25 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         AutomationDomain body = readEntity(response, AutomationDomain.class);
         assertEquals("customer-auth", body.getAutomationKey());
         verify(domainService).validateCreate(eq(ORG_ID), eq(ENV_ID), any());
+    }
+
+    @Test
+    void dryRun_create_reports_invalid_settings() {
+        String domainId = AutomationIds.domainId(ENV_ID, "bad-new-oidc-uri");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "bad-new-oidc-uri")));
+        doReturn(Single.error(new InvalidRedirectUriException("post_logout_redirect_uri : not a uri is malformed")))
+                .when(domainService).validateSettings(any(Domain.class));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true),
+                definitionWithPostLogoutRedirectUri("bad-new-oidc-uri", "not a uri"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals("post_logout_redirect_uri : not a uri is malformed", body.getDryRunErrors().get(0).message());
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
     }
 
     @Test

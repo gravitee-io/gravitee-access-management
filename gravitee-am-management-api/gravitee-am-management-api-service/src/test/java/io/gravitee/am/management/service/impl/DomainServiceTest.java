@@ -110,6 +110,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidDataPlaneException;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidWebAuthnConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.I18nDictionaryService;
@@ -2199,6 +2200,49 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).update(any(Domain.class));
     }
 
+    @Test
+    public void shouldValidateSettings_ofADomainNotPersistedYet() {
+        Domain domain = notPersistedDomain();
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        doReturn(Completable.complete()).when(domainValidator).validate(any(), any());
+        doReturn(Completable.complete()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+
+        domainService.validateSettings(domain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(domain);
+
+        verify(domainRepository, never()).findById(anyString());
+        verify(domainRepository, never()).create(any());
+        verify(domainRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotValidateSettings_invalidPostLogoutRedirectUri() {
+        Domain domain = notPersistedDomain();
+        domain.getOidc().setPostLogoutRedirectUris(List.of("not a uri"));
+
+        domainService.validateSettings(domain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(error -> error instanceof InvalidRedirectUriException
+                        && "post_logout_redirect_uri : not a uri is malformed".equals(error.getMessage()));
+    }
+
+    private static Domain notPersistedDomain() {
+        Domain domain = new Domain();
+        domain.setId("not-persisted-domain");
+        domain.setHrid("not-persisted-domain");
+        domain.setName("not-persisted-domain");
+        domain.setPath("/not-persisted-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setOidc(OIDCSettings.defaultSettings());
+        return domain;
+    }
 
     @Test
     public void shouldGetEntrypoint_entrypoint1() {
