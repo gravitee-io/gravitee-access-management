@@ -24,20 +24,12 @@ security:
 - gravitee-auth: []
 tags:
 - name: Authentication Device Notifier
-- name: Authorization Engine
-- name: Bot Detection
-- name: Certificate
 - name: Device Identifier
-- name: Extension Grant
-- name: Factor
-- name: Identity Provider
 - name: Newsletter
 - name: Notifier
 - name: Password Policy
 - name: Plugin
 - name: Policy
-- name: Reporter
-- name: Resource
 - name: alerts
 - name: application
 - name: audit
@@ -10646,7 +10638,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Authorization Engine
+      - authorization engine
       - platform
       summary: List authorization engine plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10667,7 +10659,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Authorization Engine
+      - authorization engine
       - platform
       summary: Get an authorization engine plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10687,7 +10679,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Authorization Engine
+      - authorization engine
       - platform
       summary: Get an authorization engine plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10707,7 +10699,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Bot Detection
+      - bot detection
       - platform
       summary: List bot detection plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10721,7 +10713,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Bot Detection
+      - bot detection
       - platform
       summary: Get a Bot Detection plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10741,7 +10733,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Bot Detection
+      - bot detection
       - platform
       summary: Get a Bot Detection plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10761,7 +10753,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Certificate
+      - certificate
       - platform
       summary: List certificate plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10775,7 +10767,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Certificate
+      - certificate
       - platform
       summary: Get an certificate plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10795,7 +10787,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Certificate
+      - certificate
       - platform
       summary: Get an certificate's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10869,7 +10861,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Extension Grant
+      - extension grant
       - platform
       summary: List extension grant plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10883,7 +10875,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Extension Grant
+      - extension grant
       - platform
       summary: Get an extension grant plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10903,7 +10895,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Extension Grant
+      - extension grant
       - platform
       summary: Get an extension grant plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10923,7 +10915,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Factor
+      - factor
       - platform
       summary: List factor plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -10937,7 +10929,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Factor
+      - factor
       - platform
       summary: Get a factor plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -10957,7 +10949,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Factor
+      - factor
       - platform
       summary: Get a factor plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -10977,7 +10969,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Identity Provider
+      - identity provider
       - platform
       summary: List identity provider plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -11006,7 +10998,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Identity Provider
+      - identity provider
       - platform
       summary: Get an identity provider
       description: There is no particular permission needed. User must be authenticated.
@@ -11026,7 +11018,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Identity Provider
+      - identity provider
       - platform
       summary: Get an identity provider plugin's schema
       description: There is no particular permission needed. User must be authenticated.
@@ -11212,7 +11204,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Reporter
+      - reporter
       - platform
       summary: List reporter plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -11226,7 +11218,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Reporter
+      - reporter
       - platform
       summary: Get a reporter plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -11246,7 +11238,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Reporter
+      - reporter
       - platform
       summary: Get a reporter plugin's schema
       operationId: getReporterSchema
@@ -11265,7 +11257,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Resource
+      - resource
       - platform
       summary: List resource plugins
       description: There is no particular permission needed. User must be authenticated.
@@ -11286,7 +11278,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Resource
+      - resource
       - platform
       summary: Get a resource plugin
       description: There is no particular permission needed. User must be authenticated.
@@ -11306,7 +11298,7 @@ paths:
     get:
       tags:
       - Plugin
-      - Resource
+      - resource
       - platform
       summary: Get a resource plugin's schema
       description: There is no particular permission needed. User must be authenticated.
