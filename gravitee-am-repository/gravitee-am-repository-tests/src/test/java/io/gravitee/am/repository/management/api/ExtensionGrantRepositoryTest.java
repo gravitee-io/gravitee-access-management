@@ -23,8 +23,11 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -157,5 +160,17 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
         observer.assertComplete();
         observer.assertNoValues();
         observer.assertNoErrors();
+    }
+
+    @Test
+    public void testFindAllWhateverTheReference() {
+        ExtensionGrant first = buildExtensionGrant();
+        ExtensionGrant second = buildExtensionGrant();
+        String firstId = extensionGrantRepository.create(first).blockingGet().getId();
+        String secondId = extensionGrantRepository.create(second).blockingGet().getId();
+
+        List<String> ids = extensionGrantRepository.findAll().map(ExtensionGrant::getId).toList().blockingGet();
+
+        assertTrue(ids.containsAll(List.of(firstId, secondId)));
     }
 }

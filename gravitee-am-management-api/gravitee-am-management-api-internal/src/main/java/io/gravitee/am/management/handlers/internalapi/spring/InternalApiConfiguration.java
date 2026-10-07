@@ -18,9 +18,11 @@ package io.gravitee.am.management.handlers.internalapi.spring;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneEndpoint;
+import io.gravitee.am.management.handlers.internalapi.endpoints.EncryptConfigurationsEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.InternalApiService;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
+import io.gravitee.am.management.service.encryption.ConfigurationEncryptionService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.dataplane.DataPlaneProvisioningService;
 import org.springframework.context.annotation.Bean;
@@ -55,6 +57,12 @@ public class InternalApiConfiguration {
     public DeleteDataPlaneEndpoint deleteDataPlaneEndpoint(DataPlaneProvisioningService dataPlaneProvisioningService,
                                                            ObjectMapper objectMapper) {
         return new DeleteDataPlaneEndpoint(dataPlaneProvisioningService, objectMapper);
+    }
+
+    @Bean
+    public EncryptConfigurationsEndpoint encryptConfigurationsEndpoint(ConfigurationEncryptionService configurationEncryptionService,
+                                                                       ObjectMapper objectMapper) {
+        return new EncryptConfigurationsEndpoint(configurationEncryptionService, objectMapper);
     }
 
     @Bean

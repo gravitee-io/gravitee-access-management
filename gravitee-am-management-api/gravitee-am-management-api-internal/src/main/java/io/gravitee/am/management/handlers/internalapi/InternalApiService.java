@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.internalapi;
 
 import io.gravitee.am.management.handlers.internalapi.endpoints.CreateDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.DeleteDataPlaneEndpoint;
+import io.gravitee.am.management.handlers.internalapi.endpoints.EncryptConfigurationsEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.GetDataPlaneEndpoint;
 import io.gravitee.am.management.handlers.internalapi.endpoints.ListDataPlanesEndpoint;
 import io.gravitee.common.service.AbstractService;
@@ -48,6 +49,9 @@ public class InternalApiService extends AbstractService<InternalApiService> {
     @Autowired
     private DeleteDataPlaneEndpoint deleteDataPlaneEndpoint;
 
+    @Autowired
+    private EncryptConfigurationsEndpoint encryptConfigurationsEndpoint;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -55,6 +59,7 @@ public class InternalApiService extends AbstractService<InternalApiService> {
         endpointManager.register(listDataPlanesEndpoint);
         endpointManager.register(getDataPlaneEndpoint);
         endpointManager.register(deleteDataPlaneEndpoint);
+        endpointManager.register(encryptConfigurationsEndpoint);
         log.info("Internal API endpoints have been registered");
     }
 }

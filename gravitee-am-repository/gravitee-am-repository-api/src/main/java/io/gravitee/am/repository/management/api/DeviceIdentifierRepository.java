@@ -28,6 +28,8 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public interface DeviceIdentifierRepository extends CrudRepository<DeviceIdentifier, String> {
 
+    Flowable<DeviceIdentifier> findAll();
+
     Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId);
 
     Completable deleteByReference(Reference reference);

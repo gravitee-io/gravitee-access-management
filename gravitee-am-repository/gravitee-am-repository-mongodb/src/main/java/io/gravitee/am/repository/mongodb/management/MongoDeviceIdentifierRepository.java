@@ -62,6 +62,12 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
     }
 
     @Override
+    public Flowable<DeviceIdentifier> findAll() {
+        return Flowable.fromPublisher(withMaxTime(deviceIdentifierMongoMongoCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(deviceIdentifierMongoMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
                 .observeOn(Schedulers.computation());

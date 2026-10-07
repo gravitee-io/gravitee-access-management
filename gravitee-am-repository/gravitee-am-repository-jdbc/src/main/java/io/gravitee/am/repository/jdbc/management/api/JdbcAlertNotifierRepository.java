@@ -89,6 +89,14 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
     }
 
     @Override
+    public Flowable<AlertNotifier> findAll() {
+        LOGGER.debug("findAll()");
+        return fluxToFlowable(getTemplate().select(JdbcAlertNotifier.class).all())
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId) {
         return findByCriteria(referenceType, referenceId, new AlertNotifierCriteria());
     }

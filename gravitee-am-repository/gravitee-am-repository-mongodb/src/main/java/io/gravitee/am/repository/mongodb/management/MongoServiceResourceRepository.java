@@ -56,6 +56,12 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
     }
 
     @Override
+    public Flowable<ServiceResource> findAll() {
+        return Flowable.fromPublisher(withMaxTime(resourceCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<ServiceResource> findByReference(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert)
                 .observeOn(Schedulers.computation());

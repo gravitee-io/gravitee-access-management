@@ -26,6 +26,8 @@ import io.reactivex.rxjava3.core.Maybe;
  */
 public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant, String> {
 
+    Flowable<ExtensionGrant> findAll();
+
     Flowable<ExtensionGrant> findByDomain(String domain);
 
     Maybe<ExtensionGrant> findByDomainAndName(String domain, String name);

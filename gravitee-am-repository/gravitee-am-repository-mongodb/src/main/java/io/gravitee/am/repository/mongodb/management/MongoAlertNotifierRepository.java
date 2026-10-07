@@ -67,6 +67,13 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
     }
 
     @Override
+    public Flowable<AlertNotifier> findAll() {
+        return Flowable.fromPublisher(withMaxTime(collection.find()))
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId) {
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
 

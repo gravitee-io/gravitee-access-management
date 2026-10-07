@@ -27,7 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -190,5 +193,19 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
         alertNotifier.setCreatedAt(new Date());
         alertNotifier.setUpdatedAt(new Date());
         return alertNotifier;
+    }
+
+    @Test
+    public void testFindAllWhateverTheReference() {
+        AlertNotifier first = buildAlertNotifier();
+        AlertNotifier second = buildAlertNotifier();
+        first.setReferenceId("domain-1");
+        second.setReferenceId("domain-2");
+        String firstId = alertNotifierRepository.create(first).blockingGet().getId();
+        String secondId = alertNotifierRepository.create(second).blockingGet().getId();
+
+        List<String> ids = alertNotifierRepository.findAll().map(AlertNotifier::getId).toList().blockingGet();
+
+        assertTrue(ids.containsAll(List.of(firstId, secondId)));
     }
 }
