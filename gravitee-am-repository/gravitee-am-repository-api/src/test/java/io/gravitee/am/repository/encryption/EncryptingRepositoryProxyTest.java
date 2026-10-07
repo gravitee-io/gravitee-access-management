@@ -189,8 +189,8 @@ class EncryptingRepositoryProxyTest {
     private static StandardEnvironment keysEnvironment(EncryptionKey... keys) {
         Map<String, Object> properties = new HashMap<>();
         for (int i = 0; i < keys.length; i++) {
-            properties.put(EncryptingRepositoryBeanPostProcessor.KEYS_PROPERTY + "[" + i + "].id", keys[i].id());
-            properties.put(EncryptingRepositoryBeanPostProcessor.KEYS_PROPERTY + "[" + i + "].secret", keys[i].secret());
+            properties.put(EncryptionKeys.KEYS_PROPERTY + "[" + i + "].id", keys[i].id());
+            properties.put(EncryptionKeys.KEYS_PROPERTY + "[" + i + "].secret", keys[i].secret());
         }
         return environment(properties);
     }

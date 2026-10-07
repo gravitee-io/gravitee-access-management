@@ -63,6 +63,14 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
     }
 
     @Override
+    public Flowable<ServiceResource> findAll() {
+        LOGGER.debug("findAll()");
+        return serviceResourceRepository.findAll()
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<ServiceResource> findByType(String type) {
         LOGGER.debug("findByType({})", type);
         return serviceResourceRepository.findByType(type)

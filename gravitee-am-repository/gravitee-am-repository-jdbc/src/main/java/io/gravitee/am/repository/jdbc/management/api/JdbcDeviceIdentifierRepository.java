@@ -52,6 +52,14 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
     }
 
     @Override
+    public Flowable<DeviceIdentifier> findAll() {
+        LOGGER.debug("findAll()");
+        return fluxToFlowable(getTemplate().select(JdbcDeviceIdentifier.class).all())
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
         return fluxToFlowable(getTemplate().select(JdbcDeviceIdentifier.class)

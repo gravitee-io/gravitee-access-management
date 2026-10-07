@@ -26,7 +26,10 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -205,4 +208,15 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValue(f -> f.getReferenceId().equals(DOMAIN_2));
     }
 
+    @Test
+    public void testFindAllWhateverTheReference() {
+        DeviceIdentifier first = buildDeviceIdentifier();
+        DeviceIdentifier second = buildDeviceIdentifier();
+        String firstId = repository.create(first).blockingGet().getId();
+        String secondId = repository.create(second).blockingGet().getId();
+
+        List<String> ids = repository.findAll().map(DeviceIdentifier::getId).toList().blockingGet();
+
+        assertTrue(ids.containsAll(List.of(firstId, secondId)));
+    }
 }

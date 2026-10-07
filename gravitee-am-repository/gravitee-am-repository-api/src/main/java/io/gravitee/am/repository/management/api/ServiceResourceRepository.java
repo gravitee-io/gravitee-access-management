@@ -28,6 +28,8 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public interface ServiceResourceRepository extends CrudRepository<ServiceResource, String> {
 
+    Flowable<ServiceResource> findAll();
+
     Flowable<ServiceResource> findByReference(ReferenceType referenceType, String referenceId);
 
     Flowable<ServiceResource> findByType(String type);

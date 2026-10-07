@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.encryption;
 
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.encryption.FieldEncryptor.EncryptionKey;
 import io.gravitee.node.logging.NodeLoggerFactory;
 import org.slf4j.Logger;
@@ -23,7 +22,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.env.Environment;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,31 +30,19 @@ import java.util.List;
  * It must be declared in the repository plugin context: the plugin copies its repositories into the
  * parent context as ready-made singletons, so a post processor of the parent context never sees them.
  * <p>
- * The keys are read from {@value #KEYS_PROPERTY}{@code [i].id} and {@code [i].secret}, oldest first: the last one
- * encrypts, the others only decrypt the values they encrypted. Without any key, repositories are returned unchanged.
+ * The keys come from {@link EncryptionKeys}. Without any key, repositories are returned unchanged.
  *
  * @author GraviteeSource Team
  */
 public class EncryptingRepositoryBeanPostProcessor implements BeanPostProcessor {
-
-    public static final String KEYS_PROPERTY = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".encryption.keys";
 
     private static final Logger LOGGER = NodeLoggerFactory.getLogger(EncryptingRepositoryBeanPostProcessor.class);
 
     private final FieldEncryptor encryptor;
 
     public EncryptingRepositoryBeanPostProcessor(Environment environment) {
-        List<EncryptionKey> keys = readKeys(environment);
+        List<EncryptionKey> keys = EncryptionKeys.fromEnvironment(environment);
         this.encryptor = keys.isEmpty() ? null : FieldEncryptor.withKeys(keys);
-    }
-
-    private static List<EncryptionKey> readKeys(Environment environment) {
-        List<EncryptionKey> keys = new ArrayList<>();
-        for (int i = 0; environment.containsProperty(KEYS_PROPERTY + "[" + i + "].id"); i++) {
-            String prefix = KEYS_PROPERTY + "[" + i + "].";
-            keys.add(new EncryptionKey(environment.getProperty(prefix + "id"), environment.getProperty(prefix + "secret")));
-        }
-        return keys;
     }
 
     @Override

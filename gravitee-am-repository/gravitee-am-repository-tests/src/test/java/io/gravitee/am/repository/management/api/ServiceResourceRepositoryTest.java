@@ -25,8 +25,11 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -216,4 +219,15 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
     }
 
+    @Test
+    public void testFindAllWhateverTheReference() {
+        ServiceResource first = buildResource();
+        ServiceResource second = buildResource();
+        String firstId = serviceResourceRepository.create(first).blockingGet().getId();
+        String secondId = serviceResourceRepository.create(second).blockingGet().getId();
+
+        List<String> ids = serviceResourceRepository.findAll().map(ServiceResource::getId).toList().blockingGet();
+
+        assertTrue(ids.containsAll(List.of(firstId, secondId)));
+    }
 }

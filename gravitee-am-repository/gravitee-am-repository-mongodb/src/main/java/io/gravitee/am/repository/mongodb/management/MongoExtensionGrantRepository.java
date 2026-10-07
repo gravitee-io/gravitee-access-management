@@ -61,6 +61,12 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     }
 
     @Override
+    public Flowable<ExtensionGrant> findAll() {
+        return Flowable.fromPublisher(withMaxTime(extensionGrantsCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<ExtensionGrant> findByDomain(String domain) {
         return Flowable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert)
                 .observeOn(Schedulers.computation());

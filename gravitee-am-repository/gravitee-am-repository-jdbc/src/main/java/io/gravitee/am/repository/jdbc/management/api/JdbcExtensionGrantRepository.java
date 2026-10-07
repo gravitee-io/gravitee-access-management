@@ -50,6 +50,14 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
     }
 
     @Override
+    public Flowable<ExtensionGrant> findAll() {
+        LOGGER.debug("findAll()");
+        return extensionGrantRepository.findAll()
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<ExtensionGrant> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return extensionGrantRepository.findByDomain(domain)

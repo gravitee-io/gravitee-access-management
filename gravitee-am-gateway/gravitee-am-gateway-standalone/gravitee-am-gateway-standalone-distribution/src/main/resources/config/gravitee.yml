@@ -409,10 +409,14 @@ repositories:
     # stored in the management repository (AES-256-GCM). Values stored before encryption is enabled
     # stay readable in clear text and are encrypted on their next update.
     # Each value records the id of the key that encrypted it. The last key of the list encrypts, the
-    # others only decrypt: to rotate, append a key with a new id; values move to it on their next
-    # update. A key still used by a stored value must stay listed, otherwise reading that value fails.
-    # Never reuse an id for another secret. The Management API and the Gateway must declare the same
-    # keys; losing a key makes the configurations it encrypted unreadable.
+    # others only decrypt. A key still used by a stored value must stay listed, otherwise reading that
+    # value fails. Never reuse an id for another secret; losing a key makes the configurations it
+    # encrypted unreadable.
+    # Stored configurations move to the last key when they are updated, or all at once on a call to
+    # POST /_node/encryption/reencrypt (Management API technical API), which also encrypts the
+    # configurations stored before encryption was enabled. To rotate: append a key with a new id on
+    # every Gateway and Management API node and restart them, then call that endpoint on one
+    # Management API node; once it answers 200, the older keys can be removed.
     #encryption:
     #  keys:
     #    - id: v1
