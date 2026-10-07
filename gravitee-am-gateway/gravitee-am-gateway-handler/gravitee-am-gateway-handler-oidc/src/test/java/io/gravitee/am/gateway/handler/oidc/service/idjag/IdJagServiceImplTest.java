@@ -374,6 +374,45 @@ class IdJagServiceImplTest {
     }
 
     @Test
+    void shouldBindToTheDPoPKeyOfTheTokenExchange() {
+        OAuth2Request oAuth2Request = request();
+        oAuth2Request.setConfirmationMethodJkt("proof-key-thumbprint");
+
+        service.create(oAuth2Request, client(300), user(), executionContext).blockingGet();
+
+        JWT assertion = capturedAssertion();
+        assertThat(assertion.get(Claims.CNF)).isEqualTo(Map.of(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "proof-key-thumbprint"));
+        assertThat(assertion.getDPoPConfirmationThumbprint()).isEqualTo("proof-key-thumbprint");
+    }
+
+    @Test
+    void shouldOmitTheCnfClaimWithoutDPoPProof() {
+        assertThat(mintedAssertion()).doesNotContainKey(Claims.CNF);
+    }
+
+    @Test
+    void shouldIgnoreACustomClaimNamingTheKeyBinding() {
+        Client client = clientWithClaims(TokenClaim.of(TokenTypeHint.ID_JAG, Claims.CNF, FORGED));
+        lenient().when(templateEngine.getValue(FORGED, Object.class)).thenReturn(Map.of(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "forged"));
+        OAuth2Request oAuth2Request = request();
+        oAuth2Request.setConfirmationMethodJkt("proof-key-thumbprint");
+
+        service.create(oAuth2Request, client, user(), executionContext).blockingGet();
+
+        assertThat(capturedAssertion().getDPoPConfirmationThumbprint()).isEqualTo("proof-key-thumbprint");
+    }
+
+    @Test
+    void shouldNotForgeAKeyBindingWithoutDPoPProof() {
+        Client client = clientWithClaims(TokenClaim.of(TokenTypeHint.ID_JAG, Claims.CNF, FORGED));
+        lenient().when(templateEngine.getValue(FORGED, Object.class)).thenReturn(Map.of(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "forged"));
+
+        service.create(request(), client, user(), executionContext).blockingGet();
+
+        assertThat(capturedAssertion()).doesNotContainKey(Claims.CNF);
+    }
+
+    @Test
     void shouldKeepTheApplicationsCustomClaimsLenient() {
         Client client = clientWithClaims(TokenClaim.of(TokenTypeHint.ID_JAG, "tenant", BROKEN));
         when(templateEngine.getValue(BROKEN, Object.class)).thenThrow(new IllegalStateException("EL1008E"));
