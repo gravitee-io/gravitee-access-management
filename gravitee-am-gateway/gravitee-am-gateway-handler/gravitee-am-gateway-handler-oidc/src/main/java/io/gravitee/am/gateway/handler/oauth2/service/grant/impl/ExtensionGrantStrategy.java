@@ -159,6 +159,7 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                 client.getClientId(), extensionGrant.getGrantType());
 
         return extensionGrantProvider.grant(createExtensionGrantRequest(request, client))
+                .flatMap(grantResult -> requireProofOfPossession(grantResult, request.getConfirmationMethodJkt()))
                 .flatMap(grantResult -> resolveUser(request, client, grantResult)
                         .map(user -> grantedAccess(createTokenCreationRequest(request, client, user, resolveSource(grantResult.identityProvider()), grantResult.resource() != null), grantResult)))
                 .switchIfEmpty(Single.fromCallable(() -> createTokenCreationRequest(request, client, null, resolveSource(null), false)))
@@ -178,6 +179,23 @@ public class ExtensionGrantStrategy implements GrantStrategy {
                     String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
                     return Single.error(new InvalidGrantException(msg, ex));
                 });
+    }
+
+    private static Maybe<ExtensionGrantResult> requireProofOfPossession(ExtensionGrantResult grantResult, String proofJkt) {
+        if (!(grantResult.verifiedClaims().get(Claims.CNF) instanceof Map<?, ?> confirmationMethods)
+                || !confirmationMethods.containsKey(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT)) {
+            return Maybe.just(grantResult);
+        }
+        if (!(confirmationMethods.get(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT) instanceof String boundJkt)) {
+            return Maybe.error(new InvalidGrantException("Invalid proof of possession binding"));
+        }
+        if (proofJkt == null) {
+            return Maybe.error(new InvalidGrantException("Proof of possession required for this authorization grant"));
+        }
+        if (!boundJkt.equals(proofJkt)) {
+            return Maybe.error(new InvalidGrantException("Proof of possession key does not match the authorization grant"));
+        }
+        return Maybe.just(grantResult);
     }
 
     private static TokenCreationRequest grantedAccess(TokenCreationRequest creationRequest, ExtensionGrantResult grantResult) {
