@@ -17,10 +17,7 @@
 import { afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
-import {
-  AutomationAuthFixture,
-  setupAutomationAuthFixture,
-} from './fixtures/automation-domain-fixture';
+import { AutomationAuthFixture, setupAutomationAuthFixture } from './fixtures/automation-domain-fixture';
 import { AutomationDomainDef, buildAutomationDomainDef } from './fixtures/automation-definitions';
 
 setup(120000);
@@ -293,34 +290,42 @@ describe('Automation API - Domain - Round-trip preserves all writable fields', (
       expect.objectContaining({ enabled: true, allowUnsecuredHttpUri: true }),
     );
 
-    expect(body.loginSettings).toEqual(expect.objectContaining({
-      registerEnabled: true,
-      forgotPasswordEnabled: true,
-      rememberMeEnabled: true,
-      hideForm: false,
-    }));
+    expect(body.loginSettings).toEqual(
+      expect.objectContaining({
+        registerEnabled: true,
+        forgotPasswordEnabled: true,
+        rememberMeEnabled: true,
+        hideForm: false,
+      }),
+    );
 
-    expect(body.accountSettings).toEqual(expect.objectContaining({
-      loginAttemptsDetectionEnabled: true,
-      maxLoginAttempts: 5,
-      loginAttemptsResetTime: 600,
-      rememberMe: true,
-      rememberMeDuration: 86400,
-    }));
+    expect(body.accountSettings).toEqual(
+      expect.objectContaining({
+        loginAttemptsDetectionEnabled: true,
+        maxLoginAttempts: 5,
+        loginAttemptsResetTime: 600,
+        rememberMe: true,
+        rememberMeDuration: 86400,
+      }),
+    );
 
-    expect(body.passwordSettings).toEqual(expect.objectContaining({
-      minLength: 12,
-      maxLength: 64,
-      includeNumbers: true,
-      includeSpecialCharacters: true,
-      lettersInMixedCase: true,
-    }));
+    expect(body.passwordSettings).toEqual(
+      expect.objectContaining({
+        minLength: 12,
+        maxLength: 64,
+        includeNumbers: true,
+        includeSpecialCharacters: true,
+        lettersInMixedCase: true,
+      }),
+    );
 
-    expect(body.corsSettings).toEqual(expect.objectContaining({
-      enabled: true,
-      allowCredentials: true,
-      maxAge: 3600,
-    }));
+    expect(body.corsSettings).toEqual(
+      expect.objectContaining({
+        enabled: true,
+        allowCredentials: true,
+        maxAge: 3600,
+      }),
+    );
     expect(body.corsSettings.allowedOrigins).toEqual(['https://app.example.com']);
     expect(body.corsSettings.allowedMethods).toEqual(expect.arrayContaining(['GET', 'POST']));
     expect(body.corsSettings.allowedHeaders).toEqual(expect.arrayContaining(['Authorization', 'Content-Type']));
