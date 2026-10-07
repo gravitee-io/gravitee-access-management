@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.oauth2.InternalClientTokenIssuer;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.Domain;
@@ -43,6 +44,9 @@ public class InternalClientTokenIssuerImpl implements InternalClientTokenIssuer 
 
     @Override
     public Single<IssuedToken> issue(Client client) {
+        if (client.getAuthorizedGrantTypes() == null || !client.getAuthorizedGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)) {
+            return Single.error(new UnauthorizedClientException("Client is not authorized to use the client_credentials grant type"));
+        }
         return Single.fromCallable(this::origin)
                 .flatMap(origin -> tokenService.create(tokenRequest(client, origin), client, null))
                 .map(token -> new IssuedToken(token.getValue(), token.getExpiresIn()));
