@@ -17,7 +17,9 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
+import io.gravitee.am.management.handlers.automation.model.AutomationOidcSettings;
 import io.gravitee.am.management.handlers.automation.model.DryRunError;
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyResolutionMethod;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -28,6 +30,7 @@ import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -291,6 +294,27 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
         Response response = put(domainsTarget(), invalid);
 
         assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    void put_rejects_an_invalid_post_logout_redirect_uri_naming_it() {
+        String domainId = AutomationIds.domainId(ENV_ID, "bad-oidc-uri");
+        Domain existing = domain(domainId, "bad-oidc-uri");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false)))
+                .thenReturn(Single.error(new InvalidRedirectUriException("post_logout_redirect_uri : not a uri is malformed")));
+        AutomationDomain definition = definition("bad-oidc-uri");
+        AutomationOidcSettings oidc = new AutomationOidcSettings();
+        oidc.setPostLogoutRedirectUris(List.of("not a uri"));
+        definition.setOidc(oidc);
+
+        Response response = put(domainsTarget(), definition);
+
+        assertEquals(400, response.getStatus());
+        ErrorEntity error = readEntity(response, ErrorEntity.class);
+        assertEquals("post_logout_redirect_uri : not a uri is malformed", error.getMessage());
+        assertEquals(400, error.getHttpCode());
     }
 
     // --- dry-run tests ---
