@@ -19,6 +19,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.encryption.FieldEncryptor.EncryptionKey;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.reactivex.rxjava3.core.Completable;
@@ -39,14 +40,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EncryptingRepositoryProxyTest {
 
-    private static final String SECRET = "a-secret";
     private static final String CONFIGURATION = "{\"password\":\"s3cr3t\"}";
-    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.fromSecret(SECRET);
+    private static final EncryptionKey KEY = new EncryptionKey("2025", "a-secret");
+    private static final EncryptionKey NEXT_KEY = new EncryptionKey("2026", "another-secret");
+    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.withKeys(List.of(KEY));
 
     private final InMemoryReporterRepository store = new InMemoryReporterRepository();
-    private final ReporterRepository repository = (ReporterRepository) new EncryptingRepositoryBeanPostProcessor(
-            environment(Map.of(EncryptingRepositoryBeanPostProcessor.SECRET_PROPERTY, SECRET)))
-            .postProcessAfterInitialization(store, "reporterRepository");
+    private final ReporterRepository repository = wrap(store, KEY);
 
     @Test
     void should_store_encrypted_and_return_clear_text_on_create() {
@@ -55,7 +55,7 @@ class EncryptingRepositoryProxyTest {
         Reporter created = repository.create(reporter).blockingGet();
 
         assertThat(created.getConfiguration()).isEqualTo(CONFIGURATION);
-        assertThat(store.stored("r1").getConfiguration()).startsWith(FieldEncryptor.PREFIX);
+        assertThat(store.stored("r1").getConfiguration()).startsWith("enc:2025:");
         assertThat(ENCRYPTOR.decrypt(store.stored("r1").getConfiguration())).isEqualTo(CONFIGURATION);
     }
 
@@ -145,16 +145,54 @@ class EncryptingRepositoryProxyTest {
         Object bean = new Object();
 
         Object processed = new EncryptingRepositoryBeanPostProcessor(
-                environment(Map.of(EncryptingRepositoryBeanPostProcessor.SECRET_PROPERTY, SECRET)))
+                keysEnvironment(KEY))
                 .postProcessAfterInitialization(bean, "other");
 
         assertThat(processed).isSameAs(bean);
     }
 
     @Test
+    void should_read_with_the_old_key_and_write_with_the_new_one() {
+        repository.create(reporter("r1", CONFIGURATION)).blockingGet();
+        ReporterRepository rotated = wrap(store, KEY, NEXT_KEY);
+
+        Reporter read = rotated.findById("r1").blockingGet();
+        assertThat(read.getConfiguration()).isEqualTo(CONFIGURATION);
+        assertThat(store.stored("r1").getConfiguration()).startsWith("enc:2025:");
+
+        rotated.update(read).blockingGet();
+        assertThat(store.stored("r1").getConfiguration()).startsWith("enc:2026:");
+        assertThat(rotated.findById("r1").blockingGet().getConfiguration()).isEqualTo(CONFIGURATION);
+    }
+
+    @Test
+    void should_fail_to_read_a_value_encrypted_with_a_removed_key() {
+        repository.create(reporter("r1", CONFIGURATION)).blockingGet();
+        ReporterRepository withoutOldKey = wrap(store, NEXT_KEY);
+
+        assertThatThrownBy(() -> withoutOldKey.findById("r1").blockingGet())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("[2025]");
+    }
+
+    @Test
     void should_delegate_equals_to_the_target() {
         assertThat(repository).isEqualTo(repository);
         assertThat(repository.equals(store)).isTrue();
+    }
+
+    private static ReporterRepository wrap(ReporterRepository target, EncryptionKey... keys) {
+        return (ReporterRepository) new EncryptingRepositoryBeanPostProcessor(keysEnvironment(keys))
+                .postProcessAfterInitialization(target, "reporterRepository");
+    }
+
+    private static StandardEnvironment keysEnvironment(EncryptionKey... keys) {
+        Map<String, Object> properties = new HashMap<>();
+        for (int i = 0; i < keys.length; i++) {
+            properties.put(EncryptingRepositoryBeanPostProcessor.KEYS_PROPERTY + "[" + i + "].id", keys[i].id());
+            properties.put(EncryptingRepositoryBeanPostProcessor.KEYS_PROPERTY + "[" + i + "].secret", keys[i].secret());
+        }
+        return environment(properties);
     }
 
     private static StandardEnvironment environment(Map<String, Object> properties) {

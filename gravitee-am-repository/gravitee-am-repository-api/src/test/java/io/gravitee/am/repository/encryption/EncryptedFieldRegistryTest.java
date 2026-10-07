@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EncryptedFieldRegistryTest {
 
-    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.fromSecret("a-secret");
+    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.withKeys(List.of(new FieldEncryptor.EncryptionKey("2025", "a-secret")));
     private static final String CONFIGURATION = "{\"password\":\"s3cr3t\"}";
 
     static Stream<Arguments> repositories() {
@@ -94,7 +94,7 @@ class EncryptedFieldRegistryTest {
 
         assertThat(copy).isNotSameAs(original);
         assertThat(configurationOf(original)).isEqualTo(CONFIGURATION);
-        assertThat(configurationOf(copy)).startsWith(FieldEncryptor.PREFIX);
+        assertThat(configurationOf(copy)).startsWith("enc:2025:");
 
         field.decryptInPlace(copy, ENCRYPTOR);
         assertThat(configurationOf(copy)).isEqualTo(CONFIGURATION);
