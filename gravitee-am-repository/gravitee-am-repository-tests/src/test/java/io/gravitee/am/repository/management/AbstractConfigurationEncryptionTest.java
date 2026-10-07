@@ -52,7 +52,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Every entity whose configuration is encrypted is stored with the {@code enc:v1:} prefix, and read back in
+ * Every entity whose configuration is encrypted is stored with the {@code enc:<key id>:} prefix, and read back in
  * clear text. Each backend reads the stored value without going through the repository.
  *
  * @author GraviteeSource Team
@@ -259,7 +259,7 @@ public abstract class AbstractConfigurationEncryptionTest extends AbstractManage
 
     private void assertStoredEncrypted(String table, String id) {
         String stored = storedConfiguration(table, id);
-        assertTrue(table + " stores " + stored, stored.startsWith("enc:v1:"));
+        assertTrue(table + " stores " + stored, stored.startsWith("enc:repository-tests:"));
         assertFalse(stored.contains(SECRET_VALUE));
     }
 }
