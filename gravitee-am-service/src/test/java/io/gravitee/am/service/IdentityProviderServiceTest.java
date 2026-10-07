@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -353,6 +354,51 @@ public class IdentityProviderServiceTest {
         testObserver.assertComplete();
         verify(identityProviderRepository).create(captor.capture());
         Assert.assertEquals("idp-domain-1-dev-users", captor.getValue().getId());
+    }
+
+    @Test
+    public void shouldCreate_keepTheMappersSuppliedByTheAutomationApi() {
+        AutomationNewIdentityProvider newIdentityProvider = automationIdentityProviderWithMappers();
+
+        ArgumentCaptor<IdentityProvider> captor = mockSuccessfulCreate();
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderRepository).create(captor.capture());
+        assertMappers(captor.getValue());
+    }
+
+    @Test
+    public void validateCreate_keepTheMappersSuppliedByTheAutomationApi() {
+        AutomationNewIdentityProvider newIdentityProvider = automationIdentityProviderWithMappers();
+        when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.complete());
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
+
+        TestObserver<IdentityProvider> testObserver = identityProviderService.validateCreate(new Domain(DOMAIN), newIdentityProvider, false).test();
+
+        testObserver.assertComplete();
+        assertMappers(testObserver.values().get(0));
+        verify(identityProviderRepository, never()).create(any(IdentityProvider.class));
+    }
+
+    private static AutomationNewIdentityProvider automationIdentityProviderWithMappers() {
+        AutomationNewIdentityProvider newIdentityProvider = new AutomationNewIdentityProvider();
+        newIdentityProvider.setAutomationKey("dev-users");
+        newIdentityProvider.setType("inline-am-idp");
+        newIdentityProvider.setName("my-idp");
+        newIdentityProvider.setConfiguration("{}");
+        newIdentityProvider.setMappers(Map.of("email", "mail"));
+        newIdentityProvider.setRoleMapper(Map.of("ADMIN", new String[]{"groupname=admins"}));
+        newIdentityProvider.setGroupMapper(Map.of("devs", new String[]{"groupname=developers"}));
+        return newIdentityProvider;
+    }
+
+    private static void assertMappers(IdentityProvider identityProvider) {
+        Assert.assertEquals(Map.of("email", "mail"), identityProvider.getMappers());
+        Assert.assertArrayEquals(new String[]{"groupname=admins"}, identityProvider.getRoleMapper().get("ADMIN"));
+        Assert.assertArrayEquals(new String[]{"groupname=developers"}, identityProvider.getGroupMapper().get("devs"));
     }
 
     @Test

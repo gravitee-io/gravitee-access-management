@@ -26,6 +26,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
+import io.gravitee.am.service.model.AutomationNewIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
@@ -37,7 +38,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -104,6 +107,20 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         return idp;
     }
 
+    private AutomationIdentityProvider definitionWithMappers(String key) {
+        AutomationIdentityProvider def = definition(key);
+        def.setMappers(Map.of("email", "mail"));
+        def.setRoleMapper(Map.of("ADMIN", new String[]{"groupname=admins"}));
+        def.setGroupMapper(Map.of("devs", new String[]{"groupname=developers"}));
+        return def;
+    }
+
+    private static void assertMappers(AutomationNewIdentityProvider newIdp) {
+        assertEquals(Map.of("email", "mail"), newIdp.getMappers());
+        assertArrayEquals(new String[]{"groupname=admins"}, newIdp.getRoleMapper().get("ADMIN"));
+        assertArrayEquals(new String[]{"groupname=developers"}, newIdp.getGroupMapper().get("devs"));
+    }
+
     private AutomationIdentityProvider definition(String key) {
         AutomationIdentityProvider in = new AutomationIdentityProvider();
         in.setAutomationKey(key);
@@ -156,6 +173,23 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(200, response.getStatus());
         assertEquals("dev-users", readEntity(response, AutomationIdentityProvider.class).getAutomationKey());
+    }
+
+    @Test
+    void put_create_carries_the_mappers() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId)))
+                .thenReturn(Flowable.empty());
+        when(identityProviderServiceProxy.create(any(Domain.class), any(), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY), definitionWithMappers("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<AutomationNewIdentityProvider> captor = ArgumentCaptor.forClass(AutomationNewIdentityProvider.class);
+        verify(identityProviderServiceProxy).create(any(Domain.class), captor.capture(), any(), eq(false));
+        assertMappers(captor.getValue());
     }
 
     @Test
@@ -673,6 +707,22 @@ class IdentityProvidersResourceTest extends AutomationJerseySpringTest {
         assertEquals("dev-users", body.getAutomationKey());
         assertNull(body.getDryRunErrors());
         verify(identityProviderService, never()).create(any(Domain.class), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void dryRun_create_carries_the_mappers() {
+        String idpId = AutomationIds.identityProviderId(domainId, "dev-users");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), eq(domainId))).thenReturn(Flowable.empty());
+        when(identityProviderServiceProxy.validateCreate(any(Domain.class), any(), eq(false)))
+                .thenReturn(Single.just(idp(idpId, "dev-users", ManagedBy.AUTOMATION_API)));
+
+        Response response = put(identitiesTarget(DOMAIN_KEY).queryParam("dryRun", true), definitionWithMappers("dev-users"));
+
+        assertEquals(200, response.getStatus());
+        ArgumentCaptor<AutomationNewIdentityProvider> captor = ArgumentCaptor.forClass(AutomationNewIdentityProvider.class);
+        verify(identityProviderServiceProxy).validateCreate(any(Domain.class), captor.capture(), eq(false));
+        assertMappers(captor.getValue());
     }
 
     @Test

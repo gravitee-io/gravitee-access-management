@@ -57,6 +57,9 @@ public final class AutomationIdentityProviderMapper {
         newIdp.setName(definition.getName());
         newIdp.setType(definition.getType());
         newIdp.setConfiguration(definition.getConfiguration());
+        newIdp.setMappers(definition.getMappers());
+        newIdp.setRoleMapper(definition.getRoleMapper());
+        newIdp.setGroupMapper(definition.getGroupMapper());
         newIdp.setDomainWhitelist(definition.getDomainWhitelist());
         return newIdp;
     }
