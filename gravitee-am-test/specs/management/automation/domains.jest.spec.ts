@@ -220,6 +220,13 @@ describe('Automation API - Domain - Error Handling', () => {
 
     expect(response.status).toBe(400);
   });
+
+  it('should reject PUT with an invalid post-logout redirect URI, naming it (400)', async () => {
+    const { response } = await createDomain({ oidc: { postLogoutRedirectUris: ['not a uri'] } });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('post_logout_redirect_uri : not a uri is malformed');
+  });
 });
 
 describe('Automation API - Domain - Round-trip preserves all writable fields', () => {

@@ -26,12 +26,17 @@ import io.gravitee.am.management.handlers.automation.resource.ReporterResource;
 import io.gravitee.am.management.handlers.automation.resource.ReportersResource;
 import io.gravitee.am.management.handlers.automation.swagger.AutomationApiDefinition;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
+import io.gravitee.am.management.handlers.management.api.provider.ClientErrorExceptionMapper;
+import io.gravitee.am.management.handlers.management.api.provider.JacksonExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.ManagementExceptionMapper;
+import io.gravitee.am.management.handlers.management.api.provider.Oauth2ExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.ThrowableMapper;
+import io.gravitee.am.management.handlers.management.api.provider.UnrecognizedPropertyExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.ValidationExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.WebApplicationExceptionMapper;
 import io.swagger.v3.jaxrs2.SwaggerSerializers;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
 
@@ -44,6 +49,10 @@ import org.glassfish.jersey.server.ServerProperties;
 public class AutomationApiApplication extends ResourceConfig {
 
     public AutomationApiApplication() {
+        // Jackson's default exception mappers echo parser details back to the caller
+        register(JacksonFeature.withoutExceptionMappers());
+        register(JacksonExceptionMapper.class);
+
         register(OrganizationResource.class);
         register(DomainsResource.class);
         register(DomainResource.class);
@@ -56,6 +65,10 @@ public class AutomationApiApplication extends ResourceConfig {
 
         register(ObjectMapperResolver.class);
         register(ManagementExceptionMapper.class);
+        register(UnrecognizedPropertyExceptionMapper.class);
+        register(ClientErrorExceptionMapper.class);
+        // domain validation shares the OAuth2 exceptions of the gateway (e.g. invalid redirect URIs)
+        register(Oauth2ExceptionMapper.class);
         register(ValidationExceptionMapper.class);
         register(WebApplicationExceptionMapper.class);
         register(ThrowableMapper.class);

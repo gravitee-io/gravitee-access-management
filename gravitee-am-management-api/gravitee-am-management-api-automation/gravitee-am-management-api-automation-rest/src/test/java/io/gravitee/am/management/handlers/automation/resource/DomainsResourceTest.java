@@ -17,9 +17,21 @@ package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.handlers.automation.AutomationJerseySpringTest;
 import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
+<<<<<<< HEAD
+=======
+import io.gravitee.am.management.handlers.automation.model.AutomationOidcSettings;
+import io.gravitee.am.management.handlers.automation.model.DryRunError;
+import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
+>>>>>>> c49f000 (fix(automation): answer invalid requests with a 4xx instead of a 500)
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
+<<<<<<< HEAD
+=======
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.reactivex.rxjava3.core.Completable;
+>>>>>>> c49f000 (fix(automation): answer invalid requests with a 4xx instead of a 500)
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -179,4 +191,137 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
 
         assertEquals(400, response.getStatus());
     }
+<<<<<<< HEAD
+=======
+
+    @Test
+    void put_rejects_an_invalid_post_logout_redirect_uri_naming_it() {
+        String domainId = AutomationIds.domainId(ENV_ID, "bad-oidc-uri");
+        Domain existing = domain(domainId, "bad-oidc-uri");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.update(eq(domainId), any(Domain.class), eq(false)))
+                .thenReturn(Single.error(new InvalidRedirectUriException("post_logout_redirect_uri : not a uri is malformed")));
+        AutomationDomain definition = definition("bad-oidc-uri");
+        AutomationOidcSettings oidc = new AutomationOidcSettings();
+        oidc.setPostLogoutRedirectUris(List.of("not a uri"));
+        definition.setOidc(oidc);
+
+        Response response = put(domainsTarget(), definition);
+
+        assertEquals(400, response.getStatus());
+        ErrorEntity error = readEntity(response, ErrorEntity.class);
+        assertEquals("post_logout_redirect_uri : not a uri is malformed", error.getMessage());
+        assertEquals(400, error.getHttpCode());
+    }
+
+    // --- dry-run tests ---
+
+    @Test
+    void dryRun_valid_body_returns_200_with_empty_errors() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals("customer-auth", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+    }
+
+    @Test
+    void dryRun_invalid_body_returns_200_with_errors() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.error(new InvalidParameterException("path must start with /")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals(DryRunError.Severity.ERROR, body.getDryRunErrors().get(0).severity());
+        assertEquals("path must start with /", body.getDryRunErrors().get(0).message());
+    }
+
+    @Test
+    void dryRun_does_not_persist() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+
+        put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
+        verify(domainService, never()).update(anyString(), any(Domain.class), eq(false));
+    }
+
+    @Test
+    void dryRun_update_does_not_persist() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.validateUpdate(eq(domainId), any(Domain.class), eq(false)))
+                .thenReturn(Single.just(existing));
+
+        put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
+        verify(domainService, never()).update(anyString(), any(Domain.class), eq(false));
+    }
+
+    @Test
+    void dryRun_update_existing_domain() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        Domain existing = domain(domainId, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findAll(eq(ReferenceType.DOMAIN), anyString())).thenReturn(Flowable.empty());
+        when(domainService.validateUpdate(eq(domainId), any(Domain.class), eq(false)))
+                .thenReturn(Single.just(existing));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals("customer-auth", body.getAutomationKey());
+        assertNull(body.getDryRunErrors());
+        verify(domainService).validateUpdate(eq(domainId), any(Domain.class), eq(false));
+    }
+
+    @Test
+    void dryRun_create_new_domain() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "customer-auth")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals("customer-auth", body.getAutomationKey());
+        verify(domainService).validateCreate(eq(ORG_ID), eq(ENV_ID), any());
+    }
+
+    @Test
+    void dryRun_non_automation_domain_returns_error() {
+        String domainId = AutomationIds.domainId(ENV_ID, "customer-auth");
+        when(domainService.findById(eq(domainId)))
+                .thenReturn(Maybe.just(managementDomain(domainId, "customer-auth")));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("customer-auth"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        assertEquals(DryRunError.Severity.ERROR, body.getDryRunErrors().get(0).severity());
+        assertTrue(body.getDryRunErrors().get(0).message().contains("not managed by the Automation API"));
+    }
+>>>>>>> c49f000 (fix(automation): answer invalid requests with a 4xx instead of a 500)
 }
