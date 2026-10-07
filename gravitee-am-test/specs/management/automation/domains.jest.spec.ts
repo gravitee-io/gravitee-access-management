@@ -227,6 +227,25 @@ describe('Automation API - Domain - Error Handling', () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual('post_logout_redirect_uri : not a uri is malformed');
   });
+
+  it('should not create the domain when its settings are invalid', async () => {
+    const { key, response } = await createDomain({ oidc: { postLogoutRedirectUris: ['not a uri'] } });
+    expect(response.status).toBe(400);
+
+    const getResponse = await fixture.client.getDomain(key);
+    expect(getResponse.status).toBe(404);
+  });
+
+  it('should report invalid settings on a dry-run create', async () => {
+    const key = uniqueName('autodom', true).toLowerCase();
+    const response = await fixture.client.putDomain(
+      buildAutomationDomainDef({ key, oidc: { postLogoutRedirectUris: ['not a uri'] } }),
+      '?dryRun=true',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.dryRunErrors[0].message).toEqual('post_logout_redirect_uri : not a uri is malformed');
+  });
 });
 
 describe('Automation API - Domain - Round-trip preserves all writable fields', () => {

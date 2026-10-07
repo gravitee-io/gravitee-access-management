@@ -500,8 +500,27 @@ public class DomainServiceImpl implements DomainService {
                             : Completable.complete();
                     return validateDomain(domain)
                             .andThen(referenceValidation)
+<<<<<<< HEAD
                             .andThen(Single.defer(() -> domainRepository.update(domain)));
                 })
+=======
+                            .andThen(Single.just(domain));
+                });
+    }
+
+    @Override
+    public Single<Domain> validateSettings(Domain domain) {
+        return Completable.defer(() -> validateDomain(domain))
+                .andThen(Single.just(domain));
+    }
+
+    @Override
+    public Single<Domain> update(String domainId, Domain domain, boolean validateReferences) {
+        log.debug("Update an existing domain: {}", domain);
+        return validateUpdate(domainId, domain, validateReferences)
+                .flatMap(trustedIssuerProjection::mirror)
+                .flatMap(validatedDomain -> domainRepository.update(validatedDomain))
+>>>>>>> 424763a (fix(automation): validate the whole domain definition before creating it)
                 // create event for sync process
                 .flatMap(domain1 -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));

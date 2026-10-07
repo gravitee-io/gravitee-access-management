@@ -153,19 +153,92 @@ public class DomainsResource extends AbstractAutomationResource {
                         .switchIfEmpty(Single.defer(() ->
                                 checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
                                         .andThen(Single.defer(() -> {
-                                            AutomationNewDomain newDomain = new AutomationNewDomain();
-                                            newDomain.setId(domainId);
-                                            newDomain.setAutomationKey(key);
-                                            newDomain.setName(definition.getName());
-                                            newDomain.setPath(definition.getPath());
-                                            newDomain.setDescription(definition.getDescription());
-                                            newDomain.setDataPlaneId(definition.getDataPlaneId());
-                                            return domainService.create(organizationId, environmentId, newDomain, principal);
+                                            AutomationNewDomain newDomain = newDomain(definition, domainId, key);
+                                            return validateNewDomain(organizationId, environmentId, newDomain, definition)
+                                                    .flatMap(validated -> domainService.create(organizationId, environmentId, newDomain, principal));
                                         }))))
                         .flatMap(domain -> applyAndRespond(domain, definition, principal)))
                 .subscribe(response::resume, response::resume);
     }
 
+<<<<<<< HEAD
+=======
+    private Single<AutomationDomain> dryRunCreateOrUpdate(
+            String organizationId, String environmentId,
+            AutomationDomain definition, AutomationRef domainRef, User principal) {
+
+        if (domainRef instanceof AutomationRef.IdRef) {
+            return resolver.resolveDomain(environmentId, domainRef)
+                    .flatMap(domain -> checkAnyPermission(principal, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.UPDATE)
+                            .andThen(dryRunUpdate(environmentId, definition, domain)))
+                    .onErrorReturn(ex -> withErrors(definition, ex));
+        }
+
+        final String key = domainRef.raw();
+        final String domainId = AutomationIds.domainId(environmentId, key);
+
+        return domainService.findById(domainId)
+                .flatMap(existing ->
+                        checkAnyPermission(principal, organizationId, environmentId, existing.getId(), Permission.DOMAIN, Acl.UPDATE)
+                                .andThen(existing.isManagedBy(ManagedBy.AUTOMATION_API)
+                                        ? Maybe.just(existing)
+                                        : Maybe.<Domain>error(new InvalidParameterException(
+                                                "Domain with key '" + key + "' already exists in this environment and is not managed by the Automation API"))))
+                .flatMapSingle(existing -> dryRunUpdate(environmentId, definition, existing))
+                .switchIfEmpty(Single.defer(() ->
+                        checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
+                                .andThen(dryRunCreate(organizationId, environmentId, definition, domainId, key))))
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    private Single<AutomationDomain> dryRunCreate(
+            String organizationId, String environmentId,
+            AutomationDomain definition, String domainId, String key) {
+        return validateNewDomain(organizationId, environmentId, newDomain(definition, domainId, key), definition)
+                .map(AutomationDomainMapper::toAutomationDomain)
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+    /**
+     * Validates the whole desired state of a domain that does not exist yet: the creation rules, then the
+     * settings {@link #applyAndRespond} writes once the domain is created. Creation and settings are two
+     * separate writes, so checking both upfront keeps an invalid definition from leaving a bare domain behind.
+     */
+    private Single<Domain> validateNewDomain(String organizationId, String environmentId,
+            AutomationNewDomain newDomain, AutomationDomain definition) {
+        return domainService.validateCreate(organizationId, environmentId, newDomain)
+                .flatMap(domain -> {
+                    // a domain not created yet has no identity provider to resolve a key reference against
+                    AutomationDomainMapper.applyTo(definition, domain, List.of());
+                    return trustedIssuerProjection.validate(domain.getTokenExchangeSettings())
+                            .andThen(Single.defer(() -> domainService.validateSettings(domain)));
+                });
+    }
+
+    private static AutomationNewDomain newDomain(AutomationDomain definition, String domainId, String key) {
+        AutomationNewDomain newDomain = new AutomationNewDomain();
+        newDomain.setId(domainId);
+        newDomain.setAutomationKey(key);
+        newDomain.setName(definition.getName());
+        newDomain.setPath(definition.getPath());
+        newDomain.setDescription(definition.getDescription());
+        newDomain.setDataPlaneId(definition.getDataPlaneId());
+        return newDomain;
+    }
+
+    private Single<AutomationDomain> dryRunUpdate(
+            String environmentId, AutomationDomain definition, Domain existing) {
+        return automationIdentityProviders(existing.getId())
+                .flatMap(idps -> {
+                    AutomationDomainMapper.applyTo(definition, existing, idps);
+                    return trustedIssuerProjection.validate(existing.getTokenExchangeSettings())
+                            .andThen(Single.defer(() -> domainService.validateUpdate(existing.getId(), existing, false)));
+                })
+                .map(AutomationDomainMapper::toAutomationDomain)
+                .onErrorReturn(ex -> withErrors(definition, ex));
+    }
+
+>>>>>>> 424763a (fix(automation): validate the whole domain definition before creating it)
     @Path("/{domainKey}")
     public DomainResource getDomainResource() {
         return resourceContext.getResource(DomainResource.class);

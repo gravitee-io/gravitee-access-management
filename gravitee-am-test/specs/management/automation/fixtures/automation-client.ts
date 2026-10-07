@@ -46,8 +46,8 @@ export class AutomationClient {
     return performGet(automationUrl(), `${envPath()}/domains`, this.headers());
   }
 
-  putDomain(definition: object) {
-    return performPut(automationUrl(), `${envPath()}/domains`, definition, this.headers());
+  putDomain(definition: object, query = '') {
+    return performPut(automationUrl(), `${envPath()}/domains${query}`, definition, this.headers());
   }
 
   getDomain(key: string) {
