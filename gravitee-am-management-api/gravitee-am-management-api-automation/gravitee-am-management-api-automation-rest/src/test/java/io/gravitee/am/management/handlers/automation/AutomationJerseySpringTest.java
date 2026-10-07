@@ -159,6 +159,9 @@ public abstract class AutomationJerseySpringTest {
         // (e.g. "delete was never called") scoped to the test at hand.
         clearInvocations(permissionService, domainService, certificateService, identityProviderService,
                 defaultIdentityProviderService, reporterService, dataPlaneRegistry);
+        // Domain settings pass validation unless a test stubs otherwise; re-stubbed so a rejecting stub does not leak.
+        doAnswer(invocation -> Single.just(invocation.getArgument(0)))
+                .when(domainService).validateSettings(any());
         // Fully reset: data plane tests stub findByEnvironmentId per case. Every write path activates
         // the data plane on the loader, so that is re-stubbed here.
         reset(dataPlaneDefinitionService, provisionedDataPlaneLoader);
