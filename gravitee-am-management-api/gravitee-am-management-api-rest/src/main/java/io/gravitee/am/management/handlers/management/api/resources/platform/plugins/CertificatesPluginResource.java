@@ -37,7 +37,7 @@ import java.util.Comparator;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Certificate")})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "certificate")})
 public class CertificatesPluginResource {
 
     @Context

@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Reporter")})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "reporter")})
 public class ReportersPluginResource {
 
     @Context
