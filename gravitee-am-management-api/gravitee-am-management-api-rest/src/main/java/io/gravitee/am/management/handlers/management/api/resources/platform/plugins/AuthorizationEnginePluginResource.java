@@ -36,7 +36,7 @@ import jakarta.ws.rs.core.Response;
 /**
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Authorization Engine")})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "authorization engine")})
 public class AuthorizationEnginePluginResource {
 
     @Context

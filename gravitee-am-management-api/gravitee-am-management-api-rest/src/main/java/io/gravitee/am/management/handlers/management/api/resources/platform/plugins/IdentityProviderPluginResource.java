@@ -38,7 +38,7 @@ import jakarta.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Tags({@Tag(name= "Plugin"), @Tag(name= "Identity Provider")})
+@Tags({@Tag(name= "Plugin"), @Tag(name= "identity provider")})
 public class IdentityProviderPluginResource {
 
     @Context
