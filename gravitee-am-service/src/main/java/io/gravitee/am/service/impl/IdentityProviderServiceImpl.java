@@ -264,6 +264,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         if (newIdentityProvider instanceof AutomationNewIdentityProvider auto) {
             identityProvider.setAutomationKey(auto.getAutomationKey());
             identityProvider.setManagedBy(ManagedBy.AUTOMATION_API);
+            identityProvider.setMappers(auto.getMappers());
+            identityProvider.setRoleMapper(auto.getRoleMapper());
+            identityProvider.setGroupMapper(auto.getGroupMapper());
         }
         identityProvider.setReferenceType(domain);
         identityProvider.setReferenceId(domain1);
