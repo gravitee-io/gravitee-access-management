@@ -91,6 +91,28 @@ describe('Automation API - Identity providers (resource under a domain)', () => 
     expect(response.body.system).toBe(false);
   });
 
+  it('should keep the mappers declared on the creating PUT', async () => {
+    const key = uniqueName('automappers', true).toLowerCase();
+    createdIdpKeys.push(key);
+    const mappers = { email: 'mail' };
+    const roleMapper = { ADMIN: ['groupname=admins'] };
+    const groupMapper = { DEVS: ['groupname=developers'] };
+    const definition = { ...buildInlineIdpDef({ key, users: defaultUsers }), mappers, roleMapper, groupMapper };
+
+    const dryRun = await fixture.client.putIdentity(fixture.domainKey, definition, '?dryRun=true');
+    expect(dryRun.status).toBe(200);
+    expect(dryRun.body.dryRunErrors).toBeUndefined();
+    expect(dryRun.body).toEqual(expect.objectContaining({ mappers, roleMapper, groupMapper }));
+
+    const created = await fixture.client.putIdentity(fixture.domainKey, definition);
+    expect(created.status).toBe(200);
+    expect(created.body).toEqual(expect.objectContaining({ mappers, roleMapper, groupMapper }));
+
+    const fetched = await fixture.client.getIdentity(fixture.domainKey, key);
+    expect(fetched.status).toBe(200);
+    expect(fetched.body).toEqual(expect.objectContaining({ mappers, roleMapper, groupMapper }));
+  });
+
   it('should round-trip the identity provider on GET', async () => {
     const { key } = await createIdp();
 
