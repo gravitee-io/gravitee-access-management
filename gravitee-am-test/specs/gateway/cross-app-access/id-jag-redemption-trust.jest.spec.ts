@@ -24,6 +24,7 @@ import {
   JWT_BEARER_GRANT,
   setupIdJagRedemptionFixture,
 } from './fixtures/id-jag-redemption-fixture';
+import { createDpopKey, DpopKey } from '../dpop/dpop-proof';
 
 setup(600000);
 
@@ -39,6 +40,13 @@ const issuerSignedAssertionFor = async (aud: unknown) => {
   const claims = decodeToken(await fixture.agent.assertion());
   return fixture.issuerSignedAssertion({ ...claims, aud, jti: uniqueName('jti', true) });
 };
+
+const keyBoundAssertion = async (cnf?: unknown) => {
+  const claims = decodeToken(await fixture.agent.assertion());
+  return fixture.issuerSignedAssertion({ ...claims, cnf, jti: uniqueName('jti', true) });
+};
+
+const dpopHeader = async (key: DpopKey) => ({ DPoP: await key.proof({ htm: 'POST', htu: fixture.resourceOidc.token_endpoint }) });
 
 const formHeaders = { 'Content-type': 'application/x-www-form-urlencoded' };
 
@@ -157,6 +165,112 @@ describe('ID-JAG redemption', () => {
       const response = await fixture.impostor.redeem(assertion).expect(400);
 
       expect(errorOf(response)).toBe('invalid_grant');
+    });
+  });
+
+  describe('a key-bound assertion requires a matching proof', () => {
+    let clientKey: DpopKey;
+    let otherKey: DpopKey;
+
+    beforeAll(async () => {
+      clientKey = await createDpopKey();
+      otherKey = await createDpopKey();
+    });
+
+    it('should bind the access token to the key the assertion names', async () => {
+      const assertion = await keyBoundAssertion({ jkt: clientKey.jkt });
+
+      const response = await fixture.agent.redeem(assertion, '', await dpopHeader(clientKey)).expect(200);
+
+      expect(response.body.token_type).toBe('DPoP');
+      expect(decodeToken(response.body.access_token).cnf).toEqual({ jkt: clientKey.jkt });
+    });
+
+    it('should refuse a proof signed with another key', async () => {
+      const assertion = await keyBoundAssertion({ jkt: clientKey.jkt });
+
+      const response = await fixture.agent.redeem(assertion, '', await dpopHeader(otherKey)).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe('Proof of possession key does not match the authorization grant');
+    });
+
+    it('should refuse a request without a proof', async () => {
+      const assertion = await keyBoundAssertion({ jkt: clientKey.jkt });
+
+      const response = await fixture.agent.redeem(assertion).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe('Proof of possession required for this authorization grant');
+    });
+
+    it('should ignore a binding other than a key thumbprint', async () => {
+      const assertion = await keyBoundAssertion({ 'x5t#S256': 'certificate-thumbprint' });
+
+      const response = await fixture.agent.redeem(assertion).expect(200);
+
+      expect(response.body.token_type).toBe('bearer');
+    });
+
+    it('should bind the access token to the proof key when the assertion is not key-bound', async () => {
+      const assertion = await keyBoundAssertion();
+
+      const response = await fixture.agent.redeem(assertion, '', await dpopHeader(clientKey)).expect(200);
+
+      expect(response.body.token_type).toBe('DPoP');
+      expect(decodeToken(response.body.access_token).cnf).toEqual({ jkt: clientKey.jkt });
+    });
+
+    it('should issue a bearer token when the assertion is not key-bound and no proof is sent', async () => {
+      const assertion = await keyBoundAssertion();
+
+      const response = await fixture.agent.redeem(assertion).expect(200);
+
+      expect(response.body.token_type).toBe('bearer');
+      expect(decodeToken(response.body.access_token).cnf).toBeUndefined();
+    });
+  });
+
+  describe('an ID-JAG minted with a DPoP proof on the issuer domain', () => {
+    let clientKey: DpopKey;
+    let otherKey: DpopKey;
+
+    beforeAll(async () => {
+      clientKey = await createDpopKey();
+      otherKey = await createDpopKey();
+    });
+
+    it('should carry the key of the token exchange proof', async () => {
+      const assertion = await fixture.agent.assertion({ dpopKey: clientKey });
+
+      expect(decodeToken(assertion).cnf).toEqual({ jkt: clientKey.jkt });
+    });
+
+    it('should redeem with a proof of the same key into a token bound to it', async () => {
+      const assertion = await fixture.agent.assertion({ dpopKey: clientKey });
+
+      const response = await fixture.agent.redeem(assertion, '', await dpopHeader(clientKey)).expect(200);
+
+      expect(response.body.token_type).toBe('DPoP');
+      expect(decodeToken(response.body.access_token).cnf).toEqual({ jkt: clientKey.jkt });
+    });
+
+    it('should refuse a redemption proof signed with another key', async () => {
+      const assertion = await fixture.agent.assertion({ dpopKey: clientKey });
+
+      const response = await fixture.agent.redeem(assertion, '', await dpopHeader(otherKey)).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe('Proof of possession key does not match the authorization grant');
+    });
+
+    it('should refuse a redemption without a proof', async () => {
+      const assertion = await fixture.agent.assertion({ dpopKey: clientKey });
+
+      const response = await fixture.agent.redeem(assertion).expect(400);
+
+      expect(errorOf(response)).toBe('invalid_grant');
+      expect(descriptionOf(response)).toBe('Proof of possession required for this authorization grant');
     });
   });
 

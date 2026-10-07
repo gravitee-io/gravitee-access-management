@@ -38,6 +38,7 @@ import { retryUntil } from '@utils-commands/retry';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { User } from '@management-models/User';
+import { DpopKey } from '../../dpop/dpop-proof';
 import { Fixture } from '../../../test-fixture';
 import { createTrustedDomain } from '../../../management/domain/fixtures/cross-app-access-fixture';
 import { createBundledPKCS12CertificateRequest } from '../../../management/certificates/fixtures/certificates-fixture';
@@ -93,6 +94,7 @@ export interface AssertionOptions {
   resource?: string;
   audience?: string;
   user?: 'known' | 'stranger';
+  dpopKey?: DpopKey;
 }
 
 export interface RedeemingAgent {
@@ -100,7 +102,7 @@ export interface RedeemingAgent {
   clientSecret: string;
   basicAuth: string;
   assertion: (options?: AssertionOptions) => Promise<string>;
-  redeem: (assertion: string, extraParams?: string) => request.Test;
+  redeem: (assertion: string, extraParams?: string, extraHeaders?: Record<string, string>) => request.Test;
 }
 
 export interface CraftOptions {
@@ -372,6 +374,7 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
   const mintAssertion = async (application: Application, options: AssertionOptions = {}) => {
     const user = options.user === 'stranger' ? strangerUser : knownUser;
     const idToken = await requestIdToken(issuerOidc.token_endpoint, application, user, SUBJECT_TOKEN_SCOPE);
+    const proofHeaders = options.dpopKey ? { DPoP: await options.dpopKey.proof({ htm: 'POST', htu: issuerOidc.token_endpoint }) } : {};
     return exchangeForIdJag(
       issuerOidc.token_endpoint,
       application,
@@ -379,14 +382,15 @@ export const setupIdJagRedemptionFixture = async (config: IdJagRedemptionFixture
       options.audience ?? resourceOidc.issuer,
       options.resource ?? mcpResource,
       options.scope ?? DEFAULT_ASSERTION_SCOPE,
+      proofHeaders,
     );
   };
 
   const redeemAs =
     (application: Application, publicClient: boolean) =>
-    (assertion: string, extraParams = '') => {
+    (assertion: string, extraParams = '', extraHeaders: Record<string, string> = {}) => {
       const body = `grant_type=${JWT_BEARER_GRANT}&assertion=${assertion}${extraParams}`;
-      const headers: Record<string, string> = { 'Content-type': 'application/x-www-form-urlencoded' };
+      const headers: Record<string, string> = { 'Content-type': 'application/x-www-form-urlencoded', ...extraHeaders };
       if (publicClient) {
         return performPost(resourceOidc.token_endpoint, '', `${body}&client_id=${application.settings.oauth.clientId}`, headers);
       }
