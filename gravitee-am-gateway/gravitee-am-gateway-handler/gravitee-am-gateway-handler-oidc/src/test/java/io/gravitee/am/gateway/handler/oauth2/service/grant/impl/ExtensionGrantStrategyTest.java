@@ -75,6 +75,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ExtensionGrantStrategyTest {
 
+    private static final String PROOF_JKT = "proof-key-thumbprint";
+
     @Mock
     private ExtensionGrantProvider extensionGrantProvider;
 
@@ -251,6 +253,89 @@ class ExtensionGrantStrategyTest {
 
         assertEquals(Set.of("https://mcp.example.com/calendar"), result.resources());
         assertEquals(Set.of("calendar.read"), result.scopes());
+    }
+
+    @Test
+    void shouldGrantWithoutProofWhenTheVerifiedClaimsCarryNoConfirmation() {
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(Map.of("sub", "alice"), List.of())));
+
+        strategy.process(tokenRequest, client, domain).test().assertNoErrors().assertValueCount(1);
+    }
+
+    @Test
+    void shouldGrantWithProofWhenTheVerifiedClaimsCarryNoConfirmation() {
+        tokenRequest.setConfirmationMethodJkt(PROOF_JKT);
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(Map.of("sub", "alice"), List.of())));
+
+        strategy.process(tokenRequest, client, domain).test().assertNoErrors().assertValueCount(1);
+    }
+
+    @Test
+    void shouldGrantWhenTheProofKeyMatchesTheAssertionConfirmation() {
+        tokenRequest.setConfirmationMethodJkt(PROOF_JKT);
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(Map.of("jkt", PROOF_JKT)), List.of())));
+
+        strategy.process(tokenRequest, client, domain).test().assertNoErrors().assertValueCount(1);
+    }
+
+    @Test
+    void shouldRefuseKeyBoundAssertionWithoutProof() {
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(Map.of("jkt", PROOF_JKT)), List.of())));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(ex -> ex instanceof InvalidGrantException && "Proof of possession required for this authorization grant".equals(ex.getMessage()));
+    }
+
+    @Test
+    void shouldRefuseKeyBoundAssertionWithProofOfAnotherKey() {
+        tokenRequest.setConfirmationMethodJkt("other-key-thumbprint");
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(Map.of("jkt", PROOF_JKT)), List.of())));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(ex -> ex instanceof InvalidGrantException && "Proof of possession key does not match the authorization grant".equals(ex.getMessage()));
+    }
+
+    @Test
+    void shouldRefuseMalformedKeyThumbprint() {
+        tokenRequest.setConfirmationMethodJkt(PROOF_JKT);
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(Map.of("jkt", 42)), List.of())));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(ex -> ex instanceof InvalidGrantException && "Invalid proof of possession binding".equals(ex.getMessage()));
+    }
+
+    @Test
+    void shouldGrantWithoutProofWhenTheConfirmationIsNotAnObject() {
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(PROOF_JKT), List.of())));
+
+        strategy.process(tokenRequest, client, domain).test().assertNoErrors().assertValueCount(1);
+    }
+
+    @Test
+    void shouldGrantWithoutProofWhenTheConfirmationIsACertificateThumbprint() {
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(Map.of("x5t#S256", "certificate-thumbprint")), List.of())));
+
+        strategy.process(tokenRequest, client, domain).test().assertNoErrors().assertValueCount(1);
+    }
+
+    @Test
+    void shouldNotCheckConfirmationWhenThePluginReportsNoClaims() {
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(ExtensionGrantResult.endUser(new DefaultUser("alice"))));
+
+        strategy.process(tokenRequest, client, domain).test().assertNoErrors().assertValueCount(1);
+    }
+
+    @Test
+    void shouldRefuseKeyBoundAssertionBeforeResolvingTheUser() {
+        extensionGrant.setUserExists(true);
+        when(extensionGrantProvider.grant(any())).thenReturn(Maybe.just(verifiedResult(keyBoundClaims(Map.of("jkt", PROOF_JKT)), List.of())));
+
+        strategy.process(tokenRequest, client, domain).test().assertError(InvalidGrantException.class);
+
+        verifyNoInteractions(userService, identityProviderManager, userAuthenticationManager);
     }
 
     @Test
@@ -807,5 +892,9 @@ class ExtensionGrantStrategyTest {
 
     private static ExtensionGrantResult verifiedResult(Map<String, Object> verifiedClaims, List<GrantedUserBindingCriterion> bindingCriteria) {
         return new ExtensionGrantResult(new DefaultUser("alice"), "idp-id", verifiedClaims, bindingCriteria, null, null);
+    }
+
+    private static Map<String, Object> keyBoundClaims(Object confirmation) {
+        return Map.of("sub", "alice", Claims.CNF, confirmation);
     }
 }
