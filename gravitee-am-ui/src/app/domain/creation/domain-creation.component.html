@@ -56,8 +56,17 @@
         fxLayoutAlign="center center"
         style="margin-top: 20px; border-top: 1px solid #e2e5e7; padding: 10px"
       >
-        <gv-button #createDomainBtn [disabled]="!domainForm.valid || domainForm.pristine" type="submit">CREATE </gv-button>
-        <gv-button outlined [routerLink]="['']">CANCEL</gv-button>
+        <button
+          #createDomainBtn
+          mat-raised-button
+          class="create-button"
+          color="primary"
+          type="submit"
+          [disabled]="!domainForm.valid || domainForm.pristine"
+        >
+          Create
+        </button>
+        <button mat-raised-button [routerLink]="['']" type="button">Cancel</button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
