@@ -85,8 +85,8 @@ public class TokenExchangeSettings {
             "must be enabled.", defaultValue = "false")
     private boolean allowDelegation = false;
 
-    @Schema(description = "Maximum depth of the delegation chain (nested \"act\" claims). Clamped to the range " +
-            "1–100.", defaultValue = "25")
+    @Schema(description = "Maximum depth of the delegation chain (nested \"act\" claims). Range 1–100.",
+            defaultValue = "25", minimum = "1", maximum = "100")
     private int maxDelegationDepth = DEFAULT_MAX_DELEGATION_DEPTH;
 
     @Schema(description = "ID-JAG issuance settings.")
