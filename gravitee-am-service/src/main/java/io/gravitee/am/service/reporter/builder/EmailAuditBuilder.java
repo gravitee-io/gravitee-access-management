@@ -49,6 +49,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
                 case VERIFY_ATTEMPT -> EventType.VERIFY_ATTEMPT_EMAIL_SENT;
                 case REGISTRATION_VERIFY -> EventType.REGISTRATION_VERIFY_EMAIL_SENT;
                 case REGISTRATION_CONFIRMATION -> EventType.REGISTRATION_CONFIRMATION_EMAIL_SENT;
+                case MAGIC_LINK -> EventType.MAGIC_LINK_EMAIL_SENT;
                 default -> null;
             });
         }
