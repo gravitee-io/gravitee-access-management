@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EncryptedFieldRegistryTest {
 
-    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.withKeys(List.of(new FieldEncryptor.EncryptionKey("2025", "a-secret")));
+    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.withKeys(List.of(new FieldEncryptor.EncryptionKey("2025", "a-secret")), "2025");
     private static final String CONFIGURATION = "{\"password\":\"s3cr3t\"}";
 
     static Stream<Arguments> repositories() {

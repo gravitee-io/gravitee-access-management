@@ -15,14 +15,10 @@
  */
 package io.gravitee.am.repository.encryption;
 
-import io.gravitee.am.repository.encryption.FieldEncryptor.EncryptionKey;
-import io.gravitee.node.logging.NodeLoggerFactory;
-import org.slf4j.Logger;
+import lombok.CustomLog;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.env.Environment;
-
-import java.util.List;
 
 /**
  * Wraps the repositories listed in {@link EncryptedFieldRegistry} in an {@link EncryptingRepositoryProxy}.
@@ -30,29 +26,25 @@ import java.util.List;
  * It must be declared in the repository plugin context: the plugin copies its repositories into the
  * parent context as ready-made singletons, so a post processor of the parent context never sees them.
  * <p>
- * The keys come from {@link EncryptionKeys}. Without any key, repositories are returned unchanged.
+ * The keys come from {@link EncryptionKeys}. The repositories are wrapped even without any key, so a value
+ * encrypted with a key that is not declared fails instead of reaching a plugin as ciphertext.
  *
  * @author GraviteeSource Team
  */
+@CustomLog
 public class EncryptingRepositoryBeanPostProcessor implements BeanPostProcessor {
-
-    private static final Logger LOGGER = NodeLoggerFactory.getLogger(EncryptingRepositoryBeanPostProcessor.class);
 
     private final FieldEncryptor encryptor;
 
     public EncryptingRepositoryBeanPostProcessor(Environment environment) {
-        List<EncryptionKey> keys = EncryptionKeys.fromEnvironment(environment);
-        this.encryptor = keys.isEmpty() ? null : FieldEncryptor.withKeys(keys);
+        this.encryptor = EncryptionKeys.encryptor(environment);
     }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (encryptor == null) {
-            return bean;
-        }
         return EncryptedFieldRegistry.forRepository(bean.getClass())
                 .map(field -> {
-                    LOGGER.debug("Encrypting field of {} on repository {}", field.type().getSimpleName(), beanName);
+                    log.debug("Encrypting field of {} on repository {}", field.type().getSimpleName(), beanName);
                     return EncryptingRepositoryProxy.wrap(bean, field, encryptor);
                 })
                 .orElse(bean);

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.encryption;
 
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.encryption.FieldEncryptor.EncryptionKey;
 import org.springframework.core.env.Environment;
 
@@ -24,20 +23,29 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Reads the keys encrypting repository fields from {@value #KEYS_PROPERTY}{@code [i].id} and
- * {@code [i].secret}, oldest first: the last one encrypts, the others only decrypt the values they encrypted.
+ * Reads the encryption settings of the plugin configurations from gravitee.yml:
+ * <ul>
+ *     <li>{@value #KEYS_PROPERTY}{@code [i].id} and {@code [i].secret} declare the keys; each one decrypts
+ *     the values it encrypted;</li>
+ *     <li>{@value #ENABLED_PROPERTY} turns the encryption on, with the key named by {@value #CURRENT_KEY_PROPERTY}.
+ *     When it is off, configurations are stored in clear text and the selected key can stay in place.</li>
+ * </ul>
+ * The declared keys decrypt whatever the encryption flag is, so a node that only reads configurations,
+ * like the Gateway, needs nothing but the keys.
  *
  * @author GraviteeSource Team
  */
 public final class EncryptionKeys {
 
-    public static final String KEYS_PROPERTY = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".encryption.keys";
+    public static final String KEYS_PROPERTY = "encryptionKeys";
+    public static final String ENABLED_PROPERTY = "plugins.properties.configuration.encryption.enabled";
+    public static final String CURRENT_KEY_PROPERTY = "plugins.properties.configuration.encryption.key";
 
     private EncryptionKeys() {
     }
 
     /**
-     * @return the configured keys, oldest first, or an empty list when encryption is disabled
+     * @return the declared keys, possibly none
      */
     public static List<EncryptionKey> fromEnvironment(Environment environment) {
         List<EncryptionKey> keys = new ArrayList<>();
@@ -49,10 +57,24 @@ public final class EncryptionKeys {
     }
 
     /**
-     * @return the id of the key that encrypts, or empty when encryption is disabled
+     * @return the id of the key that encrypts, or empty when the encryption is disabled
+     * @throws IllegalArgumentException when the encryption is enabled without a key
      */
     public static Optional<String> currentKeyId(Environment environment) {
-        List<EncryptionKey> keys = fromEnvironment(environment);
-        return keys.isEmpty() ? Optional.empty() : Optional.of(keys.getLast().id());
+        if (!environment.getProperty(ENABLED_PROPERTY, Boolean.class, false)) {
+            return Optional.empty();
+        }
+        String keyId = environment.getProperty(CURRENT_KEY_PROPERTY);
+        if (keyId == null || keyId.isBlank()) {
+            throw new IllegalArgumentException("Encryption is enabled with " + ENABLED_PROPERTY + " but no key is selected with " + CURRENT_KEY_PROPERTY);
+        }
+        return Optional.of(keyId);
+    }
+
+    /**
+     * @throws IllegalArgumentException when a key is invalid, or when the encryption is enabled without a declared key
+     */
+    public static FieldEncryptor encryptor(Environment environment) {
+        return FieldEncryptor.withKeys(fromEnvironment(environment), currentKeyId(environment).orElse(null));
     }
 }
