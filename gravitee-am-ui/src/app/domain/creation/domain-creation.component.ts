@@ -16,6 +16,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { get } from 'lodash';
+import { MatButton } from '@angular/material/button';
 
 import { DomainService } from '../../services/domain.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -31,7 +32,7 @@ export class DomainCreationComponent implements OnInit {
   dataPlanes: any[];
   displayNavLink: boolean;
   oneDataPlane = false;
-  @ViewChild('createDomainBtn', { static: true }) createDomainBtn: any;
+  @ViewChild('createDomainBtn', { static: true }) createDomainBtn!: MatButton;
 
   constructor(
     private domainService: DomainService,
@@ -52,17 +53,14 @@ export class DomainCreationComponent implements OnInit {
   }
 
   create() {
-    this.createDomainBtn.nativeElement.loading = true;
-    this.createDomainBtn.nativeElement.disabled = true;
+    this.createDomainBtn.disabled = true;
     this.domainService.create(this.domain).subscribe(
       (data) => {
-        this.createDomainBtn.nativeElement.loading = false;
         this.snackbarService.open('Domain ' + data.name + ' created');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (error: unknown) => {
-        this.createDomainBtn.nativeElement.loading = false;
-        this.createDomainBtn.nativeElement.disabled = false;
+        this.createDomainBtn.disabled = false;
         this.snackbarService.openFromComponent('Errors', [get(error, 'error.message')]);
       },
     );
