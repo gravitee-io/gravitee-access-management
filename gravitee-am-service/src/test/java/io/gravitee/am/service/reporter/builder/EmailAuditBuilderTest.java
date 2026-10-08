@@ -37,6 +37,7 @@ class EmailAuditBuilderTest {
             "VERIFY_ATTEMPT, VERIFY_ATTEMPT_EMAIL_SENT",
             "REGISTRATION_VERIFY, REGISTRATION_VERIFY_EMAIL_SENT",
             "REGISTRATION_CONFIRMATION, REGISTRATION_CONFIRMATION_EMAIL_SENT",
+            "MAGIC_LINK, MAGIC_LINK_EMAIL_SENT",
     })
     void shouldMapTemplateToFilterableEventType(Template template, String expectedType) {
         var audit = AuditBuilder.builder(EmailAuditBuilder.class)
