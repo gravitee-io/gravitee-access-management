@@ -78,7 +78,9 @@ public class CertificateResource extends AbstractAutomationResource {
 
     @DELETE
     @Operation(operationId = "automationDeleteCertificate", summary = "Delete a certificate",
-            description = "Deletes an Automation-managed certificate by its key. Deleting a certificate that " +
+            description = "Deletes an Automation-managed certificate by its key. A domain that names it by key " +
+                    "in saml.certificate or certificateSettings.fallbackCertificate keeps the reference, which " +
+                    "resolves again once a certificate with the same key is created. Deleting a certificate that " +
                     "does not exist also returns 204.")
     @ApiResponse(responseCode = "204", description = "Certificate successfully deleted")
     public void delete(

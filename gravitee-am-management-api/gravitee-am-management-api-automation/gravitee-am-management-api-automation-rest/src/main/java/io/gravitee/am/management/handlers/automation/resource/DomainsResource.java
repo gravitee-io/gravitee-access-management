@@ -117,8 +117,7 @@ public class DomainsResource extends AbstractAutomationResource {
             "includes a dryRunErrors field with any validation errors.",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = AutomationDomain.class)))
     @ApiResponse(responseCode = "400", description = "Invalid request: validation failure, an immutable field " +
-            "change, a key that already exists for a domain not managed by the Automation API, or an unknown " +
-            "defaultIdentityProviderForRegistration reference")
+            "change, or a key that already exists for a domain not managed by the Automation API")
     public void createOrUpdate(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,

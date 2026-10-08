@@ -79,8 +79,10 @@ public class IdentityProviderResource extends AbstractAutomationResource {
 
     @DELETE
     @Operation(operationId = "automationDeleteIdentityProvider", summary = "Delete an identity provider",
-            description = "Deletes an Automation-managed identity provider by its key. Deleting an identity " +
-                    "provider that does not exist also returns 204.")
+            description = "Deletes an Automation-managed identity provider by its key. A domain that names it " +
+                    "in accountSettings.defaultIdentityProviderForRegistration keeps the reference, which resolves " +
+                    "again once an identity provider with the same key is created. Deleting an identity provider " +
+                    "that does not exist also returns 204.")
     @ApiResponse(responseCode = "204", description = "Identity provider successfully deleted")
     public void delete(
             @PathParam("orgId") String organizationId,
