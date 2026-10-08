@@ -14,13 +14,19 @@
 # limitations under the License.
 #
 
+# Plugin configurations are encrypted in the management repository; the Gateway and the Management
+# API must declare the same keys.
 services:
   gateway:
     environment:
       - GRAVITEE_LICENSE_KEY=${GRAVITEE_LICENSE_KEY}
       - GRAVITEE_SERVICES_SYNC_PROBES_STATE_ENABLED=true
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_ENCRYPTION_KEYS_0_ID=ci
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_ENCRYPTION_KEYS_0_SECRET=integration-tests-encryption-secret
 
   management:
     environment:
       - GRAVITEE_LICENSE_KEY=${GRAVITEE_LICENSE_KEY}
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_ENCRYPTION_KEYS_0_ID=ci
+      - GRAVITEE_REPOSITORIES_MANAGEMENT_ENCRYPTION_KEYS_0_SECRET=integration-tests-encryption-secret
 
