@@ -77,6 +77,13 @@ public class AutomationApiDefinition implements ReaderListener {
     private static final String ERROR_SCHEMA = "Error";
 
     /**
+     * String properties whose allowed values are stored and returned as declared (they are not Java enums),
+     * keyed by schema name. Their enum values keep their case.
+     */
+    private static final Map<String, Set<String>> VERBATIM_ENUM_PROPERTIES = Map.of(
+            "XFrameSettings", Set.of("action"));
+
+    /**
      * Human-readable descriptions for each tag, keyed by tag name.
      */
     private static final Map<String, String> TAG_DESCRIPTIONS = Map.of(
@@ -184,7 +191,7 @@ public class AutomationApiDefinition implements ReaderListener {
                 }
             }
             fixWebAuthnCertificatesValueType(filteredSchemas);
-            filteredSchemas.values().forEach(AutomationApiDefinition::lowercaseEnumsInSchema);
+            filteredSchemas.forEach(AutomationApiDefinition::lowercaseEnums);
             // sort properties within each schema for deterministic output
             filteredSchemas.values().forEach(AutomationApiDefinition::sortSchemaProperties);
             openAPI.getComponents().setSchemas(filteredSchemas);
@@ -451,6 +458,23 @@ public class AutomationApiDefinition implements ReaderListener {
                 && certificatesSchema.getAdditionalProperties() instanceof Schema valueSchema) {
             valueSchema.setType("string");
         }
+    }
+
+    /**
+     * Lowercases the enums of a component schema, except those of its {@link #VERBATIM_ENUM_PROPERTIES}.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void lowercaseEnums(String schemaName, Schema schema) {
+        Set<String> verbatim = VERBATIM_ENUM_PROPERTIES.getOrDefault(schemaName, Set.of());
+        if (verbatim.isEmpty() || schema.getProperties() == null) {
+            lowercaseEnumsInSchema(schema);
+            return;
+        }
+        ((Map<String, Schema>) schema.getProperties()).forEach((property, propertySchema) -> {
+            if (!verbatim.contains(property)) {
+                lowercaseEnumsInSchema(propertySchema);
+            }
+        });
     }
 
     /**

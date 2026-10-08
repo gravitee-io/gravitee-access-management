@@ -100,7 +100,7 @@ public class AutomationDomain implements DryRunResult {
     @NotNull
     @Size(min = 1, max = 255)
     @Schema(description = "Context path the domain is served under, relative to the gateway. Must start with a slash.",
-            example = "/example-domain")
+            example = "/example-domain", pattern = "^/.*")
     private String path;
 
     @Schema(description = "Sharding tags that control which gateways deploy this domain.",

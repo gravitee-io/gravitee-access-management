@@ -2236,6 +2236,7 @@ components:
           example: /example-domain
           maxLength: 255
           minLength: 1
+          pattern: ^/.*
         saml:
           $ref: "#/components/schemas/AutomationSamlSettings"
         scim:
@@ -3086,7 +3087,9 @@ components:
           format: int32
           default: 25
           description: Maximum depth of the delegation chain (nested "act" claims).
-            Clamped to the range 1–100.
+            Must be between 1 and 100.
+          maximum: 100
+          minimum: 1
         tokenExchangeOAuthSettings:
           $ref: "#/components/schemas/TokenExchangeOAuthSettings"
         trustedIssuers:
@@ -3285,8 +3288,10 @@ components:
       properties:
         action:
           type: string
-          description: "X-Frame-Options action. Supported values: DENY, SAMEORIGIN.\
-            \ Leave empty to omit the header."
+          description: X-Frame-Options action. Omit it to leave the header out.
+          enum:
+          - DENY
+          - SAMEORIGIN
           example: DENY
         enabled:
           type: boolean
