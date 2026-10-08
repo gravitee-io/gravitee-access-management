@@ -76,6 +76,8 @@ public class AutomationApiDefinition implements ReaderListener {
 
     private static final String ERROR_SCHEMA = "Error";
 
+    private static final Map<String, Set<String>> VERBATIM_ENUM_PROPERTIES = Map.of("XFrameSettings", Set.of("action"));
+
     /**
      * Human-readable descriptions for each tag, keyed by tag name.
      */
@@ -184,7 +186,8 @@ public class AutomationApiDefinition implements ReaderListener {
                 }
             }
             fixWebAuthnCertificatesValueType(filteredSchemas);
-            filteredSchemas.values().forEach(AutomationApiDefinition::lowercaseEnumsInSchema);
+            filteredSchemas.forEach((name, schema) ->
+                    lowercaseEnumsInSchema(schema, VERBATIM_ENUM_PROPERTIES.getOrDefault(name, Set.of())));
             // sort properties within each schema for deterministic output
             filteredSchemas.values().forEach(AutomationApiDefinition::sortSchemaProperties);
             openAPI.getComponents().setSchemas(filteredSchemas);
@@ -457,8 +460,13 @@ public class AutomationApiDefinition implements ReaderListener {
      * Lowercases the {@code enum} values (and an enum-typed {@code default}) of a schema and, recursively, of
      * its properties, array items and map values to match the runtime wire format.
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings("rawtypes")
     private static void lowercaseEnumsInSchema(Schema schema) {
+        lowercaseEnumsInSchema(schema, Set.of());
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void lowercaseEnumsInSchema(Schema schema, Set<String> verbatimProperties) {
         if (schema == null) {
             return;
         }
@@ -470,8 +478,9 @@ public class AutomationApiDefinition implements ReaderListener {
             }
         }
         if (schema.getProperties() != null) {
-            ((Map<String, Schema>) schema.getProperties()).values()
-                    .forEach(AutomationApiDefinition::lowercaseEnumsInSchema);
+            ((Map<String, Schema>) schema.getProperties()).entrySet().stream()
+                    .filter(property -> !verbatimProperties.contains(property.getKey()))
+                    .forEach(property -> lowercaseEnumsInSchema(property.getValue()));
         }
         if (schema.getItems() != null) {
             lowercaseEnumsInSchema(schema.getItems());

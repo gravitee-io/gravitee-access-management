@@ -37,8 +37,8 @@ public class XFrameSettings {
             defaultValue = "false")
     private boolean enabled;
 
-    @Schema(description = "X-Frame-Options action. Supported values: DENY, SAMEORIGIN. Leave empty to omit the header.",
-            example = "DENY")
+    @Schema(description = "X-Frame-Options action. Omit to leave the header out.",
+            example = "DENY", allowableValues = {"DENY", "SAMEORIGIN"})
     private String action;
 
     public XFrameSettings() {
