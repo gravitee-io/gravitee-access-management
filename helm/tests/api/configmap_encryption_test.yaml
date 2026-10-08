@@ -1,0 +1,47 @@
+suite: Management API configMap - plugin configuration encryption
+templates:
+  - "api/api-configmap.yaml"
+tests:
+  - it: Should not render the encryption sections by default
+    template: api/api-configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "encryptionKeys:"
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "plugins:"
+  - it: Should render the encryption keys and the plugins section
+    template: api/api-configmap.yaml
+    set:
+      encryptionKeys:
+        - id: v1
+          secret: kubernetes://default/secrets/am-encryption-keys/v1
+        - id: v2
+          secret: kubernetes://default/secrets/am-encryption-keys/v2
+      plugins:
+        properties:
+          configuration:
+            encryption:
+              enabled: true
+              key: v2
+    asserts:
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            (?m)^encryptionKeys:
+              - id: v1
+                secret: kubernetes://default/secrets/am-encryption-keys/v1
+              - id: v2
+                secret: kubernetes://default/secrets/am-encryption-keys/v2
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            (?m)^plugins:
+              properties:
+                configuration:
+                  encryption:
+                    enabled: true
+                    key: v2

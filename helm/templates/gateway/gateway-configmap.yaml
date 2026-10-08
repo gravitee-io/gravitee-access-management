@@ -239,6 +239,12 @@ data:
 {{- end }}
 
 {{ include "repositories" (dict "context" . "scope" "gateway") | indent 4}}
+
+{{- if .Values.encryptionKeys }}
+    # the Gateway only decrypts the plugin configurations, so it needs the keys but no plugins section
+    encryptionKeys:
+{{ toYaml .Values.encryptionKeys | indent 6 }}
+{{- end }}
   {{- if .Values.gateway.consent }}
     consent:
 {{ toYaml .Values.gateway.consent | indent 6  }}
