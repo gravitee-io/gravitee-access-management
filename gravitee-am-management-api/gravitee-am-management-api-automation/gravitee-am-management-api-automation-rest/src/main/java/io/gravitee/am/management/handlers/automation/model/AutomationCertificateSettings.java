@@ -22,8 +22,9 @@ import lombok.Setter;
 /**
  * Domain certificate settings as exposed by the Automation API.
  * <p>
- * {@code fallbackCertificate} references — by {@code key} — one of the certificates
- * declared in the same Domain request.
+ * {@code fallbackCertificate} references — by {@code key} — a certificate managed under the
+ * same domain. The reference is eventually consistent: that certificate may not exist yet, or
+ * any more.
  *
  * @author GraviteeSource Team
  */
@@ -34,8 +35,9 @@ import lombok.Setter;
 public class AutomationCertificateSettings {
 
     @Schema(description = "Key of a certificate managed under this domain, used as the fallback certificate " +
-            "when a client does not specify one. Must reference a certificate created via the domain's " +
-            "certificate endpoints.",
+            "when a client does not specify one. The reference is not checked against existing certificates: " +
+            "it can name one created after the domain or since deleted, and resolves whenever a certificate " +
+            "with that key exists.",
             example = "default")
     private String fallbackCertificate;
 }
