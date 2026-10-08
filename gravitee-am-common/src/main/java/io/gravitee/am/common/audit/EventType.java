@@ -307,6 +307,13 @@ public interface EventType {
 
     /**
      * ----------
+     * Plugin configuration encryption audit log actions
+     * ----------
+     */
+    String PLUGIN_CONFIGURATIONS_REENCRYPTED = "PLUGIN_CONFIGURATIONS_REENCRYPTED";
+
+    /**
+     * ----------
      * Entrypoint audit log actions
      * ----------
      */
