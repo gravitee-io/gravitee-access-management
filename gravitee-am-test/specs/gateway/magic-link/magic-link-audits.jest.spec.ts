@@ -51,8 +51,6 @@ describe('Magic Link audits - requesting a link', () => {
     expect(audit.type).toEqual(REQUESTED);
   });
 
-  // Guards AM-7861: MAGIC_LINK_EMAIL_SENT was never recorded, because EmailAuditBuilder had no
-  // case for the MAGIC_LINK template and the resulting typeless audit was discarded.
   it(jira`records that the email was sent ${'AM-6722'}`, async () => {
     const known = await baseline(EMAIL_SENT);
 
