@@ -33,12 +33,13 @@ import java.util.Map;
  * Encrypts a string field with AES-256-GCM before it is stored, and decrypts it when it is read.
  * <p>
  * The stored value is {@code enc:<key id>:<b64(iv)>:<b64(ciphertext)>}. The key id names the key that
- * encrypted the value, so keys can be rotated: the last key of the list encrypts, and every key of the
- * list decrypts the values it encrypted. A value encrypted with a key that is no longer configured
- * cannot be read and fails.
+ * encrypted the value, so keys can be rotated: the current key encrypts, and every configured key
+ * decrypts the values it encrypted. A value encrypted with a key that is no longer configured cannot be
+ * read and fails.
  * <p>
- * A value without the prefix is treated as plain text, so data written before the encryption was
- * enabled stays readable.
+ * Without a current key, values are stored in clear text, while the values already encrypted stay
+ * readable. A value without the prefix is treated as clear text, so data written before the encryption
+ * was enabled stays readable.
  * <p>
  * Keys are derived once from the configured secrets: deriving them for each call would make every
  * repository read pay for the PBKDF2 iterations.
@@ -69,19 +70,20 @@ public final class FieldEncryptor {
     }
 
     /**
-     * @param keys the configured keys, oldest first: the last one encrypts
+     * @param keys         the configured keys, each decrypting the values it encrypted
+     * @param currentKeyId the id of the key that encrypts, one of {@code keys}; null to store values in clear text
      */
-    public static FieldEncryptor withKeys(List<EncryptionKey> keys) {
-        if (keys == null || keys.isEmpty()) {
-            throw new IllegalArgumentException("At least one encryption key is required");
-        }
+    public static FieldEncryptor withKeys(List<EncryptionKey> keys, String currentKeyId) {
         Map<String, SecretKey> derived = new HashMap<>();
         for (EncryptionKey key : keys) {
             if (derived.put(key.id(), derive(key.secret())) != null) {
                 throw new IllegalArgumentException("Encryption key [" + key.id() + "] is declared twice");
             }
         }
-        return new FieldEncryptor(Map.copyOf(derived), keys.getLast().id());
+        if (currentKeyId != null && !derived.containsKey(currentKeyId)) {
+            throw new IllegalArgumentException("Encryption key [" + currentKeyId + "] is selected to encrypt but is not declared");
+        }
+        return new FieldEncryptor(Map.copyOf(derived), currentKeyId);
     }
 
     public static boolean isEncrypted(String value) {
@@ -90,11 +92,14 @@ public final class FieldEncryptor {
 
     /**
      * Encrypts {@code value} with the current key. A value already encrypted with an older key is
-     * encrypted again with the current one.
+     * encrypted again with the current one. Without a current key, {@code value} is returned in clear text.
      */
     public String encrypt(String value) {
         if (value == null) {
             return null;
+        }
+        if (currentKeyId == null) {
+            return decrypt(value);
         }
         if (isEncrypted(value)) {
             if (currentKeyId.equals(parse(value).keyId())) {
@@ -169,6 +174,10 @@ public final class FieldEncryptor {
      * @param secret the secret the key is derived from
      */
     public record EncryptionKey(String id, String secret) {
+        @Override
+        public String toString() {
+            return "EncryptionKey(" + id + ")";
+        }
 
         public EncryptionKey {
             if (id == null || id.isBlank() || id.indexOf(SEPARATOR) >= 0) {

@@ -125,6 +125,16 @@
 #    enabled: true
 #    action: 1; mode=block
 
+
+## Keys decrypting the plugin configurations (identity providers, reporters, certificates, factors, ...)
+## that the Management API stores encrypted in the management repository (AES-256-GCM). The Gateway never
+## encrypts them, so it needs no other encryption setting, but it must declare the same keys as the
+## Management API: each stored value is decrypted with the key declared under the id it records, and
+## reading a value whose key is not declared fails.
+#encryptionKeys:
+#  - id: v1
+#    secret: change-me
+
 # Path to plugins repository
 #plugins:
 #  path: ${gravitee.home}/plugins
@@ -405,22 +415,6 @@ repositories:
   # For more information about MongoDB configuration, please have a look to:
   # - http://api.mongodb.org/java/current/com/mongodb/MongoClientOptions.html
   management:
-    # Encrypts the plugin configurations (identity providers, reporters, certificates, factors, ...)
-    # stored in the management repository (AES-256-GCM). Values stored before encryption is enabled
-    # stay readable in clear text and are encrypted on their next update.
-    # Each value records the id of the key that encrypted it. The last key of the list encrypts, the
-    # others only decrypt. A key still used by a stored value must stay listed, otherwise reading that
-    # value fails. Never reuse an id for another secret; losing a key makes the configurations it
-    # encrypted unreadable.
-    # Stored configurations move to the last key when they are updated, or all at once on a call to
-    # POST /_node/encryption/reencrypt (Management API technical API), which also encrypts the
-    # configurations stored before encryption was enabled. To rotate: append a key with a new id on
-    # every Gateway and Management API node and restart them, then call that endpoint on one
-    # Management API node; once it answers 200, the older keys can be removed.
-    #encryption:
-    #  keys:
-    #    - id: v1
-    #      secret: change-me
     type: mongodb
     mongodb:
       dbname: ${ds.mongodb.dbname}

@@ -43,10 +43,10 @@ class EncryptingRepositoryProxyTest {
     private static final String CONFIGURATION = "{\"password\":\"s3cr3t\"}";
     private static final EncryptionKey KEY = new EncryptionKey("2025", "a-secret");
     private static final EncryptionKey NEXT_KEY = new EncryptionKey("2026", "another-secret");
-    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.withKeys(List.of(KEY));
+    private static final FieldEncryptor ENCRYPTOR = FieldEncryptor.withKeys(List.of(KEY), KEY.id());
 
     private final InMemoryReporterRepository store = new InMemoryReporterRepository();
-    private final ReporterRepository repository = wrap(store, KEY);
+    private final ReporterRepository repository = wrap(store, KEY.id(), KEY);
 
     @Test
     void should_store_encrypted_and_return_clear_text_on_create() {
@@ -133,11 +133,46 @@ class EncryptingRepositoryProxyTest {
     }
 
     @Test
-    void should_not_wrap_without_secret() {
-        Object bean = new EncryptingRepositoryBeanPostProcessor(environment(Map.of()))
+    void should_store_clear_text_without_current_key_and_still_read_encrypted_values() {
+        repository.create(reporter("encrypted", CONFIGURATION)).blockingGet();
+        ReporterRepository withoutCurrentKey = wrap(store, null, KEY);
+
+        withoutCurrentKey.create(reporter("clear", CONFIGURATION)).blockingGet();
+
+        assertThat(store.stored("clear").getConfiguration()).isEqualTo(CONFIGURATION);
+        assertThat(withoutCurrentKey.findById("encrypted").blockingGet().getConfiguration()).isEqualTo(CONFIGURATION);
+    }
+
+    @Test
+    void should_store_clear_text_when_disabled_with_a_selected_key() {
+        Map<String, Object> properties = new HashMap<>(Map.of(
+                EncryptionKeys.KEYS_PROPERTY + "[0].id", KEY.id(),
+                EncryptionKeys.KEYS_PROPERTY + "[0].secret", KEY.secret(),
+                EncryptionKeys.ENABLED_PROPERTY, "false",
+                EncryptionKeys.CURRENT_KEY_PROPERTY, KEY.id()));
+        ReporterRepository disabled = (ReporterRepository) new EncryptingRepositoryBeanPostProcessor(environment(properties))
                 .postProcessAfterInitialization(store, "reporterRepository");
 
-        assertThat(bean).isSameAs(store);
+        disabled.create(reporter("clear", CONFIGURATION)).blockingGet();
+
+        assertThat(store.stored("clear").getConfiguration()).isEqualTo(CONFIGURATION);
+    }
+
+    @Test
+    void should_fail_to_read_an_encrypted_value_when_no_key_is_declared() {
+        repository.create(reporter("r1", CONFIGURATION)).blockingGet();
+        ReporterRepository withoutKeys = wrap(store, null);
+
+        assertThatThrownBy(() -> withoutKeys.findById("r1").blockingGet())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("[2025]");
+    }
+
+    @Test
+    void should_refuse_a_current_key_that_is_not_declared() {
+        assertThatThrownBy(() -> wrap(store, "unknown", KEY))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("[unknown]");
     }
 
     @Test
@@ -145,7 +180,7 @@ class EncryptingRepositoryProxyTest {
         Object bean = new Object();
 
         Object processed = new EncryptingRepositoryBeanPostProcessor(
-                keysEnvironment(KEY))
+                keysEnvironment(KEY.id(), KEY))
                 .postProcessAfterInitialization(bean, "other");
 
         assertThat(processed).isSameAs(bean);
@@ -154,7 +189,7 @@ class EncryptingRepositoryProxyTest {
     @Test
     void should_read_with_the_old_key_and_write_with_the_new_one() {
         repository.create(reporter("r1", CONFIGURATION)).blockingGet();
-        ReporterRepository rotated = wrap(store, KEY, NEXT_KEY);
+        ReporterRepository rotated = wrap(store, NEXT_KEY.id(), KEY, NEXT_KEY);
 
         Reporter read = rotated.findById("r1").blockingGet();
         assertThat(read.getConfiguration()).isEqualTo(CONFIGURATION);
@@ -168,7 +203,7 @@ class EncryptingRepositoryProxyTest {
     @Test
     void should_fail_to_read_a_value_encrypted_with_a_removed_key() {
         repository.create(reporter("r1", CONFIGURATION)).blockingGet();
-        ReporterRepository withoutOldKey = wrap(store, NEXT_KEY);
+        ReporterRepository withoutOldKey = wrap(store, NEXT_KEY.id(), NEXT_KEY);
 
         assertThatThrownBy(() -> withoutOldKey.findById("r1").blockingGet())
                 .isInstanceOf(IllegalStateException.class)
@@ -181,13 +216,17 @@ class EncryptingRepositoryProxyTest {
         assertThat(repository.equals(store)).isTrue();
     }
 
-    private static ReporterRepository wrap(ReporterRepository target, EncryptionKey... keys) {
-        return (ReporterRepository) new EncryptingRepositoryBeanPostProcessor(keysEnvironment(keys))
+    private static ReporterRepository wrap(ReporterRepository target, String currentKeyId, EncryptionKey... keys) {
+        return (ReporterRepository) new EncryptingRepositoryBeanPostProcessor(keysEnvironment(currentKeyId, keys))
                 .postProcessAfterInitialization(target, "reporterRepository");
     }
 
-    private static StandardEnvironment keysEnvironment(EncryptionKey... keys) {
+    private static StandardEnvironment keysEnvironment(String currentKeyId, EncryptionKey... keys) {
         Map<String, Object> properties = new HashMap<>();
+        if (currentKeyId != null) {
+            properties.put(EncryptionKeys.ENABLED_PROPERTY, "true");
+            properties.put(EncryptionKeys.CURRENT_KEY_PROPERTY, currentKeyId);
+        }
         for (int i = 0; i < keys.length; i++) {
             properties.put(EncryptionKeys.KEYS_PROPERTY + "[" + i + "].id", keys[i].id());
             properties.put(EncryptionKeys.KEYS_PROPERTY + "[" + i + "].secret", keys[i].secret());

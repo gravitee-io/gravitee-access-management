@@ -59,7 +59,7 @@ public class EncryptConfigurationsEndpoint extends AbstractInternalApiEndpoint {
     public void handle(RoutingContext context) {
         Optional<String> keyId = configurationEncryptionService.currentKeyId();
         if (keyId.isEmpty()) {
-            respondError(context, HttpStatusCode.BAD_REQUEST_400, "No encryption key is configured under " + EncryptionKeys.KEYS_PROPERTY);
+            respondError(context, HttpStatusCode.BAD_REQUEST_400, "Encryption is not enabled with " + EncryptionKeys.ENABLED_PROPERTY);
             return;
         }
 

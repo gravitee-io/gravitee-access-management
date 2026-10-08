@@ -74,13 +74,13 @@ class EncryptConfigurationsEndpointTest {
     }
 
     @Test
-    void shouldReturn400WhenNoKeyIsConfigured() {
+    void shouldReturn400WhenTheEncryptionIsDisabled() {
         when(configurationEncryptionService.currentKeyId()).thenReturn(Optional.empty());
 
         endpoint.handle(routingContext);
 
         verify(response).setStatusCode(400);
-        assertThat(body()).contains("repositories.management.encryption.keys");
+        assertThat(body()).contains("plugins.properties.configuration.encryption.enabled");
         verify(configurationEncryptionService, never()).encryptAll(any());
     }
 

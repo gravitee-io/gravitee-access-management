@@ -117,10 +117,35 @@
 #    directives:
 #      - "default-src self;"
 #      - "frame-ancestors 'none';"
-# Path to plugins repository
+
+# Keys encrypting the plugin configurations (identity providers, reporters, certificates, factors, ...)
+# stored in the management repository (AES-256-GCM). Each stored value records the id of the key that
+# encrypted it, and is decrypted with the key declared under that id: a key still used by a stored value
+# must stay declared, otherwise reading that value fails. Never reuse an id for another secret; losing a
+# key makes the configurations it encrypted unreadable. The Management API and the Gateways must declare
+# the same keys.
+#encryptionKeys:
+#  - id: v1
+#    secret: change-me
+
 #plugins:
+## Encryption of the plugin configurations, done by the Management API with the key declared under
+## encryptionKeys whose id is set in 'key'. While 'enabled' is false (default), configurations are
+## stored in clear text and the ones already encrypted stay readable, so the encryption can be turned
+## off without removing the key.
+## Stored configurations move to the selected key when they are updated, or all at once on a call to
+## POST /_node/encryption/reencrypt (Management API technical API), which also encrypts the
+## configurations stored in clear text. To rotate: declare a key with a new id on every Gateway and
+## Management API node, select it here, restart them, then call that endpoint on one Management API
+## node; once it answers 200, the older keys can be removed.
+#  properties:
+#    configuration:
+#      encryption:
+#        enabled: true
+#        key: v1
+## Path to plugins repository
 #  path: ${gravitee.home}/plugins
-# If a plugin is already installed (but with a different version), management node does not start anymore
+## If a plugin is already installed (but with a different version), management node does not start anymore
 #  failOnDuplicate: true
 
 # Configuration of additional reporters
@@ -440,22 +465,6 @@ repositories:
   # For more information about MongoDB configuration, please have a look to:
   # - http://api.mongodb.org/java/current/com/mongodb/MongoClientOptions.html
   management:
-    # Encrypts the plugin configurations (identity providers, reporters, certificates, factors, ...)
-    # stored in the management repository (AES-256-GCM). Values stored before encryption is enabled
-    # stay readable in clear text and are encrypted on their next update.
-    # Each value records the id of the key that encrypted it. The last key of the list encrypts, the
-    # others only decrypt. A key still used by a stored value must stay listed, otherwise reading that
-    # value fails. Never reuse an id for another secret; losing a key makes the configurations it
-    # encrypted unreadable.
-    # Stored configurations move to the last key when they are updated, or all at once on a call to
-    # POST /_node/encryption/reencrypt (Management API technical API), which also encrypts the
-    # configurations stored before encryption was enabled. To rotate: append a key with a new id on
-    # every Gateway and Management API node and restart them, then call that endpoint on one
-    # Management API node; once it answers 200, the older keys can be removed.
-    #encryption:
-    #  keys:
-    #    - id: v1
-    #      secret: change-me
     type: mongodb
     mongodb:
       dbname: ${ds.mongodb.dbname}

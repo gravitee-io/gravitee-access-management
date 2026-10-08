@@ -33,19 +33,21 @@ import static org.mockito.Mockito.when;
 class ConfigurationEncryptionServiceTest {
 
     @Test
-    void should_use_the_last_configured_key() {
+    void should_use_the_selected_key() {
         StandardEnvironment environment = new StandardEnvironment();
         environment.getPropertySources().addFirst(new MapPropertySource("test", Map.of(
                 EncryptionKeys.KEYS_PROPERTY + "[0].id", "v1",
                 EncryptionKeys.KEYS_PROPERTY + "[0].secret", "secret-1",
                 EncryptionKeys.KEYS_PROPERTY + "[1].id", "v2",
-                EncryptionKeys.KEYS_PROPERTY + "[1].secret", "secret-2")));
+                EncryptionKeys.KEYS_PROPERTY + "[1].secret", "secret-2",
+                EncryptionKeys.ENABLED_PROPERTY, "true",
+                EncryptionKeys.CURRENT_KEY_PROPERTY, "v1")));
 
-        assertThat(new ConfigurationEncryptionService(List.of(), environment).currentKeyId()).contains("v2");
+        assertThat(new ConfigurationEncryptionService(List.of(), environment).currentKeyId()).contains("v1");
     }
 
     @Test
-    void should_have_no_key_when_encryption_is_disabled() {
+    void should_have_no_key_when_the_encryption_is_disabled() {
         assertThat(new ConfigurationEncryptionService(List.of(), new StandardEnvironment()).currentKeyId()).isEmpty();
     }
 

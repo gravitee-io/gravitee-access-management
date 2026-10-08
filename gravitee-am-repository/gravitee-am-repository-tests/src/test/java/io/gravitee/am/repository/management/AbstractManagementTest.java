@@ -35,8 +35,10 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
         loader = AnnotationConfigContextLoader.class)
 // Runs every management repository test with the field encryption enabled.
 @TestPropertySource(properties = {
-        "repositories.management.encryption.keys[0].id=repository-tests",
-        "repositories.management.encryption.keys[0].secret=repository-tests-secret"
+        "encryptionKeys[0].id=repository-tests",
+        "encryptionKeys[0].secret=repository-tests-secret",
+        "plugins.properties.configuration.encryption.enabled=true",
+        "plugins.properties.configuration.encryption.key=repository-tests"
 })
 public abstract class AbstractManagementTest {
 
