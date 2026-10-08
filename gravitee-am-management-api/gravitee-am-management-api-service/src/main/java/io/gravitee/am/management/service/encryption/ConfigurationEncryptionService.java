@@ -17,6 +17,8 @@ package io.gravitee.am.management.service.encryption;
 
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.repository.encryption.EncryptionKeys;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.core.env.Environment;
@@ -39,10 +41,12 @@ public class ConfigurationEncryptionService {
 
     private final List<ConfigurationEncryptionTask<?>> tasks;
     private final Environment environment;
+    private final AuditService auditService;
 
-    public ConfigurationEncryptionService(List<ConfigurationEncryptionTask<?>> tasks, Environment environment) {
+    public ConfigurationEncryptionService(List<ConfigurationEncryptionTask<?>> tasks, Environment environment, AuditService auditService) {
         this.tasks = tasks.stream().sorted(Comparator.comparing(ConfigurationEncryptionTask::plugin)).toList();
         this.environment = environment;
+        this.auditService = auditService;
     }
 
     /**
@@ -54,12 +58,24 @@ public class ConfigurationEncryptionService {
 
     /**
      * Runs the task of each plugin type one after the other; a failing plugin type does not stop the others.
+     * Each call is audited with the result of every plugin type.
      *
      * @param keyId the current key id, see {@link #currentKeyId()}
      */
     public Single<List<ConfigurationEncryptionResult>> encryptAll(String keyId) {
         return Flowable.fromIterable(tasks)
                 .concatMapSingle(task -> task.run(keyId))
-                .toList();
+                .toList()
+                .doOnSuccess(results -> audit(keyId, results, null))
+                .doOnError(throwable -> audit(keyId, null, throwable));
+    }
+
+    private void audit(String keyId, List<ConfigurationEncryptionResult> results, Throwable throwable) {
+        ConfigurationEncryptionAuditBuilder audit = AuditBuilder.builder(ConfigurationEncryptionAuditBuilder.class)
+                .reencryption(keyId, results);
+        if (throwable != null) {
+            audit.throwable(throwable);
+        }
+        auditService.report(audit);
     }
 }
