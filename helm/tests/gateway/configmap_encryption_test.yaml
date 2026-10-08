@@ -1,0 +1,34 @@
+suite: Gateway configMap - plugin configuration encryption
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Should not render the encryption keys by default
+    template: gateway/gateway-configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "encryptionKeys:"
+  - it: Should render the encryption keys but not the plugins section
+    template: gateway/gateway-configmap.yaml
+    set:
+      encryptionKeys:
+        - id: v1
+          secret: kubernetes://default/secrets/am-encryption-keys/v1
+      plugins:
+        properties:
+          configuration:
+            encryption:
+              enabled: true
+              key: v1
+    asserts:
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: |
+            (?m)^encryptionKeys:
+              - id: v1
+                secret: kubernetes://default/secrets/am-encryption-keys/v1
+      - notMatchRegex:
+          path: data["gravitee.yml"]
+          pattern: "plugins:"

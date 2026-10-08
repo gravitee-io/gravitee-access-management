@@ -89,6 +89,8 @@ To configure common features such as:
 | Parameter              | Description        | Default |
 | ---------------------- | ------------------ | ------- |
 | `chaos.enabled`        | Enable Chaos test  | false   |
+| `encryptionKeys`       | Keys (`id`, `secret`) decrypting the plugin configurations stored encrypted, rendered for the Management API and the Gateway | `[]` |
+| `plugins`              | Plugin settings rendered for the Management API, e.g. `plugins.properties.configuration.encryption.enabled` and `key` to encrypt the plugin configurations with a key declared in `encryptionKeys` | `{}` |
 
 
 ### Mongo

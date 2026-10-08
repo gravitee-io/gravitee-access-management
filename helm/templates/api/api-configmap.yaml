@@ -84,6 +84,16 @@ data:
 
 {{ include "dataPlanes" . | indent 4 }}
 
+    {{- if .Values.encryptionKeys }}
+    encryptionKeys:
+{{ toYaml .Values.encryptionKeys | indent 6 }}
+    {{- end }}
+
+    {{- if .Values.plugins }}
+    plugins:
+{{ toYaml .Values.plugins | indent 6 }}
+    {{- end }}
+
 {{ include "repositories" (dict "context" . "scope" "management") | indent 4 }}
 
     gateway:

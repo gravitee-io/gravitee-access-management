@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 4.x](https://github.com/gravitee-io/gravitee-access-management/tree/master/helm/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.14.0
+
+- Plugin configurations can be stored encrypted in the management repository: the keys are declared with the new `encryptionKeys` value (Management API and Gateway), and the encryption is turned on for the Management API with the new `plugins` value (`plugins.properties.configuration.encryption.enabled` and `key`)
+
 ### 4.13.0
 
 - The management node now handles only the MANAGEMENT repository scope.

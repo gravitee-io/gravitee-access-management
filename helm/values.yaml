@@ -83,6 +83,25 @@ chaos:
 #    kubeConfigFile:
 #    timeoutMs: 3000
 
+# Keys of the plugin configurations (identity providers, reporters, certificates, factors, ...) stored
+# encrypted in the management repository, rendered for both the Management API and the Gateway: each
+# stored value is decrypted with the key declared under the id it records, so a key still used must stay
+# declared on every node. Never reuse an id for another secret; losing a key makes the configurations it
+# encrypted unreadable. Prefer a Kubernetes secret reference over a clear text secret (see 'secrets').
+encryptionKeys: []
+#  - id: v1
+#    secret: kubernetes://default/secrets/am-encryption-keys/v1
+
+# Plugin settings, rendered for the Management API only.
+# 'encryption' turns the encryption of the plugin configurations on, with the key declared under
+# 'encryptionKeys' whose id is set in 'key'. The Gateway never encrypts, it only needs 'encryptionKeys'.
+plugins: {}
+#  properties:
+#    configuration:
+#      encryption:
+#        enabled: true
+#        key: v1
+
 smtp:
   enabled: true
 #  host: smtp.example.com
