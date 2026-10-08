@@ -76,7 +76,7 @@ describe('DomainCreationComponent', () => {
     nameInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    createButton = fixture.nativeElement.querySelector('gv-button[type="submit"]');
+    createButton = fixture.nativeElement.querySelector('button[type="submit"]');
   });
 
   afterEach(() => {

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { get } from 'lodash';
-import { MatButton } from '@angular/material/button';
 
 import { DomainService } from '../../services/domain.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -32,7 +31,7 @@ export class DomainCreationComponent implements OnInit {
   dataPlanes: any[];
   displayNavLink: boolean;
   oneDataPlane = false;
-  @ViewChild('createDomainBtn', { static: true }) createDomainBtn!: MatButton;
+  creating = false;
 
   constructor(
     private domainService: DomainService,
@@ -53,14 +52,14 @@ export class DomainCreationComponent implements OnInit {
   }
 
   create() {
-    this.createDomainBtn.disabled = true;
+    this.creating = true;
     this.domainService.create(this.domain).subscribe(
       (data) => {
         this.snackbarService.open('Domain ' + data.name + ' created');
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (error: unknown) => {
-        this.createDomainBtn.disabled = false;
+        this.creating = false;
         this.snackbarService.openFromComponent('Errors', [get(error, 'error.message')]);
       },
     );
