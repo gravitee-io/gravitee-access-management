@@ -534,8 +534,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: "Invalid request: validation failure, an immutable field change,\
-            \ a key that already exists for a domain not managed by the Automation\
-            \ API, or an unknown defaultIdentityProviderForRegistration reference"
+            \ or a key that already exists for a domain not managed by the Automation\
+            \ API"
         "403":
           content:
             application/json:
@@ -886,8 +886,11 @@ paths:
       - Domains
   /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates/{certKey}:
     delete:
-      description: Deletes an Automation-managed certificate by its key. Deleting
-        a certificate that does not exist also returns 204.
+      description: "Deletes an Automation-managed certificate by its key. A domain\
+        \ that names it by key in saml.certificate or certificateSettings.fallbackCertificate\
+        \ keeps the reference, which resolves again once a certificate with the same\
+        \ key is created. Deleting a certificate that does not exist also returns\
+        \ 204."
       operationId: automationDeleteCertificate
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -1266,8 +1269,11 @@ paths:
       - Domains
   /organizations/{orgId}/environments/{envId}/domains/{domainKey}/identities/{identityKey}:
     delete:
-      description: Deletes an Automation-managed identity provider by its key. Deleting
-        an identity provider that does not exist also returns 204.
+      description: "Deletes an Automation-managed identity provider by its key. A\
+        \ domain that names it in accountSettings.defaultIdentityProviderForRegistration\
+        \ keeps the reference, which resolves again once an identity provider with\
+        \ the same key is created. Deleting an identity provider that does not exist\
+        \ also returns 204."
       operationId: automationDeleteIdentityProvider
       parameters:
       - description: Identifier of the organization that owns the environment.
@@ -1799,10 +1805,11 @@ components:
           description: Whether resetting a password also completes a pending registration.
         defaultIdentityProviderForRegistration:
           type: string
-          description: "Key of an identity provider that exists under this domain,\
-            \ used as the default for user registration. Resolved against the domain's\
-            \ identity providers when applied; a value that does not match an existing\
-            \ identity provider is rejected with a 400 response."
+          description: "Key of an identity provider managed under this domain, used\
+            \ as the default for user registration. The reference is not checked against\
+            \ existing identity providers: it can name one created after the domain\
+            \ or since deleted, and resolves whenever an identity provider with that\
+            \ key exists."
           example: users-idp
         deletePasswordlessDevicesAfterResetPassword:
           type: boolean
@@ -2011,8 +2018,10 @@ components:
         fallbackCertificate:
           type: string
           description: "Key of a certificate managed under this domain, used as the\
-            \ fallback certificate when a client does not specify one. Must reference\
-            \ a certificate created via the domain's certificate endpoints."
+            \ fallback certificate when a client does not specify one. The reference\
+            \ is not checked against existing certificates: it can name one created\
+            \ after the domain or since deleted, and resolves whenever a certificate\
+            \ with that key exists."
           example: default
       title: Certificate settings
     AutomationClientRegistrationSettings:
@@ -2513,8 +2522,9 @@ components:
         certificate:
           type: string
           description: "Key of a certificate managed under this domain, used to sign\
-            \ SAML responses. Must reference a certificate created via the domain's\
-            \ certificate endpoints."
+            \ SAML responses. The reference is not checked against existing certificates:\
+            \ it can name one created after the domain or since deleted, and resolves\
+            \ whenever a certificate with that key exists."
           example: signing-cert
         enabled:
           type: boolean

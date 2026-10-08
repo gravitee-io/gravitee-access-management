@@ -22,9 +22,9 @@ import lombok.Setter;
 /**
  * Domain SAML 2.0 IdP settings as exposed by the Automation API.
  * <p>
- * {@code certificate} references — by {@code key} — one of the certificates declared
- * in the same Domain request, keeping the SAML signing certificate atomically
- * consistent with the domain's certificates.
+ * {@code certificate} references — by {@code key} — a certificate managed under the same
+ * domain. The reference is eventually consistent: that certificate may not exist yet, or
+ * any more.
  *
  * @author GraviteeSource Team
  */
@@ -42,7 +42,8 @@ public class AutomationSamlSettings {
     private String entityId;
 
     @Schema(description = "Key of a certificate managed under this domain, used to sign SAML responses. " +
-            "Must reference a certificate created via the domain's certificate endpoints.",
+            "The reference is not checked against existing certificates: it can name one created after the " +
+            "domain or since deleted, and resolves whenever a certificate with that key exists.",
             example = "signing-cert")
     private String certificate;
 }
