@@ -32,7 +32,8 @@ let fixture: CibaFederationFixture;
 //    configured with an OIDC identity provider that points at domainB's discovery document.
 // 2. The federation notifier relays bc-authorize to domainB, which notifies its own local user via the
 //    HTTP device notifier (pointed at the CIBA delegated-service mock's accept-all/reject-all endpoints),
-//    then polls domainB's token endpoint and calls back domainA to finalize the transaction.
+//    and each client token poll on domainA polls domainB's token endpoint once, completing the transaction
+//    in domainA when domainB issues tokens.
 beforeAll(async () => {
   fixture = await setupCibaFederationFixture();
 });
@@ -54,7 +55,7 @@ describe('CIBA Federation — happy path', () => {
   });
 
   it('materializes the federated user in the hint domain user list although it never logged in there directly', async () => {
-    // The federated user never logs in to the hint domain directly — the CIBA callback provisions it locally from
+    // The federated user never logs in to the hint domain directly — CIBA completion provisions it locally from
     // the target domain's token/userinfo response, identified by source/identities rather than by username (the
     // target domain's `sub` claim becomes the local username since only the `openid` scope was requested).
     const users = await getAllUsers(fixture.hintDomain.domain.id, fixture.accessToken);

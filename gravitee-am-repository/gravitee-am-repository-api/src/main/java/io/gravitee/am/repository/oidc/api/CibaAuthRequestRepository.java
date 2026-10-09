@@ -21,6 +21,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.Date;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -36,6 +38,13 @@ public interface CibaAuthRequestRepository extends ExpiredDataSweeper {
     Single<CibaAuthRequest> update(CibaAuthRequest authreq);
 
     Single<CibaAuthRequest> updateStatus(String authReqId, String status);
+
+    /**
+     * Atomically sets lastAccessAt to {@code now} when the request has {@code expectedStatus} and was last
+     * accessed at or before {@code notAccessedSince}. Emits whether it did; concurrent callers passing the same
+     * {@code notAccessedSince} see at most one true. An unknown id emits false.
+     */
+    Single<Boolean> updateLastAccessAt(String id, String expectedStatus, Date notAccessedSince, Date now);
 
     Completable delete(String id);
 

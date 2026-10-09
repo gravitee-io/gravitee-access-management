@@ -18,6 +18,7 @@ package io.gravitee.am.authdevice.notifier.api;
 import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
+import io.gravitee.am.authdevice.notifier.api.model.ADStatusRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
 import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
 import io.gravitee.am.common.plugin.AmPluginProvider;
@@ -52,6 +53,16 @@ public interface AuthenticationDeviceNotifierProvider extends Service<Authentica
     Single<ADNotificationResponse> notify(ADNotificationRequest request);
 
     Single<Optional<ADUserResponse>> extractUserResponse(ADCallbackContext callbackContext);
+
+    /**
+     * Asked at most once per polling interval while the request is pending. Empty means no decision yet, and an
+     * error fails that poll with the request still pending. A present response is final: the gateway completes
+     * or rejects the request and never asks again. Notifiers that complete through the callback endpoint keep
+     * this default.
+     */
+    default Single<Optional<ADUserResponse>> checkStatus(ADStatusRequest request) {
+        return Single.just(Optional.empty());
+    }
 
     default Set<NotifierCapability> capabilities() {
         return Set.of();
