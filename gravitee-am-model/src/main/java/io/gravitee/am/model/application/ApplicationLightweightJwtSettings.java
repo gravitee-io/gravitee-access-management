@@ -21,6 +21,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author GraviteeSource Team
  */
@@ -29,13 +32,23 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(title = "Application Lightweight JWT settings",
-        description = "Restricts the JWT access token and the ID token returned to the client to the reserved protocol claims.")
+        description = "Restricts the JWT access token and the ID token returned to the client to the reserved protocol claims and the allowlisted claims.")
 public class ApplicationLightweightJwtSettings {
 
     @Schema(description = "Whether Lightweight JWT is enabled.", defaultValue = "false")
     private boolean enabled;
 
+    @Builder.Default
+    @Schema(description = "Claim names kept in the access and refresh tokens in addition to the reserved claims. A listed claim is kept only if AM issues it.")
+    private List<String> accessTokenAllowlist = new ArrayList<>();
+
+    @Builder.Default
+    @Schema(description = "Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it.")
+    private List<String> idTokenAllowlist = new ArrayList<>();
+
     public ApplicationLightweightJwtSettings(ApplicationLightweightJwtSettings other) {
         this.enabled = other.enabled;
+        this.accessTokenAllowlist = other.accessTokenAllowlist != null ? new ArrayList<>(other.accessTokenAllowlist) : new ArrayList<>();
+        this.idTokenAllowlist = other.idTokenAllowlist != null ? new ArrayList<>(other.idTokenAllowlist) : new ArrayList<>();
     }
 }

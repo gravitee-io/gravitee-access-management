@@ -223,6 +223,36 @@ public class PatchApplicationTest {
     }
 
     @Test
+    public void shouldKeepLightweightJwtAllowlistsWhenDisabled() {
+        PatchApplicationOAuthSettings oauthPatch = new PatchApplicationOAuthSettings();
+        oauthPatch.setLightweightJwtSettings(Optional.of(ApplicationLightweightJwtSettings.builder()
+                .enabled(false)
+                .accessTokenAllowlist(List.of("tenant"))
+                .idTokenAllowlist(List.of("email"))
+                .build()));
+
+        PatchApplicationSettings settingsPatch = new PatchApplicationSettings();
+        settingsPatch.setOauth(Optional.of(oauthPatch));
+
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(settingsPatch));
+
+        Application toPatch = new Application();
+        ApplicationSettings appSettings = new ApplicationSettings();
+        ApplicationOAuthSettings existingOauth = new ApplicationOAuthSettings();
+        existingOauth.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).accessTokenAllowlist(List.of("tenant")).build());
+        appSettings.setOauth(existingOauth);
+        toPatch.setSettings(appSettings);
+
+        Application result = patch.patch(toPatch);
+
+        ApplicationLightweightJwtSettings patched = result.getSettings().getOauth().getLightweightJwtSettings();
+        assertFalse(patched.isEnabled());
+        assertEquals(List.of("tenant"), patched.getAccessTokenAllowlist());
+        assertEquals(List.of("email"), patched.getIdTokenAllowlist());
+    }
+
+    @Test
     public void patch_leaves_userinfoCustomClaims_untouched_when_optional_empty() {
         List<UserInfoClaim> existing = List.of(UserInfoClaim.of("kept", "#kept"));
 

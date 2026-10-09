@@ -17,6 +17,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -38,7 +39,7 @@ describe('TokensComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, FormsModule],
+      imports: [CommonModule, FormsModule, MatChipsModule],
       declarations: [TokensComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
@@ -135,6 +136,84 @@ describe('TokensComponent', () => {
     component.toggleLightweightJwt({ checked: true });
 
     expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ lightweightJwtSettings: { enabled: true } }));
+  });
+
+  it('shouldHideAllowlistsWhenLightweightJwtDisabled', () => {
+    createFixture({ lightweightJwtSettings: { enabled: false, accessTokenAllowlist: ['tenant'] } });
+
+    expect(fixture.nativeElement.querySelector('[data-testid="lightweight-jwt-allowlists"]')).toBeNull();
+  });
+
+  it('shouldShowAllowlistsWhenLightweightJwtEnabled', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true } });
+
+    expect(fixture.nativeElement.querySelector('[data-testid="accessTokenAllowlist-input"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="idTokenAllowlist-input"]')).toBeTruthy();
+  });
+
+  it('shouldAddTrimmedClaimToAllowlist', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true } });
+    const emitted = jest.fn();
+    component.settingsChange.subscribe(emitted);
+    const clear = jest.fn();
+
+    component.addLightweightJwtAllowlistClaim('accessTokenAllowlist', { value: ' tenant ', chipInput: { clear } } as any);
+
+    expect(clear).toHaveBeenCalled();
+    expect(emitted).toHaveBeenCalledWith(
+      expect.objectContaining({ lightweightJwtSettings: { enabled: true, accessTokenAllowlist: ['tenant'] } }),
+    );
+  });
+
+  it('shouldKeepAllowlistsIndependent', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true, accessTokenAllowlist: ['tenant'] } });
+
+    component.addLightweightJwtAllowlistClaim('idTokenAllowlist', { value: 'email', chipInput: { clear: jest.fn() } } as any);
+
+    expect(component.lightweightJwtAllowlist('accessTokenAllowlist')).toEqual(['tenant']);
+    expect(component.lightweightJwtAllowlist('idTokenAllowlist')).toEqual(['email']);
+  });
+
+  it('shouldIgnoreBlankAndDuplicateClaims', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true, accessTokenAllowlist: ['tenant'] } });
+    const emitted = jest.fn();
+    component.settingsChange.subscribe(emitted);
+
+    component.addLightweightJwtAllowlistClaim('accessTokenAllowlist', { value: '  ', chipInput: { clear: jest.fn() } } as any);
+    component.addLightweightJwtAllowlistClaim('accessTokenAllowlist', { value: 'tenant', chipInput: { clear: jest.fn() } } as any);
+
+    expect(emitted).not.toHaveBeenCalled();
+    expect(component.lightweightJwtAllowlist('accessTokenAllowlist')).toEqual(['tenant']);
+  });
+
+  it('shouldRejectTooLongClaim', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true } });
+
+    component.addLightweightJwtAllowlistClaim('idTokenAllowlist', { value: 'x'.repeat(129), chipInput: { clear: jest.fn() } } as any);
+
+    expect(TestBed.inject(SnackbarService).open).toHaveBeenCalledWith('Claim name must be at most 128 characters');
+    expect(component.lightweightJwtAllowlist('idTokenAllowlist')).toEqual([]);
+  });
+
+  it('shouldRemoveClaimFromAllowlist', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true, idTokenAllowlist: ['email', 'tenant'] } });
+
+    component.removeLightweightJwtAllowlistClaim('idTokenAllowlist', 'email');
+
+    expect(component.lightweightJwtAllowlist('idTokenAllowlist')).toEqual(['tenant']);
+  });
+
+  it('shouldKeepAllowlistsWhenToggledOffAndOn', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true, accessTokenAllowlist: ['tenant'], idTokenAllowlist: ['email'] } });
+
+    component.toggleLightweightJwt({ checked: false });
+    component.toggleLightweightJwt({ checked: true });
+
+    expect(component.oauthSettings.lightweightJwtSettings).toEqual({
+      enabled: true,
+      accessTokenAllowlist: ['tenant'],
+      idTokenAllowlist: ['email'],
+    });
   });
 
   it('shouldOpenLightweightJwtClaimsDialogFromInfoButton', () => {

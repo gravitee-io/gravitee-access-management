@@ -219,9 +219,10 @@ public class TokenServiceImpl implements TokenService {
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // filter after the refresh token copied the access token claims
                     if (client.isLightweightJwtEnabled()) {
-                        accessToken.keySet().retainAll(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
+                        List<String> allowlist = client.lightweightJwtAccessTokenAllowlist();
+                        accessToken.retainClaims(withAllowlist(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, allowlist));
                         if (refreshToken != null) {
-                            refreshToken.keySet().retainAll(LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS);
+                            refreshToken.retainClaims(withAllowlist(LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS, allowlist));
                         }
                     }
                     // encode and sign JWT tokens
@@ -584,6 +585,10 @@ public class TokenServiceImpl implements TokenService {
     }
 
     // The agent's subject identity: its instance id when known, otherwise the blueprint client_id.
+    private static Set<String> withAllowlist(Set<String> reservedClaims, List<String> allowlist) {
+        return Stream.concat(reservedClaims.stream(), allowlist.stream()).collect(Collectors.toSet());
+    }
+
     private static String resolveAgentSubject(Client client) {
         return client.getAgentInstanceId() != null ? client.getAgentInstanceId() : client.getClientId();
     }

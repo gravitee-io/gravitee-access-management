@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { find, findIndex, remove } from 'lodash';
 
@@ -21,6 +23,10 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { ClaimsInfoDialogComponent } from '../dialog/claims-info.component';
 import { LightweightJwtInfoDialogComponent } from '../dialog/lightweight-jwt-info.component';
 import { MIN_ID_JAG_VALIDITY_SECONDS } from '../cross-app-access/cross-app-access.types';
+
+export const LIGHTWEIGHT_JWT_CLAIM_NAME_MAX_LENGTH = 128;
+
+type LightweightJwtAllowlistField = 'accessTokenAllowlist' | 'idTokenAllowlist';
 
 @Component({
   selector: 'app-tokens-settings',
@@ -43,6 +49,8 @@ export class TokensComponent implements OnInit {
   readonly MIN_ID_JAG_VALIDITY_SECONDS = MIN_ID_JAG_VALIDITY_SECONDS;
 
   claimTokenTypes: string[] = [];
+
+  readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
   get validityFieldFlex(): number {
     return this.context === 'McpServer' ? 32 : 24;
@@ -109,6 +117,36 @@ export class TokensComponent implements OnInit {
 
   toggleLightweightJwt(event) {
     this.oauthSettings.lightweightJwtSettings = { ...this.oauthSettings.lightweightJwtSettings, enabled: event.checked };
+    this.modelChanged();
+  }
+
+  lightweightJwtAllowlist(field: LightweightJwtAllowlistField): string[] {
+    return this.oauthSettings.lightweightJwtSettings?.[field] ?? [];
+  }
+
+  addLightweightJwtAllowlistClaim(field: LightweightJwtAllowlistField, event: MatChipInputEvent) {
+    const claim = (event.value || '').trim();
+    event.chipInput?.clear();
+    if (!claim) {
+      return;
+    }
+    if (claim.length > LIGHTWEIGHT_JWT_CLAIM_NAME_MAX_LENGTH) {
+      this.snackbarService.open(`Claim name must be at most ${LIGHTWEIGHT_JWT_CLAIM_NAME_MAX_LENGTH} characters`);
+      return;
+    }
+    const allowlist = this.lightweightJwtAllowlist(field);
+    if (allowlist.includes(claim)) {
+      return;
+    }
+    this.oauthSettings.lightweightJwtSettings = { ...this.oauthSettings.lightweightJwtSettings, [field]: [...allowlist, claim] };
+    this.modelChanged();
+  }
+
+  removeLightweightJwtAllowlistClaim(field: LightweightJwtAllowlistField, claim: string) {
+    this.oauthSettings.lightweightJwtSettings = {
+      ...this.oauthSettings.lightweightJwtSettings,
+      [field]: this.lightweightJwtAllowlist(field).filter((name) => name !== claim),
+    };
     this.modelChanged();
   }
 

@@ -19,15 +19,22 @@ import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 public class ApplicationLightweightJwtSettingsMongo {
 
     private boolean enabled;
+    private List<String> accessTokenAllowlist;
+    private List<String> idTokenAllowlist;
 
     public ApplicationLightweightJwtSettings convert() {
         ApplicationLightweightJwtSettings settings = new ApplicationLightweightJwtSettings();
         settings.setEnabled(isEnabled());
+        settings.setAccessTokenAllowlist(accessTokenAllowlist != null ? new ArrayList<>(accessTokenAllowlist) : new ArrayList<>());
+        settings.setIdTokenAllowlist(idTokenAllowlist != null ? new ArrayList<>(idTokenAllowlist) : new ArrayList<>());
         return settings;
     }
 
@@ -37,6 +44,8 @@ public class ApplicationLightweightJwtSettingsMongo {
         }
         ApplicationLightweightJwtSettingsMongo mongo = new ApplicationLightweightJwtSettingsMongo();
         mongo.setEnabled(settings.isEnabled());
+        mongo.setAccessTokenAllowlist(settings.getAccessTokenAllowlist());
+        mongo.setIdTokenAllowlist(settings.getIdTokenAllowlist());
         return mongo;
     }
 }

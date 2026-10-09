@@ -46,6 +46,7 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -75,6 +76,7 @@ import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
+import io.gravitee.am.service.validators.lightweightjwt.ApplicationLightweightJwtValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -197,6 +199,9 @@ public class ApplicationServiceTest {
 
     @Spy
     private ApplicationCrossAppAccessValidator crossAppAccessValidator = new ApplicationCrossAppAccessValidator();
+
+    @Spy
+    private ApplicationLightweightJwtValidator lightweightJwtValidator = new ApplicationLightweightJwtValidator();
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -1052,6 +1057,27 @@ public class ApplicationServiceTest {
 
         testObserver.assertError(err -> err instanceof InvalidClientMetadataException
                 && err.getMessage().equals("crossAppAccessSettings.resourceServers entries must have a non-blank clientId"));
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidatePatchWhenLightweightJwtAllowlistHasBlankClaimName() {
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder()
+                .enabled(true)
+                .accessTokenAllowlist(List.of("tenant", " "))
+                .build());
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        Application toPatch = emptyAppWithDomain();
+        toPatch.setSettings(settings);
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", oauthPatch(), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("lightweightJwtSettings.accessTokenAllowlist must not contain a blank claim name"));
         verify(applicationRepository, never()).update(any(Application.class));
     }
 

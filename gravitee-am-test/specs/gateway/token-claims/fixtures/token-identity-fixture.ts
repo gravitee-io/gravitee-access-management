@@ -144,9 +144,9 @@ export interface TokenIdentityFixture extends Fixture {
   userinfo: (accessTokenValue: string) => Promise<Record<string, any>>;
   /**
    * Patches the Lightweight JWT setting, then polls until a fresh access token reflects it.
-   * `probeClaim` is a custom claim the setting removes.
+   * `probeClaim` is a custom claim the setting removes. The allowlists replace the stored ones.
    */
-  setLightweightJwt: (enabled: boolean, probeClaim: string) => Promise<void>;
+  setLightweightJwt: (enabled: boolean, probeClaim: string, allowlists?: LightweightJwtAllowlists) => Promise<void>;
 }
 
 /**
@@ -170,6 +170,11 @@ export interface UserInfoCustomClaim {
   claimValue: string;
 }
 
+export interface LightweightJwtAllowlists {
+  accessTokenAllowlist?: string[];
+  idTokenAllowlist?: string[];
+}
+
 export interface TokenIdentityOptions {
   /** Application-level custom claims, applied to the token types named on each entry. */
   tokenCustomClaims?: TokenCustomClaim[];
@@ -190,7 +195,7 @@ export interface TokenIdentityOptions {
    */
   extraScopes?: { scope: string; defaultScope: boolean }[];
   /** Application-level Lightweight JWT settings. */
-  lightweightJwtSettings?: { enabled: boolean };
+  lightweightJwtSettings?: { enabled: boolean } & LightweightJwtAllowlists;
   /** Lets prompt=none with an id_token_hint authenticate the user without a session. */
   silentReAuthentication?: boolean;
   /** Name of a domain role assigned to the primary user. */
@@ -407,9 +412,14 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       return response.body;
     };
 
-    const setLightweightJwt = async (enabled: boolean, probeClaim: string) => {
+    const setLightweightJwt = async (enabled: boolean, probeClaim: string, allowlists: LightweightJwtAllowlists = {}) => {
       await waitForSyncAfter(startedDomain.id, () =>
-        patchApplication(startedDomain.id, accessToken, { settings: { oauth: { lightweightJwtSettings: { enabled } } } }, app.id),
+        patchApplication(
+          startedDomain.id,
+          accessToken,
+          { settings: { oauth: { lightweightJwtSettings: { enabled, ...allowlists } } } },
+          app.id,
+        ),
       );
 
       // the gateway client can lag the domain lastSync by a few seconds

@@ -286,7 +286,9 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                     && "calendar-client".equals(crossAppAccess.getResourceServers().get(0).getClientId());
         });
         testObserver.assertValue(a -> a.getSettings().getOauth().getLightweightJwtSettings() != null
-                && a.getSettings().getOauth().getLightweightJwtSettings().isEnabled());
+                && a.getSettings().getOauth().getLightweightJwtSettings().isEnabled()
+                && List.of("tenant").equals(a.getSettings().getOauth().getLightweightJwtSettings().getAccessTokenAllowlist())
+                && List.of("email", "tenant").equals(a.getSettings().getOauth().getLightweightJwtSettings().getIdTokenAllowlist()));
     }
 
     private static Application buildApplication() {
@@ -354,7 +356,11 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                         .clientId("calendar-client")
                         .build()))
                 .build());
-        oauth.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
+        oauth.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder()
+                .enabled(true)
+                .accessTokenAllowlist(List.of("tenant"))
+                .idTokenAllowlist(List.of("email", "tenant"))
+                .build());
 
         final AccountSettings account = new AccountSettings();
         account.setResetPasswordInvalidateTokens(true);
