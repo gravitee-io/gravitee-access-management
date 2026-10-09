@@ -16,6 +16,7 @@
 package io.gravitee.am.common.jwt;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -182,5 +183,9 @@ public class JWT extends HashMap<String, Object> {
             return jkt;
         }
         return null;
+    }
+
+    public void retainClaims(Collection<String> claims) {
+        keySet().retainAll(claims);
     }
 }

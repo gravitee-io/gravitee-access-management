@@ -121,4 +121,31 @@ public class ClientTest {
         client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
         assertTrue(client.isLightweightJwtEnabled());
     }
+
+    @Test
+    public void shouldReturnEmptyAllowlistsWhenNotConfigured() {
+        Client client = new Client();
+        assertEquals(List.of(), client.lightweightJwtAllowedAccessTokenClaims());
+        assertEquals(List.of(), client.lightweightJwtAllowedIdTokenClaims());
+
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).allowedAccessTokenClaims(null).allowedIdTokenClaims(null).build());
+        assertEquals(List.of(), client.lightweightJwtAllowedAccessTokenClaims());
+        assertEquals(List.of(), client.lightweightJwtAllowedIdTokenClaims());
+    }
+
+    @Test
+    public void shouldCopyAllowlists() {
+        Client client = new Client();
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder()
+                .enabled(true)
+                .allowedAccessTokenClaims(List.of("tenant"))
+                .allowedIdTokenClaims(List.of("email"))
+                .build());
+
+        Client copy = new Client(client);
+
+        assertEquals(List.of("tenant"), copy.lightweightJwtAllowedAccessTokenClaims());
+        assertEquals(List.of("email"), copy.lightweightJwtAllowedIdTokenClaims());
+        assertNotSame(client.getLightweightJwtSettings().getAllowedAccessTokenClaims(), copy.getLightweightJwtSettings().getAllowedAccessTokenClaims());
+    }
 }
