@@ -13155,12 +13155,28 @@ components:
     ApplicationLightweightJwtSettings:
       type: object
       description: Restricts the JWT access token and the ID token returned to the
-        client to the reserved protocol claims.
+        client to the reserved protocol claims and the allowlisted claims.
       properties:
+        accessTokenAllowlist:
+          type: array
+          description: Claim names kept in the access and refresh tokens in addition
+            to the reserved claims. A listed claim is kept only if AM issues it.
+          items:
+            type: string
+            description: Claim names kept in the access and refresh tokens in addition
+              to the reserved claims. A listed claim is kept only if AM issues it.
         enabled:
           type: boolean
           default: false
           description: Whether Lightweight JWT is enabled.
+        idTokenAllowlist:
+          type: array
+          description: Claim names kept in the ID token in addition to the reserved
+            claims. A listed claim is kept only if AM issues it.
+          items:
+            type: string
+            description: Claim names kept in the ID token in addition to the reserved
+              claims. A listed claim is kept only if AM issues it.
       title: Application Lightweight JWT settings
     ApplicationOAuthSettings:
       type: object

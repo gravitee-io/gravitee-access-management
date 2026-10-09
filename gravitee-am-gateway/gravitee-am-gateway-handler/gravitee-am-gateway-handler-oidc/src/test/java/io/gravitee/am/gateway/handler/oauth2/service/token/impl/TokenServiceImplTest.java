@@ -1820,6 +1820,81 @@ public class TokenServiceImplTest {
         assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme");
     }
 
+    @Test
+    public void shouldKeepAllowlistedClaimsInAccessAndRefreshTokens() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+
+        Client client = lightweightClient(true);
+        client.getLightweightJwtSettings().setAccessTokenAllowlist(List.of("tenant", "not_issued", Claims.SCOPE));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).containsEntry("tenant", "acme").containsKeys(Claims.SCOPE, Claims.CLIENT_ID)
+                .doesNotContainKey("not_issued");
+        assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme").containsKey(Claims.SCOPE)
+                .doesNotContainKey("not_issued");
+    }
+
+    @Test
+    public void shouldNotApplyIdTokenAllowlistToAccessAndRefreshTokens() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+
+        Client client = lightweightClient(true);
+        client.getLightweightJwtSettings().setIdTokenAllowlist(List.of("tenant"));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).doesNotContainKey("tenant");
+        assertThat(jwtCaptor.getAllValues().get(1)).doesNotContainKey("tenant");
+    }
+
+    @Test
+    public void shouldApplyAllowlistOnRefreshTokenGrant() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setGrantType(GrantType.REFRESH_TOKEN);
+        request.setRefreshToken(Map.of(Claims.SUB, "user", "tenant", "previous", "legacy", "previous"));
+
+        Client client = lightweightClient(true);
+        client.getLightweightJwtSettings().setAccessTokenAllowlist(List.of("tenant"));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).containsEntry("tenant", "acme").doesNotContainKey("legacy");
+        assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme").doesNotContainKey("legacy");
+    }
+
+    @Test
+    public void shouldIgnoreAllowlistWhenLightweightJwtDisabled() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setSupportRefreshToken(false);
+
+        Client client = lightweightClient(false);
+        client.setTokenCustomClaims(List.of(
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "tenant", "acme"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "region", "eu")));
+        client.getLightweightJwtSettings().setAccessTokenAllowlist(List.of("tenant"));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getValue()).containsEntry("tenant", "acme").containsEntry("region", "eu");
+    }
+
     private OAuth2Request authorizationCodeRequest() {
         OAuth2Request request = new OAuth2Request();
         request.setParameters(new LinkedMultiValueMap<>());

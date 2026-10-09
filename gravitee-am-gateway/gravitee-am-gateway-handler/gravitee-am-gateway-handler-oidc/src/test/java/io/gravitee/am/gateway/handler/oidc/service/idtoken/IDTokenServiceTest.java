@@ -1043,6 +1043,34 @@ public class IDTokenServiceTest {
         assertEquals("acme", idToken.get("tenant"));
     }
 
+    @Test
+    public void shouldKeepAllowlistedClaimsInIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        Client client = lightweightClient(true);
+        client.getLightweightJwtSettings().setIdTokenAllowlist(List.of("tenant", StandardClaims.ADDRESS, "not_issued", Claims.SUB));
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertEquals("acme", idToken.get("tenant"));
+        assertEquals("gravitee", idToken.get(StandardClaims.ADDRESS));
+        assertEquals("user-sub", idToken.get(Claims.SUB));
+        assertFalse(idToken.containsKey("not_issued"));
+    }
+
+    @Test
+    public void shouldNotApplyAccessTokenAllowlistToIdToken() {
+        OAuth2Request oAuth2Request = lightweightRequest();
+        Client client = lightweightClient(true);
+        client.getLightweightJwtSettings().setAccessTokenAllowlist(List.of("tenant", StandardClaims.ADDRESS));
+        stubSubjectWithInternalSub();
+
+        JWT idToken = createIdToken(oAuth2Request, client, loggedInUser());
+
+        assertFalse(idToken.containsKey("tenant"));
+        assertFalse(idToken.containsKey(StandardClaims.ADDRESS));
+    }
+
     private OAuth2Request lightweightRequest() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("client-id");

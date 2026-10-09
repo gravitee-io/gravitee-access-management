@@ -1340,6 +1340,18 @@ public class Client implements Cloneable, Resource {
         return lightweightJwtSettings != null && lightweightJwtSettings.isEnabled();
     }
 
+    public List<String> lightweightJwtAccessTokenAllowlist() {
+        return lightweightJwtSettings != null && lightweightJwtSettings.getAccessTokenAllowlist() != null
+                ? lightweightJwtSettings.getAccessTokenAllowlist()
+                : List.of();
+    }
+
+    public List<String> lightweightJwtIdTokenAllowlist() {
+        return lightweightJwtSettings != null && lightweightJwtSettings.getIdTokenAllowlist() != null
+                ? lightweightJwtSettings.getIdTokenAllowlist()
+                : List.of();
+    }
+
     public int getIdJagValiditySeconds() {
         return idJagValiditySeconds;
     }

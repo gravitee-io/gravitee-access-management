@@ -55,6 +55,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -267,7 +268,9 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         // the hash claims (at_hash, c_hash, s_hash) are added at signing, after this filter
         if (client.isLightweightJwtEnabled()) {
-            idToken.keySet().retainAll(LIGHTWEIGHT_ID_TOKEN_CLAIMS);
+            Set<String> retainedClaims = new HashSet<>(LIGHTWEIGHT_ID_TOKEN_CLAIMS);
+            retainedClaims.addAll(client.lightweightJwtIdTokenAllowlist());
+            idToken.retainClaims(retainedClaims);
         }
 
         return idToken;

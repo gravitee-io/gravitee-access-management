@@ -27,17 +27,29 @@
 /* eslint-disable */
 import { mapValues } from '../runtime';
 /**
- * Restricts the JWT access token and the ID token returned to the client to the reserved protocol claims.
+ * Restricts the JWT access token and the ID token returned to the client to the reserved protocol claims and the allowlisted claims.
  * @export
  * @interface ApplicationLightweightJwtSettings
  */
 export interface ApplicationLightweightJwtSettings {
   /**
-   * Whether the access token and the ID token returned to the client only contain the reserved protocol claims.
+   * Claim names kept in the access and refresh tokens in addition to the reserved claims. A listed claim is kept only if AM issues it.
+   * @type {Array<string>}
+   * @memberof ApplicationLightweightJwtSettings
+   */
+  accessTokenAllowlist?: Array<string>;
+  /**
+   * Whether Lightweight JWT is enabled.
    * @type {boolean}
    * @memberof ApplicationLightweightJwtSettings
    */
   enabled?: boolean;
+  /**
+   * Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it.
+   * @type {Array<string>}
+   * @memberof ApplicationLightweightJwtSettings
+   */
+  idTokenAllowlist?: Array<string>;
 }
 
 /**
@@ -56,7 +68,9 @@ export function ApplicationLightweightJwtSettingsFromJSONTyped(json: any, ignore
     return json;
   }
   return {
+    accessTokenAllowlist: json['accessTokenAllowlist'] == null ? undefined : json['accessTokenAllowlist'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
+    idTokenAllowlist: json['idTokenAllowlist'] == null ? undefined : json['idTokenAllowlist'],
   };
 }
 
@@ -73,6 +87,8 @@ export function ApplicationLightweightJwtSettingsToJSONTyped(
   }
 
   return {
+    accessTokenAllowlist: value['accessTokenAllowlist'],
     enabled: value['enabled'],
+    idTokenAllowlist: value['idTokenAllowlist'],
   };
 }
