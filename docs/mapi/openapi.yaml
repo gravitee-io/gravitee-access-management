@@ -13155,8 +13155,22 @@ components:
     ApplicationLightweightJwtSettings:
       type: object
       description: Restricts the JWT access token and the ID token returned to the
-        client to the reserved protocol claims.
+        client to the reserved protocol claims and the allowlisted claims.
       properties:
+        allowedAccessTokenClaims:
+          type: array
+          description: Claim names kept in the access and refresh tokens in addition
+            to the reserved claims. A listed claim is kept only if AM issues it.
+          items:
+            type: string
+            maxLength: 128
+        allowedIdTokenClaims:
+          type: array
+          description: Claim names kept in the ID token in addition to the reserved
+            claims. A listed claim is kept only if AM issues it.
+          items:
+            type: string
+            maxLength: 128
         enabled:
           type: boolean
           default: false

@@ -88,6 +88,7 @@ import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsVali
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
 import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
+import io.gravitee.am.service.validators.lightweightjwt.ApplicationLightweightJwtValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -199,6 +200,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationCrossAppAccessValidator crossAppAccessValidator;
+
+    @Autowired
+    private ApplicationLightweightJwtValidator lightweightJwtValidator;
 
     @Autowired
     private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
@@ -1144,6 +1148,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return validateTokenCustomClaims(app)
                             .flatMap(this::validateCrossAppAccessSettings)
+                            .flatMap(this::validateLightweightJwtSettings)
                             .flatMap(GrantTypeUtils::validateGrantTypes)
                             .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
                             .flatMap(this::validateScopes)
@@ -1165,6 +1170,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Single<Application> validateCrossAppAccessSettings(Application application) {
         return crossAppAccessValidator.validate(application.getSettings().getOauth())
+                .<Single<Application>>map(error -> Single.error(new InvalidClientMetadataException(error)))
+                .orElseGet(() -> Single.just(application));
+    }
+
+    private Single<Application> validateLightweightJwtSettings(Application application) {
+        return lightweightJwtValidator.validate(application.getSettings().getOauth())
                 .<Single<Application>>map(error -> Single.error(new InvalidClientMetadataException(error)))
                 .orElseGet(() -> Single.just(application));
     }

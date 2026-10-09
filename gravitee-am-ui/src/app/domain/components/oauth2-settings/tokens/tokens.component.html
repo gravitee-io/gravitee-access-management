@@ -123,7 +123,55 @@
           >
             Enable Lightweight JWT
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%">Custom claims are removed unless they are named after a kept claim.</mat-hint>
+          <mat-hint style="font-size: 75%">Claims are removed unless they are reserved or allowlisted below.</mat-hint>
+        </div>
+        <div fxLayout="column" *ngIf="isLightweightJwtEnabled()" data-testid="lightweight-jwt-allowlists">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Allowed access and refresh token claims</mat-label>
+            <mat-chip-grid #allowedAccessTokenClaimsChips aria-label="Allowed access and refresh token claims" [disabled]="readonly">
+              <mat-chip-row
+                *ngFor="let claim of lightweightJwtAllowlist('allowedAccessTokenClaims')"
+                [removable]="!readonly"
+                (removed)="removeLightweightJwtAllowlistClaim('allowedAccessTokenClaims', claim)"
+              >
+                {{ claim }}
+                <mat-icon matChipRemove *ngIf="!readonly">cancel</mat-icon>
+              </mat-chip-row>
+              <input
+                placeholder="tenant, email, ..."
+                data-testid="allowedAccessTokenClaims-input"
+                [matChipInputFor]="allowedAccessTokenClaimsChips"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                [matChipInputAddOnBlur]="true"
+                (matChipInputTokenEnd)="addLightweightJwtAllowlistClaim('allowedAccessTokenClaims', $event)"
+                [disabled]="readonly"
+              />
+            </mat-chip-grid>
+            <mat-hint>Claims kept in the access and refresh tokens when AM issues them.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Allowed ID token claims</mat-label>
+            <mat-chip-grid #allowedIdTokenClaimsChips aria-label="Allowed ID token claims" [disabled]="readonly">
+              <mat-chip-row
+                *ngFor="let claim of lightweightJwtAllowlist('allowedIdTokenClaims')"
+                [removable]="!readonly"
+                (removed)="removeLightweightJwtAllowlistClaim('allowedIdTokenClaims', claim)"
+              >
+                {{ claim }}
+                <mat-icon matChipRemove *ngIf="!readonly">cancel</mat-icon>
+              </mat-chip-row>
+              <input
+                placeholder="tenant, email, ..."
+                data-testid="allowedIdTokenClaims-input"
+                [matChipInputFor]="allowedIdTokenClaimsChips"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                [matChipInputAddOnBlur]="true"
+                (matChipInputTokenEnd)="addLightweightJwtAllowlistClaim('allowedIdTokenClaims', $event)"
+                [disabled]="readonly"
+              />
+            </mat-chip-grid>
+            <mat-hint>Claims kept in the ID token when AM issues them.</mat-hint>
+          </mat-form-field>
         </div>
       </div>
 
@@ -213,6 +261,9 @@
               </ng-template>
             </ngx-datatable-column>
           </ngx-datatable>
+          <div *ngIf="lightweightJwtRemovedClaims().length > 0" class="gv-form-hint" data-testid="lightweight-jwt-removed-claims">
+            Lightweight JWT removes these claims because they are not allowed: {{ lightweightJwtRemovedClaims().join(', ') }}
+          </div>
         </div>
       </div>
 

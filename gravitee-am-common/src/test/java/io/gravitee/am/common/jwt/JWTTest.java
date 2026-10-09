@@ -18,6 +18,7 @@ package io.gravitee.am.common.jwt;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,5 +56,25 @@ class JWTTest {
     @Test
     void shouldHaveNoTypeWhenBuiltFromAPlainClaimsMap() {
         assertThat(new JWT(Map.of("sub", "the-user")).getType()).isNull();
+    }
+
+    @Test
+    void shouldRetainOnlyListedClaims() {
+        JWT jwt = new JWT(Map.of("sub", "the-user", "email", "a@b.c", "tenant", "acme"));
+
+        jwt.retainClaims(Set.of("sub", "not_issued"));
+
+        assertThat(jwt).containsOnlyKeys("sub");
+    }
+
+    @Test
+    void shouldKeepTheTypeWhenRetainingClaims() {
+        JWT jwt = new JWT(Map.of("sub", "the-user"));
+        jwt.setType(JwtType.ID_JAG);
+
+        jwt.retainClaims(Set.of());
+
+        assertThat(jwt).isEmpty();
+        assertThat(jwt.getType()).isEqualTo(JwtType.ID_JAG);
     }
 }

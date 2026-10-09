@@ -33,6 +33,7 @@ import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.crossappaccess.ApplicationCrossAppAccessValidator;
+import io.gravitee.am.service.validators.lightweightjwt.ApplicationLightweightJwtValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -120,6 +121,9 @@ public class ApplicationServiceCimdGuardTest {
 
     @Spy
     private ApplicationCrossAppAccessValidator crossAppAccessValidator = new ApplicationCrossAppAccessValidator();
+
+    @Spy
+    private ApplicationLightweightJwtValidator lightweightJwtValidator = new ApplicationLightweightJwtValidator();
 
     @Before
     public void setUp() {

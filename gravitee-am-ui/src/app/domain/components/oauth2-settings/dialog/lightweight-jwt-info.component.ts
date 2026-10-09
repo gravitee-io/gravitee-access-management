@@ -16,12 +16,33 @@
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 
-interface KeptClaims {
+export interface KeptClaims {
   token: string;
   always: string[];
   whenSet: string[];
   internal: string[];
 }
+
+export const LIGHTWEIGHT_JWT_KEPT_CLAIMS: KeptClaims[] = [
+  {
+    token: 'Access token',
+    always: ['iss', 'sub', 'aud', 'exp', 'iat', 'jti', 'scope', 'client_id'],
+    whenSet: ['cnf', 'act', 'client_profile', 'permissions', 'authorization_details'],
+    internal: ['gis', 'domain', 'claims_request_parameter'],
+  },
+  {
+    token: 'ID token',
+    always: ['iss', 'sub', 'aud', 'exp', 'iat', 'auth_time'],
+    whenSet: ['nonce', 'acr', 'client_profile', 'at_hash', 'c_hash', 's_hash'],
+    internal: ['gis'],
+  },
+  {
+    token: 'Refresh token',
+    always: ['iss', 'sub', 'aud', 'exp', 'iat', 'jti', 'scope'],
+    whenSet: ['cnf', 'act', 'client_profile', 'permissions', 'authorization_details', 'orig_resources'],
+    internal: ['gis', 'domain'],
+  },
+];
 
 @Component({
   selector: 'lightweight-jwt-info-dialog',
@@ -30,26 +51,7 @@ interface KeptClaims {
   standalone: false,
 })
 export class LightweightJwtInfoDialogComponent {
-  readonly keptClaims: KeptClaims[] = [
-    {
-      token: 'Access token',
-      always: ['iss', 'sub', 'aud', 'exp', 'iat', 'jti', 'scope', 'client_id'],
-      whenSet: ['cnf', 'act', 'client_profile', 'permissions', 'authorization_details'],
-      internal: ['gis', 'domain', 'claims_request_parameter'],
-    },
-    {
-      token: 'ID token',
-      always: ['iss', 'sub', 'aud', 'exp', 'iat', 'auth_time'],
-      whenSet: ['nonce', 'acr', 'client_profile', 'at_hash', 'c_hash', 's_hash'],
-      internal: ['gis'],
-    },
-    {
-      token: 'Refresh token',
-      always: ['iss', 'sub', 'aud', 'exp', 'iat', 'jti', 'scope'],
-      whenSet: ['cnf', 'act', 'client_profile', 'permissions', 'authorization_details', 'orig_resources'],
-      internal: ['gis', 'domain'],
-    },
-  ];
+  readonly keptClaims = LIGHTWEIGHT_JWT_KEPT_CLAIMS;
 
   constructor(public dialogRef: MatDialogRef<LightweightJwtInfoDialogComponent>) {}
 }
