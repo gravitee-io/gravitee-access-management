@@ -30,6 +30,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -99,9 +100,23 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Completable delete(String id) {
+    public Completable touch(String id, Date lastAccessAt, boolean slowDown) {
+        LOGGER.debug("Touch CibaAuthRequest {} slowDown={}", id, slowDown);
+        final String sql = slowDown
+                ? "UPDATE ciba_auth_requests SET last_access_at = :lastAccessAt, slow_down_count = slow_down_count + 1 WHERE id = :id"
+                : "UPDATE ciba_auth_requests SET last_access_at = :lastAccessAt WHERE id = :id";
+        return monoToCompletable(getTemplate().getDatabaseClient().sql(sql)
+                .bind("lastAccessAt", LocalDateTime.ofInstant(lastAccessAt.toInstant(), UTC))
+                .bind("id", id)
+                .fetch().rowsUpdated())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Boolean> delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(getTemplate().delete(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class))
+        return monoToSingle(getTemplate().delete(Query.query(where("id").is(id)), JdbcCibaAuthRequest.class))
+                .map(deleted -> deleted > 0)
                 .observeOn(Schedulers.computation());
     }
 

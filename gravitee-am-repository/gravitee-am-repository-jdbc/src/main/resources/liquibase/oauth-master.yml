@@ -27,3 +27,5 @@ databaseChangeLog:
       - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-add-tokens-jkt.yml
   - include:
       - file: liquibase/oauth/changelogs/v4_14_0/4.14.0-add-tokens-withheld-claims.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-ciba-add-slow-down-count.yml
