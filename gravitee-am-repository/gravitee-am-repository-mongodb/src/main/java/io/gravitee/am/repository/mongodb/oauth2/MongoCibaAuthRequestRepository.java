@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -54,6 +55,8 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
 
     private static final String FIELD_EXPIRE_AT = "expire_at";
     private static final String FIELD_EXTERNAL_ID = "ext_transaction_id";
+    private static final String FIELD_LAST_ACCESS_AT = "last_acess_at";
+    private static final String FIELD_SLOW_DOWN_COUNT = "slow_down_count";
 
     @PostConstruct
     public void init() {
@@ -107,8 +110,18 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     }
 
     @Override
-    public Completable delete(String id) {
-        return Completable.fromPublisher(cibaAuthRequestCollection.findOneAndDelete(eq(FIELD_ID, id)))
+    public Completable touch(String id, Date lastAccessAt, boolean slowDown) {
+        final Bson update = slowDown
+                ? Updates.combine(Updates.set(FIELD_LAST_ACCESS_AT, lastAccessAt), Updates.inc(FIELD_SLOW_DOWN_COUNT, 1))
+                : Updates.set(FIELD_LAST_ACCESS_AT, lastAccessAt);
+        return Completable.fromPublisher(cibaAuthRequestCollection.updateOne(eq(FIELD_ID, id), update))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Boolean> delete(String id) {
+        return Single.fromPublisher(cibaAuthRequestCollection.deleteOne(eq(FIELD_ID, id)))
+                .map(deleteResult -> deleteResult.getDeletedCount() > 0)
                 .observeOn(Schedulers.computation());
     }
 
@@ -127,6 +140,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authReqMongo.setExpireAt(authReq.getExpireAt());
         authReqMongo.setCreatedAt(authReq.getCreatedAt());
         authReqMongo.setLastAccessAt(authReq.getLastAccessAt());
+        authReqMongo.setSlowDownCount(authReq.getSlowDownCount());
         authReqMongo.setExternalTrxId(authReq.getExternalTrxId());
 
         if (authReq.getExternalInformation() != null) {
@@ -154,6 +168,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authReq.setCreatedAt(authReqMongo.getCreatedAt());
         authReq.setExpireAt(authReqMongo.getExpireAt());
         authReq.setLastAccessAt(authReqMongo.getLastAccessAt());
+        authReq.setSlowDownCount(authReqMongo.getSlowDownCount());
         authReq.setExternalTrxId(authReqMongo.getExternalTrxId());
         authReq.setDeviceNotifierId(authReqMongo.getDeviceNotifierId());
 
