@@ -20,11 +20,18 @@ import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestServiceImpl;
+import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.polling.PollingService;
+import io.gravitee.am.gateway.handler.common.service.polling.impl.KeepIntervalPollingPolicy;
+import io.gravitee.am.gateway.handler.common.service.polling.impl.PollingServiceImpl;
+import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
+import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -55,5 +62,13 @@ public class CIBAConfiguration implements ProtocolConfiguration {
     @Bean
     public AuthenticationRequestService authenticationRequestService() {
         return new AuthenticationRequestServiceImpl();
+    }
+
+    @Bean
+    public PollingService<CibaAuthRequest> cibaPollingService(CibaAuthRequestRepository cibaAuthRequestRepository,
+                                                              @Value("${openid.ciba.auth-request.retention:900}") int retentionInSec) {
+        return new PollingServiceImpl<>(cibaAuthRequestRepository,
+                request -> AuthenticationRequestStatus.valueOf(request.getStatus()).pollingState(),
+                retentionInSec, new KeepIntervalPollingPolicy<>());
     }
 }

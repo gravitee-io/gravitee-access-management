@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
+import io.gravitee.am.common.exception.oauth2.AuthorizationPendingException;
+import io.gravitee.am.common.exception.oauth2.SlowDownException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
-import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
