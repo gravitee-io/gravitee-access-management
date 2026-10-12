@@ -71,7 +71,7 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
                 logout(routingContext);
                 break;
             default:
-                routingContext.fail(405);
+                failLogout(routingContext, 405);
         }
     }
 
@@ -79,13 +79,13 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
         // First, restore the initial query parameters (those provided when accessing /oauth/authorize on AM side).
         restoreState(routingContext, next -> {
             if (next.failed()) {
-                routingContext.fail(next.cause());
+                failLogout(routingContext, next.cause());
                 return;
             }
             // restore the session (required for the next steps)
             restoreCurrentSession(routingContext, sessionHandler -> {
                 if (sessionHandler.failed()) {
-                    routingContext.fail(sessionHandler.cause());
+                    failLogout(routingContext, sessionHandler.cause());
                     return;
                 }
                 final UserToken currentSession = sessionHandler.result();

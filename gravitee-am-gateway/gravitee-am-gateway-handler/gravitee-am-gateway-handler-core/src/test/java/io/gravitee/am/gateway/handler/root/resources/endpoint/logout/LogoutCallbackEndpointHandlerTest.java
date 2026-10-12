@@ -34,6 +34,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -43,6 +44,8 @@ import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelp
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 /**
@@ -65,12 +68,17 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private CertificateManager certificateManager;
 
+    private GatewayMetricProvider metricProvider;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
+        metricProvider = mock(GatewayMetricProvider.class);
+        final LogoutCallbackEndpoint endpoint = new LogoutCallbackEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, certificateManager);
+        endpoint.metricProvider = metricProvider;
         router.route(HttpMethod.GET, "/logout/callback")
-                .handler(new LogoutCallbackEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, certificateManager))
+                .handler(endpoint)
                 .failureHandler(new ErrorHandler("/error"));
     }
 
@@ -135,5 +143,38 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/error?state=myappstate&client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldCountLogoutSuccess_onceRedirectDone() throws Exception {
+        JWT state = new JWT();
+        state.put("q", "post_logout_redirect_uri=http://my-app&state=myappstate");
+        state.put("p", "provider-id");
+        state.put("c", "client-id");
+        when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
+        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class), any())).thenReturn(Single.just(state));
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(new Client()));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            setUser(routingContext, endUser);
+            routingContext.next();
+        });
+
+        testRequest(HttpMethod.GET, "/logout/callback?state=myappstate", null, resp -> {}, HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(metricProvider).incrementLogoutSuccess();
+        verify(metricProvider, never()).incrementLogoutFailure();
+    }
+
+    @Test
+    public void shouldCountLogoutFailure_whenStateMissing() throws Exception {
+
+        testRequest(HttpMethod.GET, "/logout/callback", null, resp -> {}, HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(metricProvider, never()).incrementLogoutSuccess();
+        verify(metricProvider).incrementLogoutFailure();
     }
 }
