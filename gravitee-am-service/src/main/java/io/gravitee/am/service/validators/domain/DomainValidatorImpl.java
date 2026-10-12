@@ -24,6 +24,7 @@ import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSetting
 import io.gravitee.am.service.validators.path.PathValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.am.service.validators.webprotection.CspSettingsValidator;
+import io.gravitee.am.service.validators.webprotection.XFrameSettingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -46,16 +47,19 @@ public class DomainValidatorImpl implements DomainValidator {
     private final VirtualHostValidator virtualHostValidator;
     private final ClientRegistrationSettingsValidator clientRegistrationSettingsValidator;
     private final CspSettingsValidator cspSettingsValidator;
+    private final XFrameSettingsValidator xFrameSettingsValidator;
 
     @Autowired
     public DomainValidatorImpl(PathValidator pathValidator,
                                VirtualHostValidator virtualHostValidator,
                                ClientRegistrationSettingsValidator clientRegistrationSettingsValidator,
-                               CspSettingsValidator cspSettingsValidator){
+                               CspSettingsValidator cspSettingsValidator,
+                               XFrameSettingsValidator xFrameSettingsValidator){
         this.pathValidator = pathValidator;
         this.virtualHostValidator = virtualHostValidator;
         this.clientRegistrationSettingsValidator = clientRegistrationSettingsValidator;
         this.cspSettingsValidator = cspSettingsValidator;
+        this.xFrameSettingsValidator = xFrameSettingsValidator;
     }
 
     @Override
@@ -119,6 +123,7 @@ public class DomainValidatorImpl implements DomainValidator {
 
         chain.add(validateCertificateBasedAuthSettings(domain));
         chain.add(validateCspSettings(domain));
+        chain.add(validateXFrameSettings(domain));
 
         return Completable.merge(chain);
     }
@@ -151,6 +156,13 @@ public class DomainValidatorImpl implements DomainValidator {
             return Completable.complete();
         }
         return cspSettingsValidator.validate(domain.getWebProtectionSettings().getCsp());
+    }
+
+    private Completable validateXFrameSettings(Domain domain) {
+        if (domain.getWebProtectionSettings() == null || domain.getWebProtectionSettings().getXframe() == null) {
+            return Completable.complete();
+        }
+        return xFrameSettingsValidator.validate(domain.getWebProtectionSettings().getXframe());
     }
 
 }
