@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.CertificateInfo;
@@ -101,6 +103,7 @@ public class TokenServiceImpl implements TokenService {
             Claims.GIO_INTERNAL_SUB, Claims.DOMAIN, Claims.CLAIMS);
     private static final Set<String> LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS = Stream.concat(
             LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS.stream(), Stream.of(Claims.ORIG_RESOURCES)).collect(Collectors.toUnmodifiableSet());
+    private static final TypeReference<Map<String, Object>> CLAIMS_TYPE = new TypeReference<>() {};
 
     @Autowired
     private BackwardCompatibleTokenRepository tokenRepository;
@@ -134,6 +137,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private IdJagService idJagService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Setter
     @Value("${handlers.oauth2.response.strict:false}")
@@ -192,9 +198,12 @@ public class TokenServiceImpl implements TokenService {
     private Maybe<Token> introspectAs(String token, JWTService.TokenType hint, String callerClientId) {
         return introspectionTokenService.introspect(token, hint, callerClientId)
                 .onErrorResumeWith(Maybe.empty())
-                .map(result -> result.tokenType() == REFRESH_TOKEN
-                        ? convertRefreshToken(result.jwt(), result.clientId())
-                        : convertAccessToken(result.jwt(), result.clientId()));
+                .map(result -> {
+                    result.withheldClaims().forEach(result.jwt()::putIfAbsent);
+                    return result.tokenType() == REFRESH_TOKEN
+                            ? convertRefreshToken(result.jwt(), result.clientId())
+                            : convertAccessToken(result.jwt(), result.clientId());
+                });
     }
 
     @Override
@@ -218,13 +227,9 @@ public class TokenServiceImpl implements TokenService {
                     // create JWT refresh token
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // filter after the refresh token copied the access token claims
-                    if (client.isLightweightJwtEnabled()) {
-                        List<String> allowlist = client.lightweightJwtAllowedAccessTokenClaims();
-                        accessToken.retainClaims(withAllowlist(LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, allowlist));
-                        if (refreshToken != null) {
-                            refreshToken.retainClaims(withAllowlist(LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS, allowlist));
-                        }
-                    }
+                    boolean lightweightJwt = client.isLightweightJwtEnabled();
+                    Map<String, Object> accessTokenWithheldClaims = lightweightJwt ? withholdAccessTokenClaims(client, accessToken) : null;
+                    Map<String, Object> refreshTokenWithheldClaims = lightweightJwt && refreshToken != null ? withholdRefreshTokenClaims(client, refreshToken) : null;
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
                     return Single.zip(
@@ -232,7 +237,7 @@ public class TokenServiceImpl implements TokenService {
                                     (refreshToken != null ? jwtService.encodeJwt(refreshToken, client).map(Optional::of) : Single.just(Optional.<EncodedJWT>empty())),
                                     (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(tokenWithCertInfo -> enhanceToken(oAuth2Request, client, endUser, executionContext, tokenWithCertInfo))
-                            .flatMap(tokenWithCertInfo -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> tokenWithCertInfo))
+                            .flatMap(tokenWithCertInfo -> storeTokens(accessToken, accessTokenWithheldClaims, refreshToken, refreshTokenWithheldClaims, oAuth2Request, endUser).toSingle(() -> tokenWithCertInfo))
                             .doOnSuccess(tokenWithCertInfo -> auditService.report(buildTokenCreatedAudit(oAuth2Request, client, endUser, accessToken, refreshToken, tokenWithCertInfo)));
                 })
                 .map(tokenWithCertificateInfo -> tokenWithCertificateInfo.token)
@@ -365,14 +370,16 @@ public class TokenServiceImpl implements TokenService {
         return tokenRepository.deleteByJti(refreshToken);
     }
 
-    private Completable storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
+    private Completable storeTokens(JWT accessToken, Map<String, Object> accessTokenWithheldClaims,
+                                    JWT refreshToken, Map<String, Object> refreshTokenWithheldClaims,
+                                    OAuth2Request oAuth2Request, User user) {
         return tokenManager.storeTokens(
-                convert(accessToken, refreshToken, oAuth2Request, user),
-                refreshToken != null ? convert(refreshToken, user, oAuth2Request) : null);
+                convert(accessToken, accessTokenWithheldClaims, refreshToken, oAuth2Request, user),
+                refreshToken != null ? convert(refreshToken, refreshTokenWithheldClaims, user, oAuth2Request) : null);
     }
 
-    private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
-        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, user, oAuth2Request);
+    private io.gravitee.am.repository.oauth2.model.AccessToken convert(JWT token, Map<String, Object> withheldClaims, JWT refreshToken, OAuth2Request oAuth2Request, User user) {
+        io.gravitee.am.repository.oauth2.model.AccessToken accessToken = convertCommon(new io.gravitee.am.repository.oauth2.model.AccessToken(), token, withheldClaims, user, oAuth2Request);
         // set authorization code
         accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
         // set refresh token
@@ -380,11 +387,11 @@ public class TokenServiceImpl implements TokenService {
         return accessToken;
     }
 
-    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, User user, OAuth2Request request) {
-        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, user, request);
+    private io.gravitee.am.repository.oauth2.model.RefreshToken convert(JWT token, Map<String, Object> withheldClaims, User user, OAuth2Request request) {
+        return convertCommon(new io.gravitee.am.repository.oauth2.model.RefreshToken(), token, withheldClaims, user, request);
     }
 
-    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, User user, OAuth2Request request) {
+    private <T extends io.gravitee.am.repository.oauth2.model.Token> T convertCommon(T newToken, JWT sourceToken, Map<String, Object> withheldClaims, User user, OAuth2Request request) {
         newToken.setId(RandomString.generate());
         newToken.setToken(sourceToken.getJti());
         newToken.setDomain(sourceToken.getDomain());
@@ -395,6 +402,7 @@ public class TokenServiceImpl implements TokenService {
         newToken.setCreatedAt(new Date(sourceToken.getIat() * 1000));
         newToken.setExpireAt(new Date(sourceToken.getExp() * 1000));
         newToken.setJkt(request.getConfirmationMethodJkt());
+        newToken.setWithheldClaims(withheldClaims);
         return newToken;
     }
 
@@ -605,6 +613,22 @@ public class TokenServiceImpl implements TokenService {
         log.debug("resources: {}, JTI: {}, client ID:{}", jsonArray, jwt.getJti(), request.getClientId());
 
         jwt.put(Claims.AUD, jsonArray);
+    }
+
+    private Map<String, Object> withholdAccessTokenClaims(Client client, JWT accessToken) {
+        return withholdClaims(client, accessToken, LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS);
+    }
+
+    private Map<String, Object> withholdRefreshTokenClaims(Client client, JWT refreshToken) {
+        return withholdClaims(client, refreshToken, LIGHTWEIGHT_REFRESH_TOKEN_CLAIMS);
+    }
+
+    private Map<String, Object> withholdClaims(Client client, JWT jwt, Set<String> reservedClaims) {
+        Set<String> retainedClaims = withAllowlist(reservedClaims, client.lightweightJwtAllowedAccessTokenClaims());
+        Map<String, Object> withheldClaims = new HashMap<>(jwt);
+        withheldClaims.keySet().removeAll(retainedClaims);
+        jwt.retainClaims(retainedClaims);
+        return withheldClaims.isEmpty() ? null : objectMapper.convertValue(withheldClaims, CLAIMS_TYPE);
     }
 
     private JWT createRefreshTokenJWT(OAuth2Request request, Client client, User user, JWT accessToken) {

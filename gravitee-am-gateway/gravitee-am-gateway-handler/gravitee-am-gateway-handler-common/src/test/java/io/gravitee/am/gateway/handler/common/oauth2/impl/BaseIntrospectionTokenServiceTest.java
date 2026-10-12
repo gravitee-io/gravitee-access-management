@@ -452,7 +452,7 @@ public class BaseIntrospectionTokenServiceTest {
                                       ClientLookupService clientLookupService,
                                       ProtectedResourceManager protectedResourceManager,
                                       Environment environment) {
-            super(jwtService, clientLookupService, protectedResourceManager, environment);
+            super(jwtService, clientLookupService, protectedResourceManager, environment, false);
         }
 
         @Override

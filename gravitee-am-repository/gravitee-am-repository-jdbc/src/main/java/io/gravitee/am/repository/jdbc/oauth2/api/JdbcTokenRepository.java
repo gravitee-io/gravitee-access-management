@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.jdbc.common.RetryOnConcurrencyFailure;
@@ -22,6 +23,7 @@ import io.gravitee.am.repository.jdbc.common.RetryOnConcurrencyFailureConfigurat
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringTokenRepository;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
@@ -43,6 +45,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,6 +67,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
 
     private static final String ACCESS_TOKEN_PREFIX = "at_";
     private static final String REFRESH_TOKEN_PREFIX = "rt_";
+    private static final TypeReference<Map<String, Object>> WITHHELD_CLAIMS_TYPE = new TypeReference<>() {};
 
     private static final List<FieldSpec<JdbcToken, ?>> TOKEN_FIELDS = List.of(
             new FieldSpec<>("id", JdbcToken::getId, String.class),
@@ -78,7 +82,8 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
             new FieldSpec<>("type", JdbcToken::getType, String.class),
             new FieldSpec<>("parent_jti_1", JdbcToken::getParentJti1, String.class),
             new FieldSpec<>("parent_jti_2", JdbcToken::getParentJti2, String.class),
-            new FieldSpec<>("jkt", JdbcToken::getJkt, String.class));
+            new FieldSpec<>("jkt", JdbcToken::getJkt, String.class),
+            new FieldSpec<>("withheld_claims", JdbcToken::getWithheldClaims, String.class));
 
     private static final List<FieldSpec<JdbcToken, ?>> ACCESS_TOKEN_FIELDS = prefixed(ACCESS_TOKEN_PREFIX);
     private static final List<FieldSpec<JdbcToken, ?>> REFRESH_TOKEN_FIELDS = prefixed(REFRESH_TOKEN_PREFIX);
@@ -288,6 +293,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setDomain(entity.getDomain());
         result.setSubject(entity.getSubject());
         result.setJkt(entity.getJkt());
+        result.setWithheldClaims(JSONMapper.toCollectionOfBean(entity.getWithheldClaims(), WITHHELD_CLAIMS_TYPE));
         result.setAllParentJtis(new HashSet<>()); // parentIds are only needed to perform RECURSIVE delete
         if (entity.getCreatedAt() != null) {
             result.setCreatedAt(Date.from(entity.getCreatedAt().atZone(UTC).toInstant()));
@@ -307,6 +313,7 @@ public class JdbcTokenRepository extends AbstractJdbcRepository implements Token
         result.setDomain(token.getDomain());
         result.setSubject(token.getSubject());
         result.setJkt(token.getJkt());
+        result.setWithheldClaims(JSONMapper.toJson(token.getWithheldClaims()));
 
         Iterator<String> it = (token.getAllParentJtis() == null ? Stream.<String>empty() : token.getAllParentJtis().stream())
                 .filter(jti -> !jti.equals(result.getToken()))
