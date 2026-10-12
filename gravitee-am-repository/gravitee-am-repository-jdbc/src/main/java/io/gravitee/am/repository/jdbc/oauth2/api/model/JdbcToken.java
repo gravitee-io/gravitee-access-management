@@ -42,4 +42,7 @@ public class JdbcToken extends JdbcBaseToken {
 
     @Column("jkt")
     private String jkt;
+
+    @Column("withheld_claims")
+    private String withheldClaims;
 }
