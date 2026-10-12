@@ -29,6 +29,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
@@ -66,6 +67,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     protected Domain domain;
     private final AuthenticationFlowContextService authenticationFlowContextService;
     protected UserService userService;
+    protected GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     protected AbstractLogoutEndpoint(Domain domain,
                                   UserService userService,
@@ -134,7 +136,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
 
         List<String> registeredUris = client != null && !isEmpty(client.getPostLogoutRedirectUris()) ? client.getPostLogoutRedirectUris() : (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
         if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris, domain.isRedirectUriStrictMatching() || domain.usePlainFapiProfile())) {
-            routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
+            failLogout(routingContext, new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
             return;
         }
 
@@ -143,19 +145,20 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
             // to avoid URISyntaxException due to the space in the scope parameter value
             URI uri = UriBuilder.fromURIString(logoutRedirectUrl).build();
             if(uri.getUserInfo() != null){
-                routingContext.fail(new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
+                failLogout(routingContext, new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
                 return;
             }
         } catch (URISyntaxException ex){
             // the URI is invalid, only log the error to avoid regression
             // URI white list will reject the value if necessary
             LOGGER.warn("The post_logout_redirect_uri [{}] has syntax error redirect to error page: {}", logoutRedirectUrl, ex.getMessage());
-            routingContext.fail(new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
+            failLogout(routingContext, new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
             return;
         }
 
         // redirect the End-User
-        doRedirect0(routingContext, endSessionEndpoint == null ? logoutRedirectUrl : endSessionEndpoint);
+        // redirecting to the external OP end_session_endpoint is only a hand-over, the logout is counted by the callback endpoint
+        doRedirect0(routingContext, endSessionEndpoint == null ? logoutRedirectUrl : endSessionEndpoint, endSessionEndpoint == null);
     }
 
     private String getLogoutRedirectUrl(MultiMap params) {
@@ -213,10 +216,21 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                                 doRedirect(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), routingContext);
                             } else {
                                 routingContext.response().setStatusCode(200).end();
+                                metricProvider.incrementLogoutSuccess();
                             }
                         },
-                        routingContext::fail
+                        error -> failLogout(routingContext, error)
                 );
+    }
+
+    protected void failLogout(RoutingContext routingContext, Throwable error) {
+        metricProvider.incrementLogoutFailure();
+        routingContext.fail(error);
+    }
+
+    protected void failLogout(RoutingContext routingContext, int statusCode) {
+        metricProvider.incrementLogoutFailure();
+        routingContext.fail(statusCode);
     }
 
     private boolean needToInvalidateTokens(RoutingContext routingContext) {
@@ -232,7 +246,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         return Boolean.parseBoolean(invalidateTokens);
     }
 
-    private void doRedirect0(RoutingContext routingContext, String url) {
+    private void doRedirect0(RoutingContext routingContext, String url, boolean logoutCompleted) {
         // state OPTIONAL. Opaque value used by the RP to maintain state between the logout request and the callback to the endpoint specified by the post_logout_redirect_uri parameter.
         // If included in the logout request, the OP passes this value back to the RP using the state parameter when redirecting the User Agent back to the RP.
         UriBuilder uriBuilder = UriBuilder.fromURIString(url);
@@ -247,9 +261,12 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                     .putHeader(HttpHeaders.LOCATION, uriBuilder.buildString())
                     .setStatusCode(302)
                     .end();
+            if (logoutCompleted) {
+                metricProvider.incrementLogoutSuccess();
+            }
         } catch (Exception ex) {
             LOGGER.error("An error has occurred during post-logout redirection", ex);
-            routingContext.fail(500);
+            failLogout(routingContext, 500);
         }
     }
 

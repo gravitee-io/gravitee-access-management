@@ -96,7 +96,7 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
                 logout(routingContext);
                 break;
             default:
-                routingContext.fail(405);
+                failLogout(routingContext, 405);
         }
     }
 

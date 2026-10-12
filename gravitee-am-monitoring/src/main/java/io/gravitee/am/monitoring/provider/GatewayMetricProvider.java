@@ -219,4 +219,12 @@ public class GatewayMetricProvider {
     public void incrementError() {
         this.errorFailure.increment();
     }
+
+    public void incrementLogoutSuccess() {
+        this.logoutSuccess.increment();
+    }
+
+    public void incrementLogoutFailure() {
+        this.logoutFailure.increment();
+    }
 }

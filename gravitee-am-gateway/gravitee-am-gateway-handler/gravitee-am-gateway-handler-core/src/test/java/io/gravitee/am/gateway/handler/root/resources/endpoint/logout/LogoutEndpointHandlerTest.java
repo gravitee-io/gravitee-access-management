@@ -45,6 +45,7 @@ import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -87,12 +88,17 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private WebClient webClient;
 
+    private GatewayMetricProvider metricProvider;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
+        metricProvider = mock(GatewayMetricProvider.class);
+        final LogoutEndpoint endpoint = new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient);
+        endpoint.metricProvider = metricProvider;
         router.route(HttpMethod.GET, "/logout")
-                .handler(new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient))
+                .handler(endpoint)
                 .failureHandler(new ErrorHandler("/error"));
     }
 
@@ -731,5 +737,35 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                     assertTrue(location.equals("https://dev"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldCountLogoutSuccess_onceRedirectDone() throws Exception {
+
+        testRequest(HttpMethod.GET, "/logout", null, resp -> {}, HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(metricProvider).incrementLogoutSuccess();
+        verify(metricProvider, never()).incrementLogoutFailure();
+    }
+
+    @Test
+    public void shouldCountLogoutFailure_whenPostLogoutRedirectUriMismatch() throws Exception {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
+        when(clientLookupService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            setUser(routingContext, endUser);
+            routingContext.next();
+        });
+
+        testRequest(HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest", null, resp -> {}, HttpStatusCode.FOUND_302, "Found", null);
+
+        verify(metricProvider, never()).incrementLogoutSuccess();
+        verify(metricProvider).incrementLogoutFailure();
     }
 }
