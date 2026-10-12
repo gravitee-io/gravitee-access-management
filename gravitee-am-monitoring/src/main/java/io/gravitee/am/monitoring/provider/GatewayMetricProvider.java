@@ -24,10 +24,18 @@ import io.micrometer.core.instrument.Tags;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_CONSENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_ERRORS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDPS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDP_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_INTROSPECTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_LOGOUT;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_CHALLENGES;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCES;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCE_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REVOKE;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_TOKENS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_USER_INFO;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_STATUS;
@@ -83,6 +91,50 @@ public class GatewayMetricProvider {
     private final CounterHelper socialFailedAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
             Tag.of(TAG_AUTH_STATUS, "FAILURE"),
             Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_EXTERNAL)));
+
+    private final CounterHelper introspectSuccess = new CounterHelper(METRICS_INTROSPECTS, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper introspectFailure = new CounterHelper(METRICS_INTROSPECTS, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper tokenSuccess = new CounterHelper(METRICS_TOKENS, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper tokenFailure = new CounterHelper(METRICS_TOKENS, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper revokeSuccess = new CounterHelper(METRICS_REVOKE, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper revokeFailure = new CounterHelper(METRICS_REVOKE, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper consentSuccess = new CounterHelper(METRICS_CONSENTS, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper consentFailure = new CounterHelper(METRICS_CONSENTS, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper errorFailure = new CounterHelper(METRICS_ERRORS);
+
+    private final CounterHelper userInfoSuccess = new CounterHelper(METRICS_USER_INFO, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper userInfoFailure = new CounterHelper(METRICS_USER_INFO, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper logoutSuccess = new CounterHelper(METRICS_LOGOUT, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper logoutFailure = new CounterHelper(METRICS_LOGOUT, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper mfaSuccess = new CounterHelper(METRICS_MFA_CHALLENGES, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper mfaFailure = new CounterHelper(METRICS_MFA_CHALLENGES, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
 
     public void incrementAppEvt() {
         this.appEvtCounter.increment();
@@ -162,5 +214,9 @@ public class GatewayMetricProvider {
         } else {
             this.internalFailedAuth.increment();
         }
+    }
+
+    public void incrementError() {
+        this.errorFailure.increment();
     }
 }

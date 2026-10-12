@@ -41,6 +41,15 @@ public interface Constants {
     String METRICS_PROCESSED_STAGING_EMAILS = METRICS_NAME_PREFIX + "processed_staging_emails";
     String METRICS_DROPPED_EMAILS = METRICS_NAME_PREFIX + "dropped_emails";
 
+    String METRICS_INTROSPECTS = METRICS_NAME_PREFIX + "introspect";
+    String METRICS_TOKENS = METRICS_NAME_PREFIX + "token_generation";
+    String METRICS_REVOKE = METRICS_NAME_PREFIX + "token_revocation";
+    String METRICS_CONSENTS = METRICS_NAME_PREFIX + "consent";
+    String METRICS_ERRORS = METRICS_NAME_PREFIX + "error";
+    String METRICS_USER_INFO = METRICS_NAME_PREFIX + "user_info_hint";
+    String METRICS_LOGOUT = METRICS_NAME_PREFIX + "logout";
+    String METRICS_MFA_CHALLENGES = METRICS_NAME_PREFIX + "mfa_challenge";
+
     String TAG_STATUS = "status";
     String TAG_AUTH_STATUS = "auth_status";
     String TAG_AUTH_IDP = "idp";
