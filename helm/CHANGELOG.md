@@ -4,7 +4,8 @@ This file documents all notable changes to [Gravitee.io Access Management 4.x](h
 
 ### 4.13.0
 
-- The management node now handles only the MANAGEMENT repository scope.
+- The management node now handles only the MANAGEMENT repository scope. 
+- Liquibase is now enabled by default for the Gateway process.
 
 ### 4.12.0
 
