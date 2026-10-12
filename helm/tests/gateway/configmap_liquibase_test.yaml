@@ -1,0 +1,27 @@
+suite: Gateway configMap - liquibase
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Should enable liquibase in the gravitee.yml by default
+    template: gateway/gateway-configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "(?m)^liquibase:\n  enabled: true$"
+
+  - it: Should disable liquibase in the gravitee.yml when gateway.liquibase.enabled is false
+    template: gateway/gateway-configmap.yaml
+    set:
+      gateway:
+        liquibase:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchRegex:
+          path: data["gravitee.yml"]
+          pattern: "(?m)^liquibase:\n  enabled: false$"
