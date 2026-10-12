@@ -235,6 +235,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         tokenMongo.setExpireAt(token.getExpireAt());
         tokenMongo.setParentJtis(token.getAllParentJtis());
         tokenMongo.setJkt(token.getJkt());
+        tokenMongo.setWithheldClaims(token.getWithheldClaims() != null ? new Document(token.getWithheldClaims()) : null);
         return tokenMongo;
     }
 
@@ -259,6 +260,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         accessToken.setExpireAt(tokenMongo.getExpireAt());
         accessToken.setAllParentJtis(tokenMongo.getParentJtis());
         accessToken.setJkt(tokenMongo.getJkt());
+        accessToken.setWithheldClaims(tokenMongo.getWithheldClaims());
         return accessToken;
     }
 
@@ -277,6 +279,7 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
         refreshToken.setExpireAt(tokenMongo.getExpireAt());
         refreshToken.setAllParentJtis(tokenMongo.getParentJtis());
         refreshToken.setJkt(tokenMongo.getJkt());
+        refreshToken.setWithheldClaims(tokenMongo.getWithheldClaims());
         return refreshToken;
     }
 }

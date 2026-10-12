@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
@@ -59,11 +60,14 @@ abstract class BaseIntrospectionTokenService {
     private final ProtectedResourceManager protectedResourceManager;
     private final boolean isLegacyRfc8707Enabled;
     private final int offlineVerificationTimerSeconds;
-    
+    private final boolean requireStoredTokenLookupForLightweightJwt;
+
     BaseIntrospectionTokenService(JWTService jwtService,
                                   ClientLookupService clientLookupService,
                                   ProtectedResourceManager protectedResourceManager,
-                                  Environment environment) {
+                                  Environment environment,
+                                  boolean requireStoredTokenLookupForLightweightJwt) {
+        this.requireStoredTokenLookupForLightweightJwt = requireStoredTokenLookupForLightweightJwt;
         this.jwtService = jwtService;
         this.clientLookupService = clientLookupService;
         this.protectedResourceManager = protectedResourceManager;
@@ -77,24 +81,22 @@ abstract class BaseIntrospectionTokenService {
         return jwtService.decode(token, hint)
                 .flatMap(jwt -> validateAudienceAndGetCertificateId(jwt, callerClientId)
                         .flatMap(certificateId -> jwtService.decodeAndVerify(token, Maybe.just(certificateId), hint)))
-                .toMaybe()
-                .flatMap(jwt -> {
-                    // Just check the JWT signature and JWT validity if offline verification option is enabled
-                    // or if the token has just been created (could not be in database so far because of async database storing process delay)
-                    if (offlineVerification || Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + offlineVerificationTimerSeconds))) {
-                        return Maybe.just(new IntrospectionResult(jwt, null, hint));
-                    }
+                .flatMapMaybe(jwt -> shouldLookUpStoredToken(jwt, offlineVerification)
+                        .flatMapMaybe(lookUpStoredToken -> {
+                            if (!lookUpStoredToken) {
+                                return Maybe.just(new IntrospectionResult(jwt, null, hint));
+                            }
 
-                    // check if token is not revoked
-                    return findByToken(jwt.getJti())
-                            .switchIfEmpty(Maybe.error(() -> new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
-                            .map(storedToken -> {
-                                if (storedToken.getExpireAt().before(new Date())) {
-                                    throw new InvalidTokenException("The token expired", "Token with JTI [" + jwt.getJti() + "] is expired", jwt);
-                                }
-                                return new IntrospectionResult(jwt, storedToken.getClient(), storedTokenType(storedToken));
-                            });
-                })
+                            // check if token is not revoked
+                            return findByToken(jwt.getJti())
+                                    .switchIfEmpty(Maybe.error(() -> new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
+                                    .map(storedToken -> {
+                                        if (storedToken.getExpireAt().before(new Date())) {
+                                            throw new InvalidTokenException("The token expired", "Token with JTI [" + jwt.getJti() + "] is expired", jwt);
+                                        }
+                                        return new IntrospectionResult(jwt, storedToken.getClient(), storedTokenType(storedToken), storedToken.getWithheldClaims());
+                                    });
+                        }))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof JWTException) {
                         if (log.isDebugEnabled()) {
@@ -121,6 +123,38 @@ abstract class BaseIntrospectionTokenService {
                     }
                     return Maybe.error(ex);
                 });
+    }
+
+    private Single<Boolean> shouldLookUpStoredToken(JWT jwt, boolean offlineVerification) {
+        if (offlineVerification) {
+            return Single.just(false);
+        }
+        if (!Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + offlineVerificationTimerSeconds))) {
+            return Single.just(true);
+        }
+        if (!requireStoredTokenLookupForLightweightJwt) {
+            return Single.just(false);
+        }
+        return isIssuedToLightweightJwtClient(jwt);
+    }
+
+    private Single<Boolean> isIssuedToLightweightJwtClient(JWT jwt) {
+        String clientId = issuedToClientId(jwt);
+        if (clientId == null) {
+            return Single.just(true);
+        }
+        return clientLookupService.findByDomainAndClientId(jwt.getDomain(), clientId)
+                .map(Client::isLightweightJwtEnabled)
+                .defaultIfEmpty(true)
+                .onErrorReturnItem(true);
+    }
+
+    private static String issuedToClientId(JWT jwt) {
+        if (jwt.get(Claims.CLIENT_ID) instanceof String clientId) {
+            return clientId;
+        }
+        List<String> audiences = jwt.getAudList();
+        return audiences.size() == 1 ? audiences.get(0) : null;
     }
 
     private static TokenType storedTokenType(Token storedToken) {

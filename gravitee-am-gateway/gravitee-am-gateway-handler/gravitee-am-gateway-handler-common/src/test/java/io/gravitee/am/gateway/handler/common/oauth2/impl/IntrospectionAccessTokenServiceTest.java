@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -144,6 +145,28 @@ public class IntrospectionAccessTokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         // repository should not be call because the token is too recent
+        verify(tokenRepository, never()).findAccessTokenByJti(jwt.getJti());
+    }
+
+    @Test
+    public void shouldNotLookUpRecentTokenOfLightweightJwtClient() {
+        final String token = "token";
+        final JWT jwt = new JWT();
+        jwt.setJti("jti");
+        jwt.setDomain("domain");
+        jwt.setAud("client");
+        jwt.setIat(Instant.now().getEpochSecond());
+        final Client client = new Client();
+        client.setClientId("client");
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
+
+        when(jwtService.decode(token, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(jwtService.decodeAndVerify(eq(token), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspect(token, false).test();
+
+        testObserver.assertValue(jwt);
         verify(tokenRepository, never()).findAccessTokenByJti(jwt.getJti());
     }
 

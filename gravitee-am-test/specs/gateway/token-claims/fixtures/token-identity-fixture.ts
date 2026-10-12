@@ -37,7 +37,7 @@ import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { FlowEntityTypeEnum } from '../../../../api/management/models';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createScope } from '@management-commands/scope-management-commands';
-import { introspectToken, performGet, performPost, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
@@ -145,9 +145,9 @@ export interface TokenIdentityFixture extends Fixture {
   /** Calls /oidc/userinfo with the supplied access token. */
   userinfo: (accessTokenValue: string) => Promise<Record<string, any>>;
   /** Introspects a token as the fixture application. */
-  introspect: (token: string) => Promise<Record<string, any>>;
+  introspect: (token: string, tokenTypeHint?: TokenTypeHint) => Promise<Record<string, any>>;
   /** Revokes a token as the fixture application. */
-  revoke: (token: string) => Promise<void>;
+  revoke: (token: string, tokenTypeHint?: TokenTypeHint) => Promise<void>;
   /**
    * Patches the Lightweight JWT setting, then polls until a fresh access token reflects it.
    * `probeClaim` is a custom claim the setting removes. The allowlists replace the stored ones.
@@ -164,6 +164,8 @@ export function decodeToken(token: string): DecodedToken {
   expect(parts).toHaveLength(3);
   return { raw: token, payload: JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) };
 }
+
+export type TokenTypeHint = 'access_token' | 'refresh_token';
 
 export interface TokenCustomClaim {
   tokenType: 'ACCESS_TOKEN' | 'ID_TOKEN';
@@ -426,10 +428,18 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       return response.body;
     };
 
-    const introspect = (token: string) => introspectToken(oidc.introspection_endpoint, token, applicationBase64Token(app));
+    const introspect = async (token: string, tokenTypeHint?: TokenTypeHint) => {
+      const body = `token=${encodeURIComponent(token)}` + (tokenTypeHint ? `&token_type_hint=${tokenTypeHint}` : '');
+      const response = await performPost(oidc.introspection_endpoint, '', body, {
+        ...FORM_HEADERS,
+        Authorization: basicAuth(),
+      }).expect(200);
+      return response.body;
+    };
 
-    const revoke = async (token: string) => {
-      await performPost(oidc.revocation_endpoint, '', `token=${encodeURIComponent(token)}`, {
+    const revoke = async (token: string, tokenTypeHint?: TokenTypeHint) => {
+      const body = `token=${encodeURIComponent(token)}` + (tokenTypeHint ? `&token_type_hint=${tokenTypeHint}` : '');
+      await performPost(oidc.revocation_endpoint, '', body, {
         ...FORM_HEADERS,
         Authorization: basicAuth(),
       }).expect(200);

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
@@ -76,6 +77,9 @@ public class TokenMongo {
 
     @BsonProperty("jkt")
     private String jkt;
+
+    @BsonProperty("withheld_claims")
+    private Document withheldClaims;
 
     @Override
     public boolean equals(Object o) {

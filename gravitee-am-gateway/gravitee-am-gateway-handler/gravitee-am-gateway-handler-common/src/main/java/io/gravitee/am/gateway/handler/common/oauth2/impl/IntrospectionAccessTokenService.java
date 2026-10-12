@@ -36,7 +36,7 @@ public class IntrospectionAccessTokenService extends BaseIntrospectionTokenServi
                                            ProtectedResourceManager protectedResourceManager,
                                            Environment environment,
                                            TokenRepository tokenRepository) {
-        super(jwtService, clientLookupService, protectedResourceManager, environment);
+        super(jwtService, clientLookupService, protectedResourceManager, environment, false);
         this.tokenRepository = tokenRepository;
     }
 

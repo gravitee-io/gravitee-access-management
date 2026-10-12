@@ -20,6 +20,7 @@ import lombok.Setter;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -74,6 +75,7 @@ public abstract class Token {
      */
     private String jkt;
 
+    private Map<String, Object> withheldClaims;
 
     @Override
     public boolean equals(Object o) {
