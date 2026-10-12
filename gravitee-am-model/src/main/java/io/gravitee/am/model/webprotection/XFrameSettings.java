@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
  * @author GraviteeSource Team
  */
@@ -27,6 +29,10 @@ import lombok.Setter;
 @Schema(title = "X-Frame-Options settings", description = "Controls whether the domain's pages may be " +
         "embedded in frames on other origins.")
 public class XFrameSettings {
+
+    public static final String DENY = "DENY";
+    public static final String SAMEORIGIN = "SAMEORIGIN";
+    public static final List<String> ALLOWED_ACTIONS = List.of(DENY, SAMEORIGIN);
 
     @Schema(description = "Whether X-Frame-Options settings are inherited from the gateway defaults (gravitee.yml). " +
             "When null, legacy behaviour applies: enabled=true overrides and enabled=false inherits.",
@@ -38,7 +44,7 @@ public class XFrameSettings {
     private boolean enabled;
 
     @Schema(description = "X-Frame-Options action. Omit to leave the header out.",
-            example = "DENY", allowableValues = {"DENY", "SAMEORIGIN"})
+            example = DENY, allowableValues = {DENY, SAMEORIGIN})
     private String action;
 
     public XFrameSettings() {

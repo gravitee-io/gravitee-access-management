@@ -20,6 +20,7 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.webprotection.CspSettings;
 import io.gravitee.am.model.webprotection.WebProtectionSettings;
+import io.gravitee.am.model.webprotection.XFrameSettings;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.domain.DomainValidator;
@@ -28,6 +29,7 @@ import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSetting
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
 import io.gravitee.am.service.validators.webprotection.CspSettingsValidator;
+import io.gravitee.am.service.validators.webprotection.XFrameSettingsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
@@ -52,6 +54,7 @@ public class DomainValidatorTest {
 
     private DomainValidator domainValidator;
     private CspSettingsValidator cspSettingsValidator;
+    private XFrameSettingsValidator xFrameSettingsValidator;
 
     @Before
     public void before(){
@@ -62,7 +65,8 @@ public class DomainValidatorTest {
         ClientRegistrationSettingsValidator clientRegistrationSettingsValidator = new ClientRegistrationSettingsValidator(applicationService);
 
         cspSettingsValidator = Mockito.mock(CspSettingsValidator.class);
-        domainValidator = new DomainValidatorImpl(pathValidator, new VirtualHostValidatorImpl(pathValidator), clientRegistrationSettingsValidator, cspSettingsValidator);
+        xFrameSettingsValidator = Mockito.mock(XFrameSettingsValidator.class);
+        domainValidator = new DomainValidatorImpl(pathValidator, new VirtualHostValidatorImpl(pathValidator), clientRegistrationSettingsValidator, cspSettingsValidator, xFrameSettingsValidator);
     }
 
     @Test
@@ -209,6 +213,7 @@ public class DomainValidatorTest {
         domainValidator.validate(getValidDomain(), emptyList()).test().assertNoErrors();
 
         verify(cspSettingsValidator, never()).validate(any());
+        verify(xFrameSettingsValidator, never()).validate(any());
     }
 
     @Test
@@ -219,6 +224,7 @@ public class DomainValidatorTest {
         domainValidator.validate(domain, emptyList()).test().assertNoErrors();
 
         verify(cspSettingsValidator, never()).validate(any());
+        verify(xFrameSettingsValidator, never()).validate(any());
     }
 
     @Test
@@ -253,6 +259,47 @@ public class DomainValidatorTest {
                 .assertError(throwable -> expectedMessage.equals(throwable.getMessage()));
 
         verify(cspSettingsValidator).validate(cspSettings);
+    }
+
+    @Test
+    public void validate_xFrameSettings_callsXFrameValidator() {
+        XFrameSettings xFrameSettings = new XFrameSettings();
+        Domain domain = domainWithXFrame(xFrameSettings);
+        when(xFrameSettingsValidator.validate(xFrameSettings)).thenReturn(Completable.complete());
+
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
+
+        verify(xFrameSettingsValidator).validate(xFrameSettings);
+    }
+
+    @Test
+    public void validate_xFrameSettingsError_surfacesValidatorMessage() {
+        assertXFrameErrorPropagates(new InvalidDomainException("ALLOW-FROM"), InvalidDomainException.class, "ALLOW-FROM");
+    }
+
+    @Test
+    public void validate_xFrameSettingsUnexpectedError_isNotDisguisedAsAValidationFailure() {
+        assertXFrameErrorPropagates(new IllegalStateException("validator failed"), IllegalStateException.class, "validator failed");
+    }
+
+    private void assertXFrameErrorPropagates(Throwable validatorError, Class<? extends Throwable> expectedType, String expectedMessage) {
+        XFrameSettings xFrameSettings = new XFrameSettings();
+        Domain domain = domainWithXFrame(xFrameSettings);
+        when(xFrameSettingsValidator.validate(xFrameSettings)).thenReturn(Completable.error(validatorError));
+
+        domainValidator.validate(domain, emptyList()).test()
+                .assertError(expectedType)
+                .assertError(throwable -> expectedMessage.equals(throwable.getMessage()));
+
+        verify(xFrameSettingsValidator).validate(xFrameSettings);
+    }
+
+    private Domain domainWithXFrame(XFrameSettings xFrameSettings) {
+        Domain domain = getValidDomain();
+        WebProtectionSettings webProtectionSettings = new WebProtectionSettings();
+        webProtectionSettings.setXframe(xFrameSettings);
+        domain.setWebProtectionSettings(webProtectionSettings);
+        return domain;
     }
 
     private Domain domainWithCsp(CspSettings cspSettings) {
