@@ -227,4 +227,12 @@ public class GatewayMetricProvider {
     public void incrementLogoutFailure() {
         this.logoutFailure.increment();
     }
+
+    public void incrementUserInfoSuccess() {
+        this.userInfoSuccess.increment();
+    }
+
+    public void incrementUserInfoFailure() {
+        this.userInfoFailure.increment();
+    }
 }
