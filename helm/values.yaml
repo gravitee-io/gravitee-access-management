@@ -709,7 +709,7 @@ gateway:
   reloadOnConfigChange: true
 
   liquibase:
-    enabled: false
+    enabled: true
 
   deployment:
     # Annotations to apply to the deployment
