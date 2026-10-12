@@ -40,6 +40,7 @@ import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.UserProperties;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -91,7 +92,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final SubjectManager subjectManager;
     private final ExecutionContextFactory executionContextFactory;
-
+    private GatewayMetricProvider metricProvider;
     private final boolean legacyOpenidScope;
 
     public UserInfoEndpoint(UserEnhancer userEnhancer,
@@ -108,6 +109,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         this.legacyOpenidScope = environment.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false);
         this.subjectManager = subjectManager;
         this.executionContextFactory = executionContextFactory;
+        this.metricProvider = new GatewayMetricProvider();
     }
 
     @Override
@@ -145,12 +147,18 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                         }
                 )
                 .subscribe(
-                        buffer -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .end(buffer)
+                        buffer -> {
+                            metricProvider.incrementUserInfoSuccess();
+                            context.response()
+                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                    .end(buffer);
+                        }
                         ,
-                        context::fail
+                        error -> {
+                            metricProvider.incrementUserInfoFailure();
+                            context.fail(error);
+                        }
                 );
     }
 
