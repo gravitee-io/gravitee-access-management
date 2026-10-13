@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.attestation;
 
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.GraviteeWebAuthnOptions;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.webauthn.RelyingParty;
@@ -34,7 +35,7 @@ public class AttestationTest {
     public void testU2FAttestation() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "Bo-VjHOkJZy8DjnCJnIc0Oxt9QAz5upMdSJxNbd-GyAo6MNIvPBb9YsUlE0ZJaaWXtWH5FQyPS6bT_e698IirQ==")
@@ -60,7 +61,7 @@ public class AttestationTest {
     public void testU2FHypersecuAttestation() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "HRiuOZKJ6yNnBrSnocnFuGgsjcAZICl4-0uEDAQHCIXncWQCkYUBvvUzZQovrxmeB9Qm23hmj6PnzWyoiWtt8w")
@@ -86,7 +87,7 @@ public class AttestationTest {
     public void testTPMAttestation() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "hWzdFiPbOMQ5KNBsMhs-Zeh8F0iTHrH63YKkrxJFgjQ")
@@ -111,7 +112,7 @@ public class AttestationTest {
     public void testPackedAttestation() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "sL39APyTmisrjh11vghaqNfuruLQmCfR0c1ryKtaQ81jkEhNa5u9xLTnkibvXC9YpzBLFwWEZ3k9CR_sxzm_pWYbBOtKxeZu9z2GT8b6QW4iQvRlyumCT3oENx_8401r")
@@ -137,7 +138,7 @@ public class AttestationTest {
     public void testPackedFullAttestationSample() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "wsLryOAxXMU54s2fCSWPzWjXHOBKPploN-UHftj4_rpIu6BZxNXppm82f7Y6iX9FEOKKeS5-N2TALeyzLnJfAA")
@@ -162,7 +163,7 @@ public class AttestationTest {
     public void testPackedSurrogateAttestationSample() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "H6X2BnnjgOzu_Oj87vpRnwMJeJYVzwM3wtY1lhAfQ14")
@@ -187,7 +188,7 @@ public class AttestationTest {
     public void testAndroidSafetyNetAttestation() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
@@ -212,7 +213,7 @@ public class AttestationTest {
     public void testAppleAttestation() {
         WebAuthn webAuthN = WebAuthn.create(
                 Vertx.vertx(),
-                new GraviteeWebAuthnOptions().setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
+                new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()).setRelyingParty(new RelyingParty().setName("FIDO Examples Corporation")));
 
         JsonObject packedFullAttestationWebAuthnSample = new JsonObject()
                 .put("rawId", "J4lAqPXhefDrUD7oh5LQMbBH5TE")

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.parity;
 
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.ShippedTrustAnchors;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
@@ -53,6 +54,7 @@ final class VertxWebAuthnCeremonies implements WebAuthnCeremonies {
         ReflectionTestUtils.setField(factory, "vertx", vertx);
         ReflectionTestUtils.setField(factory, "domain", domain);
         ReflectionTestUtils.setField(factory, "credentialStore", credentialStore);
+        ReflectionTestUtils.setField(factory, "trustAnchorRegistry", ShippedTrustAnchors.registry());
         this.webAuthn = factory.getObject();
         applyProductionAttestationOrder(webAuthn);
     }

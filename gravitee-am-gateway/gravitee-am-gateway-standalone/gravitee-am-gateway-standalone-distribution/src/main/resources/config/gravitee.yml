@@ -407,6 +407,16 @@ handlers:
     clientErrorReporting:
       enabled: false
 
+# WebAuthn trust anchors: root certificates trusted to validate the attestation certificate chains of the
+# android-key, apple and android-safetynet formats, for every security domain (the certificates set in a
+# domain's WebAuthn settings come on top of them). Every .pem, .crt, .cer or .der file of the folder and of
+# its sub-directories is loaded. A file at the top level applies to the format it is named after
+# (apple.pem), a top-level directory to the format it is named after for every file below it
+# (android-key/...); files named after anything else apply to these three formats. Restart the gateway to reload.
+#webauthn:
+#  trustAnchors:
+#    path: ${gravitee.home}/webauthn/trust-anchors
+
 repositories:
   # Cluster bound to Mongo IDPs that have "use system cluster" option enabled (management or gateway)
   system-cluster: management

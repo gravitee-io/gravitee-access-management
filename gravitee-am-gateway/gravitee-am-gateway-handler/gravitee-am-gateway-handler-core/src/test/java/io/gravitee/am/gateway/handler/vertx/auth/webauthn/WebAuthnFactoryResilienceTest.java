@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.ShippedTrustAnchors;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -30,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -63,6 +66,7 @@ class WebAuthnFactoryResilienceTest {
     @BeforeEach
     void init() {
         when(vertx.getDelegate()).thenReturn(Vertx.vertx().getDelegate());
+        ReflectionTestUtils.setField(webAuthnFactory, "trustAnchorRegistry", ShippedTrustAnchors.registry());
     }
 
     private static List<X509Certificate> androidRootsOf(GraviteeWebAuthnOptions options) {
@@ -74,21 +78,24 @@ class WebAuthnFactoryResilienceTest {
     class LoadingCertificates {
 
         @Test
-        void shouldBuildOptionsWhenAnEmbeddedCertificateCannotBeLoaded() {
-            assertThatCode(GraviteeWebAuthnOptions::new)
-                    .as("Constructing the options must not propagate a certificate failure. If it does, the "
+        void shouldRegisterEveryShippedAndroidRoot() {
+            assertThat(androidRootsOf(new GraviteeWebAuthnOptions(ShippedTrustAnchors.registry())))
+                    .as("Every Android Key trust anchor shipped with the gateway must be available to the "
+                            + "attestation check, or devices enrolled under the missing root are refused.")
+                    .containsExactlyElementsOf(ShippedTrustAnchors.registry().roots(ANDROID_KEY));
+        }
+
+        @Test
+        void shouldBuildOptionsWithoutAnyTrustAnchor() {
+            assertThatCode(() -> new GraviteeWebAuthnOptions(WebAuthnTrustAnchorRegistry.empty()))
+                    .as("A gateway without trust anchor files must still build the options. If it does not, the "
                             + "webAuthn bean fails, rootProvider cannot be built and no security domain deploys.")
                     .doesNotThrowAnyException();
-
-            assertThat(androidRootsOf(new GraviteeWebAuthnOptions()))
-                    .as("Degrading is acceptable, emptying is not: at least one attestation root must survive "
-                            + "or no Android attestation can be validated at all.")
-                    .isNotEmpty();
         }
 
         @Test
         void shouldTolerateAnAdditionalRootCertificateThatCannotBeLoaded() {
-            GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions();
+            GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions(ShippedTrustAnchors.registry());
             List<X509Certificate> before = List.copyOf(androidRootsOf(options));
 
             assertThatCode(() -> options.pushAdditionalRootCertificate(ANDROID_KEY, UNLOADABLE_CERTIFICATE))
@@ -101,8 +108,8 @@ class WebAuthnFactoryResilienceTest {
         }
 
         @Test
-        void shouldKeepEmbeddedRootsWhenTheDomainSuppliesACertificateThatCannotBeLoaded() {
-            GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions();
+        void shouldKeepShippedRootsWhenTheDomainSuppliesACertificateThatCannotBeLoaded() {
+            GraviteeWebAuthnOptions options = new GraviteeWebAuthnOptions(ShippedTrustAnchors.registry());
             List<X509Certificate> before = List.copyOf(androidRootsOf(options));
 
             options.putRootCertificate("customer-root", UNLOADABLE_CERTIFICATE);
