@@ -24,7 +24,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import lombok.CustomLog;
@@ -42,9 +42,9 @@ import lombok.CustomLog;
 @CustomLog
 public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
 
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
 
-    public WebAuthnRegisterCredentialsEndpoint(DomainDataPlane domainDataPlane, WebAuthn webAuthn) {
+    public WebAuthnRegisterCredentialsEndpoint(DomainDataPlane domainDataPlane, WebAuthn4J webAuthn) {
         setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
     }

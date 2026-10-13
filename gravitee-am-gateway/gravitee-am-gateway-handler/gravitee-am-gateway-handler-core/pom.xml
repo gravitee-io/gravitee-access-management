@@ -118,10 +118,6 @@
 
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-auth-webauthn</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-webauthn4j</artifactId>
         </dependency>
         <dependency>

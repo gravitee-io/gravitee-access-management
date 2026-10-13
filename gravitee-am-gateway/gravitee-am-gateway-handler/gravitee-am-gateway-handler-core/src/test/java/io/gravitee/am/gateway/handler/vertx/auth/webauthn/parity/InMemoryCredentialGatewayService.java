@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Credential storage kept in memory, so the WebAuthn ceremonies run against the real
- * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore}
+ * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStorage}
  * and the test can read back exactly what AM would persist.
  *
  * @author GraviteeSource Team

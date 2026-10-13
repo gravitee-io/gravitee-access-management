@@ -30,8 +30,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.thymeleaf.util.StringUtils;
@@ -48,12 +47,12 @@ import lombok.CustomLog;
 @CustomLog
 public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
 
     public WebAuthnRegisterHandler(UserService userService,
                                    FactorManager factorManager,
                                    DomainDataPlane domainDataplane,
-                                   WebAuthn webAuthn,
+                                   WebAuthn4J webAuthn,
                                    CredentialGatewayService credentialService) {
         setUserService(userService);
         setFactorManager(factorManager);
@@ -198,11 +197,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
         // authenticate the user
         Single.fromCompletionStage(webAuthn.authenticate(
                 // authInfo
-                new WebAuthnCredentials()
-                        .setOrigin(webAuthnOrigin(ctx))
-                        .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
-                        .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                        .setWebauthn(webauthnResp)).toCompletionStage())
+                webAuthnCredentials(ctx, webauthnResp)).toCompletionStage())
                 .doFinally(() -> {
                     // invalidate the challenge
                     session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
