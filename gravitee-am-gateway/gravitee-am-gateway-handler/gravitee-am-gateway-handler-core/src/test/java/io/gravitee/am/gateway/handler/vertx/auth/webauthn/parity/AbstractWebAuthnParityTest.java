@@ -27,7 +27,6 @@ import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.parity.WebAuthnCeremonies.Ceremony;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.parity.WebAuthnCeremonies.CeremonyFailedException;
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
@@ -88,16 +87,18 @@ public abstract class AbstractWebAuthnParityTest {
     protected static Vertx vertx;
 
     protected InMemoryCredentialGatewayService credentialService;
-    protected RepositoryCredentialStore credentialStore;
+    protected JWTBuilder jwtBuilder;
+    /** {@code user.webAuthn.maxAllowCredentials} */
+    protected int maxAllowCredentials;
     protected WebAuthnSettings settings;
     protected Domain domain;
     private WebAuthnCeremonies ceremonies;
 
     /**
-     * Build the implementation under test for the domain. Called once per test, after the scenario has
-     * adjusted the domain settings.
+     * Build the implementation under test for the domain, with its credential store set up by
+     * {@link #configureCredentialStore(Object)}. Called after the scenario has adjusted the domain settings.
      */
-    protected abstract WebAuthnCeremonies createCeremonies(Vertx vertx, Domain domain, RepositoryCredentialStore credentialStore);
+    protected abstract WebAuthnCeremonies createCeremonies(Vertx vertx, Domain domain);
 
     /**
      * Deviation E1 of the AM-5812 plan: vertx-auth-webauthn never verifies the rpIdHash because the
@@ -140,7 +141,7 @@ public abstract class AbstractWebAuthnParityTest {
     void setUpDomain() throws Exception {
         credentialService = new InMemoryCredentialGatewayService();
 
-        JWTBuilder jwtBuilder = mock(JWTBuilder.class);
+        jwtBuilder = mock(JWTBuilder.class);
         MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
         when(jwtBuilder.sign(any())).thenAnswer(invocation -> "header.payload." + Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(sha256.digest(invocation.getArgument(0).toString().getBytes(StandardCharsets.UTF_8))));
@@ -152,19 +153,34 @@ public abstract class AbstractWebAuthnParityTest {
         domain.setId("domain-id");
         domain.setWebAuthnSettings(settings);
 
-        credentialStore = new RepositoryCredentialStore();
+        maxAllowCredentials = -1;
+        ceremonies = null;
+    }
+
+    /**
+     * Inject the in-memory credential service and the store settings of the scenario into a credential
+     * store of the implementation (both implementations use the same field names).
+     */
+    protected <T> T configureCredentialStore(T credentialStore) {
         ReflectionTestUtils.setField(credentialStore, "credentialService", credentialService);
         ReflectionTestUtils.setField(credentialStore, "jwtBuilder", jwtBuilder);
         ReflectionTestUtils.setField(credentialStore, "domain", domain);
-        ReflectionTestUtils.setField(credentialStore, "maxAllowCredentials", -1);
-        ceremonies = null;
+        ReflectionTestUtils.setField(credentialStore, "maxAllowCredentials", maxAllowCredentials);
+        return credentialStore;
     }
 
     protected WebAuthnCeremonies ceremonies() {
         if (ceremonies == null) {
-            ceremonies = createCeremonies(vertx, domain, credentialStore);
+            ceremonies = createCeremonies(vertx, domain);
         }
         return ceremonies;
+    }
+
+    /**
+     * Rebuild the implementation, to apply settings changed after the first ceremony.
+     */
+    protected void rebuildCeremonies() {
+        ceremonies = null;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -307,6 +323,16 @@ public abstract class AbstractWebAuthnParityTest {
         @Test
         void direct_attestation_rejects_android_key_not_chaining_to_a_trusted_root() {
             settings.setAttestationConveyancePreference(AttestationConveyancePreference.DIRECT);
+
+            assertThatThrownBy(() -> register(browser(new ChainShapeAuthenticators.AndroidKey(Shape.UP_TO_ROOT)), USERNAME))
+                    .isInstanceOf(CeremonyFailedException.class);
+            assertThat(credentialService.all()).isEmpty();
+        }
+
+        @Test
+        void direct_attestation_rejects_android_key_chaining_to_the_root_of_another_format() throws Exception {
+            settings.setAttestationConveyancePreference(AttestationConveyancePreference.DIRECT);
+            settings.setCertificates(Map.of("apple", testRootCertificate()));
 
             assertThatThrownBy(() -> register(browser(new ChainShapeAuthenticators.AndroidKey(Shape.UP_TO_ROOT)), USERNAME))
                     .isInstanceOf(CeremonyFailedException.class);
@@ -508,7 +534,8 @@ public abstract class AbstractWebAuthnParityTest {
             register(browser(passkey(0)), USERNAME);
             register(browser(passkey(0)), USERNAME);
             register(browser(passkey(0)), USERNAME);
-            ReflectionTestUtils.setField(credentialStore, "maxAllowCredentials", 2);
+            maxAllowCredentials = 2;
+            rebuildCeremonies();
 
             assertThat(allowedCredentialIds(ceremonies().loginOptions(USERNAME))).hasSize(2);
         }

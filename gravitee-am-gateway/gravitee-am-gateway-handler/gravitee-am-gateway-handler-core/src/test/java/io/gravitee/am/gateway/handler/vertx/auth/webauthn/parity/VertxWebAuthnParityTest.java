@@ -38,8 +38,8 @@ import java.nio.file.Path;
 class VertxWebAuthnParityTest extends AbstractWebAuthnParityTest {
 
     @Override
-    protected WebAuthnCeremonies createCeremonies(Vertx vertx, Domain domain, RepositoryCredentialStore credentialStore) {
-        return new VertxWebAuthnCeremonies(vertx, domain, credentialStore);
+    protected WebAuthnCeremonies createCeremonies(Vertx vertx, Domain domain) {
+        return new VertxWebAuthnCeremonies(vertx, domain, configureCredentialStore(new RepositoryCredentialStore()));
     }
 
     @Override
