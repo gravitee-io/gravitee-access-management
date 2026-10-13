@@ -665,7 +665,7 @@ public class TrustDomainServiceImpl implements TrustDomainService {
             return Optional.of("keyMaterial.jwksUrl is required when source=JWKS_URL");
         }
         return PrivateAddressGuard.validateHttpUrl(
-                "jwksUrl", jwksUrl, settings.isAllowUnsecuredHttpUri(), settings.isAllowPrivateIpAddress());
+                "JWKS URL", jwksUrl, settings.isAllowUnsecuredHttpUri(), settings.isAllowPrivateIpAddress());
     }
 
     private Optional<String> validateCertificate(String certificate) {

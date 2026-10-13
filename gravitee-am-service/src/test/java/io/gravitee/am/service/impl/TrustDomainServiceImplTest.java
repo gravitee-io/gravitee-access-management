@@ -233,6 +233,15 @@ public class TrustDomainServiceImplTest {
     }
 
     @Test
+    public void shouldNameJwksUrlFieldAsLabeled_whenHostDoesNotResolve() {
+        NewTrustedDomain input = jwksUrlInput("https://does-not-resolve.invalid/jwks.json");
+
+        service.create(domain, input, null).test()
+                .assertError(InvalidTrustDomainException.class)
+                .assertError(err -> err.getMessage().contains("JWKS URL host does-not-resolve.invalid could not be resolved"));
+    }
+
+    @Test
     public void create_allowsPrivateAddress_whenPolicyPermits() {
         keyRetrievalSettings.setAllowPrivateIpAddress(true);
         NewTrustedDomain input = jwksUrlInput("https://10.0.0.1/keys");
