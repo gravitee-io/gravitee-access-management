@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -58,6 +59,9 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
     @Autowired
     private RepositoryCredentialStore credentialStore;
 
+    @Autowired
+    private WebAuthnTrustAnchorRegistry trustAnchorRegistry;
+
     @Override
     public WebAuthn getObject() {
         WebAuthnSettings webAuthnSettings = domain.getWebAuthnSettings();
@@ -66,7 +70,7 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
         }
 
         // create WebAuthn options
-        WebAuthnOptions webAuthnOptions = new GraviteeWebAuthnOptions()
+        WebAuthnOptions webAuthnOptions = new GraviteeWebAuthnOptions(trustAnchorRegistry)
                 .setRelyingParty(getRelyingParty())
                 .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
                 .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
@@ -147,7 +151,7 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
 
     private WebAuthn defaultWebAuthn() {
         return WebAuthn.create(
-                vertx.getDelegate(), new GraviteeWebAuthnOptions().setRelyingParty(getRelyingParty()))
+                vertx.getDelegate(), new GraviteeWebAuthnOptions(trustAnchorRegistry).setRelyingParty(getRelyingParty()))
                 .authenticatorFetcher(this::fetchAuthenticator)
                 .authenticatorUpdater(this::storeAuthenticator);
     }

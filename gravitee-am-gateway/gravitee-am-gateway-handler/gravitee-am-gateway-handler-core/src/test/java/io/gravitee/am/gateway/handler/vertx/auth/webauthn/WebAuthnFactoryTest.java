@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -28,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -54,6 +56,7 @@ public class WebAuthnFactoryTest {
     @Before
     public void init() {
         when(vertx.getDelegate()).thenReturn(Vertx.vertx().getDelegate());
+        ReflectionTestUtils.setField(webAuthnFactory, "trustAnchorRegistry", WebAuthnTrustAnchorRegistry.empty());
     }
 
     @Test
