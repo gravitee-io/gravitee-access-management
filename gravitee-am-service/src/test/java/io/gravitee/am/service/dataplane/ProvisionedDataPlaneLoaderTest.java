@@ -34,12 +34,14 @@ import org.springframework.core.env.StandardEnvironment;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -262,6 +264,42 @@ class ProvisionedDataPlaneLoaderTest {
 
         assertThat(loaded).extracting(DataPlaneDescription::id).containsExactly("dp-1");
         assertThat(environment.getProperty("dataPlanes.provisioned.dp-1.mongodb.uri")).isEqualTo("mongodb://h:27017/db");
+    }
+
+    @Test
+    void should_register_a_definition_provisioned_after_startup_under_the_lock_the_sync_event_takes() {
+        when(dataPlaneDefinitionRepository.findAll()).thenReturn(Flowable.empty());
+        var loader = loader();
+        var registry = mock(DataPlaneRegistry.class);
+        loader.setRegistry(registry);
+        loader.load(loaded::add);
+        var locked = new AtomicBoolean();
+        doAnswer(invocation -> {
+            locked.set(Thread.holdsLock(loader));
+            return null;
+        }).when(registry).registerProvisioned(any());
+        when(dataPlaneDefinitionRepository.findById("dp-1"))
+                .thenReturn(Maybe.just(definition("dp-1", "mongodb", "{\"mongodb\":{\"uri\":\"mongodb://h:27017/db\"}}")));
+
+        loader.activate("dp-1").test().assertComplete();
+
+        assertThat(locked).isTrue();
+    }
+
+    @Test
+    void should_deactivate_under_the_lock_the_sync_event_takes() {
+        var loader = loader();
+        var registry = mock(DataPlaneRegistry.class);
+        loader.setRegistry(registry);
+        var locked = new AtomicBoolean();
+        doAnswer(invocation -> {
+            locked.set(Thread.holdsLock(loader));
+            return null;
+        }).when(registry).unregister("dp-1");
+
+        loader.deactivate("dp-1");
+
+        assertThat(locked).isTrue();
     }
 
     @Test
