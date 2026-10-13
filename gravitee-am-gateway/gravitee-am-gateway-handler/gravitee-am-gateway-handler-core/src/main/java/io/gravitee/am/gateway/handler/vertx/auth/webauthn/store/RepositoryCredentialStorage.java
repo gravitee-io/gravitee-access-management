@@ -56,7 +56,7 @@ public class RepositoryCredentialStorage implements CredentialStorage {
     @Autowired
     private CredentialGatewayService credentialService;
 
-    @Lazy // Need to be lazy loaded to ensure jwt builder is instantiated with all resolved configuration included eventual secrets.
+    @Lazy
     @Autowired
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;

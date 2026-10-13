@@ -106,6 +106,21 @@ class WebAuthn4JFactoryTest {
     }
 
     @Test
+    void takes_the_relying_party_from_the_settings() {
+        WebAuthnSettings settings = new WebAuthnSettings();
+        settings.setRelyingPartyName("Custom RP name");
+        settings.setOrigin("https://auth.gravitee.io:8443");
+        domain.setWebAuthnSettings(settings);
+
+        assertThat(factory.getRelyingParty().getName()).isEqualTo("Custom RP name");
+        assertThat(factory.getRelyingParty().getId()).isEqualTo("auth.gravitee.io");
+
+        settings.setRelyingPartyId("gravitee.io");
+
+        assertThat(factory.getRelyingParty().getId()).isEqualTo("gravitee.io");
+    }
+
+    @Test
     void builds_the_webauthn_bean_without_settings() {
         assertThat(factory.getObject()).isNotNull();
         assertThat(factory.getRelyingParty().getName()).isEqualTo("Gravitee.io Access Management");

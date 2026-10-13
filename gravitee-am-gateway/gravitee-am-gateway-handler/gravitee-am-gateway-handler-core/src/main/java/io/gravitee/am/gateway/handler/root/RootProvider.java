@@ -151,7 +151,7 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Route;
 import io.vertx.rxjava3.ext.web.Router;
@@ -272,7 +272,7 @@ public class RootProvider extends AbstractProtocolProvider {
     private FactorManager factorManager;
 
     @Autowired
-    private WebAuthn webAuthn;
+    private WebAuthn4J webAuthn;
 
     @Autowired
     private JWTService jwtService;

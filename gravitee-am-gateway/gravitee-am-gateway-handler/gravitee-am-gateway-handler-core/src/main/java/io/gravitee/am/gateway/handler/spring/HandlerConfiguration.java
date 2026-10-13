@@ -33,8 +33,8 @@ import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.manager.resource.impl.ResourceManagerImpl;
 import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn4JFactory;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStorage;
 import io.gravitee.am.gateway.handler.vertx.cors.CorsHandlerFactory;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -87,13 +87,13 @@ public class HandlerConfiguration {
     }
 
     @Bean
-    public RepositoryCredentialStore credentialStore() {
-        return new RepositoryCredentialStore();
+    public RepositoryCredentialStorage credentialStorage() {
+        return new RepositoryCredentialStorage();
     }
 
     @Bean
-    public WebAuthnFactory webAuthn() {
-        return new WebAuthnFactory();
+    public WebAuthn4JFactory webAuthn() {
+        return new WebAuthn4JFactory();
     }
 
     @Bean

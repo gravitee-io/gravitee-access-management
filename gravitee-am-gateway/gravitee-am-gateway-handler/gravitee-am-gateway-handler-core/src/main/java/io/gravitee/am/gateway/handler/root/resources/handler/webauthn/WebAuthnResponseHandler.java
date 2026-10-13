@@ -27,8 +27,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
@@ -48,12 +47,12 @@ import lombok.CustomLog;
 @CustomLog
 public class WebAuthnResponseHandler extends WebAuthnHandler {
 
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
 
     public WebAuthnResponseHandler(UserService userService,
                                    FactorManager factorManager,
                                    DomainDataPlane domainDataPlane,
-                                   WebAuthn webAuthn,
+                                   WebAuthn4J webAuthn,
                                    CredentialGatewayService credentialService,
                                    UserAuthenticationManager userAuthenticationManager) {
         setUserService(userService);
@@ -95,11 +94,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
             // authenticate the user
             Single.fromCompletionStage(webAuthn.authenticate(
                     // authInfo
-                    new WebAuthnCredentials()
-                            .setOrigin(webAuthnOrigin(ctx))
-                            .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
-                            .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                            .setWebauthn(webauthnResp)).toCompletionStage())
+                    webAuthnCredentials(ctx, webauthnResp)).toCompletionStage())
                     .doFinally(() -> {
                         // invalidate the challenge
                         session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);

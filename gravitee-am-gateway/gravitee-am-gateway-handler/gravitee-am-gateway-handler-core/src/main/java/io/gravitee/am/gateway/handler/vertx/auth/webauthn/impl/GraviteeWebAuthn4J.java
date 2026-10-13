@@ -15,22 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl;
 
-/*
- * Copyright 2019 Red Hat, Inc.
- *
- *  All rights reserved. This program and the accompanying materials
- *  are made available under the terms of the Eclipse Public License v1.0
- *  and Apache License v2.0 which accompanies this distribution.
- *
- *  The Eclipse Public License is available at
- *  http://www.eclipse.org/legal/epl-v10.html
- *
- *  The Apache License v2.0 is available at
- *  http://www.opensource.org/licenses/apache2.0.php
- *
- *  You may elect to redistribute this code under either of these licenses.
- */
-
 import com.webauthn4j.async.WebAuthnAsyncManager;
 import com.webauthn4j.async.verifier.attestation.statement.androidkey.AndroidKeyAttestationStatementAsyncVerifier;
 import com.webauthn4j.async.verifier.attestation.statement.androidsafetynet.AndroidSafetyNetAttestationStatementAsyncVerifier;
@@ -95,6 +79,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import static io.vertx.ext.auth.impl.Codec.base64UrlDecode;
@@ -352,7 +338,7 @@ public class GraviteeWebAuthn4J implements WebAuthn4J {
         // user verification is checked below with the rule of vertx-auth-webauthn
         RegistrationParameters registrationParameters = new RegistrationParameters(getServerProperty(authInfo), pubKeyCredParams, false, false);
 
-        return Future.fromCompletionStage(webAuthnManager.verify(registrationRequest, registrationParameters))
+        return verified(webAuthnManager.verify(registrationRequest, registrationParameters))
                 .map(registrationData -> {
                     AuthenticatorData<?> authenticatorData = registrationData.getAttestationObject().getAuthenticatorData();
                     if (options.getUserVerification() == UserVerification.REQUIRED && !authenticatorData.isFlagUV() && !authenticatorData.isFlagUP()) {
@@ -386,8 +372,18 @@ public class GraviteeWebAuthn4J implements WebAuthn4J {
                 userVerificationRequired,
                 userVerificationRequired);
 
-        return Future.fromCompletionStage(webAuthnManager.verify(authenticationRequest, authenticationParameters))
+        return verified(webAuthnManager.verify(authenticationRequest, authenticationParameters))
                 .map(authenticationData -> authenticationData.getAuthenticatorData().getSignCount());
+    }
+
+    /**
+     * The result of a webauthn4j verification. A verification failure is given as is, not wrapped in the
+     * {@link CompletionException} of the asynchronous stages, like vertx-auth-webauthn failed with its own
+     * exception: the handlers and the error page rely on it.
+     */
+    private static <T> Future<T> verified(CompletionStage<T> verification) {
+        return Future.fromCompletionStage(verification)
+                .recover(error -> Future.failedFuture(error instanceof CompletionException && error.getCause() != null ? error.getCause() : error));
     }
 
     private ServerProperty getServerProperty(WebAuthn4JCredentials authInfo) {

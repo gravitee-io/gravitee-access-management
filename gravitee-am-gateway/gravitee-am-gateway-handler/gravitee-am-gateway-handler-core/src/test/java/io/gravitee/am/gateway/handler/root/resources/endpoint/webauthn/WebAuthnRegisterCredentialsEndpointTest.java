@@ -24,7 +24,7 @@ import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
@@ -53,7 +53,7 @@ public class WebAuthnRegisterCredentialsEndpointTest extends RxWebTestBase {
     @Mock
     private DomainDataPlane domainDataPlane;
     @Mock
-    private WebAuthn webAuthn;
+    private WebAuthn4J webAuthn;
 
     private WebAuthnRegisterCredentialsEndpoint endpoint;
 

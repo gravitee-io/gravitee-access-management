@@ -48,6 +48,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4JCredentials;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
@@ -121,33 +122,51 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
      * Point the generated options at the relying party for this request's origin: {@code rp.id} on
      * registration, top-level {@code rpId} on assertion.
      * <p>
-     * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory} builds the {@code WebAuthn}
-     * bean once per domain and falls back to {@code localhost}, so its id cannot follow the request.
-     * Rewriting is safe because we never set {@code WebAuthnCredentials.domain}, so Vert.x skips its
-     * {@code rpIdHash} check. Only entrypoint-derived origins are used: otherwise the factory's value
-     * already honours the relying party id the domain configured.
+     * {@link io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn4JFactory} builds the {@code WebAuthn4J}
+     * bean once per domain and falls back to {@code localhost}, so its id cannot follow the request. The
+     * ceremony is then verified against the same id, see {@link #webAuthnCredentials(RoutingContext, JsonObject)}.
+     */
+    protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
+        entrypointRelyingPartyId(ctx).ifPresent(relyingPartyId -> {
+            if (options.containsKey("rp")) {
+                options.getJsonObject("rp").put("id", relyingPartyId);
+            }
+            if (options.containsKey("rpId")) {
+                options.put("rpId", relyingPartyId);
+            }
+        });
+    }
+
+    /**
+     * What the WebAuthn bean verifies a browser response against: the origin of the request, the relying
+     * party id {@link #applyRelyingPartyId(RoutingContext, JsonObject)} gave the browser, and the challenge
+     * and username saved in the session with the options.
+     */
+    protected WebAuthn4JCredentials webAuthnCredentials(RoutingContext ctx, JsonObject webauthn) {
+        return new WebAuthn4JCredentials()
+                .setOrigin(webAuthnOrigin(ctx))
+                .setDomain(entrypointRelyingPartyId(ctx).orElse(null))
+                .setChallenge(ctx.session().get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
+                .setUsername(ctx.session().get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
+                .setWebauthn(webauthn);
+    }
+
+    /**
+     * The relying party id of the entrypoint the request came through, empty to keep the one of the
+     * WebAuthn bean. Only entrypoint-derived origins are used: otherwise the bean's value already honours
+     * the relying party id the domain configured.
      * <p>
      * A relying party id the domain set explicitly is left alone. Credentials are bound to the id they
      * were registered under, so replacing a deliberate one — often a parent domain, so a single credential
      * covers several subdomains — would stop every existing authenticator offering it.
      */
-    protected void applyRelyingPartyId(RoutingContext ctx, JsonObject options) {
+    private Optional<String> entrypointRelyingPartyId(RoutingContext ctx) {
         if (saysMoreThanTheOrigin(domainDataPlane.getDomain().getWebAuthnSettings())) {
-            return;
+            return Optional.empty();
         }
-        String relyingPartyId = domainDataPlane
+        return domainDataPlane
                 .getWebAuthnEntrypointOrigin(UriBuilderRequest.resolveOrigin(ctx.request()))
-                .map(RequestUtils::getDomain)
-                .orElse(null);
-        if (relyingPartyId == null) {
-            return;
-        }
-        if (options.containsKey("rp")) {
-            options.getJsonObject("rp").put("id", relyingPartyId);
-        }
-        if (options.containsKey("rpId")) {
-            options.put("rpId", relyingPartyId);
-        }
+                .map(RequestUtils::getDomain);
     }
 
     /**
