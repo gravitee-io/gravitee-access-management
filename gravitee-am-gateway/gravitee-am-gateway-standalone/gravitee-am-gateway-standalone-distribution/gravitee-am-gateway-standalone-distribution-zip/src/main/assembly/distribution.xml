@@ -84,6 +84,14 @@
 			</includes>
 			<fileMode>755</fileMode>
 		</fileSet>
+
+		<fileSet>
+			<directory>../target/distribution/webauthn</directory>
+			<outputDirectory>/webauthn</outputDirectory>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</fileSet>
 	</fileSets>
 
 </assembly>

@@ -1001,6 +1001,19 @@ gateway:
   #  - name: config
   #    secret:
   #      secretName: gravitee-config-secret-name
+  # WebAuthn trust anchors: the image ships the root certificates validating Android Key, Apple and
+  # Android SafetyNet attestations in /opt/graviteeio-am-gateway/webauthn/trust-anchors, one directory or
+  # file per attestation format. Every .pem, .crt, .cer or .der file found there, sub-directories included,
+  # is loaded at startup. To trust more roots without hiding the shipped ones, mount them in a sub-directory
+  # of the format they apply to:
+  #extraVolumes: |
+  #  - name: webauthn-android-key-roots
+  #    configMap:
+  #      name: my-android-key-roots
+  #extraVolumeMounts: |
+  #  - name: webauthn-android-key-roots
+  #    mountPath: /opt/graviteeio-am-gateway/webauthn/trust-anchors/android-key/custom
+  #    readOnly: true
   mfa_rate:
     enabled: true
     limit: 5
