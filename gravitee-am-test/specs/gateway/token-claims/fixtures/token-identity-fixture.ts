@@ -37,7 +37,7 @@ import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { FlowEntityTypeEnum } from '../../../../api/management/models';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createScope } from '@management-commands/scope-management-commands';
-import { performGet, performPost, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { introspectToken, performGet, performPost, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { Fixture } from '../../../test-fixture';
@@ -129,8 +129,10 @@ export interface TokenIdentityFixture extends Fixture {
   passwordGrant: (scope?: string) => Promise<Record<string, any>>;
   /** Resource-owner password grant for an arbitrary fixture user. */
   passwordGrantFor: (subject: any, scope?: string) => Promise<Record<string, any>>;
-  /** Exchanges a refresh token for a fresh token set. */
-  refreshGrant: (refreshToken: string) => Promise<Record<string, any>>;
+  /** Exchanges a refresh token for a fresh token set, optionally narrowing the granted scope. */
+  refreshGrant: (refreshToken: string, scope?: string) => Promise<Record<string, any>>;
+  /** Sends a refresh token grant and returns the raw response, whatever its status. */
+  refreshGrantResponse: (refreshToken: string) => Promise<any>;
   /**
    * Full browser authorization-code flow: login, consent-free redirect, code exchange.
    * `additionalParams` is appended to the authorize request (e.g. `nonce=...`).
@@ -142,6 +144,10 @@ export interface TokenIdentityFixture extends Fixture {
   exchangeCode: (location: string) => Promise<Record<string, any>>;
   /** Calls /oidc/userinfo with the supplied access token. */
   userinfo: (accessTokenValue: string) => Promise<Record<string, any>>;
+  /** Introspects a token as the fixture application. */
+  introspect: (token: string) => Promise<Record<string, any>>;
+  /** Revokes a token as the fixture application. */
+  revoke: (token: string) => Promise<void>;
   /**
    * Patches the Lightweight JWT setting, then polls until a fresh access token reflects it.
    * `probeClaim` is a custom claim the setting removes. The allowlists replace the stored ones.
@@ -198,6 +204,8 @@ export interface TokenIdentityOptions {
   lightweightJwtSettings?: { enabled: boolean } & LightweightJwtAllowlists;
   /** Lets prompt=none with an id_token_hint authenticate the user without a session. */
   silentReAuthentication?: boolean;
+  /** Keeps the same refresh token across refresh token grants. */
+  disableRefreshTokenRotation?: boolean;
   /** Name of a domain role assigned to the primary user. */
   userRole?: string;
   /** Name of a domain group the primary user belongs to. */
@@ -259,6 +267,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
           ...(options.userinfoCustomClaims ? { userinfoCustomClaims: options.userinfoCustomClaims } : {}),
           ...(options.lightweightJwtSettings ? { lightweightJwtSettings: options.lightweightJwtSettings } : {}),
           ...(options.silentReAuthentication ? { silentReAuthentication: true } : {}),
+          ...(options.disableRefreshTokenRotation ? { disableRefreshTokenRotation: true } : {}),
         },
         advanced: { skipConsent: true },
       },
@@ -342,13 +351,20 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
 
     const passwordGrant = (scope?: string) => passwordGrantFor(user, scope);
 
-    const refreshGrant = async (refreshToken: string) => {
-      const response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${refreshToken}`, {
-        ...FORM_HEADERS,
-        Authorization: basicAuth(),
-      }).expect(200);
+    const refreshGrantRequest = (refreshToken: string, scope?: string) =>
+      performPost(
+        oidc.token_endpoint,
+        '',
+        `grant_type=refresh_token&refresh_token=${refreshToken}` + (scope ? `&scope=${encodeURIComponent(scope)}` : ''),
+        { ...FORM_HEADERS, Authorization: basicAuth() },
+      );
+
+    const refreshGrant = async (refreshToken: string, scope?: string) => {
+      const response = await refreshGrantRequest(refreshToken, scope).expect(200);
       return response.body;
     };
+
+    const refreshGrantResponse = async (refreshToken: string) => await refreshGrantRequest(refreshToken);
 
     const authorizationCodeFlow = async (additionalParams?: string) => {
       const postLogin = await signInUser(
@@ -410,6 +426,15 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       return response.body;
     };
 
+    const introspect = (token: string) => introspectToken(oidc.introspection_endpoint, token, applicationBase64Token(app));
+
+    const revoke = async (token: string) => {
+      await performPost(oidc.revocation_endpoint, '', `token=${encodeURIComponent(token)}`, {
+        ...FORM_HEADERS,
+        Authorization: basicAuth(),
+      }).expect(200);
+    };
+
     const setLightweightJwt = async (enabled: boolean, probeClaim: string, allowlists: LightweightJwtAllowlists = {}) => {
       await waitForSyncAfter(startedDomain.id, () =>
         patchApplication(
@@ -448,10 +473,13 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
       passwordGrant,
       passwordGrantFor,
       refreshGrant,
+      refreshGrantResponse,
       authorizationCodeFlow,
       silentAuthorize,
       exchangeCode,
       userinfo,
+      introspect,
+      revoke,
       setLightweightJwt,
       cleanUp: async () => {
         if (domain?.id) {

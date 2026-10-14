@@ -1738,7 +1738,9 @@ public class TokenServiceImplTest {
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
-        assertThat(jwtCaptor.getAllValues().get(1)).containsKeys(Claims.ORIG_RESOURCES, Claims.CNF).doesNotContainKey("tenant");
+        assertThat(jwtCaptor.getAllValues().get(1)).containsKey(Claims.ORIG_RESOURCES).doesNotContainKey("tenant");
+        assertThat((Map<String, Object>) jwtCaptor.getAllValues().get(1).getConfirmationMethod())
+                .containsEntry(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jkt");
     }
 
     @Test
@@ -1873,6 +1875,36 @@ public class TokenServiceImplTest {
         verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
         assertThat(jwtCaptor.getAllValues().get(0)).containsEntry("tenant", "acme").doesNotContainKey("legacy");
         assertThat(jwtCaptor.getAllValues().get(1)).containsEntry("tenant", "acme").doesNotContainKey("legacy");
+    }
+
+    @Test
+    public void lightweightJwt_keepsOrigResourcesAndDpopBindingOnRefreshTokenGrant() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setGrantType(GrantType.REFRESH_TOKEN);
+        request.setResources(Set.of("https://api.example.com"));
+        request.setConfirmationMethodJkt("the-jkt");
+        request.setRefreshToken(Map.of(Claims.SUB, "user",
+                Claims.ORIG_RESOURCES, List.of("https://api.example.com", "https://other.example.com")));
+
+        Client client = lightweightClient(true);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        JWT accessToken = jwtCaptor.getAllValues().get(0);
+        JWT refreshToken = jwtCaptor.getAllValues().get(1);
+        assertThat(accessToken).doesNotContainKey("tenant");
+        assertThat((Map<String, Object>) accessToken.getConfirmationMethod())
+                .containsEntry(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jkt");
+        assertThat((List<String>) accessToken.get(Claims.AUD)).containsExactly("https://api.example.com");
+        assertThat(refreshToken).doesNotContainKey("tenant");
+        assertThat((Map<String, Object>) refreshToken.getConfirmationMethod())
+                .containsEntry(JWT.CONFIRMATION_METHOD_JWK_THUMBPRINT, "the-jkt");
+        assertThat((List<String>) refreshToken.get(Claims.ORIG_RESOURCES))
+                .containsExactlyInAnyOrder("https://api.example.com", "https://other.example.com");
     }
 
     @Test
