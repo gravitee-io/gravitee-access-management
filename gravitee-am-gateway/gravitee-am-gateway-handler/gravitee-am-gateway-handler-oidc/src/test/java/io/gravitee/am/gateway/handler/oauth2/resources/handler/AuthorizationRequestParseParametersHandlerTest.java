@@ -72,6 +72,46 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     }
 
     @Test
+    public void shouldAcceptDeviceFlowWithoutResponseTypeAndRedirectUri() throws Exception {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.DEVICE_CODE));
+        router.route().order(-1).handler(routingContext -> {
+            ((io.vertx.ext.web.impl.RoutingContextInternal) routingContext.getDelegate()).setSession(session);
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, new OpenIDProviderMetadata());
+            routingContext.next();
+        });
+        Mockito.when(session.get(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY)).thenReturn("client-id");
+        Mockito.lenient().when(session.get(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY)).thenReturn("device-code");
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?client_id=client-id&scope=openid",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldNotRelaxValidationForAnOrdinaryRequestCarryingAStaleDeviceFlowMarker() throws Exception {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.DEVICE_CODE));
+        router.route().order(-1).handler(routingContext -> {
+            ((io.vertx.ext.web.impl.RoutingContextInternal) routingContext.getDelegate()).setSession(session);
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, new OpenIDProviderMetadata());
+            routingContext.next();
+        });
+        Mockito.lenient().when(session.get(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY)).thenReturn("client-id");
+        Mockito.lenient().when(session.get(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY)).thenReturn("device-code");
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?client_id=client-id&response_type=code&redirect_uri=https://callback",
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
     public void shouldRejectRequest_unsupportedAcrValues() throws Exception {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
         openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_BRONZE));

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connect your device</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{device.code_entry.title}"/>
+        </div>
+        <div class="header-description">
+            <span th:text="#{device.code_entry.description}"/>
+        </div>
+    </div>
+    <div class="item error-text" th:if="${error}">
+        <span class="error" th:text="#{'device.code_entry.error.' + ${error}}"></span>
+    </div>
+    <div class="section">
+        <form id="form" role="form" class="form" th:action="${action}" method="post">
+            <input type="text" id="user_code" name="user_code" class="input-field" autocomplete="off"
+                   autocapitalize="characters" spellcheck="false" required
+                   th:value="${user_code}"
+                   th:placeholder="#{device.code_entry.label}"/>
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+
+            <div>
+                <button type="submit" id="submitBtn" name="action" value="approve" class="button primary" th:text="#{device.code_entry.submit}"></button>
+                <button type="submit" id="rejectBtn" name="action" value="reject" formnovalidate class="button" th:text="#{device.code_entry.reject}"></button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
