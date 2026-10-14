@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -37,6 +39,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -122,7 +125,8 @@ class RefreshTokenStrategyTest {
         user.setId("user-id");
 
         Map<String, Object> additionalInfo = new HashMap<>();
-        additionalInfo.put("sub", "user-id");
+        additionalInfo.put(Claims.SUB, "user-id");
+        additionalInfo.put(Claims.GIO_INTERNAL_SUB, "user-gis");
 
         Token refreshToken = new AccessToken("token-value");
         refreshToken.setSubject("user-id");
@@ -133,7 +137,8 @@ class RefreshTokenStrategyTest {
 
         when(tokenService.refresh(eq("refresh-token-value"), any(), eq(client)))
                 .thenReturn(Single.just(refreshToken));
-        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(any(), any()))
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(jwtCaptor.capture(), any()))
                 .thenReturn(Maybe.just(user));
         when(resourceConsistencyValidationService.resolveFinalResources(any(), any()))
                 .thenReturn(Set.of());
@@ -141,6 +146,8 @@ class RefreshTokenStrategyTest {
         TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
 
         assertNotNull(result);
+        assertEquals("user-id", jwtCaptor.getValue().getSub());
+        assertEquals("user-gis", jwtCaptor.getValue().getInternalSub());
         assertEquals("client-id", result.clientId());
         assertEquals(GrantType.REFRESH_TOKEN, result.grantType());
         assertEquals(user, result.resourceOwner());

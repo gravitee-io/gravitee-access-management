@@ -80,4 +80,14 @@ describe('Lightweight JWT claim sources - enabled', () => {
     expect(Object.keys(payload).sort()).toEqual([...LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, 'act', 'cnf'].sort());
     expect(payload).toMatchObject({ act: 'custom-actor', cnf: 'custom-cnf' });
   });
+
+  it('should keep only the custom claims named after a kept claim on the refresh token grant', async () => {
+    await fixture.setLightweightJwt(true, 'tenant');
+    const initial = await fixture.passwordGrant(SCOPE);
+
+    const payload = decodeToken((await fixture.refreshGrant(initial.refresh_token)).access_token).payload;
+
+    expect(Object.keys(payload).sort()).toEqual([...LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS, 'act', 'cnf'].sort());
+    expect(payload).toMatchObject({ act: 'custom-actor', cnf: 'custom-cnf' });
+  });
 });
