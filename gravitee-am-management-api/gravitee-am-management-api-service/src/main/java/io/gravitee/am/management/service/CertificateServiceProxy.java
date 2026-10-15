@@ -31,6 +31,8 @@ public interface CertificateServiceProxy {
 
     Maybe<Certificate> findById(String id);
 
+    Maybe<Certificate> findById(String domain, String id);
+
     Single<List<CertificateEntity>> findByDomainAndUse(String domain, String use);
 
     Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal);
@@ -41,7 +43,7 @@ public interface CertificateServiceProxy {
 
     Single<Certificate> validateUpdate(Domain domain, String id, UpdateCertificate updateCertificate);
 
-    Completable delete(String certificateId, User principal);
+    Completable delete(String domain, String certificateId, User principal);
 
     Single<Certificate> rotate(Domain domain, User principal);
 
