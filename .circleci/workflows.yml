@@ -579,9 +579,10 @@ jobs:
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Build stack
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
@@ -619,9 +620,10 @@ jobs:
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -663,7 +665,7 @@ jobs:
       - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Build stack
           command: cp /tmp/workspace/*.zip docker/local-stack/dev/build-ctx && npm --prefix docker/local-stack run stack:init:build
@@ -698,7 +700,7 @@ jobs:
       - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
