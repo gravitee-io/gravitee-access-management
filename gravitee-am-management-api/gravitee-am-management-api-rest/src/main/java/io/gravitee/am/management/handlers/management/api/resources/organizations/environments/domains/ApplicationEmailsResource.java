@@ -127,11 +127,11 @@ public class ApplicationEmailsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE)
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE)
                 .andThen(emailTemplateValidator.validate(newEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(existingDomain -> applicationService.findById(application)
+                        .flatMap(existingDomain -> applicationService.findById(domain, application)
                                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                                 .flatMapSingle(__ -> emailTemplateService.create(existingDomain, application, newEmail, authenticatedUser))
                                 .map(email -> Response
