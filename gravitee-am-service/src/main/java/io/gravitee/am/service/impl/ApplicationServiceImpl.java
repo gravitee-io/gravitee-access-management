@@ -303,6 +303,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Maybe<Application> findById(String domain, String id) {
+        return findById(id).filter(application -> belongsToDomain(application, domain));
+    }
+
+    private static boolean belongsToDomain(Application application, String domain) {
+        return domain != null && domain.equals(application.getDomain());
+    }
+
+    @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("Find application by domain: {} and client_id {}", domain, clientId);
         return applicationRepository.findByDomainAndClientId(domain, clientId)
@@ -406,6 +415,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         LOGGER.debug("Update application {} type to {} for domain {}", id, type, domain);
 
         return applicationRepository.findById(id)
+                .filter(existingApplication -> belongsToDomain(existingApplication, domain))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
                 .flatMap(existingApplication -> {
                     Application toPatch = new Application(existingApplication);
@@ -427,6 +437,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         LOGGER.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
+                .filter(existingApplication -> belongsToDomain(existingApplication, domain.getId()))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
                 .flatMap(existingApplication -> {
                     Application toPatch = patchApplication.patch(existingApplication);
@@ -474,6 +485,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Completable delete(String id, User principal, Domain domain) {
         LOGGER.debug("Delete application {}", id);
         return applicationRepository.findById(id)
+                .filter(application -> belongsToDomain(application, domain.getId()))
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
                 .flatMapCompletable(application -> {
                     // create event for sync process
