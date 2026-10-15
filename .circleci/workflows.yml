@@ -1014,9 +1014,10 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
           with_ui: true
@@ -1070,9 +1071,10 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -1130,9 +1132,10 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
           with_ui: true
@@ -1191,9 +1194,10 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
-          command: npm --prefix docker/local-stack run stack:init:ciba
+          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
