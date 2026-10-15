@@ -62,6 +62,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.service.ApplicationSearcher;
+import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationEngineService;
@@ -236,6 +237,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ApplicationSearcher applicationSearcher;
+
+    @Autowired
+    protected ApplicationSecretService applicationSecretService;
 
     @Autowired
     protected FactorService factorService;
@@ -545,6 +549,11 @@ public abstract class JerseySpringTest {
         @Bean
         public ApplicationSearcher applicationSearcher() {
             return mock(ApplicationSearcher.class);
+        }
+
+        @Bean
+        public ApplicationSecretService applicationSecretService() {
+            return mock(ApplicationSecretService.class);
         }
 
         @Bean

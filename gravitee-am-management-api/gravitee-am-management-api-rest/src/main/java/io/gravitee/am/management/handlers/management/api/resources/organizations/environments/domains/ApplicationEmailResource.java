@@ -95,7 +95,7 @@ public class ApplicationEmailResource extends AbstractResource {
                 .andThen(emailTemplateValidator.validate(updateEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(existingDomain -> applicationService.findById(application)
+                        .flatMap(existingDomain -> applicationService.findById(domain, application)
                                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                                 .flatMapSingle(__ -> emailTemplateService.update(existingDomain, application, email, updateEmail))))
                 .subscribe(response::resume, response::resume);
@@ -121,7 +121,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)
-                .andThen(emailTemplateService.delete(email))
+                .andThen(emailTemplateService.delete(domain, email, getAuthenticatedUser()))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
