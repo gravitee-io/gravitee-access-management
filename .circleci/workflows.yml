@@ -307,7 +307,7 @@ commands:
             DRY_RUN: << parameters.dry_run >>
           name: "Gravitee AM Community Edition Package Bundle"
           command: |
-            export MVN_PRJ_VERSION=$(mvn -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
+            export MVN_PRJ_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
             export RELEASE_VERSION_NUMBER=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
 
             mkdir -p ~/release/graviteeio-am/components/gravitee-am-management-api/
