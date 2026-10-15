@@ -18,7 +18,11 @@ package io.gravitee.am.gateway.handler.oauth2.spring;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.DelegatingInternalClientTokenIssuer;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
@@ -40,38 +44,42 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
-import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenManagerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessTokenMinter;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.IdJagTokenMinter;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.IdTokenOnlyMinter;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.InternalClientTokenIssuerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenEnhancerImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenMinterFacade;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenExchangeUserResolver;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.*;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TokenValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.TrustedIssuerResolver;
-import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.DefaultTokenValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.DomainTokenValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenExchangeUserResolverFacade;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TokenUserResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerResolverImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerTokenValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.impl.TrustedIssuerUserResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceConsistencyValidationServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainKeyService;
-import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
-import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceValidationServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
-import io.gravitee.am.gateway.handler.oauth2.service.validation.impl.ResourceConsistencyValidationServiceImpl;
-import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
-
+import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.DomainReadService;
-import java.util.List;
-
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.service.DomainReadService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -88,6 +96,28 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public TokenService tokenService() {
         return new TokenServiceImpl();
+    }
+
+    @Bean
+    public AccessTokenMinter accessTokenMinter() {
+        return new AccessTokenMinter();
+    }
+
+    @Bean
+    public IdTokenOnlyMinter idTokenOnlyMinter() {
+        return new IdTokenOnlyMinter();
+    }
+
+    @Bean
+    public IdJagTokenMinter idJagTokenMinter() {
+        return new IdJagTokenMinter();
+    }
+
+    @Bean
+    public TokenMinterFacade tokenMinterFacade(AccessTokenMinter accessTokenMinter,
+                                               IdTokenOnlyMinter idTokenOnlyMinter,
+                                               IdJagTokenMinter idJagTokenMinter) {
+        return new TokenMinterFacade(accessTokenMinter, idTokenOnlyMinter, idJagTokenMinter);
     }
 
     @Bean
@@ -210,8 +240,4 @@ public class OAuth2Configuration implements ProtocolConfiguration {
         return new OAuth2Provider();
     }
 
-    @Bean
-    public TokenManager tokenManager() {
-        return new TokenManagerImpl();
-    }
 }
