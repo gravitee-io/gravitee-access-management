@@ -138,7 +138,7 @@ class CertificateServiceImplTest {
         Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         // when
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser()).test();
 
         // then
         observer.assertComplete();
@@ -159,7 +159,7 @@ class CertificateServiceImplTest {
                 .thenReturn(Flowable.just(new Application()));
 
         // when
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser()).test();
 
         // then
         observer.assertError(ex -> ex instanceof CertificateWithApplicationsException);
@@ -186,7 +186,7 @@ class CertificateServiceImplTest {
                 .thenReturn(Flowable.just(new ProtectedResource()));
 
         // when
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser()).test();
 
         // then
         observer.assertError(ex -> ex instanceof CertificateWithProtectedResourceException);
@@ -214,7 +214,7 @@ class CertificateServiceImplTest {
                 .thenReturn(Flowable.just(idp));
 
         // when
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser()).test();
 
         // then
         observer.assertError(ex -> ex instanceof CertificateWithIdpException);
@@ -252,7 +252,7 @@ class CertificateServiceImplTest {
                 .thenReturn(Maybe.just(domain));
 
         // when
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser()).test();
 
         // then
         observer.assertError(ex -> ex instanceof CertificateIsFallbackException);
@@ -295,7 +295,7 @@ class CertificateServiceImplTest {
         Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         // when
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser()).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser()).test();
 
         // then
         observer.assertComplete();
@@ -398,7 +398,7 @@ class CertificateServiceImplTest {
                 .thenReturn(Completable.complete());
         Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser(), true).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser(), true).test();
 
         observer.assertComplete();
         observer.assertNoErrors();
@@ -425,7 +425,7 @@ class CertificateServiceImplTest {
                 .thenReturn(Completable.complete());
         Mockito.when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<Void> observer = service.delete(certId, new DefaultUser(), true).test();
+        TestObserver<Void> observer = service.delete("domainId", certId, new DefaultUser(), true).test();
 
         observer.assertComplete();
         observer.assertNoErrors();
