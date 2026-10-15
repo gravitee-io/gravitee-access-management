@@ -1036,7 +1036,7 @@ public class DomainServiceTest {
         when(applicationService.delete(anyString(), any())).thenReturn(complete());
         when(certificate.getId()).thenReturn(CERTIFICATE_ID);
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(certificate));
-        when(certificateService.delete(anyString())).thenReturn(complete());
+        when(certificateService.delete(eq(DOMAIN_ID), anyString())).thenReturn(complete());
         when(identityProvider.getId()).thenReturn(IDP_ID);
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(identityProvider));
         when(identityProviderService.delete(eq(DOMAIN_ID), anyString())).thenReturn(complete());
@@ -1100,7 +1100,7 @@ public class DomainServiceTest {
         testObserver.assertComplete();
 
         verify(applicationService, times(2)).delete(anyString(), any());
-        verify(certificateService, times(1)).delete(CERTIFICATE_ID);
+        verify(certificateService, times(1)).delete(DOMAIN_ID, CERTIFICATE_ID);
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
@@ -1163,7 +1163,7 @@ public class DomainServiceTest {
         testObserver.assertNoErrors();
 
         verify(applicationService, never()).delete(anyString(), any());
-        verify(certificateService, never()).delete(anyString());
+        verify(certificateService, never()).delete(anyString(), anyString());
         verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(extensionGrantService, never()).delete(anyString(), anyString());
         verify(roleService, never()).delete(eq(DOMAIN), eq(DOMAIN_ID), anyString());

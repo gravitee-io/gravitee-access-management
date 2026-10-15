@@ -35,6 +35,8 @@ public interface CertificateService {
 
     Maybe<Certificate> findById(String id);
 
+    Maybe<Certificate> findById(String domain, String id);
+
     Flowable<Certificate> findAll();
 
     Flowable<Certificate> findByDomain(String domain);
@@ -69,7 +71,7 @@ public interface CertificateService {
 
     Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal);
 
-    Completable delete(String certificateId, User principal);
+    Completable delete(String domain, String certificateId, User principal);
 
     Completable updateExpirationDate(String certificateId, Date expirationDate);
 
@@ -81,8 +83,8 @@ public interface CertificateService {
         return update(domain, id, updateCertificate, null);
     }
 
-    default Completable delete(String certificateId) {
-        return delete(certificateId, null);
+    default Completable delete(String domain, String certificateId) {
+        return delete(domain, certificateId, null);
     }
 
 }
