@@ -108,7 +108,7 @@ public class EmailResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.DELETE)
-                .andThen(emailTemplateService.delete(email, authenticatedUser))
+                .andThen(emailTemplateService.delete(domain, email, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
