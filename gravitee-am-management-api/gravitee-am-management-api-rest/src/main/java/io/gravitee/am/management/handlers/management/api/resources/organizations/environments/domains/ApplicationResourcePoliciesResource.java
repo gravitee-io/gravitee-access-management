@@ -87,7 +87,7 @@ public class ApplicationResourcePoliciesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, application, Permission.APPLICATION_RESOURCE, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> applicationService.findById(application)
+                        .flatMap(domain -> applicationService.findById(domainId, application)
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(application1 -> resourceService.findAccessPoliciesByResources(domain, Collections.singletonList(resource))
                                 .map(AccessPolicyListItem::new).toList())))
