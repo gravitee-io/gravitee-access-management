@@ -34,6 +34,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import io.gravitee.am.service.exception.ClientSecretInvalidException;
 import io.gravitee.am.service.exception.ClientSecretNotFoundException;
@@ -83,6 +84,9 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     @Override
     public Single<ClientSecret> create(Domain domain, Application application, NewClientSecret newClientSecret, User principal) {
+        if (!belongsToDomain(application, domain)) {
+            return Single.error(() -> new ApplicationNotFoundException(application.getId()));
+        }
         List<ClientSecret> secrets = application.getSecrets();
         String newSecretName = newClientSecret.getName().trim();
         if (secrets.stream().map(ClientSecret::getName).anyMatch(n -> n.equals(newSecretName))) {
@@ -126,6 +130,10 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
                 });
     }
 
+    private static boolean belongsToDomain(Application application, Domain domain) {
+        return domain != null && domain.getId() != null && domain.getId().equals(application.getDomain());
+    }
+
     @Override
     public Flowable<ClientSecret> findAllByApplication(Application application) {
         return Flowable.fromIterable(application.getSecrets())
@@ -135,6 +143,9 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
     @Override
     public Single<Application> renew(Domain domain, Application application, String id, User principal) {
         log.debug("Renew client secret for application {} and domain {}", application.getId(), domain);
+        if (!belongsToDomain(application, domain)) {
+            return Single.error(() -> new ApplicationNotFoundException(application.getId()));
+        }
 
         // check application
         if (application.getSettings() == null) {
@@ -185,6 +196,9 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     @Override
     public Completable delete(Domain domain, Application application, String id, User principal) {
+        if (!belongsToDomain(application, domain)) {
+            return Completable.error(() -> new ApplicationNotFoundException(application.getId()));
+        }
         if (application.getSecrets().size() == 1) {
             return Completable.error(() -> new ClientSecretDeleteException("Cannot remove last secret"));
         }

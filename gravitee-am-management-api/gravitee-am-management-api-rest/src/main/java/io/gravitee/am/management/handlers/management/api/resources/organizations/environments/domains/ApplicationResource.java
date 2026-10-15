@@ -100,16 +100,11 @@ public class ApplicationResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> applicationService.findById(application))
+                        .flatMap(irrelevant -> applicationService.findById(domain, application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(app -> findAllPermissions(authenticatedUser, organizationId, environmentId, domain, application)
                                 .map(userPermissions -> filterApplicationInfos(app, userPermissions))))
-                .map(application1 -> {
-                    if (!application1.getDomain().equalsIgnoreCase(domain)) {
-                        throw new BadRequestException("Application does not belong to domain");
-                    }
-                    return Response.ok(application1).build();
-                })
+                .map(application1 -> Response.ok(application1).build())
                 .subscribe(response::resume, response::resume);
     }
 

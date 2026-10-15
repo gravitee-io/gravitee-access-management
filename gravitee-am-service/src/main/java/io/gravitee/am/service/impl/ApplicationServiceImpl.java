@@ -399,6 +399,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Maybe<Application> findById(String domain, String id) {
+        return findById(id).filter(application -> belongsToDomain(application, domain));
+    }
+
+    private static boolean belongsToDomain(Application application, String domain) {
+        return domain != null && domain.equals(application.getDomain());
+    }
+
+    @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         log.debug("Find application by domain: {} and client_id {}", domain, clientId);
         return applicationRepository.findByDomainAndClientId(domain, clientId)
@@ -776,6 +785,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.debug("Update application {} type to {} for domain {}", id, type, domain);
 
         return applicationRepository.findById(id)
+                .filter(existingApplication -> belongsToDomain(existingApplication, domain))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
                 .flatMap(existingApplication -> {
                     Application toPatch = new Application(existingApplication);
@@ -797,6 +807,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
+                .filter(existingApplication -> belongsToDomain(existingApplication, domain.getId()))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
                 .flatMap(existingApplication -> {
                     // Prevent un-templating an application that is currently the CIMD template
@@ -861,6 +872,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Completable delete(String id, User principal, Domain domain) {
         log.debug("Delete application {}", id);
         return applicationRepository.findById(id)
+                .filter(application -> belongsToDomain(application, domain.getId()))
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
                 .flatMapCompletable(application -> {
                     // Prevent deletion of an application that is currently the CIMD template
