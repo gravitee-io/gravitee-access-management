@@ -8,6 +8,6 @@
     "test:collections:parallel": "mkdir -p logs && printf '%s\\n' collections/*.json | POSTMAN_ENV=\"${POSTMAN_ENV:-environment/docker.json}\" xargs -P \"${POSTMAN_CONCURRENCY:-2}\" -I {} sh -c 'echo \"START $1\" && newman run \"$1\" -e \"$POSTMAN_ENV\" --ignore-redirects --insecure --bail > \"logs/$(basename \"$1\").log\" 2>&1 && echo \"PASS $1\" || { echo \"FAIL $1\"; tail -40 \"logs/$(basename \"$1\").log\"; exit 1; }' _ {}"
   },
   "devDependencies": {
-    "newman": "6.2.2"
+    "newman": "6.2.3"
   }
 }
