@@ -69,7 +69,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.introspection.Introspection
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -188,9 +187,6 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private PolicyChainHandler policyChainHandler;
 
     @Autowired
-    private TokenManager tokenManager;
-
-    @Autowired
     private CorsHandler corsHandler;
 
     @Autowired
@@ -253,19 +249,8 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     protected void doStart() throws Exception {
         super.doStart();
 
-        // init services
-        initServices();
-
         // init web router
         initRouter();
-    }
-
-    private void initServices() {
-        try {
-            tokenManager.start();
-        } catch (Exception e) {
-            logger.error("An error occurs while starting oauth 2.0 services", e);
-        }
     }
 
     private void initRouter() {
