@@ -32,4 +32,6 @@ public interface OAuth2AuthProvider {
     }
 
     void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler);
+
+    void decodeTokenWithWithheldClaims(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler);
 }

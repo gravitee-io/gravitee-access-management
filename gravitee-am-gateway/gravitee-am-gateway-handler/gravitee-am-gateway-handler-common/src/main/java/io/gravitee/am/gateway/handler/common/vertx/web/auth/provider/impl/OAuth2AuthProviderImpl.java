@@ -33,6 +33,9 @@ import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.util.function.BiFunction;
+
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -53,7 +56,16 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
 
     @Override
     public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
-        introspect(token, offlineVerification)
+        decode(token, introspect(token, offlineVerification, introspectionTokenService::introspect), handler);
+    }
+
+    @Override
+    public void decodeTokenWithWithheldClaims(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
+        decode(token, introspect(token, offlineVerification, introspectionTokenService::introspectRestoringWithheldClaims), handler);
+    }
+
+    private void decode(String token, Maybe<JWT> introspection, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
+        introspection
                 .flatMap(jwt -> findFirstClientByAudience(jwt)
                         .switchIfEmpty(Maybe.error(new InvalidTokenException("The token is invalid", "Client or resource not found: " + jwt.getAud(), jwt)))
                         .map(client -> new OAuth2AuthResponse(jwt, client)))
@@ -70,12 +82,10 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
                         error -> handler.handle(Future.failedFuture(error)));
     }
 
-    private Maybe<JWT> introspect(String token, boolean offlineVerification) {
+    private Maybe<JWT> introspect(String token, boolean offlineVerification, BiFunction<String, Boolean, Maybe<JWT>> introspection) {
         return jwtCache.isPresent(token)
                 .onErrorResumeNext(err -> Single.just(false))
-                .flatMapMaybe(jtiCached -> jtiCached ?
-                        introspectionTokenService.introspect(token, true) :
-                        introspectionTokenService.introspect(token, offlineVerification));
+                .flatMapMaybe(jwtCached -> introspection.apply(token, jwtCached || offlineVerification));
     }
 
     private Maybe<Client> findFirstClientByAudience(JWT jwt) {

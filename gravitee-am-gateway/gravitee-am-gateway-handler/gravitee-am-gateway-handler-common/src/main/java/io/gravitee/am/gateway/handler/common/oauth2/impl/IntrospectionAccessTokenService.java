@@ -36,7 +36,7 @@ public class IntrospectionAccessTokenService extends BaseIntrospectionTokenServi
                                            ProtectedResourceManager protectedResourceManager,
                                            Environment environment,
                                            TokenRepository tokenRepository) {
-        super(jwtService, clientLookupService, protectedResourceManager, environment, false);
+        super(jwtService, clientLookupService, protectedResourceManager, environment);
         this.tokenRepository = tokenRepository;
     }
 
@@ -47,6 +47,13 @@ public class IntrospectionAccessTokenService extends BaseIntrospectionTokenServi
 
     @Override
     public Maybe<JWT> introspect(String token, boolean offlineVerification) {
-        return introspectToken(token, ACCESS_TOKEN, offlineVerification, null).map(IntrospectionResult::jwt);
+        return introspectToken(token, ACCESS_TOKEN, offlineVerification, false, null)
+                .map(IntrospectionResult::jwtWithWithheldClaims);
+    }
+
+    @Override
+    public Maybe<JWT> introspectRestoringWithheldClaims(String token, boolean offlineVerification) {
+        return introspectToken(token, ACCESS_TOKEN, offlineVerification, true, null)
+                .map(IntrospectionResult::jwtWithWithheldClaims);
     }
 }
