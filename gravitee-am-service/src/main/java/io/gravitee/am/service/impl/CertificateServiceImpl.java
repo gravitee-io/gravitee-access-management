@@ -199,6 +199,11 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    public Maybe<Certificate> findById(String domain, String id) {
+        return findById(id).filter(certificate -> domain.equals(certificate.getDomain()));
+    }
+
+    @Override
     public Flowable<Certificate> findByDomain(String domain) {
         return innerFindByDomain(domain);
     }
@@ -383,7 +388,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Single<Certificate> validateUpdate(Domain domain, String id, UpdateCertificate updateCertificate) {
-        return certificateRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> {
                     // 'type' is immutable for an existing certificate
@@ -533,18 +538,18 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Completable delete(String certificateId, User principal, boolean force) {
-        return delete(certificateId, principal, force, false);
+    public Completable delete(String domain, String certificateId, User principal, boolean force) {
+        return delete(domain, certificateId, principal, force, false);
     }
 
     @Override
-    public Completable deleteAutomationManaged(String certificateId, User principal) {
-        return delete(certificateId, principal, false, true);
+    public Completable deleteAutomationManaged(String domain, String certificateId, User principal) {
+        return delete(domain, certificateId, principal, false, true);
     }
 
-    private Completable delete(String certificateId, User principal, boolean force, boolean allowFallbackReferenceByKey) {
+    private Completable delete(String domain, String certificateId, User principal, boolean force, boolean allowFallbackReferenceByKey) {
         log.debug("Delete certificate {}", certificateId);
-        return certificateRepository.findById(certificateId)
+        return findById(domain, certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
                 .flatMapSingle(certificate -> force ? Single.just(certificate) : checkApplicationsUsage(certificate)
                                 .flatMap(this::checkIdentityProviderUsage)
