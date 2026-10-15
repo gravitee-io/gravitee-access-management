@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getAuthenticationDeviceNotifierApi, getDomainApi } from './service/utils';
+import { getDomainApi } from './service/utils';
 import { Domain } from '../../management/models';
 import { DomainPage } from '../../management/models/DomainPage';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
@@ -146,19 +146,6 @@ export const listDomains = (accessToken: string, options?: DomainListOptions): P
     page: options?.page,
     size: options?.size,
     q: options?.q,
-  });
-
-export const createAcceptAllDeviceNotifier = (domainId, accessToken) =>
-  getAuthenticationDeviceNotifierApi(accessToken).createAuthenticationDeviceNotifier({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    newAuthenticationDeviceNotifier: {
-      type: 'http-am-authdevice-notifier',
-      configuration:
-        '{"endpoint":"http://localhost:8080/ciba/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}',
-      name: 'Always OK notifier',
-    },
   });
 
 export const getDomainFlows = (domainId, accessToken) =>
