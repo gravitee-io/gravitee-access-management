@@ -180,6 +180,11 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    public Maybe<Certificate> findById(String domain, String id) {
+        return findById(id).filter(certificate -> domain.equals(certificate.getDomain()));
+    }
+
+    @Override
     public Flowable<Certificate> findByDomain(String domain) {
         return innerFindByDomain(domain);
     }
@@ -283,7 +288,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal) {
         log.debug("Update a certificate {} for domain {}", id, domain.getId());
-        return certificateRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> certificatePluginService.getSchema(certificate.getType())
                         .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(certificate.getType())))
@@ -388,9 +393,9 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Completable delete(String certificateId, User principal) {
+    public Completable delete(String domain, String certificateId, User principal) {
         log.debug("Delete certificate {}", certificateId);
-        return certificateRepository.findById(certificateId)
+        return findById(domain, certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
                 .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId).count()
                         .flatMap(applications -> {
