@@ -126,7 +126,7 @@ public class ApplicationFormsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> applicationService.findById(application))
+                        .flatMap(irrelevant -> applicationService.findById(domain, application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(irrelevant -> formService.create(domain, application, newForm, authenticatedUser))
                         .map(form -> Response
