@@ -337,4 +337,61 @@ public class OAuth2AuthProviderImplTest {
         verify(introspectionTokenService).introspect(TOKEN, true);
         verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
     }
+
+    @Test
+    public void shouldRestoreWithheldClaims() throws InterruptedException {
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, CLIENT_ID,
+                Claims.DOMAIN, DOMAIN,
+                "region", "eu"
+        ));
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+
+        when(introspectionTokenService.introspectRestoringWithheldClaims(TOKEN, false)).thenReturn(Maybe.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.just(client));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        oAuth2AuthProvider.decodeTokenWithWithheldClaims(TOKEN, false, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertTrue(result[0].succeeded());
+        assertEquals(jwt, result[0].result().getToken());
+    }
+
+    @Test
+    public void shouldRestoreWithheldClaimsWithOfflineVerificationWhenTokenIsCached() throws InterruptedException {
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, CLIENT_ID,
+                Claims.DOMAIN, DOMAIN,
+                "region", "eu"
+        ));
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+
+        when(jtiCache.isPresent(TOKEN)).thenReturn(Single.just(true));
+        when(introspectionTokenService.introspectRestoringWithheldClaims(TOKEN, true)).thenReturn(Maybe.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.just(client));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        oAuth2AuthProvider.decodeTokenWithWithheldClaims(TOKEN, false, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertTrue(result[0].succeeded());
+        assertEquals(jwt, result[0].result().getToken());
+    }
 }

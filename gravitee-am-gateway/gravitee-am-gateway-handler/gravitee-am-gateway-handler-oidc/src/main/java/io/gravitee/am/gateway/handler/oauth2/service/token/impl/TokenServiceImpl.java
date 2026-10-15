@@ -125,12 +125,9 @@ public class TokenServiceImpl implements TokenService {
     private Maybe<Token> introspectAs(String token, JWTService.TokenType hint, String callerClientId) {
         return introspectionTokenService.introspect(token, hint, callerClientId)
                 .onErrorResumeWith(Maybe.empty())
-                .map(result -> {
-                    result.withheldClaims().forEach(result.jwt()::putIfAbsent);
-                    return result.tokenType() == REFRESH_TOKEN
-                            ? convertRefreshToken(result.jwt(), result.clientId())
-                            : convertAccessToken(result.jwt(), result.clientId());
-                });
+                .map(result -> result.tokenType() == REFRESH_TOKEN
+                        ? convertRefreshToken(result.jwtWithWithheldClaims(), result.clientId())
+                        : convertAccessToken(result.jwtWithWithheldClaims(), result.clientId()));
     }
 
     @Override

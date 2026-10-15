@@ -216,6 +216,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         userInfoAuthHandler.extractToken(true);
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
+        userInfoAuthHandler.restoreWithheldClaims(true);
         userInfoAuthHandler.dpopProofValidator(dpopProofValidator);
 
         Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager, executionContextFactory);

@@ -34,4 +34,13 @@ public record IntrospectionResult(JWT jwt, String clientId, TokenType tokenType,
     public IntrospectionResult(JWT jwt, String clientId, TokenType tokenType) {
         this(jwt, clientId, tokenType, Map.of());
     }
+
+    public JWT jwtWithWithheldClaims() {
+        if(withheldClaims.isEmpty()) {
+            return jwt;
+        }
+        JWT merged = new JWT(jwt);
+        withheldClaims.forEach(merged::putIfAbsent);
+        return merged;
+    }
 }

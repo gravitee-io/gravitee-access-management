@@ -60,14 +60,11 @@ abstract class BaseIntrospectionTokenService {
     private final ProtectedResourceManager protectedResourceManager;
     private final boolean isLegacyRfc8707Enabled;
     private final int offlineVerificationTimerSeconds;
-    private final boolean requireStoredTokenLookupForLightweightJwt;
 
     BaseIntrospectionTokenService(JWTService jwtService,
                                   ClientLookupService clientLookupService,
                                   ProtectedResourceManager protectedResourceManager,
-                                  Environment environment,
-                                  boolean requireStoredTokenLookupForLightweightJwt) {
-        this.requireStoredTokenLookupForLightweightJwt = requireStoredTokenLookupForLightweightJwt;
+                                  Environment environment) {
         this.jwtService = jwtService;
         this.clientLookupService = clientLookupService;
         this.protectedResourceManager = protectedResourceManager;
@@ -77,11 +74,12 @@ abstract class BaseIntrospectionTokenService {
 
     protected abstract Maybe<? extends Token> findByToken(String token);
 
-    protected Maybe<IntrospectionResult> introspectToken(String token, TokenType hint, boolean offlineVerification, String callerClientId) {
+    protected Maybe<IntrospectionResult> introspectToken(String token, TokenType hint, boolean offlineVerification,
+                                                         boolean loadWithheldClaims, String callerClientId) {
         return jwtService.decode(token, hint)
                 .flatMap(jwt -> validateAudienceAndGetCertificateId(jwt, callerClientId)
                         .flatMap(certificateId -> jwtService.decodeAndVerify(token, Maybe.just(certificateId), hint)))
-                .flatMapMaybe(jwt -> shouldLookUpStoredToken(jwt, offlineVerification)
+                .flatMapMaybe(jwt -> shouldLookUpStoredToken(jwt, offlineVerification, loadWithheldClaims)
                         .flatMapMaybe(lookUpStoredToken -> {
                             if (!lookUpStoredToken) {
                                 return Maybe.just(new IntrospectionResult(jwt, null, hint));
@@ -125,17 +123,11 @@ abstract class BaseIntrospectionTokenService {
                 });
     }
 
-    private Single<Boolean> shouldLookUpStoredToken(JWT jwt, boolean offlineVerification) {
-        if (offlineVerification) {
-            return Single.just(false);
-        }
-        if (!Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + offlineVerificationTimerSeconds))) {
+    private Single<Boolean> shouldLookUpStoredToken(JWT jwt, boolean offlineVerification, boolean loadWithheldClaims) {
+        if (!offlineVerification && !Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + offlineVerificationTimerSeconds))) {
             return Single.just(true);
         }
-        if (!requireStoredTokenLookupForLightweightJwt) {
-            return Single.just(false);
-        }
-        return isIssuedToLightweightJwtClient(jwt);
+        return loadWithheldClaims ? isIssuedToLightweightJwtClient(jwt) : Single.just(false);
     }
 
     private Single<Boolean> isIssuedToLightweightJwtClient(JWT jwt) {

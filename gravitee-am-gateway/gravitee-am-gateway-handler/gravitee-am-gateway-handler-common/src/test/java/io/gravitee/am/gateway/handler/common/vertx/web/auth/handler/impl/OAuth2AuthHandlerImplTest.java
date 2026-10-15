@@ -37,6 +37,7 @@ import io.vertx.rxjava3.core.http.HttpClientResponse;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.Test;
+import org.mockito.stubbing.Answer;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -108,6 +109,27 @@ public class    OAuth2AuthHandlerImplTest extends RxWebTestBase {
                 rc -> AssertionsForClassTypes.assertThat((Object) rc.get(ConstantKeys.CLIENT_CONTEXT_KEY)).isNotNull());
 
         testRequest(HttpMethod.GET, "/test", withAuthorization("Bearer pretend-its-a-token"), HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldNotRestoreWithheldClaimsByDefault() throws Exception {
+        givenTokenDecodesTo(Map.of(Claims.SUB, TEST_SUB));
+
+        testRequest(HttpMethod.GET, "/test", withAuthorization("Bearer the-token"), HttpStatusCode.OK_200, "OK", null);
+
+        verify(provider).decodeToken(eq("the-token"), eq(false), any());
+        verify(provider, never()).decodeTokenWithWithheldClaims(any(), anyBoolean(), any());
+    }
+
+    @Test
+    public void shouldRestoreWithheldClaims() throws Exception {
+        handler.restoreWithheldClaims(true);
+        givenTokenDecodesTo(Map.of(Claims.SUB, TEST_SUB));
+
+        testRequest(HttpMethod.GET, "/test", withAuthorization("Bearer the-token"), HttpStatusCode.OK_200, "OK", null);
+
+        verify(provider).decodeTokenWithWithheldClaims(eq("the-token"), eq(false), any());
+        verify(provider, never()).decodeToken(any(), anyBoolean(), any());
     }
 
     @Test
@@ -214,14 +236,16 @@ public class    OAuth2AuthHandlerImplTest extends RxWebTestBase {
     }
 
     private void givenTokenDecodesTo(Map<String, ?> claims) {
-        doAnswer(invocation -> {
+        Answer<Void> decoded = invocation -> {
             var handler = (Handler<AsyncResult<OAuth2AuthResponse>>) invocation.getArguments()[2];
             var token = new JWT(claims);
             var client = new Client();
 
             handler.handle(Future.succeededFuture(new OAuth2AuthResponse(token, client)));
             return null;
-        }).when(provider).decodeToken(any(), anyBoolean(), any());
+        };
+        doAnswer(decoded).when(provider).decodeToken(any(), anyBoolean(), any());
+        doAnswer(decoded).when(provider).decodeTokenWithWithheldClaims(any(), anyBoolean(), any());
     }
 
 
