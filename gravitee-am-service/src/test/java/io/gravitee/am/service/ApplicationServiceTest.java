@@ -206,6 +206,66 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldFindByIdInDomain() {
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
+
+        applicationService.findById(DOMAIN.getId(), "my-client").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValueCount(1);
+    }
+
+    @Test
+    public void shouldNotFindByIdInDomain_applicationFromAnotherDomain() {
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(appInOtherDomain()));
+
+        applicationService.findById(DOMAIN.getId(), "my-client").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoValues();
+    }
+
+    @Test
+    public void shouldNotPatch_applicationFromAnotherDomain() {
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(appInOtherDomain()));
+
+        applicationService.patch(DOMAIN, "my-client", new PatchApplication(), principal, revokeToken).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNotUpdateType_applicationFromAnotherDomain() {
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(appInOtherDomain()));
+
+        applicationService.updateType(DOMAIN.getId(), "my-client", ApplicationType.SERVICE, principal).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNotDelete_applicationFromAnotherDomain() {
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(appInOtherDomain()));
+
+        applicationService.delete("my-client", DOMAIN).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationRepository, never()).delete(anyString());
+    }
+
+    private static Application appInOtherDomain() {
+        Application app = new Application();
+        app.setId("my-client");
+        app.setDomain("other-domain");
+        return app;
+    }
+
+    @Test
     public void shouldFindById() {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         TestObserver testObserver = applicationService.findById("my-client").test();
@@ -1650,14 +1710,14 @@ public class ApplicationServiceTest {
     public void shouldDelete() {
         Application existingClient = Mockito.mock(Application.class);
         when(existingClient.getId()).thenReturn("my-client");
-        when(existingClient.getDomain()).thenReturn("my-domain");
+        when(existingClient.getDomain()).thenReturn(DOMAIN.getId());
         when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         Form form = new Form();
         form.setId("form-id");
         when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.just(form));
-        when(formService.delete(eq("my-domain"), eq(form.getId()))).thenReturn(Completable.complete());
+        when(formService.delete(eq(DOMAIN.getId()), eq(form.getId()))).thenReturn(Completable.complete());
         Email email = new Email();
         email.setId("email-id");
         when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.just(email));
@@ -1674,7 +1734,7 @@ public class ApplicationServiceTest {
         testObserver.assertNoErrors();
 
         verify(applicationRepository, times(1)).delete(existingClient.getId());
-        verify(formService, times(1)).delete(eq("my-domain"), anyString());
+        verify(formService, times(1)).delete(eq(DOMAIN.getId()), anyString());
         verify(emailTemplateService, times(1)).delete(anyString());
         verify(membershipService, times(1)).delete(any(), anyString());
     }
@@ -1682,7 +1742,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldDelete_withoutRelatedData() {
         Application existingClient = Mockito.mock(Application.class);
-        when(existingClient.getDomain()).thenReturn("my-domain");
+        when(existingClient.getDomain()).thenReturn(DOMAIN.getId());
         when(existingClient.getId()).thenReturn("my-client");
         when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
@@ -1705,7 +1765,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldDelete_technicalException() {
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
         when(applicationRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
         TestObserver testObserver = applicationService.delete("my-client", DOMAIN).test();
@@ -1930,7 +1990,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
 
@@ -2131,7 +2191,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
 
@@ -2169,7 +2229,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(emptyAppWithDomain()));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
 

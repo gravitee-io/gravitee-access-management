@@ -17,8 +17,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
-import { performDelete, performGet, performPatch, performPut } from '@gateway-commands/oauth-oidc-commands';
+import { performDelete, performGet, performPatch, performPost , performPut } from '@gateway-commands/oauth-oidc-commands';
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
+import { createApplication } from '@management-commands/application-management-commands';
+import { listClientSecrets } from '@management-commands/client-secrets-management-commands';
 import { getAllCertificates } from '@management-commands/certificate-management-commands';
 
 setup(200000);
@@ -203,5 +205,93 @@ describe('Cross-reference isolation - an application owner is confined to their 
 
     expect(response.status).toBe(403);
     expect(response.body.message).toEqual('Permission denied');
+  });
+});
+
+/**
+ * Sub-resources of an application (secrets, emails, analytics, flows) must reject an application
+ * that does not belong to the domain of the path, even when the caller owns that domain: owning
+ * domain A must not give access to an application of domain B addressed as /domains/A/applications/{appB}.
+ */
+describe('Cross-reference isolation - a domain owner cannot reach an application of another domain through their own domain', () => {
+  let foreignApplication: any;
+
+  beforeAll(async () => {
+    foreignApplication = await createApplication(fixture.otherDomain.id, fixture.adminToken, {
+      name: 'foreign-service-app',
+      type: 'SERVICE',
+      clientId: `foreign-${Date.now()}`,
+    });
+  });
+
+  const foreignApplicationPath = (suffix: string) => domainPath(fixture.domain.id, `/applications/${foreignApplication.id}${suffix}`);
+
+  it('should refuse creating a secret for an application of another domain', async () => {
+    const secretsBefore = await listClientSecrets(fixture.otherDomain.id, fixture.adminToken, foreignApplication.id);
+
+    const response = await performPost(
+      getOrganisationManagementUrl(),
+      foreignApplicationPath('/secrets'),
+      { name: 'stolen' },
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(403);
+    expect(response.body.secret).toBeUndefined();
+    const secretsAfter = await listClientSecrets(fixture.otherDomain.id, fixture.adminToken, foreignApplication.id);
+    expect(secretsAfter.length).toEqual(secretsBefore.length);
+  });
+
+  it('should refuse listing the secrets of an application of another domain', async () => {
+    const response = await performGet(
+      getOrganisationManagementUrl(),
+      foreignApplicationPath('/secrets'),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it('should refuse creating an email template for an application of another domain', async () => {
+    const response = await performPost(
+      getOrganisationManagementUrl(),
+      foreignApplicationPath('/emails'),
+      { template: 'RESET_PASSWORD', from: 'attacker@example.com', subject: 'x', content: 'x', expiresAfter: 86400 },
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it('should refuse reading the analytics of an application of another domain', async () => {
+    const response = await performGet(
+      getOrganisationManagementUrl(),
+      foreignApplicationPath('/analytics?type=count&field=application&interval=3600000&from=0&to=1'),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it('should refuse reading a flow of an application of another domain', async () => {
+    const response = await performGet(
+      getOrganisationManagementUrl(),
+      foreignApplicationPath('/flows/any-flow'),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('should still let a DOMAIN_OWNER create a secret for an application of their own domain', async () => {
+    const response = await performPost(
+      getOrganisationManagementUrl(),
+      domainPath(fixture.domain.id, `/applications/${fixture.application.id}/secrets`),
+      { name: 'own-domain-secret' },
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(201);
+    expect(response.body.secret).toBeDefined();
   });
 });

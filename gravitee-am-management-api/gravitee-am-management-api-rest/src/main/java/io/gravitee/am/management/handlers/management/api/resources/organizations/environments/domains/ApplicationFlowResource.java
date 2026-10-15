@@ -24,11 +24,14 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -56,6 +59,9 @@ public class ApplicationFlowResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private ApplicationService applicationService;
 
     @Autowired
     private FlowService flowService;
@@ -87,8 +93,8 @@ public class ApplicationFlowResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
-                .andThen(flowService.findById(ReferenceType.DOMAIN, domain, flow)
-                        .switchIfEmpty(Maybe.error(new FlowNotFoundException(flow)))
+                .andThen(checkApplicationInDomain(domain, application))
+                .andThen(findApplicationFlow(domain, application, flow)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
     }
@@ -117,11 +123,26 @@ public class ApplicationFlowResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
+                .andThen(checkApplicationInDomain(domain, application))
+                .andThen(findApplicationFlow(domain, application, flow).ignoreElement())
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
                 .andThen(flowValidator.validate(updateFlow))
                 .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
+    }
+
+    // APPLICATION_FLOW is checked at domain level only, so the application must be explicitly checked against the domain
+    private Completable checkApplicationInDomain(String domain, String application) {
+        return applicationService.findById(domain, application)
+                .switchIfEmpty(Single.error(() -> new ApplicationNotFoundException(application)))
+                .ignoreElement();
+    }
+
+    private Single<Flow> findApplicationFlow(String domain, String application, String flow) {
+        return flowService.findById(ReferenceType.DOMAIN, domain, flow)
+                .filter(existingFlow -> application.equals(existingFlow.getApplication()))
+                .switchIfEmpty(Single.error(() -> new FlowNotFoundException(flow)));
     }
 
     private static Flow convert(io.gravitee.am.service.model.Flow flow) {
