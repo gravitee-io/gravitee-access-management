@@ -17,8 +17,9 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
-import { performGet, performPatch } from '@gateway-commands/oauth-oidc-commands';
+import { performDelete, performGet, performPatch, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
+import { getAllCertificates } from '@management-commands/certificate-management-commands';
 
 setup(200000);
 
@@ -109,6 +110,63 @@ describe('Cross-reference isolation - a domain owner is confined to their own do
 
     expect(response.status).toBe(403);
     expect(response.body.message).toEqual('Permission denied');
+  });
+});
+
+describe('Cross-reference isolation - a domain owner cannot reach a certificate of another domain through their own domain', () => {
+  const certificatePath = (certificateId: string) => domainPath(fixture.domain.id, `/certificates/${certificateId}`);
+  const firstCertificateOf = async (domainId: string) => (await getAllCertificates(domainId, fixture.adminToken))[0];
+
+  it('should refuse reading a certificate of another domain', async () => {
+    const foreignCertificate = await firstCertificateOf(fixture.otherDomain.id);
+
+    const response = await performGet(
+      getOrganisationManagementUrl(),
+      certificatePath(foreignCertificate.id),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('should refuse updating a certificate of another domain', async () => {
+    const foreignCertificate = await firstCertificateOf(fixture.otherDomain.id);
+
+    const response = await performPut(
+      getOrganisationManagementUrl(),
+      certificatePath(foreignCertificate.id),
+      { name: 'updated through another domain', type: foreignCertificate.type, configuration: '{}' },
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('should refuse deleting a certificate of another domain', async () => {
+    const foreignCertificate = await firstCertificateOf(fixture.otherDomain.id);
+
+    const response = await performDelete(
+      getOrganisationManagementUrl(),
+      certificatePath(foreignCertificate.id),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(404);
+    const remaining = await getAllCertificates(fixture.otherDomain.id, fixture.adminToken);
+    expect(remaining.map((certificate) => certificate.id)).toContain(foreignCertificate.id);
+  });
+
+  it('should still let a DOMAIN_OWNER read a certificate of their own domain', async () => {
+    const ownCertificate = await firstCertificateOf(fixture.domain.id);
+
+    const response = await performGet(
+      getOrganisationManagementUrl(),
+      certificatePath(ownCertificate.id),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toEqual(ownCertificate.id);
   });
 });
 
