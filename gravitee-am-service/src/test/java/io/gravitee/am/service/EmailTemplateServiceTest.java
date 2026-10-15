@@ -327,4 +327,15 @@ public class EmailTemplateServiceTest {
         testSubscriber.assertNotComplete();
         testSubscriber.assertError(EmailAlreadyExistsException.class);
     }
+
+    @Test
+    public void shouldNotDelete_emailFromAnotherDomain() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "email-id")).thenReturn(Maybe.empty());
+
+        emailTemplateService.delete(DOMAIN.getId(), "email-id", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(EmailNotFoundException.class);
+
+        verify(emailRepository, never()).delete(anyString());
+    }
 }
