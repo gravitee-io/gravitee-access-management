@@ -93,8 +93,8 @@ public class CertificateResource extends AbstractAutomationResource {
         final AutomationRef certRef = AutomationRef.parse(certKey);
         checkAnyPermission(principal, organizationId, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.DELETE)
                 .andThen(resolver.resolveDomainMaybe(environmentId, domainRef))
-                .flatMap(domain -> resolver.resolveCertificateMaybe(domain, certRef))
-                .flatMapCompletable(certificate -> certificateService.delete(certificate.getId(), principal))
+                .flatMapCompletable(domain -> resolver.resolveCertificateMaybe(domain, certRef)
+                        .flatMapCompletable(certificate -> certificateService.delete(domain.getId(), certificate.getId(), principal)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

@@ -32,11 +32,13 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.management.service.MaskingMode;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -60,6 +62,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -175,7 +178,7 @@ class CertificateServiceProxyImplTest {
         existing.setId("cert-id");
         existing.setType("cert");
         existing.setConfiguration("{\"key\":\"value\"}");
-        when(certService.findById("cert-id")).thenReturn(Maybe.just(existing));
+        when(certService.findById(TEST_DOMAIN, "cert-id")).thenReturn(Maybe.just(existing));
         when(certPluginService.getSchema(anyString())).thenReturn(Maybe.just("{\"type\":\"object\"}"));
         when(certService.update(domain, "cert-id", update, principal)).thenReturn(Single.error(new TechnicalManagementException("validation error")));
 
@@ -188,6 +191,34 @@ class CertificateServiceProxyImplTest {
         assertThat(audit.getType()).isEqualTo(EventType.CERTIFICATE_UPDATED);
         assertThat(audit.getReferenceId()).isEqualTo(TEST_DOMAIN);
         assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+    }
+
+    @Test
+    void shouldNotUpdateCertificateOfAnotherDomain() {
+        var domain = new Domain();
+        domain.setId(TEST_DOMAIN);
+        var principal = mock(User.class);
+        when(certService.findById(TEST_DOMAIN, "foreign-cert-id")).thenReturn(Maybe.empty());
+
+        certificateServiceProxy()
+                .update(domain, "foreign-cert-id", new UpdateCertificate(), principal)
+                .test()
+                .assertError(CertificateNotFoundException.class);
+
+        verify(certService, never()).update(any(), any(), any(), any());
+        var audit = captureAudit();
+        assertThat(audit.getReferenceId()).isEqualTo(TEST_DOMAIN);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+    }
+
+    @Test
+    void shouldDeleteWithinTheGivenDomain() {
+        var principal = mock(User.class);
+        when(certService.delete(TEST_DOMAIN, "cert-id", principal)).thenReturn(Completable.complete());
+
+        certificateServiceProxy().delete(TEST_DOMAIN, "cert-id", principal).test().assertComplete();
+
+        verify(certService).delete(TEST_DOMAIN, "cert-id", principal);
     }
 
     @Test
