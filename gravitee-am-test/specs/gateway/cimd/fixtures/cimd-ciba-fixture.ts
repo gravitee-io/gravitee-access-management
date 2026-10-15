@@ -29,6 +29,7 @@ import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
+import { createCibaNotifierMock } from '@utils-commands/ciba-notifier-mock';
 import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
 import { Fixture } from '../../../test-fixture';
@@ -149,6 +150,7 @@ async function createTemplateApplication(domainId: string, accessToken: string, 
 export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
   let domain: Domain | null = null;
   let accessToken: string | null = null;
+  const cibaNotifier = createCibaNotifierMock();
 
   try {
     accessToken = await requestAdminAccessToken();
@@ -174,15 +176,12 @@ export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
     expect(user).toBeDefined();
 
     const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/`;
-    const internalCibaUrl = process.env.AM_INTERNAL_CIBA_NOTIFIER_URL;
-    const cibaUrl = process.env.AM_CIBA_NOTIFIER_URL;
-
     const notifierResponse = await performPost(
       `${managementUrl}${domain.id}/auth-device-notifiers`,
       '',
       {
         type: 'http-am-authdevice-notifier',
-        configuration: `{"endpoint":"${internalCibaUrl}/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+        configuration: cibaNotifier.notifierConfiguration('accept-all'),
         name: 'Always OK notifier',
       },
       {
@@ -220,22 +219,10 @@ export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
     // waitForDomainStart already waits for gateway sync (waitForDomainReady) and OIDC well-known (waitForOidcReady).
     const startedDomain = await waitForDomainStart(domain);
 
-    const cibaNotifierRegResponse = await performPost(
-      `${cibaUrl}/domains`,
-      '',
-      {
-        domainId: domain.id,
-        domainCallback: `${process.env.AM_INTERNAL_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate/callback`,
-        // AM's callback ignores the Basic header but Vert.x requires url-encoding of client_id
-        clientId: encodeURIComponent(CIMD_CIBA_CLIENT_ID_POLL),
-        clientSecret: '',
-      },
-      {
-        'Content-type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    );
-    expect(cibaNotifierRegResponse.status).toBe(200);
+    await cibaNotifier.register({
+      url: `${process.env.AM_INTERNAL_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate/callback`,
+      clientId: CIMD_CIBA_CLIENT_ID_POLL,
+    });
 
     const cibaEndpoint = `${process.env.AM_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate`;
     const tokenEndpoint = startedDomain.oidcConfig.token_endpoint;
@@ -316,10 +303,12 @@ export const setupCimdCibaFixture = async (): Promise<CimdCibaFixture> => {
       createPrivateKeyJwtAssertion: (clientId: string) =>
         createPrivateKeyJwtAssertion(clientId, cibaEndpoint),
       cleanUp: async () => {
+        await cibaNotifier.remove();
         await safeDeleteDomain(domain?.id, accessToken);
       },
     };
   } catch (error) {
+    await cibaNotifier.remove();
     if (domain?.id && accessToken) {
       await safeDeleteDomain(domain.id, accessToken);
     }

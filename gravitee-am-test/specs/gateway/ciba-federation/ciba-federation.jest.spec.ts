@@ -31,7 +31,7 @@ let fixture: CibaFederationFixture;
 //    the "target" domain (domainB) can resolve. domainA's device notifier is the CIBA-federation notifier,
 //    configured with an OIDC identity provider that points at domainB's discovery document.
 // 2. The federation notifier relays bc-authorize to domainB, which notifies its own local user via the
-//    HTTP device notifier (pointed at the CIBA delegated-service mock's accept-all/reject-all endpoints),
+//    HTTP device notifier (pointed at the WireMock CIBA notifier's accept-all/reject-all stubs),
 //    then polls domainB's token endpoint and calls back domainA to finalize the transaction.
 beforeAll(async () => {
   fixture = await setupCibaFederationFixture();

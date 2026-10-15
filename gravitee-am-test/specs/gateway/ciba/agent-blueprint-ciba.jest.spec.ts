@@ -36,7 +36,7 @@ afterAll(async () => {
 describe('CIBA × HOSTED_DELEGATED (client_secret_basic) — case A', () => {
   it('issues an access_token and id_token after the device notifier auto-accepts', async () => {
     const { clientId, clientSecret } = fixture.hostedDelegatedBasic;
-    await fixture.registerClientWithDelegatedService(clientId, clientSecret);
+    await fixture.registerNotifierCallbackClient(clientId, clientSecret);
 
     const init = await fixture.initiateCiba(clientId, fixture.user.username, clientSecret);
     expect(init.status).toBe(200);
@@ -52,7 +52,7 @@ describe('CIBA × HOSTED_DELEGATED (client_secret_basic) — case A', () => {
 describe('CIBA × non-agent control (client_secret_basic) — case C', () => {
   it('issues an access_token for a regular WEB client (proves the rig works)', async () => {
     const { clientId, clientSecret } = fixture.control;
-    await fixture.registerClientWithDelegatedService(clientId, clientSecret);
+    await fixture.registerNotifierCallbackClient(clientId, clientSecret);
 
     const init = await fixture.initiateCiba(clientId, fixture.user.username, clientSecret);
     expect(init.status).toBe(200);
@@ -67,7 +67,7 @@ describe('CIBA × non-agent control (client_secret_basic) — case C', () => {
 describe('CIBA × HOSTED_DELEGATED with reject-all notifier — case D', () => {
   it('returns access_denied after the device notifier rejects', async () => {
     const { clientId, clientSecret } = fixture.hostedDelegatedBasic;
-    await fixture.registerClientWithDelegatedService(clientId, clientSecret);
+    await fixture.registerNotifierCallbackClient(clientId, clientSecret);
     await fixture.switchNotifier('reject-all');
     try {
       const init = await fixture.initiateCiba(clientId, fixture.user.username, clientSecret);
@@ -88,10 +88,10 @@ describe('CIBA × CIMD HOSTED_DELEGATED — case F', () => {
   it('issues an access_token for a CIMD-resolved agent client (proves the CIMD path)', async () => {
     expect(fixture.cimdHostedDelegated).not.toBeNull();
     const clientId = fixture.cimdHostedDelegated!.clientId;
-    // private_key_jwt agents have no client_secret — the delegated-service callback to AM still needs basic creds,
+    // private_key_jwt agents have no client_secret — the notifier callback to AM still needs basic creds,
     // so re-register a confidential client (hostedDelegatedBasic). AM's callback only validates auth_req_id,
     // not which client authenticated, so this works.
-    await fixture.registerClientWithDelegatedService(
+    await fixture.registerNotifierCallbackClient(
       fixture.hostedDelegatedBasic.clientId,
       fixture.hostedDelegatedBasic.clientSecret,
     );
@@ -110,7 +110,7 @@ describe('CIBA × HOSTED_DELEGATED with private_key_jwt + JAR — case G', () =>
   it('issues tokens for a signed request object', async () => {
     const { clientId } = fixture.hostedDelegatedPrivateKeyJwt;
     // Same callback-creds workaround as case F (private_key_jwt agent has no secret).
-    await fixture.registerClientWithDelegatedService(
+    await fixture.registerNotifierCallbackClient(
       fixture.hostedDelegatedBasic.clientId,
       fixture.hostedDelegatedBasic.clientSecret,
     );

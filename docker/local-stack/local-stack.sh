@@ -103,13 +103,13 @@ FULL=0
 DETACH=1
 LICENSE_FILE="$DEV/license/gravitee-universe-v4.key"
 # opt-in extras (plain vars — keep this script bash-3.2 compatible, macOS default)
-WANT_UI=0; WANT_WIREMOCK=1; WANT_CIBA=0; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0; WANT_LDAP=0
+WANT_UI=0; WANT_WIREMOCK=1; WANT_OPENFGA=0; WANT_KAFKA=0; WANT_MTLS=0; WANT_SPIRE=0; WANT_CLOUD=0; WANT_KEYCLOAK=0; WANT_LDAP=0
 WANT_CHAOS=0             # --chaos: interpose toxiproxy on AM's outbound connections
 WANT_AE=0                # --alert-engine: Gravitee Alert Engine, wired to both planes
 
 want_set() { # want_set <name> <value>
   case "$1" in
-    ui) WANT_UI="$2" ;; wiremock) WANT_WIREMOCK="$2" ;; ciba) WANT_CIBA="$2" ;;
+    ui) WANT_UI="$2" ;; wiremock) WANT_WIREMOCK="$2" ;;
     openfga) WANT_OPENFGA="$2" ;; kafka) WANT_KAFKA="$2" ;; mtls) WANT_MTLS="$2" ;;
     spire) WANT_SPIRE="$2" ;; cloud) WANT_CLOUD="$2" ;; keycloak) WANT_KEYCLOAK="$2" ;;
     ldap) WANT_LDAP="$2" ;;
@@ -117,8 +117,6 @@ want_set() { # want_set <name> <value>
     *) return 1 ;;
   esac
 }
-
-CIBA_IMAGE="gravitee-am-ciba-delegated-service"
 
 usage() {
   cat <<'EOF'
@@ -146,12 +144,12 @@ MODE
 SERVICES
   (default lean)       gateway, management, <db>, smtp, wiremock
   --ui                 also start the Console UI on :4200 (needed for playwright)
-  --full               UI + wiremock + ciba + openfga + kafka + mtls + ldap
+  --full               UI + wiremock + openfga + kafka + mtls + ldap
                        (the union the jest gateway + playwright suites need)
   --ldap               start OpenLDAP on :1389, seeded with dc=gravitee,dc=io
                        (needed by the LDAP identity-provider tests)
   --with a,b,...       opt-in extras individually:
-                       ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,keycloak,ldap,
+                       ui,wiremock,openfga,kafka,mtls,spire,cloud,keycloak,ldap,
                        alert-engine
   --keycloak           start Keycloak on :8180 as a third-party SAML IdP
                        (realms saml-test / saml-test-2 imported at start-up)
@@ -259,7 +257,7 @@ DBSVC="mongodb"; [ "$DB" = "psql" ] && DBSVC="postgres"
 
 # --full implies UI + the heavy extras
 if [ "$FULL" -eq 1 ]; then
-  WANT_UI=1; WANT_WIREMOCK=1; WANT_CIBA=1; WANT_OPENFGA=1; WANT_KAFKA=1; WANT_MTLS=1; WANT_LDAP=1
+  WANT_UI=1; WANT_WIREMOCK=1; WANT_OPENFGA=1; WANT_KAFKA=1; WANT_MTLS=1; WANT_LDAP=1
 fi
 
 # ---------------------------------------------------------------------------
@@ -320,7 +318,6 @@ build_service_list() {
    SERVICES=(management gateway "$DBSVC" smtp am-wait)
   [ "$WANT_WIREMOCK" -eq 1 ] && SERVICES+=(wiremock wiremock-init)
   [ "$WANT_UI" -eq 1 ]       && SERVICES+=(webui)
-  [ "$WANT_CIBA" -eq 1 ]     && SERVICES+=(ciba)
   [ "$WANT_OPENFGA" -eq 1 ]  && SERVICES+=(openfga)
   [ "$WANT_KAFKA" -eq 1 ]    && SERVICES+=(kafka)
   [ "$WANT_MTLS" -eq 1 ]     && SERVICES+=(gateway-mtls)
@@ -508,15 +505,6 @@ source_build() {
     copy_artifact "$WEBUI_TARGET/gravitee-am-webui-*.zip" "gravitee-am-webui-" "webui" || die "webui zip missing"
     [ -d "../management-ui/config" ] && cp -r ../management-ui/config "$DEV/build-ctx/" || true
   fi
-}
-
-# Build the CIBA delegated service image (no published image exists).
-ensure_ciba() {
-  if [ "$BUILD_MODE" != "force" ] && docker image inspect "$CIBA_IMAGE" >/dev/null 2>&1; then
-    printf '%s    ciba image present%s\n' "$C_DIM" "$C_RST"; return 0
-  fi
-  run_step "Building CIBA image (jib)" mvn_in_repo -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild \
-    || die "CIBA image build failed — see output above."
 }
 
 ensure_jdbc_drivers() {
@@ -731,15 +719,12 @@ cmd_up() {
     log "Pulled mode: ${reg}/am-*:${VERSION}"
     compose pull gateway management $( [ "$WANT_UI" -eq 1 ] && echo webui ) \
       || die "Image pull failed. Check the tag/registry and 'docker login ${reg}'."
-    # CIBA has no published image; build it locally if requested.
-    [ "$WANT_CIBA" -eq 1 ] && ensure_ciba
     log "Starting stack (no build)…"
     local up_args=(); [ "$DETACH" -eq 1 ] && up_args+=(-d); up_args+=(--no-build)
     start_stack "${up_args[@]}" ${SERVICES[@]+"${SERVICES[@]}"}
   else
     log "Source mode: building Access Management from the current code state"
     source_build
-    [ "$WANT_CIBA" -eq 1 ] && ensure_ciba
     log "Building images & starting stack…"
     local up_args=(); [ "$DETACH" -eq 1 ] && up_args+=(-d); up_args+=(--build)
     start_stack "${up_args[@]}" ${SERVICES[@]+"${SERVICES[@]}"}
