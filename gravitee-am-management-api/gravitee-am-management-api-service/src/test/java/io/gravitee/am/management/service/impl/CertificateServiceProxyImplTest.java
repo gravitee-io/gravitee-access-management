@@ -16,9 +16,11 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Template;
@@ -26,6 +28,9 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.CertificateNotFoundException;
+import io.gravitee.am.service.model.UpdateCertificate;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.apache.commons.text.RandomStringGenerator;
@@ -43,6 +48,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CertificateServiceProxyImplTest {
@@ -109,6 +116,35 @@ class CertificateServiceProxyImplTest {
                 .allSatisfy(cert -> assertThat(cert.identityProviders()).isNotEmpty())
         ;
 
+    }
+
+    @Test
+    void shouldNotUpdateCertificateOfAnotherDomain() {
+        var domain = new Domain();
+        domain.setId(TEST_DOMAIN);
+        var principal = mock(User.class);
+        when(certService.findById(TEST_DOMAIN, "foreign-cert-id")).thenReturn(Maybe.empty());
+
+        certificateServiceProxy()
+                .update(domain, "foreign-cert-id", new UpdateCertificate(), principal)
+                .test()
+                .assertError(CertificateNotFoundException.class);
+
+        verify(certService, never()).update(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldDeleteWithinTheGivenDomain() {
+        var principal = mock(User.class);
+        when(certService.delete(TEST_DOMAIN, "cert-id", principal)).thenReturn(Completable.complete());
+
+        certificateServiceProxy().delete(TEST_DOMAIN, "cert-id", principal).test().assertComplete();
+
+        verify(certService).delete(TEST_DOMAIN, "cert-id", principal);
+    }
+
+    private CertificateServiceProxyImpl certificateServiceProxy() {
+        return new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), settings);
     }
 
     private Flowable<IdentityProvider> someRandomIdps() {

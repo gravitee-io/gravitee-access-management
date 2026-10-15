@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.plugin.ValidationResult;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.Metadata;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
@@ -182,6 +183,59 @@ public class CertificateServiceTest {
     }
 
     @Test
+    public void shouldFindByIdInDomain() {
+        Certificate certificate = new Certificate();
+        certificate.setId("my-certificate");
+        certificate.setDomain(DOMAIN.getId());
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
+
+        certificateService.findById(DOMAIN.getId(), "my-certificate").test()
+                .assertValue(certificate);
+    }
+
+    @Test
+    public void shouldNotFindById_certificateOfAnotherDomain() {
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+
+        certificateService.findById(DOMAIN.getId(), "my-certificate").test()
+                .assertComplete()
+                .assertNoValues();
+    }
+
+    @Test
+    public void shouldNotUpdate_certificateOfAnotherDomain() {
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+
+        certificateService.update(DOMAIN, "my-certificate", new UpdateCertificate(), new DefaultUser("user")).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(CertificateNotFoundException.class);
+
+        verify(certificateRepository, never()).update(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
+    public void shouldNotDelete_certificateOfAnotherDomain() {
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+
+        certificateService.delete(DOMAIN.getId(), "my-certificate", new DefaultUser("user")).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(CertificateNotFoundException.class);
+
+        verify(certificateRepository, never()).delete(any());
+        verify(eventService, never()).create(any());
+        verify(auditService, never()).report(any());
+    }
+
+    private static Certificate otherDomainCertificate() {
+        Certificate certificate = new Certificate();
+        certificate.setId("my-certificate");
+        certificate.setDomain("other-domain");
+        certificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
+        return certificate;
+    }
+
+    @Test
     public void shouldFindByDomain() {
         when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(new Certificate()));
         TestSubscriber<Certificate> testSubscriber = certificateService.findByDomain(DOMAIN.getId()).test();
@@ -214,7 +268,7 @@ public class CertificateServiceTest {
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<Void> testObserver = certificateService.delete("my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -230,7 +284,7 @@ public class CertificateServiceTest {
     public void shouldDelete_technicalException() {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver<Void> testObserver = certificateService.delete("my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -244,7 +298,7 @@ public class CertificateServiceTest {
     public void shouldDelete_notFound() {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.empty());
 
-        TestObserver<Void> testObserver = certificateService.delete("my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
 
         testObserver.assertError(CertificateNotFoundException.class);
         testObserver.assertNotComplete();
@@ -256,10 +310,13 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldDelete_certificateWithClients() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(new Certificate()));
+        Certificate certificate = new Certificate();
+        certificate.setId("my-certificate");
+        certificate.setDomain(DOMAIN.getId());
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.just(new Application()));
 
-        TestObserver<Void> testObserver = certificateService.delete("my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
 
         testObserver.assertError(CertificateWithApplicationsException.class);
         testObserver.assertNotComplete();
@@ -316,6 +373,7 @@ public class CertificateServiceTest {
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
         var certificate = new Certificate();
         certificate.setType(type);
+        certificate.setDomain(DOMAIN.getId());
         when(certificateRepository.findById(any())).thenReturn(Maybe.just(certificate));
         when(certificateRepository.update(any())).thenReturn(Single.just(new Certificate()));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
@@ -372,7 +430,6 @@ public class CertificateServiceTest {
         newCertificate.setConfiguration(certificateNode.toString());
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.invalid("The configuration details entered are incorrect. Please check those and try again."));
 
-
         TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(error -> error instanceof InvalidParameterException && "The configuration details entered are incorrect. Please check those and try again.".equals(error.getMessage()));
@@ -393,6 +450,7 @@ public class CertificateServiceTest {
         var existingCertificate = new Certificate();
         existingCertificate.setId(UUID.randomUUID().toString());
         existingCertificate.setName("certificate");
+        existingCertificate.setDomain(DOMAIN.getId());
         existingCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
         existingCertificate.setConfiguration(certificateNode.toString());
         existingCertificate.setMetadata(new HashMap<>());
@@ -564,7 +622,6 @@ public class CertificateServiceTest {
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
 
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
-
 
         TestObserver<Certificate> testObserver = certificateService.rotate(DOMAIN, mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
