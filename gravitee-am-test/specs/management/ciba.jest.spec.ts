@@ -27,6 +27,7 @@ import jwt from 'jsonwebtoken';
 import jwkToPem from 'jwk-to-pem';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { setup } from '../test-fixture';
+import { createCibaNotifierMock } from '@utils-commands/ciba-notifier-mock';
 
 setup(200000);
 
@@ -36,8 +37,7 @@ let nonCibaDomain: any;
 let cibaUser: any;
 let cibaApp: any;
 const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/`;
-const cibaUrl = `${process.env.AM_CIBA_NOTIFIER_URL}`;
-const internalCibaUrl = `${process.env.AM_INTERNAL_CIBA_NOTIFIER_URL}`;
+const cibaNotifier = createCibaNotifierMock();
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
@@ -289,7 +289,7 @@ describe('CIBA valid Flow', () => {
       '',
       {
         type: 'http-am-authdevice-notifier',
-        configuration: `{"endpoint":"${internalCibaUrl}/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+        configuration: cibaNotifier.notifierConfiguration('accept-all'),
         name: 'Always OK notifier',
       },
       {
@@ -319,21 +319,11 @@ describe('CIBA valid Flow', () => {
       },
     });
     await delay(6000);
-    const cibaResponse = await performPost(
-      `${cibaUrl}/domains`,
-      '',
-      {
-        domainId: cibaDomain.id,
-        domainCallback: `${process.env.AM_INTERNAL_GATEWAY_URL}/${cibaDomain.hrid}/oidc/ciba/authenticate/callback`,
-        clientId: cibaApp.client_id,
-        clientSecret: cibaApp.client_secret,
-      },
-      {
-        'Content-type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    );
-    expect(cibaResponse.status).toBe(200);
+    await cibaNotifier.register({
+      url: `${process.env.AM_INTERNAL_GATEWAY_URL}/${cibaDomain.hrid}/oidc/ciba/authenticate/callback`,
+      clientId: cibaApp.client_id,
+      clientSecret: cibaApp.client_secret,
+    });
   });
   it('With login as Hint', async () => {
     const response1 = await performPost(
@@ -494,7 +484,7 @@ describe('CIBA valid Flow', () => {
       '',
       {
         type: 'http-am-authdevice-notifier',
-        configuration: `{"endpoint":"${internalCibaUrl}/notify/reject-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+        configuration: cibaNotifier.notifierConfiguration('reject-all'),
         name: 'Always reject notifier',
       },
       {
@@ -557,6 +547,7 @@ describe('CIBA valid Flow', () => {
 });
 
 afterAll(async () => {
+  await cibaNotifier.remove();
   if (cibaDomain && cibaDomain.id) {
     await safeDeleteDomain(cibaDomain.id, accessToken);
   }

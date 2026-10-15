@@ -150,11 +150,6 @@ services:
           -d @/tmp/request-kafka-oauth.json \
           -H "Content-Type: application/json"
 
-  ciba:
-    image: gravitee-am-ciba-delegated-service
-    ports:
-      - 8080:8080
-
   openfga:
     image: openfga/openfga:v1.8.5
     ports:

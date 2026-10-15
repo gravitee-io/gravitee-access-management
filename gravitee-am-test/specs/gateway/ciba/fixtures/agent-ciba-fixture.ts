@@ -35,6 +35,7 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
+import { CibaNotifierMock, createCibaNotifierMock } from '@utils-commands/ciba-notifier-mock';
 import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
 import { Fixture } from '../../../test-fixture';
@@ -109,10 +110,10 @@ export interface AgentCibaFixture extends Fixture {
   createRequestJwt: (clientId: string, loginHint: string) => Promise<string>;
   switchNotifier: (target: 'accept-all' | 'reject-all') => Promise<void>;
   /**
-   * The delegated CIBA service stores a single registration per domain (last-write-wins).
+   * The CIBA notifier mock holds a single callback client per domain (last-write-wins).
    * Call this from each test before initiating CIBA to make sure the callback authenticates as the expected client.
    */
-  registerClientWithDelegatedService: (clientId: string, clientSecret?: string) => Promise<void>;
+  registerNotifierCallbackClient: (clientId: string, clientSecret?: string) => Promise<void>;
 }
 
 const createPrivateKeyJwtAssertion = async (clientId: string, audience: string): Promise<string> => {
@@ -197,7 +198,7 @@ async function createNotifier(
   managementUrl: string,
   domainId: string,
   accessToken: string,
-  internalCibaUrl: string,
+  cibaNotifier: CibaNotifierMock,
   endpointSuffix: 'accept-all' | 'reject-all',
 ): Promise<string> {
   const response = await performPost(
@@ -205,7 +206,7 @@ async function createNotifier(
     '',
     {
       type: 'http-am-authdevice-notifier',
-      configuration: `{"endpoint":"${internalCibaUrl}/notify/${endpointSuffix}","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+      configuration: cibaNotifier.notifierConfiguration(endpointSuffix),
       name: `${endpointSuffix} notifier`,
     },
     {
@@ -215,31 +216,6 @@ async function createNotifier(
   );
   expect(response.status).toBe(201);
   return response.body.id;
-}
-
-async function registerWithDelegatedService(
-  cibaUrl: string,
-  accessToken: string,
-  domainId: string,
-  gatewayCallback: string,
-  clientId: string,
-  clientSecret: string,
-): Promise<void> {
-  const res = await performPost(
-    `${cibaUrl}/domains`,
-    '',
-    {
-      domainId,
-      domainCallback: gatewayCallback,
-      clientId: encodeURIComponent(clientId),
-      clientSecret: clientSecret ?? '',
-    },
-    {
-      'Content-type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-  );
-  expect(res.status).toBe(200);
 }
 
 async function createAgentApp(
@@ -373,6 +349,7 @@ async function createCimdHostedDelegated(
 
 export const setupAgentCibaFixture = async (): Promise<AgentCibaFixture> => {
   let domain: Domain | null = null;
+  const cibaNotifier = createCibaNotifierMock();
   let accessToken: string | null = null;
 
   try {
@@ -400,11 +377,8 @@ export const setupAgentCibaFixture = async (): Promise<AgentCibaFixture> => {
 
     const orgEnv = `${process.env.AM_MANAGEMENT_URL}/management/organizations/${process.env.AM_DEF_ORG_ID}/environments/${process.env.AM_DEF_ENV_ID}`;
     const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/`;
-    const internalCibaUrl = process.env.AM_INTERNAL_CIBA_NOTIFIER_URL;
-    const cibaUrl = process.env.AM_CIBA_NOTIFIER_URL;
-
-    const acceptNotifierId = await createNotifier(managementUrl, domain.id, accessToken, internalCibaUrl, 'accept-all');
-    const rejectNotifierId = await createNotifier(managementUrl, domain.id, accessToken, internalCibaUrl, 'reject-all');
+    const acceptNotifierId = await createNotifier(managementUrl, domain.id, accessToken, cibaNotifier, 'accept-all');
+    const rejectNotifierId = await createNotifier(managementUrl, domain.id, accessToken, cibaNotifier, 'reject-all');
 
     // Enable CIBA + CIMD (CIMD needed for case F). Start with accept-all notifier.
     await patchDomain(domain.id, accessToken, {
@@ -467,18 +441,11 @@ export const setupAgentCibaFixture = async (): Promise<AgentCibaFixture> => {
 
     const gatewayCallback = `${process.env.AM_INTERNAL_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate/callback`;
 
-    const registerClientWithDelegatedService = async (clientId: string, clientSecret?: string): Promise<void> => {
-      await registerWithDelegatedService(
-        cibaUrl,
-        accessToken!,
-        domain!.id,
-        gatewayCallback,
-        clientId,
-        clientSecret ?? '',
-      );
+    const registerNotifierCallbackClient = async (clientId: string, clientSecret?: string): Promise<void> => {
+      await cibaNotifier.register({ url: gatewayCallback, clientId, clientSecret });
     };
     // Seed with hostedDelegatedBasic so case A works out of the box; tests override before initiating.
-    await registerClientWithDelegatedService(hostedDelegatedBasic.clientId, hostedDelegatedBasic.clientSecret);
+    await registerNotifierCallbackClient(hostedDelegatedBasic.clientId, hostedDelegatedBasic.clientSecret);
 
     const cibaEndpoint = `${process.env.AM_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate`;
     const tokenEndpoint = startedDomain.oidcConfig.token_endpoint;
@@ -602,12 +569,14 @@ export const setupAgentCibaFixture = async (): Promise<AgentCibaFixture> => {
       pollTokenWithPrivateKeyJwtUntilGranted,
       createRequestJwt: (clientId: string, loginHint: string) => createRequestJwt(clientId, oidcBaseAudience, loginHint),
       switchNotifier,
-      registerClientWithDelegatedService,
+      registerNotifierCallbackClient,
       cleanUp: async () => {
+        await cibaNotifier.remove();
         await safeDeleteDomain(domain?.id, accessToken);
       },
     };
   } catch (error) {
+    await cibaNotifier.remove();
     if (domain?.id && accessToken) {
       await safeDeleteDomain(domain.id, accessToken);
     }

@@ -285,15 +285,6 @@ commands:
                     echo "${IMAGE#*=} is $(docker image inspect --format '{{index .RepoDigests 0}}' "${SOURCE}")"
                   done
 
-  build-ciba-image-tar:
-    description: Build the CIBA delegated-service image as ~/ciba-image.tar, which the jest jobs docker-load
-    steps:
-      - run:
-          name: Build CIBA delegated-service image tar
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -DskipTests -Djib.from.platforms=linux/amd64 -Djib.container.format=Docker -f gravitee-am-ciba-delegated-service/pom.xml package jib:buildTar
-            cp ./gravitee-am-ciba-delegated-service/target/jib-image.tar ~/ciba-image.tar
-
   install-jdk-25:
     description: Install JDK 25 on machine executor
     steps:
@@ -671,22 +662,6 @@ jobs:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
-  # Integration tests run on pulled images, without the process_pull_request job that builds the CIBA image tar
-  build_ciba_image:
-    executor:
-      name: openjdk
-      class: medium
-      version: "25.0.1"
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - checkout
-      - azure-artifacts-token
-      - build-ciba-image-tar
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - ./ciba-image.tar
   run_jest_tests_mongo:
     parameters:
       mongo_version:
@@ -711,13 +686,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
-      - run:
-          name: Load prebuilt CIBA image
-          command: docker load -i /tmp/workspace/ciba-image.tar
       - prepare-am-images:
           am_images: << parameters.am_images >>
       - run:
@@ -774,13 +745,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
-      - run:
-          name: Load prebuilt CIBA image
-          command: docker load -i /tmp/workspace/ciba-image.tar
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -839,14 +806,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
       - run:
@@ -892,14 +854,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -950,14 +907,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
       - run:
@@ -1110,17 +1062,12 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
           with_ui: true
@@ -1167,17 +1114,12 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -1228,17 +1170,12 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
           with_ui: true
@@ -1290,17 +1227,12 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix gravitee-am-test install
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -1351,14 +1283,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix postman install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - prepare-am-images:
           am_images: << parameters.am_images >>
       - run:
@@ -1396,14 +1323,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://YeSlq7aKxJaAFSQupb-rkA/custom_field/base64
           var-name: GRAVITEE_LICENSE_KEY
-      - install-jdk-25
       - run:
           name: Install test module dependencies
           command: npm --prefix postman install
-      - azure-artifacts-token
-      - run:
-          name: Create CIBA image
-          command: mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -f gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild
       - run:
           name: Prepare JDBC plugins
           command: npm --prefix docker/local-stack run stack:init:plugins:psql
@@ -1867,16 +1789,12 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
-      # build the CIBA image once here (reactor already warm from the install above) as a tar,
-      # so downstream jest jobs docker-load it instead of each rebuilding it from source
-      - build-ciba-image-tar
       - persist_to_workspace:
           root: ~/
           paths:
             - ./gravitee-am-gateway-standalone-*.zip
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
-            - ./ciba-image.tar
 
   release:
     parameters:
@@ -3033,18 +2951,10 @@ workflows:
             - load-slack-token-on-schedule
           post-steps:
             - notify-failure-on-schedule
-      - build_ciba_image:
-          context: cicd-orchestrator
-          requires:
-            - setup
-          pre-steps:
-            - load-slack-token-on-schedule
-          post-steps:
-            - notify-failure-on-schedule
       - run_jest_tests_mongo:
           context: cicd-orchestrator
           requires:
-            - build_ciba_image
+            - setup
           am_images: pull
           pre-steps:
             - load-slack-token-on-schedule
@@ -3056,7 +2966,7 @@ workflows:
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
-            - build_ciba_image
+            - setup
           am_images: pull
           pre-steps:
             - load-slack-token-on-schedule

@@ -28,6 +28,7 @@ import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { CibaNotifierMock, createCibaNotifierMock } from '@utils-commands/ciba-notifier-mock';
 import { Domain } from '@management-models/Domain';
 import { Fixture } from '../../../test-fixture';
 
@@ -54,7 +55,7 @@ async function createNotifier(
   managementUrl: string,
   domainId: string,
   accessToken: string,
-  internalCibaUrl: string,
+  cibaNotifier: CibaNotifierMock,
   endpointSuffix: 'accept-all' | 'reject-all',
 ): Promise<string> {
   const response = await performPost(
@@ -62,30 +63,13 @@ async function createNotifier(
     '',
     {
       type: 'http-am-authdevice-notifier',
-      configuration: `{"endpoint":"${internalCibaUrl}/notify/${endpointSuffix}","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}`,
+      configuration: cibaNotifier.notifierConfiguration(endpointSuffix),
       name: `${endpointSuffix} notifier`,
     },
     { 'Content-type': 'application/json', Authorization: `Bearer ${accessToken}` },
   );
   expect(response.status).toBe(201);
   return response.body.id;
-}
-
-async function registerWithDelegatedService(
-  cibaUrl: string,
-  accessToken: string,
-  domainId: string,
-  gatewayCallback: string,
-  clientId: string,
-  clientSecret: string,
-): Promise<void> {
-  const res = await performPost(
-    `${cibaUrl}/domains`,
-    '',
-    { domainId, domainCallback: gatewayCallback, clientId: encodeURIComponent(clientId), clientSecret },
-    { 'Content-type': 'application/json', Authorization: `Bearer ${accessToken}` },
-  );
-  expect(res.status).toBe(200);
 }
 
 async function createResourceApplication(domainId: string, accessToken: string): Promise<{ clientId: string; clientSecret: string }> {
@@ -131,7 +115,7 @@ async function createDelegatedServiceApplication(
       settings: {
         oauth: {
           redirectUris: ['https://delegated-service.example.com/callback'],
-          // The delegated-service mock authenticates its accept-all/reject-all callback with HTTP Basic auth.
+          // The CIBA notifier mock authenticates its accept-all/reject-all callback with HTTP Basic auth.
           tokenEndpointAuthMethod: 'client_secret_basic',
         },
       },
@@ -143,6 +127,7 @@ async function createDelegatedServiceApplication(
 
 export const setupTargetDomain = async (accessToken: string): Promise<TargetDomainFixture> => {
   let domain: Domain | null = null;
+  const cibaNotifier = createCibaNotifierMock();
 
   try {
     domain = await createDomain(accessToken, uniqueName('ciba-fed-target', true), 'CIBA federation target domain');
@@ -162,11 +147,8 @@ export const setupTargetDomain = async (accessToken: string): Promise<TargetDoma
     expect(user).toBeDefined();
 
     const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations/DEFAULT/environments/DEFAULT/domains/`;
-    const internalCibaUrl = process.env.AM_INTERNAL_CIBA_NOTIFIER_URL;
-    const cibaUrl = process.env.AM_CIBA_NOTIFIER_URL;
-
-    const acceptNotifierId = await createNotifier(managementUrl, domain.id, accessToken, internalCibaUrl, 'accept-all');
-    const rejectNotifierId = await createNotifier(managementUrl, domain.id, accessToken, internalCibaUrl, 'reject-all');
+    const acceptNotifierId = await createNotifier(managementUrl, domain.id, accessToken, cibaNotifier, 'accept-all');
+    const rejectNotifierId = await createNotifier(managementUrl, domain.id, accessToken, cibaNotifier, 'reject-all');
 
     await patchDomain(domain.id, accessToken, {
       oidc: {
@@ -186,15 +168,11 @@ export const setupTargetDomain = async (accessToken: string): Promise<TargetDoma
     await startDomain(domain.id, accessToken);
     const startedDomain = await waitForDomainStart(domain);
 
-    const gatewayCallback = `${process.env.AM_INTERNAL_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate/callback`;
-    await registerWithDelegatedService(
-      cibaUrl,
-      accessToken,
-      domain.id,
-      gatewayCallback,
-      delegatedServiceApp.clientId,
-      delegatedServiceApp.clientSecret,
-    );
+    await cibaNotifier.register({
+      url: `${process.env.AM_INTERNAL_GATEWAY_URL}/${startedDomain.domain.hrid}/oidc/ciba/authenticate/callback`,
+      clientId: delegatedServiceApp.clientId,
+      clientSecret: delegatedServiceApp.clientSecret,
+    });
 
     const switchNotifier = async (target: 'accept-all' | 'reject-all'): Promise<void> => {
       const id = target === 'accept-all' ? acceptNotifierId : rejectNotifierId;
@@ -222,10 +200,12 @@ export const setupTargetDomain = async (accessToken: string): Promise<TargetDoma
       delegatedServiceApp,
       switchNotifier,
       cleanUp: async () => {
+        await cibaNotifier.remove();
         await safeDeleteDomain(domain?.id, accessToken);
       },
     };
   } catch (error) {
+    await cibaNotifier.remove();
     if (domain?.id) {
       await safeDeleteDomain(domain.id, accessToken);
     }

@@ -66,7 +66,7 @@ are cached). Override the heuristic with:
 > runtime plugin/classpath errors (e.g. `Lookup method resolution failed`). `--build` clears
 > those caches first, which a plain Maven build cannot.
 
-Long build steps (Maven, `make plugins`, CIBA) run quietly with a progress spinner; their
+Long build steps (Maven, `make plugins`) run quietly with a progress spinner; their
 full output is captured and shown only if the step fails.
 
 ### 2. Start a specific version (pulled images)
@@ -93,19 +93,16 @@ docker login graviteeio.azurecr.io
 
 `--version` / `--registry` on the CLI always override the env file.
 
-> CIBA has no published image. If you request it in pulled mode (`--full` or `--with ciba`),
-> the CIBA delegated service is still built from source via jib.
-
 ## Service sets
 
 | Selector | Services started |
 |----------|------------------|
 | *(default lean)* | gateway, management, db, smtp, wiremock |
 | `--ui` | + Console UI (`:4200`) — needed for playwright & manual Console work |
-| `--full` | UI + wiremock + ciba + openfga + kafka + mtls (the jest-gateway + playwright union) |
+| `--full` | UI + wiremock + openfga + kafka + mtls (the jest-gateway + playwright union) |
 | `--cloud` | cockpit mock; management API in managed-cloud mode (Cockpit command path) |
 | `--alert-engine` | + Gravitee Alert Engine (`:8072`), gateway and management API connected to it — see [Alert Engine](#alert-engine) |
-| `--with a,b,…` | opt-in individually: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,alert-engine` |
+| `--with a,b,…` | opt-in individually: `ui,wiremock,openfga,kafka,mtls,spire,cloud,alert-engine` |
 | `--db mongo\|psql` | choose the backend database (default `mongo`) |
 | `--chaos` | + toxiproxy, interposed on AM's outbound connections — see [Fault injection](#fault-injection) |
 

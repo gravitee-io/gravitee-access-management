@@ -80,11 +80,6 @@ Add following plugins to your `plugin` directory:
 * gravitee-service-geoip
 * gravitee-am-gateway-handler-saml2-idp
 
-==== CIBA delegated service
-Build `gravitee-am-ciba-delegated-service`
-
-and run `java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar`
-
 ==== Mock email provider:
 
 Run with command:
