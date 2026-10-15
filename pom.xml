@@ -75,7 +75,7 @@
     <properties>
         <bouncycastle.version>1.85</bouncycastle.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>8.3.66</gravitee-bom.version>
+        <gravitee-bom.version>8.3.69</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
         <gravitee-node.version>7.28.0</gravitee-node.version>
