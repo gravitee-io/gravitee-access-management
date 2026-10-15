@@ -123,7 +123,7 @@ public class ScimUsersDPoPEnforcementTest extends RxWebTestBase {
 
     private void givenAccessTokenDecodesToDpopBound() {
         doAnswer(invocation -> {
-            Handler<AsyncResult<OAuth2AuthResponse>> handler = invocation.getArgument(2);
+            Handler<AsyncResult<OAuth2AuthResponse>> handler = invocation.getArgument(3);
             JWT token = new JWT(Map.of(
                     Claims.SUB, "client-id",
                     Claims.AUD, "client-id",
@@ -131,7 +131,7 @@ public class ScimUsersDPoPEnforcementTest extends RxWebTestBase {
                     Claims.CNF, Map.of("jkt", THE_JKT)));
             handler.handle(Future.succeededFuture(new OAuth2AuthResponse(token, new Client())));
             return null;
-        }).when(oAuth2AuthProvider).decodeToken(any(), anyBoolean(), any());
+        }).when(oAuth2AuthProvider).decodeToken(any(), anyBoolean(), anyBoolean(), any());
     }
 
     private Consumer<HttpClientRequest> withAuthorization(String authorization) {

@@ -452,7 +452,7 @@ public class BaseIntrospectionTokenServiceTest {
                                       ClientLookupService clientLookupService,
                                       ProtectedResourceManager protectedResourceManager,
                                       Environment environment) {
-            super(jwtService, clientLookupService, protectedResourceManager, environment, false);
+            super(jwtService, clientLookupService, protectedResourceManager, environment);
         }
 
         @Override
@@ -461,7 +461,7 @@ public class BaseIntrospectionTokenServiceTest {
         }
 
         Maybe<JWT> introspect(String token, boolean offlineVerification, String callerClientId) {
-            return super.introspectToken(token, ACCESS_TOKEN, offlineVerification, callerClientId).map(IntrospectionResult::jwt);
+            return super.introspectToken(token, ACCESS_TOKEN, offlineVerification, false, callerClientId).map(IntrospectionResult::jwt);
         }
     }
 }

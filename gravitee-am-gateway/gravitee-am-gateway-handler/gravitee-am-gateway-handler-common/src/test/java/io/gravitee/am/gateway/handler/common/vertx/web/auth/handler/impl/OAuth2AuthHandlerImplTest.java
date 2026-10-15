@@ -111,6 +111,25 @@ public class    OAuth2AuthHandlerImplTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldNotRestoreWithheldClaimsByDefault() throws Exception {
+        givenTokenDecodesTo(Map.of(Claims.SUB, TEST_SUB));
+
+        testRequest(HttpMethod.GET, "/test", withAuthorization("Bearer the-token"), HttpStatusCode.OK_200, "OK", null);
+
+        verify(provider).decodeToken(eq("the-token"), eq(false), eq(false), any());
+    }
+
+    @Test
+    public void shouldRestoreWithheldClaims() throws Exception {
+        handler.restoreWithheldClaims(true);
+        givenTokenDecodesTo(Map.of(Claims.SUB, TEST_SUB));
+
+        testRequest(HttpMethod.GET, "/test", withAuthorization("Bearer the-token"), HttpStatusCode.OK_200, "OK", null);
+
+        verify(provider).decodeToken(eq("the-token"), eq(false), eq(true), any());
+    }
+
+    @Test
     public void forceEndUserToken_notEndUserToken_unauthorized() throws Exception{
         handler.forceEndUserToken(true);
         var tokenClaims = Map.of(Claims.SUB, "test", Claims.AUD, "test");
@@ -215,13 +234,13 @@ public class    OAuth2AuthHandlerImplTest extends RxWebTestBase {
 
     private void givenTokenDecodesTo(Map<String, ?> claims) {
         doAnswer(invocation -> {
-            var handler = (Handler<AsyncResult<OAuth2AuthResponse>>) invocation.getArguments()[2];
+            var handler = (Handler<AsyncResult<OAuth2AuthResponse>>) invocation.getArguments()[3];
             var token = new JWT(claims);
             var client = new Client();
 
             handler.handle(Future.succeededFuture(new OAuth2AuthResponse(token, client)));
             return null;
-        }).when(provider).decodeToken(any(), anyBoolean(), any());
+        }).when(provider).decodeToken(any(), anyBoolean(), anyBoolean(), any());
     }
 
 

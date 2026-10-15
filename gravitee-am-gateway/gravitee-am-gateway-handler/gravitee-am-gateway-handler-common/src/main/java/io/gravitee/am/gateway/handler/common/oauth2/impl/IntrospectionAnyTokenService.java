@@ -33,7 +33,7 @@ public class IntrospectionAnyTokenService extends BaseIntrospectionTokenService 
                                         ProtectedResourceManager protectedResourceManager,
                                         Environment environment,
                                         TokenRepository tokenRepository) {
-        super(jwtService, clientLookupService, protectedResourceManager, environment, true);
+        super(jwtService, clientLookupService, protectedResourceManager, environment);
         this.tokenRepository = tokenRepository;
     }
 
@@ -43,6 +43,6 @@ public class IntrospectionAnyTokenService extends BaseIntrospectionTokenService 
     }
 
     public Maybe<IntrospectionResult> introspect(String token, TokenType hint, String callerClientId) {
-        return introspectToken(token, hint, false, callerClientId);
+        return introspectToken(token, hint, false, true, callerClientId);
     }
 }

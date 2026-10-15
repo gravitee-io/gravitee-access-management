@@ -145,6 +145,8 @@ public interface OAuth2AuthHandler extends AuthHandler {
      */
     void offlineVerification(boolean offlineVerification);
 
+    void restoreWithheldClaims(boolean restoreWithheldClaims);
+
     /**
      * Provide the DPoP proof validator (RFC 9449) used to enforce sender-constrained (cnf.jkt) tokens.
      * When set, a bound token must be presented under the DPoP scheme with a valid proof; when absent,

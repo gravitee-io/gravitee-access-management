@@ -52,8 +52,8 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
     private JWTCache jwtCache;
 
     @Override
-    public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
-        introspect(token, offlineVerification)
+    public void decodeToken(String token, boolean offlineVerification, boolean restoreWithheldClaims, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
+        introspect(token, offlineVerification, restoreWithheldClaims)
                 .flatMap(jwt -> findFirstClientByAudience(jwt)
                         .switchIfEmpty(Maybe.error(new InvalidTokenException("The token is invalid", "Client or resource not found: " + jwt.getAud(), jwt)))
                         .map(client -> new OAuth2AuthResponse(jwt, client)))
@@ -70,7 +70,10 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
                         error -> handler.handle(Future.failedFuture(error)));
     }
 
-    private Maybe<JWT> introspect(String token, boolean offlineVerification) {
+    private Maybe<JWT> introspect(String token, boolean offlineVerification, boolean restoreWithheldClaims) {
+        if (restoreWithheldClaims) {
+            return introspectionTokenService.introspectWithWithheldClaims(token, offlineVerification);
+        }
         return jwtCache.isPresent(token)
                 .onErrorResumeNext(err -> Single.just(false))
                 .flatMapMaybe(jtiCached -> jtiCached ?

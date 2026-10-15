@@ -71,6 +71,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
     private boolean selfResource;
     private boolean isSelfResourceAUser;
     private boolean offlineVerification;
+    private boolean restoreWithheldClaims;
     private String resourceParameter;
     private String resourceRequiredScope;
     private DPoPProofValidator dpopProofValidator;
@@ -108,7 +109,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                 context.put(ConstantKeys.RAW_TOKEN_CONTEXT_KEY, presented.value());
             }
 
-            oAuth2AuthProvider.decodeToken(presented.value(), offlineVerification, handler -> {
+            oAuth2AuthProvider.decodeToken(presented.value(), offlineVerification, restoreWithheldClaims, handler -> {
                 if (handler.failed()) {
                     processException(context, handler.cause());
                     return;
@@ -239,6 +240,10 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
     public void offlineVerification(boolean offlineVerification) {
         this.offlineVerification = offlineVerification;
+    }
+
+    public void restoreWithheldClaims(boolean restoreWithheldClaims) {
+        this.restoreWithheldClaims = restoreWithheldClaims;
     }
 
     public void dpopProofValidator(DPoPProofValidator dpopProofValidator) {

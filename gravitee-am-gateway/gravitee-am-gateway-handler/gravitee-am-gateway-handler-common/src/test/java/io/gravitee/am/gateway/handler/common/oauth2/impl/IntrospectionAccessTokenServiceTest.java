@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
@@ -40,6 +41,7 @@ import org.springframework.core.env.Environment;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
@@ -53,6 +55,8 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class IntrospectionAccessTokenServiceTest {
+
+    private static final String TOKEN = "token";
 
     @Mock
     private JWTService jwtService;
@@ -300,5 +304,92 @@ public class IntrospectionAccessTokenServiceTest {
                 && "Token audience values [client] do not match any client or protected resource identifiers in domain [domain]".equals(e.getDetails()));
         verify(clientLookupService).findByDomainAndClientId("domain", "client");
         verify(tokenRepository, never()).findAccessTokenByJti(anyString());
+    }
+
+    @Test
+    public void shouldRestoreWithheldClaimsOfStoredToken() {
+        JWT jwt = verifiedToken(Instant.now().minus(1, ChronoUnit.DAYS), new Client());
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.just(storedToken(Map.of("region", "eu", Claims.SUB, "withheld-sub"))));
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspectWithWithheldClaims(TOKEN, false).test();
+
+        testObserver.assertValue(restored -> "eu".equals(restored.get("region")) && "user".equals(restored.getSub()));
+    }
+
+    @Test
+    public void shouldNotRestoreWithheldClaimsOnIntrospection() {
+        JWT jwt = verifiedToken(Instant.now().minus(1, ChronoUnit.DAYS), new Client());
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.just(storedToken(Map.of("region", "eu"))));
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspect(TOKEN, false).test();
+
+        testObserver.assertValue(introspected -> !introspected.containsKey("region"));
+    }
+
+    @Test
+    public void shouldLookUpRecentTokenOfLightweightJwtClientWhenRestoringWithheldClaims() {
+        JWT jwt = verifiedToken(Instant.now(), lightweightJwtClient());
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.just(storedToken(Map.of("region", "eu"))));
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspectWithWithheldClaims(TOKEN, false).test();
+
+        testObserver.assertValue(restored -> "eu".equals(restored.get("region")));
+    }
+
+    @Test
+    public void shouldRejectRecentRevokedTokenOfLightweightJwtClientWhenRestoringWithheldClaims() {
+        JWT jwt = verifiedToken(Instant.now(), lightweightJwtClient());
+        when(tokenRepository.findAccessTokenByJti(jwt.getJti())).thenReturn(Maybe.empty());
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspectWithWithheldClaims(TOKEN, false).test();
+
+        testObserver.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void shouldNotLookUpRecentTokenOfFullJwtClientWhenRestoringWithheldClaims() {
+        JWT jwt = verifiedToken(Instant.now(), new Client());
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspectWithWithheldClaims(TOKEN, false).test();
+
+        testObserver.assertValue(jwt);
+        verify(tokenRepository, never()).findAccessTokenByJti(anyString());
+    }
+
+    @Test
+    public void shouldNotLookUpTokenWhenRestoringWithheldClaimsOffline() {
+        JWT jwt = verifiedToken(Instant.now().minus(1, ChronoUnit.DAYS), lightweightJwtClient());
+
+        TestObserver<JWT> testObserver = introspectionTokenService.introspectWithWithheldClaims(TOKEN, true).test();
+
+        testObserver.assertValue(jwt);
+        verify(tokenRepository, never()).findAccessTokenByJti(anyString());
+    }
+
+    private JWT verifiedToken(Instant issuedAt, Client client) {
+        JWT jwt = new JWT();
+        jwt.setJti("jti");
+        jwt.setDomain("domain");
+        jwt.setAud("client");
+        jwt.setSub("user");
+        jwt.setIat(issuedAt.getEpochSecond());
+        client.setClientId("client");
+        when(jwtService.decode(TOKEN, ACCESS_TOKEN)).thenReturn(Single.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())).thenReturn(Maybe.just(client));
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(ACCESS_TOKEN))).thenReturn(Single.just(jwt));
+        return jwt;
+    }
+
+    private static Client lightweightJwtClient() {
+        Client client = new Client();
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
+        return client;
+    }
+
+    private static AccessToken storedToken(Map<String, Object> withheldClaims) {
+        AccessToken accessToken = new AccessToken();
+        accessToken.setExpireAt(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
+        accessToken.setWithheldClaims(withheldClaims);
+        return accessToken;
     }
 }

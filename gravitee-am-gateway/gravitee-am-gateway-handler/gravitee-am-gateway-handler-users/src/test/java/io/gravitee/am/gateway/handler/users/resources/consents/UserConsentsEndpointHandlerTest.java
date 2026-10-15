@@ -98,10 +98,10 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotListConsents_invalid_token() throws Exception {
         doAnswer(invocation -> {
-            Handler<AsyncResult<io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse>> handler = invocation.getArgument(2);
+            Handler<AsyncResult<io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse>> handler = invocation.getArgument(3);
             handler.handle(Future.failedFuture(new InvalidTokenException("Invalid access token")));
             return null;
-        }).when(oAuth2AuthProvider).decodeToken(anyString(), anyBoolean(), any());
+        }).when(oAuth2AuthProvider).decodeToken(anyString(), anyBoolean(), anyBoolean(), any());
 
         router.route("/users/:userId/consents")
                 .handler(oAuth2AuthHandler)

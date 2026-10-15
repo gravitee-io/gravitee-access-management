@@ -25,4 +25,6 @@ import io.reactivex.rxjava3.core.Maybe;
 public interface IntrospectionTokenService {
 
     Maybe<JWT> introspect(String token, boolean offlineVerification);
+
+    Maybe<JWT> introspectWithWithheldClaims(String token, boolean offlineVerification);
 }

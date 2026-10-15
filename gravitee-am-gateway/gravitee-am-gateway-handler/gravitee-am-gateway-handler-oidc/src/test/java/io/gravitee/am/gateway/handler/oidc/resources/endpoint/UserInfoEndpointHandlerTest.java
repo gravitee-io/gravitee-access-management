@@ -891,7 +891,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private OAuth2AuthProvider oAuth2AuthProvider() {
         return new OAuth2AuthProvider() {
             @Override
-            public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
+            public void decodeToken(String token, boolean offlineVerification, boolean restoreWithheldClaims, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
                 handler.handle(Future.succeededFuture(new OAuth2AuthResponse()));
             }
         };
@@ -900,7 +900,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private OAuth2AuthProvider oAuth2AuthProvider(Throwable throwable) {
         return new OAuth2AuthProvider() {
             @Override
-            public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
+            public void decodeToken(String token, boolean offlineVerification, boolean restoreWithheldClaims, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
                 handler.handle(Future.failedFuture(throwable));
             }
         };
@@ -909,7 +909,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private OAuth2AuthProvider oAuth2AuthProvider(JWT jwt, Client client) {
         return new OAuth2AuthProvider() {
             @Override
-            public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
+            public void decodeToken(String token, boolean offlineVerification, boolean restoreWithheldClaims, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
                 handler.handle(Future.succeededFuture(new OAuth2AuthResponse(jwt, client)));
             }
         };

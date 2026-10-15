@@ -66,7 +66,7 @@ public class OAuth2AuthProviderImplTest {
     public void setUp() {
         // Reset mocks before each test
         reset(introspectionTokenService, clientLookupService, jtiCache);
-        when(jtiCache.isPresent(anyString())).thenReturn(Single.just(false));
+        lenient().when(jtiCache.isPresent(anyString())).thenReturn(Single.just(false));
     }
 
     @Test
@@ -336,5 +336,35 @@ public class OAuth2AuthProviderImplTest {
         verify(jtiCache).put(TOKEN, 456L);
         verify(introspectionTokenService).introspect(TOKEN, true);
         verify(clientLookupService).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+    }
+
+    @Test
+    public void shouldRestoreWithheldClaimsWithoutOfflineVerificationWhenTokenIsCached() throws InterruptedException {
+        JWT jwt = new JWT(Map.of(
+                Claims.SUB, "test-sub",
+                Claims.AUD, CLIENT_ID,
+                Claims.DOMAIN, DOMAIN,
+                "region", "eu"
+        ));
+        Client client = new Client();
+        client.setClientId(CLIENT_ID);
+
+        lenient().when(jtiCache.isPresent(TOKEN)).thenReturn(Single.just(true));
+        when(introspectionTokenService.introspectWithWithheldClaims(TOKEN, false)).thenReturn(Maybe.just(jwt));
+        when(clientLookupService.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.just(client));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        AsyncResult<OAuth2AuthResponse>[] result = new AsyncResult[1];
+
+        oAuth2AuthProvider.decodeToken(TOKEN, false, true, handler -> {
+            result[0] = handler;
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertTrue(result[0].succeeded());
+        assertEquals(jwt, result[0].result().getToken());
+        verify(introspectionTokenService, never()).introspect(anyString(), anyBoolean());
     }
 }
