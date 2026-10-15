@@ -128,12 +128,12 @@ class CertificateResourceTest extends AutomationJerseySpringTest {
     void delete_returns_204() {
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.just(domain()));
         when(certificateService.findByDomain(anyString())).thenReturn(Flowable.just(cert(true, ManagedBy.AUTOMATION_API)));
-        when(certificateService.deleteAutomationManaged(eq(certId), any())).thenReturn(Completable.complete());
+        when(certificateService.deleteAutomationManaged(eq(domainId), eq(certId), any())).thenReturn(Completable.complete());
 
         Response response = certificatesTarget(DOMAIN_KEY).path(CERT_KEY).request().delete();
 
         assertEquals(204, response.getStatus());
-        verify(certificateService).deleteAutomationManaged(eq(certId), any());
+        verify(certificateService).deleteAutomationManaged(eq(domainId), eq(certId), any());
     }
 
     @Test
@@ -144,7 +144,7 @@ class CertificateResourceTest extends AutomationJerseySpringTest {
         Response response = certificatesTarget(DOMAIN_KEY).path(CERT_KEY).request().delete();
 
         assertEquals(204, response.getStatus());
-        verify(certificateService, never()).deleteAutomationManaged(anyString(), any());
+        verify(certificateService, never()).deleteAutomationManaged(anyString(), anyString(), any());
     }
 
     @Test
@@ -154,7 +154,7 @@ class CertificateResourceTest extends AutomationJerseySpringTest {
         Response response = certificatesTarget(DOMAIN_KEY).path(CERT_KEY).request().delete();
 
         assertEquals(204, response.getStatus());
-        verify(certificateService, never()).deleteAutomationManaged(anyString(), any());
+        verify(certificateService, never()).deleteAutomationManaged(anyString(), anyString(), any());
     }
 
     @Test
@@ -173,6 +173,6 @@ class CertificateResourceTest extends AutomationJerseySpringTest {
         Response response = certificatesTarget(DOMAIN_KEY).path(CERT_KEY).request().delete();
 
         assertEquals(403, response.getStatus());
-        verify(certificateService, never()).deleteAutomationManaged(anyString(), any());
+        verify(certificateService, never()).deleteAutomationManaged(anyString(), anyString(), any());
     }
 }
