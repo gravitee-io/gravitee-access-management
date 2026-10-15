@@ -868,4 +868,35 @@ public class PermissionServiceTest {
         verify(applicationService, never()).findById(any());
     }
 
+    @Test
+    public void getReferenceIds_roleWithoutRequestedPermission() {
+
+        DefaultUser user = new DefaultUser("user");
+        user.setId(USER_ID);
+
+        Membership membership = new Membership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId(USER_ID);
+        membership.setReferenceType(ReferenceType.APPLICATION);
+        membership.setReferenceId("appId");
+        membership.setRoleId(ROLE_ID);
+
+        Role role = new Role();
+        role.setId(ROLE_ID);
+        role.setAssignableType(ReferenceType.APPLICATION);
+        role.setPermissionAcls(Permission.of(DOMAIN, READ));
+
+        when(orgGroupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(membershipService.findByCriteria(eq(ReferenceType.APPLICATION), argThat(criteria -> criteria.getUserId().get().equals(user.getId())
+                && !criteria.getGroupIds().isPresent()
+                && criteria.isLogicalOR()))).thenReturn(Flowable.just(membership));
+        when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(Collections.singleton(role)));
+
+        TestSubscriber<String> obs = cut.getReferenceIdsWithPermission(user, ReferenceType.APPLICATION, APPLICATION, Set.of(READ))
+                .test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoValues();
+    }
 }
