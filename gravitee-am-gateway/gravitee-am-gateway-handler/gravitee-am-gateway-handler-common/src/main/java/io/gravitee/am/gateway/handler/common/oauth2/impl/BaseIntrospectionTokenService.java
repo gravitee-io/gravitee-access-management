@@ -60,14 +60,11 @@ abstract class BaseIntrospectionTokenService {
     private final ProtectedResourceManager protectedResourceManager;
     private final boolean isLegacyRfc8707Enabled;
     private final int offlineVerificationTimerSeconds;
-    private final boolean lookUpRecentLightweightTokens;
 
     BaseIntrospectionTokenService(JWTService jwtService,
                                   ClientLookupService clientLookupService,
                                   ProtectedResourceManager protectedResourceManager,
-                                  Environment environment,
-                                  boolean lookUpRecentLightweightTokens) {
-        this.lookUpRecentLightweightTokens = lookUpRecentLightweightTokens;
+                                  Environment environment) {
         this.jwtService = jwtService;
         this.clientLookupService = clientLookupService;
         this.protectedResourceManager = protectedResourceManager;
@@ -77,11 +74,12 @@ abstract class BaseIntrospectionTokenService {
 
     protected abstract Maybe<? extends Token> findByToken(String token);
 
-    protected Maybe<IntrospectionResult> introspectToken(String token, TokenType hint, boolean offlineVerification, String callerClientId) {
+    protected Maybe<IntrospectionResult> introspectToken(String token, TokenType hint, boolean offlineVerification,
+                                                         boolean lookUpRecentLightweightTokens, String callerClientId) {
         return jwtService.decode(token, hint)
                 .flatMap(jwt -> validateAudienceAndGetCertificateId(jwt, callerClientId)
                         .flatMap(certificateId -> jwtService.decodeAndVerify(token, Maybe.just(certificateId), hint)))
-                .flatMapMaybe(jwt -> skipStoredTokenLookup(jwt, offlineVerification)
+                .flatMapMaybe(jwt -> skipStoredTokenLookup(jwt, offlineVerification, lookUpRecentLightweightTokens)
                         .flatMapMaybe(skip -> {
                             // Just check the JWT signature and JWT validity if offline verification option is enabled
                             // or if the token has just been created (could not be in database so far because of async database storing process delay)
@@ -127,7 +125,7 @@ abstract class BaseIntrospectionTokenService {
                 });
     }
 
-    private Single<Boolean> skipStoredTokenLookup(JWT jwt, boolean offlineVerification) {
+    private Single<Boolean> skipStoredTokenLookup(JWT jwt, boolean offlineVerification, boolean lookUpRecentLightweightTokens) {
         if (offlineVerification) {
             return Single.just(true);
         }
