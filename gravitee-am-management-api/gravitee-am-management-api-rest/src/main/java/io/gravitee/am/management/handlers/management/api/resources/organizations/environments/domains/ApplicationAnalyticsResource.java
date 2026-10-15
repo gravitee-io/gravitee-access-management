@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.ApplicationAnalyticsService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -74,7 +75,7 @@ public class ApplicationAnalyticsResource extends AbstractResource {
         query.setInterval(param.getInterval());
         query.setSize(param.getSize());
 
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION_ANALYTICS, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_ANALYTICS, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
                         .flatMap(domain -> applicationAnalyticsService.execute(domain, query)))

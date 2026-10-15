@@ -61,6 +61,11 @@ public interface EmailTemplateService {
 
     Completable delete(String emailId, User principal);
 
+    /**
+     * Delete an email template, only if it belongs to the given domain.
+     */
+    Completable delete(String domain, String emailId, User principal);
+
     default Single<Email> create(Domain domain, NewEmail newEmail) {
         return create(domain, newEmail,  null);
     }
