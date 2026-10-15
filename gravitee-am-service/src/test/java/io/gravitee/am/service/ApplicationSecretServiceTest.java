@@ -24,6 +24,7 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import io.gravitee.am.service.exception.ClientSecretNotFoundException;
 import io.gravitee.am.service.exception.TooManyClientSecretsException;
@@ -51,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -284,6 +286,44 @@ class ApplicationSecretServiceTest {
                         app.getSecrets().getFirst().getName().equals("name0") &&
                         app.getSecretSettings().size() == 1 &&
                         app.getSecretSettings().getFirst().getAlgorithm().equalsIgnoreCase("none")));
+    }
+
+    @Test
+    public void shouldNotCreateSecret_applicationFromAnotherDomain() {
+        Application client = applicationWithSecret(1);
+        client.setDomain("other-domain");
+        NewClientSecret newClientSecret = new NewClientSecret();
+        newClientSecret.setName("new-secret");
+
+        applicationSecretService.create(DOMAIN, client, newClientSecret, new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationService, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotRenewSecret_applicationFromAnotherDomain() {
+        Application client = applicationWithSecret(1);
+        client.setDomain("other-domain");
+
+        applicationSecretService.renew(DOMAIN, client, "secret-id0", new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationService, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDeleteSecret_applicationFromAnotherDomain() {
+        Application client = applicationWithSecret(2);
+        client.setDomain("other-domain");
+
+        applicationSecretService.delete(DOMAIN, client, "secret-id1", new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationService, never()).update(any());
     }
 
     private static Application emptyAppWithDomain() {
