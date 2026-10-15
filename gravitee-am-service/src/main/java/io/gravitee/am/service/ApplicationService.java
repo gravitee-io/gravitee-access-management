@@ -63,6 +63,12 @@ public interface ApplicationService {
 
     Maybe<Application> findById(String id);
 
+    /**
+     * Find an application by its ID, only if it belongs to the given domain.
+     * Returns an empty Maybe when the application does not exist or belongs to another domain.
+     */
+    Maybe<Application> findById(String domain, String id);
+
     Maybe<Application> findByDomainAndClientId(String domain, String clientId);
 
     Single<Application> create(Domain domain, NewApplication newApplication, User principal);
