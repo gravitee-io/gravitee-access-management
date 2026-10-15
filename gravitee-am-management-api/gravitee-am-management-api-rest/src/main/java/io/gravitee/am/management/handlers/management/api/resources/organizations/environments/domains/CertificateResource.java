@@ -91,14 +91,9 @@ public class CertificateResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> certificateService.findById(certificate))
+                        .flatMap(irrelevant -> certificateService.findById(domain, certificate))
                         .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
-                        .map(cert -> {
-                            if (!cert.getDomain().equalsIgnoreCase(domain)) {
-                                throw new BadRequestException("Certificate does not belong to domain");
-                            }
-                            return Response.ok(ModifiedCertificateEntity.of(cert)).build();
-                        }))
+                        .map(cert -> Response.ok(ModifiedCertificateEntity.of(cert)).build()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -125,6 +120,9 @@ public class CertificateResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(certificateManager.getCertificateProvider(certificate)
                         .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
+                        .flatMap(provider -> certificateService.findById(domain, certificate)
+                                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
+                                .map(irrelevant -> provider))
                         .flatMapSingle(CertificateProvider::publicKey))
                 .subscribe(response::resume, response::resume);
     }
@@ -154,6 +152,9 @@ public class CertificateResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(certificateManager.getCertificateProvider(certificate)
                         .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
+                        .flatMap(provider -> certificateService.findById(domain, certificate)
+                                .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
+                                .map(irrelevant -> provider))
                         .flatMapSingle(CertificateProvider::publicKeys))
                 .subscribe(response::resume, response::resume);
     }
@@ -210,7 +211,7 @@ public class CertificateResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.DELETE)
-                .andThen(certificateService.delete(certificate, authenticatedUser))
+                .andThen(certificateService.delete(domain, certificate, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

@@ -89,6 +89,11 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
+    public Maybe<Certificate> findById(String domain, String id) {
+        return certificateService.findById(domain, id).flatMap(certificate -> filterSensitiveData(certificate).toMaybe());
+    }
+
+    @Override
     public Single<List<CertificateEntity>> findByDomainAndUse(String domainId, String use) {
         return certificateService.findByDomain(domainId)
                 .filter(cert -> {
@@ -171,7 +176,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                         .type(EventType.CERTIFICATE_UPDATED)
                         .reference(Reference.domain(domain.getId()));
 
-        return certificateService.findById(id)
+        return certificateService.findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .doOnError(err -> auditService.report(audit.get().throwable(err)))
                 .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
@@ -187,8 +192,8 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
 
     @Override
-    public Completable delete(String certificateId, User principal) {
-        return certificateService.delete(certificateId, principal);
+    public Completable delete(String domain, String certificateId, User principal) {
+        return certificateService.delete(domain, certificateId, principal);
     }
 
     @Override
