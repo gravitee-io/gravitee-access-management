@@ -24,13 +24,10 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.FlowService;
-import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,9 +58,6 @@ public class ApplicationFlowResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
     private FlowService flowService;
 
     @Autowired
@@ -76,7 +70,8 @@ public class ApplicationFlowResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a flow",
             operationId = "getAppFlow",
-            description = "User must have the APPLICATION_FLOW[READ] permission on the specified domain " +
+            description = "User must have the APPLICATION_FLOW[READ] permission on the specified application " +
+                    "or APPLICATION_FLOW[READ] permission on the specified domain " +
                     "or APPLICATION_FLOW[READ] permission on the specified environment " +
                     "or APPLICATION_FLOW[READ] permission on the specified organization")
     @ApiResponses({
@@ -92,8 +87,7 @@ public class ApplicationFlowResource extends AbstractResource {
             @PathParam("flow") String flow,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
-                .andThen(checkApplicationInDomain(domain, application))
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FLOW, Acl.READ)
                 .andThen(findApplicationFlow(domain, application, flow)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
@@ -104,7 +98,8 @@ public class ApplicationFlowResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update a flow",
             operationId = "updateAppFlow",
-            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
+            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified application " +
+                    "or APPLICATION_FLOW[UPDATE] permission on the specified domain " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified environment " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
@@ -122,21 +117,13 @@ public class ApplicationFlowResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
-                .andThen(checkApplicationInDomain(domain, application))
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FLOW, Acl.UPDATE)
                 .andThen(findApplicationFlow(domain, application, flow).ignoreElement())
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
                 .andThen(flowValidator.validate(updateFlow))
                 .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
-    }
-
-    // APPLICATION_FLOW is checked at domain level only, so the application must be explicitly checked against the domain
-    private Completable checkApplicationInDomain(String domain, String application) {
-        return applicationService.findById(domain, application)
-                .switchIfEmpty(Single.error(() -> new ApplicationNotFoundException(application)))
-                .ignoreElement();
     }
 
     private Single<Flow> findApplicationFlow(String domain, String application, String flow) {
