@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.management.service.DomainService;
@@ -36,7 +35,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -86,14 +84,9 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUTHDEVICE_NOTIFIER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> authDeviceNotifierService.findById(deviceNotifierId))
+                        .flatMap(__ -> authDeviceNotifierService.findById(domain, deviceNotifierId))
                         .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierNotFoundException(deviceNotifierId)))
-                        .map(deviceNotifier -> {
-                            if (!deviceNotifier.getReferenceId().equalsIgnoreCase(domain) && !deviceNotifier.getReferenceType().equals(ReferenceType.DOMAIN)) {
-                                throw new BadRequestException("AuthenticationDeviceNotifier does not belong to domain");
-                            }
-                            return Response.ok(deviceNotifier).build();
-                        }))
+                        .map(deviceNotifier -> Response.ok(deviceNotifier).build()))
                 .subscribe(response::resume, response::resume);
     }
 

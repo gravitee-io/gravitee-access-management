@@ -425,7 +425,7 @@ public class ScopeServiceTest {
     public void shouldNotPatch_malformedIconUri() {
         PatchScope patchScope = new PatchScope();
         patchScope.setIconUri(Optional.of("malformedIconUri"));
-        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(inDomain(new Scope())));
 
         TestObserver testObserver = new TestObserver();
         scopeService.patch(DOMAIN, "my-scope",patchScope).subscribe(testObserver);
@@ -550,7 +550,7 @@ public class ScopeServiceTest {
         UpdateScope updateScope = new UpdateScope();
         updateScope.setIconUri("malformedIconUri");
 
-        when(scopeRepository.findById("toUpdateId")).thenReturn(Maybe.just(new Scope()));
+        when(scopeRepository.findById("toUpdateId")).thenReturn(Maybe.just(inDomain(new Scope())));
 
         TestObserver testObserver = new TestObserver();
         scopeService.update(DOMAIN, "toUpdateId",updateScope).subscribe(testObserver);
@@ -570,7 +570,7 @@ public class ScopeServiceTest {
 
         final String scopeId = "toUpdateId";
 
-        Scope toUpdate = new Scope();
+        Scope toUpdate = inDomain(new Scope());
         toUpdate.setId(scopeId);
         toUpdate.setSystem(true);
         toUpdate.setDiscovery(false);
@@ -631,7 +631,7 @@ public class ScopeServiceTest {
 
     @Test
     public void shouldDelete2_technicalException() {
-        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(inDomain(new Scope())));
 
         TestObserver testObserver = new TestObserver();
         scopeService.delete(new Domain(DOMAIN), "my-scope", false).subscribe(testObserver);
@@ -642,7 +642,7 @@ public class ScopeServiceTest {
 
     @Test
     public void shouldDelete3_technicalException() {
-        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(inDomain(new Scope())));
 
         TestObserver testObserver = new TestObserver();
         scopeService.delete(new Domain(DOMAIN), "my-scope", false).subscribe(testObserver);
@@ -717,7 +717,7 @@ public class ScopeServiceTest {
 
     @Test
     public void shouldNotDeleteSystemScope() {
-        Scope scope = new Scope();
+        Scope scope = inDomain(new Scope());
         scope.setKey("scope-key");
         scope.setSystem(true);
         when(scopeRepository.findById("scope-id")).thenReturn(Maybe.just(scope));
@@ -749,5 +749,43 @@ public class ScopeServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(isValid -> isValid);
+    }
+
+    private static Scope inDomain(Scope scope) {
+        scope.setDomain(DOMAIN.getId());
+        return scope;
+    }
+
+    @Test
+    public void shouldNotUpdate_scopeOfAnotherDomain() {
+        when(scopeRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainScope()));
+
+        scopeService.update(DOMAIN, "other-id", new UpdateScope()).test().assertError(ScopeNotFoundException.class);
+
+        verify(scopeRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotPatch_scopeOfAnotherDomain() {
+        when(scopeRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainScope()));
+
+        scopeService.patch(DOMAIN, "other-id", new PatchScope()).test().assertError(ScopeNotFoundException.class);
+
+        verify(scopeRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_scopeOfAnotherDomain() {
+        when(scopeRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainScope()));
+
+        scopeService.delete(DOMAIN, "other-id", false).test().assertError(ScopeNotFoundException.class);
+
+        verify(scopeRepository, never()).delete(any());
+    }
+
+    private static Scope otherDomainScope() {
+        Scope scope = new Scope();
+        scope.setDomain("other-domain");
+        return scope;
     }
 }
