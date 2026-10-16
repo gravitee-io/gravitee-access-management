@@ -2032,7 +2032,9 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        Application existingApp = new Application();
+        existingApp.setDomain(DOMAIN.getId());
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existingApp));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
 
@@ -2070,7 +2072,10 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+
+        Application existingApp = new Application();
+        existingApp.setDomain(DOMAIN.getId());
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existingApp));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
 

@@ -87,7 +87,7 @@ public class ApplicationFlowResource extends AbstractResource {
             @PathParam("flow") String flow,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FLOW, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FLOW, Acl.READ)
                 .andThen(findApplicationFlow(domain, application, flow)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
@@ -117,7 +117,7 @@ public class ApplicationFlowResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FLOW, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FLOW, Acl.UPDATE)
                 .andThen(findApplicationFlow(domain, application, flow).ignoreElement())
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
                 .andThen(flowValidator.validate(updateFlow))
