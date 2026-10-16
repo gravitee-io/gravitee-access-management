@@ -130,6 +130,7 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
                 try {
                     JWT jwt = jwtParser.parse(token);
                     UsernamePasswordAuthenticationToken authentication = convertToAuthentication(jwt);
+                    authenticationService.checkUserEnabled((User) authentication.getPrincipal(), (String) jwt.get(Claims.ORGANIZATION), COCKPIT_SOURCE);
                     User principal = authenticationService.onAuthenticationSuccess(authentication);
 
                     final Environment environment = environmentService.findById((String) jwt.get(Claims.ENVIRONMENT), (String) jwt.get(Claims.ORGANIZATION)).blockingGet();

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.handlers.management.api.authentication.service.impl.AuthenticationServiceImpl;
 import io.gravitee.am.model.Membership;
@@ -40,11 +42,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
 
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.anyString;
@@ -226,5 +231,43 @@ public class AuthenticationServiceTest {
         verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);
         verify(userServiceMock, times(1)).update(any(io.gravitee.am.model.User.class));
         verify(membershipServiceMock, times(1)).addOrUpdate(any(String.class), argThat(m -> !m.isFromRoleMapper() && m.getRoleId().equals(DEFAULT_ROLE.getId())));
+    }
+
+    @Test
+    public void shouldRejectDisabledUser() {
+        DefaultUser principal = new DefaultUser("john");
+        principal.setId("external-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setEnabled(false);
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "external-id", "idp")).thenReturn(Maybe.just(user));
+
+        assertThrows(DisabledException.class, () -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp"));
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(new ObjectMapper());
+            return builder.isFailure() && EventType.USER_LOGIN.equals(audit.getType()) && "user-id".equals(audit.getActor().getId());
+        }));
+    }
+
+    @Test
+    public void shouldAcceptEnabledUser_foundByUsername() {
+        DefaultUser principal = new DefaultUser("john");
+        principal.setId("external-id");
+        User user = new User();
+        user.setEnabled(true);
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "external-id", "idp")).thenReturn(Maybe.empty());
+        when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "john", "idp")).thenReturn(Maybe.just(user));
+
+        assertDoesNotThrow(() -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp"));
+    }
+
+    @Test
+    public void shouldAcceptUnknownUser() {
+        DefaultUser principal = new DefaultUser("john");
+        principal.setId("external-id");
+        when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "external-id", "idp")).thenReturn(Maybe.empty());
+        when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "john", "idp")).thenReturn(Maybe.empty());
+
+        assertDoesNotThrow(() -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp"));
     }
 }

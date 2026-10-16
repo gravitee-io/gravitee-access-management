@@ -25,4 +25,9 @@ import org.springframework.security.core.Authentication;
 public interface AuthenticationService {
 
     User onAuthenticationSuccess(Authentication authentication);
+
+    /**
+     * @throws org.springframework.security.authentication.DisabledException if the organization user exists and is disabled
+     */
+    void checkUserEnabled(User principal, String organizationId, String source);
 }
