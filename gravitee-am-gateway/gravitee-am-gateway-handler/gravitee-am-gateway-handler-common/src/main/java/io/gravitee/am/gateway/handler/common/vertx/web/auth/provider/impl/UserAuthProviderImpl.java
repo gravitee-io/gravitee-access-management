@@ -91,8 +91,9 @@ public class UserAuthProviderImpl implements UserAuthProvider {
             authenticationContext.set(ConstantKeys.DEVICE_ID, context.request().getParam(DEVICE_ID));
 
             userAuthenticationManager.authenticate(client, authentication)
+                    .map(User::new)
                     .subscribe(
-                            user -> handler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))),
+                            user -> handler.handle(Future.succeededFuture(user)),
                             error -> handler.handle(Future.failedFuture(error))
                     );
         });
