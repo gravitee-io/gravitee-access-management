@@ -145,7 +145,9 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                         final int startOffset = page * size;
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
-                        return organizationUserService.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+                        return organizationUserService.findByIdIn(pagedMemberIds)
+                                .filter(user -> belongsTo(user, organizationId))
+                                .toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }
@@ -184,7 +186,7 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                         throw new GroupAlreadyExistsException(newGroup.getName());
                     }
                 })
-                .flatMap(this::setMembers)
+                .flatMap(group -> setMembers(organizationId, group))
                 .flatMap(group -> groupRepository.create(group))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -222,7 +224,7 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                     groupToUpdate.setUpdatedAt(new Date());
 
                     // set members and update
-                    return setMembers(groupToUpdate)
+                    return setMembers(organizationId, groupToUpdate)
                             .flatMap(group -> groupRepository.update(group))
                             .doOnSuccess(group -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(oldGroup).group(group)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).reference(new Reference(ReferenceType.ORGANIZATION, organizationId)).throwable(throwable)));
@@ -257,10 +259,11 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                 });
     }
 
-    private Single<Group> setMembers(Group group) {
+    private Single<Group> setMembers(String organizationId, Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
             return organizationUserService.findByIdIn(userMembers)
+                    .filter(user -> belongsTo(user, organizationId))
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {
@@ -269,5 +272,9 @@ public class OrganizationGroupServiceImpl implements OrganizationGroupService {
                     });
         }
         return Single.just(group);
+    }
+
+    private static boolean belongsTo(User user, String organizationId) {
+        return ReferenceType.ORGANIZATION == user.getReferenceType() && organizationId.equals(user.getReferenceId());
     }
 }
