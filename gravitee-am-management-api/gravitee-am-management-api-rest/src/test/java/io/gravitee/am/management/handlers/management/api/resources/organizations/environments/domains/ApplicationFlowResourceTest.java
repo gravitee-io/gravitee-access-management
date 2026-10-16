@@ -15,18 +15,25 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Application;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 public class ApplicationFlowResourceTest extends JerseySpringTest {
 
@@ -36,7 +43,6 @@ public class ApplicationFlowResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetFlow() {
-        doReturn(Maybe.just(application())).when(applicationService).findById(DOMAIN_ID, APPLICATION_ID);
         doReturn(Maybe.just(flow(APPLICATION_ID))).when(flowService).findById(ReferenceType.DOMAIN, DOMAIN_ID, FLOW_ID);
 
         final Response response = flowTarget().request().get();
@@ -45,18 +51,22 @@ public class ApplicationFlowResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotGetFlow_applicationFromAnotherDomain() {
-        doReturn(Maybe.empty()).when(applicationService).findById(DOMAIN_ID, APPLICATION_ID);
+    public void shouldCheckReadPermissionOnApplication() {
         doReturn(Maybe.just(flow(APPLICATION_ID))).when(flowService).findById(ReferenceType.DOMAIN, DOMAIN_ID, FLOW_ID);
+        reset(permissionService);
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
 
-        final Response response = flowTarget().request().get();
+        flowTarget().request().get();
 
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        final ArgumentCaptor<PermissionAcls> aclsCaptor = ArgumentCaptor.forClass(PermissionAcls.class);
+        verify(permissionService).hasPermission(any(User.class), aclsCaptor.capture());
+        assertTrue(aclsCaptor.getValue().referenceStream()
+                        .anyMatch(ref -> ref.getKey() == ReferenceType.APPLICATION && APPLICATION_ID.equals(ref.getValue())),
+                "APPLICATION_FLOW[READ] must be checked on the application");
     }
 
     @Test
     public void shouldNotGetFlow_flowFromAnotherApplication() {
-        doReturn(Maybe.just(application())).when(applicationService).findById(DOMAIN_ID, APPLICATION_ID);
         doReturn(Maybe.just(flow("app-2"))).when(flowService).findById(ReferenceType.DOMAIN, DOMAIN_ID, FLOW_ID);
 
         final Response response = flowTarget().request().get();
@@ -66,13 +76,6 @@ public class ApplicationFlowResourceTest extends JerseySpringTest {
 
     private WebTarget flowTarget() {
         return target("domains").path(DOMAIN_ID).path("applications").path(APPLICATION_ID).path("flows").path(FLOW_ID);
-    }
-
-    private static Application application() {
-        final Application application = new Application();
-        application.setId(APPLICATION_ID);
-        application.setDomain(DOMAIN_ID);
-        return application;
     }
 
     private static Flow flow(String application) {
