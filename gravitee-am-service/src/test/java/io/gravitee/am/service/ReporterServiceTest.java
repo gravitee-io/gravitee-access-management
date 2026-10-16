@@ -24,6 +24,7 @@ import io.gravitee.am.repository.junit.management.MemoryReporterRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.ReporterDeleteException;
+import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.model.NewReporter;
@@ -281,5 +282,29 @@ class ReporterServiceTest {
         reporter.setConfiguration("{\"filename\":\"" + randomStringGenerator.generate(12) + "\"}");
 
         return reporter;
+    }
+
+    @Test
+    void shouldNotUpdateReporterOfAnotherReference() {
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        var newReporter = randomTestFileReporter("test");
+        var createdReporter = reporterService.create(Reference.domain("victim-domain"), newReporter, null, false)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .values()
+                .get(0);
+        var updateReporter = new UpdateReporter();
+        updateReporter.setName("renamed");
+        updateReporter.setConfiguration(newReporter.getConfiguration());
+        updateReporter.setEnabled(false);
+
+        reporterService.update(Reference.domain("other-domain"), createdReporter.getId(), updateReporter, false)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertError(ReporterNotFoundException.class);
+
+        reporterRepository.findById(createdReporter.getId()).test()
+                .assertValue(stored -> stored.getName().equals(newReporter.getName()) && stored.isEnabled());
     }
 }
