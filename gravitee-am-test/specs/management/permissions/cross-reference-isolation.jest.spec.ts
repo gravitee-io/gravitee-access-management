@@ -17,11 +17,12 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
-import { performDelete, performGet, performPatch, performPost , performPut } from '@gateway-commands/oauth-oidc-commands';
+import { performDelete, performGet, performPatch, performPost, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { getOrganisationManagementUrl } from '@management-commands/service/utils';
 import { createApplication } from '@management-commands/application-management-commands';
 import { listClientSecrets } from '@management-commands/client-secrets-management-commands';
 import { getAllCertificates } from '@management-commands/certificate-management-commands';
+import { getPublicKey } from '@utils-commands/jwt';
 
 setup(200000);
 
@@ -169,6 +170,99 @@ describe('Cross-reference isolation - a domain owner cannot reach a certificate 
 
     expect(response.status).toBe(200);
     expect(response.body.id).toEqual(ownCertificate.id);
+  });
+});
+
+const recaptchaConfiguration =
+  '{"siteKey":"cdef","secretKey":"abcd","serviceUrl":"https://www.google.com/recaptcha/api/siteverify","tokenParameterName":"X-Recaptcha-Token","minScore":0.5}';
+const totpConfiguration = '{"issuer":"Gravitee.io","algorithm":"HmacSHA1","timeStep":"30","returnDigits":"6"}';
+const notifierConfiguration =
+  '{"endpoint":"http://localhost:8080/ciba/notify/accept-all","headerName":"Authorization","connectTimeout":5000,"idleTimeout":10000,"maxPoolSize":10}';
+const smtpConfiguration = '{"host":"smtp","port":5025,"from":"admin@test.com","protocol":"smtp","authentication":false,"startTls":false}';
+const pluginEntity = (label: string, segment: string, type: string, configuration: string, extra: object = {}) => {
+  const definition = { name: `isolation ${segment}`, type, configuration };
+  return { label, segment, create: { ...definition, ...extra }, update: { ...definition, name: 'updated through another domain' } };
+};
+
+const domainEntities = [
+  {
+    label: 'a scope',
+    segment: 'scopes',
+    create: { key: 'isolation_scope', name: 'isolation scope', description: 'isolation scope' },
+    update: { name: 'updated through another domain', description: 'updated through another domain' },
+  },
+  pluginEntity('a factor', 'factors', 'otp-am-factor', totpConfiguration, { factorType: 'TOTP' }),
+  pluginEntity('a bot detection', 'bot-detections', 'google-recaptcha-v3-am-bot-detection', recaptchaConfiguration, {
+    detectionType: 'CAPTCHA',
+  }),
+  pluginEntity('an extension grant', 'extensionGrants', 'jwtbearer-am-extension-grant', `{"publicKey":"ssh-rsa ${getPublicKey()}"}`, {
+    grantType: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+  }),
+  pluginEntity('a device identifier', 'device-identifiers', 'fingerprintjs-v3-community-device-identifier', '{}'),
+  pluginEntity('an authentication device notifier', 'auth-device-notifiers', 'http-am-authdevice-notifier', notifierConfiguration),
+  pluginEntity('a service resource', 'resources', 'smtp-am-resource', smtpConfiguration),
+  pluginEntity('a reporter', 'reporters', 'reporter-am-file', '{"filename":"isolation-reporter"}'),
+];
+
+describe('Cross-reference isolation - a domain owner cannot reach a sub-entity of another domain through their own domain', () => {
+  const foreignIds = new Map<string, string>();
+  const foreignPath = (segment: string) => domainPath(fixture.domain.id, `/${segment}/${foreignIds.get(segment)}`);
+  const storedForeign = (segment: string) =>
+    performGet(
+      getOrganisationManagementUrl(),
+      domainPath(fixture.otherDomain.id, `/${segment}/${foreignIds.get(segment)}`),
+      headers(fixture.adminToken),
+    );
+
+  beforeAll(async () => {
+    for (const entity of domainEntities) {
+      const created = await performPost(
+        getOrganisationManagementUrl(),
+        domainPath(fixture.otherDomain.id, `/${entity.segment}`),
+        entity.create,
+        headers(fixture.adminToken),
+      );
+      expect(created.status).toBe(201);
+      foreignIds.set(entity.segment, created.body.id);
+    }
+  });
+
+  it.each(domainEntities)('should refuse reading $label of another domain', async ({ segment }) => {
+    const response = await performGet(getOrganisationManagementUrl(), foreignPath(segment), headers(fixture.domainOwner.token));
+
+    expect(response.status).toBe(404);
+  });
+
+  it.each(domainEntities)('should refuse updating $label of another domain', async ({ segment, create, update }) => {
+    const response = await performPut(getOrganisationManagementUrl(), foreignPath(segment), update, headers(fixture.domainOwner.token));
+
+    expect(response.status).toBe(404);
+    expect((await storedForeign(segment)).body.name).toEqual(create.name);
+  });
+
+  it.each(domainEntities)('should refuse deleting $label of another domain', async ({ segment }) => {
+    const response = await performDelete(getOrganisationManagementUrl(), foreignPath(segment), headers(fixture.domainOwner.token));
+
+    expect(response.status).toBe(404);
+    expect((await storedForeign(segment)).status).toBe(200);
+  });
+
+  it('should still let a DOMAIN_OWNER read a scope of their own domain', async () => {
+    const created = await performPost(
+      getOrganisationManagementUrl(),
+      domainPath(fixture.domain.id, '/scopes'),
+      { key: 'own_isolation_scope', name: 'own isolation scope', description: 'own isolation scope' },
+      headers(fixture.adminToken),
+    );
+
+    const response = await performGet(
+      getOrganisationManagementUrl(),
+      domainPath(fixture.domain.id, `/scopes/${created.body.id}`),
+      headers(fixture.domainOwner.token),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toEqual(created.body.id);
   });
 });
 
