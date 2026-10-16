@@ -89,6 +89,11 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     }
 
     @Override
+    public Maybe<BotDetection> findById(String domain, String id) {
+        return findById(id).filter(botDetection -> ReferenceType.DOMAIN == botDetection.getReferenceType() && domain.equals(botDetection.getReferenceId()));
+    }
+
+    @Override
     public Flowable<BotDetection> findByDomain(String domain) {
         log.debug("Find bot detections by domain: {}", domain);
         return botDetectionRepository.findByReference(ReferenceType.DOMAIN, domain)
@@ -133,7 +138,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     public Single<BotDetection> update(String domain, String id, UpdateBotDetection updateBotDetection, User principal) {
         log.debug("Update bot detection {} for domain {}", id, domain);
 
-        return botDetectionRepository.findById(id)
+        return findById(domain, id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
                 .flatMap(oldBotDetection -> {
                     BotDetection botDetectionToUpdate = new BotDetection(oldBotDetection);
@@ -162,7 +167,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     public Completable delete(String domainId, String botDetectionId, User principal) {
         log.debug("Delete bot detection {}", botDetectionId);
 
-        return botDetectionRepository.findById(botDetectionId)
+        return findById(domainId, botDetectionId)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(botDetectionId)))
                 .flatMap(checkBotDetectionReleasedByDomain(domainId, botDetectionId))
                 .flatMap(checkBotDetectionReleasedByApp(domainId, botDetectionId))

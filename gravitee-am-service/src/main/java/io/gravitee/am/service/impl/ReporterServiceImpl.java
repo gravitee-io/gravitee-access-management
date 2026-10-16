@@ -128,6 +128,11 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     @Override
+    public Maybe<Reporter> findById(Reference reference, String id) {
+        return findById(id).filter(reporter -> reporter.getReference().matches(reference.type(), reference.id()));
+    }
+
+    @Override
     public Single<Reporter> createDefault(Reference reference) {
         LOGGER.debug("Create default reporter for  {}", reference);
         NewReporter newReporter = createInternal(reference);
@@ -221,7 +226,7 @@ public class ReporterServiceImpl implements ReporterService {
     public Single<Reporter> update(Reference reference, String reporterId, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
         LOGGER.debug("Update a reporter {} for {}", reporterId, reference);
 
-        return reporterRepository.findById(reporterId)
+        return findById(reference, reporterId)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(reporterId)))
                 .flatMap(oldReporter -> {
                     // 'type' is immutable for an existing reporter

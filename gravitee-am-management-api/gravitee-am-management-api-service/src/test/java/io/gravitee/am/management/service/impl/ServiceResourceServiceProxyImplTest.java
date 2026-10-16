@@ -125,7 +125,7 @@ class ServiceResourceServiceProxyImplTest {
         var existing = buildResource("{\"secret\":\"old\"}");
         var updated = buildResource("{\"secret\":\"new\"}");
 
-        when(serviceResourceService.findById("res-id")).thenReturn(Maybe.just(existing));
+        when(serviceResourceService.findById(domain.getId(), "res-id")).thenReturn(Maybe.just(existing));
         when(resourcePluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
         when(serviceResourceService.update(domain, "res-id", update, principal)).thenReturn(Single.just(updated));
 
@@ -146,7 +146,7 @@ class ServiceResourceServiceProxyImplTest {
 
         var existing = buildResource("{\"secret\":\"old\"}");
 
-        when(serviceResourceService.findById("res-id")).thenReturn(Maybe.just(existing));
+        when(serviceResourceService.findById(domain.getId(), "res-id")).thenReturn(Maybe.just(existing));
         when(resourcePluginService.getSchema(anyString())).thenReturn(Maybe.empty());
 
         service.update(domain, "res-id", update, principal)
@@ -188,7 +188,7 @@ class ServiceResourceServiceProxyImplTest {
         resource.setCreatedAt(new Date());
         resource.setUpdatedAt(new Date());
 
-        when(serviceResourceService.findById("res-id")).thenReturn(Maybe.just(resource));
+        when(serviceResourceService.findById(domain.getId(), "res-id")).thenReturn(Maybe.just(resource));
         when(resourcePluginService.getSchema(anyString())).thenReturn(Maybe.just("{}"));
         when(serviceResourceService.update(domain, "res-id", update, principal)).thenReturn(Single.error(new TechnicalManagementException("fail")));
 
@@ -225,7 +225,7 @@ class ServiceResourceServiceProxyImplTest {
         var updated = new ServiceResource(resource);
         updated.setConfiguration("{\"foo\":\"baz\"}");
 
-        when(serviceResourceService.findById("res-id")).thenReturn(Maybe.just(resource));
+        when(serviceResourceService.findById(domain.getId(), "res-id")).thenReturn(Maybe.just(resource));
         when(resourcePluginService.getSchema(anyString())).thenReturn(Maybe.just("{\"type\":\"object\"}"));
         when(serviceResourceService.update(domain, "res-id", update, principal)).thenReturn(Single.just(updated));
 
@@ -250,7 +250,7 @@ class ServiceResourceServiceProxyImplTest {
         update.setType("smtp");
         update.setConfiguration("{}");
 
-        when(serviceResourceService.findById("missing")).thenReturn(Maybe.empty());
+        when(serviceResourceService.findById(domain.getId(), "missing")).thenReturn(Maybe.empty());
 
         service.update(domain, "missing", update, principal)
                 .test()
