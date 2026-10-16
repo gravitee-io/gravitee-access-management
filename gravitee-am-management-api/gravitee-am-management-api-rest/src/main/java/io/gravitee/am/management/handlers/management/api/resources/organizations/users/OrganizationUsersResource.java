@@ -235,6 +235,7 @@ public class OrganizationUsersResource extends AbstractResource {
         return switch (bulkRequest.action()) {
             case CREATE ->
                     bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user -> organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
+                            .map(UserEntity::new)
                             .map(BulkOperationResult::created)
                     );
             case DELETE ->

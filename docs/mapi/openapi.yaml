@@ -10646,7 +10646,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/UserEntity"
           description: Group members successfully fetched
         "500":
           description: Internal server error
