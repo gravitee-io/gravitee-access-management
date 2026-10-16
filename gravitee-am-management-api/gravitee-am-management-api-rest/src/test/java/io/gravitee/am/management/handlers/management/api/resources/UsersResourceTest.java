@@ -436,6 +436,38 @@ public class UsersResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldReturnUserEntityInBulkCreateOrganizationUser() {
+        when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
+        when(organizationService.findById(ORGANIZATION_DEFAULT)).thenReturn(Single.just(new Organization()));
+
+        final User mockUser = new User();
+        mockUser.setId("user-id-1");
+        mockUser.setUsername("username-1");
+        mockUser.setPassword("$2a$10$hash");
+        mockUser.setReferenceType(ORGANIZATION);
+        mockUser.setReferenceId(ORGANIZATION_DEFAULT);
+
+        when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(mockUser));
+
+        final var newUser = new NewOrganizationUser();
+        newUser.setUsername("username-1");
+        newUser.setPassword("password");
+        BulkRequest<NewOrganizationUser> bulkRequest = new BulkRequest<>(BulkRequest.Action.CREATE, null, List.of(newUser));
+        final Response response = target("organizations")
+                .path(ORGANIZATION_DEFAULT)
+                .path("users")
+                .path("bulk")
+                .request()
+                .post(Entity.entity(bulkRequest, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        JsonNode createdUser = readEntity(response, JsonNode.class).get("results").get(0).get("body");
+        assertEquals("username-1", createdUser.get("username").asText());
+        assertFalse(createdUser.has("password"));
+    }
+
+    @Test
     public void shouldGetOrganizationUsersAndServiceAccount() {
         final String organizationId = "DEFAULT";
 
