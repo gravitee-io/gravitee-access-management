@@ -268,8 +268,8 @@ public class User implements IUser {
     }
 
     public String getEmail() {
-        if (email == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.EMAIL);
+        if (email == null) {
+            return getStringClaim(StandardClaims.EMAIL);
         }
         return email;
     }
@@ -286,8 +286,9 @@ public class User implements IUser {
 
         // fall back to standard claims
         if (getAdditionalInformation() != null) {
-            if (getAdditionalInformation().get(StandardClaims.NAME) != null) {
-                return (String) getAdditionalInformation().get(StandardClaims.NAME);
+            String name = getStringClaim(StandardClaims.NAME);
+            if (name != null) {
+                return name;
             }
             if (getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
                 return getAdditionalInformation().get(StandardClaims.GIVEN_NAME) + ((getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) ? " " + getAdditionalInformation().get(StandardClaims.FAMILY_NAME) : "");
@@ -299,19 +300,16 @@ public class User implements IUser {
     }
 
     public String getFirstName() {
-        if (firstName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
+        if (firstName == null) {
             // fall back to OIDC standard claims
-            firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
+            firstName = getStringClaim(StandardClaims.GIVEN_NAME);
         }
 
         return firstName;
     }
 
     public String getMiddleName() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.MIDDLE_NAME) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.MIDDLE_NAME);
-        }
-        return null;
+        return getStringClaim(StandardClaims.MIDDLE_NAME);
     }
 
     public void setMiddleName(String middleName) {
@@ -319,9 +317,9 @@ public class User implements IUser {
     }
 
     public String getLastName() {
-        if (lastName == null && getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
+        if (lastName == null) {
             // fall back to OIDC standard claims
-            lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
+            lastName = getStringClaim(StandardClaims.FAMILY_NAME);
         }
 
         return lastName;
@@ -336,9 +334,9 @@ public class User implements IUser {
                         .map(Attribute::getValue)
                         .findFirst()
                         .orElse(photos.get(0).getValue());
-            } else if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PICTURE) != null) {
+            } else {
                 // fall back to OIDC standard claims
-                picture = (String) getAdditionalInformation().get(StandardClaims.PICTURE);
+                picture = getStringClaim(StandardClaims.PICTURE);
             }
         }
         return picture;
@@ -423,6 +421,22 @@ public class User implements IUser {
         return null;
     }
 
+    /**
+     * Read a standard claim expected to be a string. Scalar values (numbers, booleans) are converted to their
+     * string representation, structured values (maps, lists...) are ignored, so that a malformed claim
+     * provided by an identity provider or an API client never breaks the user serialization.
+     */
+    private String getStringClaim(String claim) {
+        Object value = get(claim);
+        if (value instanceof String stringValue) {
+            return stringValue;
+        }
+        if (value instanceof Number || value instanceof Boolean) {
+            return value.toString();
+        }
+        return null;
+    }
+
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         if (additionalInformation == null) {
             this.additionalInformation = null;
@@ -490,7 +504,7 @@ public class User implements IUser {
     }
 
     public String getProfile() {
-        return get(StandardClaims.PROFILE);
+        return getStringClaim(StandardClaims.PROFILE);
     }
 
     public void setProfile(String profile) {
@@ -498,7 +512,7 @@ public class User implements IUser {
     }
 
     public String getWebsite() {
-        return get(StandardClaims.WEBSITE);
+        return getStringClaim(StandardClaims.WEBSITE);
     }
 
     public void setWebsite(String website) {
@@ -506,7 +520,7 @@ public class User implements IUser {
     }
 
     public String getBirthdate() {
-        return get(StandardClaims.BIRTHDATE);
+        return getStringClaim(StandardClaims.BIRTHDATE);
     }
 
     public void setBirthdate(String birthdate) {
@@ -514,7 +528,7 @@ public class User implements IUser {
     }
 
     public String getZoneInfo() {
-        return get(StandardClaims.ZONEINFO);
+        return getStringClaim(StandardClaims.ZONEINFO);
     }
 
     public void setZoneInfo(String zoneInfo) {
@@ -522,7 +536,7 @@ public class User implements IUser {
     }
 
     public String getLocale() {
-        return get(StandardClaims.LOCALE);
+        return getStringClaim(StandardClaims.LOCALE);
     }
 
     public void setLocale(String locale) {
@@ -530,7 +544,7 @@ public class User implements IUser {
     }
 
     public String getPhoneNumber() {
-        return get(StandardClaims.PHONE_NUMBER);
+        return getStringClaim(StandardClaims.PHONE_NUMBER);
     }
 
     public void setPhoneNumber(String phoneNumber) {
@@ -538,8 +552,8 @@ public class User implements IUser {
     }
 
     public Map<String, Object> getAddress() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.ADDRESS) != null) {
-            return (Map<String, Object>) getAdditionalInformation().get(StandardClaims.ADDRESS);
+        if (get(StandardClaims.ADDRESS) instanceof Map<?, ?> address) {
+            return (Map<String, Object>) address;
         }
         return null;
     }
