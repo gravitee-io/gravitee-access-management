@@ -19,6 +19,7 @@ import io.gravitee.am.common.scim.CommonAttribute;
 import io.gravitee.am.common.scim.Schema;
 import lombok.Getter;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +42,15 @@ public class AttributePath {
      * "name" and group 5 matches "familyName".
      */
     private static final Pattern pattern = Pattern.compile("^((.+):)?([^.]+)(\\.(.+))?$");
+
+    private static final Pattern ATTRIBUTE_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_-]*$");
+
+    private static final Set<String> SUPPORTED_SCHEMAS = Set.of(
+            Schema.SCHEMA_URI_CORE,
+            Schema.SCHEMA_URI_USER,
+            Schema.SCHEMA_URI_ENTERPRISE_USER,
+            Schema.SCHEMA_URI_CUSTOM_USER,
+            Schema.SCHEMA_URI_GROUP);
 
     /**
      * The URI of the attribute schema.
@@ -98,6 +108,8 @@ public class AttributePath {
         final String attributeName = matcher.group(3);
         final String subAttributeName = matcher.group(5);
 
+        validateComponents(path, attributeSchema, attributeName, subAttributeName);
+
         if (attributeSchema != null) {
             return new AttributePath(attributeSchema, attributeName,
                     subAttributeName);
@@ -114,6 +126,21 @@ public class AttributePath {
                 return new AttributePath(defaultSchema, attributeName,
                         subAttributeName);
             }
+        }
+    }
+
+    private static void validateComponents(final String path,
+                                           final String attributeSchema,
+                                           final String attributeName,
+                                           final String subAttributeName) {
+        if (attributeName == null || !ATTRIBUTE_NAME_PATTERN.matcher(attributeName).matches()) {
+            throw new IllegalArgumentException(String.format("Invalid filter attribute '%s'", path));
+        }
+        if (subAttributeName != null && !ATTRIBUTE_NAME_PATTERN.matcher(subAttributeName).matches()) {
+            throw new IllegalArgumentException(String.format("Invalid filter attribute '%s'", path));
+        }
+        if (attributeSchema != null && SUPPORTED_SCHEMAS.stream().noneMatch(attributeSchema::equalsIgnoreCase)) {
+            throw new IllegalArgumentException(String.format("Invalid filter attribute '%s'", path));
         }
     }
 
