@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.management.service.DomainService;
@@ -36,7 +35,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -87,14 +85,9 @@ public class ServiceResourceResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> resourceService.findById(resource))
+                        .flatMap(__ -> resourceService.findById(domain, resource))
                         .switchIfEmpty(Maybe.error(new FactorNotFoundException(resource)))
-                        .map(res1 -> {
-                            if (!res1.getReferenceId().equalsIgnoreCase(domain) && !res1.getReferenceType().equals(ReferenceType.DOMAIN)) {
-                                throw new BadRequestException("Resource does not belong to domain");
-                            }
-                            return Response.ok(res1).build();
-                        }))
+                        .map(res1 -> Response.ok(res1).build()))
                 .subscribe(response::resume, response::resume);
     }
 

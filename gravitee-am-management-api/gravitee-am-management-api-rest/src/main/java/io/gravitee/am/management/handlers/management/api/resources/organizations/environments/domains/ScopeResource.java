@@ -36,7 +36,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -91,14 +90,9 @@ public class ScopeResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> scopeService.findById(scopeId))
+                        .flatMap(irrelevant -> scopeService.findById(domain, scopeId))
                         .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
-                        .map(scope -> {
-                            if (!scope.getDomain().equalsIgnoreCase(domain)) {
-                                throw new BadRequestException("Scope does not belong to domain");
-                            }
-                            return Response.ok(scope).build();
-                        }))
+                        .map(scope -> Response.ok(scope).build()))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -69,6 +69,11 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
     }
 
     @Override
+    public Maybe<ServiceResource> findById(String domain, String id) {
+        return serviceResourceService.findById(domain, id).flatMap(serviceResource -> filterSensitiveData(serviceResource).toMaybe());
+    }
+
+    @Override
     public Flowable<ServiceResource> findByDomain(String domain) {
         return serviceResourceService.findByDomain(domain).flatMapSingle(this::filterSensitiveData);
     }
@@ -90,7 +95,7 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
                         .type(EventType.RESOURCE_UPDATED)
                         .reference(Reference.domain(domain.getId()));
 
-        return serviceResourceService.findById(id)
+        return serviceResourceService.findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
                 .doOnError(err -> auditService.report(audit.get().throwable(err)))
                 .flatMap(oldResource -> filterSensitiveData(oldResource)
