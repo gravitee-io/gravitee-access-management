@@ -158,6 +158,77 @@ public class DatabaseDialectHelperTest {
     }
 
     @Test
+    public void shouldRejectUserFilterAttributeWithSqlTautology() {
+        PostgresqlHelper helper = new PostgresqlHelper(Mockito.mock(R2dbcDialect.class), null);
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("1=1/**/or/**/1=1");
+        criteria.setOperator("pr");
+        final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+        Assert.assertThrows(IllegalArgumentException.class, () ->
+                helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, "id", 0, 10, DatabaseDialectHelper.ScimRepository.USERS));
+    }
+
+    @Test
+    public void shouldRejectUserFilterAttributeWithQuote() {
+        PostgresqlHelper helper = new PostgresqlHelper(Mockito.mock(R2dbcDialect.class), null);
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("us'ername");
+        criteria.setFilterValue("x");
+        criteria.setOperator("eq");
+        final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+        Assert.assertThrows(IllegalArgumentException.class, () ->
+                helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, "id", 0, 10, DatabaseDialectHelper.ScimRepository.USERS));
+    }
+
+    @Test
+    public void shouldRejectJsonKeyWithQuote() {
+        PostgresqlHelper helper = new PostgresqlHelper(Mockito.mock(R2dbcDialect.class), null);
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("additionalInformation.ab'c");
+        criteria.setFilterValue("x");
+        criteria.setOperator("eq");
+        final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+        Assert.assertThrows(IllegalArgumentException.class, () ->
+                helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, "id", 0, 10, DatabaseDialectHelper.ScimRepository.USERS));
+    }
+
+    @Test
+    public void shouldRejectGroupFilterAttributeWithSqlTautology() {
+        PostgresqlHelper helper = new PostgresqlHelper(Mockito.mock(R2dbcDialect.class), null);
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("1=1/**/or/**/1=1");
+        criteria.setOperator("pr");
+        final String BASE_CLAUSE = " FROM groups WHERE reference_id = :refId AND reference_type = :refType AND ";
+        Assert.assertThrows(IllegalArgumentException.class, () ->
+                helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, "id", 0, 10, DatabaseDialectHelper.ScimRepository.GROUPS));
+    }
+
+    @Test
+    public void shouldAcceptBareColumnFilterAttribute() {
+        PostgresqlHelper helper = new PostgresqlHelper(Mockito.mock(R2dbcDialect.class), null);
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("username");
+        criteria.setFilterValue("alice");
+        criteria.setOperator("eq");
+        final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, "id", 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
+        assertTrue("query keeps bare column", search.getSelectQuery().startsWith("SELECT * " + BASE_CLAUSE + "username = :username"));
+        assertEquals("binding should contain username", "alice", search.getBinding().get("username"));
+    }
+
+    @Test
+    public void shouldAcceptAdditionalInformationCustomKey() {
+        PostgresqlHelper helper = new PostgresqlHelper(Mockito.mock(R2dbcDialect.class), null);
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("additionalInformation.custom_key");
+        criteria.setFilterValue("v");
+        criteria.setOperator("eq");
+        final String BASE_CLAUSE = " FROM users WHERE reference_id = :refId AND reference_type = :refType AND ";
+        ScimSearch search = helper.prepareScimSearchQuery(new StringBuilder(BASE_CLAUSE), criteria, "id", 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
+        assertTrue("query maps JSON key", search.getSelectQuery().contains("additional_information ->> 'custom_key'"));
+    }
+
+    @Test
     public void shouldEscapeLikePatternValue_MsSql_Brackets() {
         R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
         MsSqlHelper helper = new MsSqlHelper(dialect, null);
