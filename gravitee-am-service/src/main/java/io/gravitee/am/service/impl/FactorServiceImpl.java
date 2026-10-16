@@ -102,6 +102,11 @@ public class FactorServiceImpl implements FactorService {
     }
 
     @Override
+    public Maybe<Factor> findById(String domain, String id) {
+        return findById(id).filter(factor -> domain.equals(factor.getDomain()));
+    }
+
+    @Override
     public Flowable<Factor> findByDomain(String domain) {
         LOGGER.debug("Find factors by domain: {}", domain);
         return factorRepository.findByDomain(domain)
@@ -166,7 +171,7 @@ public class FactorServiceImpl implements FactorService {
     public Single<Factor> update(String domain, String id, UpdateFactor updateFactor, User principal) {
         LOGGER.debug("Update an factor {} for domain {}", id, domain);
 
-        return factorRepository.findById(id)
+        return findById(domain, id)
                 .switchIfEmpty(Single.error(new FactorNotFoundException(id)))
                 .flatMap(oldFactor -> {
                     Factor factorToUpdate = new Factor(oldFactor);
@@ -198,7 +203,7 @@ public class FactorServiceImpl implements FactorService {
     public Completable delete(String domain, String factorId, User principal) {
         LOGGER.debug("Delete factor {}", factorId);
 
-        return factorRepository.findById(factorId)
+        return findById(domain, factorId)
                 .switchIfEmpty(Maybe.error(new FactorNotFoundException(factorId)))
                 .flatMapSingle(factor -> applicationService.findByFactor(factorId).count()
                         .flatMap(applications -> {

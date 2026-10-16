@@ -282,4 +282,30 @@ public class ServiceResourceServiceTest {
         verify(auditService, never()).report(any());
         verify(resourceRepository, never()).delete(any());
     }
+
+
+    @Test
+    public void shouldNotUpdate_serviceResourceOfAnotherDomain() {
+        when(resourceRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainServiceResource()));
+
+        resourceService.update(DOMAIN, "other-id", new UpdateServiceResource(), null).test().assertError(ServiceResourceNotFoundException.class);
+
+        verify(resourceRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_serviceResourceOfAnotherDomain() {
+        when(resourceRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainServiceResource()));
+
+        resourceService.delete(DOMAIN.getId(), "other-id", null).test().assertError(ServiceResourceNotFoundException.class);
+
+        verify(resourceRepository, never()).delete(any());
+    }
+
+    private static ServiceResource otherDomainServiceResource() {
+        ServiceResource serviceResource = new ServiceResource();
+        serviceResource.setReferenceType(ReferenceType.DOMAIN);
+        serviceResource.setReferenceId("other-domain");
+        return serviceResource;
+    }
 }
