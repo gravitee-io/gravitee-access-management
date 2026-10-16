@@ -21,6 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepository;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.AuthenticationDeviceNotifierServiceImpl;
@@ -156,7 +157,7 @@ public class AuthenticationDeviceNotifierServiceTest {
     public void shouldUpdate() {
         UpdateAuthenticationDeviceNotifier updateAuthenticationDeviceNotifier = Mockito.mock(UpdateAuthenticationDeviceNotifier.class);
         when(updateAuthenticationDeviceNotifier.getName()).thenReturn("auth-dev-notifier");
-        when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(new AuthenticationDeviceNotifier()));
+        when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(inDomain(new AuthenticationDeviceNotifier())));
         when(authDeviceNotifierRepository.update(any(AuthenticationDeviceNotifier.class))).thenReturn(Single.just(new AuthenticationDeviceNotifier()));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -210,7 +211,7 @@ public class AuthenticationDeviceNotifierServiceTest {
 
     @Test
     public void shouldDelete() {
-        AuthenticationDeviceNotifier deviceNotifier = new AuthenticationDeviceNotifier();
+        AuthenticationDeviceNotifier deviceNotifier = inDomain(new AuthenticationDeviceNotifier());
         deviceNotifier.setId("deviceNotifier-id");
         when(authDeviceNotifierRepository.findById(deviceNotifier.getId())).thenReturn(Maybe.just(deviceNotifier));
         when(authDeviceNotifierRepository.delete(deviceNotifier.getId())).thenReturn(Completable.complete());
@@ -224,5 +225,36 @@ public class AuthenticationDeviceNotifierServiceTest {
 
         verify(authDeviceNotifierRepository).delete(deviceNotifier.getId());
         verify(auditService).report(any(AuthDeviceNotifierAuditBuilder.class));
+    }
+
+    private static AuthenticationDeviceNotifier inDomain(AuthenticationDeviceNotifier authenticationDeviceNotifier) {
+        authenticationDeviceNotifier.setReferenceType(ReferenceType.DOMAIN);
+        authenticationDeviceNotifier.setReferenceId(DOMAIN.getId());
+        return authenticationDeviceNotifier;
+    }
+
+    @Test
+    public void shouldNotUpdate_authenticationDeviceNotifierOfAnotherDomain() {
+        when(authDeviceNotifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainAuthenticationDeviceNotifier()));
+
+        authDeviceNotifierService.update(DOMAIN, "other-id", new UpdateAuthenticationDeviceNotifier()).test().assertError(AbstractNotFoundException.class);
+
+        verify(authDeviceNotifierRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_authenticationDeviceNotifierOfAnotherDomain() {
+        when(authDeviceNotifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainAuthenticationDeviceNotifier()));
+
+        authDeviceNotifierService.delete(DOMAIN.getId(), "other-id").test().assertError(AuthenticationDeviceNotifierNotFoundException.class);
+
+        verify(authDeviceNotifierRepository, never()).delete(any());
+    }
+
+    private static AuthenticationDeviceNotifier otherDomainAuthenticationDeviceNotifier() {
+        AuthenticationDeviceNotifier authenticationDeviceNotifier = new AuthenticationDeviceNotifier();
+        authenticationDeviceNotifier.setReferenceType(ReferenceType.DOMAIN);
+        authenticationDeviceNotifier.setReferenceId("other-domain");
+        return authenticationDeviceNotifier;
     }
 }

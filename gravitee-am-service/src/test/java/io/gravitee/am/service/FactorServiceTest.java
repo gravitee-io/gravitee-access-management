@@ -244,7 +244,7 @@ public class FactorServiceTest {
     public void shouldUpdate2_technicalException() {
         UpdateFactor updateFactor = Mockito.mock(UpdateFactor.class);
         when(updateFactor.getName()).thenReturn("my-factor");
-        when(factorRepository.findById("my-factor")).thenReturn(Maybe.just(new Factor()));
+        when(factorRepository.findById("my-factor")).thenReturn(Maybe.just(inDomain(new Factor())));
         when(factorRepository.update(any(Factor.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = factorService.update(DOMAIN, "my-factor", updateFactor).test();
@@ -270,7 +270,7 @@ public class FactorServiceTest {
 
     @Test
     public void shouldNotDelete_factorWithClients() {
-        Factor factor = new Factor();
+        Factor factor = inDomain(new Factor());
         factor.setId("factor-id");
         when(factorRepository.findById(factor.getId())).thenReturn(Maybe.just(factor));
         when(applicationService.findByFactor(factor.getId())).thenReturn(Flowable.just(new Application()));
@@ -310,5 +310,34 @@ public class FactorServiceTest {
         testObserver.assertNoErrors();
 
         verify(factorRepository, times(1)).delete(factor.getId());
+    }
+
+    private static Factor inDomain(Factor factor) {
+        factor.setDomain(DOMAIN);
+        return factor;
+    }
+
+    @Test
+    public void shouldNotUpdate_factorOfAnotherDomain() {
+        when(factorRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainFactor()));
+
+        factorService.update(DOMAIN, "other-id", new UpdateFactor()).test().assertError(FactorNotFoundException.class);
+
+        verify(factorRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_factorOfAnotherDomain() {
+        when(factorRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainFactor()));
+
+        factorService.delete(DOMAIN, "other-id").test().assertError(FactorNotFoundException.class);
+
+        verify(factorRepository, never()).delete(any());
+    }
+
+    private static Factor otherDomainFactor() {
+        Factor factor = new Factor();
+        factor.setDomain("other-domain");
+        return factor;
     }
 }

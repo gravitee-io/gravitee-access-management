@@ -35,7 +35,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -86,14 +85,9 @@ public class ExtensionGrantResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> extensionGrantService.findById(extensionGrant))
+                        .flatMap(irrelevant -> extensionGrantService.findById(domain, extensionGrant))
                         .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrant)))
-                        .map(extensionGrant1 -> {
-                            if (!extensionGrant1.getDomain().equalsIgnoreCase(domain)) {
-                                throw new BadRequestException("Extension grant does not belong to domain");
-                            }
-                            return Response.ok(extensionGrant1).build();
-                        }))
+                        .map(extensionGrant1 -> Response.ok(extensionGrant1).build()))
                 .subscribe(response::resume, response::resume);
     }
 

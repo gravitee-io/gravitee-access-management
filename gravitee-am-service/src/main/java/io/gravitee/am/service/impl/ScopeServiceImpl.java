@@ -109,6 +109,11 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
+    public Maybe<Scope> findById(String domain, String id) {
+        return findById(id).filter(scope -> domain.equals(scope.getDomain()));
+    }
+
+    @Override
     public Single<Page<Scope>> search(String domain, String query, int page, int size) {
         log.debug("Search scopes by domain and query: {} {}", domain, query);
         return scopeRepository.search(domain, query, page, size)
@@ -206,7 +211,7 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Single<Scope> patch(Domain domain, String id, PatchScope patchScope, User principal) {
         log.debug("Patching a scope {} for domain {}", id, domain);
-        return scopeRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(oldScope -> {
                     Scope scopeToUpdate = patchScope.patch(oldScope);
@@ -224,7 +229,7 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Single<Scope> update(Domain domain, String id, UpdateScope updateScope, User principal) {
         log.debug("Update a scope {} for domain {}", id, domain.getId());
-        return scopeRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(oldScope -> {
                     Scope scopeToUpdate = new Scope(oldScope);
@@ -267,7 +272,7 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Single<Scope> update(Domain domain, String id, UpdateSystemScope updateScope) {
         log.debug("Update a system scope {} for domain {}", id, domain.getId());
-        return scopeRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(scope -> {
                     scope.setName(updateScope.getName());
@@ -296,7 +301,7 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Completable delete(Domain domain, String scopeId, boolean force, User principal) {
         log.debug("Delete scope {}", scopeId);
-        return scopeRepository.findById(scopeId)
+        return findById(domain.getId(), scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
                 .flatMapSingle(scope -> {
                     if (scope.isSystem() && !force) {
