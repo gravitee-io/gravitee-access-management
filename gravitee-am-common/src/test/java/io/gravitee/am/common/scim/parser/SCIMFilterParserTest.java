@@ -66,4 +66,51 @@ public class SCIMFilterParserTest {
         assertTrue("title".equals(filter.getFilterAttribute().toString()));
         assertNull(filter.getFilterValue());
     }
+
+    @Test
+    public void shouldAcceptStandardAttributeNames() {
+        assertNotNull(SCIMFilterParser.parse("userName eq \"alice\""));
+        assertNotNull(SCIMFilterParser.parse("emails.value co \"@example.com\""));
+        assertNotNull(SCIMFilterParser.parse("meta.created gt \"2024-01-01T00:00:00.000Z\""));
+        assertNotNull(SCIMFilterParser.parse("name.givenName sw \"Al\""));
+        assertNotNull(SCIMFilterParser.parse("additionalInformation.custom_key eq \"v\""));
+        assertNotNull(SCIMFilterParser.parse("active eq true"));
+    }
+
+    @Test
+    public void shouldAcceptUrnPrefixedAttributeName() {
+        Filter filter = SCIMFilterParser.parse("urn:ietf:params:scim:schemas:core:2.0:User:userName eq \"alice\"");
+        assertNotNull(filter);
+        assertTrue("urn:ietf:params:scim:schemas:core:2.0:User:userName".equals(filter.getFilterAttribute().toString()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectAttributeNameWithSqlTautology() {
+        SCIMFilterParser.parse("1=1/**/or/**/1=1 pr");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectAttributeNameWithQuote() {
+        SCIMFilterParser.parse("us'ername eq \"x\"");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectJsonKeyWithQuote() {
+        SCIMFilterParser.parse("additionalInformation.ab'c eq \"x\"");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldRejectUnknownSchemaPrefix() {
+        SCIMFilterParser.parse("1=1/**/or/**/1=1:userName pr");
+    }
+
+    @Test
+    public void shouldReportInvalidFilterAttributeMessage() {
+        try {
+            SCIMFilterParser.parse("1=1/**/or/**/1=1 pr");
+            org.junit.Assert.fail("expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Invalid filter attribute"));
+        }
+    }
 }
