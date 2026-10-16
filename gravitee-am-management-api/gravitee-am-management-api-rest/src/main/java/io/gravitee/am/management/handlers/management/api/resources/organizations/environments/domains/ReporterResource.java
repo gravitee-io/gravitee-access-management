@@ -20,7 +20,6 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
@@ -28,7 +27,6 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,7 +36,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -50,7 +47,6 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -85,14 +81,9 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(reporterId))
+                        .flatMap(irrelevant -> reporterService.findById(Reference.domain(domain), reporterId))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
-                        .map(reporter -> {
-                            if (!reporter.getReference().matches(ReferenceType.DOMAIN, domain)) {
-                                throw new BadRequestException("Reporter does not belong to domain");
-                            }
-                            return Response.ok(reporter.apiRepresentation(false)).build();
-                        }))
+                        .map(reporter -> Response.ok(reporter.apiRepresentation(false)).build()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -145,19 +136,9 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(reporter))
-                        .map(Optional::ofNullable)
-                        .switchIfEmpty(Maybe.just(Optional.empty()))
-                        .flatMapCompletable(reporter1 -> {
-                            if (reporter1.isPresent()) {
-                                if (!reporter1.get().getReference().matches(ReferenceType.DOMAIN, domain)) {
-                                    return Completable.error(new BadRequestException("Reporter does not belong to domain"));
-                                }
-
-                                return reporterService.delete(reporter, authenticatedUser);
-                            }
-                            return Completable.complete();
-                        }))
+                        .flatMap(irrelevant -> reporterService.findById(Reference.domain(domain), reporter))
+                        .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporter)))
+                        .flatMapCompletable(irrelevant -> reporterService.delete(reporter, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

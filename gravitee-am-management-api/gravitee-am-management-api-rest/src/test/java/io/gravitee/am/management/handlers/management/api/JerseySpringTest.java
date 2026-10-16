@@ -50,6 +50,7 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
+import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.DeviceManagementService;
@@ -61,6 +62,7 @@ import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsReg
 import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
@@ -263,6 +265,12 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected BotDetectionServiceProxy botDetectionService;
+
+    @Autowired
+    protected ServiceResourceServiceProxy serviceResourceServiceProxy;
+
+    @Autowired
+    protected AuthenticationDeviceNotifierService authDeviceNotifierService;
 
     @Autowired
     protected DeviceIdentifierPluginService deviceIdentifierPluginService;
@@ -588,6 +596,16 @@ public abstract class JerseySpringTest {
         @Bean
         public BotDetectionServiceProxy botDetectionServiceProxy() {
             return mock(BotDetectionServiceProxy.class);
+        }
+
+        @Bean
+        public ServiceResourceServiceProxy serviceResourceServiceProxy() {
+            return mock(ServiceResourceServiceProxy.class);
+        }
+
+        @Bean
+        public AuthenticationDeviceNotifierService authDeviceNotifierService() {
+            return mock(AuthenticationDeviceNotifierService.class);
         }
 
         @Bean
