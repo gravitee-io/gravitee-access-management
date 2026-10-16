@@ -33,6 +33,8 @@ public interface AuthenticationDeviceNotifierService {
 
     Maybe<AuthenticationDeviceNotifier> findById(String id);
 
+    Maybe<AuthenticationDeviceNotifier> findById(String domain, String id);
+
     Flowable<AuthenticationDeviceNotifier> findByDomain(String domain);
 
     Single<AuthenticationDeviceNotifier> create(Domain domain, NewAuthenticationDeviceNotifier notifier, User principal);
