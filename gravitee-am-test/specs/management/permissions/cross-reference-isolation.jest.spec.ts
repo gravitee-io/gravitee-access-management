@@ -280,7 +280,7 @@ describe('Cross-reference isolation - a domain owner cannot reach an application
       headers(fixture.domainOwner.token),
     );
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(403);
   });
 
   it('should still let a DOMAIN_OWNER create a secret for an application of their own domain', async () => {
