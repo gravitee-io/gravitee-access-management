@@ -23,7 +23,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.FactorNotFoundException;
+import io.gravitee.am.service.exception.ServiceResourceNotFoundException;
 import io.gravitee.am.service.model.UpdateServiceResource;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -86,7 +86,7 @@ public class ServiceResourceResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> resourceService.findById(domain, resource))
-                        .switchIfEmpty(Maybe.error(new FactorNotFoundException(resource)))
+                        .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resource)))
                         .map(res1 -> Response.ok(res1).build()))
                 .subscribe(response::resume, response::resume);
     }

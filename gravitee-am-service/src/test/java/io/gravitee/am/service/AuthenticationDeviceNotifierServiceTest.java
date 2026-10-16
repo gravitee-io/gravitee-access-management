@@ -21,7 +21,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepository;
-import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.AuthenticationDeviceNotifierServiceImpl;
@@ -237,7 +236,7 @@ public class AuthenticationDeviceNotifierServiceTest {
     public void shouldNotUpdate_authenticationDeviceNotifierOfAnotherDomain() {
         when(authDeviceNotifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainAuthenticationDeviceNotifier()));
 
-        authDeviceNotifierService.update(DOMAIN, "other-id", new UpdateAuthenticationDeviceNotifier()).test().assertError(AbstractNotFoundException.class);
+        authDeviceNotifierService.update(DOMAIN, "other-id", new UpdateAuthenticationDeviceNotifier()).test().assertError(AuthenticationDeviceNotifierNotFoundException.class);
 
         verify(authDeviceNotifierRepository, never()).update(any());
     }
