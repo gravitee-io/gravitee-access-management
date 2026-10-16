@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -59,6 +60,8 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     public static final String TIMEZONE = "timezone";
     public static final String ADDITIONAL_INFORMATION_DOT = "additional_information.";
     public static final String ADDITIONAL_INFORMATION_CAMEL_CASE_DOT = "additionalInformation.";
+    private static final Pattern SAFE_FIELD_NAME = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$");
+    private static final Pattern SAFE_JSON_KEY = Pattern.compile("^[a-zA-Z0-9_-]+$");
 
     private final R2dbcDialect dialect;
 
@@ -204,11 +207,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             case "meta.accountLockedUntil":
                 return "account_locked_until";
             default:
-                if (filterName.startsWith(ADDITIONAL_INFORMATION_CAMEL_CASE_DOT)) {
-                    return filterName.replaceFirst("additionalInformation", "additional_information");
-                } else {
-                    return filterName;
-                }
+                return convertDynamicFieldName(filterName);
         }
     }
 
@@ -223,8 +222,29 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             case META_CREATED -> "created_at";
             case META_LAST_MODIFIED -> "updated_at";
             case DISPLAY_NAME -> "name";
-            default -> filterName;
+            default -> validateSimpleFieldName(filterName);
         };
+    }
+
+    private String convertDynamicFieldName(String filterName) {
+        String normalized = filterName.startsWith(ADDITIONAL_INFORMATION_CAMEL_CASE_DOT)
+                ? ADDITIONAL_INFORMATION_DOT + filterName.substring(ADDITIONAL_INFORMATION_CAMEL_CASE_DOT.length())
+                : filterName;
+        if (normalized.startsWith(ADDITIONAL_INFORMATION_DOT)) {
+            String key = normalized.substring(ADDITIONAL_INFORMATION_DOT.length());
+            if (!SAFE_JSON_KEY.matcher(key).matches()) {
+                throw new IllegalArgumentException("Invalid filter attribute '" + filterName + "'");
+            }
+            return normalized;
+        }
+        return validateSimpleFieldName(filterName);
+    }
+
+    private String validateSimpleFieldName(String filterName) {
+        if (!SAFE_FIELD_NAME.matcher(filterName).matches()) {
+            throw new IllegalArgumentException("Invalid filter attribute '" + filterName + "'");
+        }
+        return filterName;
     }
 
     protected final String operatorConverter(FilterCriteria criteria) {
