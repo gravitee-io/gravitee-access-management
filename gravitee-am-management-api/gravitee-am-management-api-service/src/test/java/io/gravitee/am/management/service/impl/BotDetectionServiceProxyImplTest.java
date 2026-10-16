@@ -146,7 +146,7 @@ class BotDetectionServiceProxyImplTest {
         var existing = buildDetection("bot-id", "{\"secret\":\"old\"}");
         var updated = buildDetection("bot-id", "{\"secret\":\"new\"}");
 
-        when(botDetectionService.findById("bot-id")).thenReturn(Maybe.just(existing));
+        when(botDetectionService.findById("domain", "bot-id")).thenReturn(Maybe.just(existing));
         when(botDetectionPluginService.getSchema(anyString())).thenAnswer(inv -> Maybe.just(SCHEMA));
         when(botDetectionService.update("domain", "bot-id", update, principal)).thenReturn(Single.just(updated));
 
@@ -163,7 +163,7 @@ class BotDetectionServiceProxyImplTest {
         update.setType("kaptcha");
         update.setConfiguration("{}");
 
-        when(botDetectionService.findById("unknown")).thenReturn(Maybe.empty());
+        when(botDetectionService.findById("domain", "unknown")).thenReturn(Maybe.empty());
 
         assertThatThrownBy(() -> service.update("domain", "unknown", update, mock(User.class)).blockingGet())
                 .isInstanceOf(BotDetectionNotFoundException.class);
@@ -179,7 +179,7 @@ class BotDetectionServiceProxyImplTest {
 
         var existing = buildDetection("bot-id", "{\"secret\":\"old\"}");
 
-        when(botDetectionService.findById("bot-id")).thenReturn(Maybe.just(existing));
+        when(botDetectionService.findById("domain", "bot-id")).thenReturn(Maybe.just(existing));
         when(botDetectionPluginService.getSchema(anyString())).thenReturn(Maybe.empty());
 
         assertThatThrownBy(() -> service.update("domain", "bot-id", update, principal).blockingGet())
@@ -265,7 +265,7 @@ class BotDetectionServiceProxyImplTest {
         var existing = buildDetection("bot-id", "{\"secret\":\"old\"}");
         var updated = buildDetection("bot-id", "{\"secret\":\"new\"}");
 
-        when(botDetectionService.findById("bot-id")).thenReturn(Maybe.just(existing));
+        when(botDetectionService.findById("domain", "bot-id")).thenReturn(Maybe.just(existing));
         when(botDetectionPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
         when(botDetectionService.update("domain", "bot-id", update, principal)).thenReturn(Single.just(updated));
 
@@ -288,7 +288,7 @@ class BotDetectionServiceProxyImplTest {
 
         var existing = buildDetection("bot-id", "{\"secret\":\"old\"}");
 
-        when(botDetectionService.findById("bot-id")).thenReturn(Maybe.just(existing));
+        when(botDetectionService.findById("domain", "bot-id")).thenReturn(Maybe.just(existing));
         when(botDetectionPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
         when(botDetectionService.update("domain", "bot-id", update, principal)).thenReturn(Single.error(new RuntimeException("boom")));
 

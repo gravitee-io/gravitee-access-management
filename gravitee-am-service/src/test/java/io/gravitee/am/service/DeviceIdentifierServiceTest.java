@@ -172,7 +172,7 @@ public class DeviceIdentifierServiceTest {
         when(updateDeviceIdentifier.getName()).thenReturn("device-identifier");
         DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
         deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
-        deviceIdentifier.setReferenceId("id");
+        deviceIdentifier.setReferenceId(DOMAIN.getId());
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(deviceIdentifier));
         when(deviceIdentifierRepository.update(any(DeviceIdentifier.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
@@ -230,7 +230,7 @@ public class DeviceIdentifierServiceTest {
         DeviceIdentifier detection = new DeviceIdentifier();
         detection.setId("detection-id");
         detection.setReferenceType(ReferenceType.DOMAIN);
-        detection.setReferenceId("id");
+        detection.setReferenceId(DOMAIN.getId());
         when(deviceIdentifierRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
         when(deviceIdentifierRepository.delete(detection.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -262,7 +262,7 @@ public class DeviceIdentifierServiceTest {
         UpdateDeviceIdentifier updateDeviceIdentifier = Mockito.mock(UpdateDeviceIdentifier.class);
         DeviceIdentifier existing = new DeviceIdentifier();
         existing.setReferenceType(ReferenceType.DOMAIN);
-        existing.setReferenceId("id");
+        existing.setReferenceId(DOMAIN.getId());
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(existing));
         when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
 
@@ -273,4 +273,28 @@ public class DeviceIdentifierServiceTest {
         verify(deviceIdentifierRepository, never()).update(any(DeviceIdentifier.class));
     }
 
+    @Test
+    public void shouldNotUpdate_deviceIdentifierOfAnotherDomain() {
+        when(deviceIdentifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainDeviceIdentifier()));
+
+        deviceIdentifierService.update(DOMAIN, "other-id", new UpdateDeviceIdentifier()).test().assertError(DeviceIdentifierNotFoundException.class);
+
+        verify(deviceIdentifierRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_deviceIdentifierOfAnotherDomain() {
+        when(deviceIdentifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainDeviceIdentifier()));
+
+        deviceIdentifierService.delete(DOMAIN.getId(), "other-id").test().assertError(DeviceIdentifierNotFoundException.class);
+
+        verify(deviceIdentifierRepository, never()).delete(any());
+    }
+
+    private static DeviceIdentifier otherDomainDeviceIdentifier() {
+        DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
+        deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
+        deviceIdentifier.setReferenceId("other-domain");
+        return deviceIdentifier;
+    }
 }
