@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.mapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
@@ -114,6 +116,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
             }
         });
         mapper.addMixIn(Domain.class, MixIn.class);
+        mapper.addMixIn(User.class, UserMixIn.class);
         mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
         mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -131,5 +134,10 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
     private abstract static class MixIn {
         @JsonIgnore
         abstract Event getLastEvent();
+    }
+
+    private abstract static class UserMixIn {
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        private String password;
     }
 }
