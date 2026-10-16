@@ -77,7 +77,7 @@ public class ApplicationAnalyticsResource extends AbstractResource {
         query.setInterval(param.getInterval());
         query.setSize(param.getSize());
 
-        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_ANALYTICS, Acl.READ)
+        checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, application, Permission.APPLICATION_ANALYTICS, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Single.defer(() -> Single.error(new DomainNotFoundException(domainId))))
                         .flatMap(domain -> applicationAnalyticsService.execute(domain, query)))
