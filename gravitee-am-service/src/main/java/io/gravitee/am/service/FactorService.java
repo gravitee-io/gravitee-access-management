@@ -32,6 +32,8 @@ public interface FactorService {
 
     Maybe<Factor> findById(String id);
 
+    Maybe<Factor> findById(String domain, String id);
+
     Flowable<Factor> findByDomain(String domain);
 
     Single<Factor> create(String domain, NewFactor factor, User principal);
