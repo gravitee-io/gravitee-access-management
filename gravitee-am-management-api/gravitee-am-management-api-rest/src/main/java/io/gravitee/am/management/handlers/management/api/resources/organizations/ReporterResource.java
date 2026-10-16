@@ -28,7 +28,6 @@ import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +38,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -50,7 +48,6 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 
-import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -86,14 +83,9 @@ public class ReporterResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
-                        .flatMapMaybe(irrelevant -> reporterService.findById(reporterId))
+                        .flatMapMaybe(irrelevant -> reporterService.findById(Reference.organization(organizationId), reporterId))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
-                        .map(reporter -> {
-                            if (!reporter.getReference().matches(ReferenceType.ORGANIZATION, organizationId)) {
-                                throw new BadRequestException("Reporter does not belong to organization");
-                            }
-                            return Response.ok(reporter.apiRepresentation(false)).build();
-                        }))
+                        .map(reporter -> Response.ok(reporter.apiRepresentation(false)).build()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -137,19 +129,9 @@ public class ReporterResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
-                        .flatMapMaybe(irrelevant -> reporterService.findById(reporterId))
-                        .map(Optional::ofNullable)
-                        .switchIfEmpty(Maybe.just(Optional.empty()))
-                        .flatMapCompletable(r -> {
-                            if (r.isEmpty()) {
-                                return Completable.complete();
-                            }
-                            if (!r.get().getReference().matches(ReferenceType.ORGANIZATION, organizationId)) {
-                                return Completable.error(new BadRequestException("Reporter does not belong to organization"));
-                            }
-
-                            return reporterService.delete(reporterId, authenticatedUser);
-                        }))
+                        .flatMapMaybe(irrelevant -> reporterService.findById(Reference.organization(organizationId), reporterId))
+                        .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
+                        .flatMapCompletable(irrelevant -> reporterService.delete(reporterId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

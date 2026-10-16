@@ -46,7 +46,7 @@ public class ScopeResourceTest extends JerseySpringTest {
         mockScope.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockScope)).when(scopeService).findById(scopeId);
+        doReturn(Maybe.just(mockScope)).when(scopeService).findById(domainId, scopeId);
 
         final Response response = target("domains").path(domainId).path("scopes").path(scopeId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -65,12 +65,11 @@ public class ScopeResourceTest extends JerseySpringTest {
         final String scopeId = "scope-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(scopeService).findById(scopeId);
+        doReturn(Maybe.empty()).when(scopeService).findById(domainId, scopeId);
 
         final Response response = target("domains").path(domainId).path("scopes").path(scopeId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
-
 
     @Test
     public void shouldGetScope_domainNotFound() {
@@ -81,25 +80,5 @@ public class ScopeResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("scopes").path(scopeId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
-    }
-
-    @Test
-    public void shouldGetScope_wrongDomain() {
-        final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        final String scopeId = "scope-id";
-        final Scope mockScope = new Scope();
-        mockScope.setId(scopeId);
-        mockScope.setKey(scopeId);
-        mockScope.setName("scope-name");
-        mockScope.setDomain("wrong-domain");
-
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockScope)).when(scopeService).findById(scopeId);
-
-        final Response response = target("domains").path(domainId).path("scopes").path(scopeId).request().get();
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }
