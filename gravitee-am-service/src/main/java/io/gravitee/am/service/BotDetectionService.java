@@ -32,6 +32,8 @@ public interface BotDetectionService {
 
     Maybe<BotDetection> findById(String id);
 
+    Maybe<BotDetection> findById(String domain, String id);
+
     Flowable<BotDetection> findByDomain(String domain);
 
     Single<BotDetection> create(String domain, NewBotDetection botDetection, User principal);
