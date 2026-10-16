@@ -94,6 +94,11 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     }
 
     @Override
+    public Maybe<ServiceResource> findById(String domain, String id) {
+        return findById(id).filter(resource -> ReferenceType.DOMAIN == resource.getReferenceType() && domain.equals(resource.getReferenceId()));
+    }
+
+    @Override
     public Flowable<ServiceResource> findByDomain(String domain) {
         log.debug("Find resources by domain: {}", domain);
         return serviceResourceRepository.findByReference(ReferenceType.DOMAIN, domain)
@@ -137,7 +142,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     public Single<ServiceResource> update(Domain domain, String id, UpdateServiceResource updateResource, User principal) {
         log.debug("Update a resource {} for domain {}", id, domain);
 
-        return serviceResourceRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
                 .flatMap(oldServiceResource -> {
                     ServiceResource resourceToUpdate = new ServiceResource(oldServiceResource);
@@ -167,7 +172,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     @Override
     public Completable delete(String domain, String resourceId, User principal) {
         log.debug("Delete resource {}", resourceId);
-        return serviceResourceRepository.findById(resourceId)
+        return findById(domain, resourceId)
                 .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resourceId)))
                 .flatMapSingle(resource ->
                         factorService.findByDomain(domain)

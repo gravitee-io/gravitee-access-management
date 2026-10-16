@@ -33,6 +33,8 @@ public interface DeviceIdentifierService {
 
     Maybe<DeviceIdentifier> findById(String id);
 
+    Maybe<DeviceIdentifier> findById(String domain, String id);
+
     Flowable<DeviceIdentifier> findByDomain(String domain);
 
     Single<DeviceIdentifier> create(Domain domain, NewDeviceIdentifier newDeviceIdentifier, User principal);

@@ -315,7 +315,7 @@ public class ServiceResourceServiceTest {
         resource.setConfiguration("{}");
         resource.setName("myresource");
 
-        ServiceResource record = new ServiceResource();
+        ServiceResource record = inDomain(new ServiceResource());
         record.setId("resid");
         record.setType("rtype");
         record.setConfiguration("{}");
@@ -332,4 +332,34 @@ public class ServiceResourceServiceTest {
         verify(resourceRepository, never()).update(any(ServiceResource.class));
     }
 
+    private static ServiceResource inDomain(ServiceResource serviceResource) {
+        serviceResource.setReferenceType(ReferenceType.DOMAIN);
+        serviceResource.setReferenceId(DOMAIN.getId());
+        return serviceResource;
+    }
+
+    @Test
+    public void shouldNotUpdate_serviceResourceOfAnotherDomain() {
+        when(resourceRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainServiceResource()));
+
+        resourceService.update(DOMAIN, "other-id", new UpdateServiceResource(), null).test().assertError(ServiceResourceNotFoundException.class);
+
+        verify(resourceRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_serviceResourceOfAnotherDomain() {
+        when(resourceRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainServiceResource()));
+
+        resourceService.delete(DOMAIN.getId(), "other-id", null).test().assertError(ServiceResourceNotFoundException.class);
+
+        verify(resourceRepository, never()).delete(any());
+    }
+
+    private static ServiceResource otherDomainServiceResource() {
+        ServiceResource serviceResource = new ServiceResource();
+        serviceResource.setReferenceType(ReferenceType.DOMAIN);
+        serviceResource.setReferenceId("other-domain");
+        return serviceResource;
+    }
 }

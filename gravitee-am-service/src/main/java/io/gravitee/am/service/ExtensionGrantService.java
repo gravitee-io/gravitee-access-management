@@ -33,6 +33,8 @@ public interface ExtensionGrantService {
 
     Maybe<ExtensionGrant> findById(String id);
 
+    Maybe<ExtensionGrant> findById(String domain, String id);
+
     Flowable<ExtensionGrant> findByDomain(String tokenGranter);
 
     Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant, User principal);

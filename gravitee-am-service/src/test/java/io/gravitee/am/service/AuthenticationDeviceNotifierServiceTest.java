@@ -167,7 +167,7 @@ public class AuthenticationDeviceNotifierServiceTest {
     public void shouldUpdate() {
         UpdateAuthenticationDeviceNotifier updateAuthenticationDeviceNotifier = Mockito.mock(UpdateAuthenticationDeviceNotifier.class);
         when(updateAuthenticationDeviceNotifier.getName()).thenReturn("auth-dev-notifier");
-        when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(new AuthenticationDeviceNotifier()));
+        when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(inDomain(new AuthenticationDeviceNotifier())));
         when(authDeviceNotifierRepository.update(any(AuthenticationDeviceNotifier.class))).thenReturn(Single.just(new AuthenticationDeviceNotifier()));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -221,7 +221,7 @@ public class AuthenticationDeviceNotifierServiceTest {
 
     @Test
     public void shouldDelete() {
-        AuthenticationDeviceNotifier deviceNotifier = new AuthenticationDeviceNotifier();
+        AuthenticationDeviceNotifier deviceNotifier = inDomain(new AuthenticationDeviceNotifier());
         deviceNotifier.setId("deviceNotifier-id");
         when(authDeviceNotifierRepository.findById(deviceNotifier.getId())).thenReturn(Maybe.just(deviceNotifier));
         when(authDeviceNotifierRepository.delete(deviceNotifier.getId())).thenReturn(Completable.complete());
@@ -254,7 +254,7 @@ public class AuthenticationDeviceNotifierServiceTest {
         UpdateAuthenticationDeviceNotifier updateNotifier = Mockito.mock(UpdateAuthenticationDeviceNotifier.class);
         AuthenticationDeviceNotifier existing = new AuthenticationDeviceNotifier();
         existing.setReferenceType(ReferenceType.DOMAIN);
-        existing.setReferenceId("id");
+        existing.setReferenceId(DOMAIN.getId());
         when(authDeviceNotifierRepository.findById("auth-dev-notifier")).thenReturn(Maybe.just(existing));
         when(pluginLicenseGate.check(any(), any(), any())).thenReturn(Completable.error(new LicenseFeatureRequiredException("feature-x", "plugin-x")));
 
@@ -265,4 +265,34 @@ public class AuthenticationDeviceNotifierServiceTest {
         verify(authDeviceNotifierRepository, never()).update(any(AuthenticationDeviceNotifier.class));
     }
 
+    private static AuthenticationDeviceNotifier inDomain(AuthenticationDeviceNotifier authenticationDeviceNotifier) {
+        authenticationDeviceNotifier.setReferenceType(ReferenceType.DOMAIN);
+        authenticationDeviceNotifier.setReferenceId(DOMAIN.getId());
+        return authenticationDeviceNotifier;
+    }
+
+    @Test
+    public void shouldNotUpdate_authenticationDeviceNotifierOfAnotherDomain() {
+        when(authDeviceNotifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainAuthenticationDeviceNotifier()));
+
+        authDeviceNotifierService.update(DOMAIN, "other-id", new UpdateAuthenticationDeviceNotifier()).test().assertError(AuthenticationDeviceNotifierNotFoundException.class);
+
+        verify(authDeviceNotifierRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_authenticationDeviceNotifierOfAnotherDomain() {
+        when(authDeviceNotifierRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainAuthenticationDeviceNotifier()));
+
+        authDeviceNotifierService.delete(DOMAIN.getId(), "other-id").test().assertError(AuthenticationDeviceNotifierNotFoundException.class);
+
+        verify(authDeviceNotifierRepository, never()).delete(any());
+    }
+
+    private static AuthenticationDeviceNotifier otherDomainAuthenticationDeviceNotifier() {
+        AuthenticationDeviceNotifier authenticationDeviceNotifier = new AuthenticationDeviceNotifier();
+        authenticationDeviceNotifier.setReferenceType(ReferenceType.DOMAIN);
+        authenticationDeviceNotifier.setReferenceId("other-domain");
+        return authenticationDeviceNotifier;
+    }
 }

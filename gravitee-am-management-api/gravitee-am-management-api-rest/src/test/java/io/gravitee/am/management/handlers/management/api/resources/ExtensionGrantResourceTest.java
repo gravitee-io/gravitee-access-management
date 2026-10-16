@@ -47,7 +47,7 @@ public class ExtensionGrantResourceTest extends JerseySpringTest {
         mockExtensionGrant.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockExtensionGrant)).when(extensionGrantService).findById(extensionGrantId);
+        doReturn(Maybe.just(mockExtensionGrant)).when(extensionGrantService).findById(domainId, extensionGrantId);
 
         final Response response = target("domains").path(domainId).path("extensionGrants").path(extensionGrantId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -66,12 +66,11 @@ public class ExtensionGrantResourceTest extends JerseySpringTest {
         final String extensionGrantId = "extensionGrant-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(extensionGrantService).findById(extensionGrantId);
+        doReturn(Maybe.empty()).when(extensionGrantService).findById(domainId, extensionGrantId);
 
         final Response response = target("domains").path(domainId).path("extensionGrants").path(extensionGrantId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
-
 
     @Test
     public void shouldGetExtensionGrant_domainNotFound() {
@@ -82,25 +81,6 @@ public class ExtensionGrantResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("extensionGrants").path(extensionGrantId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
-    }
-
-    @Test
-    public void shouldGetExtensionGrant_wrongDomain() {
-        final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        final String extensionGrantId = "extensionGrant-id";
-        final ExtensionGrant mockExtensionGrant = new ExtensionGrant();
-        mockExtensionGrant.setId(extensionGrantId);
-        mockExtensionGrant.setName("extensionGrant-name");
-        mockExtensionGrant.setDomain("wrong-domain");
-
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockExtensionGrant)).when(extensionGrantService).findById(extensionGrantId);
-
-        final Response response = target("domains").path(domainId).path("extensionGrants").path(extensionGrantId).request().get();
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
     @Test
