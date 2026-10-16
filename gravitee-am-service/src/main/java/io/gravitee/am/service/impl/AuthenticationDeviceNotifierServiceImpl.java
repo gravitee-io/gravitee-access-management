@@ -32,7 +32,6 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
-import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
@@ -137,7 +136,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
         log.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain.getId());
 
         return findById(domain.getId(), id)
-                .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
+                .switchIfEmpty(Single.error(new AuthenticationDeviceNotifierNotFoundException(id)))
                 .flatMap(oldNotifier -> {
                     AuthenticationDeviceNotifier notifierToUpdate = new AuthenticationDeviceNotifier(oldNotifier);
                     notifierToUpdate.setName(updateNotifier.getName());
