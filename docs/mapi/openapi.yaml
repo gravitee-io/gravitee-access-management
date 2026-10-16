@@ -9772,12 +9772,7 @@ paths:
           content:
             application/json:
               schema:
-<<<<<<< HEAD
-                $ref: "#/components/schemas/User"
-=======
                 $ref: "#/components/schemas/UserEntity"
-          description: Group members successfully fetched
->>>>>>> bc27551 (fix: return user entities from organization group members (#8901))
         "500":
           description: Internal server error
   /organizations/{organizationId}/groups/{group}/members/{member}:
