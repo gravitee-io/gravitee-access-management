@@ -15,18 +15,26 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -228,6 +236,83 @@ public class UserTest {
         Assertions.assertNotNull(map.get("OTHER"));
         Assertions.assertNotNull(map.get("CALL"));
         Assertions.assertNull(map.get("HTTP"));
+    }
+
+    private static Stream<Arguments> stringClaimGetters() {
+        return Stream.of(
+                Arguments.of(StandardClaims.EMAIL, (Function<User, String>) User::getEmail),
+                Arguments.of(StandardClaims.NAME, (Function<User, String>) User::getDisplayName),
+                Arguments.of(StandardClaims.GIVEN_NAME, (Function<User, String>) User::getFirstName),
+                Arguments.of(StandardClaims.MIDDLE_NAME, (Function<User, String>) User::getMiddleName),
+                Arguments.of(StandardClaims.FAMILY_NAME, (Function<User, String>) User::getLastName),
+                Arguments.of(StandardClaims.PICTURE, (Function<User, String>) User::getPicture),
+                Arguments.of(StandardClaims.PROFILE, (Function<User, String>) User::getProfile),
+                Arguments.of(StandardClaims.WEBSITE, (Function<User, String>) User::getWebsite),
+                Arguments.of(StandardClaims.BIRTHDATE, (Function<User, String>) User::getBirthdate),
+                Arguments.of(StandardClaims.ZONEINFO, (Function<User, String>) User::getZoneInfo),
+                Arguments.of(StandardClaims.LOCALE, (Function<User, String>) User::getLocale),
+                Arguments.of(StandardClaims.PHONE_NUMBER, (Function<User, String>) User::getPhoneNumber)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("stringClaimGetters")
+    public void shouldReturnStringClaim(String claim, Function<User, String> getter) {
+        var user = new User();
+        user.putAdditionalInformation(claim, "value");
+
+        assertThat(getter.apply(user)).isEqualTo("value");
+    }
+
+    @ParameterizedTest
+    @MethodSource("stringClaimGetters")
+    public void shouldConvertNumericClaimToString(String claim, Function<User, String> getter) {
+        var user = new User();
+        user.putAdditionalInformation(claim, 12345);
+
+        assertThat(getter.apply(user)).isEqualTo("12345");
+    }
+
+    @ParameterizedTest
+    @MethodSource("stringClaimGetters")
+    public void shouldConvertBooleanClaimToString(String claim, Function<User, String> getter) {
+        var user = new User();
+        user.putAdditionalInformation(claim, true);
+
+        assertThat(getter.apply(user)).isEqualTo("true");
+    }
+
+    @ParameterizedTest
+    @MethodSource("stringClaimGetters")
+    public void shouldIgnoreStructuredClaim(String claim, Function<User, String> getter) {
+        var user = new User();
+        user.setUsername("username");
+        user.putAdditionalInformation(claim, Map.of("key", "value"));
+        var userWithList = new User();
+        userWithList.setUsername("username");
+        userWithList.putAdditionalInformation(claim, List.of("value"));
+
+        // getDisplayName falls back to the username when no usable claim is found
+        String expected = StandardClaims.NAME.equals(claim) ? "username" : null;
+        assertThat(getter.apply(user)).isEqualTo(expected);
+        assertThat(getter.apply(userWithList)).isEqualTo(expected);
+    }
+
+    @Test
+    public void shouldIgnoreNonMapAddressClaim() {
+        var user = new User();
+        user.putAdditionalInformation(StandardClaims.ADDRESS, "street");
+
+        assertThat(user.getAddress()).isNull();
+    }
+
+    @Test
+    public void shouldSerializeUserWithNonStringStandardClaims() {
+        var user = new User();
+        stringClaimGetters().forEach(args -> user.putAdditionalInformation((String) args.get()[0], 12345));
+        user.putAdditionalInformation(StandardClaims.ADDRESS, 12345);
+
+        assertThatCode(() -> JsonMapper.builder().build().writeValueAsString(user)).doesNotThrowAnyException();
     }
 
 }

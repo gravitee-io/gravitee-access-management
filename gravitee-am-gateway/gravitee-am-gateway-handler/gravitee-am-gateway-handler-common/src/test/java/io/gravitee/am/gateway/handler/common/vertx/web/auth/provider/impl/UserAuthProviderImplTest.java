@@ -25,6 +25,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
@@ -35,6 +36,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -130,6 +133,28 @@ public class UserAuthProviderImplTest {
         var attributes = context.getAttributes();
         assertEquals(domainId, attributes.get(Claims.DOMAIN));
         assertEquals(client, attributes.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+    }
+
+    @Test
+    public void shouldFailAuthenticationWhenUserCannotBeConverted() {
+        String clientId = "test-client";
+        Client client = createClient(clientId, "test-domain-id");
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        setupHttpRequestMocks();
+        io.gravitee.am.model.User unserializableUser = new io.gravitee.am.model.User() {
+            @Override
+            public String getBirthdate() {
+                throw new ClassCastException("unexpected birthdate type");
+            }
+        };
+        when(userAuthenticationManager.authenticate(any(Client.class), any(Authentication.class)))
+                .thenReturn(Single.just(unserializableUser));
+
+        AtomicReference<AsyncResult<io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User>> result = new AtomicReference<>();
+        userAuthProvider.authenticate(routingContext, createAuthInfo(clientId), result::set);
+
+        assertNotNull("Authentication handler should be called", result.get());
+        assertTrue("Authentication should fail", result.get().failed());
     }
 
 }
