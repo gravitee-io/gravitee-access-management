@@ -1830,8 +1830,9 @@ paths:
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows/{flow}:
     get:
       description: "User must have the APPLICATION_FLOW[READ] permission on the specified\
-        \ domain or APPLICATION_FLOW[READ] permission on the specified environment\
-        \ or APPLICATION_FLOW[READ] permission on the specified organization"
+        \ application or APPLICATION_FLOW[READ] permission on the specified domain\
+        \ or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ]\
+        \ permission on the specified organization"
       operationId: getAppFlow
       parameters:
       - in: path
@@ -1874,8 +1875,9 @@ paths:
       - domain
     put:
       description: "User must have the APPLICATION_FLOW[UPDATE] permission on the\
-        \ specified domain or APPLICATION_FLOW[UPDATE] permission on the specified\
-        \ environment or APPLICATION_FLOW[UPDATE] permission on the specified organization"
+        \ specified application or APPLICATION_FLOW[UPDATE] permission on the specified\
+        \ domain or APPLICATION_FLOW[UPDATE] permission on the specified environment\
+        \ or APPLICATION_FLOW[UPDATE] permission on the specified organization"
       operationId: updateAppFlow
       parameters:
       - in: path
