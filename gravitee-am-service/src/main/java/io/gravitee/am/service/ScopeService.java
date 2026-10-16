@@ -41,6 +41,8 @@ public interface ScopeService extends DomainDataPlaneCleanup {
 
     Maybe<Scope> findById(String id);
 
+    Maybe<Scope> findById(String domain, String id);
+
     Single<Scope> create(Domain domain, NewScope scope, User principal);
 
     Single<Scope> create(Domain domain, NewSystemScope scope);

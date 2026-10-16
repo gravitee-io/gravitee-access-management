@@ -21,7 +21,6 @@ import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.BotDetection;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -35,7 +34,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -85,14 +83,9 @@ public class BotDetectionResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_BOT_DETECTION, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> botDetectionService.findById(botDetectionId))
+                        .flatMap(__ -> botDetectionService.findById(domain, botDetectionId))
                         .switchIfEmpty(Maybe.error(new BotDetectionNotFoundException(botDetectionId)))
-                        .map(botDetection -> {
-                            if (!botDetection.getReferenceId().equalsIgnoreCase(domain) && !botDetection.getReferenceType().equals(ReferenceType.DOMAIN)) {
-                                throw new BadRequestException("BotDetection does not belong to domain");
-                            }
-                            return Response.ok(botDetection).build();
-                        }))
+                        .map(botDetection -> Response.ok(botDetection).build()))
                 .subscribe(response::resume, response::resume);
     }
 

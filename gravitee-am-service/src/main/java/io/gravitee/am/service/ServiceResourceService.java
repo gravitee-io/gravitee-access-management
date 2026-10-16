@@ -33,6 +33,8 @@ public interface ServiceResourceService {
 
     Maybe<ServiceResource> findById(String id);
 
+    Maybe<ServiceResource> findById(String domain, String id);
+
     Flowable<ServiceResource> findByDomain(String domain);
 
     Single<ServiceResource> create(Domain domain, NewServiceResource res, User principal);

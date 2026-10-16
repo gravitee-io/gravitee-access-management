@@ -82,6 +82,11 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     }
 
     @Override
+    public Maybe<DeviceIdentifier> findById(String domain, String id) {
+        return findById(id).filter(deviceIdentifier -> ReferenceType.DOMAIN == deviceIdentifier.getReferenceType() && domain.equals(deviceIdentifier.getReferenceId()));
+    }
+
+    @Override
     public Flowable<DeviceIdentifier> findByDomain(String domain) {
         log.debug("Find device identifiers by domain: {}", domain);
         return deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, domain)
@@ -128,7 +133,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     public Single<DeviceIdentifier> update(Domain domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal) {
         log.debug("Update device identifier {} for domain {}", id, domain);
 
-        return deviceIdentifierRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new DeviceIdentifierNotFoundException(id)))
                 .flatMap(oldDeviceIdentifier -> {
                     DeviceIdentifier deviceIdentifierToUpdate = new DeviceIdentifier(oldDeviceIdentifier);
@@ -160,7 +165,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     public Completable delete(String domainId, String deviceIdentifier, User principal) {
         log.debug("Delete device identifier {}", deviceIdentifier);
 
-        return deviceIdentifierRepository.findById(deviceIdentifier)
+        return findById(domainId, deviceIdentifier)
                 .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifier)))
                 .flatMapCompletable(toDelete -> {
                     // create event for sync process
