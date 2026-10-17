@@ -21,7 +21,6 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.exception.DeviceIdentifierNotFoundException;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.DeviceIdentifier;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -35,7 +34,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -80,14 +78,9 @@ public class DeviceIdentifierResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_DEVICE_IDENTIFIER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> deviceIdentifierService.findById(deviceIdentifierId))
+                        .flatMap(__ -> deviceIdentifierService.findById(domain, deviceIdentifierId))
                         .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifierId)))
-                        .map(deviceIdentifier -> {
-                            if (!(deviceIdentifier.getReferenceId().equalsIgnoreCase(domain) && deviceIdentifier.getReferenceType().equals(ReferenceType.DOMAIN))) {
-                                throw new BadRequestException("DeviceIdentifier does not belong to domain");
-                            }
-                            return Response.ok(deviceIdentifier).build();
-                        }))
+                        .map(deviceIdentifier -> Response.ok(deviceIdentifier).build()))
                 .subscribe(response::resume, response::resume);
     }
 

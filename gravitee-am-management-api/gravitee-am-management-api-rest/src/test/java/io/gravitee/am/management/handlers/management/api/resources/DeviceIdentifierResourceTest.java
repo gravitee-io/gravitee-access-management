@@ -47,7 +47,7 @@ public class DeviceIdentifierResourceTest extends JerseySpringTest {
         mockDeviceIdentifier.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockDeviceIdentifier)).when(deviceIdentifierService).findById(deviceIdentifierId);
+        doReturn(Maybe.just(mockDeviceIdentifier)).when(deviceIdentifierService).findById(domainId, deviceIdentifierId);
 
         final Response response = target("domains").path(domainId).path("device-identifiers").path(deviceIdentifierId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -66,7 +66,7 @@ public class DeviceIdentifierResourceTest extends JerseySpringTest {
         final String deviceIdentifierId = "deviceIdentifier-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(deviceIdentifierService).findById(deviceIdentifierId);
+        doReturn(Maybe.empty()).when(deviceIdentifierService).findById(domainId, deviceIdentifierId);
 
         final Response response = target("domains").path(domainId).path("device-identifiers").path(deviceIdentifierId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
@@ -81,25 +81,5 @@ public class DeviceIdentifierResourceTest extends JerseySpringTest {
 
         final Response response = target("domains").path(domainId).path("device-identifiers").path(deviceIdentifierId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
-    }
-
-    @Test
-    public void shouldGetDeviceIdentifier_wrongDomain() {
-        final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        final String deviceIdentifierId = "deviceIdentifier-id2";
-        final DeviceIdentifier mockDeviceIdentifier = new DeviceIdentifier();
-        mockDeviceIdentifier.setId(deviceIdentifierId);
-        mockDeviceIdentifier.setName("deviceIdentifier-name");
-        mockDeviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
-        mockDeviceIdentifier.setReferenceId("wrong-domain");
-
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockDeviceIdentifier)).when(deviceIdentifierService).findById(deviceIdentifierId);
-
-        final Response response = target("domains").path(domainId).path("device-identifiers").path(deviceIdentifierId).request().get();
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 }
