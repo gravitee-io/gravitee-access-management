@@ -220,6 +220,27 @@ public class OrganizationGroupServiceTest {
     }
 
     @Test
+    public void shouldUpdate_keepOnlyOrganizationMembers() {
+        UpdateGroup updateGroup = new UpdateGroup();
+        updateGroup.setName("name");
+        updateGroup.setMembers(List.of("local-user", "foreign-user"));
+        Group group = new Group();
+        group.setReferenceType(ReferenceType.ORGANIZATION);
+        group.setReferenceId(ORGANIZATION);
+
+        when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(group));
+        when(groupRepository.findByName(ReferenceType.ORGANIZATION, ORGANIZATION, "name")).thenReturn(Maybe.empty());
+        when(organizationUserService.findByIdIn(List.of("local-user", "foreign-user")))
+                .thenReturn(Flowable.just(orgUser("local-user", ORGANIZATION), orgUser("foreign-user", "other-org")));
+        when(groupRepository.update(any(Group.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        TestObserver<Group> testObserver = groupService.update(ORGANIZATION, "my-group", updateGroup, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(updated -> updated.getMembers().equals(List.of("local-user")));
+    }
+
+    @Test
     public void shouldUpdate_technicalException() {
         UpdateGroup updateGroup = Mockito.mock(UpdateGroup.class);
         when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "my-group")).thenReturn(Maybe.just(new Group()));
@@ -298,5 +319,28 @@ public class OrganizationGroupServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         verify(organizationUserService).findByIdIn(any());
+    }
+
+    @Test
+    public void shouldFindMembers_returnOnlyOrganizationMembers() {
+        Group group = new Group();
+        group.setMembers(List.of("foreign-user", "local-user"));
+
+        when(groupRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION, "group-id")).thenReturn(Maybe.just(group));
+        when(organizationUserService.findByIdIn(List.of("foreign-user", "local-user")))
+                .thenReturn(Flowable.just(orgUser("foreign-user", "other-org"), orgUser("local-user", ORGANIZATION)));
+
+        TestObserver<Page<User>> observer = groupService.findMembers(ORGANIZATION, "group-id", 0, 10).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertValue(page -> page.getData().stream().map(User::getId).toList().equals(List.of("local-user")));
+    }
+
+    private static User orgUser(String id, String organizationId) {
+        User user = new User();
+        user.setId(id);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(organizationId);
+        return user;
     }
 }
