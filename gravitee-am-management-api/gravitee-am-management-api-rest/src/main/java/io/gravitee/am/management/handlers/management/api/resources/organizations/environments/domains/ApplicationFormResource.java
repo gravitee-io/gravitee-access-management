@@ -92,7 +92,7 @@ public class ApplicationFormResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> applicationService.findById(application))
+                        .flatMap(irrelevant -> applicationService.findById(domain, application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(irrelevant -> formService.update(domain, application, form, updateForm, authenticatedUser)))
                 .subscribe(response::resume, response::resume);

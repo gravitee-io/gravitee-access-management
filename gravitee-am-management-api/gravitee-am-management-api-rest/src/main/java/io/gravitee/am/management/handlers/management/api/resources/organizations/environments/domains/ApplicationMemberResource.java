@@ -73,7 +73,7 @@ public class ApplicationMemberResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_MEMBER, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
+                        .flatMap(__ -> applicationService.findById(domain, application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapCompletable(__ -> membershipService.delete(Reference.application(application), membershipId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);

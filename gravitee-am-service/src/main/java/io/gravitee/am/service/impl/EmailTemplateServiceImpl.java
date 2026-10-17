@@ -189,7 +189,17 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Override
     public Completable delete(String emailId, User principal) {
         LOGGER.debug("Delete email {}", emailId);
-        return Completable.fromMaybe(emailRepository.findById(emailId)
+        return delete0(emailRepository.findById(emailId), emailId, principal);
+    }
+
+    @Override
+    public Completable delete(String domain, String emailId, User principal) {
+        LOGGER.debug("Delete email {} for domain {}", emailId, domain);
+        return delete0(emailRepository.findById(ReferenceType.DOMAIN, domain, emailId), emailId, principal);
+    }
+
+    private Completable delete0(Maybe<Email> emailLookup, String emailId, User principal) {
+        return Completable.fromMaybe(emailLookup
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
                 .flatMapSingle(email -> {
                     // create event for sync process
