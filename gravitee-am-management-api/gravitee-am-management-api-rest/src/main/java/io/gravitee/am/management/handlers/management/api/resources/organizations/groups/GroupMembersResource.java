@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.model.Acl;
@@ -70,7 +71,7 @@ public class GroupMembersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Group members successfully fetched",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation =User.class))),
+                            schema = @Schema(implementation = UserEntity.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -83,9 +84,10 @@ public class GroupMembersResource extends AbstractResource {
                 .andThen(orgGroupService.findMembers(organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
                         .flatMap(pagedMembers -> {
                             if (pagedMembers.getData() == null) {
-                                return Single.just(pagedMembers);
+                                return Single.just(new Page<UserEntity>(null, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
                             }
                             return Observable.fromIterable(pagedMembers.getData())
+                                    .map(UserEntity::new)
                                     .flatMapSingle(member -> {
                                         if (member.getSource() != null) {
                                             return identityProviderService.findById(member.getSource())
