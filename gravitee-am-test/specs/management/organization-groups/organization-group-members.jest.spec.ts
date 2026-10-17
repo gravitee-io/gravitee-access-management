@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { setup } from '../../test-fixture';
+import fetch from 'cross-fetch';
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { OrganizationGroupMembersFixture, setupOrganizationGroupMembersFixture } from './fixtures/organization-group-members-fixture';
 
-setup(200000);
+global.fetch = fetch;
+jest.setTimeout(200000);
 
 let fixture: OrganizationGroupMembersFixture;
 

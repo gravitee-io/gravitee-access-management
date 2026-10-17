@@ -66,13 +66,13 @@ export const setupOrganizationGroupMembersFixture = async (): Promise<Organizati
     const member = await createOrganisationUser(accessToken, newMember());
     userIds.push(member.id);
 
-    const created = await getGroupApi(accessToken).createPlatformGroupRaw({
+    const created = await getGroupApi(accessToken).create9Raw({
       organizationId,
       newGroup: { name: uniqueName('org-group', true), members: [member.id] },
     });
     group = await created.raw.json();
 
-    const listMembers = async () => (await getGroupApi(accessToken).listGroupMembersRaw({ organizationId, group: group.id })).raw.json();
+    const listMembers = async () => (await getGroupApi(accessToken).list18Raw({ organizationId, group: group.id })).raw.json();
 
     const bulkCreateMember = async () => {
       const response = await bulkCreateOrgUsers(accessToken, [newMember()]);
