@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.reactor.spring;
 
 import io.gravitee.am.gateway.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.gateway.handler.SecurityDomainRouterFactory;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorLoader;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
@@ -25,9 +27,12 @@ import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import java.nio.file.Path;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,6 +55,15 @@ public class ReactorConfiguration {
     @Bean
     public SecurityDomainRouterFactory securityDomainRouterFactory() {
         return new SecurityDomainRouterFactory();
+    }
+
+    /**
+     * WebAuthn trust anchors, loaded once for every security domain of the gateway.
+     */
+    @Bean
+    public WebAuthnTrustAnchorRegistry webAuthnTrustAnchorRegistry(
+            @Value("${webauthn.trustAnchors.path:${gravitee.home}/webauthn/trust-anchors}") String trustAnchorsPath) {
+        return WebAuthnTrustAnchorLoader.load(Path.of(trustAnchorsPath));
     }
 
     @Bean

@@ -33,7 +33,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.Credentials;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.core.http.HttpClientRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
@@ -74,7 +74,7 @@ public class WebAuthnRegisterHandlerTest extends RxWebTestBase {
     @Mock
     private CredentialGatewayService credentialService;
     @Mock
-    private WebAuthn webAuthn;
+    private WebAuthn4J webAuthn;
 
     private WebAuthnRegisterHandler webAuthnRegisterHandler;
 

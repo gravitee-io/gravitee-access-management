@@ -73,6 +73,14 @@
         </fileSet>
 
         <fileSet>
+            <directory>src/main/resources/webauthn</directory>
+            <outputDirectory>/webauthn</outputDirectory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
             <directory>${project.build.directory}/lib</directory>
             <outputDirectory>/lib</outputDirectory>
             <includes>

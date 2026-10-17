@@ -34,12 +34,11 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.Credentials;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpClientRequest;
-import io.vertx.ext.auth.webauthn.MetaDataService;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.AuthenticatorIntegrityVerifier;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
@@ -86,7 +85,7 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
     private WebAuthnLoginHandler webAuthnLoginHandler;
 
     @Mock
-    private WebAuthn webAuthn;
+    private WebAuthn4J webAuthn;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -96,9 +95,6 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         super.setUp();
 
         // init webauthn objet
-        MetaDataService metaDataService = mock(MetaDataService.class);
-        when(metaDataService.verify(any())).thenReturn(new JsonObject());
-        when(webAuthn.metaDataService()).thenReturn(metaDataService);
         when(webAuthn.authenticate(any(Credentials.class))).thenReturn(Future.succeededFuture(io.vertx.ext.auth.User.fromName("username")));
 
         webAuthnLoginHandler =
@@ -119,9 +115,10 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         webAuthnSettings.setEnforceAuthenticatorIntegrityMaxAge(10);
         when(domain.getWebAuthnSettings()).thenReturn(webAuthnSettings);
 
-        MetaDataService metaDataService = mock(MetaDataService.class);
-        doThrow(RuntimeException.class).when(metaDataService).verify(any());
-        when(webAuthn.metaDataService()).thenReturn(metaDataService);
+        AuthenticatorIntegrityVerifier integrityVerifier = mock(AuthenticatorIntegrityVerifier.class);
+        when(integrityVerifier.hasCertificates(any())).thenReturn(true);
+        doThrow(new java.security.cert.CertificateExpiredException("expired")).when(integrityVerifier).verify(any());
+        webAuthnLoginHandler = new WebAuthnLoginHandler(userService, factorManager, domainDataPlane, webAuthn, credentialService, userAuthenticationManager, integrityVerifier);
 
         Credential credential = packedCredential();
 

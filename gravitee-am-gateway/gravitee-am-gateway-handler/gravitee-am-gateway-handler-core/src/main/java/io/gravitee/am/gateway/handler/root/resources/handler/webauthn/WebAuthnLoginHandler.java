@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.AuthenticatorIntegrityVerifier;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -35,10 +36,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.webauthn.AttestationCertificates;
-import io.vertx.ext.auth.webauthn.Authenticator;
-import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
-import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.thymeleaf.util.StringUtils;
@@ -60,20 +58,32 @@ import lombok.CustomLog;
 @CustomLog
 public class WebAuthnLoginHandler extends WebAuthnHandler {
 
-    private final WebAuthn webAuthn;
+    private final WebAuthn4J webAuthn;
+    private final AuthenticatorIntegrityVerifier integrityVerifier;
 
     public WebAuthnLoginHandler(UserService userService,
                                 FactorManager factorManager,
                                 DomainDataPlane domainDataPlane,
-                                WebAuthn webAuthn,
+                                WebAuthn4J webAuthn,
                                 CredentialGatewayService credentialService,
                                 UserAuthenticationManager userAuthenticationManager) {
+        this(userService, factorManager, domainDataPlane, webAuthn, credentialService, userAuthenticationManager, new AuthenticatorIntegrityVerifier());
+    }
+
+    WebAuthnLoginHandler(UserService userService,
+                         FactorManager factorManager,
+                         DomainDataPlane domainDataPlane,
+                         WebAuthn4J webAuthn,
+                         CredentialGatewayService credentialService,
+                         UserAuthenticationManager userAuthenticationManager,
+                         AuthenticatorIntegrityVerifier integrityVerifier) {
         setUserService(userService);
         setFactorManager(factorManager);
         setCredentialService(credentialService);
         setUserAuthenticationManager(userAuthenticationManager);
         setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
+        this.integrityVerifier = integrityVerifier;
     }
 
     @Override
@@ -176,11 +186,7 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
         // authenticate the user with its webauthn credential id
         Single.fromCompletionStage(webAuthn.authenticate(
                         // authInfo
-                        new WebAuthnCredentials()
-                                .setOrigin(webAuthnOrigin(ctx))
-                                .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
-                                .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
-                                .setWebauthn(webauthnResp)).toCompletionStage()).onErrorResumeNext(throwable -> {
+                        webAuthnCredentials(ctx, webauthnResp)).toCompletionStage()).onErrorResumeNext(throwable -> {
                                     if (throwable.getCause() != null) {
                                         log.error("Unexpected exception", throwable.getCause());
                                         return Single.error(throwable.getCause());
@@ -245,13 +251,9 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                     if ("none".equals(fmt)) {
                         return false;
                     }
-                    // waiting feedback from Vert.x team https://github.com/eclipse-vertx/vertx-auth/issues/619
-                    // before removing this condition
                     try {
-                        JsonObject jsonObject = new JsonObject(credential.getAttestationStatement());
-                        AttestationCertificates attestationCertificates = new AttestationCertificates(jsonObject);
                         // if no certificate chain, skip the verification
-                        if (attestationCertificates.getX5c() == null || attestationCertificates.getX5c().isEmpty()) {
+                        if (!integrityVerifier.hasCertificates(credential)) {
                             log.debug("No certificate chain has been found for credential {}", credentialId);
                             return false;
                         }
@@ -263,22 +265,8 @@ public class WebAuthnLoginHandler extends WebAuthnHandler {
                     return (lastCheckedAt == null || Instant.now().isAfter(lastCheckedAt.toInstant().plusSeconds(maxAge)));
                 })
                 .firstElement()
-                .map(credential -> {
-                    Authenticator authenticator = new Authenticator();
-                    authenticator.setUserName(credential.getUsername());
-                    authenticator.setCredID(credential.getCredentialId());
-                    authenticator.setAaguid(credential.getAaguid());
-                    authenticator.setCounter(credential.getCounter());
-                    authenticator.setPublicKey(credential.getPublicKey());
-                    authenticator.setFmt(credential.getAttestationStatementFormat());
-                    JsonObject jsonObject = new JsonObject(credential.getAttestationStatement());
-                    authenticator.setAttestationCertificates(new AttestationCertificates(jsonObject));
-                    // verify integrity (throws RuntimeException if the authenticator is invalid or
-                    // returns an MDS statement for this authenticator or null).
-                    JsonObject statement = webAuthn.metaDataService().verify(authenticator);
-                    return statement != null ? statement : new JsonObject();
-                })
-                .ignoreElement()
+                // verify integrity (throws if the attestation certificates of the authenticator are not valid anymore)
+                .flatMapCompletable(credential -> Completable.fromAction(() -> integrityVerifier.verify(credential)))
                 .onErrorResumeNext(error -> {
                     log.error("User {} webauthn authenticator {} has not been trusted", username, credentialId, error);
                     return Completable.error(new AccountDeviceIntegrityException("Invalid user webauthn authenticator"));

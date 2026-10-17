@@ -93,6 +93,7 @@
         <nimbus.version>10.4</nimbus.version>
         <json-smart.version>2.5.2</json-smart.version>
         <tink.version>1.16.0</tink.version>
+        <webauthn4j.version>0.30.3.RELEASE</webauthn4j.version>
         <gson-version>2.12.1</gson-version>
         <json-version>20240303</json-version>
         <freemarker.version>2.3.34</freemarker.version>
@@ -267,12 +268,21 @@
                 <type>pom</type>
             </dependency>
 
-            <!-- vertx-auth-webauthn was removed after 5.0.0.CR2 (replaced by vertx-auth-webauthn4j) -->
-            <!-- Pin to last available version until WebAuthn code is migrated -->
             <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-webauthn</artifactId>
-                <version>5.0.0.CR2</version>
+                <groupId>com.webauthn4j</groupId>
+                <artifactId>webauthn4j-test</artifactId>
+                <version>${webauthn4j.version}</version>
+                <exclusions>
+                    <!-- AM ships bcprov/bcpkix-jdk18on, the jdk15to18 flavor would duplicate the same classes -->
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcprov-jdk15to18</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcpkix-jdk15to18</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- Gravitee.io -->
