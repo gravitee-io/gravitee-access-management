@@ -97,7 +97,7 @@ public class EmailResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(emailTemplateService).delete(eq(emailId), any());
+        doReturn(Completable.complete()).when(emailTemplateService).delete(eq(domainId), eq(emailId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -115,7 +115,7 @@ public class EmailResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.error(new EmailNotFoundException(emailId))).when(emailTemplateService).delete(eq(emailId), any());
+        doReturn(Completable.error(new EmailNotFoundException(emailId))).when(emailTemplateService).delete(eq(domainId), eq(emailId), any());
 
         final Response response = target("domains")
                 .path(domainId)

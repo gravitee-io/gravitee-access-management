@@ -28,7 +28,7 @@ import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -70,7 +70,8 @@ public class ApplicationFlowResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a flow",
             operationId = "getAppFlow",
-            description = "User must have the APPLICATION_FLOW[READ] permission on the specified domain " +
+            description = "User must have the APPLICATION_FLOW[READ] permission on the specified application " +
+                    "or APPLICATION_FLOW[READ] permission on the specified domain " +
                     "or APPLICATION_FLOW[READ] permission on the specified environment " +
                     "or APPLICATION_FLOW[READ] permission on the specified organization")
     @ApiResponses({
@@ -86,9 +87,8 @@ public class ApplicationFlowResource extends AbstractResource {
             @PathParam("flow") String flow,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
-                .andThen(flowService.findById(ReferenceType.DOMAIN, domain, flow)
-                        .switchIfEmpty(Maybe.error(new FlowNotFoundException(flow)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FLOW, Acl.READ)
+                .andThen(findApplicationFlow(domain, application, flow)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
     }
@@ -98,7 +98,8 @@ public class ApplicationFlowResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update a flow",
             operationId = "updateAppFlow",
-            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
+            description = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified application " +
+                    "or APPLICATION_FLOW[UPDATE] permission on the specified domain " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified environment " +
                     "or APPLICATION_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
@@ -116,12 +117,19 @@ public class ApplicationFlowResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FLOW, Acl.UPDATE)
+                .andThen(findApplicationFlow(domain, application, flow).ignoreElement())
                 .andThen(FlowUtils.checkPoliciesDeployed(policyPluginService, updateFlow))
                 .andThen(flowValidator.validate(updateFlow))
                 .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
                         .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<Flow> findApplicationFlow(String domain, String application, String flow) {
+        return flowService.findById(ReferenceType.DOMAIN, domain, flow)
+                .filter(existingFlow -> application.equals(existingFlow.getApplication()))
+                .switchIfEmpty(Single.error(() -> new FlowNotFoundException(flow)));
     }
 
     private static Flow convert(io.gravitee.am.service.model.Flow flow) {

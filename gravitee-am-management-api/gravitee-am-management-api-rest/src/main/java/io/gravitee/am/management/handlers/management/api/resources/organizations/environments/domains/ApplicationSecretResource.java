@@ -82,7 +82,7 @@ public class ApplicationSecretResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(exitingDomain -> applicationService.findById(application)
+                        .flatMapSingle(exitingDomain -> applicationService.findById(domain, application)
                                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                                 .flatMap(application1 -> applicationSecretService.renew(exitingDomain, application1, secret, authenticatedUser)
                                         .map(app -> app.getSecrets().stream().filter(cs -> cs.getId().equals(secret)).findFirst().orElse(new ClientSecret())))))
@@ -110,11 +110,11 @@ public class ApplicationSecretResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.DELETE)
+        checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(existingDomain ->
-                                applicationService.findById(application)
+                                applicationService.findById(domain, application)
                                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                                         .flatMap(app -> applicationSecretService.delete(existingDomain, app, secret, authenticatedUser)
                                                 .toSingleDefault(app)

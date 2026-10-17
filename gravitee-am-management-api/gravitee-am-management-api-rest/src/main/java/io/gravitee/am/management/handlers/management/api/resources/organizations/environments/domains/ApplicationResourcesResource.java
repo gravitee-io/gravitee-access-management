@@ -99,7 +99,7 @@ public class ApplicationResourcesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, ReferenceType.APPLICATION, application, Permission.APPLICATION_RESOURCE, Acl.LIST)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> applicationService.findById(application)
+                        .flatMapSingle(domain -> applicationService.findById(domainId, application)
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                         .flatMap(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
                         .flatMap(pagedResources -> Observable.fromIterable(pagedResources.getData())

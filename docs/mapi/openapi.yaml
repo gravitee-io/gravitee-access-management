@@ -1615,8 +1615,9 @@ paths:
       - domain
       summary: Get a flow
       description: "User must have the APPLICATION_FLOW[READ] permission on the specified\
-        \ domain or APPLICATION_FLOW[READ] permission on the specified environment\
-        \ or APPLICATION_FLOW[READ] permission on the specified organization"
+        \ application or APPLICATION_FLOW[READ] permission on the specified domain\
+        \ or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ]\
+        \ permission on the specified organization"
       operationId: getAppFlow
       parameters:
       - name: organizationId
@@ -1659,8 +1660,9 @@ paths:
       - domain
       summary: Update a flow
       description: "User must have the APPLICATION_FLOW[UPDATE] permission on the\
-        \ specified domain or APPLICATION_FLOW[UPDATE] permission on the specified\
-        \ environment or APPLICATION_FLOW[UPDATE] permission on the specified organization"
+        \ specified application or APPLICATION_FLOW[UPDATE] permission on the specified\
+        \ domain or APPLICATION_FLOW[UPDATE] permission on the specified environment\
+        \ or APPLICATION_FLOW[UPDATE] permission on the specified organization"
       operationId: updateAppFlow
       parameters:
       - name: organizationId
