@@ -35,7 +35,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -86,14 +85,9 @@ public class FactorResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> factorService.findById(factor))
+                        .flatMap(__ -> factorService.findById(domain, factor))
                         .switchIfEmpty(Maybe.error(new FactorNotFoundException(factor)))
-                        .map(factor1 -> {
-                            if (!factor1.getDomain().equalsIgnoreCase(domain)) {
-                                throw new BadRequestException("Factor does not belong to domain");
-                            }
-                            return Response.ok(factor1).build();
-                        }))
+                        .map(factor1 -> Response.ok(factor1).build()))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -66,6 +66,11 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
     }
 
     @Override
+    public Maybe<BotDetection> findById(String domain, String id) {
+        return botDetectionService.findById(domain, id).flatMap(botDetection -> filterSensitiveData(botDetection).toMaybe());
+    }
+
+    @Override
     public Flowable<BotDetection> findByDomain(String domain) {
         return botDetectionService.findByDomain(domain).flatMapSingle(this::filterSensitiveData);
     }
@@ -87,7 +92,7 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
 
     @Override
     public Single<BotDetection> update(String domain, String id, UpdateBotDetection updateBotDetection, User principal) {
-        return botDetectionService.findById(id)
+        return botDetectionService.findById(domain, id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
                 .flatMap(oldBotDetection -> filterSensitiveData(oldBotDetection)
                         .flatMap(safeOldBoDetection -> updateSensitiveData(updateBotDetection, oldBotDetection)

@@ -92,6 +92,11 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     }
 
     @Override
+    public Maybe<ExtensionGrant> findById(String domain, String id) {
+        return findById(id).filter(extensionGrant -> domain.equals(extensionGrant.getDomain()));
+    }
+
+    @Override
     public Flowable<ExtensionGrant> findByDomain(String domain) {
         LOGGER.debug("Find extension grants by domain: {}", domain);
         return extensionGrantRepository.findByDomain(domain)
@@ -150,7 +155,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     public Single<ExtensionGrant> update(Domain domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal) {
         LOGGER.debug("Update a extension grant {} for domain {}", id, domain.getId());
 
-        return extensionGrantRepository.findById(id)
+        return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new ExtensionGrantNotFoundException(id)))
                 .flatMap(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain.getId(), updateExtensionGrant.getName())
                         .map(Optional::of)
@@ -193,7 +198,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     @Override
     public Completable delete(String domain, String extensionGrantId, User principal) {
         LOGGER.debug("Delete extension grant {}", extensionGrantId);
-        return extensionGrantRepository.findById(extensionGrantId)
+        return findById(domain, extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
                 // check for clients using this extension grant
                 .flatMapSingle(extensionGrant -> applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
