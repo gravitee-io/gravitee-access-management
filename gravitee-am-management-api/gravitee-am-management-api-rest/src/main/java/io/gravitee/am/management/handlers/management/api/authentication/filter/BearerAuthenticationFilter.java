@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -153,6 +154,7 @@ public class BearerAuthenticationFilter extends AbstractAuthenticationProcessing
         var orgUser = userService.findById(ReferenceType.ORGANIZATION, (String) payload.get("org"), (String) claims.get(StandardClaims.SUB))
                 .compose(this::applyTimeout)
                 .blockingGet();
+        checkEnabled(orgUser);
 
         var dates = List.of(
                 // We check the last logout of the user
@@ -184,6 +186,7 @@ public class BearerAuthenticationFilter extends AbstractAuthenticationProcessing
         var orgUser = userService.findByAccessToken(token.id(), token.value())
                 .compose(this::applyTimeout)
                 .blockingGet();
+        checkEnabled(orgUser);
         DefaultUser user = new DefaultUser(orgUser.getUsername());
         user.setId(orgUser.getId());
         user.setAdditionalInformation(Map.of("accountTokenId", token.id()));
@@ -200,6 +203,12 @@ public class BearerAuthenticationFilter extends AbstractAuthenticationProcessing
                 throw new BadCredentialsException("Malformed token");
             }
             return new AccountAccessToken(parts[0], parts[1]);
+        }
+    }
+
+    private static void checkEnabled(User orgUser) {
+        if (!orgUser.isEnabled()) {
+            throw new DisabledException("User is disabled");
         }
     }
 

@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
+import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
@@ -32,12 +33,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
 import java.util.Arrays;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -59,6 +62,9 @@ public class ManagementAuthenticationProviderTest {
 
     @Mock
     private OrganizationService organizationService;
+
+    @Mock
+    private AuthenticationService authenticationService;
 
     @BeforeEach
     public void init() {
@@ -153,5 +159,18 @@ public class ManagementAuthenticationProviderTest {
         Assert.assertNotNull(authentication);
         verify(identityProviderManager, times(0)).get("idp1");
         verify(identityProviderManager, times(1)).get("idp2");
+    }
+
+    @Test
+    public void shouldNotAuthenticate_disabledUser() {
+        DefaultUser user = new DefaultUser("username");
+        AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
+        when(authenticationProvider.loadUserByUsername(any(io.gravitee.am.identityprovider.api.Authentication.class))).thenReturn(Maybe.just(user));
+        when(identityProviderManager.getIdentityProvider("idp1")).thenReturn(new IdentityProvider());
+        when(identityProviderManager.get("idp1")).thenReturn(authenticationProvider);
+        doThrow(new DisabledException("User is disabled")).when(authenticationService).checkUserEnabled(user, Organization.DEFAULT, "idp1");
+
+        Assertions.assertThrows(DisabledException.class,
+                () -> managementAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken("username", "password")));
     }
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.OrganizationUserServiceImpl;
@@ -541,12 +543,56 @@ public class OrganizationUserServiceTest {
         user.setReferenceType(ReferenceType.ORGANIZATION);
 
         when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "ud", user.getId())).thenReturn(Completable.complete());
 
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", user, "Test123!", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertNoErrors();
+        testObserver.assertComplete();
 
-        verify(commonUserService).update(any());
+        verify(commonUserService).update(argThat(updated -> updated.getLastLogoutAt() != null));
+        verify(commonUserService).revokeUserAccessTokens(ReferenceType.ORGANIZATION, "ud", user.getId());
+        verify(auditService).report(argThat(audit -> EventType.USER_PASSWORD_RESET.equals(audit.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    public void shouldDisableUser_revokeTokensAndEndSessions() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(true);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Completable.complete());
+
+        organizationUserService.updateStatus(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", false, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(updated -> !updated.isEnabled() && updated.getLastLogoutAt() != null);
+
+        verify(commonUserService).revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id");
+        verify(auditService).report(argThat(audit -> EventType.USER_DISABLED.equals(audit.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    public void shouldEnableUser_keepTokens() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(false);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        organizationUserService.updateStatus(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", true, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(updated -> updated.isEnabled() && updated.getLastLogoutAt() == null);
+
+        verify(commonUserService, never()).revokeUserAccessTokens(any(), any(), any());
+        verify(auditService).report(argThat(audit -> EventType.USER_ENABLED.equals(audit.build(new ObjectMapper()).getType())));
     }
 
     @Test

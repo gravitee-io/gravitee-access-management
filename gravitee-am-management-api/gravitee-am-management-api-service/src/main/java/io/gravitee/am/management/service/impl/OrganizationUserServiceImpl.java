@@ -216,10 +216,14 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
         }
 
         // update 'users' collection for management and audit purpose
-        user.setLastPasswordReset(new Date());
-        user.setUpdatedAt(new Date());
+        final Date now = new Date();
+        user.setLastPasswordReset(now);
+        // end the existing sessions of the user
+        user.setLastLogoutAt(now);
+        user.setUpdatedAt(now);
         user.setPassword(PWD_ENCODER.encode(password));
         return userService.update(user)
+                .flatMap(user1 -> getUserService().revokeUserAccessTokens(user1.getReferenceType(), user1.getReferenceId(), user1.getId()).toSingleDefault(user1))
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).reference(Reference.organization(organizationId)).throwable(throwable)))
                 .ignoreElement();
@@ -404,7 +408,12 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
         return getUserService().findById(referenceType, referenceId, userId)
                 .flatMap(user -> {
                     user.setEnabled(status);
-                    return getUserService().update(user);
+                    if (status) {
+                        return getUserService().update(user);
+                    }
+                    user.setLastLogoutAt(new Date());
+                    return getUserService().update(user)
+                            .flatMap(updated -> getUserService().revokeUserAccessTokens(updated.getReferenceType(), updated.getReferenceId(), updated.getId()).toSingleDefault(updated));
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
