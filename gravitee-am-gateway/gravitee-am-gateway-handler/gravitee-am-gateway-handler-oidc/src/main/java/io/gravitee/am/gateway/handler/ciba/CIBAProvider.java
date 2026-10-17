@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationReque
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParametersHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -121,9 +120,6 @@ public class CIBAProvider extends AbstractProtocolProvider {
     private SubjectManager subjectManager;
 
     @Autowired
-    private IdentityProviderManager identityProviderManager;
-
-    @Autowired
     private AuthenticationDeviceNotifierManager deviceNotifierManager;
 
     @Override
@@ -154,7 +150,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(this.openIDDiscoveryService))
                 .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService))
                 .handler(new AuthenticationRequestParametersHandler(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager))
-                .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain, jwtService, identityProviderManager, deviceNotifierManager));
+                .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain, jwtService));
 
         // To process the callback content we perform authentication of the caller that must be registered as AM client.
         // If a plugin need a non authenticate webhook, we should create another endpoint without clientAuthHandler.

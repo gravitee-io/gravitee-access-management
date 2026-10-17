@@ -31,14 +31,6 @@ public class CibaFederationAuthenticationDeviceNotifierConfiguration implements 
     // The Gravitee AM identity provider (IdP) that this notifier federates to. Used by the gateway to
     // resolve the OIDC connection bundle (clientId/secret/wellKnownUri/scope) per request.
     private String identityProviderId;
-    // Blank/absent = the callback URL the gateway derives from the incoming bc-authorize request.
-    private String callbackUrl;
-    private String callbackClientId;
-    private String callbackClientSecret;
-    // How the notifier authenticates the completion callback to the AM gateway callback endpoint.
-    // Must match the registered callback application's tokenEndpointAuthMethod. Supported:
-    // client_secret_post (default) and client_secret_basic.
-    private String callbackClientAuthMethod = "client_secret_post";
     private String recipientDisplayName = "the requesting application";
     // Blank/absent = raw relay (authorization_details relayed unchanged); a non-blank value selects a
     // strategy contributed by a strategy module on the plugin classpath. See ConsentRelayStrategyRegistry.
@@ -46,5 +38,4 @@ public class CibaFederationAuthenticationDeviceNotifierConfiguration implements 
     // Blank/absent = relay the CIBA hint verbatim (default); a non-blank value selects a hint-decoration
     // transform contributed by a strategy module on the plugin classpath. See HintDecorationStrategyRegistry.
     private String hintDecorationStrategy;
-    private Integer maxLifetimeSeconds = 120;
 }

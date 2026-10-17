@@ -33,7 +33,11 @@ public interface AuthenticationRequestService {
 
     Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client);
 
-    Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client);
+    /**
+     * @param request the inbound token request; forwarded to UserAuthenticationManager.connect(...)
+     *   when the notifier decides the request on this poll; non-null for the reason given on validateUserResponse.
+     */
+    Single<CibaAuthRequest> retrieve(Domain domain, String authReqId, Client client, io.gravitee.gateway.api.Request request);
 
     Single<CibaAuthRequest> updateAuthDeviceInformation(CibaAuthRequest request);
 

@@ -30,6 +30,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import java.util.concurrent.TimeUnit;
+
 @Configuration
 public class CibaFederationProviderSpringConfiguration {
 
@@ -70,10 +72,18 @@ public class CibaFederationProviderSpringConfiguration {
     @Bean
     @Qualifier("cibaFederationWebClient")
     public WebClient cibaFederationWebClient(WebClientBuilder webClientBuilder) {
-        // No fixed endpoint: the client uses absolute URLs (discovery doc + resolved OP endpoints + the
-        // gateway callback), so scheme/TLS follow each absolute URL. The builder still applies node-level
+        // No fixed endpoint: the client uses absolute URLs (discovery doc + resolved OP endpoints),
+        // so scheme/TLS follow each absolute URL. The builder still applies node-level
         // TLS/HTTP options from gravitee.yml.
-        WebClientOptions options = new WebClientOptions().setUserAgent("Gravitee.io-AM-CIBA-Federation/1");
-        return webClientBuilder.createWebClient(vertx, options);
+        return webClientBuilder.createWebClient(vertx, webClientOptions(environment));
+    }
+
+    static WebClientOptions webClientOptions(Environment environment) {
+        final int timeoutMs = environment.getProperty("httpClient.timeout", Integer.class, 10000);
+        return new WebClientOptions()
+                .setUserAgent("Gravitee.io-AM-CIBA-Federation/1")
+                .setConnectTimeout(timeoutMs)
+                .setIdleTimeout(timeoutMs)
+                .setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
     }
 }
