@@ -700,6 +700,7 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
           command: npm --prefix docker/local-stack run stack:init:ciba
@@ -754,6 +755,7 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: cd gravitee-am-test && npx playwright install --with-deps chromium
+      - azure-artifacts-token
       - run:
           name: Create CIBA image
           command: npm --prefix docker/local-stack run stack:init:ciba
