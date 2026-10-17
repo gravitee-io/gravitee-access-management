@@ -89,7 +89,7 @@ public class ApplicationSecretsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_OPENID, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
+                        .flatMap(__ -> applicationService.findById(domain, application))
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                         .flatMap(application1 -> applicationSecretService.findAllByApplication(application1).toList()))
                 .subscribe(response::resume, response::resume);
@@ -120,10 +120,10 @@ public class ApplicationSecretsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_OPENID, Acl.CREATE)
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_OPENID, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(existingDomain -> applicationService.findById(application)
+                        .flatMap(existingDomain -> applicationService.findById(domain, application)
                                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                                 .flatMapSingle(existingApplication -> applicationSecretService.create(existingDomain, existingApplication, clientSecret, authenticatedUser))
                                 .map(secret -> Response.status(Response.Status.CREATED)
