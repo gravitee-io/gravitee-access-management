@@ -24,10 +24,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
-import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJag;
-import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJagService;
-import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
@@ -37,22 +34,24 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationReques
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
+import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJag;
+import io.gravitee.am.gateway.handler.oidc.service.idjag.IdJagService;
+import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
@@ -61,13 +60,17 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import net.minidev.json.JSONArray;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -108,9 +111,6 @@ public class TokenServiceImplTest {
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @Mock
-    private TokenManager tokenManager;
-
-    @Mock
     private AuditService auditService;
 
     @Mock
@@ -125,8 +125,26 @@ public class TokenServiceImplTest {
     @Mock
     private IdJagService idJagService;
 
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @InjectMocks
     TokenServiceImpl tokenService;
+
+    @InjectMocks
+    private AccessTokenMinter accessTokenMinter;
+
+    @InjectMocks
+    private IdTokenOnlyMinter idTokenOnlyMinter;
+
+    @InjectMocks
+    private IdJagTokenMinter idJagTokenMinter;
+
+    @Before
+    public void wireTokenMinters() {
+        TokenMinterFacade tokenMinterFacade = new TokenMinterFacade(accessTokenMinter, idTokenOnlyMinter, idJagTokenMinter);
+        ReflectionTestUtils.setField(tokenService, "tokenMinter", tokenMinterFacade);
+    }
 
     @Test
     public void shouldUseTokenExchangeExpirationAndClientIdClaim() {
@@ -283,7 +301,7 @@ public class TokenServiceImplTest {
 
         ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor =
                 ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
-        verify(tokenManager).storeTokens(any(), captor.capture());
+        verify(tokenRepository).create(any(), captor.capture());
         assertThat(captor.getValue().getJkt()).isEqualTo("the-jwk-thumbprint");
 
         ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
@@ -313,7 +331,7 @@ public class TokenServiceImplTest {
 
         ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor =
                 ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
-        verify(tokenManager).storeTokens(any(), captor.capture());
+        verify(tokenRepository).create(any(), captor.capture());
         assertThat(captor.getValue().getJkt()).isNull();
     }
 
@@ -414,7 +432,7 @@ public class TokenServiceImplTest {
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
         when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
-        when(tokenManager.storeTokens(any(), any())).thenReturn(Completable.complete());
+        when(tokenRepository.create(any(), any())).thenReturn(Completable.complete());
         when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
     }
 
@@ -1392,7 +1410,7 @@ public class TokenServiceImplTest {
 
     @Test
     public void shouldReturnTheGrantedResourceInStrictResponseMode() {
-        tokenService.setStrictResponse(true);
+        accessTokenMinter.setStrictResponse(true);
         OAuth2Request request = extensionGrantRequest(true, Set.of("https://mcp.example.com/calendar"));
 
         Token token = createPassingThroughEnhancer(request);
@@ -1631,7 +1649,7 @@ public class TokenServiceImplTest {
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete();
 
-        verify(tokenManager, Mockito.never()).storeTokens(any(), any());
+        verify(tokenRepository, Mockito.never()).create(any(), any());
         verify(jwtService, Mockito.never()).encodeJwt(any(JWT.class), any(Client.class));
         verify(idTokenService, Mockito.never()).create(any(OAuth2Request.class), any(Client.class), any(User.class), any());
     }
@@ -1927,6 +1945,135 @@ public class TokenServiceImplTest {
         assertThat(jwtCaptor.getValue()).containsEntry("tenant", "acme").containsEntry("region", "eu");
     }
 
+    @Test
+    public void shouldStoreWithheldClaimsOfLightweightTokens() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+
+        Client client = lightweightClient(true);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        assertThat(storedAccessToken().getWithheldClaims()).isEqualTo(Map.of("tenant", "acme"));
+        assertThat(storedRefreshToken().getWithheldClaims()).isEqualTo(Map.of("tenant", "acme"));
+    }
+
+    @Test
+    public void shouldNotStoreAllowlistedClaimsAsWithheld() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+
+        Client client = lightweightClient(true);
+        client.setTokenCustomClaims(List.of(
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "tenant", "acme"),
+                TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "region", "eu")));
+        client.getLightweightJwtSettings().setAllowedAccessTokenClaims(List.of("tenant"));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        assertThat(storedAccessToken().getWithheldClaims()).isEqualTo(Map.of("region", "eu"));
+        assertThat(storedRefreshToken().getWithheldClaims()).isEqualTo(Map.of("region", "eu"));
+    }
+
+    @Test
+    public void shouldNotStoreWithheldClaimsWhenNothingIsWithheld() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+
+        Client client = lightweightClient(true);
+        client.getLightweightJwtSettings().setAllowedAccessTokenClaims(List.of("tenant"));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        assertThat(storedAccessToken().getWithheldClaims()).isNull();
+        assertThat(storedRefreshToken().getWithheldClaims()).isNull();
+    }
+
+    @Test
+    public void shouldNotStoreWithheldClaimsWhenLightweightJwtDisabled() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+
+        Client client = lightweightClient(false);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        assertThat(storedAccessToken().getWithheldClaims()).isNull();
+        assertThat(storedRefreshToken().getWithheldClaims()).isNull();
+    }
+
+    @Test
+    public void shouldStoreWithheldClaimsAsJsonValues() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setSupportRefreshToken(false);
+
+        Client client = lightweightClient(true);
+        client.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, "roles", "user-roles")));
+        setupCustomClaimMocks(request, invocation -> new String[]{"admin", "user"});
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        assertThat(storedAccessToken().getWithheldClaims()).isEqualTo(Map.of("roles", List.of("admin", "user")));
+    }
+
+    @Test
+    public void shouldStoreWithheldClaimsOnRefreshTokenGrant() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setGrantType(GrantType.REFRESH_TOKEN);
+        request.setRefreshToken(Map.of(Claims.SUB, "user"));
+
+        Client client = lightweightClient(true);
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        assertThat(storedAccessToken().getWithheldClaims()).isEqualTo(Map.of("tenant", "acme"));
+    }
+
+    @Test
+    public void shouldMergeWithheldClaimsIntoIntrospectedToken() {
+        JWT jwt = new JWT();
+        jwt.setJti("id");
+        jwt.setScope("read");
+        Mockito.when(introspectionTokenService.introspect(Mockito.anyString(), Mockito.eq(JWTService.TokenType.ACCESS_TOKEN), Mockito.isNull()))
+                .thenReturn(Maybe.just(new IntrospectionResult(jwt, "client-id", JWTService.TokenType.ACCESS_TOKEN,
+                        Map.of("email", "jane@acme.com", Claims.SCOPE, "withheld-scope"))));
+
+        tokenService.introspect("token").test()
+                .assertValue(token -> "jane@acme.com".equals(token.getAdditionalInformation().get("email"))
+                        && "read".equals(token.getScope())
+                        && "read".equals(token.getAdditionalInformation().get(Claims.SCOPE)));
+    }
+
+    @Test
+    public void shouldMergeWithheldClaimsIntoIntrospectedRefreshToken() {
+        JWT jwt = new JWT();
+        jwt.setJti("id");
+        Mockito.when(introspectionTokenService.introspect(Mockito.anyString(), Mockito.eq(JWTService.TokenType.REFRESH_TOKEN), Mockito.isNull()))
+                .thenReturn(Maybe.just(new IntrospectionResult(jwt, "client-id", JWTService.TokenType.REFRESH_TOKEN, Map.of("tenant", "acme"))));
+
+        tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
+                .assertValue(token -> token instanceof RefreshToken && "acme".equals(token.getAdditionalInformation().get("tenant")));
+    }
+
+    private io.gravitee.am.repository.oauth2.model.AccessToken storedAccessToken() {
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.AccessToken> captor = ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.AccessToken.class);
+        verify(tokenRepository).create(captor.capture(), any());
+        return captor.getValue();
+    }
+
+    private io.gravitee.am.repository.oauth2.model.RefreshToken storedRefreshToken() {
+        ArgumentCaptor<io.gravitee.am.repository.oauth2.model.RefreshToken> captor = ArgumentCaptor.forClass(io.gravitee.am.repository.oauth2.model.RefreshToken.class);
+        verify(tokenRepository).create(any(), captor.capture());
+        return captor.getValue();
+    }
+
     private OAuth2Request authorizationCodeRequest() {
         OAuth2Request request = new OAuth2Request();
         request.setParameters(new LinkedMultiValueMap<>());
@@ -1939,12 +2086,16 @@ public class TokenServiceImplTest {
     }
 
     private void setupCustomClaimMocks(OAuth2Request request) {
+        setupCustomClaimMocks(request, invocation -> invocation.getArgument(0));
+    }
+
+    private void setupCustomClaimMocks(OAuth2Request request, Answer<Object> claimValues) {
         when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
         when(jwtService.encodeJwt(any(JWT.class), any(Client.class))).thenReturn(Single.just(sampleEncodedJwt()));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
-        when(tokenManager.storeTokens(any(), any())).thenReturn(Completable.complete());
+        when(tokenRepository.create(any(), any())).thenReturn(Completable.complete());
         TemplateEngine templateEngine = Mockito.mock(TemplateEngine.class);
-        when(templateEngine.getValue(anyString(), eq(Object.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(templateEngine.getValue(anyString(), eq(Object.class))).thenAnswer(claimValues);
         ExecutionContext executionContext = spy(new SimpleExecutionContext(request, null));
         doReturn(templateEngine).when(executionContext).getTemplateEngine();
         when(executionContextFactory.create(any())).thenReturn(executionContext);

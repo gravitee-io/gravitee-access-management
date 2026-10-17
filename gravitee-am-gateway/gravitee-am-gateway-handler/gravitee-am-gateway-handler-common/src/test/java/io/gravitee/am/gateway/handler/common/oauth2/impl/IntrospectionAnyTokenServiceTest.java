@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionResult;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
@@ -41,6 +43,7 @@ import org.springframework.core.env.Environment;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.REFRESH_TOKEN;
@@ -123,6 +126,96 @@ public class IntrospectionAnyTokenServiceTest {
     }
 
     @Test
+    public void shouldLookUpRecentTokenOfLightweightJwtClient() {
+        JWT jwt = recentJwt();
+        mockValidSignature(jwt, ACCESS_TOKEN, lightweightClient());
+        Token storedToken = stored(new AccessToken());
+        storedToken.setWithheldClaims(Map.of("email", "jane@acme.com"));
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.just(storedToken));
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, ACCESS_TOKEN, null).test();
+
+        observer.assertValue(result -> result.withheldClaims().equals(Map.of("email", "jane@acme.com"))
+                && "stored-client".equals(result.clientId()));
+    }
+
+    @Test
+    public void shouldRejectRecentTokenOfLightweightJwtClientNotFoundInDatabase() {
+        JWT jwt = recentJwt();
+        mockValidSignature(jwt, ACCESS_TOKEN, lightweightClient());
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, ACCESS_TOKEN, null).test();
+
+        observer.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void shouldResolveLightweightJwtClientFromClientIdClaim() {
+        JWT jwt = recentJwt();
+        jwt.put(Claims.CLIENT_ID, "lightweight-client");
+        mockValidSignature(jwt, ACCESS_TOKEN, client());
+        when(clientLookupService.findByDomainAndClientId("domain", "lightweight-client")).thenReturn(Maybe.just(lightweightClient()));
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, ACCESS_TOKEN, null).test();
+
+        observer.assertError(InvalidTokenException.class);
+        verify(tokenRepository, times(1)).findByJti("jti");
+    }
+
+    @Test
+    public void shouldLookUpRecentTokenWhenClientLookupFails() {
+        JWT jwt = recentJwt();
+        jwt.put(Claims.CLIENT_ID, "unknown-client");
+        mockValidSignature(jwt, ACCESS_TOKEN, client());
+        when(clientLookupService.findByDomainAndClientId("domain", "unknown-client")).thenReturn(Maybe.error(new IllegalStateException("lookup failed")));
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, ACCESS_TOKEN, null).test();
+
+        observer.assertError(InvalidTokenException.class);
+    }
+
+    @Test
+    public void shouldLookUpRecentTokenWhenClientNotFound() {
+        JWT jwt = recentJwt();
+        jwt.put(Claims.CLIENT_ID, "unknown-client");
+        mockValidSignature(jwt, ACCESS_TOKEN, client());
+        when(clientLookupService.findByDomainAndClientId("domain", "unknown-client")).thenReturn(Maybe.empty());
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.empty());
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, ACCESS_TOKEN, null).test();
+
+        observer.assertError(InvalidTokenException.class);
+        verify(tokenRepository, times(1)).findByJti("jti");
+    }
+
+    @Test
+    public void shouldReturnWithheldClaimsOfStoredToken() {
+        JWT jwt = storedJwt();
+        mockValidSignature(jwt, REFRESH_TOKEN);
+        Token storedToken = stored(new RefreshToken());
+        storedToken.setWithheldClaims(Map.of("tenant", "acme"));
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.just(storedToken));
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, REFRESH_TOKEN, null).test();
+
+        observer.assertValue(result -> result.withheldClaims().equals(Map.of("tenant", "acme")));
+    }
+
+    @Test
+    public void shouldReturnNoWithheldClaimsWhenNoneStored() {
+        JWT jwt = storedJwt();
+        mockValidSignature(jwt, ACCESS_TOKEN);
+        when(tokenRepository.findByJti("jti")).thenReturn(Maybe.just(stored(new AccessToken())));
+
+        TestObserver<IntrospectionResult> observer = introspectionTokenService.introspect(TOKEN, ACCESS_TOKEN, null).test();
+
+        observer.assertValue(result -> result.withheldClaims().isEmpty());
+    }
+
+    @Test
     public void shouldRejectTokenNotFoundInDatabase() {
         JWT jwt = storedJwt();
         mockValidSignature(jwt, ACCESS_TOKEN);
@@ -161,8 +254,12 @@ public class IntrospectionAnyTokenServiceTest {
     }
 
     private void mockValidSignature(JWT jwt, JWTService.TokenType expectedType) {
+        mockValidSignature(jwt, expectedType, client());
+    }
+
+    private void mockValidSignature(JWT jwt, JWTService.TokenType expectedType, Client client) {
         when(jwtService.decode(TOKEN, expectedType)).thenReturn(Single.just(jwt));
-        when(clientLookupService.findByDomainAndClientId("domain", "client")).thenReturn(Maybe.just(client()));
+        when(clientLookupService.findByDomainAndClientId("domain", "client")).thenReturn(Maybe.just(client));
         when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(expectedType))).thenReturn(Single.just(jwt));
     }
 
@@ -173,6 +270,18 @@ public class IntrospectionAnyTokenServiceTest {
         jwt.setAud("client");
         jwt.setIat(Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond());
         return jwt;
+    }
+
+    private static JWT recentJwt() {
+        JWT jwt = storedJwt();
+        jwt.setIat(Instant.now().getEpochSecond());
+        return jwt;
+    }
+
+    private static Client lightweightClient() {
+        Client client = client();
+        client.setLightweightJwtSettings(ApplicationLightweightJwtSettings.builder().enabled(true).build());
+        return client;
     }
 
     private static Client client() {

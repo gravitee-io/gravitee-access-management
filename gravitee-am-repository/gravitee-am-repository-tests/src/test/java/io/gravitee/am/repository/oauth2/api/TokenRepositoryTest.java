@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -220,6 +222,49 @@ public class TokenRepositoryTest extends AbstractOAuthTest {
 
         assertNull(tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet());
         assertNull(tokenRepository.findRefreshTokenByJti(refreshToken.getToken()).blockingGet());
+    }
+
+    @Test
+    public void shouldPersistAndReadWithheldClaims() {
+        String suffix = shortSuffix();
+        Map<String, Object> accessTokenClaims = Map.of(
+                "email", "jane@acme.com",
+                "roles", List.of("admin", "user"),
+                "address", Map.of("country", "FR"),
+                "age", 42,
+                "verified", true);
+        Map<String, Object> refreshTokenClaims = Map.of("tenant", "acme");
+
+        AccessToken accessToken = newAccessToken("withheld-at-" + suffix, "domain-id", "client-id", "user-id");
+        accessToken.setWithheldClaims(accessTokenClaims);
+        RefreshToken refreshToken = newRefreshToken("withheld-rt-" + suffix, "domain-id", "client-id", "user-id");
+        refreshToken.setWithheldClaims(refreshTokenClaims);
+
+        tokenRepository.create(accessToken, refreshToken).blockingAwait();
+
+        assertEquals(accessTokenClaims, tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet().getWithheldClaims());
+        assertEquals(accessTokenClaims, tokenRepository.findByJti(accessToken.getToken()).blockingGet().getWithheldClaims());
+        assertEquals(refreshTokenClaims, tokenRepository.findRefreshTokenByJti(refreshToken.getToken()).blockingGet().getWithheldClaims());
+        assertEquals(refreshTokenClaims, tokenRepository.findByJti(refreshToken.getToken()).blockingGet().getWithheldClaims());
+    }
+
+    @Test
+    public void shouldPersistAndReadSingleTokenWithheldClaims() {
+        AccessToken accessToken = newAccessToken("withheld-single-at-" + shortSuffix(), null, null, null);
+        accessToken.setWithheldClaims(Map.of("email", "jane@acme.com"));
+
+        tokenRepository.create(accessToken).ignoreElement().blockingAwait();
+
+        assertEquals(Map.of("email", "jane@acme.com"), tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet().getWithheldClaims());
+    }
+
+    @Test
+    public void shouldReadNoWithheldClaimsWhenNoneStored() {
+        AccessToken accessToken = newAccessToken("no-withheld-at-" + shortSuffix(), null, null, null);
+
+        tokenRepository.create(accessToken, null).blockingAwait();
+
+        assertNull(tokenRepository.findAccessTokenByJti(accessToken.getToken()).blockingGet().getWithheldClaims());
     }
 
     @Test
