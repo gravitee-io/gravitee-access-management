@@ -170,7 +170,7 @@ public class BotDetectionServiceTest {
     public void shouldUpdate() {
         UpdateBotDetection updateBotDetection = Mockito.mock(UpdateBotDetection.class);
         when(updateBotDetection.getName()).thenReturn("bot-detection");
-        when(botDetectionRepository.findById("bot-detection")).thenReturn(Maybe.just(new BotDetection()));
+        when(botDetectionRepository.findById("bot-detection")).thenReturn(Maybe.just(inDomain(new BotDetection())));
         when(botDetectionRepository.update(any(BotDetection.class))).thenReturn(Single.just(new BotDetection()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -224,7 +224,7 @@ public class BotDetectionServiceTest {
 
     @Test
     public void shouldDelete() {
-        BotDetection detection = new BotDetection();
+        BotDetection detection = inDomain(new BotDetection());
         detection.setId("detection-id");
         when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
         when(botDetectionRepository.delete(detection.getId())).thenReturn(Completable.complete());
@@ -245,7 +245,7 @@ public class BotDetectionServiceTest {
 
     @Test
     public void shouldNotDelete_UsedByDomain() {
-        BotDetection detection = new BotDetection();
+        BotDetection detection = inDomain(new BotDetection());
         detection.setId("detection-id");
         when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
         final Domain domain = new Domain();
@@ -264,7 +264,7 @@ public class BotDetectionServiceTest {
 
     @Test
     public void shouldNotDelete_UsedByApp() {
-        BotDetection detection = new BotDetection();
+        BotDetection detection = inDomain(new BotDetection());
         detection.setId("detection-id");
         when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
         final Domain domain = new Domain();
@@ -283,5 +283,36 @@ public class BotDetectionServiceTest {
         testObserver.assertError(BotDetectionUsedException.class);
 
         verify(botDetectionRepository, never()).delete(detection.getId());
+    }
+
+    private static BotDetection inDomain(BotDetection botDetection) {
+        botDetection.setReferenceType(ReferenceType.DOMAIN);
+        botDetection.setReferenceId(DOMAIN);
+        return botDetection;
+    }
+
+    @Test
+    public void shouldNotUpdate_botDetectionOfAnotherDomain() {
+        when(botDetectionRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainBotDetection()));
+
+        botDetectionService.update(DOMAIN, "other-id", new UpdateBotDetection()).test().assertError(BotDetectionNotFoundException.class);
+
+        verify(botDetectionRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldNotDelete_botDetectionOfAnotherDomain() {
+        when(botDetectionRepository.findById("other-id")).thenReturn(Maybe.just(otherDomainBotDetection()));
+
+        botDetectionService.delete(DOMAIN, "other-id").test().assertError(BotDetectionNotFoundException.class);
+
+        verify(botDetectionRepository, never()).delete(any());
+    }
+
+    private static BotDetection otherDomainBotDetection() {
+        BotDetection botDetection = new BotDetection();
+        botDetection.setReferenceType(ReferenceType.DOMAIN);
+        botDetection.setReferenceId("other-domain");
+        return botDetection;
     }
 }

@@ -78,6 +78,11 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
+    public Maybe<Reporter> findById(Reference reference, String id) {
+        return reporterService.findById(reference, id).flatMap(reporter -> filterSensitiveData(reporter).toMaybe());
+    }
+
+    @Override
     public Single<Reporter> createDefault(Reference reference) {
         return reporterService.createDefault(reference);
     }
@@ -114,7 +119,7 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
                         .type(EventType.REPORTER_UPDATED)
                         .reference(domain);
 
-        return reporterService.findById(id)
+        return reporterService.findById(domain, id)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
                 .doOnError(throwable -> auditService.report(baseAudit.get().throwable(throwable)))
                 .flatMap(oldReporter ->

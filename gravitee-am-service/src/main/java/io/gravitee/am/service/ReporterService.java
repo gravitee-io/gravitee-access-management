@@ -42,6 +42,8 @@ public interface ReporterService {
 
     Maybe<Reporter> findById(String id);
 
+    Maybe<Reporter> findById(Reference reference, String id);
+
     Single<Reporter> createDefault(Reference reference);
 
     /**

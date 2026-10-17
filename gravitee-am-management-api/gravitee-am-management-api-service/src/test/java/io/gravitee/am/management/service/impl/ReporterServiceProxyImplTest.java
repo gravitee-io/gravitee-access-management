@@ -164,7 +164,7 @@ class ReporterServiceProxyImplTest {
         var existing = buildReporter("{\"secret\":\"old\"}");
         var updated = buildReporter("{\"secret\":\"new\"}");
 
-        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(existing));
+        when(reporterService.findById(reference, "rep-id")).thenReturn(Maybe.just(existing));
         when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just(SCHEMA));
         when(reporterService.update(reference, "rep-id", update, principal, false)).thenReturn(Single.just(updated));
 
@@ -184,7 +184,7 @@ class ReporterServiceProxyImplTest {
 
         var existing = buildReporter("{\"secret\":\"old\"}");
 
-        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(existing));
+        when(reporterService.findById(reference, "rep-id")).thenReturn(Maybe.just(existing));
         when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.empty());
 
         service.update(reference, "rep-id", update, principal, false)
@@ -222,7 +222,7 @@ class ReporterServiceProxyImplTest {
         reporter.setCreatedAt(new Date());
         reporter.setUpdatedAt(new Date());
 
-        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(reporter));
+        when(reporterService.findById(reference, "rep-id")).thenReturn(Maybe.just(reporter));
         when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just("{}"));
         when(reporterService.update(reference, "rep-id", update, principal, false)).thenReturn(Single.error(new TechnicalManagementException("fail")));
 
@@ -257,7 +257,7 @@ class ReporterServiceProxyImplTest {
         var updated = new Reporter(reporter);
         updated.setConfiguration("{\"foo\":\"baz\"}");
 
-        when(reporterService.findById("rep-id")).thenReturn(Maybe.just(reporter));
+        when(reporterService.findById(reference, "rep-id")).thenReturn(Maybe.just(reporter));
         when(reporterPluginService.getSchema(anyString())).thenReturn(Maybe.just("{\"type\":\"object\"}"));
         when(reporterService.update(reference, "rep-id", update, principal, false)).thenReturn(Single.just(updated));
 
@@ -281,7 +281,7 @@ class ReporterServiceProxyImplTest {
         update.setType("console");
         update.setConfiguration("{}");
 
-        when(reporterService.findById("missing")).thenReturn(Maybe.empty());
+        when(reporterService.findById(reference, "missing")).thenReturn(Maybe.empty());
 
         service.update(reference, "missing", update, principal, false)
                 .test()

@@ -32,7 +32,6 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
-import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
@@ -76,6 +75,11 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an authentication device notifier using its ID: %s", id), ex));
                 });
+    }
+
+    @Override
+    public Maybe<AuthenticationDeviceNotifier> findById(String domain, String id) {
+        return findById(id).filter(notifier -> ReferenceType.DOMAIN == notifier.getReferenceType() && domain.equals(notifier.getReferenceId()));
     }
 
     @Override
@@ -131,8 +135,8 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
     public Single<AuthenticationDeviceNotifier> update(Domain domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal) {
         log.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain.getId());
 
-        return adNotifierRepository.findById(id)
-                .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
+        return findById(domain.getId(), id)
+                .switchIfEmpty(Single.error(new AuthenticationDeviceNotifierNotFoundException(id)))
                 .flatMap(oldNotifier -> {
                     AuthenticationDeviceNotifier notifierToUpdate = new AuthenticationDeviceNotifier(oldNotifier);
                     notifierToUpdate.setName(updateNotifier.getName());
@@ -170,7 +174,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
     public Completable delete(String domainId, String notifierId, User principal) {
         log.debug("Delete authentication device notifier {}", notifierId);
 
-        return adNotifierRepository.findById(notifierId)
+        return findById(domainId, notifierId)
                 .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierNotFoundException(notifierId)))
                 .flatMapCompletable(notifier -> {
                     // create event for sync process
