@@ -5,7 +5,6 @@
   "description": "Gravitee.io AM - Tests",
   "license": "MIT License",
   "scripts": {
-    "stack:init:ciba": "mvn -f ../../gravitee-am-ciba-delegated-service/pom.xml package jib:dockerBuild",
     "stack:init:plugins:psql": "sh dev/scripts/download-jdbc.sh",
     "stack:init:copy-am": "rm -f ./dev/build-ctx/*.zip && cp ../../gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/gravitee-am*.zip dev/build-ctx && cp ../../gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/gravitee-am*.zip ./dev/build-ctx && cp ../../gravitee-am-ui/target/gravitee-am-webui-*.zip ./dev/build-ctx",
     "stack:init:build": "AM_VERSION=* docker compose -f dev/docker-compose.yml build",
@@ -29,8 +28,8 @@
     "stack:dev:setup:psql": "JDBC_PLUGINS=./plugins/jdbc docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml up -d",
     "stack:dev:pw:setup:mongo": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml up -d",
     "stack:dev:pw:setup:psql": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose-ui.yml up -d",
-    "stack:dev:mongo": "yarn run stack:init:ciba && yarn run stack:init:build && yarn run stack:dev:setup:mongo",
-    "stack:dev:psql": "yarn run stack:init:ciba && yarn run stack:init:plugins:psql && yarn run stack:init:build && yarn run stack:dev:setup:psql",
+    "stack:dev:mongo": "yarn run stack:init:build && yarn run stack:dev:setup:mongo",
+    "stack:dev:psql": "yarn run stack:init:plugins:psql && yarn run stack:init:build && yarn run stack:dev:setup:psql",
     "stack:dev:mailbox": "docker compose -f dev/docker-compose.yml up -d smtp",
     "stack:down": "docker compose -f dev/docker-compose.yml -f dev/docker-compose-dev.yml -f dev/docker-compose-ci.yml -f dev/docker-compose.postgres.yml -f dev/docker-compose.mongo.yml -f dev/docker-compose-ui.yml -f dev/docker-compose-kerberos.yml -f dev/docker-compose.spire.yml -f dev/docker-compose.cloud.yml -f dev/docker-compose.alert-engine.yml down",
     "stack:perf:openfga": "docker compose -f perf/docker-compose.yml up -d && docker compose -f perf/docker-compose.yml logs --follow openfga-import",

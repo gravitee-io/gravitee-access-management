@@ -38,10 +38,10 @@ cd docker/local-stack
 | `--registry <host>` | Image registry (default `graviteeio` / Docker Hub). Private registry for nightlies. |
 | `--db mongo\|psql` | Backend database (default `mongo`). `psql` auto-downloads JDBC drivers. |
 | `--ui` | Also start the Console UI on `:4200` (required for playwright). |
-| `--full` | UI + wiremock + ciba + openfga + kafka + mtls (jest-gateway + playwright union). Does **not** include cloud. |
+| `--full` | UI + wiremock + openfga + kafka + mtls (jest-gateway + playwright union). Does **not** include cloud. |
 | `--cloud` | Overlay: cockpit mock + management API in managed-cloud mode. |
 | `--alert-engine` | Overlay: Gravitee Alert Engine on `:8072`, gateway + management API connected to it. Not part of `--full`. |
-| `--with a,b,…` | Opt-in extras: `ui,wiremock,ciba,openfga,kafka,mtls,spire,cloud,alert-engine`. |
+| `--with a,b,…` | Opt-in extras: `ui,wiremock,openfga,kafka,mtls,spire,cloud,alert-engine`. |
 | `--chaos` | Route AM's outbound connections through toxiproxy so they can be broken on demand. Off by default. |
 | `--build` | Full clean rebuild: wipes stale source-tree plugin caches, `mvn clean install`, `make plugins`. Use when a container crashes on boot. |
 | `--quick` / `--no-build` | Skip Maven; reuse existing zips, just rebuild images. |
@@ -140,7 +140,5 @@ npm --prefix gravitee-am-test run pw            # playwright (needs --ui/--full)
 - **Pulled nightlies** (`*.x-latest`, `master-latest`) are only in the **private** Gravitee
   registry: copy `dev/.env.example` to `dev/.env`, set `AM_REGISTRY`, and `docker login`
   first. The private registry hostname is never committed in an active config line.
-- **CIBA has no published image** — `--full`/`--with ciba` builds it from source via jib even
-  in pulled mode.
 
 See `docker/local-stack/README.md` for the full reference.
