@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.gravitee.am.service.utils.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -217,6 +218,9 @@ public class DynamicClientRegistrationRequest {
 
     @JsonProperty("backchannel_user_code_parameter")
     private Optional<Boolean> backchannelUserCodeParameter;
+
+    @JsonProperty("device_flow_settings")
+    private Optional<ApplicationDeviceFlowSettings> deviceFlowSettings;
 
     // GETTER AND SETTERS //
 
@@ -624,6 +628,14 @@ public class DynamicClientRegistrationRequest {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public Optional<ApplicationDeviceFlowSettings> getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(Optional<ApplicationDeviceFlowSettings> deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
+    }
+
     @Override
     public String toString() {
         return "ClientPayload{clientName='" + (clientName != null ? clientName.orElse("") : "") + "\'}";
@@ -691,6 +703,8 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+
+        SetterUtils.safeSet(client::setDeviceFlowSettings, this.getDeviceFlowSettings());
 
         return client;
     }
@@ -762,6 +776,8 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+
+        SetterUtils.set(client::setDeviceFlowSettings, this.getDeviceFlowSettings());
 
         return client;
     }

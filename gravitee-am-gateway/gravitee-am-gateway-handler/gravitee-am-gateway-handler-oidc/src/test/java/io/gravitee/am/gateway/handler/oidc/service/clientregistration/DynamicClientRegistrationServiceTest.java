@@ -54,6 +54,7 @@ import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.impl.SecretService;
@@ -405,6 +406,38 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(throwable -> "Invalid response type.".equals(
                 throwable.getMessage()));
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldRefuseADeviceFlowOverrideWithNonPositiveTimings() {
+        ApplicationDeviceFlowSettings settings = new ApplicationDeviceFlowSettings();
+        settings.setDeviceCodeExpiry(0);
+        settings.setPollingInterval(2);
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setDeviceFlowSettings(Optional.of(settings));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldAcceptADeviceFlowOverrideWithPositiveTimings() {
+        ApplicationDeviceFlowSettings settings = new ApplicationDeviceFlowSettings();
+        settings.setDeviceCodeExpiry(120);
+        settings.setPollingInterval(2);
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setDeviceFlowSettings(Optional.of(settings));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getDeviceFlowSettings().getDeviceCodeExpiry() == 120
+                && client.getDeviceFlowSettings().getPollingInterval() == 2);
     }
 
     @Test
@@ -798,6 +831,38 @@ public class DynamicClientRegistrationServiceTest {
                 client.getAuthorizedGrantTypes().contains("implicit") &&
                 client.getResponseTypes().size() == 1 &&
                 client.getResponseTypes().contains("token")
+        );
+    }
+
+    @Test
+    public void shouldCreateClientWithDeviceCodeGrant() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setGrantTypes(Optional.of(List.of(GrantType.DEVICE_CODE)));
+        request.setResponseTypes(Optional.of(List.of()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getAuthorizedGrantTypes().size() == 1 &&
+                client.getAuthorizedGrantTypes().contains(GrantType.DEVICE_CODE) &&
+                client.getResponseTypes().isEmpty()
+        );
+    }
+
+    @Test
+    public void shouldCreateClientWithDeviceCodeAndRefreshTokenGrants() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setGrantTypes(Optional.of(List.of(GrantType.DEVICE_CODE, GrantType.REFRESH_TOKEN)));
+        request.setResponseTypes(Optional.of(List.of()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getAuthorizedGrantTypes().size() == 2 &&
+                client.getAuthorizedGrantTypes().contains(GrantType.DEVICE_CODE) &&
+                client.getAuthorizedGrantTypes().contains(GrantType.REFRESH_TOKEN)
         );
     }
 
