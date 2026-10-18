@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHa
 import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.oauth2.DeviceFlowProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -161,6 +162,8 @@ public class OIDCProvider extends AbstractProtocolProvider {
         // Start OAuth 2.0 provider first
         startOAuth2Protocol();
 
+        startDeviceFlowProtocol();
+
         // Start OpenID Connect provider
         startOpenIDConnectProtocol();
 
@@ -187,6 +190,11 @@ public class OIDCProvider extends AbstractProtocolProvider {
     private void startOAuth2Protocol() throws Exception {
         OAuth2Provider oAuth2Provider = applicationContext.getBean(OAuth2Provider.class);
         oAuth2Provider.start();
+    }
+
+    private void startDeviceFlowProtocol() throws Exception {
+        DeviceFlowProvider deviceFlowProvider = applicationContext.getBean(DeviceFlowProvider.class);
+        deviceFlowProvider.start();
     }
 
     private void startUMAProtocol() throws Exception {

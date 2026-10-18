@@ -1,0 +1,148 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.gateway.handler.oauth2.service.device;
+
+import io.gravitee.am.gateway.handler.oauth2.spring.DeviceFlowConfiguration;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
+import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author GraviteeSource Team
+ */
+@ExtendWith(MockitoExtension.class)
+class DeviceAuthorizationRequestServiceTest {
+
+    private static final int RETENTION = 900;
+    private static final int EXPIRY = 600;
+    private static final int INTERVAL = 5;
+
+    @Mock
+    private DeviceAuthorizationRequestRepository repository;
+
+    @Mock
+    private Domain domain;
+
+    @InjectMocks
+    private DeviceAuthorizationRequestServiceImpl service;
+
+    private Client client;
+
+    @BeforeEach
+    void init() {
+        ReflectionTestUtils.setField(service, "pollingService", new DeviceFlowConfiguration().deviceCodePollingService(repository, RETENTION));
+        client = new Client();
+        client.setClientId("client-id");
+    }
+
+    private void withDeviceFlowSettings() {
+        DeviceFlowSettings settings = new DeviceFlowSettings();
+        settings.setEnabled(true);
+        settings.setDeviceCodeExpiry(EXPIRY);
+        settings.setPollingInterval(INTERVAL);
+        OIDCSettings oidc = new OIDCSettings();
+        oidc.setDeviceFlowSettings(settings);
+        when(domain.getOidc()).thenReturn(oidc);
+    }
+
+    @Test
+    void shouldRegisterRequestWithGeneratedCodesAndPendingStatus() {
+        withDeviceFlowSettings();
+        when(repository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        TestObserver<DeviceAuthorizationRequest> observer = service.register(client, Set.of("openid")).test();
+
+        observer.assertComplete();
+        ArgumentCaptor<DeviceAuthorizationRequest> captor = ArgumentCaptor.forClass(DeviceAuthorizationRequest.class);
+        org.mockito.Mockito.verify(repository).create(captor.capture());
+        DeviceAuthorizationRequest created = captor.getValue();
+        assertEquals(UserCodeGenerator.LENGTH, created.getUserCode().length());
+        assertEquals(DeviceAuthorizationRequestStatus.PENDING.name(), created.getStatus());
+        assertEquals("client-id", created.getClientId());
+        assertEquals(Set.of("openid"), created.getScopes());
+        long ttlInSec = (created.getExpireAt().getTime() - created.getCreatedAt().getTime()) / 1000;
+        assertEquals(EXPIRY + RETENTION, ttlInSec);
+    }
+
+    @Test
+    void shouldInheritTheDomainTimingsWhenTheApplicationDoesNotOverrideThem() {
+        withDeviceFlowSettings();
+
+        assertEquals(EXPIRY, service.getDeviceCodeExpiryInSec(client));
+        assertEquals(INTERVAL, service.getPollingIntervalInSec(client));
+    }
+
+    @Test
+    void shouldFollowTheDomainTimingsAsTheyChange() {
+        withDeviceFlowSettings();
+        assertEquals(EXPIRY, service.getDeviceCodeExpiryInSec(client));
+
+        domain.getOidc().getDeviceFlowSettings().setDeviceCodeExpiry(1200);
+        domain.getOidc().getDeviceFlowSettings().setPollingInterval(9);
+
+        assertEquals(1200, service.getDeviceCodeExpiryInSec(client));
+        assertEquals(9, service.getPollingIntervalInSec(client));
+    }
+
+    @Test
+    void shouldPreferTheApplicationTimingsOverTheDomainOnes() {
+        withApplicationOverride(120, 2);
+
+        assertEquals(120, service.getDeviceCodeExpiryInSec(client));
+        assertEquals(2, service.getPollingIntervalInSec(client));
+    }
+
+    @Test
+    void shouldIssueACodeLivingForTheApplicationExpiry() {
+        withApplicationOverride(120, 2);
+        when(repository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        service.register(client, Set.of("openid")).test().assertComplete();
+
+        ArgumentCaptor<DeviceAuthorizationRequest> captor = ArgumentCaptor.forClass(DeviceAuthorizationRequest.class);
+        org.mockito.Mockito.verify(repository).create(captor.capture());
+        DeviceAuthorizationRequest created = captor.getValue();
+        assertEquals(120 + RETENTION, (created.getExpireAt().getTime() - created.getCreatedAt().getTime()) / 1000);
+    }
+
+    private void withApplicationOverride(int expiry, int interval) {
+        ApplicationDeviceFlowSettings override = new ApplicationDeviceFlowSettings();
+        override.setDeviceCodeExpiry(expiry);
+        override.setPollingInterval(interval);
+        client.setDeviceFlowSettings(override);
+    }
+
+}
