@@ -32,6 +32,7 @@ public class RateLimitMongo extends Auditable {
     private String userId;
     private String client;
     private String factorId;
+    private String purpose;
     private long tokenLeft;
     private boolean allowRequest;
     private Date createdAt;
@@ -69,6 +70,14 @@ public class RateLimitMongo extends Auditable {
 
     public void setFactorId(String factorId) {
         this.factorId = factorId;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
     }
 
     public long getTokenLeft() {

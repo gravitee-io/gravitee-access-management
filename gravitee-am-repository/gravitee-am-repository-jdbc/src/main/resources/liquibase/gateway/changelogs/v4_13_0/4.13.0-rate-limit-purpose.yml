@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-rate-limit-purpose
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: rate_limit
+                columnName: purpose
+      changes:
+        - addColumn:
+            tableName: rate_limit
+            columns:
+              - column: { name: purpose, type: nvarchar(64), constraints: { nullable: true } }
+
+        - dropNotNullConstraint:
+            tableName: rate_limit
+            columnName: factor_id
+            columnDataType: nvarchar(255)
+
+        - dropNotNullConstraint:
+            tableName: rate_limit
+            columnName: client
+            columnDataType: nvarchar(255)
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: purpose
+            indexName: idx_rate_limit_userid_purpose
+            tableName: rate_limit
+            unique: false
