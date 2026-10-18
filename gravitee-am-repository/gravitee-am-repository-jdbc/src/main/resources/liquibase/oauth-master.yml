@@ -27,3 +27,5 @@ databaseChangeLog:
       - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-add-tokens-jkt.yml
   - include:
       - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-ciba-add-slow-down-count.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_13_0/4.13.0-device-auth-requests-table.yml
