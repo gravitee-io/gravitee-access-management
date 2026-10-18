@@ -240,6 +240,75 @@ public class RateLimitRepositoryTest extends AbstractGatewayTest {
         afterDeleteFindObserver2.assertNoValues();
     }
 
+    @Test
+    public void shouldPersistThePurposeWithoutAFactorOrAClient() {
+        RateLimit rateLimit = createRateLimit();
+        rateLimit.setFactorId(null);
+        rateLimit.setClient(null);
+        rateLimit.setPurpose("DEVICE_CODE_ENTRY");
+        RateLimit createdRateLimit = repository.create(rateLimit).blockingGet();
+
+        TestObserver<RateLimit> observer = repository.findById(createdRateLimit.getId()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertNoErrors();
+        observer.assertValue(obj -> "DEVICE_CODE_ENTRY".equals(obj.getPurpose()));
+        observer.assertValue(obj -> obj.getFactorId() == null);
+        observer.assertValue(obj -> obj.getClient() == null);
+    }
+
+    @Test
+    public void shouldNotFindByCriteriaWhenThePurposeDiffers() {
+        RateLimit rateLimit = createRateLimit();
+        rateLimit.setFactorId(null);
+        rateLimit.setClient(null);
+        rateLimit.setPurpose("DEVICE_CODE_ENTRY");
+        RateLimit createdRateLimit = repository.create(rateLimit).blockingGet();
+        RateLimitCriteria criteria = new RateLimitCriteria.Builder()
+                .userId(createdRateLimit.getUserId())
+                .build();
+
+        TestObserver<RateLimit> observer = repository.findByCriteria(criteria).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertNoErrors();
+        observer.assertNoValues();
+    }
+
+    @Test
+    public void shouldNotShareABucketBetweenPurposes() {
+        final String random = UUID.randomUUID().toString();
+        RateLimit mfaBucket = createRateLimit();
+        mfaBucket.setUserId("user-id" + random);
+        repository.create(mfaBucket).blockingGet();
+
+        RateLimit deviceBucket = createRateLimit();
+        deviceBucket.setUserId(mfaBucket.getUserId());
+        deviceBucket.setFactorId(null);
+        deviceBucket.setClient(null);
+        deviceBucket.setPurpose("DEVICE_CODE_ENTRY");
+        RateLimit createdDeviceBucket = repository.create(deviceBucket).blockingGet();
+
+        TestObserver<RateLimit> observer = repository.findByCriteria(new RateLimitCriteria.Builder()
+                .userId(mfaBucket.getUserId())
+                .purpose("DEVICE_CODE_ENTRY")
+                .build()).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertNoErrors();
+        observer.assertValue(obj -> obj.getId().equals(createdDeviceBucket.getId()));
+
+        TestObserver<RateLimit> mfaObserver = repository.findByCriteria(new RateLimitCriteria.Builder()
+                .userId(mfaBucket.getUserId())
+                .factorId(mfaBucket.getFactorId())
+                .client(mfaBucket.getClient())
+                .build()).test();
+        mfaObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        mfaObserver.assertNoErrors();
+        mfaObserver.assertValue(obj -> obj.getId().equals(mfaBucket.getId()));
+    }
+
     private void assertEqualsTo(RateLimit rateLimit, TestObserver<RateLimit> observer) {
         observer.assertValue(observable -> observable.getUserId().equals(rateLimit.getUserId()));
         observer.assertValue(observable -> observable.getClient().equals(rateLimit.getClient()));

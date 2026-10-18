@@ -55,6 +55,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_ID;
 public class MongoRateLimitRepository extends AbstractGatewayMongoRepository implements RateLimitRepository {
     private static final String RATE_LIMIT = "rate_limit";
     private static final String FIELD_FACTOR_ID = "factorId";
+    private static final String FIELD_PURPOSE = "purpose";
 
     private MongoCollection<RateLimitMongo> rateLimitCollection;
 
@@ -66,9 +67,12 @@ public class MongoRateLimitRepository extends AbstractGatewayMongoRepository imp
         rateLimitCollection = mongoOperations.getCollection(RATE_LIMIT, RateLimitMongo.class);
         super.init(rateLimitCollection);
 
-        super.createIndex(rateLimitCollection, Map.of(new Document(FIELD_USER_ID, 1)
-                        .append(FIELD_CLIENT, 1)
-                        .append(FIELD_FACTOR_ID, 1), new IndexOptions().name("u1c1f1")),
+        super.createIndex(rateLimitCollection, Map.of(
+                        new Document(FIELD_USER_ID, 1)
+                                .append(FIELD_CLIENT, 1)
+                                .append(FIELD_FACTOR_ID, 1), new IndexOptions().name("u1c1f1"),
+                        new Document(FIELD_USER_ID, 1)
+                                .append(FIELD_PURPOSE, 1), new IndexOptions().name("u1p1")),
                 getEnsureIndexOnStart());
     }
 
@@ -135,7 +139,13 @@ public class MongoRateLimitRepository extends AbstractGatewayMongoRepository imp
             filters.add(eq(FIELD_FACTOR_ID, criteria.factorId()));
         }
 
-        return (filters.isEmpty()) ? new BasicDBObject() : and(filters);
+        if (filters.isEmpty()) {
+            return new BasicDBObject();
+        }
+
+        filters.add(eq(FIELD_PURPOSE, criteria.purpose()));
+
+        return and(filters);
     }
 
     private RateLimit convert(RateLimitMongo rateLimitMongo) {
@@ -147,6 +157,7 @@ public class MongoRateLimitRepository extends AbstractGatewayMongoRepository imp
         rateLimit.setId(rateLimitMongo.getId());
         rateLimit.setUserId(rateLimitMongo.getUserId());
         rateLimit.setFactorId(rateLimitMongo.getFactorId());
+        rateLimit.setPurpose(rateLimitMongo.getPurpose());
         rateLimit.setClient(rateLimitMongo.getClient());
         rateLimit.setTokenLeft(rateLimitMongo.getTokenLeft());
         rateLimit.setAllowRequest(rateLimitMongo.isAllowRequest());
@@ -168,6 +179,7 @@ public class MongoRateLimitRepository extends AbstractGatewayMongoRepository imp
         rateLimitMongo.setUserId(rateLimit.getUserId());
         rateLimitMongo.setClient(rateLimit.getClient());
         rateLimitMongo.setFactorId(rateLimit.getFactorId());
+        rateLimitMongo.setPurpose(rateLimit.getPurpose());
         rateLimitMongo.setTokenLeft(rateLimit.getTokenLeft());
         rateLimitMongo.setAllowRequest(rateLimit.isAllowRequest());
         rateLimitMongo.setCreatedAt(rateLimit.getCreatedAt());
