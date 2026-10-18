@@ -39,6 +39,8 @@ import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHa
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentPostEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceAuthorizationEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceVerificationUriResolver;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthorizationRequestEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
@@ -64,6 +66,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.TokenR
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -116,6 +119,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     public static final String PATH_REVOKE = "/revoke";
     public static final String PATH_PAR = "/par";
     public static final String PATH_ERROR = "/error";
+    public static final String PATH_DEVICE_AUTHORIZATION = "/device_authorization";
     @Autowired
     private Domain domain;
 
@@ -241,6 +245,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private SecretService secretService;
+
+    @Autowired
+    private DeviceAuthorizationRequestService deviceAuthorizationRequestService;
 
     @Autowired
     private AuditService auditService;
@@ -379,6 +386,15 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(clientAuthHandler)
                 .handler(new RevocationTokenEndpoint(revocationTokenService));
 
+        if (domain.useDeviceFlow()) {
+            oauth2Router.route(HttpMethod.OPTIONS, PATH_DEVICE_AUTHORIZATION)
+                    .handler(corsHandler);
+            oauth2Router.route(HttpMethod.POST, PATH_DEVICE_AUTHORIZATION)
+                    .handler(corsHandler)
+                    .handler(clientAuthHandler)
+                    .handler(new DeviceAuthorizationEndpoint(deviceAuthorizationRequestService, new DeviceVerificationUriResolver()));
+        }
+
         // Error endpoint
         oauth2Router.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
@@ -408,6 +424,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
             oauth2Router.route(PATH_REVOKE).handler(rootExtensionPointHandler);
             oauth2Router.route(PATH_PAR).handler(rootExtensionPointHandler);
             oauth2Router.route(PATH_ERROR).handler(rootExtensionPointHandler);
+            if (domain.useDeviceFlow()) {
+                oauth2Router.route(PATH_DEVICE_AUTHORIZATION).handler(rootExtensionPointHandler);
+            }
         }
     }
 
