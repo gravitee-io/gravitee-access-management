@@ -58,7 +58,7 @@ public class MongoIndexUpgradersTest {
                         MongoOAuth2IndexUpgrader.class.getName() + "_drop-unused-indexes");
         assertThat(new MongoGatewayIndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
-                .containsExactly(MongoGatewayIndexUpgrader.class.getName() + "_initial-indexes");
+                .containsExactly(MongoGatewayIndexUpgrader.class.getName() + "_initial-indexes", MongoGatewayIndexUpgrader.class.getName() + "_rate-limit-purpose");
     }
 
     @Test
@@ -72,7 +72,7 @@ public class MongoIndexUpgradersTest {
                 .containsExactly(tuple("initial-indexes", "008287bfa02e"),
                         tuple("drop-unused-indexes", "616d86399633"));
         assertThat(changesets(MongoGatewayIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
-                .containsExactly(tuple("initial-indexes", "973ec105e893"));
+                .containsExactly(tuple("initial-indexes", "973ec105e893"), tuple("rate-limit-purpose", "4568a3263e53"));
     }
 
     @Test
