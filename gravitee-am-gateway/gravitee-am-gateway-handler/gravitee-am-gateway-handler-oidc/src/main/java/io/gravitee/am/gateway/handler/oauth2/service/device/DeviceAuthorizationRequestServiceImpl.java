@@ -67,6 +67,12 @@ public class DeviceAuthorizationRequestServiceImpl implements DeviceAuthorizatio
     }
 
     @Override
+    public Single<DeviceAuthorizationRequest> retrieve(String deviceCode, Client client) {
+        log.debug("Search for device authorization request '{}' for client {}", deviceCode, client.getClientId());
+        return pollingService.poll(deviceCode, client.getClientId(), getPollingIntervalInSec(client));
+    }
+
+    @Override
     public Maybe<DeviceAuthorizationRequest> findByUserCode(String userCode) {
         final String normalized = UserCodeGenerator.normalize(userCode);
         if (normalized == null || normalized.isEmpty()) {

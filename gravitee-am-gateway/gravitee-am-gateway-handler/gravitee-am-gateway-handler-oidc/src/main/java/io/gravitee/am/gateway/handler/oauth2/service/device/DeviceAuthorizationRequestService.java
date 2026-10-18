@@ -36,6 +36,12 @@ public interface DeviceAuthorizationRequestService {
     Single<DeviceAuthorizationRequest> register(Client client, Set<String> scopes);
 
     /**
+     * Read a request on behalf of a polling device, applying the polling state machine.
+     * The request is deleted once it reaches a terminal state, so a code can be redeemed only once.
+     */
+    Single<DeviceAuthorizationRequest> retrieve(String deviceCode, Client client);
+
+    /**
      * @param userCode the code as typed by the end user, in any case and with any separator
      */
     Maybe<DeviceAuthorizationRequest> findByUserCode(String userCode);
