@@ -313,6 +313,7 @@ public class Client implements Cloneable, Resource {
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     private ApplicationCrossAppAccessSettings crossAppAccessSettings;
+    private ApplicationDeviceFlowSettings deviceFlowSettings;
 
     private ApplicationLightweightJwtSettings lightweightJwtSettings;
 
@@ -430,6 +431,7 @@ public class Client implements Cloneable, Resource {
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
         this.lightweightJwtSettings = other.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(other.lightweightJwtSettings) : null;
+        this.deviceFlowSettings = other.deviceFlowSettings != null ? new ApplicationDeviceFlowSettings(other.deviceFlowSettings) : null;
         this.secretExpirationSettings = other.secretExpirationSettings;
         this.agentType = other.agentType;
         this.agentInstanceId = other.agentInstanceId;
@@ -1358,6 +1360,14 @@ public class Client implements Cloneable, Resource {
 
     public void setIdJagValiditySeconds(int idJagValiditySeconds) {
         this.idJagValiditySeconds = idJagValiditySeconds;
+    }
+
+    public ApplicationDeviceFlowSettings getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettings deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
     }
 
     public List<ApplicationSecretSettings> getSecretSettings() {
