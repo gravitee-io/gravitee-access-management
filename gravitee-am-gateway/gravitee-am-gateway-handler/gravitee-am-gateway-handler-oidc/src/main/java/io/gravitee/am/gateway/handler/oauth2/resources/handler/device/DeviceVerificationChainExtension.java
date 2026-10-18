@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceFlo
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationChainExtension;
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -30,10 +31,11 @@ public class DeviceVerificationChainExtension implements AuthorizationChainExten
 
     public DeviceVerificationChainExtension(Domain domain,
                                             DeviceAuthorizationRequestService requestService,
-                                            DeviceFlowPageRenderer renderer) {
+                                            DeviceFlowPageRenderer renderer,
+                                            AuditService auditService) {
         this.domain = domain;
-        this.completionHandler = new DeviceVerificationCompletionHandler(requestService, renderer);
-        this.denialHandler = new DeviceVerificationDenialHandler(requestService, renderer);
+        this.completionHandler = new DeviceVerificationCompletionHandler(requestService, renderer, auditService);
+        this.denialHandler = new DeviceVerificationDenialHandler(requestService, renderer, auditService);
     }
 
     @Override

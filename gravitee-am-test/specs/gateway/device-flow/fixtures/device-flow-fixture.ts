@@ -28,11 +28,13 @@ import { createScope } from '@management-commands/scope-management-commands';
 import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createDomainForm } from '@management-commands/form-management-commands';
+import { getAuditApi } from '@management-commands/service/utils';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { createTestApp } from '@utils-commands/application-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { retryUntil } from '@utils-commands/retry';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import type { ApplicationDeviceFlowSettings } from '@management-models/ApplicationDeviceFlowSettings';
@@ -125,6 +127,8 @@ export interface DeviceFlowFixture extends Fixture {
   ) => Promise<{ session: VerificationSession; consentPage: any; completion: any }>;
   approveWithRememberedConsent: (userCode: string, clientId: string, as: DeviceFlowUser) => Promise<any>;
   setApplicationTimings: (deviceFlowSettings: ApplicationDeviceFlowSettings | null) => Promise<void>;
+  listAudits: (type: string, from: number) => Promise<any>;
+  waitForAudits: (type: string, from: number) => Promise<any>;
 }
 
 export const wrongCodeBudget = async (): Promise<number> => {
@@ -369,6 +373,23 @@ export const setupDeviceFlowFixture = async (options: DeviceFlowFixtureOptions =
       );
     };
 
+    const listAudits = (type: string, from: number) =>
+      getAuditApi(token).listDomainAudits({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        type,
+        from,
+        size: 10,
+      });
+
+    const waitForAudits = (type: string, from: number) =>
+      retryUntil(
+        () => listAudits(type, from),
+        (page) => page.data?.length > 0,
+        { timeoutMillis: 10_000, intervalMillis: 250 },
+      );
+
     const cleanUp = async () => {
       await safeDeleteDomain(domainId, token);
     };
@@ -399,6 +420,8 @@ export const setupDeviceFlowFixture = async (options: DeviceFlowFixtureOptions =
       approveThroughConsent,
       approveWithRememberedConsent,
       setApplicationTimings,
+      listAudits,
+      waitForAudits,
       cleanUp,
     };
   } catch (error) {

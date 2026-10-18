@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.device;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
@@ -25,6 +26,9 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.Aut
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.gateway.DeviceFlowAuditBuilder;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.CustomLog;
@@ -40,11 +44,14 @@ public class DeviceVerificationCompletionHandler implements Handler<RoutingConte
 
     private final DeviceAuthorizationRequestService requestService;
     private final DeviceFlowPageRenderer renderer;
+    private final AuditService auditService;
 
     public DeviceVerificationCompletionHandler(DeviceAuthorizationRequestService requestService,
-                                               DeviceFlowPageRenderer renderer) {
+                                               DeviceFlowPageRenderer renderer,
+                                               AuditService auditService) {
         this.requestService = requestService;
         this.renderer = renderer;
+        this.auditService = auditService;
     }
 
     @Override
@@ -68,13 +75,25 @@ public class DeviceVerificationCompletionHandler implements Handler<RoutingConte
         requestService.approve(deviceCode, client.getClientId(), endUser.getId(), authorizationRequest.getScopes())
                 .doFinally(() -> DeviceFlowContext.clear(context))
                 .subscribe(
-                        request -> complete(context, DeviceFlowOutcome.APPROVED),
+                        request -> {
+                            reportApproved(context, client, endUser);
+                            complete(context, DeviceFlowOutcome.APPROVED);
+                        },
                         error -> DeviceFlowOutcome.of(error).ifPresentOrElse(
                                 outcome -> complete(context, outcome),
                                 () -> {
                                     log.error("Unable to approve the device authorization request", error);
                                     context.fail(error);
                                 }));
+    }
+
+    private void reportApproved(RoutingContext context, Client client, io.gravitee.am.model.User endUser) {
+        auditService.report(AuditBuilder.builder(DeviceFlowAuditBuilder.class)
+                .type(EventType.DEVICE_FLOW_APPROVED)
+                .user(endUser)
+                .application(client)
+                .ipAddress(context)
+                .userAgent(context));
     }
 
     private void complete(RoutingContext context, DeviceFlowOutcome outcome) {

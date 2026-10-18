@@ -191,3 +191,56 @@ describe('OAuth2 - RFC 8628 - Device Authorization Grant - verification', () => 
     expect(denied.body.error).toEqual('access_denied');
   });
 });
+
+describe('OAuth2 - RFC 8628 - Device Authorization Grant - audit log', () => {
+  it('must record an approval against the user who authorized the device', async () => {
+    const approvingUser = await fixture.createUser();
+    const from = Date.now();
+    const body = await fixture.requestDeviceCode();
+
+    await fixture.approveThroughConsent(body.user_code, fixture.confidentialClientId, approvingUser);
+
+    const audits = await fixture.waitForAudits('DEVICE_FLOW_APPROVED', from);
+    expect(audits.data[0]).toMatchObject({
+      type: 'DEVICE_FLOW_APPROVED',
+      outcome: { status: 'success' },
+      actor: { alternativeId: approvingUser.username, type: 'USER' },
+      target: { id: fixture.confidentialApp.id, type: 'APPLICATION' },
+    });
+  });
+
+  it('must record a denial against the user who refused the device', async () => {
+    const from = Date.now();
+    const body = await fixture.requestDeviceCode();
+    const session = await fixture.signInOnSecondDevice(fixture.confidentialClientId);
+
+    await fixture.rejectCode(session, body.user_code).expect(200);
+
+    const audits = await fixture.waitForAudits('DEVICE_FLOW_DENIED', from);
+    expect(audits.data[0]).toMatchObject({
+      type: 'DEVICE_FLOW_DENIED',
+      outcome: { status: 'success' },
+      actor: { alternativeId: fixture.user.username, type: 'USER' },
+      target: { id: fixture.confidentialApp.id, type: 'APPLICATION' },
+    });
+  });
+
+  it('must record a failed verification, and nothing at all for the code issuance itself', async () => {
+    const from = Date.now();
+    await fixture.requestDeviceCode();
+    const session = await fixture.signInOnSecondDevice(fixture.confidentialClientId);
+
+    await fixture.enterCode(session, DEVICE_FLOW_TEST.UNKNOWN_USER_CODE).expect(302);
+
+    const audits = await fixture.waitForAudits('DEVICE_FLOW_VERIFICATION_FAILED', from);
+    expect(audits.data[0]).toMatchObject({
+      type: 'DEVICE_FLOW_VERIFICATION_FAILED',
+      outcome: { status: 'failure' },
+      actor: { alternativeId: fixture.user.username, type: 'USER' },
+      target: { id: fixture.confidentialApp.id, type: 'APPLICATION' },
+    });
+
+    const approvals = await fixture.listAudits('DEVICE_FLOW_APPROVED', from);
+    expect(approvals.data ?? []).toHaveLength(0);
+  });
+});

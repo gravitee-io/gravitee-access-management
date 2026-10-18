@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.device;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
@@ -24,7 +26,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationR
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
@@ -32,6 +37,7 @@ import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -62,6 +68,9 @@ public class DeviceVerificationDenialHandlerTest extends RxWebTestBase {
     @Mock
     private Session session;
 
+    @Mock
+    private AuditService auditService;
+
     private Throwable failure = new AccessDeniedException("User denied access");
 
     @Override
@@ -84,7 +93,7 @@ public class DeviceVerificationDenialHandlerTest extends RxWebTestBase {
                     setUser(context, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
                     context.fail(failure);
                 })
-                .failureHandler(new DeviceVerificationDenialHandler(requestService, new DeviceFlowPageRenderer(engine, new Domain())))
+                .failureHandler(new DeviceVerificationDenialHandler(requestService, new DeviceFlowPageRenderer(engine, new Domain()), auditService))
                 .failureHandler(rc -> rc.response().setStatusCode(302).end());
     }
 
@@ -120,5 +129,34 @@ public class DeviceVerificationDenialHandlerTest extends RxWebTestBase {
                 eq("device_completion|client-internal-id"));
         verify(session).remove(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY);
         verify(session).remove(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY);
+    }
+
+    @Test
+    public void shouldReportADeniedEventWithTheUserAsActor() throws Exception {
+        when(session.get(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY)).thenReturn("client-id");
+        when(session.get(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY)).thenReturn("device-code");
+        when(requestService.deny("device-code", "client-id")).thenReturn(Single.just(new DeviceAuthorizationRequest()));
+        when(engine.render(any(Map.class), eq("device_completion|client-internal-id")))
+                .thenReturn(Single.just(Buffer.buffer("completion page")));
+
+        testRequest(HttpMethod.GET, "/oauth/authorize?client_id=client-id", null, 200, "OK", "completion page");
+
+        ArgumentCaptor<AuditBuilder> captor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService).report(captor.capture());
+        Audit audit = captor.getValue().build(new ObjectMapper());
+        assertEquals(EventType.DEVICE_FLOW_DENIED, audit.getType());
+        assertEquals("user-id", audit.getActor().getId());
+        assertEquals("bob", audit.getActor().getAlternativeId());
+        assertEquals("client-internal-id", audit.getTarget().getId());
+        assertEquals("domain-id", audit.getReferenceId());
+    }
+
+    @Test
+    public void shouldNotReportADeniedEventWhenTheRequestIsNotADeviceFlow() throws Exception {
+        when(session.get(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY)).thenReturn(null);
+
+        testRequest(HttpMethod.GET, "/oauth/authorize?client_id=client-id", 302, "Found");
+
+        verify(auditService, never()).report(any());
     }
 }

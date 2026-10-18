@@ -15,14 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.device;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
+import io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceFlowOutcome;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceFlowPageRenderer;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationSessionCleaner;
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.gateway.DeviceFlowAuditBuilder;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.CustomLog;
@@ -42,11 +47,14 @@ public class DeviceVerificationDenialHandler implements Handler<RoutingContext> 
 
     private final DeviceAuthorizationRequestService requestService;
     private final DeviceFlowPageRenderer renderer;
+    private final AuditService auditService;
 
     public DeviceVerificationDenialHandler(DeviceAuthorizationRequestService requestService,
-                                           DeviceFlowPageRenderer renderer) {
+                                           DeviceFlowPageRenderer renderer,
+                                           AuditService auditService) {
         this.requestService = requestService;
         this.renderer = renderer;
+        this.auditService = auditService;
     }
 
     @Override
@@ -61,6 +69,7 @@ public class DeviceVerificationDenialHandler implements Handler<RoutingContext> 
         requestService.deny(deviceCode, client.getClientId())
                 .subscribe(
                         request -> {
+                            reportDenied(context, client);
                             DeviceFlowContext.clear(context);
                             AuthorizationSessionCleaner.clean(context);
                             renderer.renderCompletion(context, DeviceFlowOutcome.DENIED);
@@ -69,5 +78,14 @@ public class DeviceVerificationDenialHandler implements Handler<RoutingContext> 
                             log.error("Unable to reject the device authorization request", error);
                             context.next();
                         });
+    }
+
+    private void reportDenied(RoutingContext context, Client client) {
+        auditService.report(AuditBuilder.builder(DeviceFlowAuditBuilder.class)
+                .type(EventType.DEVICE_FLOW_DENIED)
+                .user(RoutingContextHelper.endUser(context))
+                .application(client)
+                .ipAddress(context)
+                .userAgent(context));
     }
 }
