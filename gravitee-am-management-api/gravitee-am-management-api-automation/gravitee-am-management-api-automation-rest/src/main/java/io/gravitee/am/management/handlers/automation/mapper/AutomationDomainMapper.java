@@ -127,6 +127,7 @@ public final class AutomationDomainMapper {
         out.setRequestUris(oidc.getRequestUris());
         // cimdSettings is intentionally not surfaced — see AutomationOidcSettings javadoc.
         out.setCibaSettings(toAutomationCiba(oidc.getCibaSettings()));
+        out.setDeviceFlowSettings(oidc.getDeviceFlowSettings());
         return out;
     }
 
@@ -249,6 +250,7 @@ public final class AutomationDomainMapper {
         out.setPostLogoutRedirectUris(in.getPostLogoutRedirectUris());
         out.setRequestUris(in.getRequestUris());
         out.setCibaSettings(toModelCiba(in.getCibaSettings()));
+        out.setDeviceFlowSettings(in.getDeviceFlowSettings());
         return out;
     }
 

@@ -15,17 +15,21 @@
  */
 package io.gravitee.am.service.utils;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -173,6 +177,74 @@ public class GrantTypeUtilsTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldAcceptDeviceCodeAlone() {
+        TestObserver<Application> testObserver = GrantTypeUtils.validateGrantTypes(
+                applicationWith(List.of(GrantType.DEVICE_CODE), Collections.emptyList())).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldAcceptDeviceCodeWithRefreshToken() {
+        TestObserver<Application> testObserver = GrantTypeUtils.validateGrantTypes(
+                applicationWith(List.of(GrantType.DEVICE_CODE, "refresh_token"), Collections.emptyList())).test();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldSupportDeviceCodeGrantType() {
+        assertTrue(GrantTypeUtils.isSupportedGrantType(GrantType.DEVICE_CODE));
+        assertTrue(GrantTypeUtils.getSupportedGrantTypes().contains(GrantType.DEVICE_CODE));
+    }
+
+    @Test
+    public void shouldKeepDeviceCodeWithoutResponseType() {
+        Application application = GrantTypeUtils.completeGrantTypeCorrespondance(
+                applicationWith(List.of(GrantType.DEVICE_CODE), Collections.emptyList()));
+
+        assertTrue(application.getSettings().getOauth().getGrantTypes().contains(GrantType.DEVICE_CODE));
+        assertTrue(application.getSettings().getOauth().getResponseTypes().isEmpty());
+    }
+
+    @Test
+    public void shouldKeepDeviceCodeAlongsideCodeResponseType() {
+        Application application = GrantTypeUtils.completeGrantTypeCorrespondance(
+                applicationWith(List.of(GrantType.DEVICE_CODE, "authorization_code"), List.of("code")));
+
+        assertTrue(application.getSettings().getOauth().getGrantTypes().contains(GrantType.DEVICE_CODE));
+        assertTrue(application.getSettings().getOauth().getGrantTypes().contains("authorization_code"));
+    }
+
+    @Test
+    public void shouldKeepDeviceCodeOnClientCorrespondance() {
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(new ArrayList<>(List.of(GrantType.DEVICE_CODE, "refresh_token")));
+        client.setResponseTypes(new ArrayList<>());
+
+        client = GrantTypeUtils.completeGrantTypeCorrespondance(client);
+
+        assertTrue(client.getAuthorizedGrantTypes().contains(GrantType.DEVICE_CODE));
+        assertTrue(client.getAuthorizedGrantTypes().contains("refresh_token"));
+    }
+
+    private static Application applicationWith(List<String> grantTypes, List<String> responseTypes) {
+        Application application = new Application();
+
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(new ArrayList<>(grantTypes));
+        oAuthSettings.setResponseTypes(new ArrayList<>(responseTypes));
+
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        application.setSettings(settings);
+
+        return application;
     }
 
     @Test
