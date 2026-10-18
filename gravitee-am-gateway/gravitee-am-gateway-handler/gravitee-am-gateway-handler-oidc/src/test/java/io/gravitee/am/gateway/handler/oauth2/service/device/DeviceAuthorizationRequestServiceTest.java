@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.device;
 
+import io.gravitee.am.common.exception.oauth2.AuthorizationPendingException;
 import io.gravitee.am.common.exception.oauth2.ExpiredTokenException;
+import io.gravitee.am.common.exception.oauth2.InvalidPollingRequestException;
+import io.gravitee.am.common.exception.oauth2.SlowDownException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.model.Domain;
@@ -25,6 +28,7 @@ import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -45,7 +49,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
@@ -103,6 +109,45 @@ class DeviceAuthorizationRequestServiceTest {
         assertEquals(Set.of("openid"), created.getScopes());
         long ttlInSec = (created.getExpireAt().getTime() - created.getCreatedAt().getTime()) / 1000;
         assertEquals(EXPIRY + RETENTION, ttlInSec);
+    }
+
+    @Test
+    void shouldRejectUnknownDeviceCode() {
+        withDeviceFlowSettings();
+        when(repository.findById("unknown")).thenReturn(Maybe.empty());
+
+        service.retrieve("unknown", client).test().assertError(InvalidPollingRequestException.class);
+    }
+
+    @Test
+    void shouldRejectDeviceCodeIssuedToAnotherClient() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setClientId("another-client");
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.retrieve("device-code", client).test().assertError(InvalidPollingRequestException.class);
+    }
+
+    @Test
+    void shouldReportPendingWhileNotApproved() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setLastAccessAt(new Date(Instant.now().minusSeconds(INTERVAL + 1L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(AuthorizationPendingException.class);
+    }
+
+    @Test
+    void shouldReportExpiredRatherThanMissingInsideRetentionWindow() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION - 10L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.retrieve("device-code", client).test().assertError(ExpiredTokenException.class);
     }
 
     @Test
@@ -215,6 +260,88 @@ class DeviceAuthorizationRequestServiceTest {
     }
 
     @Test
+    void shouldCountEachSlowDown() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+        assertEquals(1, request.getSlowDownCount());
+
+        service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+        assertEquals(2, request.getSlowDownCount());
+    }
+
+    @Test
+    void shouldWidenTheIntervalByFiveSecondsPerSlowDown() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setSlowDownCount(1);
+        request.setLastAccessAt(new Date(Instant.now().minusSeconds(INTERVAL + 1L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+    }
+
+    @Test
+    void shouldAdvanceLastAccessOnEachSlowDown() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        Date previousAccess = new Date(Instant.now().minusSeconds(1L).toEpochMilli());
+        request.setLastAccessAt(previousAccess);
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+
+        assertTrue(request.getLastAccessAt().after(previousAccess));
+    }
+
+    @Test
+    void shouldCapTheEscalatedIntervalAtSixtySeconds() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        for (int i = 0; i < 50; i++) {
+            service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+        }
+
+        request.setLastAccessAt(new Date(Instant.now().minusSeconds(61L).toEpochMilli()));
+        service.retrieve("device-code", client).test().assertError(AuthorizationPendingException.class);
+    }
+
+    @Test
+    void shouldNotSlowDownAClientThatRespectsTheInterval() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setLastAccessAt(new Date(Instant.now().minusSeconds(INTERVAL + 1L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(AuthorizationPendingException.class);
+
+        assertEquals(0, request.getSlowDownCount());
+    }
+
+    @Test
+    void shouldServeAWidenedRequestNormallyOnceTheWidenedIntervalElapsed() {
+        withDeviceFlowSettings();
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setSlowDownCount(2);
+        request.setLastAccessAt(new Date(Instant.now().minusSeconds(INTERVAL + 10L + 1L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(AuthorizationPendingException.class);
+
+        assertEquals(2, request.getSlowDownCount());
+    }
+
+    @Test
     void shouldDetectExpiryAgainstTheRetentionWindow() {
         DeviceAuthorizationRequest request = pendingRequest();
         assertFalse(service.isExpired(request));
@@ -264,11 +391,47 @@ class DeviceAuthorizationRequestServiceTest {
         assertEquals(120 + RETENTION, (created.getExpireAt().getTime() - created.getCreatedAt().getTime()) / 1000);
     }
 
+    @Test
+    void shouldHoldAPollingDeviceToTheApplicationInterval() {
+        withApplicationOverride(120, 2);
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setLastAccessAt(new Date(Instant.now().minusSeconds(3L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(AuthorizationPendingException.class);
+
+        request.setLastAccessAt(new Date());
+        service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+    }
+
+    @Test
+    void shouldWidenTheApplicationIntervalOnSlowDown() {
+        withApplicationOverride(120, 2);
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        persistPollingWrites(request);
+
+        service.retrieve("device-code", client).test().assertError(SlowDownException.class);
+
+        assertEquals(1, request.getSlowDownCount());
+    }
+
     private void withApplicationOverride(int expiry, int interval) {
         ApplicationDeviceFlowSettings override = new ApplicationDeviceFlowSettings();
         override.setDeviceCodeExpiry(expiry);
         override.setPollingInterval(interval);
         client.setDeviceFlowSettings(override);
+    }
+
+    private void persistPollingWrites(DeviceAuthorizationRequest request) {
+        lenient().when(repository.touch(eq(request.getId()), any(), anyBoolean())).thenAnswer(invocation -> {
+            request.setLastAccessAt(invocation.getArgument(1));
+            if (invocation.<Boolean>getArgument(2)) {
+                request.setSlowDownCount(request.getSlowDownCount() + 1);
+            }
+            return Completable.complete();
+        });
     }
 
     private DeviceAuthorizationRequest pendingRequest() {
