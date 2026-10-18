@@ -34,6 +34,26 @@ import static org.mockito.ArgumentMatchers.any;
 public class RedirectUriValidationHandlerTest {
 
     @Test
+    public void shouldSkipValidationForDeviceFlow(){
+        Domain domain = new Domain();
+        final var handler = new RedirectUriValidationHandler(domain);
+
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        io.vertx.rxjava3.ext.web.Session session = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(ctx.session()).thenReturn(session);
+        Mockito.when(request.getParam(Parameters.CLIENT_ID)).thenReturn("client-id");
+        Mockito.when(session.get(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY)).thenReturn("client-id");
+        Mockito.when(session.get(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY)).thenReturn("device-code");
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.times(1)).next();
+        Mockito.verify(ctx, Mockito.never()).fail(any(Throwable.class));
+    }
+
+    @Test
     public void when_return_url_is_not_present_validate_redirect_uri(){
         Domain domain = new Domain();
         final var handler = new RedirectUriValidationHandler(domain);
