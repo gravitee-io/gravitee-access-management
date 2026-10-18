@@ -55,7 +55,8 @@ public class MongoIndexUpgradersTest {
         assertThat(new MongoOAuth2IndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoOAuth2IndexUpgrader.class.getName() + "_initial-indexes",
-                        MongoOAuth2IndexUpgrader.class.getName() + "_drop-unused-indexes");
+                        MongoOAuth2IndexUpgrader.class.getName() + "_drop-unused-indexes",
+                        MongoOAuth2IndexUpgrader.class.getName() + "_device-auth-requests");
         assertThat(new MongoGatewayIndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoGatewayIndexUpgrader.class.getName() + "_initial-indexes", MongoGatewayIndexUpgrader.class.getName() + "_rate-limit-purpose");
@@ -70,7 +71,8 @@ public class MongoIndexUpgradersTest {
                         tuple("reporters-reference-index", "f7b2ef6e63f0"));
         assertThat(changesets(MongoOAuth2IndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "008287bfa02e"),
-                        tuple("drop-unused-indexes", "616d86399633"));
+                        tuple("drop-unused-indexes", "616d86399633"),
+                        tuple("device-auth-requests", "9cc85208baa8"));
         assertThat(changesets(MongoGatewayIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "973ec105e893"), tuple("rate-limit-purpose", "4568a3263e53"));
     }

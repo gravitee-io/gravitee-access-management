@@ -49,6 +49,15 @@
         "authorization_codes": ["t1"],
         "tokens": ["c1"]
       }
+    },
+    {
+      "id": "device-auth-requests",
+      "create": {
+        "device_auth_requests": [
+          { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 },
+          { "name": "uc1", "key": { "user_code": 1 }, "unique": true }
+        ]
+      }
     }
   ]
 }
