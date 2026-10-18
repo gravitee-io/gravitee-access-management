@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.device;
 
+import io.gravitee.am.common.exception.oauth2.ExpiredTokenException;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.common.service.polling.PollingService;
 import io.gravitee.am.gateway.handler.common.service.polling.PollingWindow;
 import io.gravitee.am.model.Domain;
@@ -23,6 +25,7 @@ import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +64,68 @@ public class DeviceAuthorizationRequestServiceImpl implements DeviceAuthorizatio
         request.setExpireAt(window.expireAt());
         log.debug("Register device authorization request '{}' for client {}", request.getId(), client.getClientId());
         return requestRepository.create(request);
+    }
+
+    @Override
+    public Maybe<DeviceAuthorizationRequest> findByUserCode(String userCode) {
+        final String normalized = UserCodeGenerator.normalize(userCode);
+        if (normalized == null || normalized.isEmpty()) {
+            return Maybe.empty();
+        }
+        return requestRepository.findByUserCode(normalized);
+    }
+
+    @Override
+    public Single<DeviceAuthorizationRequest> approve(String deviceCode, String clientId, String subject, Set<String> scopes) {
+        return stillActionable(deviceCode, clientId)
+                .flatMap(request -> {
+                    request.setStatus(DeviceAuthorizationRequestStatus.APPROVED.name());
+                    request.setSubject(subject);
+                    request.setScopes(scopes);
+                    return leavePending(request);
+                });
+    }
+
+    @Override
+    public Single<DeviceAuthorizationRequest> deny(String deviceCode, String clientId) {
+        log.debug("Deny device authorization request '{}' for client {}", deviceCode, clientId);
+        return stillActionable(deviceCode, clientId)
+                .flatMap(request -> {
+                    request.setStatus(DeviceAuthorizationRequestStatus.DENIED.name());
+                    return leavePending(request);
+                });
+    }
+
+    private Single<DeviceAuthorizationRequest> leavePending(DeviceAuthorizationRequest request) {
+        return requestRepository.update(request, DeviceAuthorizationRequestStatus.PENDING.name())
+                .switchIfEmpty(Single.error(() -> new InvalidGrantException(request.getId())));
+    }
+
+    private Single<DeviceAuthorizationRequest> stillActionable(String deviceCode, String clientId) {
+        return requestRepository.findById(deviceCode)
+                .switchIfEmpty(Single.error(() -> new InvalidGrantException(deviceCode)))
+                .flatMap(request -> {
+                    if (!request.getClientId().equals(clientId)) {
+                        return Single.error(new InvalidGrantException(deviceCode));
+                    }
+                    if (isExpired(request)) {
+                        return Single.error(new ExpiredTokenException());
+                    }
+                    if (!isPending(request)) {
+                        return Single.error(new InvalidGrantException(deviceCode));
+                    }
+                    return Single.just(request);
+                });
+    }
+
+    @Override
+    public boolean isPending(DeviceAuthorizationRequest request) {
+        return DeviceAuthorizationRequestStatus.PENDING.name().equals(request.getStatus()) && !isExpired(request);
+    }
+
+    @Override
+    public boolean isExpired(DeviceAuthorizationRequest request) {
+        return pollingService.isExpired(request);
     }
 
     @Override

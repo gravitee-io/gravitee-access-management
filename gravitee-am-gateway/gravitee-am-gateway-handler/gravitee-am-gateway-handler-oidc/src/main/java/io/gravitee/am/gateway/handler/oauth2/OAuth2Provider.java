@@ -44,6 +44,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthor
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationChainExtensionRegistry;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestEndUserConsentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestMFAPromptHandler;
@@ -241,6 +242,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private AuthorizationChainExtensionRegistry authorizationChainExtensionRegistry;
+
     @Value("${legacy.handler.globalRootFlow.enabled:false}")
     private boolean globalRootFlow = false;
 
@@ -308,7 +312,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
+                .handler(authorizationChainExtensionRegistry.completionHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
+                .failureHandler(authorizationChainExtensionRegistry.failureHandler())
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
         // Authorization consent endpoint

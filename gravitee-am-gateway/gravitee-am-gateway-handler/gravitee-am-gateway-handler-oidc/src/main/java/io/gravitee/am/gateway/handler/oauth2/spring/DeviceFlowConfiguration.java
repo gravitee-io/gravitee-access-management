@@ -21,11 +21,16 @@ import io.gravitee.am.gateway.handler.common.service.polling.PollingService;
 import io.gravitee.am.gateway.handler.common.service.polling.impl.PollingServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.polling.impl.WidenIntervalPollingPolicy;
 import io.gravitee.am.gateway.handler.oauth2.DeviceFlowProvider;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device.DeviceFlowPageRenderer;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationChainExtension;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.device.DeviceVerificationChainExtension;
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestStatus;
 import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,5 +54,17 @@ public class DeviceFlowConfiguration implements ProtocolConfiguration {
         return new PollingServiceImpl<>(deviceAuthorizationRequestRepository,
                 request -> DeviceAuthorizationRequestStatus.valueOf(request.getStatus()).pollingState(),
                 retentionInSec, new WidenIntervalPollingPolicy<>());
+    }
+
+    @Bean
+    public DeviceFlowPageRenderer deviceFlowPageRenderer(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain) {
+        return new DeviceFlowPageRenderer(thymeleafTemplateEngine, domain);
+    }
+
+    @Bean
+    public AuthorizationChainExtension deviceVerificationChainExtension(Domain domain,
+                                                                        DeviceAuthorizationRequestService deviceAuthorizationRequestService,
+                                                                        DeviceFlowPageRenderer deviceFlowPageRenderer) {
+        return new DeviceVerificationChainExtension(domain, deviceAuthorizationRequestService, deviceFlowPageRenderer);
     }
 }

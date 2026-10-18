@@ -32,6 +32,8 @@ public enum Template {
     FORGOT_PASSWORD("forgot_password", "/forgotPassword"),
     RESET_PASSWORD("reset_password", "/resetPassword"),
     OAUTH2_USER_CONSENT("oauth2_user_consent", "/oauth/confirm_access"),
+    DEVICE_CODE_ENTRY("device_code_entry", "/oauth/device"),
+    DEVICE_COMPLETION("device_completion", null),
     MFA_ENROLL("mfa_enroll", "/mfa/enroll"),
     MFA_CHALLENGE("mfa_challenge", "/mfa/challenge"),
     MFA_CHALLENGE_ALTERNATIVES("mfa_challenge_alternatives", "/mfa/challenge/alternatives"),

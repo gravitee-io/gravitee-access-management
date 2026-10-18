@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.device;
 
+import io.gravitee.am.common.exception.oauth2.ExpiredTokenException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.spring.DeviceFlowConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
@@ -23,6 +25,7 @@ import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,10 +37,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -98,6 +106,124 @@ class DeviceAuthorizationRequestServiceTest {
     }
 
     @Test
+    void shouldNormalizeUserCodeBeforeLookup() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findByUserCode("BCDFGHJK")).thenReturn(Maybe.just(request));
+
+        service.findByUserCode("bcdf-ghjk").test().assertValue(request);
+    }
+
+    @Test
+    void shouldReturnEmptyForBlankUserCode() {
+        service.findByUserCode(" - ").test().assertNoValues().assertComplete();
+    }
+
+    @Test
+    void shouldApproveWithSubjectAndScopes() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        when(repository.update(any(), eq(DeviceAuthorizationRequestStatus.PENDING.name()))).thenAnswer(invocation -> Maybe.just(invocation.getArgument(0)));
+
+        service.approve("device-code", "client-id", "user-id", Set.of("openid")).test().assertComplete();
+
+        assertEquals(DeviceAuthorizationRequestStatus.APPROVED.name(), request.getStatus());
+        assertEquals("user-id", request.getSubject());
+        assertEquals(Set.of("openid"), request.getScopes());
+    }
+
+    @Test
+    void shouldRefuseToApproveWhenTheRequestLeftPendingConcurrently() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        when(repository.update(any(), eq(DeviceAuthorizationRequestStatus.PENDING.name()))).thenReturn(Maybe.empty());
+
+        service.approve("device-code", "client-id", "user-id", Set.of("openid")).test()
+                .assertError(InvalidGrantException.class);
+    }
+
+    @Test
+    void shouldRefuseToDenyWhenTheRequestLeftPendingConcurrently() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        when(repository.update(any(), eq(DeviceAuthorizationRequestStatus.PENDING.name()))).thenReturn(Maybe.empty());
+
+        service.deny("device-code", "client-id").test().assertError(InvalidGrantException.class);
+    }
+
+    @Test
+    void shouldRefuseToApproveForAnotherClient() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.approve("device-code", "another-client", "user-id", Set.of("openid")).test()
+                .assertError(InvalidGrantException.class);
+
+        assertEquals(DeviceAuthorizationRequestStatus.PENDING.name(), request.getStatus());
+    }
+
+    @Test
+    void shouldRefuseToApproveARequestThatIsNoLongerPending() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setStatus(DeviceAuthorizationRequestStatus.APPROVED.name());
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.approve("device-code", "client-id", "user-id", Set.of("openid")).test()
+                .assertError(InvalidGrantException.class);
+    }
+
+    @Test
+    void shouldRefuseToApproveAnExpiredRequest() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION - 10L).toEpochMilli()));
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.approve("device-code", "client-id", "user-id", Set.of("openid")).test()
+                .assertError(ExpiredTokenException.class);
+    }
+
+    @Test
+    void shouldDenyAPendingRequest() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+        when(repository.update(any(), eq(DeviceAuthorizationRequestStatus.PENDING.name()))).thenAnswer(invocation -> Maybe.just(invocation.getArgument(0)));
+
+        service.deny("device-code", "client-id").test().assertComplete();
+
+        assertEquals(DeviceAuthorizationRequestStatus.DENIED.name(), request.getStatus());
+    }
+
+    @Test
+    void shouldRefuseToDenyForAnotherClient() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.deny("device-code", "another-client").test().assertError(InvalidGrantException.class);
+
+        assertEquals(DeviceAuthorizationRequestStatus.PENDING.name(), request.getStatus());
+    }
+
+    @Test
+    void shouldRefuseToApproveARequestThatWasDenied() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setStatus(DeviceAuthorizationRequestStatus.DENIED.name());
+        when(repository.findById("device-code")).thenReturn(Maybe.just(request));
+
+        service.approve("device-code", "client-id", "user-id", Set.of("openid")).test()
+                .assertError(InvalidGrantException.class);
+
+        assertEquals(DeviceAuthorizationRequestStatus.DENIED.name(), request.getStatus());
+    }
+
+    @Test
+    void shouldDetectExpiryAgainstTheRetentionWindow() {
+        DeviceAuthorizationRequest request = pendingRequest();
+        assertFalse(service.isExpired(request));
+
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION - 10L).toEpochMilli()));
+        assertTrue(service.isExpired(request));
+    }
+
+    @Test
     void shouldInheritTheDomainTimingsWhenTheApplicationDoesNotOverrideThem() {
         withDeviceFlowSettings();
 
@@ -145,4 +271,15 @@ class DeviceAuthorizationRequestServiceTest {
         client.setDeviceFlowSettings(override);
     }
 
+    private DeviceAuthorizationRequest pendingRequest() {
+        DeviceAuthorizationRequest request = new DeviceAuthorizationRequest();
+        request.setId("device-code");
+        request.setUserCode("BCDFGHJK");
+        request.setClientId("client-id");
+        request.setStatus(DeviceAuthorizationRequestStatus.PENDING.name());
+        request.setCreatedAt(new Date());
+        request.setLastAccessAt(new Date());
+        request.setExpireAt(new Date(Instant.now().plusSeconds(EXPIRY + RETENTION).toEpochMilli()));
+        return request;
+    }
 }
