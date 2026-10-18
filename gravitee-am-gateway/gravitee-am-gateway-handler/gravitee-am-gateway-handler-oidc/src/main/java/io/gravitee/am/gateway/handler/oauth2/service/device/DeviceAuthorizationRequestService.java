@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.device;
 
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.Set;
@@ -33,6 +34,38 @@ public interface DeviceAuthorizationRequestService {
      * Issue a device code and a user code for the given client and requested scopes.
      */
     Single<DeviceAuthorizationRequest> register(Client client, Set<String> scopes);
+
+    /**
+     * @param userCode the code as typed by the end user, in any case and with any separator
+     */
+    Maybe<DeviceAuthorizationRequest> findByUserCode(String userCode);
+
+    /**
+     * Record the end user's approval so the next poll of the device returns tokens.
+     *
+     * Rejects a request that is no longer pending, that has expired, or that belongs to another
+     * client, so that an approval cannot land on a request that moved on since the code was typed.
+     */
+    Single<DeviceAuthorizationRequest> approve(String deviceCode, String clientId, String subject, Set<String> scopes);
+
+    /**
+     * Record the end user's rejection so the next poll of the device returns access_denied.
+     *
+     * Applies the same guards as the approval, so that a request which has expired or already
+     * reached a terminal state cannot be rejected either.
+     */
+    Single<DeviceAuthorizationRequest> deny(String deviceCode, String clientId);
+
+    /**
+     * Whether the codes of this request have lapsed. A request past expiry is still readable until
+     * its retention window closes, so it can report as expired rather than as missing.
+     */
+    boolean isExpired(DeviceAuthorizationRequest request);
+
+    /**
+     * Whether this request is still waiting for its end user, and its codes are still valid.
+     */
+    boolean isPending(DeviceAuthorizationRequest request);
 
     /**
      * Validity, in seconds, advertised to the device for the codes it has just been issued.

@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.oauth2.ClientIds;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator;
 import io.gravitee.am.gateway.handler.root.service.RedirectUriValidator.CheckMethod;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -77,6 +78,10 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
+        if (DeviceFlowContext.isDeviceFlow(context)) {
+            context.next();
+            return;
+        }
         getOperation(context)
                 .doOnSuccess(op -> parseRedirectUriParameter(context, op))
                 .subscribe(x -> context.next(), context::fail);

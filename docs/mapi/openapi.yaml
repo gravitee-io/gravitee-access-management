@@ -1563,6 +1563,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -1965,6 +1967,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -4117,6 +4121,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -4908,6 +4914,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -10487,6 +10495,8 @@ paths:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -15978,6 +15988,8 @@ components:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES
@@ -16087,6 +16099,8 @@ components:
           - FORGOT_PASSWORD
           - RESET_PASSWORD
           - OAUTH2_USER_CONSENT
+          - DEVICE_CODE_ENTRY
+          - DEVICE_COMPLETION
           - MFA_ENROLL
           - MFA_CHALLENGE
           - MFA_CHALLENGE_ALTERNATIVES

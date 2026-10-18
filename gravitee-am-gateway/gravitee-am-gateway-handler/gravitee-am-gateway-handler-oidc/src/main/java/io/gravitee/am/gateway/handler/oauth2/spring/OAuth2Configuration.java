@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.oauth2.impl.DelegatingInternalClien
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationChainExtensionRegistry;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
@@ -233,6 +234,11 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public ResourceConsistencyValidationService resourceConsistencyValidationService(Environment environment) {
         return new ResourceConsistencyValidationServiceImpl(environment);
+    }
+
+    @Bean
+    public AuthorizationChainExtensionRegistry authorizationChainExtensionRegistry() {
+        return new AuthorizationChainExtensionRegistry();
     }
 
     @Bean
