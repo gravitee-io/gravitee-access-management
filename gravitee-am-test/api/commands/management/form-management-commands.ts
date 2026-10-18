@@ -23,3 +23,11 @@ export const preview = (domainId, accessToken, body) =>
     domain: domainId,
     previewRequest: body,
   });
+
+export const createDomainForm = (domainId, accessToken, body) =>
+  getFormApi(accessToken).createForm({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    newForm: body,
+  });
