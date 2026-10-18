@@ -22,6 +22,8 @@ import { patchDomain, waitFor, waitForDomainSync } from '@management-commands/do
 import { createDomainForm } from '@management-commands/form-management-commands';
 import { JWT_FORMAT } from '@specs-utils/jwt-format';
 import { retryImmediatelyForThisFile, setup } from '../../test-fixture';
+import { getAuditApi } from '@management-commands/service/utils';
+import { retryUntil } from '@utils-commands/retry';
 import type { ApplicationDeviceFlowSettings } from '@management-models/ApplicationDeviceFlowSettings';
 
 setup(200000);
@@ -470,6 +472,80 @@ describe('OAuth2 - RFC 8628 - Device Authorization Grant', () => {
         expect(rejection.text).toContain('overridden completion page');
         expect(rejection.text).toContain('invalid');
       });
+    });
+  });
+
+  describe('audit log', () => {
+    const deviceFlowAudits = (type: string, from: number) =>
+      retryUntil(
+        () =>
+          getAuditApi(fixture.accessToken).listDomainAudits({
+            organizationId: process.env.AM_DEF_ORG_ID,
+            environmentId: process.env.AM_DEF_ENV_ID,
+            domain: fixture.masterDomain.id,
+            type,
+            from,
+            size: 10,
+          }),
+        (page) => page.data?.length > 0,
+        { timeoutMillis: 10_000, intervalMillis: 250 },
+      );
+
+    it('must record an approval against the user who authorized the device', async () => {
+      const from = Date.now();
+      const body = await requestDeviceCode('scope=openid%20scope1', confidentialAuth());
+
+      await approveWithRememberedConsent(body.user_code, confidentialClientId());
+
+      const audits = await deviceFlowAudits('DEVICE_FLOW_APPROVED', from);
+      expect(audits.data[0]).toMatchObject({
+        type: 'DEVICE_FLOW_APPROVED',
+        outcome: { status: 'success' },
+        actor: { alternativeId: user.username, type: 'USER' },
+        target: { id: fixture.application.id, type: 'APPLICATION' },
+      });
+    });
+
+    it('must record a denial against the user who refused the device', async () => {
+      const from = Date.now();
+      const body = await requestDeviceCode('scope=openid%20scope1', confidentialAuth());
+      const session = await signInOnSecondDevice(confidentialClientId());
+
+      await rejectCode(session, body.user_code).expect(200);
+
+      const audits = await deviceFlowAudits('DEVICE_FLOW_DENIED', from);
+      expect(audits.data[0]).toMatchObject({
+        type: 'DEVICE_FLOW_DENIED',
+        outcome: { status: 'success' },
+        actor: { alternativeId: user.username, type: 'USER' },
+        target: { id: fixture.application.id, type: 'APPLICATION' },
+      });
+    });
+
+    it('must record a failed verification, and nothing at all for the code issuance itself', async () => {
+      const from = Date.now();
+      await requestDeviceCode('scope=openid%20scope1', confidentialAuth());
+      const session = await signInOnSecondDevice(confidentialClientId());
+
+      await enterCode(session, 'ZZZZ-ZZZZ').expect(302);
+
+      const audits = await deviceFlowAudits('DEVICE_FLOW_VERIFICATION_FAILED', from);
+      expect(audits.data[0]).toMatchObject({
+        type: 'DEVICE_FLOW_VERIFICATION_FAILED',
+        outcome: { status: 'failure' },
+        actor: { alternativeId: user.username, type: 'USER' },
+        target: { id: fixture.application.id, type: 'APPLICATION' },
+      });
+
+      const approvals = await getAuditApi(fixture.accessToken).listDomainAudits({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: fixture.masterDomain.id,
+        type: 'DEVICE_FLOW_APPROVED',
+        from,
+        size: 10,
+      });
+      expect(approvals.data ?? []).toHaveLength(0);
     });
   });
 

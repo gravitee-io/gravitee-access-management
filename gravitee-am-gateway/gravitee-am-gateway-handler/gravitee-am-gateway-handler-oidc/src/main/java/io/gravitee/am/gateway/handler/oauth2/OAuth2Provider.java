@@ -343,10 +343,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
-                .handler(new DeviceVerificationCompletionHandler(deviceAuthorizationRequestService, deviceFlowPageRenderer))
+                .handler(new DeviceVerificationCompletionHandler(deviceAuthorizationRequestService, deviceFlowPageRenderer, auditService))
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService));
         if (domain.useDeviceFlow()) {
-            authorizeRoute.failureHandler(new DeviceVerificationDenialHandler(deviceAuthorizationRequestService, deviceFlowPageRenderer));
+            authorizeRoute.failureHandler(new DeviceVerificationDenialHandler(deviceAuthorizationRequestService, deviceFlowPageRenderer, auditService));
         }
         authorizeRoute.failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
@@ -421,7 +421,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
             oauth2Router.route(HttpMethod.POST, PATH_DEVICE)
                     .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                     .handler(authenticationFlowHandler.create())
-                    .handler(new DeviceVerificationSubmitEndpoint(deviceAuthorizationRequestService, deviceFlowPageRenderer, deviceFlowRateLimiterService));
+                    .handler(new DeviceVerificationSubmitEndpoint(deviceAuthorizationRequestService, deviceFlowPageRenderer, deviceFlowRateLimiterService, auditService));
         }
 
         // Error endpoint

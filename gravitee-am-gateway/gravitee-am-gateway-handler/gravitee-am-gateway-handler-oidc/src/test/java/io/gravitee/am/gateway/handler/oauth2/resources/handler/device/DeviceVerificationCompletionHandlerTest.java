@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.device;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.ExpiredTokenException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -25,7 +27,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationReques
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
@@ -33,6 +38,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -65,6 +71,9 @@ public class DeviceVerificationCompletionHandlerTest extends RxWebTestBase {
     @Mock
     private Session session;
 
+    @Mock
+    private AuditService auditService;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -86,7 +95,7 @@ public class DeviceVerificationCompletionHandlerTest extends RxWebTestBase {
                     context.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
                     context.next();
                 })
-                .handler(new DeviceVerificationCompletionHandler(requestService, new DeviceFlowPageRenderer(engine, new Domain())))
+                .handler(new DeviceVerificationCompletionHandler(requestService, new DeviceFlowPageRenderer(engine, new Domain()), auditService))
                 .handler(rc -> rc.response().setStatusCode(204).end())
                 .failureHandler(rc -> rc.response().setStatusCode(403).end());
     }
@@ -142,6 +151,42 @@ public class DeviceVerificationCompletionHandlerTest extends RxWebTestBase {
     @Test
     public void shouldRenderTheInvalidOutcomeWhenTheCodeIsNoLongerActionable() throws Exception {
         assertOutcomeOnApprovalFailure(new InvalidGrantException("device-code"), "invalid");
+    }
+
+    @Test
+    public void shouldReportAnApprovedEventWithTheUserAsActor() throws Exception {
+        when(session.get(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY)).thenReturn("client-id");
+        when(session.get(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY)).thenReturn("device-code");
+        when(requestService.approve(eq("device-code"), eq("client-id"), eq("user-id"), eq(Set.of("openid"))))
+                .thenReturn(Single.just(new DeviceAuthorizationRequest()));
+        when(engine.render(any(Map.class), eq("device_completion|client-internal-id")))
+                .thenReturn(Single.just(Buffer.buffer("completion page")));
+
+        User user = new User();
+        user.setId("user-id");
+        user.setUsername("bob");
+        router.route().order(-1).handler(context -> {
+            setUser(context, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
+            context.next();
+        });
+
+        testRequest(HttpMethod.GET, "/oauth/authorize?client_id=client-id", null, 200, "OK", "completion page");
+
+        ArgumentCaptor<AuditBuilder> captor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService).report(captor.capture());
+        Audit audit = captor.getValue().build(new ObjectMapper());
+        assertEquals(EventType.DEVICE_FLOW_APPROVED, audit.getType());
+        assertEquals("user-id", audit.getActor().getId());
+        assertEquals("bob", audit.getActor().getAlternativeId());
+        assertEquals("client-internal-id", audit.getTarget().getId());
+        assertEquals("domain-id", audit.getReferenceId());
+    }
+
+    @Test
+    public void shouldNotReportAnApprovedEventWhenTheApprovalFailed() throws Exception {
+        assertOutcomeOnApprovalFailure(new ExpiredTokenException(), "expired");
+
+        verify(auditService, never()).report(any());
     }
 
     private void assertOutcomeOnApprovalFailure(Throwable failure, String expectedOutcome) throws Exception {
