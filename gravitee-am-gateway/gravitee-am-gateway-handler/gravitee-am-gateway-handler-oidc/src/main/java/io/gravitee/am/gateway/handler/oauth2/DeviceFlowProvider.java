@@ -189,7 +189,7 @@ public class DeviceFlowProvider extends AbstractProtocolProvider {
         deviceRouter.route(HttpMethod.POST, PATH_DEVICE)
                 .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(authenticationFlowHandler.create())
-                .handler(new DeviceVerificationSubmitEndpoint(deviceAuthorizationRequestService, pageRenderer, deviceFlowRateLimiterService));
+                .handler(new DeviceVerificationSubmitEndpoint(deviceAuthorizationRequestService, pageRenderer, deviceFlowRateLimiterService, auditService));
 
         deviceRouter.route().failureHandler(new ExceptionHandler());
 

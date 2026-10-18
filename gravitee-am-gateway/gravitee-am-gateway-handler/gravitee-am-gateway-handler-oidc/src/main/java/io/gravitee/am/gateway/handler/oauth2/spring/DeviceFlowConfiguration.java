@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationR
 import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.gravitee.am.service.AuditService;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -64,7 +65,8 @@ public class DeviceFlowConfiguration implements ProtocolConfiguration {
     @Bean
     public AuthorizationChainExtension deviceVerificationChainExtension(Domain domain,
                                                                         DeviceAuthorizationRequestService deviceAuthorizationRequestService,
-                                                                        DeviceFlowPageRenderer deviceFlowPageRenderer) {
-        return new DeviceVerificationChainExtension(domain, deviceAuthorizationRequestService, deviceFlowPageRenderer);
+                                                                        DeviceFlowPageRenderer deviceFlowPageRenderer,
+                                                                        AuditService auditService) {
+        return new DeviceVerificationChainExtension(domain, deviceAuthorizationRequestService, deviceFlowPageRenderer, auditService);
     }
 }

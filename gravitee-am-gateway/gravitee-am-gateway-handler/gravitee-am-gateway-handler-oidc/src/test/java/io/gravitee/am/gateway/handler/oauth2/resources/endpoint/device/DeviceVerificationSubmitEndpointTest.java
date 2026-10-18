@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.oauth2.ExpiredTokenException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.service.ratelimit.DeviceFlowRateLimiterService;
@@ -24,7 +27,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationR
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -35,6 +41,7 @@ import io.vertx.rxjava3.core.http.HttpClientResponse;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -72,6 +79,9 @@ public class DeviceVerificationSubmitEndpointTest extends RxWebTestBase {
     @Mock
     private DeviceFlowRateLimiterService rateLimiterService;
 
+    @Mock
+    private AuditService auditService;
+
     private boolean anonymous;
 
     @Override
@@ -97,7 +107,7 @@ public class DeviceVerificationSubmitEndpointTest extends RxWebTestBase {
                     }
                     context.next();
                 })
-                .handler(new DeviceVerificationSubmitEndpoint(requestService, new DeviceFlowPageRenderer(engine, new Domain()), rateLimiterService))
+                .handler(new DeviceVerificationSubmitEndpoint(requestService, new DeviceFlowPageRenderer(engine, new Domain()), rateLimiterService, auditService))
                 .failureHandler(rc -> rc.response().setStatusCode(500).end());
     }
 
@@ -327,6 +337,85 @@ public class DeviceVerificationSubmitEndpointTest extends RxWebTestBase {
         verify(session).put(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY, "device-code");
         verify(session).put(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY, "client-id");
         verify(session).remove(ConstantKeys.RETURN_URL_KEY);
+    }
+
+    @Test
+    public void shouldReportAVerificationFailedEventWhenTheBudgetIsExhausted() throws Exception {
+        when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+        when(rateLimiterService.hasAttemptsLeft("user-id", "domain-id")).thenReturn(Single.just(false));
+
+        postForm("user_code=BCDF-GHJK");
+
+        Audit audit = reportedAudit();
+        assertEquals(EventType.DEVICE_FLOW_VERIFICATION_FAILED, audit.getType());
+        assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
+        assertTrue(audit.getOutcome().getMessage().contains("too many attempts"));
+        assertEquals("user-id", audit.getActor().getId());
+    }
+
+    @Test
+    public void shouldReportAVerificationFailedEventWhenNoApplicationIsWaitingOnTheCode() throws Exception {
+        when(requestService.findByUserCode("BCDF-GHJK")).thenReturn(Maybe.empty());
+
+        postForm("user_code=BCDF-GHJK");
+
+        Audit audit = reportedAudit();
+        assertEquals(EventType.DEVICE_FLOW_VERIFICATION_FAILED, audit.getType());
+        assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
+        assertEquals("user-id", audit.getActor().getId());
+        assertEquals("client-internal-id", audit.getTarget().getId());
+        assertEquals("domain-id", audit.getReferenceId());
+    }
+
+    @Test
+    public void shouldReportAVerificationFailedEventWhenTheCodeBelongsToAnotherApplication() throws Exception {
+        DeviceAuthorizationRequest request = pendingRequest();
+        request.setClientId("another-client");
+        when(requestService.findByUserCode("BCDF-GHJK")).thenReturn(Maybe.just(request));
+
+        postForm("user_code=BCDF-GHJK");
+
+        assertEquals(EventType.DEVICE_FLOW_VERIFICATION_FAILED, reportedAudit().getType());
+    }
+
+    @Test
+    public void shouldReportADeniedEventWithTheUserAsActorWhenTheCodeIsRejected() throws Exception {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(requestService.findByUserCode("BCDF-GHJK")).thenReturn(Maybe.just(request));
+        when(requestService.deny("device-code", "client-id")).thenReturn(Single.just(request));
+        expectCompletionPage();
+
+        postForm("user_code=BCDF-GHJK&action=reject");
+
+        Audit audit = reportedAudit();
+        assertEquals(EventType.DEVICE_FLOW_DENIED, audit.getType());
+        assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
+        assertEquals("user-id", audit.getActor().getId());
+        assertEquals("client-internal-id", audit.getTarget().getId());
+    }
+
+    @Test
+    public void shouldNotReportAnyEventWhenTheCodeIsAccepted() throws Exception {
+        DeviceAuthorizationRequest request = pendingRequest();
+        when(requestService.findByUserCode("BCDF-GHJK")).thenReturn(Maybe.just(request));
+        when(requestService.isPending(request)).thenReturn(true);
+
+        postForm("user_code=BCDF-GHJK");
+
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldNotReportAVerificationFailedEventWhenNoCodeIsSubmitted() throws Exception {
+        postForm("");
+
+        verify(auditService, never()).report(any());
+    }
+
+    private Audit reportedAudit() {
+        ArgumentCaptor<AuditBuilder> captor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService).report(captor.capture());
+        return captor.getValue().build(new ObjectMapper());
     }
 
     private void assertBackToCodeEntryPage(HttpClientResponse response, String expectedError) {

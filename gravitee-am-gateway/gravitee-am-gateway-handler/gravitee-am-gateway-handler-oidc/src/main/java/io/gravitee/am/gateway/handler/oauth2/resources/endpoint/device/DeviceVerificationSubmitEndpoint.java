@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.device;
 
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.service.ratelimit.DeviceFlowRateLimiterService;
@@ -25,6 +26,9 @@ import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.gateway.DeviceFlowAuditBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -62,13 +66,16 @@ public class DeviceVerificationSubmitEndpoint implements Handler<RoutingContext>
     private final DeviceAuthorizationRequestService requestService;
     private final DeviceFlowPageRenderer renderer;
     private final DeviceFlowRateLimiterService rateLimiterService;
+    private final AuditService auditService;
 
     public DeviceVerificationSubmitEndpoint(DeviceAuthorizationRequestService requestService,
                                             DeviceFlowPageRenderer renderer,
-                                            DeviceFlowRateLimiterService rateLimiterService) {
+                                            DeviceFlowRateLimiterService rateLimiterService,
+                                            AuditService auditService) {
         this.requestService = requestService;
         this.renderer = renderer;
         this.rateLimiterService = rateLimiterService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -103,6 +110,7 @@ public class DeviceVerificationSubmitEndpoint implements Handler<RoutingContext>
                             if (allowed) {
                                 lookUpCode(context, client, userCode, rejected);
                             } else {
+                                reportVerificationFailed(context, "Device flow code entry refused: too many attempts");
                                 backToCodeEntryPage(context, ERROR_TOO_MANY_ATTEMPTS);
                             }
                         },
@@ -151,7 +159,10 @@ public class DeviceVerificationSubmitEndpoint implements Handler<RoutingContext>
     private void deny(RoutingContext context, Client client, DeviceAuthorizationRequest request) {
         requestService.deny(request.getId(), client.getClientId())
                 .subscribe(
-                        denied -> renderer.renderCompletion(context, DeviceFlowOutcome.DENIED),
+                        denied -> {
+                            reportDenied(context, client);
+                            renderer.renderCompletion(context, DeviceFlowOutcome.DENIED);
+                        },
                         error -> DeviceFlowOutcome.of(error).ifPresentOrElse(
                                 outcome -> renderer.renderCompletion(context, outcome),
                                 () -> {
@@ -161,7 +172,27 @@ public class DeviceVerificationSubmitEndpoint implements Handler<RoutingContext>
     }
 
     private void onUnusableCode(RoutingContext context, boolean rejected) {
+        reportVerificationFailed(context, "Device flow user code verification failed");
         onWrongCode(context, () -> reportUnusableCode(context, rejected));
+    }
+
+    private void reportVerificationFailed(RoutingContext context, String reason) {
+        auditService.report(AuditBuilder.builder(DeviceFlowAuditBuilder.class)
+                .type(EventType.DEVICE_FLOW_VERIFICATION_FAILED)
+                .throwable(new Throwable(reason))
+                .user(RoutingContextHelper.endUser(context))
+                .application(context.get(ConstantKeys.CLIENT_CONTEXT_KEY))
+                .ipAddress(context)
+                .userAgent(context));
+    }
+
+    private void reportDenied(RoutingContext context, Client client) {
+        auditService.report(AuditBuilder.builder(DeviceFlowAuditBuilder.class)
+                .type(EventType.DEVICE_FLOW_DENIED)
+                .user(RoutingContextHelper.endUser(context))
+                .application(client)
+                .ipAddress(context)
+                .userAgent(context));
     }
 
     private void reportUnusableCode(RoutingContext context, boolean rejected) {
