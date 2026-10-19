@@ -17,6 +17,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { waitForCockpitConnection } from '@cloud-commands/cockpit-commands';
 import { retryUntil } from '@utils-commands/retry';
+import { SoftwareAuthenticator } from '@gateway-commands/webauthn-authenticator';
+import { registerWebAuthnCredential, signInWithWebAuthn, WebAuthnClient } from '@gateway-commands/webauthn-commands';
 import { setup } from '../test-fixture';
 import { CloudWebAuthnFixture, setupCloudWebAuthnFixture } from './fixtures/cloud-webauthn-fixture';
 
@@ -24,9 +26,9 @@ setup(200000);
 
 /**
  * In managed cloud the browser reaches the gateway on the environment's entrypoint, so that host, not
- * gateway.url and not the domain's own WebAuthn settings, is what the ceremony has to be scoped to. The
- * origin is only compared server-side during verification and needs a real authenticator, so these
- * assert on the relying party id the gateway hands the browser, which travels with it.
+ * gateway.url and not the domain's own WebAuthn settings, is what the ceremony has to be scoped to: the
+ * relying party id the gateway hands the browser, and the origin and relying party id it verifies the
+ * response against. A software authenticator completes the ceremonies through the entrypoint host.
  *
  * The fixture's domains deliberately point their origin at localhost, so a passing assertion can only
  * mean the entrypoint overrode it. A relying party id the domain set for itself is the exception: that
@@ -71,6 +73,47 @@ describe('AM - Cloud - webauthn relying party from the environment entrypoint', 
     const options = await fixture.configuredAssertionOptions();
 
     expect(options.rpId).toEqual(fixture.configuredRelyingPartyId);
+  });
+
+  describe('passwordless ceremony through the entrypoint', () => {
+    let client: WebAuthnClient;
+    let username: string;
+    let authenticator: SoftwareAuthenticator;
+
+    beforeAll(async () => {
+      client = fixture.passwordlessClient(fixture.overridingHost);
+      const user = await fixture.createUser();
+      username = user.username;
+      authenticator = SoftwareAuthenticator.create();
+
+      const registration = await registerWebAuthnCredential(client, user, authenticator);
+
+      expect(registration.code).toEqual(expect.any(String));
+    });
+
+    it('signs in without a password with the credential registered through the entrypoint', async () => {
+      const login = await signInWithWebAuthn(client, username, authenticator);
+
+      expect(login.code).toEqual(expect.any(String));
+    });
+
+    // The response is verified against the relying party id the gateway gave the browser, so a
+    // signature for the one the domain settings fall back to cannot pass.
+    it('refuses an assertion made for the relying party of the configured origin', async () => {
+      const login = await signInWithWebAuthn(client, username, authenticator, { rpId: 'localhost' });
+
+      expect(login.code).toBeUndefined();
+      expect(login.error).toBe('technical_error');
+    });
+
+    // Not pinned to an error code: the origin check fails before webauthn4j verifies anything, and that
+    // failure ends on `unexpected_error` rather than `technical_error`, as before the webauthn4j migration.
+    it('refuses an assertion whose client data reports the configured origin', async () => {
+      const login = await signInWithWebAuthn(client, username, authenticator, { origin: 'http://localhost:8092' });
+
+      expect(login.code).toBeUndefined();
+      expect(login.error).toEqual(expect.any(String));
+    });
   });
 
   it('picks up re-synced access points without redeploying the domain', async () => {
