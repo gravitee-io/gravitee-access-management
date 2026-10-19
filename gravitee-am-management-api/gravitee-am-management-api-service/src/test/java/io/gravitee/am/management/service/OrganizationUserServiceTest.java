@@ -35,7 +35,11 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewOrganizationUser;
+<<<<<<< HEAD
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+=======
+import io.gravitee.am.service.model.UpdateUser;
+>>>>>>> ebe62ad (fix(management): end the access of disabled organization users (#8918))
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.rxjava3.core.Completable;
@@ -601,12 +605,144 @@ public class OrganizationUserServiceTest {
         user.setReferenceType(ReferenceType.ORGANIZATION);
 
         when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "ud", user.getId())).thenReturn(Completable.complete());
 
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", user, "Test123!", null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertNoErrors();
+        testObserver.assertComplete();
 
-        verify(commonUserService).update(any());
+        verify(commonUserService).update(argThat(updated -> updated.getLastLogoutAt() != null));
+        verify(commonUserService).revokeUserAccessTokens(ReferenceType.ORGANIZATION, "ud", user.getId());
+        verify(auditService).report(argThat(audit -> EventType.USER_PASSWORD_RESET.equals(audit.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    public void shouldNotResetPassword_tokenRevocationFails() {
+        when(passwordService.isValid(anyString())).thenReturn(true);
+
+        final User user = new User();
+        user.setUsername("username");
+        user.setSource("gravitee");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "ud", user.getId())).thenReturn(Completable.error(new IllegalStateException("revocation failed")));
+
+        final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", user, "Test123!", null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(IllegalStateException.class);
+
+        verify(commonUserService, never()).update(any(User.class));
+    }
+
+    @Test
+    public void shouldNotDisableUser_tokenRevocationFails() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(true);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Completable.error(new IllegalStateException("revocation failed")));
+
+        organizationUserService.updateStatus(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", false, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(IllegalStateException.class);
+
+        verify(commonUserService, never()).update(any(User.class));
+    }
+
+    @Test
+    public void shouldDisableUser_revokeTokensAndEndSessions() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(true);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Completable.complete());
+
+        organizationUserService.updateStatus(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", false, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(updated -> !updated.isEnabled() && updated.getLastLogoutAt() != null);
+
+        verify(commonUserService).revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id");
+        verify(auditService).report(argThat(audit -> EventType.USER_DISABLED.equals(audit.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    public void shouldEnableUser_keepTokens() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(false);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(commonUserService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        organizationUserService.updateStatus(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", true, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(updated -> updated.isEnabled() && updated.getLastLogoutAt() == null);
+
+        verify(commonUserService, never()).revokeUserAccessTokens(any(), any(), any());
+        verify(auditService).report(argThat(audit -> EventType.USER_ENABLED.equals(audit.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    public void shouldUpdateUser_disableWhenEnabledIsFalse() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(true);
+
+        final UpdateUser updateUser = new UpdateUser();
+        updateUser.setEnabled(false);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
+        when(commonUserService.update(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", updateUser)).thenReturn(Single.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Completable.complete());
+
+        organizationUserService.update(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", updateUser, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(updated -> !updated.isEnabled() && updated.getLastLogoutAt() != null);
+
+        verify(commonUserService).revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id");
+        verify(auditService).report(argThat(audit -> EventType.USER_UPDATED.equals(audit.build(new ObjectMapper()).getType())));
+        verify(auditService).report(argThat(audit -> EventType.USER_DISABLED.equals(audit.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    public void shouldUpdateUser_keepStatusWhenEnabledIsOmitted() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(false);
+
+        final UpdateUser updateUser = new UpdateUser();
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
+        when(commonUserService.update(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", updateUser)).thenReturn(Single.just(user));
+
+        organizationUserService.update(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", updateUser, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(updated -> !updated.isEnabled());
+
+        verify(commonUserService, never()).update(any(User.class));
+        verify(auditService, never()).report(argThat(audit -> EventType.USER_ENABLED.equals(audit.build(new ObjectMapper()).getType())));
     }
 
     @Test
