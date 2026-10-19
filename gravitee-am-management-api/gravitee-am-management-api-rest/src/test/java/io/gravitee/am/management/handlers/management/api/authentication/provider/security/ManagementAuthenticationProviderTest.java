@@ -40,6 +40,7 @@ import org.springframework.security.core.Authentication;
 import java.util.Arrays;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -168,7 +169,7 @@ public class ManagementAuthenticationProviderTest {
         when(authenticationProvider.loadUserByUsername(any(io.gravitee.am.identityprovider.api.Authentication.class))).thenReturn(Maybe.just(user));
         when(identityProviderManager.getIdentityProvider("idp1")).thenReturn(new IdentityProvider());
         when(identityProviderManager.get("idp1")).thenReturn(authenticationProvider);
-        doThrow(new DisabledException("User is disabled")).when(authenticationService).checkUserEnabled(user, Organization.DEFAULT, "idp1");
+        doThrow(new DisabledException("User is disabled")).when(authenticationService).checkUserEnabled(eq(user), eq(Organization.DEFAULT), eq("idp1"), any(), any());
 
         Assertions.assertThrows(DisabledException.class,
                 () -> managementAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken("username", "password")));

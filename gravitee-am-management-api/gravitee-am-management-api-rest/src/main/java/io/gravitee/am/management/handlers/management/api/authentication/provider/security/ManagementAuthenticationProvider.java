@@ -161,7 +161,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         }
 
         if (user != null) {
-            authenticationService.checkUserEnabled(user, organizationId, details.get(SOURCE));
+            authenticationService.checkUserEnabled(user, organizationId, details.get(SOURCE), details.get(Claims.IP_ADDRESS), details.get(Claims.USER_AGENT));
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(), AuthorityUtils.NO_AUTHORITIES);
             authenticationToken.setDetails(details);
             return authenticationToken;

@@ -184,13 +184,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void checkUserEnabled(User principal, String organizationId, String source) {
+    public void checkUserEnabled(User principal, String organizationId, String source, String ipAddress, String userAgent) {
         io.gravitee.am.model.User organizationUser = block(findOrganizationUser(principal, organizationId, source));
         if (organizationUser != null && !organizationUser.isEnabled()) {
             DisabledException exception = new DisabledException("User is disabled");
             auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
                     .user(organizationUser)
                     .reference(Reference.organization(organizationId))
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
                     .throwable(exception));
             throw exception;
         }

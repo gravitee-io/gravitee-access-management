@@ -73,7 +73,7 @@ class CockpitAuthenticationFilterTest {
         jwt.put(Claims.ORGANIZATION, Organization.DEFAULT);
         when(jwtParser.parse(TOKEN)).thenReturn(jwt);
         doThrow(new DisabledException("User is disabled")).when(authenticationService)
-                .checkUserEnabled(argThat(user -> "cockpit-user-id".equals(user.getId())), eq(Organization.DEFAULT), eq("cockpit"));
+                .checkUserEnabled(argThat(user -> "cockpit-user-id".equals(user.getId())), eq(Organization.DEFAULT), eq("cockpit"), any(), any());
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/cockpit");
         request.setPathInfo("/cockpit");

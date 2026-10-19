@@ -27,6 +27,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.http.Jet
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
+import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import jakarta.servlet.FilterChain;
@@ -122,7 +123,8 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
                 log.error("User is null, fail to authenticate user");
                 throw new BadCredentialsException("User is null after authentication process");
             }
-            authenticationService.checkUserEnabled(user, identityProvider.getReferenceId(), providerId);
+            WebAuthenticationDetails webDetails = new WebAuthenticationDetails(request);
+            authenticationService.checkUserEnabled(user, identityProvider.getReferenceId(), providerId, webDetails.getRemoteAddress(), webDetails.getUserAgent());
 
             // set user identity provider source
             Map<String, String> details = new LinkedHashMap<>();

@@ -29,5 +29,5 @@ public interface AuthenticationService {
     /**
      * @throws org.springframework.security.authentication.DisabledException if the organization user exists and is disabled
      */
-    void checkUserEnabled(User principal, String organizationId, String source);
+    void checkUserEnabled(User principal, String organizationId, String source, String ipAddress, String userAgent);
 }

@@ -242,10 +242,11 @@ public class AuthenticationServiceTest {
         user.setEnabled(false);
         when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "external-id", "idp")).thenReturn(Maybe.just(user));
 
-        assertThrows(DisabledException.class, () -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp"));
+        assertThrows(DisabledException.class, () -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp", "10.0.0.1", "test-agent"));
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(new ObjectMapper());
-            return builder.isFailure() && EventType.USER_LOGIN.equals(audit.getType()) && "user-id".equals(audit.getActor().getId());
+            return builder.isFailure() && EventType.USER_LOGIN.equals(audit.getType()) && "user-id".equals(audit.getActor().getId())
+                    && "10.0.0.1".equals(audit.getAccessPoint().getIpAddress()) && "test-agent".equals(audit.getAccessPoint().getUserAgent());
         }));
     }
 
@@ -258,7 +259,7 @@ public class AuthenticationServiceTest {
         when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "external-id", "idp")).thenReturn(Maybe.empty());
         when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "john", "idp")).thenReturn(Maybe.just(user));
 
-        assertDoesNotThrow(() -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp"));
+        assertDoesNotThrow(() -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp", null, null));
     }
 
     @Test
@@ -268,6 +269,6 @@ public class AuthenticationServiceTest {
         when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "external-id", "idp")).thenReturn(Maybe.empty());
         when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "john", "idp")).thenReturn(Maybe.empty());
 
-        assertDoesNotThrow(() -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp"));
+        assertDoesNotThrow(() -> authenticationService.checkUserEnabled(principal, ORGANIZATION_ID, "idp", null, null));
     }
 }

@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -86,7 +87,7 @@ class SocialAuthenticationFilterTest {
 
     @Test
     void shouldReject_disabledUser() {
-        doThrow(new DisabledException("User is disabled")).when(authenticationService).checkUserEnabled(user, Organization.DEFAULT, PROVIDER_ID);
+        doThrow(new DisabledException("User is disabled")).when(authenticationService).checkUserEnabled(eq(user), eq(Organization.DEFAULT), eq(PROVIDER_ID), any(), any());
 
         var exception = assertThrows(BadCredentialsException.class, () -> filter.attemptAuthentication(request(), new MockHttpServletResponse()));
 
