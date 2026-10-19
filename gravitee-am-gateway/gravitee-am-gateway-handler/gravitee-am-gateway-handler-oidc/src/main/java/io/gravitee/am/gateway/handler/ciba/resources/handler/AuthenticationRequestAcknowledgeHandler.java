@@ -15,27 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.ciba.resources.handler;
 
-import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
-import io.gravitee.am.authdevice.notifier.api.IdentityProviderDependent;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
-import io.gravitee.am.authdevice.notifier.api.model.FederatedConnection;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.utils.SecureRandomString;
-import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.ciba.service.response.CibaAuthenticationResponse;
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -55,7 +44,6 @@ import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import lombok.CustomLog;
 
 /**
@@ -71,22 +59,16 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
     private JWTService jwtService;
 
-    private IdentityProviderManager identityProviderManager;
-
-    private final AuthenticationDeviceNotifierManager deviceNotifierManager;
-
     @Value("${openid.ciba.auth-request.maxExpiry:3600}")
     private int maxExpiry = 3600;
 
     @Value("${openid.ciba.auth-request.maxNbf:3600}")
     private int maxNbf = 3600;
 
-    public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService, IdentityProviderManager identityProviderManager, AuthenticationDeviceNotifierManager deviceNotifierManager) {
+    public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService) {
         this.authRequestService = authRequestService;
         this.domain = domain;
         this.jwtService = jwtService;
-        this.identityProviderManager = identityProviderManager;
-        this.deviceNotifierManager = deviceNotifierManager;
     }
 
     @Override
@@ -153,29 +135,8 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                                         adRequest.setTransactionId(externalTrxId);
                                         adRequest.setDeviceNotifierId(authDeviceNotifierId);
                                         adRequest.setContext(context);
-                                        adRequest.setCallbackUrl(buildCallbackUrl(context));
 
-                                        final AuthenticationDeviceNotifierProvider notifierProvider =
-                                                deviceNotifierManager.getAuthDeviceNotifierProvider(authDeviceNotifierId);
-                                        final String idpId = (notifierProvider instanceof IdentityProviderDependent dep)
-                                                ? dep.getIdentityProviderId().orElse(null) : null;
-                                        final Single<ADNotificationRequest> withConnection;
-                                        if (idpId == null) {
-                                            withConnection = Single.just(adRequest);
-                                        } else {
-                                            final IdentityProvider idpModel = identityProviderManager.getIdentityProvider(idpId);
-                                            if (idpModel == null) {
-                                                return Single.error(new InvalidRequestException("CIBA federation IdP not found: " + idpId));
-                                            }
-                                            withConnection = identityProviderManager.get(idpId)
-                                                    .switchIfEmpty(Single.error(() -> new InvalidRequestException("CIBA federation IdP not available: " + idpId)))
-                                                    .map(provider -> {
-                                                        adRequest.setConnection(toFederatedConnection(provider));
-                                                        return adRequest;
-                                                    });
-                                        }
-
-                                        return withConnection.flatMap(ad -> authRequestService.notify(ad)
+                                        return authRequestService.notify(adRequest)
                                                 .flatMap(adResponse -> {
                                                     // Preserve existing externalInformation (including acrValues) and merge with new extraData
                                                     Map<String, Object> existingExternalInfo = req.getExternalInformation();
@@ -191,13 +152,11 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
                                                     req.setExternalInformation(mergedExternalInfo);
                                                     req.setExternalTrxId(adResponse.getTransactionId());
-                                                    // Persist the selected notifier id on the request so completion can
-                                                    // resolve the verifying OIDC IdP. completion resolves the IdP from
-                                                    // ADUserResponse.identityProviderId (self-described by the notifier).
-                                                    // register() does not set it, and it is the IdP-pipeline's resolution key.
+                                                    // Persist the selected notifier id on the request: a token poll asks this
+                                                    // notifier for its decision. register() does not set it.
                                                     req.setDeviceNotifierId(authDeviceNotifierId);
                                                     return authRequestService.updateAuthDeviceInformation(req);
-                                                }));
+                                                });
                                     })
                     ).subscribe(req -> {
                         CibaAuthenticationResponse response = new CibaAuthenticationResponse();
@@ -232,27 +191,6 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
         }
     }
 
-    /**
-     * Builds the CIBA callback URL the device notifier posts the authorization outcome to.
-     * Uses AM's proxy-aware {@link UriBuilderRequest#resolveProxyRequest} — the same builder that
-     * produces every other self-referential gateway URL (e.g. {@code /login/callback},
-     * {@code /logout/callback}) — so the URL honours {@code X-Forwarded-*} headers and the domain
-     * context path, rather than being reverse-engineered from the inbound request URI.
-     */
-    private static String buildCallbackUrl(RoutingContext context) {
-        return UriBuilderRequest.resolveProxyRequest(context.request(),
-                context.get(CONTEXT_PATH) + CIBAProvider.CIBA_PATH + CIBAProvider.AUTHENTICATION_CALLBACK_ENDPOINT);
-    }
-
-    static FederatedConnection toFederatedConnection(AuthenticationProvider provider) {
-        if (!(provider instanceof OpenIDConnectAuthenticationProvider<?> oidc)) {
-            throw new InvalidRequestException("CIBA federation IdP is not an OpenID Connect provider");
-        }
-        OpenIDConnectIdentityProviderConfiguration cfg = oidc.getConfiguration();
-        String scope = (cfg.getScopes() != null) ? String.join(" ", cfg.getScopes()) : "";
-        return new FederatedConnection(cfg.getClientId(), cfg.getClientSecret(), scope, cfg.getWellKnownUri(),
-                cfg.getClientAuthenticationMethod());
-    }
 
     private static boolean hasValidExp(Integer exp, Integer maxRequestLifetimeSecs) {
         if (exp == null) {

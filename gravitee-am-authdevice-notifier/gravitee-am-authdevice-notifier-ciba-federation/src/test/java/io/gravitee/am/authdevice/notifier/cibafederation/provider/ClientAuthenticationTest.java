@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ClientAuthenticationTest {
 
-    // Real Vert.x, created/closed cleanly (mirrors CibaClientTest / GatewayCallbackClientTest) so
+    // Real Vert.x, created/closed cleanly (mirrors CibaClientTest) so
     // the event loop is released and the run leaves no leaked threads behind.
     static Vertx vertx;
     static WebClient webClient;

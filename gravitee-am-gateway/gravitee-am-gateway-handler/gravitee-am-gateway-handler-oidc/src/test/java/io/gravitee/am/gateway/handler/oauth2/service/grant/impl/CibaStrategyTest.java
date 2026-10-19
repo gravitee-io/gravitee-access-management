@@ -117,7 +117,7 @@ class CibaStrategyTest {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setParameters(parameters);
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("unknown_req_id"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("unknown_req_id"), eq(client), any()))
                 .thenReturn(Single.error(new AuthorizationRejectedException("unknown_req_id")));
 
         strategy.process(tokenRequest, client, domain)
@@ -133,7 +133,7 @@ class CibaStrategyTest {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setParameters(parameters);
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("slow_down"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("slow_down"), eq(client), any()))
                 .thenReturn(Single.error(new SlowDownException()));
 
         strategy.process(tokenRequest, client, domain)
@@ -155,7 +155,7 @@ class CibaStrategyTest {
         cibaRequest.setSubject("user-id");
         cibaRequest.setScopes(Set.of("openid"));
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client), any()))
                 .thenReturn(Single.just(cibaRequest));
 
         strategy.process(tokenRequest, client, domain)
@@ -180,7 +180,7 @@ class CibaStrategyTest {
         cibaRequest.setSubject("user-id");
         cibaRequest.setScopes(Set.of("openid", "profile"));
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client), any()))
                 .thenReturn(Single.just(cibaRequest));
         when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
                 .thenReturn(Maybe.just(user));
@@ -216,7 +216,7 @@ class CibaStrategyTest {
         cibaRequest.setScopes(Set.of("openid"));
         cibaRequest.setExternalInformation(Map.of(ACR_VALUES, List.of("urn:mace:incommon:iap:silver")));
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client), any()))
                 .thenReturn(Single.just(cibaRequest));
         when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
                 .thenReturn(Maybe.just(user));
@@ -250,7 +250,7 @@ class CibaStrategyTest {
         cibaRequest.setSubject("user-id");
         cibaRequest.setScopes(Set.of("openid"));
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client), any()))
                 .thenReturn(Single.just(cibaRequest));
         when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
                 .thenReturn(Maybe.just(user));
@@ -281,7 +281,7 @@ class CibaStrategyTest {
         cibaRequest.setScopes(Set.of("openid"));
         cibaRequest.setAuthorizationDetails(List.of(authDetail));
 
-        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client)))
+        when(authenticationRequestService.retrieve(eq(domain), eq("valid-auth-req-id"), eq(client), any()))
                 .thenReturn(Single.just(cibaRequest));
         when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any()))
                 .thenReturn(Maybe.just(user));

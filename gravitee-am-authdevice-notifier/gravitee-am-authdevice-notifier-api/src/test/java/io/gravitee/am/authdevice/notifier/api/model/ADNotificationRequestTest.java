@@ -26,11 +26,4 @@ class ADNotificationRequestTest {
         assertEquals("cid", req.getConnection().clientId());
         assertEquals("openid profile email", req.getConnection().scope());
     }
-
-    @Test void callback_url_round_trips() {
-        var req = new ADNotificationRequest();
-        req.setCallbackUrl("https://gw/dom/oidc/ciba/authenticate/callback");
-        assertEquals(
-            "https://gw/dom/oidc/ciba/authenticate/callback", req.getCallbackUrl());
-    }
 }
