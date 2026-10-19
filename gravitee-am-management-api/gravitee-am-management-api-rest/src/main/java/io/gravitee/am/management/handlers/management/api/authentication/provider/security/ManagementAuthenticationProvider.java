@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
+import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
@@ -60,6 +61,9 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
     @Autowired
     private OrganizationService organizationService;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     @Value("${http.blockingGet.timeoutMillis:120000}")
     private long blockingGetTimeoutMillis = 120000;
@@ -157,6 +161,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         }
 
         if (user != null) {
+            authenticationService.checkUserEnabled(user, organizationId, details.get(SOURCE), details.get(Claims.IP_ADDRESS), details.get(Claims.USER_AGENT));
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(), AuthorityUtils.NO_AUTHORITIES);
             authenticationToken.setDetails(details);
             return authenticationToken;
