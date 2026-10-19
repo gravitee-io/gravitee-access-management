@@ -24,6 +24,7 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.service.EnvironmentService;
@@ -132,6 +133,8 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
                     final Environment environment = environmentService.findById((String) jwt.get(Claims.ENVIRONMENT), (String) jwt.get(Claims.ORGANIZATION)).blockingGet();
 
                     UsernamePasswordAuthenticationToken authentication = convertToAuthentication(jwt);
+                    WebAuthenticationDetails webDetails = new WebAuthenticationDetails(httpRequest);
+                    authenticationService.checkUserEnabled((User) authentication.getPrincipal(), (String) jwt.get(Claims.ORGANIZATION), COCKPIT_SOURCE, webDetails.getRemoteAddress(), webDetails.getUserAgent());
                     User principal = authenticationService.onAuthenticationSuccess(authentication);
 
                     String redirectPath = "";

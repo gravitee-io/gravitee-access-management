@@ -21,6 +21,7 @@ import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.util.Map;
@@ -58,6 +59,10 @@ public class AccountAccessTokenAuthenticator {
         var orgUser = userService.findByAccessToken(token.tokenId(), token.tokenValue())
                 .compose(this::applyTimeout)
                 .blockingGet();
+
+        if (!orgUser.isEnabled()) {
+            throw new DisabledException("User is disabled");
+        }
 
         DefaultUser user = new DefaultUser(orgUser.getUsername());
         user.setId(orgUser.getId());

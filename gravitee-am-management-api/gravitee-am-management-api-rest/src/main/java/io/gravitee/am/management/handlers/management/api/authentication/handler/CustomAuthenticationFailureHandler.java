@@ -30,6 +30,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 
@@ -63,8 +64,10 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
         authentication.getContext().set(Claims.USER_AGENT, userAgent(request));
         authentication.getContext().set(Claims.ORGANIZATION, organizationId);
 
-        // audit event
-        auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).reference(Reference.organization(organizationId)).throwable(exception));
+        // a disabled user is already audited by AuthenticationService.checkUserEnabled
+        if (!(exception instanceof DisabledException)) {
+            auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).reference(Reference.organization(organizationId)).throwable(exception));
+        }
 
         String redirectUri = defaultFailureUrl;
 

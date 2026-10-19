@@ -215,6 +215,28 @@ public class OrganizationUserServiceTest {
     }
 
     @Test
+    public void shouldUpdate_keepStatus() {
+        User user = new User();
+        user.setId("my-user");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORG);
+        user.setEnabled(false);
+
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setFirstName("John");
+
+        when(userRepository.findById(Reference.organization(ORG), user.getFullId())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.ORGANIZATION), eq(ORG), any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        var testObserver = userService.update(ReferenceType.ORGANIZATION, ORG, "my-user", updateUser).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(updated -> !updated.isEnabled() && "John".equals(updated.getFirstName()));
+    }
+
+    @Test
     public void shouldNotUpdate_emailFormatInvalidException() {
         User user = new User();
         user.setId("my-user");
