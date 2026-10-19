@@ -103,7 +103,7 @@ public class OrganizationUserResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update a user",
             operationId = "updateOrganizationUser",
-            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. If the enabled field is set, the user status changes in the same way as with the status endpoint.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User successfully updated",
                     content = @Content(mediaType = "application/json",
@@ -197,7 +197,7 @@ public class OrganizationUserResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update a user status",
             operationId = "updateOrganizationUserStatus",
-            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. Disabling a user ends the existing sessions and revokes the account access tokens.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User status successfully updated",
                     content = @Content(mediaType = "application/json",
@@ -265,7 +265,7 @@ public class OrganizationUserResource extends AbstractResource {
     @Path("resetPassword")
     @Operation(summary = "Reset password",
             operationId = "resetOrganizationUserPassword",
-            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. Resetting the password ends the existing sessions and revokes the account access tokens.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Password reset"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})

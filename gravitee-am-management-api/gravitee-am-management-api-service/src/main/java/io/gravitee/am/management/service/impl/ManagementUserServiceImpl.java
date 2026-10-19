@@ -351,7 +351,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                             oldUser.setDisplayName(updateUser.getDisplayName());
                         }
                         oldUser.setEmail(updateUser.getEmail());
-                        oldUser.setEnabled(updateUser.isEnabled());
+                        oldUser.setEnabled(!Boolean.FALSE.equals(updateUser.getEnabled()));
                         if (!StringUtils.isEmpty(updateUser.getPreferredLanguage())) {
                             oldUser.setPreferredLanguage(updateUser.getPreferredLanguage());
                         }
