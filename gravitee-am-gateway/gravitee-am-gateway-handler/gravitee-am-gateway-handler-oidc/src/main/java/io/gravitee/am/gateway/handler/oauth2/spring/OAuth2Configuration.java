@@ -27,6 +27,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeServi
 import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCodeServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.impl.UserConsentServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestService;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.device.DeviceAuthorizationRequestStatus;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
@@ -67,7 +70,12 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainReadService;
 import java.util.List;
 
+import io.gravitee.am.gateway.handler.common.service.polling.PollingService;
+import io.gravitee.am.gateway.handler.common.service.polling.impl.PollingServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.polling.impl.WidenIntervalPollingPolicy;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
+import io.gravitee.am.repository.oauth2.api.DeviceAuthorizationRequestRepository;
+import io.gravitee.am.repository.oauth2.model.DeviceAuthorizationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -165,6 +173,19 @@ public class OAuth2Configuration implements ProtocolConfiguration {
             @Value("${oauth2.approval.expiry:-1}") int approvalExpirySeconds
     ) {
         return new UserConsentServiceImpl(approvalExpirySeconds);
+    }
+
+    @Bean
+    public DeviceAuthorizationRequestService deviceAuthorizationRequestService() {
+        return new DeviceAuthorizationRequestServiceImpl();
+    }
+
+    @Bean
+    public PollingService<DeviceAuthorizationRequest> deviceCodePollingService(DeviceAuthorizationRequestRepository deviceAuthorizationRequestRepository,
+                                                                               @Value("${openid.deviceFlow.request.retention:900}") int retentionInSec) {
+        return new PollingServiceImpl<>(deviceAuthorizationRequestRepository,
+                request -> DeviceAuthorizationRequestStatus.valueOf(request.getStatus()).pollingState(),
+                retentionInSec, new WidenIntervalPollingPolicy<>());
     }
 
     @Bean

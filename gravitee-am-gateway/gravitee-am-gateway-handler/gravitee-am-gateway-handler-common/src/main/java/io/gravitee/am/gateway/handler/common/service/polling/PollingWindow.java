@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.ciba.exception;
+package io.gravitee.am.gateway.handler.common.service.polling;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import java.time.Instant;
+import java.util.Date;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class AuthenticationRequestExpiredException extends OAuth2Exception {
+public record PollingWindow(Date createdAt, Date expireAt) {
 
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "expired_token";
+    public static PollingWindow open(long ttlInSec, int retentionInSec) {
+        final Instant now = Instant.now();
+        return new PollingWindow(Date.from(now), Date.from(now.plusSeconds(ttlInSec + retentionInSec)));
     }
 }

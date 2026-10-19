@@ -71,6 +71,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.SecretSetting
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationCrossAppAccessSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationLightweightJwtSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationDeviceFlowSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenExchangeOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserInfoClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
@@ -629,6 +630,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 ApplicationCrossAppAccessSettingsMongo.convert(other.getCrossAppAccessSettings()));
         applicationOAuthSettingsMongo.setLightweightJwtSettings(
                 ApplicationLightweightJwtSettingsMongo.convert(other.getLightweightJwtSettings()));
+        applicationOAuthSettingsMongo.setDeviceFlowSettings(
+                ApplicationDeviceFlowSettingsMongo.convert(other.getDeviceFlowSettings()));
 
         return applicationOAuthSettingsMongo;
     }
@@ -726,6 +729,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 other.getCrossAppAccessSettings() != null ? other.getCrossAppAccessSettings().convert() : null);
         applicationOAuthSettings.setLightweightJwtSettings(
                 other.getLightweightJwtSettings() != null ? other.getLightweightJwtSettings().convert() : null);
+        applicationOAuthSettings.setDeviceFlowSettings(
+                other.getDeviceFlowSettings() != null ? other.getDeviceFlowSettings().convert() : null);
 
         return applicationOAuthSettings;
     }
