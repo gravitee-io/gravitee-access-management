@@ -107,7 +107,7 @@ describe('AM - Cloud - webauthn relying party from the environment entrypoint', 
     });
 
     // Not pinned to an error code: the origin check fails before webauthn4j verifies anything, and that
-    // failure ends on `unexpected_error` rather than `technical_error`, as before the webauthn4j migration.
+    // failure ends on `unexpected_error` rather than `technical_error`.
     it('refuses an assertion whose client data reports the configured origin', async () => {
       const login = await signInWithWebAuthn(client, username, authenticator, { origin: 'http://localhost:8092' });
 
