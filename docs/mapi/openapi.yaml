@@ -9571,8 +9571,8 @@ paths:
       - user
       summary: Update a user
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization. The enabled field is ignored. Use the status endpoint\
-        \ to enable or disable a user."
+        \ specified organization. If the enabled field is set, the user status changes\
+        \ in the same way as with the status endpoint."
       operationId: updateOrganizationUser
       parameters:
       - name: organizationId

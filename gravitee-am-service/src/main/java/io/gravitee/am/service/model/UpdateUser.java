@@ -55,7 +55,7 @@ public class UpdateUser implements IUser {
 
     private boolean credentialsNonExpired = true;
 
-    private boolean enabled = true;
+    private Boolean enabled;
 
     private boolean preRegistration;
 

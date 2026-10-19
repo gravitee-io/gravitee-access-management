@@ -374,7 +374,10 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                 .flatMap(user -> updateWithProviderIfNecessary(updateUser, user))
                 .flatMap(user -> getUserService().update(referenceType, referenceId, id, user)
                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable))));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable))))
+                .flatMap(updated -> updateUser.getEnabled() == null || updateUser.getEnabled().equals(updated.isEnabled()) ?
+                        Single.just(updated) :
+                        updateStatus(referenceType, referenceId, id, updateUser.getEnabled(), principal));
     }
 
     private Single<UpdateUser> updateWithProviderIfNecessary(UpdateUser updateUser, User user) {

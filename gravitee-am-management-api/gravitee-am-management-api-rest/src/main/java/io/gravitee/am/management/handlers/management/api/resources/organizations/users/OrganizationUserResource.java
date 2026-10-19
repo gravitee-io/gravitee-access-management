@@ -103,7 +103,7 @@ public class OrganizationUserResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update a user",
             operationId = "updateOrganizationUser",
-            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. The enabled field is ignored. Use the status endpoint to enable or disable a user.")
+            description = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. If the enabled field is set, the user status changes in the same way as with the status endpoint.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User successfully updated",
                     content = @Content(mediaType = "application/json",
