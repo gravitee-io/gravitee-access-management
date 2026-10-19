@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { getApplicationApi, getDomainApi, getEntrypointsApi } from '@management-commands/service/utils';
+import { getApplicationApi, getDomainApi, getEntrypointsApi, getUserApi } from '@management-commands/service/utils';
+import { defaultIdpId } from '@management-commands/idp-management-commands';
 import { waitForDomainStart } from '@management-commands/domain-management-commands';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
+import { WebAuthnClient } from '@gateway-commands/webauthn-commands';
 import { sendCockpitCommand } from '@cloud-commands/cockpit-commands';
 import { bindSafeDeleteCloudDomain } from '@cloud-commands/domain-commands';
 import { retryUntil } from '@utils-commands/retry';
@@ -26,6 +28,7 @@ import { setupCloudSharedFixture } from './cloud-shared-fixture';
 const POLL = { timeoutMillis: 30000, intervalMillis: 1000 };
 const REDIRECT_URI = 'https://callback.example.com';
 const PATH_LOGIN_CREDENTIALS = '/webauthn/login/credentials';
+const USER_PASSWORD = 'SomeP@ssw0rd';
 const CONFIGURED_RELYING_PARTY_ID = 'configured.example.com';
 
 const urlFor = (host: string) => `https://${host}`;
@@ -50,6 +53,10 @@ export interface CloudWebAuthnFixture {
   assertionOptions: (forwardedHost?: string) => Promise<any>;
   /** As {@link assertionOptions}, for the domain that configured its own relying party id. */
   configuredAssertionOptions: (forwardedHost?: string) => Promise<any>;
+  /** The application of the first domain, as a browser reaching the gateway on `host` addresses it. */
+  passwordlessClient: (host: string) => WebAuthnClient;
+  /** A user of the first domain with a password and no WebAuthn credential yet. */
+  createUser: () => Promise<{ username: string; password: string }>;
   /** Re-issue the ENVIRONMENT command with a new set of gateway access points. */
   resyncAccessPoints: (hosts: { generated: string; overriding: string }) => Promise<void>;
   cleanup: () => Promise<void>;
@@ -129,6 +136,15 @@ export const setupCloudWebAuthnFixture = async (): Promise<CloudWebAuthnFixture>
       newApplication: { name: clientId, type: 'WEB', clientId, redirectUris: [REDIRECT_URI] },
     });
 
+    // The default identity provider signs the user in with a password before the WebAuthn registration.
+    await getApplicationApi(accessToken).updateApplication({
+      organizationId,
+      environmentId,
+      domain: domain.id,
+      application: application.id,
+      patchApplication: { identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: 0 }]) },
+    });
+
     await domainApi.patchDomain({ organizationId, environmentId, domain: domain.id, patchDomain: { enabled: true } });
     // waitForDomainStart, not waitForDomainReady: the latter only reports sync, and the gateway rebuilds its
     // routes asynchronously after that, so the first request can land in a 404 window.
@@ -153,7 +169,7 @@ export const setupCloudWebAuthnFixture = async (): Promise<CloudWebAuthnFixture>
       return JSON.parse(response.text);
     };
 
-    return { domain, assertionOptions };
+    return { domain, application, assertionOptions };
   };
 
   // Origin deliberately wrong and no relying party id at all, so the entrypoint is the only thing that can
@@ -191,6 +207,32 @@ export const setupCloudWebAuthnFixture = async (): Promise<CloudWebAuthnFixture>
     uniqueHost,
     configuredRelyingPartyId: CONFIGURED_RELYING_PARTY_ID,
     assertionOptions: derived.assertionOptions,
+    passwordlessClient: (host: string) => ({
+      gatewayUrl,
+      domainHrid: derived.domain.hrid,
+      clientId: derived.application.settings.oauth.clientId,
+      redirectUri: REDIRECT_URI,
+      origin: urlFor(host),
+      publicUrl: urlFor(host),
+    }),
+    createUser: async () => {
+      const username = uniqueName('wa-user', true).toLowerCase();
+      await getUserApi(accessToken).createUser({
+        organizationId,
+        environmentId,
+        domain: derived.domain.id,
+        newUser: {
+          firstName: 'WebAuthn',
+          lastName: 'Cloud',
+          email: `${username}@example.com`,
+          username,
+          password: USER_PASSWORD,
+          source: defaultIdpId(derived.domain.id),
+          preRegistration: false,
+        },
+      });
+      return { username, password: USER_PASSWORD };
+    },
     configuredAssertionOptions: configured.assertionOptions,
     resyncAccessPoints,
     cleanup,

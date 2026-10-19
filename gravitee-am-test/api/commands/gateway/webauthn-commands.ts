@@ -29,6 +29,12 @@ export interface WebAuthnClient {
   redirectUri: string;
   /** The WebAuthn origin of the security domain, reported by the browser in the client data. */
   origin: string;
+  /**
+   * The URL the browser reaches the gateway on, when a proxy or an entrypoint host sits in front of
+   * `gatewayUrl`: every request carries it in X-Forwarded-Host and X-Forwarded-Proto, and the gateway
+   * URLs built on it (redirections, form actions) are sent to `gatewayUrl`.
+   */
+  publicUrl?: string;
 }
 
 /** What a ceremony overrides in the browser and authenticator behaviour. The origin defaults to the client's. */
@@ -80,16 +86,27 @@ class BrowserSession {
     return response;
   }
 
+  /** A request as the browser sends it: its cookies, and the public URL it believes it talks to. */
+  private request(method: 'get' | 'post', url: string): request.Test {
+    const { gatewayUrl, publicUrl } = this.client;
+    const publicOrigin = publicUrl && new URL(publicUrl);
+    const target = publicOrigin && url.startsWith(publicOrigin.origin) ? gatewayUrl + url.slice(publicOrigin.origin.length) : url;
+    const test = request(target)[method]('').set('Cookie', this.jar.header);
+    return publicOrigin
+      ? test.set('X-Forwarded-Host', publicOrigin.host).set('X-Forwarded-Proto', publicOrigin.protocol.replace(':', ''))
+      : test;
+  }
+
   async get(url: string): Promise<request.Response> {
-    return this.store(await request(url).get('').set('Cookie', this.jar.header).send());
+    return this.store(await this.request('get', url).send());
   }
 
   async postJson(url: string, body: Record<string, unknown>): Promise<request.Response> {
-    return this.store(await request(url).post('').set('Cookie', this.jar.header).set('Content-Type', 'application/json').send(body));
+    return this.store(await this.request('post', url).set('Content-Type', 'application/json').send(body));
   }
 
   async postForm(url: string, fields: Record<string, string>): Promise<request.Response> {
-    return this.store(await request(url).post('').set('Cookie', this.jar.header).type('form').send(fields));
+    return this.store(await this.request('post', url).type('form').send(fields));
   }
 
   /** Starts the authorization code flow; returns where the gateway sends the user to sign in. */
