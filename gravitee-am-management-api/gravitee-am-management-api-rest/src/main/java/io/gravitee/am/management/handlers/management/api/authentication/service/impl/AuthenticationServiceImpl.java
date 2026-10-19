@@ -47,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 
 import java.util.Date;
@@ -102,8 +103,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         final String source = details.get(SOURCE);
         try {
-            Single<io.gravitee.am.model.User> userSingle = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
-                    .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)))
+            Single<io.gravitee.am.model.User> userSingle = findOrganizationUser(principal, organizationId, source)
                     .switchIfEmpty(Single.error(new UserNotFoundException(principal.getUsername())))
                     .flatMap(existingUser -> {
                         existingUser.setSource(details.get(SOURCE));
@@ -153,10 +153,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                             .ipAddress(details.get(IP_ADDRESS_KEY))
                             .userAgent(details.get(USER_AGENT_KEY)))
                     );
-            if (blockingGetTimeoutMillis > 0) {
-                userSingle = userSingle.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
-            }
-            io.gravitee.am.model.User endUser = userSingle.blockingGet();
+            io.gravitee.am.model.User endUser = block(userSingle.toMaybe());
             principal.setId(endUser.getId());
             principal.setUsername(endUser.getUsername());
 
@@ -184,6 +181,33 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new IllegalStateException("Unable to read user information");
         }
 
+    }
+
+    @Override
+    public void checkUserEnabled(User principal, String organizationId, String source, String ipAddress, String userAgent) {
+        io.gravitee.am.model.User organizationUser = block(findOrganizationUser(principal, organizationId, source));
+        if (organizationUser != null && !organizationUser.isEnabled()) {
+            DisabledException exception = new DisabledException("User is disabled");
+            auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
+                    .user(organizationUser)
+                    .reference(Reference.organization(organizationId))
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .throwable(exception));
+            throw exception;
+        }
+    }
+
+    private Maybe<io.gravitee.am.model.User> findOrganizationUser(User principal, String organizationId, String source) {
+        return userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
+                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)));
+    }
+
+    private <T> T block(Maybe<T> source) {
+        if (blockingGetTimeoutMillis > 0) {
+            source = source.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
+        }
+        return source.blockingGet();
     }
 
     /**
