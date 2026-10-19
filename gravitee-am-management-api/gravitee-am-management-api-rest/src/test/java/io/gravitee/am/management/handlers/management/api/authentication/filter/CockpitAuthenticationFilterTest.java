@@ -36,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -43,7 +44,9 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -108,6 +111,21 @@ public class CockpitAuthenticationFilterTest {
         // before the environment is resolved would leave an orphan referencing a missing organization
         verify(authenticationService, never()).onAuthenticationSuccess(any());
         verify(jwtGenerator, never()).generateCookie(any(io.gravitee.am.identityprovider.api.User.class));
+        verify(response).sendError(HttpServletResponse.SC_FORBIDDEN);
+    }
+
+    @Test
+    public void shouldNotAuthenticateADisabledUser() throws Exception {
+        Environment environment = new Environment();
+        environment.setId(ENVIRONMENT_ID);
+        environment.setHrids(List.of(ENVIRONMENT_ID));
+        when(environmentService.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Single.just(environment));
+        doThrow(new DisabledException("User is disabled")).when(authenticationService)
+                .checkUserEnabled(argThat(user -> "cockpit-user-id".equals(user.getId())), eq(ORGANIZATION_ID), eq("cockpit"), any(), any());
+
+        cut.doFilter(request, response, filterChain);
+
+        verify(authenticationService, never()).onAuthenticationSuccess(any());
         verify(response).sendError(HttpServletResponse.SC_FORBIDDEN);
     }
 
