@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
@@ -653,7 +654,7 @@ public class UserServiceImpl implements UserService {
                 .flatMapCompletable(user1 -> {
                     user1.setLastLogoutAt(new Date());
                     user1.setUpdatedAt(new Date());
-                    return userService.update(user1)
+                    return userService.update(user1, UpdateActions.none())
                             .flatMapCompletable(user2 -> {
                                 if (invalidateTokens) {
                                     return tokenService.deleteByUser(user2);
