@@ -316,6 +316,25 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testCreate_sessionDates() {
+        Date lastLogoutAt = new Date(1_760_000_000_000L);
+        Date lastPasswordReset = new Date(1_760_000_100_000L);
+        User user = new User();
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setUsername("testsUsername");
+        user.setLastLogoutAt(lastLogoutAt);
+        user.setLastPasswordReset(lastPasswordReset);
+        User userCreated = organizationUserRepository.create(user).blockingGet();
+
+        TestObserver<User> testObserver = organizationUserRepository.findById(userCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(u -> lastLogoutAt.equals(u.getLastLogoutAt()) && lastPasswordReset.equals(u.getLastPasswordReset()));
+    }
+
+    @Test
     public void testUpdate_sessionDates() {
         User user = new User();
         user.setReferenceType(ReferenceType.ORGANIZATION);
