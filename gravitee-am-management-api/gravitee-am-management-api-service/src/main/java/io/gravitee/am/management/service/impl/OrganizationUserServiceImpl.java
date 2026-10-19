@@ -222,8 +222,8 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
         user.setLastLogoutAt(now);
         user.setUpdatedAt(now);
         user.setPassword(PWD_ENCODER.encode(password));
-        return userService.update(user)
-                .flatMap(user1 -> getUserService().revokeUserAccessTokens(user1.getReferenceType(), user1.getReferenceId(), user1.getId()).toSingleDefault(user1))
+        return getUserService().revokeUserAccessTokens(user.getReferenceType(), user.getReferenceId(), user.getId())
+                .andThen(Single.defer(() -> getUserService().update(user)))
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).reference(Reference.organization(organizationId)).throwable(throwable)))
                 .ignoreElement();
@@ -411,12 +411,12 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
         return getUserService().findById(referenceType, referenceId, userId)
                 .flatMap(user -> {
                     user.setEnabled(status);
-                    if (status) {
-                        return getUserService().update(user);
+                    Completable revokeTokens = Completable.complete();
+                    if (!status) {
+                        user.setLastLogoutAt(new Date());
+                        revokeTokens = getUserService().revokeUserAccessTokens(user.getReferenceType(), user.getReferenceId(), user.getId());
                     }
-                    user.setLastLogoutAt(new Date());
-                    return getUserService().update(user)
-                            .flatMap(updated -> getUserService().revokeUserAccessTokens(updated.getReferenceType(), updated.getReferenceId(), updated.getId()).toSingleDefault(updated));
+                    return revokeTokens.andThen(Single.defer(() -> getUserService().update(user)));
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).reference(new Reference(referenceType, referenceId)).throwable(throwable)));

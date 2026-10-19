@@ -556,6 +556,44 @@ public class OrganizationUserServiceTest {
     }
 
     @Test
+    public void shouldNotResetPassword_tokenRevocationFails() {
+        when(passwordService.isValid(anyString())).thenReturn(true);
+
+        final User user = new User();
+        user.setUsername("username");
+        user.setSource("gravitee");
+        user.setReferenceId("ud");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "ud", user.getId())).thenReturn(Completable.error(new IllegalStateException("revocation failed")));
+
+        final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", user, "Test123!", null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertError(IllegalStateException.class);
+
+        verify(commonUserService, never()).update(any(User.class));
+    }
+
+    @Test
+    public void shouldNotDisableUser_tokenRevocationFails() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setEnabled(true);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(commonUserService.revokeUserAccessTokens(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Completable.error(new IllegalStateException("revocation failed")));
+
+        organizationUserService.updateStatus(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", false, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(IllegalStateException.class);
+
+        verify(commonUserService, never()).update(any(User.class));
+    }
+
+    @Test
     public void shouldDisableUser_revokeTokensAndEndSessions() {
         final User user = new User();
         user.setId("user-id");
