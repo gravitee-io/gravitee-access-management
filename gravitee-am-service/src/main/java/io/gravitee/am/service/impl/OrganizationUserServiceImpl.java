@@ -463,7 +463,6 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                         oldUser.setDisplayName(updateUser.getDisplayName());
                     }
                     oldUser.setEmail(updateUser.getEmail());
-                    oldUser.setEnabled(updateUser.isEnabled());
                     if (!StringUtils.isEmpty(updateUser.getPreferredLanguage())) {
                         oldUser.setPreferredLanguage(updateUser.getPreferredLanguage());
                     }

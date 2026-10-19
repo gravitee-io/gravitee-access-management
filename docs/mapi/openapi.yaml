@@ -11582,7 +11582,8 @@ paths:
       - user
     put:
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization"
+        \ specified organization. If the enabled field is set, the user status changes\
+        \ in the same way as with the status endpoint."
       operationId: updateOrganizationUser
       parameters:
       - in: path
@@ -11616,7 +11617,8 @@ paths:
   /organizations/{organizationId}/users/{user}/resetPassword:
     post:
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization"
+        \ specified organization. Resetting the password ends the existing sessions\
+        \ and revokes the account access tokens."
       operationId: resetOrganizationUserPassword
       parameters:
       - in: path
@@ -11646,7 +11648,8 @@ paths:
   /organizations/{organizationId}/users/{user}/status:
     put:
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization"
+        \ specified organization. Disabling a user ends the existing sessions and\
+        \ revokes the account access tokens."
       operationId: updateOrganizationUserStatus
       parameters:
       - in: path
