@@ -10658,7 +10658,8 @@ paths:
       - user
       summary: Update a user
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization"
+        \ specified organization. If the enabled field is set, the user status changes\
+        \ in the same way as with the status endpoint."
       operationId: updateOrganizationUser
       parameters:
       - name: organizationId
@@ -10715,7 +10716,8 @@ paths:
       - user
       summary: Reset password
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization"
+        \ specified organization. Resetting the password ends the existing sessions\
+        \ and revokes the account access tokens."
       operationId: resetOrganizationUserPassword
       parameters:
       - name: organizationId
@@ -10745,7 +10747,8 @@ paths:
       - user
       summary: Update a user status
       description: "User must have the ORGANIZATION_USER[UPDATE] permission on the\
-        \ specified organization"
+        \ specified organization. Disabling a user ends the existing sessions and\
+        \ revokes the account access tokens."
       operationId: updateOrganizationUserStatus
       parameters:
       - name: organizationId
