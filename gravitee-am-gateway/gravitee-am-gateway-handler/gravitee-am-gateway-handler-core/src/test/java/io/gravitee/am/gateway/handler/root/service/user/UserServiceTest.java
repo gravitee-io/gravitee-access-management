@@ -21,6 +21,7 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -1587,5 +1588,21 @@ public class UserServiceTest {
 
         TestObserver<Void> observer = userService.removePendingEnrolledFactor("missing-id", "factor-id").test();
         observer.assertError(UserNotFoundException.class);
+    }
+
+    @Test
+    public void logoutShouldOnlyUpdateUserScalarFields() {
+        User user = new User();
+        user.setId("user-id");
+        when(commonUserService.findById("user-id")).thenReturn(Maybe.just(user));
+        when(commonUserService.update(any(User.class), any(UpdateActions.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        TestObserver<Void> observer = userService.logout(user, false, null).test();
+        observer.assertNoErrors();
+        observer.assertComplete();
+
+        verify(commonUserService).update(argThat(u -> u.getLastLogoutAt() != null), argThat(actions -> !actions.updateRequire()));
+        verify(commonUserService, never()).update(any(User.class));
+        verify(tokenService, never()).deleteByUser(any());
     }
 }
