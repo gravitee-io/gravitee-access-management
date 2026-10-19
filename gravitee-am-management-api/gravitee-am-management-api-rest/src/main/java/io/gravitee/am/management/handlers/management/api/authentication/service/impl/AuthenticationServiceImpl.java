@@ -153,10 +153,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                             .ipAddress(details.get(IP_ADDRESS_KEY))
                             .userAgent(details.get(USER_AGENT_KEY)))
                     );
-            if (blockingGetTimeoutMillis > 0) {
-                userSingle = userSingle.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
-            }
-            io.gravitee.am.model.User endUser = userSingle.blockingGet();
+            io.gravitee.am.model.User endUser = block(userSingle.toMaybe());
             principal.setId(endUser.getId());
             principal.setUsername(endUser.getUsername());
 
@@ -188,11 +185,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void checkUserEnabled(User principal, String organizationId, String source) {
-        Maybe<io.gravitee.am.model.User> organizationUserMaybe = findOrganizationUser(principal, organizationId, source);
-        if (blockingGetTimeoutMillis > 0) {
-            organizationUserMaybe = organizationUserMaybe.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
-        }
-        io.gravitee.am.model.User organizationUser = organizationUserMaybe.blockingGet();
+        io.gravitee.am.model.User organizationUser = block(findOrganizationUser(principal, organizationId, source));
         if (organizationUser != null && !organizationUser.isEnabled()) {
             DisabledException exception = new DisabledException("User is disabled");
             auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
@@ -206,6 +199,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private Maybe<io.gravitee.am.model.User> findOrganizationUser(User principal, String organizationId, String source) {
         return userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)));
+    }
+
+    private <T> T block(Maybe<T> source) {
+        if (blockingGetTimeoutMillis > 0) {
+            source = source.timeout(blockingGetTimeoutMillis, TimeUnit.MILLISECONDS);
+        }
+        return source.blockingGet();
     }
 
     /**
