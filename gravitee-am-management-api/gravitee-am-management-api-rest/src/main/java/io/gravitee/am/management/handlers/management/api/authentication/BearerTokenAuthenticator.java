@@ -28,6 +28,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -116,6 +117,10 @@ public class BearerTokenAuthenticator {
                         (String) claims.get(StandardClaims.SUB))
                 .compose(this::applyTimeout)
                 .blockingGet();
+
+        if (!orgUser.isEnabled()) {
+            throw new DisabledException("User is disabled");
+        }
 
         var dates = List.of(
                 Optional.ofNullable(orgUser.getLastLogoutAt()),
