@@ -31,7 +31,9 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -760,6 +762,40 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertValue(u -> u.getIdentities() != null);
         testObserver.assertValue(u -> userIdentity.getUserId().equals(u.getIdentities().get(0).getUserId()));
         testObserver.assertValue(u -> "value".equals(u.getIdentities().get(0).getAdditionalInformation().get("key")));
+    }
+
+    @Test
+    public void shouldNotDuplicateChildEntities_onConcurrentUpdates() {
+        User user = buildUser();
+        user.setIdentities(of(getUserIdentity()));
+        user.setDynamicGroups(of("dynamic_group"));
+        User userCreated = userRepository.create(user).blockingGet();
+
+        final int concurrentUpdates = 10;
+        for (int round = 0; round < 3; round++) {
+            Flowable.range(0, concurrentUpdates)
+                    .flatMapSingle(i -> userRepository.update(new User(userCreated)).subscribeOn(Schedulers.io()), false, concurrentUpdates)
+                    .test()
+                    .awaitDone(30, TimeUnit.SECONDS)
+                    .assertComplete()
+                    .assertNoErrors()
+                    .assertValueCount(concurrentUpdates);
+        }
+
+        TestObserver<User> testObserver = userRepository.findById(userCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getEmails().size() == 1);
+        testObserver.assertValue(u -> u.getPhotos().size() == 1);
+        testObserver.assertValue(u -> u.getPhoneNumbers().size() == 1);
+        testObserver.assertValue(u -> u.getIms().size() == 1);
+        testObserver.assertValue(u -> u.getRoles().size() == 1);
+        testObserver.assertValue(u -> u.getDynamicRoles().size() == 1);
+        testObserver.assertValue(u -> u.getDynamicGroups().size() == 1);
+        testObserver.assertValue(u -> u.getEntitlements().size() == 1);
+        testObserver.assertValue(u -> u.getAddresses().size() == 1);
+        testObserver.assertValue(u -> u.getIdentities().size() == 1);
     }
 
     @Test
