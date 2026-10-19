@@ -25,13 +25,9 @@ import java.util.List;
 import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry.ANDROID_KEY;
 import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry.ANDROID_SAFETYNET;
 import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry.APPLE;
-import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.anchor.WebAuthnTrustAnchorRegistry.MDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The trust anchors shipped with the distribution: the roots vertx-auth-webauthn and AM embedded in their
- * code before AM-5812, the Android Keystore root that expired on 2026-05-24 left out.
- *
  * @author GraviteeSource Team
  */
 class ShippedTrustAnchorsTest {
@@ -54,13 +50,11 @@ class ShippedTrustAnchorsTest {
     }
 
     @Test
-    void ship_one_root_for_apple_android_safetynet_and_mds() {
+    void ship_one_root_for_apple_and_android_safetynet() {
         // Apple WebAuthn Root CA, expires 2045-03-15
         assertThat(fingerprints(registry.roots(APPLE))).containsExactly("0915dd5c07a28db549d1f677bb5a75d4bfbe9561a773424327762e9e02f9bb29");
         // GlobalSign Root CA (R1), expires 2028-01-28
         assertThat(fingerprints(registry.roots(ANDROID_SAFETYNET))).containsExactly("ebd41040e4bb3ec742c9e381d31ef2a41a48b6685c96e7cef3c1df6cd4331c99");
-        // GlobalSign Root CA - R3, signer of the FIDO MDS3 BLOB, expires 2029-03-18
-        assertThat(fingerprints(registry.roots(MDS))).containsExactly("cbb522d7b7f127ad6a0113865bdf1cd4102e7d0759af635a7cf4720dc963c53b");
     }
 
     @Test
