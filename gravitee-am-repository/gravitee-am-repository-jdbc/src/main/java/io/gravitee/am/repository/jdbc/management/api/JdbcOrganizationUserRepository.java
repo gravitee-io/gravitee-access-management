@@ -537,7 +537,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         Mono<Long> action = update.fetch().rowsUpdated();
 
         if (updateActions.updateRequire()) {
-            action = deleteChildEntities(item.getId(), updateActions).then(action);
+            // update the users row before deleting the child rows: its row lock serializes concurrent updates
+            // of the same user, otherwise each transaction re-inserts its own copy of the child rows
+            action = action.flatMap(rowsUpdated -> deleteChildEntities(item.getId(), updateActions).then(Mono.just(rowsUpdated)));
             action = persistChildEntities(action, item, updateActions);
         }
 
