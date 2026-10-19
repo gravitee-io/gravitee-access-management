@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
@@ -116,6 +117,19 @@ class BearerTokenAuthenticatorTest {
         // credentials are intentionally null for JWT (see BearerAuthenticationFilter heritage)
         assertEquals(null, auth.getCredentials());
         assertEquals(1, auth.getAuthorities().size());
+    }
+
+    @Test
+    void jwt_disabledUser_throwsDisabledException() {
+        String bearer = "valid.jwt.token";
+        when(jwtParser.parse(bearer)).thenReturn(baseJwt());
+        User orgUser = new User();
+        orgUser.setId(USER_ID);
+        orgUser.setUsername(USERNAME);
+        orgUser.setEnabled(false);
+        when(userService.findById(eq(ReferenceType.ORGANIZATION), eq(ORG_ID), eq(USER_ID))).thenReturn(Single.just(orgUser));
+
+        assertThrows(DisabledException.class, () -> authenticator().authenticate(bearer, ctx()));
     }
 
     @Test
