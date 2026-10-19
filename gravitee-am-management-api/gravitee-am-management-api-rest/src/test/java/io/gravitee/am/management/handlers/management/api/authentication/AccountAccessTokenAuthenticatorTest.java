@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -76,6 +77,18 @@ class AccountAccessTokenAuthenticatorTest {
         assertEquals(TOKEN_ID, auth.getCredentials());
         assertEquals(1, auth.getAuthorities().size());
         assertEquals("ORGANIZATION_OWNER", auth.getAuthorities().iterator().next().getAuthority());
+    }
+
+    @Test
+    void shouldThrowDisabledWhenUserIsDisabled() {
+        var authenticator = new AccountAccessTokenAuthenticator(userService, BLOCKING_GET_TIMEOUT_MILLIS);
+        User orgUser = new User();
+        orgUser.setId(USER_ID);
+        orgUser.setUsername(USERNAME);
+        orgUser.setEnabled(false);
+        when(userService.findByAccessToken(eq(TOKEN_ID), eq(TOKEN_VALUE))).thenReturn(Single.just(orgUser));
+
+        assertThrows(DisabledException.class, () -> authenticator.authenticate(encode(TOKEN_ID, TOKEN_VALUE)));
     }
 
     @Test

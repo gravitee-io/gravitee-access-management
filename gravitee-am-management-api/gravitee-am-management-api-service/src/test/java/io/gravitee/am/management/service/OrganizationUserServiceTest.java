@@ -35,11 +35,8 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewOrganizationUser;
-<<<<<<< HEAD
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
-=======
 import io.gravitee.am.service.model.UpdateUser;
->>>>>>> ebe62ad (fix(management): end the access of disabled organization users (#8918))
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.rxjava3.core.Completable;
