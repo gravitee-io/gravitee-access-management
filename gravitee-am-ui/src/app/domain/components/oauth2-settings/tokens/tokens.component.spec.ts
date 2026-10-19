@@ -19,6 +19,8 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
+import { By } from '@angular/platform-browser';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { LightweightJwtInfoDialogComponent } from '../dialog/lightweight-jwt-info.component';
@@ -39,7 +41,7 @@ describe('TokensComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, FormsModule, MatChipsModule],
+      imports: [CommonModule, FormsModule, MatChipsModule, MatTooltipModule],
       declarations: [TokensComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
@@ -174,16 +176,108 @@ describe('TokensComponent', () => {
     expect(component.lightweightJwtAllowlist('allowedIdTokenClaims')).toEqual(['email']);
   });
 
-  it('shouldIgnoreBlankAndDuplicateClaims', () => {
-    createFixture({ lightweightJwtSettings: { enabled: true, allowedAccessTokenClaims: ['tenant'] } });
+  it('shouldIgnoreBlankClaims', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true } });
     const emitted = jest.fn();
     component.settingsChange.subscribe(emitted);
 
     component.addLightweightJwtAllowlistClaim('allowedAccessTokenClaims', { value: '  ', chipInput: { clear: jest.fn() } } as any);
+
+    expect(emitted).not.toHaveBeenCalled();
+    expect(TestBed.inject(SnackbarService).open).not.toHaveBeenCalled();
+  });
+
+  it('shouldRejectDuplicateClaim', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true, allowedAccessTokenClaims: ['tenant'] } });
+    const emitted = jest.fn();
+    component.settingsChange.subscribe(emitted);
+
     component.addLightweightJwtAllowlistClaim('allowedAccessTokenClaims', { value: 'tenant', chipInput: { clear: jest.fn() } } as any);
 
     expect(emitted).not.toHaveBeenCalled();
+    expect(TestBed.inject(SnackbarService).open).toHaveBeenCalledWith('Claim already exists');
     expect(component.lightweightJwtAllowlist('allowedAccessTokenClaims')).toEqual(['tenant']);
+  });
+
+  it('shouldRejectReservedClaimsCaseSensitively', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true } });
+
+    component.addLightweightJwtAllowlistClaim('allowedAccessTokenClaims', {
+      value: 'orig_resources',
+      chipInput: { clear: jest.fn() },
+    } as any);
+    component.addLightweightJwtAllowlistClaim('allowedIdTokenClaims', { value: 'nonce', chipInput: { clear: jest.fn() } } as any);
+    component.addLightweightJwtAllowlistClaim('allowedIdTokenClaims', { value: 'ISS', chipInput: { clear: jest.fn() } } as any);
+
+    const snackbar = TestBed.inject(SnackbarService).open;
+    expect(snackbar).toHaveBeenCalledWith('orig_resources is a reserved claim and is always kept');
+    expect(snackbar).toHaveBeenCalledWith('nonce is a reserved claim and is always kept');
+    expect(snackbar).toHaveBeenCalledTimes(2);
+    expect(component.lightweightJwtAllowlist('allowedAccessTokenClaims')).toEqual([]);
+    expect(component.lightweightJwtAllowlist('allowedIdTokenClaims')).toEqual(['ISS']);
+  });
+
+  it('shouldCollapseReservedClaimsByDefaultAndToggleOnClick', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true } });
+    const toggle = () => fixture.debugElement.query(By.css('[data-testid="allowedAccessTokenClaims-reserved-toggle"]'));
+    const reservedCount = () => fixture.nativeElement.querySelectorAll('[data-testid="allowedAccessTokenClaims-reserved"]').length;
+
+    expect(reservedCount()).toBe(0);
+    expect(toggle().nativeElement.textContent).toContain('...');
+    expect(toggle().injector.get(MatTooltip).message).toBe('Reserved claims: click to expand');
+
+    toggle().nativeElement.click();
+    fixture.detectChanges();
+
+    expect(reservedCount()).toBe(component.lightweightJwtReservedClaims.allowedAccessTokenClaims.length);
+    expect(toggle().injector.get(MatTooltip).message).toBe('Click to collapse reserved claims');
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="allowedIdTokenClaims-reserved"]')).toHaveLength(0);
+
+    toggle().nativeElement.click();
+    fixture.detectChanges();
+
+    expect(reservedCount()).toBe(0);
+  });
+
+  it('shouldShowReservedClaimsExpandedWithoutToggleWhenReadonly', () => {
+    fixture = TestBed.createComponent(TokensComponent);
+    component = fixture.componentInstance;
+    component.readonly = true;
+    component.oauthSettings = { lightweightJwtSettings: { enabled: true } };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="allowedAccessTokenClaims-reserved-toggle"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="allowedIdTokenClaims-reserved-toggle"]')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="allowedAccessTokenClaims-reserved"]')).toHaveLength(
+      component.lightweightJwtReservedClaims.allowedAccessTokenClaims.length,
+    );
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="allowedIdTokenClaims-reserved"]')).toHaveLength(
+      component.lightweightJwtReservedClaims.allowedIdTokenClaims.length,
+    );
+  });
+
+  it('shouldRenderReservedClaimsAsLockedChipsWithTooltips', () => {
+    createFixture({ lightweightJwtSettings: { enabled: true, allowedAccessTokenClaims: ['tenant'] } });
+    component.toggleLightweightJwtReservedClaims('allowedAccessTokenClaims');
+    component.toggleLightweightJwtReservedClaims('allowedIdTokenClaims');
+    fixture.detectChanges();
+
+    const tooltips = (testId: string) =>
+      fixture.debugElement
+        .queryAll(By.css(`[data-testid="${testId}"]`))
+        .map((chip) => [chip.nativeElement.textContent.trim().replace(/^lock\s*/, ''), chip.injector.get(MatTooltip).message]);
+
+    const accessTokenChips = tooltips('allowedAccessTokenClaims-reserved');
+    expect(accessTokenChips).toContainEqual(['iss', 'Reserved claim: Issuer']);
+    expect(accessTokenChips).toContainEqual(['orig_resources', 'Reserved claim: Original resources']);
+    expect(accessTokenChips).toContainEqual(['gis', 'Reserved claim: Gravitee internal subject (internal)']);
+    expect(accessTokenChips.filter(([name]) => name === 'iss')).toHaveLength(1);
+    expect(tooltips('allowedIdTokenClaims-reserved')).toContainEqual(['auth_time', 'Reserved claim: Authentication time']);
+    expect(tooltips('allowedIdTokenClaims-reserved').map(([name]) => name)).not.toContain('jti');
+
+    const reservedChips = fixture.nativeElement.querySelectorAll('.reserved-claim');
+    reservedChips.forEach((chip: HTMLElement) => expect(chip.querySelector('[matChipRemove]')).toBeNull());
+    expect(fixture.nativeElement.querySelectorAll('.reserved-claim-internal')).toHaveLength(4);
   });
 
   it('shouldRejectTooLongClaim', () => {

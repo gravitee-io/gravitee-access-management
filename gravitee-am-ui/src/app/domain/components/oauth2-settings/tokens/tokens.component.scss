@@ -39,3 +39,29 @@
     }
   }
 }
+
+.reserved-claim {
+  --mdc-chip-elevated-container-color: #ececec;
+  --mdc-chip-label-text-color: rgb(0 0 0 / 60%);
+  --mdc-chip-with-avatar-avatar-size: 16px;
+
+  .mat-icon {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+}
+
+.reserved-claim-internal {
+  --mdc-chip-elevated-container-color: #f6f6f6;
+  --mdc-chip-label-text-color: rgb(0 0 0 / 45%);
+
+  font-style: italic;
+}
+
+.reserved-claims-toggle {
+  cursor: pointer;
+}

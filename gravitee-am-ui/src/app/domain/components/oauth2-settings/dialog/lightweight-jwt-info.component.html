@@ -16,15 +16,18 @@
 
 -->
 <div>
-  <h1 matDialogTitle>Lightweight JWT claims</h1>
+  <h1 matDialogTitle>Lightweight JWT reserved claims</h1>
   <mat-dialog-content>
-    <small>A lightweight token keeps these claims and the claims on its allowlist. Other claims are removed.</small>
+    <small
+      >A lightweight token always keeps its reserved claims. To keep other claims, including your custom claims, add them to the allowlists.
+      All other claims are removed.</small
+    >
     <table class="lightweight-jwt-claims">
       <thead>
         <tr>
           <th></th>
-          <th>Always kept</th>
-          <th>Kept when the flow sets them</th>
+          <th>Always reserved</th>
+          <th>Reserved when the flow sets them</th>
           <th>Internal</th>
         </tr>
       </thead>
@@ -32,13 +35,13 @@
         <tr *ngFor="let row of keptClaims">
           <th scope="row">{{ row.token }}</th>
           <td>
-            <code *ngFor="let claim of row.always">{{ claim }}</code>
+            <code *ngFor="let claim of row.always" [title]="claimDescriptions[claim]">{{ claim }}</code>
           </td>
           <td>
-            <code *ngFor="let claim of row.whenSet">{{ claim }}</code>
+            <code *ngFor="let claim of row.whenSet" [title]="claimDescriptions[claim]">{{ claim }}</code>
           </td>
           <td>
-            <code *ngFor="let claim of row.internal">{{ claim }}</code>
+            <code *ngFor="let claim of row.internal" [title]="claimDescriptions[claim]">{{ claim }}</code>
           </td>
         </tr>
       </tbody>
