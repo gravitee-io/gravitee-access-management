@@ -16,8 +16,10 @@
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 
+export type LightweightJwtTokenType = 'Access token' | 'ID token' | 'Refresh token';
+
 export interface KeptClaims {
-  token: string;
+  token: LightweightJwtTokenType;
   always: string[];
   whenSet: string[];
   internal: string[];
@@ -44,6 +46,55 @@ export const LIGHTWEIGHT_JWT_KEPT_CLAIMS: KeptClaims[] = [
   },
 ];
 
+const LIGHTWEIGHT_JWT_CLAIM_DESCRIPTIONS: Record<string, string> = {
+  iss: 'Issuer',
+  sub: 'Subject',
+  aud: 'Audience',
+  exp: 'Expiration time',
+  iat: 'Issued at',
+  jti: 'JWT ID',
+  scope: 'Scope',
+  client_id: 'Client ID',
+  auth_time: 'Authentication time',
+  cnf: 'Confirmation',
+  act: 'Actor',
+  client_profile: 'Client profile',
+  permissions: 'UMA permissions',
+  authorization_details: 'Authorization details',
+  orig_resources: 'Original resources',
+  nonce: 'Nonce',
+  acr: 'Authentication context class reference',
+  at_hash: 'Access token hash',
+  c_hash: 'Authorization code hash',
+  s_hash: 'State hash',
+  gis: 'Gravitee internal subject',
+  domain: 'Security domain',
+  claims_request_parameter: 'Claims request parameter',
+};
+
+export interface ReservedClaim {
+  name: string;
+  internal: boolean;
+  tooltip: string;
+}
+
+export function reservedClaimsForTokens(tokens: LightweightJwtTokenType[]): ReservedClaim[] {
+  const rows = LIGHTWEIGHT_JWT_KEPT_CLAIMS.filter((row) => tokens.includes(row.token));
+  const reserved = new Map<string, ReservedClaim>();
+  for (const kind of ['always', 'whenSet', 'internal'] as const) {
+    for (const row of rows) {
+      for (const name of row[kind]) {
+        if (!reserved.has(name)) {
+          const internal = kind === 'internal';
+          const tooltip = `Reserved claim: ${LIGHTWEIGHT_JWT_CLAIM_DESCRIPTIONS[name] ?? name}${internal ? ' (internal)' : ''}`;
+          reserved.set(name, { name, internal, tooltip });
+        }
+      }
+    }
+  }
+  return [...reserved.values()];
+}
+
 @Component({
   selector: 'lightweight-jwt-info-dialog',
   templateUrl: './lightweight-jwt-info.component.html',
@@ -52,6 +103,7 @@ export const LIGHTWEIGHT_JWT_KEPT_CLAIMS: KeptClaims[] = [
 })
 export class LightweightJwtInfoDialogComponent {
   readonly keptClaims = LIGHTWEIGHT_JWT_KEPT_CLAIMS;
+  readonly claimDescriptions = LIGHTWEIGHT_JWT_CLAIM_DESCRIPTIONS;
 
   constructor(public dialogRef: MatDialogRef<LightweightJwtInfoDialogComponent>) {}
 }

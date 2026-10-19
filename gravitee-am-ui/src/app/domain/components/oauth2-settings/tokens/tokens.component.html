@@ -130,6 +130,31 @@
             <mat-label>Allowed access and refresh token claims</mat-label>
             <mat-chip-grid #allowedAccessTokenClaimsChips aria-label="Allowed access and refresh token claims" [disabled]="readonly">
               <mat-chip-row
+                *ngIf="!readonly"
+                class="reserved-claim reserved-claims-toggle"
+                [removable]="false"
+                [matTooltip]="lightweightJwtReservedClaimsToggleTooltip('allowedAccessTokenClaims')"
+                (click)="toggleLightweightJwtReservedClaims('allowedAccessTokenClaims')"
+                (keydown.enter)="toggleLightweightJwtReservedClaims('allowedAccessTokenClaims')"
+                data-testid="allowedAccessTokenClaims-reserved-toggle"
+              >
+                <mat-icon matChipAvatar *ngIf="!lightweightJwtReservedClaimsExpanded.allowedAccessTokenClaims">lock</mat-icon>
+                {{ lightweightJwtReservedClaimsExpanded.allowedAccessTokenClaims ? '<' : '...' }}
+              </mat-chip-row>
+              <ng-container *ngIf="isLightweightJwtReservedClaimsVisible('allowedAccessTokenClaims')">
+                <mat-chip-row
+                  *ngFor="let claim of lightweightJwtReservedClaims.allowedAccessTokenClaims"
+                  class="reserved-claim"
+                  [class.reserved-claim-internal]="claim.internal"
+                  [removable]="false"
+                  [matTooltip]="claim.tooltip"
+                  data-testid="allowedAccessTokenClaims-reserved"
+                >
+                  <mat-icon matChipAvatar>lock</mat-icon>
+                  {{ claim.name }}
+                </mat-chip-row>
+              </ng-container>
+              <mat-chip-row
                 *ngFor="let claim of lightweightJwtAllowlist('allowedAccessTokenClaims')"
                 [removable]="!readonly"
                 (removed)="removeLightweightJwtAllowlistClaim('allowedAccessTokenClaims', claim)"
@@ -152,6 +177,31 @@
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Allowed ID token claims</mat-label>
             <mat-chip-grid #allowedIdTokenClaimsChips aria-label="Allowed ID token claims" [disabled]="readonly">
+              <mat-chip-row
+                *ngIf="!readonly"
+                class="reserved-claim reserved-claims-toggle"
+                [removable]="false"
+                [matTooltip]="lightweightJwtReservedClaimsToggleTooltip('allowedIdTokenClaims')"
+                (click)="toggleLightweightJwtReservedClaims('allowedIdTokenClaims')"
+                (keydown.enter)="toggleLightweightJwtReservedClaims('allowedIdTokenClaims')"
+                data-testid="allowedIdTokenClaims-reserved-toggle"
+              >
+                <mat-icon matChipAvatar *ngIf="!lightweightJwtReservedClaimsExpanded.allowedIdTokenClaims">lock</mat-icon>
+                {{ lightweightJwtReservedClaimsExpanded.allowedIdTokenClaims ? '<' : '...' }}
+              </mat-chip-row>
+              <ng-container *ngIf="isLightweightJwtReservedClaimsVisible('allowedIdTokenClaims')">
+                <mat-chip-row
+                  *ngFor="let claim of lightweightJwtReservedClaims.allowedIdTokenClaims"
+                  class="reserved-claim"
+                  [class.reserved-claim-internal]="claim.internal"
+                  [removable]="false"
+                  [matTooltip]="claim.tooltip"
+                  data-testid="allowedIdTokenClaims-reserved"
+                >
+                  <mat-icon matChipAvatar>lock</mat-icon>
+                  {{ claim.name }}
+                </mat-chip-row>
+              </ng-container>
               <mat-chip-row
                 *ngFor="let claim of lightweightJwtAllowlist('allowedIdTokenClaims')"
                 [removable]="!readonly"

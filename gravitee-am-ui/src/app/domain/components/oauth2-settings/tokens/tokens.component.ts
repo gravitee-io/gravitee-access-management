@@ -21,14 +21,23 @@ import { find, findIndex, remove } from 'lodash';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { ClaimsInfoDialogComponent } from '../dialog/claims-info.component';
-import { LIGHTWEIGHT_JWT_KEPT_CLAIMS, LightweightJwtInfoDialogComponent } from '../dialog/lightweight-jwt-info.component';
+import {
+  LIGHTWEIGHT_JWT_KEPT_CLAIMS,
+  LightweightJwtInfoDialogComponent,
+  reservedClaimsForTokens,
+  LightweightJwtTokenType,
+  ReservedClaim,
+} from '../dialog/lightweight-jwt-info.component';
 import { MIN_ID_JAG_VALIDITY_SECONDS } from '../cross-app-access/cross-app-access.types';
 
 export const LIGHTWEIGHT_JWT_CLAIM_NAME_MAX_LENGTH = 128;
 
 type LightweightJwtAllowlistField = 'allowedAccessTokenClaims' | 'allowedIdTokenClaims';
 
-const LIGHTWEIGHT_JWT_FILTERED_TOKEN_TYPES: Record<string, { allowlist: LightweightJwtAllowlistField; keptClaims: string }> = {
+const LIGHTWEIGHT_JWT_FILTERED_TOKEN_TYPES: Record<
+  string,
+  { allowlist: LightweightJwtAllowlistField; keptClaims: LightweightJwtTokenType }
+> = {
   access_token: { allowlist: 'allowedAccessTokenClaims', keptClaims: 'Access token' },
   id_token: { allowlist: 'allowedIdTokenClaims', keptClaims: 'ID token' },
 };
@@ -56,6 +65,16 @@ export class TokensComponent implements OnInit {
   claimTokenTypes: string[] = [];
 
   readonly separatorKeysCodes: number[] = [ENTER, COMMA];
+
+  readonly lightweightJwtReservedClaims: Record<LightweightJwtAllowlistField, ReservedClaim[]> = {
+    allowedAccessTokenClaims: reservedClaimsForTokens(['Access token', 'Refresh token']),
+    allowedIdTokenClaims: reservedClaimsForTokens(['ID token']),
+  };
+
+  readonly lightweightJwtReservedClaimsExpanded: Record<LightweightJwtAllowlistField, boolean> = {
+    allowedAccessTokenClaims: false,
+    allowedIdTokenClaims: false,
+  };
 
   get validityFieldFlex(): number {
     return this.context === 'McpServer' ? 32 : 24;
@@ -139,12 +158,29 @@ export class TokensComponent implements OnInit {
       this.snackbarService.open(`Claim name must be at most ${LIGHTWEIGHT_JWT_CLAIM_NAME_MAX_LENGTH} characters`);
       return;
     }
+    if (this.lightweightJwtReservedClaims[field].some((reserved) => reserved.name === claim)) {
+      this.snackbarService.open(`${claim} is a reserved claim and is always kept`);
+      return;
+    }
     const allowlist = this.lightweightJwtAllowlist(field);
     if (allowlist.includes(claim)) {
+      this.snackbarService.open('Claim already exists');
       return;
     }
     this.oauthSettings.lightweightJwtSettings = { ...this.oauthSettings.lightweightJwtSettings, [field]: [...allowlist, claim] };
     this.modelChanged();
+  }
+
+  toggleLightweightJwtReservedClaims(field: LightweightJwtAllowlistField) {
+    this.lightweightJwtReservedClaimsExpanded[field] = !this.lightweightJwtReservedClaimsExpanded[field];
+  }
+
+  isLightweightJwtReservedClaimsVisible(field: LightweightJwtAllowlistField): boolean {
+    return this.readonly || this.lightweightJwtReservedClaimsExpanded[field];
+  }
+
+  lightweightJwtReservedClaimsToggleTooltip(field: LightweightJwtAllowlistField): string {
+    return this.lightweightJwtReservedClaimsExpanded[field] ? 'Click to collapse reserved claims' : 'Reserved claims: click to expand';
   }
 
   removeLightweightJwtAllowlistClaim(field: LightweightJwtAllowlistField, claim: string) {
