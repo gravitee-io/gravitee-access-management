@@ -8,13 +8,13 @@ one story per commit, the four verification commands green at each commit.
 
 ## 1. Stages
 
-| Stage                     | Work                                                                                                          | Exit                                                  | State                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------ |
-| 0. Patterns and inventory | `AGENTS.md`, the documents under `docs/migration/`, the inventory generator, the `migrate-area` skill         | Documents committed. Inventory counts agreed          | Done 2026-10-20                |
-| 1. Foundation             | The stories in section 2                                                                                      | The providers unit runs end to end on the kit         | Stories 1 to 7 done 2026-10-20 |
-| 2. Pilot                  | The `providers` unit with the skill and nothing else                                                          | The skill and the rules updated from the measurements | Not started                    |
-| 3. Scale                  | The batches in section 4, parallel agents in worktrees, one kit lane                                          | Every unit `done` or `out-of-scope`                   | Not started                    |
-| 4. Parity                 | Organization units, the 404 page, strangler links for anything left, the Angular Playwright journeys replayed | Self-hosted switch per the viability report phasing   | Not started                    |
+| Stage                     | Work                                                                                                          | Exit                                                  | State                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- |
+| 0. Patterns and inventory | `AGENTS.md`, the documents under `docs/migration/`, the inventory generator, the `migrate-area` skill         | Documents committed. Inventory counts agreed          | Done 2026-10-20                                                  |
+| 1. Foundation             | The stories in section 2                                                                                      | The providers unit runs end to end on the kit         | Stories 1 to 8 done 2026-10-20. The story 8 spec has not run yet |
+| 2. Pilot                  | The `providers` unit with the skill and nothing else                                                          | The skill and the rules updated from the measurements | Not started                                                      |
+| 3. Scale                  | The batches in section 4, parallel agents in worktrees, one kit lane                                          | Every unit `done` or `out-of-scope`                   | Not started                                                      |
+| 4. Parity                 | Organization units, the 404 page, strangler links for anything left, the Angular Playwright journeys replayed | Self-hosted switch per the viability report phasing   | Not started                                                      |
 
 ## 2. Stage 1 stories
 
@@ -29,7 +29,7 @@ In order. Each is one commit with the subject `feat(ui-next): <story>`.
 | 5   | Licence model                   | `src/lib/session/license.tsx`: loads `GET /organizations/:org/license`, `useLicense()` with `isMissing(feature)`, `<RequireLicense>` route element, a click guard that opens the kit upgrade dialog. The feature names from `gio-license-data.ts` | A unit test with a missing feature                                 |
 | 6   | Plugin wizard                   | `PluginWizard` in `src/app/components/`: step 1 picks a plugin type from a list with icons and licence badges, step 2 renders the schema form through `adaptAmSchema`, inside `PageFocused`                                                       | The identity provider create page uses it                          |
 | 7   | Memberships panel and tag input | `MembershipsPanel` from the Angular `components/memberships/`. `TagInput` came early with story 6                                                                                                                                                 | A unit test each                                                   |
-| 8   | Playwright project              | `gravitee-am-test/playwright/` project `console-next` on `:4201`, the cockpit-mock login fixture, one spec for the domains list                                                                                                                   | The spec runs green against the local stack                        |
+| 8   | Playwright project              | `gravitee-am-test/playwright/` project `console-next` on `:4201`, a login fixture on the Management API form, as the React console uses it, one spec for the domains list                                                                         | The spec runs green against the local stack                        |
 | 9   | Delivery                        | Docker image on the nginx pattern, `constants.json` contract, Helm value to pick the image, a CI job for the four commands                                                                                                                        | CI runs on the spike branch                                        |
 
 Stories 1 to 3 have no dependency. Story 4 and 5 depend on 2. Story 6 depends on 3 and 5. Story 8 depends on nothing.

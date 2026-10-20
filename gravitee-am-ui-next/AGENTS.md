@@ -188,6 +188,9 @@ Do not:
   gated action hides without the permission.
 - Query by role and accessible name. Do not query by class.
 - Pure helpers such as `am-schema.ts` and `am-flows.ts` get plain unit tests.
+- End-to-end specs for this console go in `../gravitee-am-test/playwright/tests/console-next/`. The `console-next`
+  project runs them against `yarn serve` on `:4201`: `npm run pw:next` in `../gravitee-am-test`. Follow
+  `../gravitee-am-test/playwright/GUIDELINES.md`.
 
 ## 11. Commits
 

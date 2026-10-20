@@ -233,10 +233,9 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 
 ## 13. Gaps that block a factory
 
-| Gap                   | Effect today                            |
-| --------------------- | --------------------------------------- |
-| One navigation file   | Parallel agents collide on it           |
-| No Playwright project | Behaviour parity has no automated check |
-| No README             | Setup lives in the spike plan           |
+| Gap                 | Effect today                  |
+| ------------------- | ----------------------------- |
+| One navigation file | Parallel agents collide on it |
+| No README           | Setup lives in the spike plan |
 
 These are the Stage 1 stories in `execution-plan.md`.
