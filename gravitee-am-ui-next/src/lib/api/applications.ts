@@ -32,6 +32,7 @@ export interface ApplicationDetail extends Application {
     readonly settings?: {
         readonly oauth?: {
             readonly clientId?: string;
+            readonly clientSecret?: string;
             readonly grantTypes?: string[];
             readonly redirectUris?: string[];
             readonly scopeSettings?: { readonly scope: string }[];
@@ -60,4 +61,79 @@ export function patchApplication(
         method: 'PATCH',
         body: JSON.stringify(patch),
     });
+}
+
+/** The type names the create endpoints take. */
+export type NewApplicationType = 'WEB' | 'BROWSER' | 'NATIVE' | 'SERVICE' | 'RESOURCE_SERVER';
+
+export interface NewApplication {
+    readonly name: string;
+    readonly type: NewApplicationType;
+    readonly description?: string;
+    readonly clientId?: string;
+    readonly clientSecret?: string;
+    readonly redirectUris: string[] | null;
+}
+
+export function createApplication(ref: DomainRef, application: NewApplication): Promise<ApplicationDetail> {
+    return http<ApplicationDetail>(`${domainPath(ref)}/applications`, { method: 'POST', body: JSON.stringify(application) });
+}
+
+/** OAuth 2.0 client metadata, as the Client Identity Metadata Document holds it. */
+export interface ClientMetadata {
+    readonly client_name?: string;
+    readonly redirect_uris?: string[];
+    readonly grant_types?: string[];
+    readonly response_types?: string[];
+    readonly scope?: string;
+    readonly token_endpoint_auth_method?: string;
+    readonly logo_uri?: string;
+    readonly jwks_uri?: string;
+    readonly jwks?: { readonly keys?: { readonly kid?: string; readonly kty?: string; readonly use?: string; readonly alg?: string }[] };
+    readonly application_type?: string;
+    readonly post_logout_redirect_uris?: string[];
+    readonly contacts?: string[];
+    readonly client_uri?: string;
+    readonly policy_uri?: string;
+    readonly tos_uri?: string;
+    readonly request_uris?: string[];
+    readonly software_id?: string;
+    readonly software_version?: string;
+    readonly software_statement?: string;
+    readonly subject_type?: string;
+    readonly sector_identifier_uri?: string;
+    readonly id_token_signed_response_alg?: string;
+    readonly tls_client_auth_subject_dn?: string;
+    readonly tls_client_auth_san_dns?: string;
+    readonly tls_client_auth_san_uri?: string;
+    readonly tls_client_auth_san_ip?: string;
+    readonly tls_client_auth_san_email?: string;
+    readonly tls_client_certificate_bound_access_tokens?: boolean;
+    readonly backchannel_token_delivery_mode?: string;
+    readonly backchannel_authentication_request_signing_alg?: string;
+    readonly backchannel_client_notification_endpoint?: string;
+    readonly backchannel_user_code_parameter?: boolean;
+}
+
+export interface CimdPreview {
+    readonly url: string;
+    readonly hasInlineJwks?: boolean;
+    readonly metadata?: ClientMetadata;
+    readonly missing?: { readonly clientName?: boolean };
+}
+
+export function validateCimd(ref: DomainRef, url: string): Promise<CimdPreview> {
+    return http<CimdPreview>(`${domainPath(ref)}/cimd/validate`, { method: 'POST', body: JSON.stringify({ url }) });
+}
+
+export interface NewCimdApplication {
+    readonly name: string;
+    readonly type: NewApplicationType;
+    readonly description?: string;
+    readonly cimdUrl: string;
+    readonly clientName?: string;
+}
+
+export function createApplicationFromCimd(ref: DomainRef, application: NewCimdApplication): Promise<ApplicationDetail> {
+    return http<ApplicationDetail>(`${domainPath(ref)}/cimd/applications`, { method: 'POST', body: JSON.stringify(application) });
 }

@@ -25,6 +25,14 @@ const BUILT_SECTIONS = new Set(['overview', 'design/flows', 'settings/general'])
 export const applicationRoutes = (
     <>
         <Route path="applications" element={lazyPage(() => import('./ApplicationsPage'), 'ApplicationsPage')} />
+        <Route
+            path="applications/new"
+            element={
+                <RequirePermission anyOf={['application_create']}>
+                    {lazyPage(() => import('./CreateApplicationPage'), 'CreateApplicationPage')}
+                </RequirePermission>
+            }
+        />
         <Route path="applications/:applicationId" element={lazyPage(() => import('./ApplicationPage'), 'ApplicationLayout')}>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={lazyPage(() => import('./ApplicationPage'), 'ApplicationOverviewPage')} />

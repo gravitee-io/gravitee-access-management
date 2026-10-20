@@ -40,6 +40,11 @@ export interface Domain {
     readonly createdAt?: number;
     readonly updatedAt?: number;
     readonly certificateSettings?: CertificateSettings;
+    readonly uma?: { readonly enabled?: boolean };
+    readonly oidc?: {
+        readonly clientRegistrationSettings?: { readonly allowRedirectUriParamsExpressionLanguage?: boolean };
+        readonly cimdSettings?: { readonly enabled?: boolean };
+    };
 }
 
 export function listDomains(organizationId: string, environmentId: string, page: number, size: number, query = ''): Promise<Page<Domain>> {

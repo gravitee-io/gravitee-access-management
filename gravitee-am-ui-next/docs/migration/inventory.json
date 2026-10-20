@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-20",
-    "angularCommit": "f4029be647",
+    "angularCommit": "7a6af760c4",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1365,9 +1365,13 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "C",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/applications/CreateApplicationPage.tsx",
+                        "src/features/applications/CimdReviewStep.tsx",
+                        "src/features/applications/ClientSecretDialog.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -1384,12 +1388,12 @@
                 "domain_list"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "C",
             "order": 3,
             "blockers": [],
-            "notes": "Split from applications so the console can create an application. Three-step Angular stepper: application type, settings, and the CIMD confirmation (step3-cimd-confirm). Not a plugin wizard, so PluginWizard does not fit; the conversion rules give one step component per mat-step.",
-            "angularCommit": null
+            "notes": "Split from applications so the console can create an application. Three-step Angular stepper: application type, settings, and the CIMD confirmation (step3-cimd-confirm). Not a plugin wizard, so PluginWizard does not fit; the conversion rules give one step component per mat-step. The page lives in src/features/applications/, the area folder, and the calls in src/lib/api/applications.ts, beside the applications unit.\nPages: applications/new → CreateApplicationPage → src/features/applications/CreateApplicationPage.tsx.\nEndpoints: POST /domains/:domain/applications (name, description, clientId, clientSecret, redirectUris, type); POST /domains/:domain/cimd/validate ({ url }); POST /domains/:domain/cimd/applications (name, type, description, cimdUrl, clientName when the document has no client_name).\nPermissions: route application_create (RequirePermission). The New application button on the list is gated with application_create, as the Angular FAB is.\nLicence features: none.\nPrototype additions left out: the in-page no-permission Alert and the disabled type cards (not in AM, the route guard does it); the trim of the input values (not in AM, Angular sends the values as typed).\nAngular behaviour added back: the full CIMD metadata review list and the View metadata JSON dialog with Copy JSON; clientName in the CIMD payload; the client secret dialog OK button stays disabled until the secret is copied, with the toast Client Secret copied to the clipboard, and the dialog has no close button (Angular disableClose); the server message in the error toast with the Angular fallback texts; the New application button on the list. The Angular AGENT branches (kind, agentType) are not reachable from this page, because step 1 offers no Agent type; the Agents area owns them.\nVerification, 2026-10-20, React console on :4201 against the authz-e2e stack (MAPI :8093), domain gamma with CIMD on and UMA off. The Angular console was not running (:4200 is the Gamma console), so the calls were compared with the Angular service and component source. Web create: POST /applications {name, type: WEB, redirectUris: [uri]}, secret dialog OK disabled until the copy, landed on /applications/:id/overview. Backend to Backend create: no Redirect URI field, the payload has redirectUris null. CIMD: POST /cimd/validate {url}, the review listed Client ID, Redirect URIs, Grant types, Response types, Scopes, Token endpoint auth method, Contacts, the JSON dialog showed the document, then POST /cimd/applications {name, type: WEB, cimdUrl, clientName}, toast Application <name> created. Same method, path and fields as Angular; an empty optional field is left out, as Angular leaves an untouched field out. Resource Server is hidden when UMA is off. Playwright: tests/console-next/application-creation.spec.ts passes, and the 9 console-next specs pass.",
+            "angularCommit": "7a6af760c4"
         },
         {
             "id": "bot-detection",

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BadgeCell, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
-import { AppWindowIcon, SearchIcon } from '@gravitee/graphene-core/icons';
+import { BadgeCell, Button, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
+import { AppWindowIcon, PlusIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
@@ -25,6 +25,7 @@ import { SearchField } from '../../app/components/SearchField';
 import { type Application, listApplications } from '../../lib/api/applications';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
+import { Can } from '../../lib/session/permissions';
 import { APPLICATION_TYPE_LABELS } from './application-types';
 
 const columns: ColumnDef<Application, unknown>[] = [
@@ -75,7 +76,20 @@ export function ApplicationsPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader title="Applications" description="Clients that sign users in through this domain." />
+            <PageHeader
+                title="Applications"
+                description="Clients that sign users in through this domain."
+                actions={
+                    <Can all={['application_create']}>
+                        <Button asChild>
+                            <Link to={`${basePath}/applications/new`}>
+                                <PlusIcon aria-hidden />
+                                Create application
+                            </Link>
+                        </Button>
+                    </Can>
+                }
+            />
             {error ? (
                 <ErrorPanel description="Could not load the applications." error={error} />
             ) : data?.totalCount === 0 && !query ? (
