@@ -78,7 +78,7 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken();
 
-    const body = await impersonationFixture.exchange(subjectToken);
+    const { body } = await impersonationFixture.requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
     const exchanged = parseJwt(body.access_token);
     const subject = parseJwt(subjectToken);
 
@@ -91,7 +91,9 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken('openid%20profile%20offline_access');
 
-    const body = await impersonationFixture.exchange(subjectToken, '&scope=openid');
+    const { body } = await impersonationFixture
+      .requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE, scope: 'openid' })
+      .expect(200);
     const exchanged = parseJwt(body.access_token);
 
     const subjectScope = String(exchanged.payload['tx_subject_scope']).split(' ').sort();
@@ -103,7 +105,7 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken();
 
-    const body = await impersonationFixture.exchange(subjectToken);
+    const { body } = await impersonationFixture.requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
     const exchanged = parseJwt(body.access_token);
 
     expect(body.access_token).toBeDefined();
@@ -114,7 +116,9 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { obtainSubjectToken } = impersonationFixture;
     const { accessToken: subjectToken } = await obtainSubjectToken();
 
-    const body = await impersonationFixture.exchange(subjectToken, `&requested_token_type=${ID_TOKEN_TYPE}`);
+    const { body } = await impersonationFixture
+      .requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE, requestedTokenType: ID_TOKEN_TYPE })
+      .expect(200);
     const issued = parseJwt(body.access_token);
     const subject = parseJwt(subjectToken);
 
@@ -127,7 +131,9 @@ describe('Token Exchange subject token claims in EL (RFC 8693)', () => {
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
 
-    const body = await delegationFixture.exchange(subjectToken, `&actor_token=${actorToken}&actor_token_type=${ACCESS_TOKEN_TYPE}`);
+    const { body } = await delegationFixture
+      .requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE, actorToken, actorTokenType: ACCESS_TOKEN_TYPE })
+      .expect(200);
     const exchanged = parseJwt(body.access_token);
 
     expect(exchanged.payload['tx_subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);

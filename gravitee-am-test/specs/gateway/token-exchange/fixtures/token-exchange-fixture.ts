@@ -98,14 +98,8 @@ export interface TokenExchangeFixture {
   // Helper method to exchange token (impersonation/delegation)
   exchangeToken: (subjectToken: string, subjectTokenType: 'access_token' | 'refresh_token', actorToken?: string) => Promise<string>;
 
-  /**
-   * Exchange an access-token subject token and return the whole token response.
-   * `extraParams` is appended to the form body verbatim.
-   */
-  exchange: (subjectToken: string, extraParams?: string) => Promise<Record<string, any>>;
-
   /** Send a token exchange request without asserting the response status. */
-  requestExchange: (exchangeRequest: TokenExchangeRequest) => Promise<request.Response>;
+  requestExchange: (exchangeRequest: TokenExchangeRequest) => request.Test;
 
   /** Call /oidc/userinfo with the supplied access token. */
   userinfo: (accessToken: string) => Promise<Record<string, any>>;
@@ -329,7 +323,7 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       }).expect(200);
     };
 
-    const requestExchange = async (exchangeRequest: TokenExchangeRequest): Promise<request.Response> => {
+    const requestExchange = (exchangeRequest: TokenExchangeRequest): request.Test => {
       const params: Record<string, string | undefined> = {
         grant_type: TOKEN_EXCHANGE_GRANT,
         subject_token: exchangeRequest.subjectToken,
@@ -359,25 +353,11 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
         subjectTokenType: `urn:ietf:params:oauth:token-type:${subjectTokenType}`,
         actorToken,
         actorTokenType: actorToken ? ACCESS_TOKEN_TYPE : undefined,
-      });
-      expect(response.status).toBe(200);
+      }).expect(200);
 
       const exchangedToken = response.body.access_token;
       expect(exchangedToken).toBeDefined();
       return exchangedToken;
-    };
-
-    const exchange = async (subjectToken: string, extraParams = ''): Promise<Record<string, any>> => {
-      const response = await performPost(
-        oidc.token_endpoint,
-        '',
-        `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${ACCESS_TOKEN_TYPE}${extraParams}`,
-        {
-          'Content-type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${basicAuth}`,
-        },
-      ).expect(200);
-      return response.body;
     };
 
     const userinfo = async (accessTokenValue: string): Promise<Record<string, any>> => {
@@ -407,7 +387,6 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       introspectToken,
       revokeToken,
       exchangeToken,
-      exchange,
       requestExchange,
       userinfo,
       cleanup,
