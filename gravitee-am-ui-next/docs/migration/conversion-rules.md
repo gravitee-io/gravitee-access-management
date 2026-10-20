@@ -197,7 +197,7 @@ uncovered list is in `migration-inventory.md`.
 | ---------------------------------------------------------------- | ----------------------------------------------------------------- | -------------- |
 | A route with `component`                                         | A `<Route>` with `lazyPage()` in the area's `routes.tsx`          | Semi-automatic |
 | `canActivate: [AuthGuard]` with `data.perms.only`                | `<RequirePermission anyOf={perms}>` with the route's own list     | Semi-automatic |
-| `canActivate: [LicenseGuard]` with `data.licenseOptions.feature` | The licence route element with the same feature                   | Semi-automatic |
+| `canActivate: [LicenseGuard]` with `data.licenseOptions.feature` | `<RequireLicense feature>` with the same feature                  | Semi-automatic |
 | `canActivate: [CloudModeGuard]`, `menu.hideInCloudMode`          | Hide the route and the nav item when the installation is managed  | Semi-automatic |
 | `data.types.only: ['WEB', ...]` on an application section        | Filter the section nav groups by `application.type` in the layout | Manual         |
 | `data.protocol: 'SAML'`                                          | Show the section when `domain.saml?.enabled`                      | Manual         |

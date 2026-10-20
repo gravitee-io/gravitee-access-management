@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import {
+    Button,
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@gravitee/graphene-core';
+import { upgradeUrl } from '../../lib/session/license';
+
+interface UpgradeDialogProps {
+    readonly open: boolean;
+    /** The licence feature the action needs. */
+    readonly feature: string;
+    /** The text of the feature, from `FEATURE_DESCRIPTIONS`. */
+    readonly description: string;
+    readonly onOpenChange: (open: boolean) => void;
+}
+
+/** The upsell the Angular `licenseGuard` directive opens when a control needs a feature the licence lacks. */
+export function UpgradeDialog({ open, feature, description, onOpenChange }: UpgradeDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Enterprise feature</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="ghost">Close</Button>
+                    </DialogClose>
+                    <Button asChild>
+                        <a href={upgradeUrl(feature)} target="_blank" rel="noreferrer">
+                            Request upgrade
+                        </a>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}

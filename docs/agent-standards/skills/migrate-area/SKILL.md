@@ -101,8 +101,9 @@ Check: every `path` of the unit's inventory entry resolves to a route, and the p
 
 Wrap each route whose `guards` has `AuthGuard` in `<RequirePermission anyOf={perms}>` from
 `src/lib/session/permissions.tsx`, with that route's own `perms` list. Gate each create, update and delete action with
-`<Can all={[...]}>` or `usePermissions().has()` and the AM name from the brief. Wrap each route with a `licenseFeature` in the licence route
-element and guard the action's click. Hide a `hideInCloudMode` page when the installation is managed.
+`<Can all={[...]}>` or `usePermissions().has()` and the AM name from the brief. Wrap each route with a `licenseFeature` in
+`<RequireLicense feature>` and each control that needs a plugin feature in `<LicenseGuard feature>`, both from
+`src/lib/session/license.tsx`. Hide a `hideInCloudMode` page when the installation is managed.
 
 Check: a test renders the page without the permission and asserts the action is absent.
 

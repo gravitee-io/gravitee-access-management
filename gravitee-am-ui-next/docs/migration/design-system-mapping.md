@@ -66,19 +66,19 @@ Validation shows inline under the field, on touch, with the Angular message. The
 
 ## 3. Dialogs and feedback
 
-| Angular                                                     | Count | Graphene                                        | Note                                                  |
-| ----------------------------------------------------------- | ----- | ----------------------------------------------- | ----------------------------------------------------- |
-| `MatDialog` with `mat-dialog-content`, `mat-dialog-actions` | 29    | `Dialog`                                        | A component per dialog with `open` and `onOpenChange` |
-| `DialogService.confirm`                                     |       | `ConfirmDialog` on `Dialog`                     | `destructive` variant for delete                      |
-| Side panel                                                  |       | `Sheet`                                         | The policy studio uses one for step settings          |
-| `MatSnackBar` through `SnackbarService`                     |       | `toast` from Sonner, `Toaster` in `App.tsx`     | `success`, `error`                                    |
-| `gio-banner-info`                                           | 1     | `Alert` with `AlertTitle`, `AlertDescription`   |                                                       |
-| `matTooltip`                                                |       | `Tooltip`                                       |                                                       |
-| `mat-menu`                                                  |       | `DropdownMenu`                                  |                                                       |
-| `app-loader`, `gv-loader`                                   |       | `Spinner`, `Skeleton`                           | `DataTable` has its own skeleton                      |
-| `mat-progress-bar`                                          |       | `Progress`                                      |                                                       |
-| `gio-license-expiration-notification`                       | 1     | Kit, in the shell                               |                                                       |
-| Upgrade dialog from `GioLicenseService`                     |       | GR-A shared dialog story. Kit dialog until then |                                                       |
+| Angular                                                     | Count | Graphene                                      | Note                                                  |
+| ----------------------------------------------------------- | ----- | --------------------------------------------- | ----------------------------------------------------- |
+| `MatDialog` with `mat-dialog-content`, `mat-dialog-actions` | 29    | `Dialog`                                      | A component per dialog with `open` and `onOpenChange` |
+| `DialogService.confirm`                                     |       | `ConfirmDialog` on `Dialog`                   | `destructive` variant for delete                      |
+| Side panel                                                  |       | `Sheet`                                       | The policy studio uses one for step settings          |
+| `MatSnackBar` through `SnackbarService`                     |       | `toast` from Sonner, `Toaster` in `App.tsx`   | `success`, `error`                                    |
+| `gio-banner-info`                                           | 1     | `Alert` with `AlertTitle`, `AlertDescription` |                                                       |
+| `matTooltip`                                                |       | `Tooltip`                                     |                                                       |
+| `mat-menu`                                                  |       | `DropdownMenu`                                |                                                       |
+| `app-loader`, `gv-loader`                                   |       | `Spinner`, `Skeleton`                         | `DataTable` has its own skeleton                      |
+| `mat-progress-bar`                                          |       | `Progress`                                    |                                                       |
+| `gio-license-expiration-notification`                       | 1     | Kit, in the shell                             |                                                       |
+| Upgrade dialog from `GioLicenseService`                     |       | `UpgradeDialog` in `src/app/components/`      |                                                       |
 
 ## 4. Navigation and layout
 
@@ -152,7 +152,7 @@ Dark mode comes from `AppLayout` `defaultTheme="system"`. No page sets a colour 
 | Memberships panel     | Domain, application, MCP server, organization members               | Kit                                             |
 | Client secret dialogs | Applications, MCP servers, domain secrets                           | Kit                                             |
 | Custom schema widgets | `datasource`, file, multiselect                                     | GR-A custom field story                         |
-| Upgrade dialog        | 21 `licenseGuard` sites                                             | GR-A shared dialog story                        |
+| Upgrade dialog        | 21 `licenseGuard` sites                                             | Built: `UpgradeDialog`, `UpgradePanel`          |
 | Charts                | Dashboard, analytics, audits                                        | `graphene-charts`                               |
 | OpenFGA model editor  | Authorization engines                                               | Design decision, class D                        |
 | Theme preview         | Theme                                                               | Design decision, class D                        |

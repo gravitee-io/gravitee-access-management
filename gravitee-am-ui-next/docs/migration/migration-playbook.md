@@ -115,8 +115,8 @@ Check: every `path` in the unit's inventory entry resolves to a React route. The
   permission from the brief.
 - When the unit introduces a new scope, such as a protected resource, load its list with `LoadPermissionScope` in the
   scope component.
-- Wrap each route with a `licenseFeature` with the licence route element. Guard the gated action's click with the
-  licence click guard.
+- Wrap each route with a `licenseFeature` in `<RequireLicense feature>`. Wrap a control that needs a plugin's
+  `feature` in `<LicenseGuard feature>`, which opens `UpgradeDialog` on click when the licence lacks it.
 - Hide a route and its nav item when the page has `hideInCloudMode` and the installation is managed.
 
 Check: a test renders the page with a user that lacks the permission and asserts the action is absent.

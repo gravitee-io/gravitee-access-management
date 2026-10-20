@@ -79,8 +79,9 @@ environment navigates to `/`.
 `src/lib/session/permissions.tsx` holds the permission model. `SessionGate` grants `CurrentUser.permissions` from
 `GET /user`. `EnvironmentScope`, `DomainScope` and `ApplicationLayout` each load their `/members/permissions` list
 through `LoadPermissionScope` before their pages render, as the Angular `AuthGuard` does. `usePermissions()`,
-`<RequirePermission>` and `<Can>` read the union. The protected resource list is not loaded yet. There is no licence
-check.
+`<RequirePermission>` and `<Can>` read the union. The protected resource list is not loaded yet.
+`src/lib/session/license.tsx` loads the licence once in `SessionGate`. `useLicense()`, `<RequireLicense>` and
+`<LicenseGuard>` read it, with the feature names in `license-features.ts`.
 
 ## 5. HTTP and API layer
 
@@ -225,12 +226,11 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 
 ## 13. Gaps that block a factory
 
-| Gap                                | Effect today                            |
-| ---------------------------------- | --------------------------------------- |
-| No licence hook, no upgrade dialog | EE features are not gated               |
-| No wizard, no memberships panel    | Create flows cannot be ported           |
-| One navigation file                | Parallel agents collide on it           |
-| No Playwright project              | Behaviour parity has no automated check |
-| No README                          | Setup lives in the spike plan           |
+| Gap                             | Effect today                            |
+| ------------------------------- | --------------------------------------- |
+| No wizard, no memberships panel | Create flows cannot be ported           |
+| One navigation file             | Parallel agents collide on it           |
+| No Playwright project           | Behaviour parity has no automated check |
+| No README                       | Setup lives in the spike plan           |
 
 These are the Stage 1 stories in `execution-plan.md`.

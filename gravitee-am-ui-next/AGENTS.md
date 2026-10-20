@@ -48,7 +48,7 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ConfirmDialog, SaveBar, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
@@ -133,9 +133,12 @@ src/
   `hasAny(...names)` for any-of. `<RequirePermission anyOf={[...]}>` wraps a route that Angular guards with `AuthGuard`,
   with that route's own `perms.only` list. `<Can all={[...]}>` gates a button or a column, as `*hasPermission` does. A
   scope's list loads through `LoadPermissionScope` before its pages render. Reference: `ApplicationPage.tsx`.
-- The licence hook is a Stage 1 foundation story. Until it exists, record the feature of a page in its inventory entry
-  and do not fake a gate.
-- Licence features are the 42 `AM_*` names in `../gravitee-am-ui/src/app/components/gio-license/gio-license-data.ts`.
+- `src/lib/session/license.tsx` holds the licence, loaded once in `SessionGate`. `useLicense().isMissing(feature)` is
+  false for no feature, which means an OSS plugin. `<RequireLicense feature>` wraps a route that Angular guards with
+  `LicenseGuard`. `<LicenseGuard feature>` wraps a control, as the Angular `licenseGuard` directive does: a click opens
+  `UpgradeDialog` instead of the control's handler.
+- Licence features are the `AmFeature` names in `src/lib/session/license-features.ts`, generated from the Angular
+  `components/gio-license/gio-license-data.ts`. A plugin's `feature` field names one.
 
 ## 9. Porting a page
 

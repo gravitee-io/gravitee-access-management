@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactNode, use } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { type CurrentUser, type Environment, getCurrentUser, listEnvironments } from '../api/management-api';
+import { LoadLicenseScope } from './license';
 import { PermissionScope } from './permissions';
 
 export interface Session {
@@ -51,7 +52,9 @@ export function SessionGate({ children }: { readonly children: ReactNode }) {
     if (data) {
         return (
             <SessionContext value={data}>
-                <PermissionScope permissions={data.user.permissions}>{children}</PermissionScope>
+                <PermissionScope permissions={data.user.permissions}>
+                    <LoadLicenseScope organizationId={data.user.org}>{children}</LoadLicenseScope>
+                </PermissionScope>
             </SessionContext>
         );
     }
