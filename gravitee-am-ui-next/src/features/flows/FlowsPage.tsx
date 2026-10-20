@@ -17,6 +17,7 @@ import { Spinner, toast } from '@gravitee/graphene-core';
 import { type Policy, PolicyStudio, type SaveOutput } from '@gravitee/graphene-policy-studio';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useCallback, useMemo } from 'react';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { type AmFlow, getPolicyDocumentation, getPolicySchema, listFlows, listPolicies, updateFlows } from '../../lib/api/flows';
 import { useCurrentDomain } from '../../lib/session/domain';
@@ -77,7 +78,7 @@ export function FlowsPage({
     );
 
     if (flowsError || pluginsError) {
-        return <p className="text-sm text-destructive">Could not load the flows.</p>;
+        return <ErrorPanel description="Could not load the flows." error={flowsError ?? pluginsError} />;
     }
     if (!flows || !plugins) {
         return <Spinner />;

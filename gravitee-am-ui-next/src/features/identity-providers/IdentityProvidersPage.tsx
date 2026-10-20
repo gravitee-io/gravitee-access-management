@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type IdentityProviderSummary, listIdentityProviders } from '../../lib/api/identity-providers';
@@ -57,13 +58,15 @@ export function IdentityProvidersPage() {
         setQuery(text.toLowerCase());
         setPage(1);
     }, []);
-    const { data, isFetching } = useQuery({ queryKey: ['identity-providers', ref], queryFn: () => listIdentityProviders(ref) });
+    const { data, error, isFetching } = useQuery({ queryKey: ['identity-providers', ref], queryFn: () => listIdentityProviders(ref) });
     const rows = (data ?? []).filter(idp => idp.name.toLowerCase().includes(query) || idp.type.toLowerCase().includes(query));
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Identity providers" description="Where the users of this domain are stored and authenticated." />
-            {data?.length === 0 ? (
+            {error ? (
+                <ErrorPanel description="Could not load the identity providers." error={error} />
+            ) : data?.length === 0 ? (
                 <DataTableEmptyState
                     variant="first-use"
                     icon={<UsersIcon />}

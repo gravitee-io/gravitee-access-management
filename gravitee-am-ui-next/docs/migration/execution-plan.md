@@ -8,13 +8,13 @@ one story per commit, the four verification commands green at each commit.
 
 ## 1. Stages
 
-| Stage                     | Work                                                                                                          | Exit                                                  | State                   |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ----------------------- |
-| 0. Patterns and inventory | `AGENTS.md`, the documents under `docs/migration/`, the inventory generator, the `migrate-area` skill         | Documents committed. Inventory counts agreed          | Done 2026-10-20         |
-| 1. Foundation             | The stories in section 2                                                                                      | The providers unit runs end to end on the kit         | Story 1 done 2026-10-20 |
-| 2. Pilot                  | The `providers` unit with the skill and nothing else                                                          | The skill and the rules updated from the measurements | Not started             |
-| 3. Scale                  | The batches in section 4, parallel agents in worktrees, one kit lane                                          | Every unit `done` or `out-of-scope`                   | Not started             |
-| 4. Parity                 | Organization units, the 404 page, strangler links for anything left, the Angular Playwright journeys replayed | Self-hosted switch per the viability report phasing   | Not started             |
+| Stage                     | Work                                                                                                          | Exit                                                  | State                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------- |
+| 0. Patterns and inventory | `AGENTS.md`, the documents under `docs/migration/`, the inventory generator, the `migrate-area` skill         | Documents committed. Inventory counts agreed          | Done 2026-10-20                 |
+| 1. Foundation             | The stories in section 2                                                                                      | The providers unit runs end to end on the kit         | Stories 1 and 2 done 2026-10-20 |
+| 2. Pilot                  | The `providers` unit with the skill and nothing else                                                          | The skill and the rules updated from the measurements | Not started                     |
+| 3. Scale                  | The batches in section 4, parallel agents in worktrees, one kit lane                                          | Every unit `done` or `out-of-scope`                   | Not started                     |
+| 4. Parity                 | Organization units, the 404 page, strangler links for anything left, the Angular Playwright journeys replayed | Self-hosted switch per the viability report phasing   | Not started                     |
 
 ## 2. Stage 1 stories
 

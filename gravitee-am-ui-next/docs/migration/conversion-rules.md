@@ -123,7 +123,7 @@ every page. Examples: `bot-detection`, `device-identifier`, `extensionGrants`, `
 | `useLayoutConfig({ breadcrumbs })` in a page                                    | `useBreadcrumbs([...])`                                      | Automatic |
 | `useLayoutConfig({ viewMode: 'context', contextSidebar, leading })` in a layout | `useSectionSidebar({ title, badges, groups, base, crumbs })` | Automatic |
 | `PageHeader` from `components/protocols/SettingsKit`                            | `PageHeader` from `src/app/components/PageHeader.tsx`        | Automatic |
-| `LoadError`, `StateGap`                                                         | The kit error panel and not-found panel                      | Automatic |
+| `LoadError`, `StateGap`                                                         | `ErrorPanel` and `NotFoundPanel` from `src/app/components/`  | Automatic |
 | `ConfirmDialog` from `components/amUi`                                          | The kit confirm dialog                                       | Automatic |
 | Search `<Input>` with a 300 ms `useEffect` debounce                             | `<SearchField label onSearch />`                             | Automatic |
 

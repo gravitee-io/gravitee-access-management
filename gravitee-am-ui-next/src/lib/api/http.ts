@@ -59,3 +59,8 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
 export async function httpText(path: string): Promise<string> {
     return (await send(path, {})).text();
 }
+
+/** True when the Management API answered 404: the entity does not exist. */
+export function isNotFound(error: unknown): boolean {
+    return error instanceof HttpError && error.status === 404;
+}

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { http, HttpError } from '../http';
+import { http, HttpError, isNotFound } from '../http';
 
 vi.mock('../../../config/app-config', () => ({ appConfig: () => ({ baseURL: 'http://am.test/management' }) }));
 
@@ -58,5 +58,13 @@ describe('http', () => {
 
         expect(error).toBeInstanceOf(HttpError);
         expect(error).toMatchObject({ status: 403, message: 'Permission denied' });
+    });
+});
+
+describe('isNotFound', () => {
+    it('is true only for an HttpError with status 404', () => {
+        expect(isNotFound(new HttpError(404, 'Domain not found'))).toBe(true);
+        expect(isNotFound(new HttpError(500, 'Boom'))).toBe(false);
+        expect(isNotFound(new Error('Boom'))).toBe(false);
     });
 });

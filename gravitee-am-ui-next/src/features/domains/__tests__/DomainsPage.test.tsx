@@ -18,6 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { listDomains } from '../../../lib/api/domains';
+import { HttpError } from '../../../lib/api/http';
 import { DomainsPage } from '../DomainsPage';
 
 vi.mock('../../../lib/api/domains', () => ({ listDomains: vi.fn() }));
@@ -55,6 +56,15 @@ describe('DomainsPage', () => {
         expect(screen.getByText('Customer realm')).toBeInTheDocument();
         expect(screen.getByText('Enabled')).toBeInTheDocument();
         expect(listDomains).toHaveBeenCalledWith('DEFAULT', 'env-1', 0, 25, '');
+    });
+
+    it('shows the error panel, not the first-use state, when the list fails', async () => {
+        vi.mocked(listDomains).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
+
+        renderPage();
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the domains.');
+        expect(screen.queryByText('No security domains')).not.toBeInTheDocument();
     });
 
     it('shows the first-use empty state when the environment has no domain', async () => {

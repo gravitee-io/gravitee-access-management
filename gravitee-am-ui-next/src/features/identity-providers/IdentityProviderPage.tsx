@@ -31,8 +31,11 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { type Control, type Resolver, type ResolverResult, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
+import { NotFoundPanel } from '../../app/components/NotFoundPanel';
 import { PageHeader } from '../../app/components/PageHeader';
+import { isNotFound } from '../../lib/api/http';
 import {
     getIdentityProvider,
     getIdentityProviderSchema,
@@ -123,7 +126,19 @@ export function IdentityProviderPage() {
     ]);
 
     if (error) {
-        return <p className="text-sm text-destructive">Could not load the identity provider.</p>;
+        return isNotFound(error) ? (
+            <NotFoundPanel
+                title="Identity provider not found"
+                description={`No identity provider with this id exists in ${domain.name}. It may have been deleted.`}
+                action={
+                    <Button asChild variant="outline">
+                        <Link to={`${basePath}/settings/providers`}>Back to providers</Link>
+                    </Button>
+                }
+            />
+        ) : (
+            <ErrorPanel description="Could not load the identity provider." error={error} />
+        );
     }
     if (!provider) {
         return <Spinner />;

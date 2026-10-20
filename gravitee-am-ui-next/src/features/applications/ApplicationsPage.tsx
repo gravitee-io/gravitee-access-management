@@ -19,6 +19,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type Application, listApplications } from '../../lib/api/applications';
@@ -66,7 +67,7 @@ export function ApplicationsPage() {
     }, []);
     useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: basePath }, { label: 'Applications' }]);
 
-    const { data, isFetching } = useQuery({
+    const { data, error, isFetching } = useQuery({
         queryKey: ['applications', ref, page, pageSize, query],
         queryFn: () => listApplications(ref, page - 1, pageSize, query),
         placeholderData: keepPreviousData,
@@ -75,7 +76,9 @@ export function ApplicationsPage() {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Applications" description="Clients that sign users in through this domain." />
-            {data?.totalCount === 0 && !query ? (
+            {error ? (
+                <ErrorPanel description="Could not load the applications." error={error} />
+            ) : data?.totalCount === 0 && !query ? (
                 <DataTableEmptyState
                     variant="first-use"
                     icon={<AppWindowIcon />}

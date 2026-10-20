@@ -194,9 +194,12 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 ## 10. Error and loading states
 
 - A scope or a page shows `<Spinner />` while its query has no data and no error.
-- An error shows a one-line paragraph with `text-destructive`. There is no shared error panel and no not-found panel.
+- A failed query renders `ErrorPanel` from `src/app/components/`, with a sentence that names what did not load and the
+  `HttpError` message under it. A list page renders it in place of the table.
+- A detail page or scope renders `NotFoundPanel` when `isNotFound(error)` from `http.ts` is true, with a link back to
+  the list. Reference: `ApplicationLayout` in `src/features/applications/ApplicationPage.tsx`.
 - A mutation error shows a `toast.error` with the `HttpError` message.
-- There is no 404 route and no handling of an `HttpError` 404 beyond the generic error line.
+- There is no 404 route for an unknown path.
 
 ## 11. Tests
 
@@ -225,7 +228,6 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 | No permission hook, no route guard, no action gate              | Every page shows every action to every user |
 | No licence hook, no upgrade dialog                              | EE features are not gated                   |
 | No confirm dialog, no save bar, no wizard, no memberships panel | Create and delete flows cannot be ported    |
-| No error or not-found panel                                     | Each page writes its own one-line error     |
 | One navigation file                                             | Parallel agents collide on it               |
 | No Playwright project                                           | Behaviour parity has no automated check     |
 | No README                                                       | Setup lives in the spike plan               |

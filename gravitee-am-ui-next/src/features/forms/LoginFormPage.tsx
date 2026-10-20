@@ -17,6 +17,7 @@ import { Button, Field, FieldLabel, Spinner, Switch, toast } from '@gravitee/gra
 import { CodeEditor } from '@gravitee/graphene-core/code-editor';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { type Form, getForm, saveForm } from '../../lib/api/forms';
 import { useCurrentDomain } from '../../lib/session/domain';
@@ -67,7 +68,7 @@ export function LoginFormPage() {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Login form" description="The HTML template of the sign-in page, rendered by the gateway with Thymeleaf." />
-            {error && <p className="text-sm text-destructive">Could not load the login form.</p>}
+            {error && <ErrorPanel description="Could not load the login form." error={error} />}
             {form ? <LoginFormEditor key={form.id ?? 'default'} form={form} /> : !error && <Spinner />}
         </div>
     );

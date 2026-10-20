@@ -19,6 +19,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type Domain, listDomains } from '../../lib/api/domains';
@@ -68,7 +69,7 @@ export function DomainsPage() {
     }, []);
     useBreadcrumbs([{ label: 'Domains' }]);
 
-    const { data, isFetching } = useQuery({
+    const { data, error, isFetching } = useQuery({
         queryKey: ['domains', user.org, environment.id, page, pageSize, query],
         queryFn: () => listDomains(user.org, environment.id, page - 1, pageSize, query),
         placeholderData: keepPreviousData,
@@ -77,7 +78,9 @@ export function DomainsPage() {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Domains" description={`Security domains in ${environment.name}.`} />
-            {data?.totalCount === 0 && !query ? (
+            {error ? (
+                <ErrorPanel description="Could not load the domains." error={error} />
+            ) : data?.totalCount === 0 && !query ? (
                 <DataTableEmptyState
                     variant="first-use"
                     icon={<ShieldIcon />}

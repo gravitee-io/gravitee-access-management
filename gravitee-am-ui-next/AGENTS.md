@@ -48,7 +48,7 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
@@ -93,6 +93,8 @@ src/
 - Most Management API lists have no sort parameter. Do not add sortable headers to a server-side table.
 - Lists search with `q=*text*`, as the Angular console does. `SearchField` debounces 300 ms.
 - Order the branches: error, then not found, then empty, then data. An outage must never render the first-use empty state.
+  Render `ErrorPanel` for an error and `NotFoundPanel` when `isNotFound(error)` is true, both from `src/app/components/`.
+  See `ApplicationLayout` in `ApplicationPage.tsx`.
 
 ## 6. Forms
 

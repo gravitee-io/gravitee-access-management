@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Spinner } from '@gravitee/graphene-core';
+import { Button, Spinner } from '@gravitee/graphene-core';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, use } from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { Link, Outlet, useParams } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
+import { NotFoundPanel } from '../../app/components/NotFoundPanel';
 import { type Domain, getDomainByHrid } from '../api/domains';
+import { isNotFound } from '../api/http';
 import type { DomainRef } from '../api/paths';
 import { useCurrentEnvironment } from './environment';
 import { useSession } from './session';
@@ -51,14 +54,27 @@ export function DomainScope() {
         queryFn: () => getDomainByHrid(user.org, environment.id, domainHrid),
     });
 
+    const domainsPath = `/environments/${environment.hrids[0]}/domains`;
+
     if (error) {
-        return <p className="text-sm text-destructive">Could not load the domain {domainHrid}.</p>;
+        return isNotFound(error) ? (
+            <NotFoundPanel
+                title="Domain not found"
+                description={`No domain named ${domainHrid} exists in ${environment.name}.`}
+                action={
+                    <Button asChild variant="outline">
+                        <Link to={domainsPath}>Back to domains</Link>
+                    </Button>
+                }
+            />
+        ) : (
+            <ErrorPanel description={`Could not load the domain ${domainHrid}.`} error={error} />
+        );
     }
     if (!domain) {
         return <Spinner />;
     }
     const ref = { organizationId: user.org, environmentId: environment.id, domainId: domain.id };
-    const domainsPath = `/environments/${environment.hrids[0]}/domains`;
     return (
         <DomainContext value={{ domain, ref, domainsPath, basePath: `${domainsPath}/${domain.hrid}` }}>
             <Outlet />

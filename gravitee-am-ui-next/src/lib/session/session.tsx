@@ -16,6 +16,7 @@
 import { Spinner } from '@gravitee/graphene-core';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactNode, use } from 'react';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { type CurrentUser, type Environment, getCurrentUser, listEnvironments } from '../api/management-api';
 
 export interface Session {
@@ -50,7 +51,11 @@ export function SessionGate({ children }: { readonly children: ReactNode }) {
         return <SessionContext value={data}>{children}</SessionContext>;
     }
     if (error && !('status' in error && error.status === 401)) {
-        return <p className="p-6 text-sm text-destructive">Could not load the current user.</p>;
+        return (
+            <div className="p-6">
+                <ErrorPanel description="Could not load the current user." error={error} />
+            </div>
+        );
     }
     return (
         <div className="flex h-screen items-center justify-center">

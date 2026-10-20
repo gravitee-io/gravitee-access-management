@@ -29,10 +29,13 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Outlet, useOutletContext, useParams } from 'react-router-dom';
+import { Link, Outlet, useOutletContext, useParams } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
+import { NotFoundPanel } from '../../app/components/NotFoundPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { APPLICATION_NAV_GROUPS } from '../../app/navigation';
 import { type ApplicationDetail, getApplication, patchApplication } from '../../lib/api/applications';
+import { isNotFound } from '../../lib/api/http';
 import { useSectionSidebar } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { FlowsPage } from '../flows/FlowsPage';
@@ -133,14 +136,26 @@ function Settings({ application }: { readonly application: ApplicationDetail }) 
 /** Loads the application and shows its sections in the context sidebar. */
 export function ApplicationLayout() {
     const { applicationId = '' } = useParams();
-    const { ref } = useCurrentDomain();
+    const { domain, ref, basePath } = useCurrentDomain();
     const { data: application, error } = useQuery({
         queryKey: ['application', ref, applicationId],
         queryFn: () => getApplication(ref, applicationId),
     });
 
     if (error) {
-        return <p className="text-sm text-destructive">Could not load the application.</p>;
+        return isNotFound(error) ? (
+            <NotFoundPanel
+                title="Application not found"
+                description={`No application with this id exists in ${domain.name}. It may have been deleted.`}
+                action={
+                    <Button asChild variant="outline">
+                        <Link to={`${basePath}/applications`}>Back to applications</Link>
+                    </Button>
+                }
+            />
+        ) : (
+            <ErrorPanel description="Could not load the application." error={error} />
+        );
     }
     if (!application) {
         return <Spinner />;
