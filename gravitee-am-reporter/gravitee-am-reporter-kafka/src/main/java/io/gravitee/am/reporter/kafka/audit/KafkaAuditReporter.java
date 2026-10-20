@@ -93,9 +93,12 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
         if (producer != null && reportable instanceof Audit audit) {
             // partition key computed on the audit referenceId which is either domainId or organizationId
             var key = audit.getReferenceId();
-            if (audit.getReferenceType().equals(ReferenceType.ORGANIZATION) && audit.getType().startsWith(ReferenceType.DOMAIN.name())) {
+            if (audit.getReferenceType().equals(ReferenceType.ORGANIZATION)
+                    && audit.getType().startsWith(ReferenceType.DOMAIN.name())
+                    && audit.getTarget() != null) {
                 // for DOMAIN event linked to an organization as referenceId
                 // route the event based on the domain id found into the target
+                // (failed DOMAIN_CREATED audits have no target, the organization id is kept as key)
                 // in that way all even related to a single domain are in the same partition
                 key = audit.getTarget().getId();
             }
