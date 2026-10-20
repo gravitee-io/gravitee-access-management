@@ -13,6 +13,7 @@ export const Config = {
             ? (process.env.AM_HELM_VALUES_PATH.includes(',') ? process.env.AM_HELM_VALUES_PATH.split(',').map((s) => s.trim()) : process.env.AM_HELM_VALUES_PATH)
             : ['scripts/migration-tool/env/k8s/am/am-mongodb-common.yaml', 'scripts/migration-tool/env/k8s/am/am-mongodb-mapi.yaml'],
         mongoValuesPath: process.env.AM_MONGO_VALUES_PATH || 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml',
+        mongoChartPath: process.env.AM_MONGO_CHART_PATH || 'scripts/migration-tool/env/k8s/db/mongodb',
         postgresValuesPath: process.env.AM_POSTGRES_VALUES_PATH || 'scripts/migration-tool/env/k8s/db/db-postgres.yaml',
         postgresChartPath: process.env.AM_POSTGRES_CHART_PATH || 'scripts/migration-tool/env/k8s/db/postgres',
         valuesPathPostgres: process.env.AM_HELM_VALUES_PATH_POSTGRES

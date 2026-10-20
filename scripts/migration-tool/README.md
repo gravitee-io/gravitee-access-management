@@ -330,7 +330,10 @@ To avoid hardcoded secrets and Aqua (or similar) scan findings:
 ## Databases (K8s)
 
 ### MongoDB
-- Bitnami MongoDB chart; credentials via `auth.existingSecret`. The tool creates the secret from `MONGODB_ROOT_PASSWORD` (or a safe default) and `MONGODB_GRAVITEE_PASSWORD` (or a default for local). For CI/Aqua, inject these via env so no secrets are hardcoded.
+- **Internal minimal chart** at `env/k8s/db/mongodb` using the **official mongo:8.2** image (standalone). Override the chart with `AM_MONGO_CHART_PATH`.
+- Values: `env/k8s/db/db-mongodb.yaml`. On first start an init script creates the `gravitee` user in the `gravitee` database, with `readWrite` on `gravitee`, `gravitee-dp1` and `gravitee-dp2`.
+- Service name: `mongo-mongodb`. Same namespace → host `mongo-mongodb`.
+- Credentials are read from the `mongo-mongodb-auth` secret. The tool creates it from `MONGODB_ROOT_PASSWORD` (or a safe default) and `MONGODB_GRAVITEE_PASSWORD` (or a default for local). For CI/Aqua, inject these via env so no secrets are hardcoded.
 
 ### PostgreSQL
 - **Internal minimal chart** at `env/k8s/db/postgres` using the **official postgres:16.6** image (no Bitnami), so Liquibase `md5()` is available.

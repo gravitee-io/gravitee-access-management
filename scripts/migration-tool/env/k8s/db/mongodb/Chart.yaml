@@ -1,0 +1,7 @@
+apiVersion: v2
+name: mongodb
+description: Minimal MongoDB for migration test (official mongo image)
+type: application
+version: 0.1.0
+appVersion: "8.2"
+maintainers: []

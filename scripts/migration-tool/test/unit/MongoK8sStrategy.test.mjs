@@ -17,7 +17,8 @@ describe('MongoK8sStrategy', () => {
         };
         mockConfig = {
             k8s: {
-                mongoValuesPath: 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml'
+                mongoValuesPath: 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml',
+                mongoChartPath: 'scripts/migration-tool/env/k8s/db/mongodb'
             }
         };
         strategy = new MongoK8sStrategy({
@@ -27,12 +28,12 @@ describe('MongoK8sStrategy', () => {
         });
     });
 
-    test('should deploy mongo', async () => {
+    test('should deploy mongo (local chart)', async () => {
         await strategy.deploy();
-        expect(mockHelm.repoAdd).toHaveBeenCalledWith('bitnami', 'https://charts.bitnami.com/bitnami');
+        expect(mockHelm.repoAdd).not.toHaveBeenCalled();
         expect(mockHelm.installOrUpgrade).toHaveBeenCalledWith(
             'mongo',
-            'bitnami/mongodb',
+            'scripts/migration-tool/env/k8s/db/mongodb',
             expect.objectContaining({
                 valuesFile: 'scripts/migration-tool/env/k8s/db/db-mongodb.yaml',
                 createNamespace: true,
@@ -45,22 +46,6 @@ describe('MongoK8sStrategy', () => {
     test('should clean mongo', async () => {
         await strategy.clean();
         expect(mockHelm.uninstall).toHaveBeenCalledWith('mongo');
-    });
-
-    test('deploy sets the chart namespaceOverride to the configured namespace (not hardcoded gravitee-am)', async () => {
-        strategy = new MongoK8sStrategy({
-            helm: mockHelm,
-            namespace: 'custom-ns',
-            config: mockConfig
-        });
-        await strategy.deploy();
-        expect(mockHelm.installOrUpgrade).toHaveBeenCalledWith(
-            'mongo',
-            'bitnami/mongodb',
-            expect.objectContaining({
-                set: expect.objectContaining({ namespaceOverride: 'custom-ns' })
-            })
-        );
     });
 
     test('when kubectl is provided, should ensure namespace and create auth secret before deploy', async () => {

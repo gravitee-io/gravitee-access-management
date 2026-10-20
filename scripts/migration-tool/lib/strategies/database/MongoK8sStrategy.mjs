@@ -1,9 +1,10 @@
 import { DatabaseStrategy } from './DatabaseStrategy.mjs';
 
 /**
- * MongoDB Strategy for Kubernetes
+ * MongoDB Strategy for Kubernetes.
+ * Uses minimal internal chart (official mongo image).
  */
-/** Secret name used by Bitnami MongoDB chart when auth.existingSecret is set (no password in values YAML). */
+/** Secret the internal MongoDB chart reads its passwords from. */
 const MONGODB_AUTH_SECRET_NAME = 'mongo-mongodb-auth';
 
 export class MongoK8sStrategy extends DatabaseStrategy {
@@ -12,10 +13,8 @@ export class MongoK8sStrategy extends DatabaseStrategy {
         this.helm = options.helm;
         this.kubectl = options.kubectl;
         this.namespace = options.namespace;
-        this.repoName = 'bitnami';
-        this.repoUrl = 'https://charts.bitnami.com/bitnami';
         this.releaseName = 'mongo';
-        this.chartName = 'bitnami/mongodb';
+        this.chartPath = options.chartPath || this.config.k8s.mongoChartPath;
     }
 
     async deploy() {
@@ -26,22 +25,18 @@ export class MongoK8sStrategy extends DatabaseStrategy {
             const rootPassword = process.env.MONGODB_ROOT_PASSWORD || 'migration-test-only';
             // Inject via env in CI to avoid hardcoded secrets (Aqua scan); default for local only.
             const graviteePassword = process.env.MONGODB_GRAVITEE_PASSWORD || 'gravitee-password';
-            // Single 'gravitee' user (parallel to auth.usernames in db-mongodb.yaml). Access to the
-            // dataplane DBs (gravitee-dp1/dp2) is granted via initdbScripts, so only one password is needed.
+            // One 'gravitee' user, granted access to every database in db-mongodb.yaml, so only one password is needed.
             await this.kubectl.createSecretGeneric(MONGODB_AUTH_SECRET_NAME, {
                 'mongodb-root-password': rootPassword,
                 'mongodb-passwords': graviteePassword
             });
         }
 
-        await this.helm.repoAdd(this.repoName, this.repoUrl);
-
-        await this.helm.installOrUpgrade(this.releaseName, this.chartName, {
+        await this.helm.installOrUpgrade(this.releaseName, this.chartPath, {
             valuesFile: this.config.k8s.mongoValuesPath,
             wait: true,
             createNamespace: true,
-            timeout: '10m',
-            set: { namespaceOverride: this.namespace }
+            timeout: '10m'
         });
     }
 

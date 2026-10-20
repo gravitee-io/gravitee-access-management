@@ -1,10 +1,5 @@
 # Groups for the LDAP identity-provider tests (AM-7447).
 #
-# Added by openldap-init AFTER the memberof overlay is installed, so that writing
-# each group stamps memberOf onto the users it names. If these were seeded with
-# the rest of the tree at container start the overlay would not yet exist and no
-# user would ever carry memberOf.
-#
 # Membership is expressed twice on purpose:
 #   member:    full user DN -> overlay derives memberOf: cn=<GROUP>,ou=groups,dc=gravitee,dc=io
 #   memberUid: bare uid     -> matched by the group search filter (memberuid={0})

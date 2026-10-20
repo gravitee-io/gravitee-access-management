@@ -52,6 +52,14 @@ describe('Helm', () => {
         expect(flags).toContain('4.7.0');
     });
 
+    test('should install into the configured namespace', async () => {
+        helm = new Helm({ namespace: 'custom-ns', shell: mockShell });
+        await helm.installOrUpgrade('mongo', 'env/k8s/db/mongodb');
+
+        const flags = mockShell.mock.calls[0][1];
+        expect(flags[flags.indexOf('-n') + 1]).toBe('custom-ns');
+    });
+
     test('should install or upgrade with multiple values files (base + override)', async () => {
         await helm.installOrUpgrade('am-mapi', 'graviteeio/am', {
             valuesFiles: ['am-mongodb-common.yaml', 'am-mongodb-mapi.yaml'],
@@ -70,7 +78,7 @@ describe('Helm', () => {
     });
 
     test('should pass a custom wait timeout to Helm', async () => {
-        await helm.installOrUpgrade('mongo', 'bitnami/mongodb', {
+        await helm.installOrUpgrade('am', 'graviteeio/am', {
             wait: true,
             timeout: '10m'
         });
@@ -81,10 +89,10 @@ describe('Helm', () => {
     });
 
     test('should add a repository', async () => {
-        await helm.repoAdd('bitnami', 'https://charts.bitnami.com/bitnami');
+        await helm.repoAdd('graviteeio', 'https://helm.gravitee.io');
 
         const args = mockShell.mock.calls[0];
-        expect(args[1]).toBe('bitnami');
-        expect(args[2]).toBe('https://charts.bitnami.com/bitnami');
+        expect(args[1]).toBe('graviteeio');
+        expect(args[2]).toBe('https://helm.gravitee.io');
     });
 });

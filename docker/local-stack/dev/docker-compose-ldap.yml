@@ -33,27 +33,10 @@
 
 services:
   openldap:
-    # Bitnami moved its public catalog to subscription-only "Secure Images" in 2025;
-    # the OSS tags remain published under bitnamilegacy. Pinned to a digest-stable
-    # tag because that repository is archived and receives no updates.
-    image: bitnamilegacy/openldap:2.6.10-debian-12-r4
+    build: ldap
     hostname: openldap
     ports:
-      # The image runs slapd as a non-root user, so it cannot bind the privileged
-      # port 389 — it listens on 1389 both inside the container and on the host.
       - "1389:1389"
-    environment:
-      - LDAP_ROOT=dc=gravitee,dc=io
-      - LDAP_ADMIN_USERNAME=admin
-      - LDAP_ADMIN_PASSWORD=admin
-      - LDAP_CUSTOM_LDIF_DIR=/ldifs
-      - LDAP_SKIP_DEFAULT_TREE=yes
-      # Needed so openldap-init can write to cn=config to install the memberof
-      # overlay. The image supports no memberof env var of its own — it only
-      # ships accesslog, syncprov and ppolicy.
-      - LDAP_CONFIG_ADMIN_ENABLED=yes
-      - LDAP_CONFIG_ADMIN_USERNAME=admin
-      - LDAP_CONFIG_ADMIN_PASSWORD=configadmin
     volumes:
       - ./ldap/gravitee-io.ldif:/ldifs/gravitee-io.ldif:ro
     healthcheck:
@@ -78,16 +61,12 @@ services:
       timeout: 3s
       retries: 20
 
-  # Installs the memberof overlay and then adds the groups, in that order.
-  # Reuses the openldap image purely for its ldapmodify/ldapadd binaries, so no
-  # extra image has to be pulled.
   openldap-init:
-    image: bitnamilegacy/openldap:2.6.10-debian-12-r4
+    build: ldap
     depends_on:
       openldap:
         condition: service_healthy
     volumes:
-      - ./ldap/memberof-overlay.ldif:/ldifs/memberof-overlay.ldif:ro
       - ./ldap/groups.ldif:/ldifs/groups.ldif:ro
     entrypoint:
       - bash
@@ -96,7 +75,7 @@ services:
         # Tolerate only "already exists" style failures, so a restart against an
         # already-configured directory is a no-op while a REAL error still stops
         # the stack. Blanket "|| true" here hides genuine breakage — e.g. a wrong
-        # olcModuleLoad path fails with rc=80 and would otherwise pass silently.
+        # ldif fails with rc=21 and would otherwise pass silently.
         #   20 = LDAP_TYPE_OR_VALUE_EXISTS   68 = LDAP_ALREADY_EXISTS
         #
         # NOTE: every shell variable below is written $$VAR, not $VAR. Compose
@@ -113,41 +92,14 @@ services:
           esac
         }
 
-        apply "memberof overlay" \
-          ldapmodify -H ldap://openldap:1389 -D "cn=admin,cn=config" -w configadmin \
-            -f /ldifs/memberof-overlay.ldif
-
-        # Groups must be written AFTER the overlay so memberOf is stamped onto users.
         apply "groups" \
           ldapadd -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
             -f /ldifs/groups.ldif
 
-        # The overlay only stamps memberOf on writes that happen while it is
-        # installed. If the groups already existed from a previous run that had no
-        # overlay, they carry no memberOf — rewrite them so they do.
-        #
-        # Every group in the ldif is deleted, not a hardcoded subset: a hardcoded
-        # list silently rots as groups are added, and because ldapadd stops at the
-        # first "already exists" (68) a single surviving group prevents every later
-        # one from being rewritten. -c makes the re-add continue past entries that
-        # are already present.
-        if ! ldapsearch -x -LLL -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
-               -b "uid=ldap-admin,ou=people,dc=gravitee,dc=io" -s base memberOf \
-             | grep -q "memberOf:"; then
-          echo "groups predate the overlay — rewriting them"
-          grep '^dn: ' /ldifs/groups.ldif | sed 's/^dn: //' | while read -r group_dn; do
-            ldapdelete -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin "$$group_dn" || true
-          done
-          apply "groups (rewrite)" \
-            ldapadd -c -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
-              -f /ldifs/groups.ldif
-        fi
-
         # Hard gate. A silent miss here surfaces much later as an inexplicable
         # role-mapper failure, so assert the exact values the mappers depend on.
         # BOTH users are checked: ldap-admin drives the role-mapping specs and john
-        # drives the account-linking ones, and a rewrite that skipped john's group
-        # would otherwise pass here and fail obscurely much later.
+        # drives the account-linking ones.
         assert_member_of() { # assert_member_of <user-dn> <expected memberOf value>
           ldapsearch -x -LLL -H ldap://openldap:1389 -D "cn=admin,dc=gravitee,dc=io" -w admin \
             -b "$$1" -s base memberOf \
@@ -157,18 +109,12 @@ services:
         assert_member_of "uid=ldap-admin,ou=people,dc=gravitee,dc=io" "cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io"
         assert_member_of "uid=john,ou=people,dc=gravitee,dc=io"       "cn=workers,ou=groups,dc=gravitee,dc=io"
 
-        # The NESTED relationship, asserted separately because it is the one thing a
-        # group rewrite can quietly lose: GRAVITEE_ADMINS is itself a member of
+        # The NESTED relationship: GRAVITEE_ADMINS is itself a member of
         # GRAVITEE_SUPER_ADMINS, and recursiveGroupFetch walks that link.
-        #
-        # Deleting a group does NOT currently strip it from its parent's member list
-        # — that is the refint overlay's job and only memberof is installed here. But
-        # this suite must not depend on that staying true across image or OpenLDAP
-        # versions, so the chain is verified rather than assumed.
         assert_member_of "cn=GRAVITEE_ADMINS,ou=groups,dc=gravitee,dc=io" "cn=GRAVITEE_SUPER_ADMINS,ou=groups,dc=gravitee,dc=io"
-        echo "LDAP ready: memberof overlay active, groups loaded, memberOf verified (incl. nested)"
+        echo "LDAP ready: groups loaded, memberOf verified (incl. nested)"
 
-  # Gate stack readiness on the directory being seeded AND the overlay applied, so
+  # Gate stack readiness on the directory being seeded AND the groups loaded, so
   # a test can never race the import. Deliberately hung off am-wait rather than
   # gateway/management: AM does not need LDAP to boot, and coupling them would let
   # a directory failure block the entire stack.
