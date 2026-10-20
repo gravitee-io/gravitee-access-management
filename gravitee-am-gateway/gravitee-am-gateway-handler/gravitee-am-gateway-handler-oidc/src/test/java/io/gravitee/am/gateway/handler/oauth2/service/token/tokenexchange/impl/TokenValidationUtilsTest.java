@@ -19,7 +19,6 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ValidatedToken;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import org.junit.Test;
@@ -36,8 +35,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class TokenValidationUtilsTest {
 
@@ -207,8 +204,6 @@ public class TokenValidationUtilsTest {
 
     @Test
     public void buildValidatedToken_allFields() {
-        Domain domain = mock(Domain.class);
-
         Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.SUB, "user-1");
         claims.put(Claims.ISS, "https://issuer.example.com");
@@ -223,7 +218,7 @@ public class TokenValidationUtilsTest {
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 claims, exp, iat, 0,
                 Set.of("read", "write"), List.of("aud-1"),
-                "token-type", domain, null);
+                "token-type", null);
 
         assertEquals("user-1", result.getSubject());
         assertEquals("https://issuer.example.com", result.getIssuer());
@@ -242,8 +237,6 @@ public class TokenValidationUtilsTest {
 
     @Test
     public void buildValidatedToken_withTrustedIssuer() {
-        Domain domain = mock(Domain.class);
-
         TrustedDomain trustedDomain = TrustedDomain.builder()
                 .domainIdentifier("https://external.example.com")
                 .tokenExchange(TokenExchangeTrustSettings.builder().enabled(true).build())
@@ -255,7 +248,7 @@ public class TokenValidationUtilsTest {
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 claims, 0, 0, 0,
                 Set.of(), List.of(),
-                "jwt", domain, trustedDomain);
+                "jwt", trustedDomain);
 
         assertTrue(result.isTrustedIssuerValidated());
         assertEquals("ext-user", result.getSubject());
@@ -263,12 +256,10 @@ public class TokenValidationUtilsTest {
 
     @Test
     public void buildValidatedToken_zeroTimestamps_nullDates() {
-        Domain domain = mock(Domain.class);
-
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 new HashMap<>(), 0, 0, 0,
                 Set.of(), List.of(),
-                "token-type", domain, null);
+                "token-type", null);
 
         assertNull(result.getExpiration());
         assertNull(result.getIssuedAt());
@@ -277,16 +268,27 @@ public class TokenValidationUtilsTest {
 
     @Test
     public void buildValidatedToken_nullClaimValues_nullFields() {
-        Domain domain = mock(Domain.class);
-
         ValidatedToken result = TokenValidationUtils.buildValidatedToken(
                 new HashMap<>(), 0, 0, 0,
                 Set.of(), List.of(),
-                "token-type", domain, null);
+                "token-type", null);
 
         assertNull(result.getSubject());
         assertNull(result.getIssuer());
         assertNull(result.getTokenId());
         assertNull(result.getClientId());
+    }
+
+    @Test
+    public void buildValidatedToken_domainClaimAbsent_nullDomain() {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(Claims.SUB, "user-1");
+
+        ValidatedToken result = TokenValidationUtils.buildValidatedToken(
+                claims, 0, 0, 0,
+                Set.of(), List.of(),
+                "token-type", null);
+
+        assertNull(result.getDomain());
     }
 }

@@ -90,13 +90,13 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
                     if (error instanceof TokenVerificationException && trustDomainManager.hasTokenExchangeTrust()) {
                         log.debug("Domain cert validation failed, trying trusted issuers: {}",
                                 error.getMessage());
-                        return validateWithTrustedIssuer(token, domain);
+                        return validateWithTrustedIssuer(token);
                     }
                     return Single.error(error);
                 });
     }
 
-    private Single<ValidatedToken> validateWithTrustedIssuer(String token, Domain domain) {
+    private Single<ValidatedToken> validateWithTrustedIssuer(String token) {
         return jwtService.decode(token, jwtTokenType)
                 .flatMap(jwt -> {
                     String issuer = jwt.getIss();
@@ -111,7 +111,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
 
                     return trustedIssuerResolver.resolve(token, trustedDomain)
                             .subscribeOn(Schedulers.io())
-                            .map(claimsSet -> buildValidatedToken(claimsSet, domain, trustedDomain));
+                            .map(claimsSet -> buildValidatedToken(claimsSet, trustedDomain));
                 })
                 .onErrorResumeNext(error -> {
                     if (error instanceof InvalidRequestException) {
@@ -126,8 +126,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
         return new InvalidRequestException("Untrusted issuer: " + issuer);
     }
 
-    private ValidatedToken buildValidatedToken(JWTClaimsSet claimsSet, Domain domain,
-                                               TrustedDomain trustedDomain) {
+    private ValidatedToken buildValidatedToken(JWTClaimsSet claimsSet, TrustedDomain trustedDomain) {
         long exp = claimsSet.getExpirationTime() != null ? claimsSet.getExpirationTime().getTime() / 1000 : 0;
         long iat = claimsSet.getIssueTime() != null ? claimsSet.getIssueTime().getTime() / 1000 : 0;
         long nbf = claimsSet.getNotBeforeTime() != null ? claimsSet.getNotBeforeTime().getTime() / 1000 : 0;
@@ -141,7 +140,7 @@ public class TrustedIssuerTokenValidator implements TokenValidator {
         return TokenValidationUtils.buildValidatedToken(claims,
                 exp, iat, nbf,
                 scopes, audience,
-                supportedTokenType, domain, trustedDomain);
+                supportedTokenType, trustedDomain);
     }
 
     private Set<String> applyScopeMapping(Set<String> originalScopes, TrustedDomain trustedDomain) {

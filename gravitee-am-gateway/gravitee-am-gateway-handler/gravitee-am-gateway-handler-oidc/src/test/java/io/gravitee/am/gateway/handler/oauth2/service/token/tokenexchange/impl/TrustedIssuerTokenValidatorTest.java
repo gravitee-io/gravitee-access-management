@@ -89,7 +89,6 @@ public class TrustedIssuerTokenValidatorTest {
 
     @Before
     public void setUp() {
-        when(domain.getId()).thenReturn(DOMAIN_ID);
         DefaultTokenValidator delegate = new DefaultTokenValidator(
                 jwtService, JWTService.TokenType.ACCESS_TOKEN, TOKEN_TYPE_URN);
         validator = new TrustedIssuerTokenValidator(
