@@ -13,44 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Domain as DomainModel } from '@am-models/Domain';
+import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
+import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import { http } from './http';
 import type { Page } from './management-api';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath, environmentPath, searchParam } from './paths';
 
-export interface VirtualHost {
-    readonly host: string;
-    readonly path: string;
-    readonly overrideEntrypoint?: boolean;
-}
+export type VirtualHost = ApiModel<VirtualHostModel, 'host' | 'path'>;
 
 export interface CertificateSettings {
     /** The id of the certificate used when the selected one fails to load or sign. */
     readonly fallbackCertificate?: string | null;
 }
 
-export interface Domain {
-    readonly id: string;
-    readonly hrid: string;
-    readonly name: string;
-    readonly description?: string;
-    readonly enabled: boolean;
-    readonly path?: string;
-    readonly vhostMode?: boolean;
-    readonly vhosts?: readonly VirtualHost[];
-    readonly createdAt?: number;
-    readonly updatedAt?: number;
-    readonly certificateSettings?: CertificateSettings;
-    readonly master?: boolean;
-    readonly tags?: readonly string[];
-    readonly dataPlaneId?: string;
-    readonly uma?: { readonly enabled?: boolean };
-    readonly oidc?: {
-        readonly clientRegistrationSettings?: { readonly allowRedirectUriParamsExpressionLanguage?: boolean };
-        readonly cimdSettings?: { readonly enabled?: boolean };
-        readonly postLogoutRedirectUris?: readonly string[];
-        readonly requestUris?: readonly string[];
-    };
-}
+export type Domain = ApiModel<Omit<DomainModel, 'vhosts'> & { vhosts?: readonly VirtualHost[] }, 'id' | 'hrid' | 'name' | 'enabled'>;
 
 export function listDomains(organizationId: string, environmentId: string, page: number, size: number, query = ''): Promise<Page<Domain>> {
     return http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?page=${page}&size=${size}${searchParam(query)}`);
@@ -60,11 +38,7 @@ export function getDomainByHrid(organizationId: string, environmentId: string, h
     return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains/_hrid/${hrid}`);
 }
 
-export interface Entrypoint {
-    readonly id: string;
-    readonly url: string;
-    readonly defaultEntrypoint?: boolean;
-}
+export type Entrypoint = ApiModel<EntrypointModel, 'id' | 'url'>;
 
 export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
     return http<Entrypoint[]>(`${domainPath(ref)}/entrypoints`);

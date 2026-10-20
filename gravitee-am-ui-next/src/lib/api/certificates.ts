@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { CertificateEntity } from '@am-models/CertificateEntity';
+import type { CertificateKey as CertificateKeyModel } from '@am-models/CertificateKey';
+import type { ModifiedCertificateEntity } from '@am-models/ModifiedCertificateEntity';
+import type { NewCertificate } from '@am-models/NewCertificate';
 import { http } from './http';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 import type { Plugin } from './plugins';
 
@@ -24,40 +29,25 @@ export interface CertificateUsage {
 
 export type CertificateStatus = 'valid' | 'will_expire' | 'expired' | 'renewed';
 
-export interface Certificate {
-    readonly id: string;
-    readonly name: string;
-    readonly type: string;
-    /** `enc`, `sig` or `mtls`. */
-    readonly usage?: readonly string[];
-    readonly system?: boolean;
-    readonly status?: CertificateStatus;
-    /** Epoch milliseconds. */
-    readonly expiresAt?: number;
-    readonly applications?: readonly CertificateUsage[];
-    readonly identityProviders?: readonly CertificateUsage[];
-}
+/** `usage` holds `enc`, `sig` or `mtls`. */
+export type Certificate = ApiModel<
+    Omit<CertificateEntity, 'status' | 'applications' | 'identityProviders'> & {
+        status?: CertificateStatus;
+        applications?: readonly CertificateUsage[];
+        identityProviders?: readonly CertificateUsage[];
+    },
+    'id' | 'name' | 'type'
+>;
 
-export interface CertificateDetail {
-    readonly id: string;
-    readonly name: string;
-    readonly type: string;
-    readonly system?: boolean;
-    /** Plugin configuration, serialized as a JSON string. */
-    readonly configuration: string;
-}
+/**
+ * `GET .../certificates/:id` returns a `ModifiedCertificateEntity`, although its `@Schema` names `CertificateEntity`.
+ * `configuration` is the plugin configuration, serialized as a JSON string.
+ */
+export type CertificateDetail = ApiModel<ModifiedCertificateEntity, 'id' | 'name' | 'type' | 'configuration'>;
 
-export interface CertificateKey {
-    readonly fmt: string;
-    readonly payload: string;
-}
+export type CertificateKey = ApiModel<CertificateKeyModel, 'fmt' | 'payload'>;
 
-export interface CertificateBody {
-    readonly name: string;
-    readonly type: string;
-    /** Plugin configuration, serialized as a JSON string. */
-    readonly configuration: string;
-}
+export type CertificateBody = ApiModel<NewCertificate>;
 
 export function listCertificates(ref: DomainRef): Promise<Certificate[]> {
     return http<Certificate[]>(`${domainPath(ref)}/certificates`);

@@ -11,7 +11,10 @@
         "isolatedModules": true,
         "resolveJsonModule": true,
         "moduleResolution": "bundler",
-        "useDefineForClassFields": true
+        "useDefineForClassFields": true,
+        "paths": {
+            "@am-models/*": ["../gravitee-am-management-api-types/models/*"]
+        }
     },
     "include": ["src"]
 }

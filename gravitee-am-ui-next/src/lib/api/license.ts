@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { GraviteeLicense } from '@am-models/GraviteeLicense';
 import { http } from './http';
+import type { ApiModel } from './model';
 
 /** The licence of the installation, as `GET /organizations/:org/license` returns it. OSS returns no feature. */
-export interface License {
-    readonly tier?: string;
-    readonly packs?: string[];
-    readonly features?: string[];
-    /** Epoch milliseconds. */
-    readonly expiresAt?: number;
-    readonly isExpired?: boolean;
-    readonly scope?: string;
-}
+export type License = ApiModel<GraviteeLicense>;
 
 export function getLicense(organizationId: string): Promise<License> {
     return http<License>(`/organizations/${organizationId}/license`);

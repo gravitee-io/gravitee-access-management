@@ -51,7 +51,7 @@ src/
   app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PluginWizard, TagInput, ValueListInput, MembershipsPanel, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
-  lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
+  lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), model.ts (ApiModel), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
   lib/forms/      am-schema.ts (adaptAmSchema)
   lib/routing/    lazyPage.tsx
   lib/session/    session.tsx (user, environments), environment.tsx (:envHrid), domain.tsx (:domainHrid, ref, basePath)
@@ -85,6 +85,11 @@ src/
 
 - API functions and entity types live in `src/lib/api/<area>.ts`, one file per area. They call `http<T>(path, init)`
   from `http.ts`, which sends the session cookie, echoes `X-Xsrf-Token`, and throws `HttpError` with the status.
+- Entity types are `ApiModel<Model, requiredKeys>` from `src/lib/api/model.ts`, over a generated model imported with
+  `import type` from `@am-models/<Model>`. The models are `.d.ts` files in `../gravitee-am-management-api-types/`. Do not
+  edit them: `npm run update:sdk:mapi -- ../docs/mapi/openapi.yaml` in `../gravitee-am-test` writes them with the jest SDK.
+- The spec is wrong in places. Response enums are lowercase on the wire, for example `type: 'web'`. Override such a
+  field with `Omit` and a comment. Keep a type hand-written when the spec has no schema for the response.
 - Paths are the Management API paths the Angular service calls, under `/organizations/:org/environments/:env/domains/:id`.
   Build them with `domainPath(ref)` and `searchParam(query)` from `src/lib/api/paths.ts`. Do not invent an endpoint. Check `../docs/mapi/openapi.yaml` when in doubt.
 - Query keys: `['<entity>', ref, id]` for a detail, `['<entities>', ref, page, size, query]` for a list.
@@ -158,16 +163,16 @@ Angular files listed for that page in `../../gamma-baby/source-refs.json`. The p
 
 Replace in every prototype page:
 
-| Prototype                                            | Console                                                                           |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `useJson`, `send`, `amUrls`, `*Urls`                 | `useQuery`, `useMutation`, functions in `src/lib/api/`                            |
-| `useHasPermission` and Gamma-style strings           | `usePermissions()` or `<Can>` and AM strings                                      |
-| `useDomain()` from `DomainLayout`                    | `useCurrentDomain()`                                                              |
-| `useEnvironment()` stub, `buildEnvPath()`            | `useCurrentEnvironment()`, `basePath`, `domainsPath`                              |
-| `/environments/:env/am/domains/:domainId`            | `/environments/:envHrid/domains/:domainHrid`                                      |
-| `LoadError`, `StateGap`, `ConfirmDialog` from `amUi` | The shared parts in `src/app/components/`                                         |
-| Types from `mocks/data/am.ts`                        | Types in `src/lib/api/`, checked against the Angular service and the OpenAPI spec |
-| Graphene 3.3.0 props                                 | Graphene 3.23.1 props                                                             |
+| Prototype                                            | Console                                                                          |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `useJson`, `send`, `amUrls`, `*Urls`                 | `useQuery`, `useMutation`, functions in `src/lib/api/`                           |
+| `useHasPermission` and Gamma-style strings           | `usePermissions()` or `<Can>` and AM strings                                     |
+| `useDomain()` from `DomainLayout`                    | `useCurrentDomain()`                                                             |
+| `useEnvironment()` stub, `buildEnvPath()`            | `useCurrentEnvironment()`, `basePath`, `domainsPath`                             |
+| `/environments/:env/am/domains/:domainId`            | `/environments/:envHrid/domains/:domainHrid`                                     |
+| `LoadError`, `StateGap`, `ConfirmDialog` from `amUi` | The shared parts in `src/app/components/`                                        |
+| Types from `mocks/data/am.ts`                        | Types in `src/lib/api/` over `@am-models/*`, checked against the Angular service |
+| Graphene 3.3.0 props                                 | Graphene 3.23.1 props                                                            |
 
 Leave out a prototype addition that has no Management API endpoint. Record it in the inventory entry.
 

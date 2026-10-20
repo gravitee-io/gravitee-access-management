@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Role as RoleModel } from '@am-models/Role';
 import { http } from './http';
 import type { Page } from './management-api';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 
-export interface Role {
-    readonly id: string;
-    readonly name: string;
-    readonly system?: boolean;
-}
+export type Role = ApiModel<RoleModel, 'id' | 'name'>;
 
 const ROLES_PAGE_SIZE = 50;
 

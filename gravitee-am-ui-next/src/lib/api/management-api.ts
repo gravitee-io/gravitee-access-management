@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Environment as EnvironmentModel } from '@am-models/Environment';
+import type { InstallationConfiguration as InstallationConfigurationModel } from '@am-models/InstallationConfiguration';
 import { http, isNotFound } from './http';
+import type { ApiModel } from './model';
 
 /** Claims of the console JWT plus the flattened platform and organization permissions, as `GET /user` returns them. */
 export interface CurrentUser {
@@ -27,11 +30,7 @@ export interface CurrentUser {
     readonly permissions: string[];
 }
 
-export interface Environment {
-    readonly id: string;
-    readonly name: string;
-    readonly hrids: string[];
-}
+export type Environment = ApiModel<EnvironmentModel, 'id' | 'name' | 'hrids'>;
 
 export interface Page<T> {
     readonly data: T[];
@@ -47,11 +46,7 @@ export function listEnvironments(organizationId: string): Promise<Environment[]>
     return http<Environment[]>(`/organizations/${organizationId}/environments`);
 }
 
-export interface InstallationConfiguration {
-    readonly type?: string;
-    /** True when the platform pins the user storage of the MongoDB identity providers to the system cluster. */
-    readonly systemClusterRestricted?: boolean;
-}
+export type InstallationConfiguration = ApiModel<InstallationConfigurationModel>;
 
 /** The installation configuration. An installation without the endpoint reads as an empty configuration. */
 export function getInstallationConfiguration(): Promise<InstallationConfiguration> {

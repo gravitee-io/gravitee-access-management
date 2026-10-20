@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Tag as TagModel } from '@am-models/Tag';
 import { http } from './http';
+import type { ApiModel } from './model';
 
 /** A sharding tag of the organization. */
-export interface Tag {
-    readonly id: string;
-    readonly name: string;
-    readonly description?: string;
-}
+export type Tag = ApiModel<TagModel, 'id' | 'name'>;
 
 export function listTags(organizationId: string): Promise<Tag[]> {
     return http<Tag[]>(`/organizations/${organizationId}/tags`);

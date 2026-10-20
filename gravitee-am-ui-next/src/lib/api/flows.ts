@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Step } from '@am-models/Step';
 import { http, httpText } from './http';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 
-export interface FlowStep {
-    readonly name?: string;
-    readonly policy: string;
-    readonly description?: string;
-    /** Policy configuration, serialized as a JSON string. */
-    readonly configuration?: string;
-    readonly enabled: boolean;
-    readonly condition?: string;
-}
+/** `configuration` is the policy configuration, serialized as a JSON string. */
+export type FlowStep = ApiModel<Step, 'policy' | 'enabled'>;
 
 export interface AmFlow {
     /** Absent while the domain still uses the default flow for this type. */

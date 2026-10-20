@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Group as GroupModel } from '@am-models/Group';
 import { http } from './http';
 import type { Page } from './management-api';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 
-export interface Group {
-    readonly id: string;
-    readonly name: string;
-}
+export type Group = ApiModel<GroupModel, 'id' | 'name'>;
 
 export function listGroups(ref: DomainRef, page: number, size: number): Promise<Page<Group>> {
     return http<Page<Group>>(`${domainPath(ref)}/groups?page=${page}&size=${size}`);

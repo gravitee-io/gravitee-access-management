@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Group } from '@am-models/Group';
+import type { Membership } from '@am-models/Membership';
+import type { NewMembership as NewMembershipModel } from '@am-models/NewMembership';
+import type { RoleEntity } from '@am-models/RoleEntity';
+import type { User } from '@am-models/User';
 import { http } from './http';
 import type { Page } from './management-api';
+import type { ApiModel } from './model';
 
 export type MemberType = 'user' | 'group';
 
@@ -30,7 +36,7 @@ export interface Member {
 
 /** The body of `GET .../members` for a domain, an application, a protected resource or the organization. */
 export interface MembershipsResponse {
-    readonly memberships: readonly { id: string; memberId: string; memberType: MemberType; roleId: string }[];
+    readonly memberships: readonly ApiModel<Omit<Membership, 'memberType'> & { memberType: MemberType }, 'id' | 'memberId' | 'roleId'>[];
     readonly metadata: {
         readonly roles: Record<string, { name: string }>;
         readonly users: Record<string, { displayName?: string }>;
@@ -39,31 +45,15 @@ export interface MembershipsResponse {
 }
 
 /** The body of `POST .../members`. A POST for a member who exists changes the role. */
-export interface NewMembership {
-    readonly memberId: string;
-    readonly memberType: 'USER' | 'GROUP';
-    readonly role: string;
-}
+export type NewMembership = ApiModel<NewMembershipModel>;
 
-export interface MembershipRole {
-    readonly id: string;
-    readonly name: string;
-    readonly system: boolean;
-}
+export type MembershipRole = ApiModel<RoleEntity, 'id' | 'name' | 'system'>;
 
 export type MembershipRoleType = 'ORGANIZATION' | 'DOMAIN' | 'APPLICATION' | 'PROTECTED_RESOURCE';
 
-export interface OrganizationUser {
-    readonly id: string;
-    readonly username: string;
-    readonly displayName?: string;
-    readonly source?: string;
-}
+export type OrganizationUser = ApiModel<User, 'id' | 'username'>;
 
-export interface OrganizationGroup {
-    readonly id: string;
-    readonly name: string;
-}
+export type OrganizationGroup = ApiModel<Group, 'id' | 'name'>;
 
 export function toMembers(response: MembershipsResponse): Member[] {
     const { roles, users, groups } = response.metadata;

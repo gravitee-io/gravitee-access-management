@@ -70,8 +70,8 @@ Work in this order. Run `yarn typecheck` after each step.
 
 Create `src/lib/api/<unit>.ts`.
 
-- One `interface` per entity, `readonly` fields, named without the `Am` prefix. Fields come from the Angular service
-  payload, checked against `../gravitee-am-test/api/management/models/` and `../docs/mapi/openapi.yaml`.
+- One type per entity, named without the `Am` prefix: `ApiModel<Model, requiredKeys>` over the generated model from
+  `@am-models/<Model>`. Check the fields against the Angular service payload. Override a field the spec gets wrong.
 - One function per Angular service method the unit uses: `listX(ref, page, size, query)`, `getX(ref, id)`,
   `createX(ref, body)`, `updateX(ref, id, body)`, `patchX(ref, id, patch)`, `deleteX(ref, id)`. Same path, same
   parameters, same payload fields.

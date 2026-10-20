@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Form as FormModel } from '@am-models/Form';
 import { http } from './http';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 
-export interface Form {
-    /** Absent while the domain still uses the default template. */
-    readonly id?: string;
-    readonly template: string;
-    readonly enabled: boolean;
-    readonly content: string;
-}
+/** `id` is absent while the domain still uses the default template. */
+export type Form = ApiModel<FormModel, 'template' | 'enabled' | 'content'>;
 
 export function getForm(ref: DomainRef, template: string): Promise<Form> {
     return http<Form>(`${domainPath(ref)}/forms?template=${template}`);

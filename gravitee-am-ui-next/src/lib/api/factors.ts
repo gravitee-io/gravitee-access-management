@@ -13,33 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Factor as FactorModel } from '@am-models/Factor';
+import type { NewFactor as NewFactorModel } from '@am-models/NewFactor';
 import { http } from './http';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 import type { Plugin } from './plugins';
 
 /** A factor of the list. The list returns these three fields only. */
-export interface FactorSummary {
-    readonly id: string;
-    readonly name: string;
-    readonly factorType?: string;
-}
+export type FactorSummary = Pick<Factor, 'id' | 'name' | 'factorType'>;
 
-export interface Factor {
-    readonly id: string;
-    readonly name: string;
-    readonly type: string;
-    readonly factorType?: string;
-    /** Plugin configuration, serialized as a JSON string. */
-    readonly configuration: string;
-}
+/**
+ * The spec lists `factorType` by its Java enum names. The API sends the type string, for example `TOTP`.
+ * `configuration` is the plugin configuration, serialized as a JSON string.
+ */
+export type Factor = ApiModel<Omit<FactorModel, 'factorType'> & { factorType?: string }, 'id' | 'name' | 'type' | 'configuration'>;
 
-export interface NewFactor {
-    readonly name: string;
-    readonly type: string;
-    readonly factorType: string;
-    /** Plugin configuration, serialized as a JSON string. */
-    readonly configuration: string;
-}
+export type NewFactor = ApiModel<NewFactorModel>;
 
 export interface FactorPlugin extends Plugin {
     /** The resource category the factor sends its codes through, or `any`. */

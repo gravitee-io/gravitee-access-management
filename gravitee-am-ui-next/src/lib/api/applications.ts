@@ -13,34 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { Application as ApplicationModel } from '@am-models/Application';
+import type { CimdValidationResponse } from '@am-models/CimdValidationResponse';
+import type { FilteredApplication } from '@am-models/FilteredApplication';
+import type { NewApplication as NewApplicationModel } from '@am-models/NewApplication';
+import type { NewCimdApplication as NewCimdApplicationModel } from '@am-models/NewCimdApplication';
+import type { PatchApplication } from '@am-models/PatchApplication';
 import { http } from './http';
 import type { Page } from './management-api';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath, searchParam } from './paths';
 
+/** The Management API returns the type in lowercase. The spec lists it in uppercase. */
 export type ApplicationType = 'web' | 'native' | 'browser' | 'service' | 'resource_server';
 
-export interface Application {
-    readonly id: string;
-    readonly name: string;
-    readonly description?: string;
-    readonly type: ApplicationType;
-    readonly enabled: boolean;
-    readonly updatedAt?: number;
-}
+export type Application = ApiModel<Omit<FilteredApplication, 'type'> & { type: ApplicationType }, 'id' | 'name' | 'enabled'>;
 
-export interface ApplicationDetail extends Application {
-    readonly settings?: {
-        readonly oauth?: {
-            readonly clientId?: string;
-            readonly clientSecret?: string;
-            readonly grantTypes?: string[];
-            readonly redirectUris?: string[];
-            readonly scopeSettings?: { readonly scope: string }[];
-        };
-        readonly advanced?: { readonly flowsInherited?: boolean };
-    };
-    readonly createdAt?: number;
-}
+export type ApplicationDetail = ApiModel<Omit<ApplicationModel, 'type'> & { type: ApplicationType }, 'id' | 'name' | 'enabled'>;
 
 export function listApplications(ref: DomainRef, page: number, size: number, query = ''): Promise<Page<Application>> {
     return http<Page<Application>>(`${domainPath(ref)}/applications?page=${page}&size=${size}${searchParam(query)}`);
@@ -50,13 +39,7 @@ export function getApplication(ref: DomainRef, applicationId: string): Promise<A
     return http<ApplicationDetail>(`${domainPath(ref)}/applications/${applicationId}`);
 }
 
-export function patchApplication(
-    ref: DomainRef,
-    applicationId: string,
-    patch: Partial<Pick<Application, 'name' | 'description' | 'enabled'>> & {
-        readonly settings?: { readonly advanced: { readonly flowsInherited: boolean } };
-    },
-): Promise<ApplicationDetail> {
+export function patchApplication(ref: DomainRef, applicationId: string, patch: PatchApplication): Promise<ApplicationDetail> {
     return http<ApplicationDetail>(`${domainPath(ref)}/applications/${applicationId}`, {
         method: 'PATCH',
         body: JSON.stringify(patch),
@@ -64,16 +47,12 @@ export function patchApplication(
 }
 
 /** The type names the create endpoints take. */
-export type NewApplicationType = 'WEB' | 'BROWSER' | 'NATIVE' | 'SERVICE' | 'RESOURCE_SERVER';
+export type NewApplicationType = Exclude<NewApplicationModel['type'], 'AGENT'>;
 
-export interface NewApplication {
-    readonly name: string;
-    readonly type: NewApplicationType;
-    readonly description?: string;
-    readonly clientId?: string;
-    readonly clientSecret?: string;
-    readonly redirectUris: string[] | null;
-}
+/** The Angular console sends `redirectUris: null` when the type takes none. */
+export type NewApplication = ApiModel<
+    Omit<NewApplicationModel, 'type' | 'redirectUris'> & { type: NewApplicationType; redirectUris: string[] | null }
+>;
 
 export function createApplication(ref: DomainRef, application: NewApplication): Promise<ApplicationDetail> {
     return http<ApplicationDetail>(`${domainPath(ref)}/applications`, { method: 'POST', body: JSON.stringify(application) });
@@ -115,24 +94,13 @@ export interface ClientMetadata {
     readonly backchannel_user_code_parameter?: boolean;
 }
 
-export interface CimdPreview {
-    readonly url: string;
-    readonly hasInlineJwks?: boolean;
-    readonly metadata?: ClientMetadata;
-    readonly missing?: { readonly clientName?: boolean };
-}
+export type CimdPreview = ApiModel<Omit<CimdValidationResponse, 'metadata'> & { metadata?: ClientMetadata }, 'url'>;
 
 export function validateCimd(ref: DomainRef, url: string): Promise<CimdPreview> {
     return http<CimdPreview>(`${domainPath(ref)}/cimd/validate`, { method: 'POST', body: JSON.stringify({ url }) });
 }
 
-export interface NewCimdApplication {
-    readonly name: string;
-    readonly type: NewApplicationType;
-    readonly description?: string;
-    readonly cimdUrl: string;
-    readonly clientName?: string;
-}
+export type NewCimdApplication = ApiModel<Omit<NewCimdApplicationModel, 'type'> & { type: NewApplicationType }>;
 
 export function createApplicationFromCimd(ref: DomainRef, application: NewCimdApplication): Promise<ApplicationDetail> {
     return http<ApplicationDetail>(`${domainPath(ref)}/cimd/applications`, { method: 'POST', body: JSON.stringify(application) });

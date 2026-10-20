@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { ServiceResource } from '@am-models/ServiceResource';
 import { HttpError, http } from './http';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 import type { Plugin } from './plugins';
 
 /** A resource of the list. The list returns the basic fields only. */
-export interface Resource {
-    readonly id: string;
-    readonly name: string;
-    readonly type: string;
-}
+export type Resource = ApiModel<ServiceResource, 'id' | 'name' | 'type'>;
 
 export interface ResourcePlugin extends Plugin {
     readonly categories?: readonly string[];

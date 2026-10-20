@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { DataSource as DataSourceModel } from '@am-models/DataSource';
 import { http } from './http';
+import type { ApiModel } from './model';
 import { environmentPath } from './paths';
 
-export interface DataSource {
-    readonly id: string;
-    readonly name: string;
-}
+export type DataSource = ApiModel<DataSourceModel, 'id' | 'name'>;
 
 export function listDataSources(organizationId: string, environmentId: string): Promise<DataSource[]> {
     return http<DataSource[]>(`${environmentPath(organizationId, environmentId)}/data-sources`);

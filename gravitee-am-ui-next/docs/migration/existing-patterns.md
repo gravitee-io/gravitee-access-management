@@ -104,11 +104,13 @@ Conventions in the functions:
 - A create-or-update pair is one function that branches on `id`, as `saveForm` does.
 - `getIdentityProviderSchema(type)` and `getPolicySchema(id)` return the raw plugin schema for the adapter.
 
-Types are hand-written `interface`s with `readonly` fields. Optional fields carry a comment when the API omits them in
-some cases. The generated models in `../gravitee-am-test/api/management/models/` were considered as a type source. They
-mark every field optional, so a page would lose the required fields it relies on. They stay a lookup for field names.
-Decision: hand-written types per area, checked against the Angular service payload, the generated model and
-`../docs/mapi/openapi.yaml`.
+Entity types come from the models generated from `../docs/mapi/openapi.yaml`. The jest SDK script writes `.d.ts` copies
+to `../gravitee-am-management-api-types/`, and the console imports them as `@am-models/<Model>`. The spec marks almost
+every response field optional, so `ApiModel<Model, 'id' | 'name'>` from `src/lib/api/model.ts` makes the fields the API
+always sends required. Where the spec is wrong, the type overrides the field with `Omit`, with a comment: response enums
+are lowercase on the wire, and some endpoints name the wrong schema. A type stays hand-written when the spec has no
+schema, as for the plugin lists and `GET /user`, or when the model has an `any` index, as `ClientMetadata` has.
+Decision: generated models per area, checked against the Angular service payload.
 
 ## 6. Data fetching and mutations
 

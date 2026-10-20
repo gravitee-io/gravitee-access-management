@@ -130,11 +130,11 @@ every page. Examples: `bot-detection`, `device-identifier`, `extensionGrants`, `
 
 ### 1.7 Types
 
-| Prototype                                                      | Console                                                                                                                                                               | Mode      |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `import type { AmScopeRecord } from '../../lib/protocols/api'` | `import type { Scope } from '../../lib/api/scopes'`                                                                                                                   | Manual    |
-| Fields invented for the mock                                   | Fields the Management API returns. Check the Angular service, the generated model under `../gravitee-am-test/api/management/models/`, and `../docs/mapi/openapi.yaml` | Manual    |
-| `interface` for a form value shape                             | `type` alias                                                                                                                                                          | Automatic |
+| Prototype                                                      | Console                                                                                                        | Mode      |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------- |
+| `import type { AmScopeRecord } from '../../lib/protocols/api'` | `import type { Scope } from '../../lib/api/scopes'`                                                            | Manual    |
+| Fields invented for the mock                                   | Fields the Management API returns. Check the Angular service and the generated model from `@am-models/<Model>` | Manual    |
+| `interface` for a form value shape                             | `type` alias                                                                                                   | Automatic |
 
 Drop the `Am` prefix. The console's types live in the console's namespace.
 

@@ -13,32 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { FilteredIdentityProviderInfo } from '@am-models/FilteredIdentityProviderInfo';
+import type { IdentityProvider as IdentityProviderModel } from '@am-models/IdentityProvider';
+import type { NewIdentityProvider as NewIdentityProviderModel } from '@am-models/NewIdentityProvider';
 import { hash } from 'bcryptjs';
 import { http } from './http';
+import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
 import type { IdentityProviderPlugin, Plugin } from './plugins';
 
-export interface IdentityProviderSummary {
-    readonly id: string;
-    readonly name: string;
-    readonly type: string;
-    readonly system: boolean;
-    readonly external: boolean;
-}
+export type IdentityProviderSummary = ApiModel<FilteredIdentityProviderInfo, 'id' | 'name' | 'type' | 'system' | 'external'>;
 
-export interface IdentityProvider extends IdentityProviderSummary {
-    /** Plugin configuration, serialized as a JSON string. System providers do not return it. */
-    readonly configuration?: string;
-    readonly domainWhitelist?: string[];
-    /** User profile attribute to raw attribute or expression. */
-    readonly mappers?: Record<string, string>;
-    /** Role id to the user expressions that get the role. */
-    readonly roleMapper?: Record<string, string[]>;
-    /** Group id to the user expressions that join the group. */
-    readonly groupMapper?: Record<string, string[]>;
-    /** True when the platform pinned the user storage of this MongoDB provider to the system cluster. */
-    readonly systemClusterRestricted?: boolean;
-}
+/** `configuration` is the plugin configuration, serialized as a JSON string. System providers do not return it. */
+export type IdentityProvider = ApiModel<IdentityProviderModel, 'id' | 'name' | 'type' | 'system' | 'external'>;
 
 export function listIdentityProviders(ref: DomainRef): Promise<IdentityProviderSummary[]> {
     return http<IdentityProviderSummary[]>(`${domainPath(ref)}/identities`);
@@ -93,14 +80,7 @@ export function getIdentityProviderSchema(type: string): Promise<Record<string, 
     return http<Record<string, unknown>>(`/platform/plugins/identities/${type}/schema`);
 }
 
-export interface NewIdentityProvider {
-    readonly name: string;
-    readonly type: string;
-    /** Plugin configuration, serialized as a JSON string. */
-    readonly configuration: string;
-    readonly external: boolean;
-    readonly domainWhitelist: readonly string[];
-}
+export type NewIdentityProvider = ApiModel<NewIdentityProviderModel, 'external' | 'domainWhitelist'>;
 
 export function createIdentityProvider(ref: DomainRef, provider: NewIdentityProvider): Promise<IdentityProvider> {
     return http<IdentityProvider>(`${domainPath(ref)}/identities`, { method: 'POST', body: JSON.stringify(provider) });
