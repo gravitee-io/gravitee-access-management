@@ -1,13 +1,13 @@
 {
     "generatedAt": "2026-10-20",
-    "angularCommit": "b12275e1e8",
+    "angularCommit": "f4029be647",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
         "angularRoutesWithComponent": 221,
         "angularComponents": 281,
         "prototypeEntries": 151,
-        "units": 56,
+        "units": 57,
         "uncoveredComponents": 67
     },
     "units": [
@@ -176,7 +176,7 @@
             "licenseFeatures": [],
             "status": "in-progress",
             "class": "A",
-            "order": 56,
+            "order": 57,
             "blockers": [],
             "notes": "Login, logout, callbacks and the environment scope are built. The 404 page remains.",
             "angularCommit": null
@@ -339,7 +339,7 @@
             "licenseFeatures": [],
             "status": "in-progress",
             "class": "C",
-            "order": 37,
+            "order": 38,
             "blockers": [],
             "notes": "The list is built. The creation wizard with data plane and CIMD steps and the dashboard with its chart widgets remain. Charts move to graphene-charts.",
             "angularCommit": null
@@ -368,32 +368,6 @@
                     "reactFiles": [
                         "src/features/applications/ApplicationsPage.tsx"
                     ],
-                    "blockers": [],
-                    "notes": ""
-                },
-                {
-                    "path": "environments/:envHrid/domains/:domainId/applications/new",
-                    "role": "page",
-                    "angularComponent": "ApplicationCreationComponent",
-                    "angularFile": "domain/applications/creation/application-creation.component.ts",
-                    "prototypePages": [
-                        "CreateApplicationPage"
-                    ],
-                    "perms": [
-                        "application_create"
-                    ],
-                    "effectivePerms": [
-                        "domain_list",
-                        "application_list",
-                        "application_create"
-                    ],
-                    "guards": [
-                        "AuthGuard"
-                    ],
-                    "resolvers": {},
-                    "status": "not-started",
-                    "class": "C",
-                    "reactFiles": [],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1308,7 +1282,6 @@
                 "domain/applications/application/idp/idp.component.ts",
                 "domain/applications/application/overview/overview.component.ts",
                 "domain/applications/applications.component.ts",
-                "domain/applications/creation/application-creation.component.ts",
                 "domain/components/oauth2-settings/component/oauth2-settings.component.ts"
             ],
             "prototypePages": [
@@ -1337,14 +1310,12 @@
                 "ApplicationSecretsPage",
                 "ApplicationSessionPage",
                 "ApplicationsPage",
-                "CreateApplicationPage",
                 "McpServerFlowsPage",
                 "McpServerOAuth2Page"
             ],
             "permissions": [
                 "application_analytics_list",
                 "application_certificate_list",
-                "application_create",
                 "application_email_template_list",
                 "application_email_template_read",
                 "application_factor_list",
@@ -1365,9 +1336,59 @@
             "licenseFeatures": [],
             "status": "in-progress",
             "class": "C",
-            "order": 38,
+            "order": 39,
             "blockers": [],
             "notes": "Twenty-eight routes. Overview, general and flows are built. Split into one sub-unit per section when ported. The OAuth 2.0 settings carry the add-scope and add-claim dialogs; factors carry the MFA assessment parts; analytics needs charts.",
+            "angularCommit": null
+        },
+        {
+            "id": "applications-create",
+            "area": "applications",
+            "pages": [
+                {
+                    "path": "environments/:envHrid/domains/:domainId/applications/new",
+                    "role": "page",
+                    "angularComponent": "ApplicationCreationComponent",
+                    "angularFile": "domain/applications/creation/application-creation.component.ts",
+                    "prototypePages": [
+                        "CreateApplicationPage"
+                    ],
+                    "perms": [
+                        "application_create"
+                    ],
+                    "effectivePerms": [
+                        "domain_list",
+                        "application_list",
+                        "application_create"
+                    ],
+                    "guards": [
+                        "AuthGuard"
+                    ],
+                    "resolvers": {},
+                    "status": "not-started",
+                    "class": "C",
+                    "reactFiles": [],
+                    "blockers": [],
+                    "notes": ""
+                }
+            ],
+            "angularFiles": [
+                "domain/applications/creation/application-creation.component.ts"
+            ],
+            "prototypePages": [
+                "CreateApplicationPage"
+            ],
+            "permissions": [
+                "application_create",
+                "application_list",
+                "domain_list"
+            ],
+            "licenseFeatures": [],
+            "status": "not-started",
+            "class": "C",
+            "order": 3,
+            "blockers": [],
+            "notes": "Split from applications so the console can create an application. Three-step Angular stepper: application type, settings, and the CIMD confirmation (step3-cimd-confirm). Not a plugin wizard, so PluginWizard does not fit; the conversion rules give one step component per mat-step.",
             "angularCommit": null
         },
         {
@@ -1481,7 +1502,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 5,
+            "order": 6,
             "blockers": [],
             "notes": "Plugin wizard. Route segment differs from the Angular folder botdetections.",
             "angularCommit": null
@@ -1714,7 +1735,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 6,
+            "order": 7,
             "blockers": [],
             "notes": "Plugin wizard. Route segment differs from the Angular folder deviceidentifiers.",
             "angularCommit": null
@@ -1835,7 +1856,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 3,
+            "order": 4,
             "blockers": [],
             "notes": "Plugin wizard. Factor schemas are not surveyed yet. An Angular Playwright page object exists.",
             "angularCommit": null
@@ -2177,7 +2198,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 4,
+            "order": 5,
             "blockers": [],
             "notes": "Plugin wizard for the resources AM calls services. An Angular Playwright page object exists.",
             "angularCommit": null
@@ -2333,7 +2354,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 11,
+            "order": 12,
             "blockers": [],
             "notes": "A settings form plus the device notifier list, wizard and detail.",
             "angularCommit": null
@@ -2388,7 +2409,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 16,
+            "order": 17,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -2518,7 +2539,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 9,
+            "order": 10,
             "blockers": [],
             "notes": "Client registration settings and the default and allowed scope lists.",
             "angularCommit": null
@@ -2573,7 +2594,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 14,
+            "order": 15,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -2686,7 +2707,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 8,
+            "order": 9,
             "blockers": [],
             "notes": "Plugin wizard. The route segment keeps the Angular camel case.",
             "angularCommit": null
@@ -2741,7 +2762,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 10,
+            "order": 11,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -2798,7 +2819,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 17,
+            "order": 18,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -2908,7 +2929,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 7,
+            "order": 8,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -2963,7 +2984,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 12,
+            "order": 13,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3018,7 +3039,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 13,
+            "order": 14,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3073,7 +3094,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 15,
+            "order": 16,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3126,7 +3147,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 26,
+            "order": 27,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3182,7 +3203,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 19,
+            "order": 20,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3271,7 +3292,7 @@
             "licenseFeatures": [],
             "status": "in-progress",
             "class": "A",
-            "order": 18,
+            "order": 19,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3324,7 +3345,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 20,
+            "order": 21,
             "blockers": [],
             "notes": "The console page src/features/forms/LoginFormPage.tsx at settings/forms has no Angular domain route. Angular routes DomainSettingsFormsComponent only at the organization level, and applications have their own forms pages. Decide whether the domain forms page stays.",
             "angularCommit": null
@@ -3377,7 +3398,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 21,
+            "order": 22,
             "blockers": [],
             "notes": "The prototype page builds on the shared memberships panel, which the kit provides.",
             "angularCommit": null
@@ -3488,7 +3509,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 25,
+            "order": 26,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3541,7 +3562,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 24,
+            "order": 25,
             "blockers": [],
             "notes": "Client secret settings. The four client secret dialogs are shared with applications and MCP servers.",
             "angularCommit": null
@@ -3709,7 +3730,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 27,
+            "order": 28,
             "blockers": [],
             "notes": "A container with tabs, a create page and a key retrieval page. Angular Playwright page objects exist.",
             "angularCommit": null
@@ -3762,7 +3783,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 22,
+            "order": 23,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -3817,7 +3838,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 23,
+            "order": 24,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -4002,7 +4023,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 29,
+            "order": 30,
             "blockers": [],
             "notes": "Group members use the shared memberships panel.",
             "angularCommit": null
@@ -4115,7 +4136,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 28,
+            "order": 29,
             "blockers": [],
             "notes": "Role detail holds the permission matrix.",
             "angularCommit": null
@@ -4170,7 +4191,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 31,
+            "order": 32,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -4223,7 +4244,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 32,
+            "order": 33,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -4627,7 +4648,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "C",
-            "order": 30,
+            "order": 31,
             "blockers": [],
             "notes": "Fourteen routes: profile, applications, credentials, devices, factors, history, identities, roles, plus the claim and account token dialogs. Angular Playwright page objects exist.",
             "angularCommit": null
@@ -4702,7 +4723,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 33,
+            "order": 34,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -4764,7 +4785,7 @@
             "licenseFeatures": [],
             "status": "done",
             "class": "B",
-            "order": 36,
+            "order": 37,
             "blockers": [],
             "notes": "Domain flows and application flows are built on the Graphene policy studio with the AM flow model.",
             "angularCommit": null
@@ -4830,7 +4851,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "C",
-            "order": 34,
+            "order": 35,
             "blockers": [],
             "notes": "The dictionary editor with its dialog.",
             "angularCommit": null
@@ -4896,7 +4917,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "D",
-            "order": 35,
+            "order": 36,
             "blockers": [],
             "notes": "The theme editor renders a live preview. No Graphene part for the preview.",
             "angularCommit": null
@@ -5072,7 +5093,7 @@
             ],
             "status": "not-started",
             "class": "B",
-            "order": 40,
+            "order": 41,
             "blockers": [],
             "notes": "Gated by the ALERT_ENGINE licence feature. Needs the licence hook. Notifier wizard.",
             "angularCommit": null
@@ -5245,7 +5266,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 39,
+            "order": 40,
             "blockers": [],
             "notes": "Audit list with filters and detail, plus the reporter list, wizard and detail.",
             "angularCommit": null
@@ -5356,7 +5377,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "D",
-            "order": 41,
+            "order": 42,
             "blockers": [],
             "notes": "OpenFGA model editor. No Graphene part. Needs a design decision.",
             "angularCommit": null
@@ -5747,7 +5768,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "C",
-            "order": 42,
+            "order": 43,
             "blockers": [],
             "notes": "Reuses the application detail routes plus the tools table. Port after applications.",
             "angularCommit": null
@@ -6762,7 +6783,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "C",
-            "order": 43,
+            "order": 44,
             "blockers": [],
             "notes": "Reuses the application routes with the agent type gate. Port after applications.",
             "angularCommit": null
@@ -6835,7 +6856,7 @@
             "licenseFeatures": [],
             "status": "in-progress",
             "class": "A",
-            "order": 44,
+            "order": 45,
             "blockers": [],
             "notes": "Hidden in Gamma mode. The organization units reuse the domain unit pages under the organization scope. Port last.",
             "angularCommit": null
@@ -7000,7 +7021,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 54,
+            "order": 55,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7058,7 +7079,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 55,
+            "order": 56,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7165,7 +7186,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 53,
+            "order": 54,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7238,7 +7259,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 47,
+            "order": 48,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7291,7 +7312,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 45,
+            "order": 46,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7444,7 +7465,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 50,
+            "order": 51,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7499,7 +7520,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 46,
+            "order": 47,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7710,7 +7731,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 48,
+            "order": 49,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7816,7 +7837,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 51,
+            "order": 52,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -7922,7 +7943,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "A",
-            "order": 52,
+            "order": 53,
             "blockers": [],
             "notes": "",
             "angularCommit": null
@@ -8051,7 +8072,7 @@
             "licenseFeatures": [],
             "status": "not-started",
             "class": "B",
-            "order": 49,
+            "order": 50,
             "blockers": [],
             "notes": "",
             "angularCommit": null

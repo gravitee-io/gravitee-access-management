@@ -84,6 +84,7 @@ function gitHead(dir) {
 const AREA_BY_UNIT = {
     domains: 'domains',
     applications: 'applications',
+    'applications-create': 'applications',
     forms: 'design',
     emails: 'design',
     texts: 'design',
@@ -159,6 +160,8 @@ function unitOf(routePath) {
     const section = segments[domainIndex + 2];
     if (!section || section === 'dashboard') return 'domains';
     if (section === 'settings') return segments[domainIndex + 3] ?? 'general';
+    // The application creation stepper is its own unit, ported ahead of the other application sections.
+    if (section === 'applications' && segments[domainIndex + 3] === 'new') return 'applications-create';
     return section;
 }
 
