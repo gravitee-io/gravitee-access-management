@@ -48,7 +48,7 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PluginWizard, TagInput, MembershipsPanel, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PluginWizard, TagInput, ValueListInput, MembershipsPanel, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
@@ -109,6 +109,8 @@ src/
   `src/app/components/`. The page loads the plugin list and the schema, and owns the POST. Host fields such as the
   domain whitelist go in `extraFields`. Reference: `src/features/identity-providers/NewIdentityProviderPage.tsx`.
 - A string list, the Angular `mat-chip-grid`, uses `TagInput`.
+- A string list with an input, an Add button and a table of rows, such as the Angular post-logout redirect URIs, uses
+  `ValueListInput`. Pass `onRemoveRequest` when Angular confirms a removal, and open `ConfirmDialog` from it.
 - An administrative roles page, the Angular `app-memberships-list` with its dialog, renders `MembershipsPanel`. The
   page passes the list, save and remove functions of its resource from `src/lib/api/<area>.ts`, maps the list through
   `toMembers()` from `src/lib/api/memberships.ts`, and passes the three `*_member_*` permissions as `canCreate`,
