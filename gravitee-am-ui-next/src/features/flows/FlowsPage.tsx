@@ -20,8 +20,8 @@ import { type ReactNode, useCallback, useMemo } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { type AmFlow, getPolicyDocumentation, getPolicySchema, listFlows, listPolicies, updateFlows } from '../../lib/api/flows';
+import { adaptAmSchema } from '../../lib/forms/am-schema';
 import { useCurrentDomain } from '../../lib/session/domain';
-import { adaptAmSchema } from '../identity-providers/am-schema';
 import { AM_FLOW_MODEL, toAmFlows, toStudioFlow, toStudioPolicy } from './am-flows';
 
 const NONE = [] as const;

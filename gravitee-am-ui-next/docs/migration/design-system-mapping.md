@@ -36,13 +36,13 @@ Counts below are tag occurrences in `gravitee-am-ui/src/app/**/*.html`.
 | `mat-checkbox`                                  | 29      | `Checkbox`                                       | Inside `Controller`                              |
 | `mat-radio-group`, `mat-radio-button`           | 8, 14   | `RadioGroup`                                     | Inside `Controller`                              |
 | `mat-autocomplete`                              | 17      | `Combobox`                                       |                                                  |
-| `mat-chip-grid`, `mat-chip-row`                 | 14      | Kit tag input from `Badge` and `Input`           | No Graphene part                                 |
+| `mat-chip-grid`, `mat-chip-row`                 | 14      | `TagInput` from `src/app/components/`            | No Graphene part                                 |
 | `mat-datepicker`                                | 4       | `DatePicker`, `Calendar`                         |                                                  |
 | `gio-save-bar`                                  | 1       | `SaveBar`                                        | In `src/app/components/`. Shows on `isDirty`     |
 | `@ajsf` `json-schema-form`                      | 10      | `JsonSchemaForm` with `jsonSchemaResolver`       | Through `adaptAmSchema()`                        |
 | `material-file`, `material-multiselect` widgets | 2       | None                                             | GR-A custom field story. Plain input until then  |
 | `gv-expression-language`                        | 5       | `Input` or `Textarea` with `ElCheatSheetTrigger` |                                                  |
-| `mat-horizontal-stepper`, `mat-step`            | 12, 26  | Kit wizard inside `PageFocused`                  | `snippets/creation-wizard-page.tsx` is the model |
+| `mat-horizontal-stepper`, `mat-step`            | 12, 26  | `PluginWizard` inside `PageFocused`              | `snippets/creation-wizard-page.tsx` is the model |
 
 Validation shows inline under the field, on touch, with the Angular message. There is no form-level error summary.
 
@@ -143,19 +143,19 @@ Dark mode comes from `AppLayout` `defaultTheme="system"`. No page sets a colour 
 
 ## 8. Parts with no Graphene match
 
-| Need                  | Used by                                                             | Plan                                            |
-| --------------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
-| Wizard                | 12 steppers: plugin creation, domain creation, application creation | Kit, on `PageFocused` with the snippet as model |
-| Confirm dialog        | Every delete                                                        | Built: `ConfirmDialog` on `Dialog`              |
-| Save bar              | Settings forms                                                      | Built: `SaveBar`                                |
-| Tag input             | 14 chip grids                                                       | Kit                                             |
-| Memberships panel     | Domain, application, MCP server, organization members               | Kit                                             |
-| Client secret dialogs | Applications, MCP servers, domain secrets                           | Kit                                             |
-| Custom schema widgets | `datasource`, file, multiselect                                     | GR-A custom field story                         |
-| Upgrade dialog        | 21 `licenseGuard` sites                                             | Built: `UpgradeDialog`, `UpgradePanel`          |
-| Charts                | Dashboard, analytics, audits                                        | `graphene-charts`                               |
-| OpenFGA model editor  | Authorization engines                                               | Design decision, class D                        |
-| Theme preview         | Theme                                                               | Design decision, class D                        |
+| Need                  | Used by                                                             | Plan                                                                                       |
+| --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Wizard                | 12 steppers: plugin creation, domain creation, application creation | Built for plugins: `PluginWizard`. The domain and application wizards need their own steps |
+| Confirm dialog        | Every delete                                                        | Built: `ConfirmDialog` on `Dialog`                                                         |
+| Save bar              | Settings forms                                                      | Built: `SaveBar`                                                                           |
+| Tag input             | 14 chip grids                                                       | Built: `TagInput`                                                                          |
+| Memberships panel     | Domain, application, MCP server, organization members               | Kit                                                                                        |
+| Client secret dialogs | Applications, MCP servers, domain secrets                           | Kit                                                                                        |
+| Custom schema widgets | `datasource`, file, multiselect                                     | GR-A custom field story                                                                    |
+| Upgrade dialog        | 21 `licenseGuard` sites                                             | Built: `UpgradeDialog`, `UpgradePanel`                                                     |
+| Charts                | Dashboard, analytics, audits                                        | `graphene-charts`                                                                          |
+| OpenFGA model editor  | Authorization engines                                               | Design decision, class D                                                                   |
+| Theme preview         | Theme                                                               | Design decision, class D                                                                   |
 
 The kit parts live in `src/app/components/`. Each is composed from Graphene primitives and takes no styling of its own
 beyond layout utilities.

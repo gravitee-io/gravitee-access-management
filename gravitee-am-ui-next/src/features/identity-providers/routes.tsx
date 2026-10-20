@@ -19,6 +19,7 @@ import { lazyPage } from '../../lib/routing/lazyPage';
 export const identityProviderRoutes = (
     <>
         <Route path="providers" element={lazyPage(() => import('./IdentityProvidersPage'), 'IdentityProvidersPage')} />
+        <Route path="providers/new" element={lazyPage(() => import('./NewIdentityProviderPage'), 'NewIdentityProviderPage')} />
         <Route path="providers/:identityProviderId" element={lazyPage(() => import('./IdentityProviderPage'), 'IdentityProviderPage')} />
     </>
 );

@@ -159,16 +159,23 @@ until dirty, `form.reset` after save.
 Values are `{ name, config }` as a `type` alias. The configuration string is parsed on load and stringified on save.
 Unsupported widgets are listed in an `Alert`. System providers show a read-only note.
 
-`am-schema.ts` drops the angular-schema-form keywords, maps `widget` to `format`, `sensitive` to `password`,
+`src/lib/forms/am-schema.ts` drops the angular-schema-form keywords, maps `widget` to `format`, `sensitive` to `password`,
 `readonly` to `readOnly`, and `titleMap` to `gioConfig.enumLabelMap`. It recurses into `properties`, `items` and the
 `oneOf`, `anyOf` and `allOf` branches.
 
-### 7.5 Code editor
+### 7.5 Plugin creation
+
+`NewIdentityProviderPage.tsx` on `PluginWizard`: step 1 lists the plugins with their icons, a filter on the name,
+the display name and the labels, and a lock on a plugin whose `feature` the licence lacks. A click on a locked plugin
+opens the upgrade dialog. Step 2 renders the name, the host fields and the schema form. The page POSTs, toasts and
+opens the new entity.
+
+### 7.6 Code editor
 
 `LoginFormPage.tsx`: Graphene `CodeEditor` in HTML mode with a `Switch` for `enabled`. The first save POSTs, later saves
 PUT.
 
-### 7.6 Full-bleed editor
+### 7.7 Full-bleed editor
 
 `FlowsPage.tsx`: `PolicyStudio` at organization scope with `flowModel={AM_FLOW_MODEL}`. `am-flows.ts` maps AM flows to
 studio flows and back. The page takes `applicationId`, `types`, `description` and `actions`, so the application flows
@@ -226,11 +233,11 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 
 ## 13. Gaps that block a factory
 
-| Gap                             | Effect today                            |
-| ------------------------------- | --------------------------------------- |
-| No wizard, no memberships panel | Create flows cannot be ported           |
-| One navigation file             | Parallel agents collide on it           |
-| No Playwright project           | Behaviour parity has no automated check |
-| No README                       | Setup lives in the spike plan           |
+| Gap                   | Effect today                            |
+| --------------------- | --------------------------------------- |
+| No memberships panel  | Member pages cannot be ported           |
+| One navigation file   | Parallel agents collide on it           |
+| No Playwright project | Behaviour parity has no automated check |
+| No README             | Setup lives in the spike plan           |
 
 These are the Stage 1 stories in `execution-plan.md`.

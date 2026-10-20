@@ -223,7 +223,7 @@ uncovered list is in `migration-inventory.md`.
 | `mat-checkbox`                                                           | `Controller` with `Checkbox`                                                                 | Automatic      |
 | `mat-radio-group`                                                        | `Controller` with `RadioGroup`                                                               | Automatic      |
 | `mat-autocomplete`                                                       | `Combobox`                                                                                   | Semi-automatic |
-| `mat-chip-grid` for a string list                                        | The kit tag input, from `Badge` and `Input`                                                  | Semi-automatic |
+| `mat-chip-grid` for a string list                                        | `TagInput` from `src/app/components/`                                                        | Semi-automatic |
 | `mat-datepicker`                                                         | `DatePicker`                                                                                 | Automatic      |
 | `formDirective.resetForm(entity)` after save                             | `form.reset(response)`                                                                       | Automatic      |
 | `@ajsf` `json-schema-form` with `[schema]` and `(onChanges)`             | `JsonSchemaForm` with `adaptAmSchema(schema)` and `jsonSchemaResolver`                       | Automatic      |
@@ -248,16 +248,16 @@ discard.
 
 ### 2.6 Dialogs, menus, feedback
 
-| Angular                                            | React                                                                     | Mode           |
-| -------------------------------------------------- | ------------------------------------------------------------------------- | -------------- |
-| `MatDialog.open(XDialogComponent, { data })`       | A `Dialog` component in the area with `open` and `onOpenChange` props     | Semi-automatic |
-| `dialogRef.afterClosed().subscribe(result => ...)` | An `onConfirm(result)` callback prop                                      | Semi-automatic |
-| `mat-menu`                                         | `DropdownMenu`                                                            | Automatic      |
-| `mat-tab-group`, `gv-tab-navbar`                   | `Tabs`, or the context sidebar when the tabs are routes                   | Semi-automatic |
-| `mat-horizontal-stepper` with `mat-step`           | The kit wizard: one step component per `mat-step`, `Button` next and back | Semi-automatic |
-| `matTooltip`                                       | `Tooltip`                                                                 | Automatic      |
-| `ngx-clipboard` `cbContent`                        | `CopyableText` or `CopyableCell`                                          | Automatic      |
-| `app-user-avatar`, `identiconHash`                 | `Avatar` with initials                                                    | Automatic      |
+| Angular                                            | React                                                                                                | Mode           |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------- |
+| `MatDialog.open(XDialogComponent, { data })`       | A `Dialog` component in the area with `open` and `onOpenChange` props                                | Semi-automatic |
+| `dialogRef.afterClosed().subscribe(result => ...)` | An `onConfirm(result)` callback prop                                                                 | Semi-automatic |
+| `mat-menu`                                         | `DropdownMenu`                                                                                       | Automatic      |
+| `mat-tab-group`, `gv-tab-navbar`                   | `Tabs`, or the context sidebar when the tabs are routes                                              | Semi-automatic |
+| `mat-horizontal-stepper` with `mat-step`           | `PluginWizard` for a plugin creation. Else one step component per `mat-step`, `Button` next and back | Semi-automatic |
+| `matTooltip`                                       | `Tooltip`                                                                                            | Automatic      |
+| `ngx-clipboard` `cbContent`                        | `CopyableText` or `CopyableCell`                                                                     | Automatic      |
+| `app-user-avatar`, `identiconHash`                 | `Avatar` with initials                                                                               | Automatic      |
 
 ### 2.7 Editors and studios
 

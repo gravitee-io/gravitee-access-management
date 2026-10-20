@@ -48,10 +48,11 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PluginWizard, TagInput, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
+  lib/forms/      am-schema.ts (adaptAmSchema)
   lib/routing/    lazyPage.tsx
   lib/session/    session.tsx (user, environments), environment.tsx (:envHrid), domain.tsx (:domainHrid, ref, basePath)
   lib/layout/     useBreadcrumbs.ts, useSectionSidebar.tsx
@@ -101,9 +102,13 @@ src/
 - Plain forms: `useForm` with `defaultValues` from the entity, `register` for inputs, `Controller` for `Switch` and
   `Select`. `SaveBar` from `src/app/components/` gives Save and Discard, bound to `isDirty`. After a save, `form.reset` with the response.
 - Validation rules and messages come from the Angular component or its reactive validators. Keep the messages.
-- Plugin configuration: `adaptAmSchema()` from `src/features/identity-providers/am-schema.ts` translates the AM
+- Plugin configuration: `adaptAmSchema()` from `src/lib/forms/am-schema.ts` translates the AM
   schema keywords, then `JsonSchemaForm` renders it with `jsonSchemaResolver`. Show the adapter's `unsupported` list
   in an `Alert`.
+- A create page whose Angular folder has `creation/` with `step1` and `step2` uses `PluginWizard` from
+  `src/app/components/`. The page loads the plugin list and the schema, and owns the POST. Host fields such as the
+  domain whitelist go in `extraFields`. Reference: `src/features/identity-providers/NewIdentityProviderPage.tsx`.
+- A string list, the Angular `mat-chip-grid`, uses `TagInput`.
 - Form value shapes that a Graphene resolver validates must be `type` aliases. An `interface` does not satisfy
   `Record<string, unknown>`.
 

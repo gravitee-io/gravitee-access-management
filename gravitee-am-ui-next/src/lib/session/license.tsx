@@ -39,7 +39,7 @@ export function featureDescription(feature: string): string {
 
 export interface LicenseState {
     readonly license: License;
-    /** True when the licence lacks the feature. False for no feature, which means an OSS plugin. */
+    /** True when the licence lacks the feature. False for no feature or a blank one, which means an OSS plugin. */
     readonly isMissing: (feature?: string | null) => boolean;
 }
 
@@ -48,7 +48,7 @@ export function useLicense(): LicenseState {
     if (!license) {
         throw new Error('useLicense() called outside <LicenseScope>');
     }
-    return useMemo(() => ({ license, isMissing: feature => !!feature && !(license.features ?? []).includes(feature) }), [license]);
+    return useMemo(() => ({ license, isMissing: feature => !!feature?.trim() && !(license.features ?? []).includes(feature) }), [license]);
 }
 
 export function LicenseScope({ license, children }: { readonly license: License; readonly children: ReactNode }) {

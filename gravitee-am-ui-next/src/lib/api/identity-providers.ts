@@ -15,6 +15,7 @@
  */
 import { http } from './http';
 import { type DomainRef, domainPath } from './paths';
+import type { IdentityProviderPlugin, Plugin } from './plugins';
 
 export interface IdentityProviderSummary {
     readonly id: string;
@@ -51,4 +52,28 @@ export function updateIdentityProvider(ref: DomainRef, provider: IdentityProvide
 
 export function getIdentityProviderSchema(type: string): Promise<Record<string, unknown>> {
     return http<Record<string, unknown>>(`/platform/plugins/identities/${type}/schema`);
+}
+
+export interface NewIdentityProvider {
+    readonly name: string;
+    readonly type: string;
+    /** Plugin configuration, serialized as a JSON string. */
+    readonly configuration: string;
+    readonly external: boolean;
+    readonly domainWhitelist: readonly string[];
+}
+
+export function createIdentityProvider(ref: DomainRef, provider: NewIdentityProvider): Promise<IdentityProvider> {
+    return http<IdentityProvider>(`${domainPath(ref)}/identities`, { method: 'POST', body: JSON.stringify(provider) });
+}
+
+const EXPAND = 'expand=icon&expand=displayName&expand=labels';
+
+/** The built-in plugins, then the social and enterprise plugins, as the Angular `IdentitiesResolver` loads them. */
+export async function listIdentityProviderPlugins(): Promise<IdentityProviderPlugin[]> {
+    const [builtIn, external] = await Promise.all([
+        http<Plugin[]>(`/platform/plugins/identities?${EXPAND}`),
+        http<Plugin[]>(`/platform/plugins/identities?external=true&${EXPAND}`),
+    ]);
+    return [...builtIn.map(plugin => ({ ...plugin, external: false })), ...external.map(plugin => ({ ...plugin, external: true }))];
 }

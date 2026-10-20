@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-20",
-    "angularCommit": "9834ca60ed",
+    "angularCommit": "75e8fd2e60",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1878,11 +1878,14 @@
                         "identities": "IdentitiesResolver",
                         "datasources": "DataSourcesResolver"
                     },
-                    "status": "not-started",
+                    "status": "in-progress",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/identity-providers/NewIdentityProviderPage.tsx",
+                        "src/app/components/PluginWizard.tsx"
+                    ],
                     "blockers": [],
-                    "notes": ""
+                    "notes": "Built in Stage 1 story 6 as the first user of PluginWizard. Missing: the schema enrichers for certificates, data sources and the system cluster hints (provider.form.enricher.ts), the MongoDB storage guidance, and the BCrypt pre-hash of the inline provider users (ProviderService.enhanceConfiguration). The detail page lacks the same enrichers."
                 },
                 {
                     "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId",

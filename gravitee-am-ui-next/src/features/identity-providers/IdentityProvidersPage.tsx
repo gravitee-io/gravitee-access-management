@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BadgeCell, DataTable, DataTableEmptyState } from '@gravitee/graphene-core';
-import { SearchIcon, UsersIcon } from '@gravitee/graphene-core/icons';
+import { BadgeCell, Button, DataTable, DataTableEmptyState } from '@gravitee/graphene-core';
+import { PlusIcon, SearchIcon, UsersIcon } from '@gravitee/graphene-core/icons';
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
@@ -24,6 +24,7 @@ import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type IdentityProviderSummary, listIdentityProviders } from '../../lib/api/identity-providers';
 import { useCurrentDomain } from '../../lib/session/domain';
+import { Can } from '../../lib/session/permissions';
 
 const columns: ColumnDef<IdentityProviderSummary, unknown>[] = [
     {
@@ -63,7 +64,20 @@ export function IdentityProvidersPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader title="Identity providers" description="Where the users of this domain are stored and authenticated." />
+            <PageHeader
+                title="Identity providers"
+                description="Where the users of this domain are stored and authenticated."
+                actions={
+                    <Can all={['domain_identity_provider_create']}>
+                        <Button asChild>
+                            <Link to="new">
+                                <PlusIcon aria-hidden />
+                                New provider
+                            </Link>
+                        </Button>
+                    </Can>
+                }
+            />
             {error ? (
                 <ErrorPanel description="Could not load the identity providers." error={error} />
             ) : data?.length === 0 ? (

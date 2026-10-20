@@ -34,16 +34,16 @@ Read in this order. Do not write code before the list is complete.
    `gamma-baby/source-refs.json`. The notes say what the prototype changed from Angular.
 5. The console reference page for each shape the unit has:
 
-| Shape                | Reference                                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| Server list          | `src/features/domains/DomainsPage.tsx`                                                       |
-| Client list          | `src/features/identity-providers/IdentityProvidersPage.tsx`                                  |
-| Detail with sections | `src/features/applications/ApplicationPage.tsx`                                              |
-| Plain form           | `Settings` in `ApplicationPage.tsx`                                                          |
-| Plugin schema form   | `src/features/identity-providers/IdentityProviderPage.tsx`                                   |
-| Plugin wizard        | The kit wizard, and `node_modules/@gravitee/graphene-core/snippets/creation-wizard-page.tsx` |
-| Code editor          | `src/features/forms/LoginFormPage.tsx`                                                       |
-| Full-bleed editor    | `src/features/flows/FlowsPage.tsx`                                                           |
+| Shape                | Reference                                                                       |
+| -------------------- | ------------------------------------------------------------------------------- |
+| Server list          | `src/features/domains/DomainsPage.tsx`                                          |
+| Client list          | `src/features/identity-providers/IdentityProvidersPage.tsx`                     |
+| Detail with sections | `src/features/applications/ApplicationPage.tsx`                                 |
+| Plain form           | `Settings` in `ApplicationPage.tsx`                                             |
+| Plugin schema form   | `src/features/identity-providers/IdentityProviderPage.tsx`                      |
+| Plugin wizard        | `src/features/identity-providers/NewIdentityProviderPage.tsx` on `PluginWizard` |
+| Code editor          | `src/features/forms/LoginFormPage.tsx`                                          |
+| Full-bleed editor    | `src/features/flows/FlowsPage.tsx`                                              |
 
 6. `conversion-rules.md` sections 1 and 3. Section 2 when the Angular page has behaviour the prototype left out.
 7. The `USAGE_GUIDE.md` section for a shape not built before.
