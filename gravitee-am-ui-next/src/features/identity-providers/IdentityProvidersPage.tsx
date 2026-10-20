@@ -13,54 +13,106 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BadgeCell, Button, DataTable, DataTableEmptyState } from '@gravitee/graphene-core';
-import { PlusIcon, SearchIcon, UsersIcon } from '@gravitee/graphene-core/icons';
-import { useQuery } from '@tanstack/react-query';
+import { BadgeCell, Button, DataTable, DataTableEmptyState, toast } from '@gravitee/graphene-core';
+import { PlusIcon, SearchIcon, Trash2Icon, UsersIcon } from '@gravitee/graphene-core/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ConfirmDialog } from '../../app/components/ConfirmDialog';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
-import { type IdentityProviderSummary, listIdentityProviders } from '../../lib/api/identity-providers';
+import {
+    deleteIdentityProvider,
+    type IdentityProviderSummary,
+    listIdentityProviderPlugins,
+    listIdentityProviders,
+} from '../../lib/api/identity-providers';
 import { useCurrentDomain } from '../../lib/session/domain';
-import { Can } from '../../lib/session/permissions';
-
-const columns: ColumnDef<IdentityProviderSummary, unknown>[] = [
-    {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: ({ row }) => (
-            <Link to={row.original.id} className="font-medium hover:underline">
-                {row.original.name}
-            </Link>
-        ),
-    },
-    {
-        accessorKey: 'type',
-        header: 'Plugin',
-        cell: ({ row }) => <span className="font-mono text-xs">{row.original.type}</span>,
-    },
-    {
-        accessorKey: 'system',
-        header: 'Origin',
-        cell: ({ row }) =>
-            row.original.system ? <BadgeCell value="System" variant="secondary" /> : <BadgeCell value="Custom" variant="outline" />,
-    },
-];
+import { Can, usePermissions } from '../../lib/session/permissions';
 
 export function IdentityProvidersPage() {
     const { ref } = useCurrentDomain();
+    const queryClient = useQueryClient();
+    const { has } = usePermissions();
     // The Management API returns every identity provider in one list, so the table pages it client-side.
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
     const [query, setQuery] = useState('');
+    const [pendingDelete, setPendingDelete] = useState<IdentityProviderSummary | null>(null);
     const search = useCallback((text: string) => {
         setQuery(text.toLowerCase());
         setPage(1);
     }, []);
     const { data, error, isFetching } = useQuery({ queryKey: ['identity-providers', ref], queryFn: () => listIdentityProviders(ref) });
-    const rows = (data ?? []).filter(idp => idp.name.toLowerCase().includes(query) || idp.type.toLowerCase().includes(query));
+    const plugins = useQuery({ queryKey: ['identity-provider-plugins'], queryFn: listIdentityProviderPlugins, staleTime: Infinity });
+    const remove = useMutation({
+        mutationFn: (id: string) => deleteIdentityProvider(ref, id),
+        onSuccess: () => {
+            setPendingDelete(null);
+            void queryClient.invalidateQueries({ queryKey: ['identity-providers', ref] });
+            toast.success('Provider deleted');
+        },
+        onError: deleteError => toast.error(`Could not delete the provider. ${deleteError.message}`),
+    });
+
+    // The Angular `displayType`: the plugin's display name, else "Custom".
+    const typeName = useCallback(
+        (type: string) => {
+            const plugin = plugins.data?.find(candidate => candidate.id === type);
+            return plugin ? (plugin.displayName ?? plugin.name) : 'Custom';
+        },
+        [plugins.data],
+    );
+    const columns = useMemo<ColumnDef<IdentityProviderSummary, unknown>[]>(
+        () => [
+            {
+                accessorKey: 'name',
+                header: 'Name',
+                cell: ({ row }) =>
+                    has('domain_identity_provider_read') ? (
+                        <Link to={row.original.id} className="font-medium hover:underline">
+                            {row.original.name}
+                        </Link>
+                    ) : (
+                        <span className="font-medium">{row.original.name}</span>
+                    ),
+            },
+            {
+                id: 'type',
+                accessorFn: row => typeName(row.type),
+                header: 'Type',
+                cell: ({ row }) => <BadgeCell value={typeName(row.original.type)} variant="outline" />,
+            },
+            {
+                accessorKey: 'system',
+                header: 'Origin',
+                cell: ({ row }) =>
+                    row.original.system ? <BadgeCell value="System" variant="secondary" /> : <BadgeCell value="Custom" variant="outline" />,
+            },
+            {
+                id: 'actions',
+                header: () => <span className="sr-only">Actions</span>,
+                enableHiding: false,
+                cell: ({ row }) => (
+                    <Can all={['domain_identity_provider_delete']}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Delete ${row.original.name}`}
+                            title="Delete"
+                            onClick={() => setPendingDelete(row.original)}
+                        >
+                            <Trash2Icon />
+                        </Button>
+                    </Can>
+                ),
+            },
+        ],
+        [has, typeName],
+    );
+    const rows = (data ?? []).filter(idp => idp.name.toLowerCase().includes(query) || typeName(idp.type).toLowerCase().includes(query));
 
     return (
         <div className="flex flex-col gap-6">
@@ -92,7 +144,7 @@ export function IdentityProvidersPage() {
                     aria-label="Identity providers"
                     columns={columns}
                     data={rows}
-                    loading={isFetching}
+                    loading={isFetching || plugins.isPending}
                     enableColumnVisibility
                     toolbar={<SearchField label="identity providers" onSearch={search} />}
                     emptyMessage={
@@ -115,6 +167,16 @@ export function IdentityProvidersPage() {
                     }}
                 />
             )}
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                title="Delete provider"
+                description="Are you sure you want to delete this provider?"
+                confirmLabel="Delete"
+                destructive
+                pending={remove.isPending}
+                onOpenChange={open => !open && setPendingDelete(null)}
+                onConfirm={() => pendingDelete && remove.mutate(pendingDelete.id)}
+            />
         </div>
     );
 }

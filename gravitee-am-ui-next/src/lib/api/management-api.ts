@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { http } from './http';
+import { http, isNotFound } from './http';
 
 /** Claims of the console JWT plus the flattened platform and organization permissions, as `GET /user` returns them. */
 export interface CurrentUser {
@@ -45,4 +45,20 @@ export function getCurrentUser(): Promise<CurrentUser> {
 
 export function listEnvironments(organizationId: string): Promise<Environment[]> {
     return http<Environment[]>(`/organizations/${organizationId}/environments`);
+}
+
+export interface InstallationConfiguration {
+    readonly type?: string;
+    /** True when the platform pins the user storage of the MongoDB identity providers to the system cluster. */
+    readonly systemClusterRestricted?: boolean;
+}
+
+/** The installation configuration. An installation without the endpoint reads as an empty configuration. */
+export function getInstallationConfiguration(): Promise<InstallationConfiguration> {
+    return http<InstallationConfiguration>('/platform/configuration/installation').catch((error: unknown) => {
+        if (isNotFound(error)) {
+            return {};
+        }
+        throw error;
+    });
 }

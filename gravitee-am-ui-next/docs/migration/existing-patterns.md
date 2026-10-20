@@ -114,15 +114,15 @@ Decision: hand-written types per area, checked against the Angular service paylo
 
 TanStack Query 5 throughout. No other state store.
 
-| Case            | Pattern                                                                                                                                              | Example                                     |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Server list     | `useQuery` keyed by `['domains', org, env, page, pageSize, query]` with `placeholderData: keepPreviousData`                                          | `DomainsPage.tsx`                           |
-| Detail          | `useQuery` keyed by `['application', ref, id]`                                                                                                       | `ApplicationPage.tsx`                       |
-| Static data     | `staleTime: Infinity` for schemas, policies, the module list                                                                                         | `IdentityProviderPage.tsx`, `FlowsPage.tsx` |
-| Dependent query | `enabled: !!provider && !provider.system`                                                                                                            | `IdentityProviderPage.tsx`                  |
-| Save            | `useMutation`; `onSuccess` sets the detail key, invalidates the list key, resets the form, `toast.success`; `onError` `toast.error` with the message | `ApplicationPage.tsx`                       |
-| Toggle          | A `useMutation` per switch, `disabled={isPending}`                                                                                                   | `ApplicationFlowsPage`                      |
-| Replace list    | `setQueryData` with the PUT response                                                                                                                 | `FlowsPage.tsx`                             |
+| Case            | Pattern                                                                                                                                              | Example                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Server list     | `useQuery` keyed by `['domains', org, env, page, pageSize, query]` with `placeholderData: keepPreviousData`                                          | `DomainsPage.tsx`                                   |
+| Detail          | `useQuery` keyed by `['application', ref, id]`                                                                                                       | `ApplicationPage.tsx`                               |
+| Static data     | `staleTime: Infinity` for schemas, policies, the module list                                                                                         | `IdentityProviderSettingsPage.tsx`, `FlowsPage.tsx` |
+| Dependent query | `enabled: !provider.system`                                                                                                                          | `IdentityProviderSettingsPage.tsx`                  |
+| Save            | `useMutation`; `onSuccess` sets the detail key, invalidates the list key, resets the form, `toast.success`; `onError` `toast.error` with the message | `ApplicationPage.tsx`                               |
+| Toggle          | A `useMutation` per switch, `disabled={isPending}`                                                                                                   | `ApplicationFlowsPage`                              |
+| Replace list    | `setQueryData` with the PUT response                                                                                                                 | `FlowsPage.tsx`                                     |
 
 Query keys include `ref` as an object. Keys are compared structurally, so this is stable.
 
@@ -154,7 +154,7 @@ until dirty, `form.reset` after save.
 
 ### 7.4 Plugin schema form
 
-`IdentityProviderPage.tsx`: the raw schema goes through `adaptAmSchema()` and the result feeds `JsonSchemaForm` with
+`IdentityProviderSettingsPage.tsx`: the raw schema goes through `adaptAmSchema()` and the result feeds `JsonSchemaForm` with
 `name="config"`. The resolver is `composeResolvers(nameResolver, jsonSchemaResolver(schema, { basePath: 'config' }))`.
 Values are `{ name, config }` as a `type` alias. The configuration string is parsed on load and stringified on save.
 Unsupported widgets are listed in an `Alert`. System providers show a read-only note.

@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Route } from 'react-router-dom';
+import { Navigate, Route } from 'react-router-dom';
 import { lazyPage } from '../../lib/routing/lazyPage';
+import { RequirePermission } from '../../lib/session/permissions';
 
 export const identityProviderRoutes = (
-    <>
-        <Route path="providers" element={lazyPage(() => import('./IdentityProvidersPage'), 'IdentityProvidersPage')} />
-        <Route path="providers/new" element={lazyPage(() => import('./NewIdentityProviderPage'), 'NewIdentityProviderPage')} />
-        <Route path="providers/:identityProviderId" element={lazyPage(() => import('./IdentityProviderPage'), 'IdentityProviderPage')} />
-    </>
+    <Route path="providers" element={<RequirePermission anyOf={['domain_identity_provider_list']} />}>
+        <Route index element={lazyPage(() => import('./IdentityProvidersPage'), 'IdentityProvidersPage')} />
+        <Route path="new" element={lazyPage(() => import('./NewIdentityProviderPage'), 'NewIdentityProviderPage')} />
+        <Route path=":providerId" element={lazyPage(() => import('./IdentityProviderLayout'), 'IdentityProviderLayout')}>
+            <Route index element={<Navigate to="settings" replace />} />
+            <Route path="settings" element={lazyPage(() => import('./IdentityProviderSettingsPage'), 'IdentityProviderSettingsPage')} />
+            <Route path="mappers" element={lazyPage(() => import('./IdentityProviderMappersPage'), 'IdentityProviderMappersPage')} />
+            <Route path="roles" element={lazyPage(() => import('./IdentityProviderRolesPage'), 'IdentityProviderRolesPage')} />
+            <Route path="groups" element={lazyPage(() => import('./IdentityProviderGroupsPage'), 'IdentityProviderGroupsPage')} />
+        </Route>
+    </Route>
 );

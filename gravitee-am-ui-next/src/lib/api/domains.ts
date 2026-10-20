@@ -15,7 +15,13 @@
  */
 import { http } from './http';
 import type { Page } from './management-api';
-import { environmentPath, searchParam } from './paths';
+import { type DomainRef, domainPath, environmentPath, searchParam } from './paths';
+
+export interface VirtualHost {
+    readonly host: string;
+    readonly path: string;
+    readonly overrideEntrypoint?: boolean;
+}
 
 export interface Domain {
     readonly id: string;
@@ -23,6 +29,9 @@ export interface Domain {
     readonly name: string;
     readonly description?: string;
     readonly enabled: boolean;
+    readonly path?: string;
+    readonly vhostMode?: boolean;
+    readonly vhosts?: readonly VirtualHost[];
     readonly createdAt?: number;
     readonly updatedAt?: number;
 }
@@ -33,4 +42,14 @@ export function listDomains(organizationId: string, environmentId: string, page:
 
 export function getDomainByHrid(organizationId: string, environmentId: string, hrid: string): Promise<Domain> {
     return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains/_hrid/${hrid}`);
+}
+
+export interface Entrypoint {
+    readonly id: string;
+    readonly url: string;
+    readonly defaultEntrypoint?: boolean;
+}
+
+export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
+    return http<Entrypoint[]>(`${domainPath(ref)}/entrypoints`);
 }

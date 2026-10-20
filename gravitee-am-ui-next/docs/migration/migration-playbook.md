@@ -40,7 +40,7 @@ Read in this order. Do not write code before the list is complete.
 | Client list          | `src/features/identity-providers/IdentityProvidersPage.tsx`                     |
 | Detail with sections | `src/features/applications/ApplicationPage.tsx`                                 |
 | Plain form           | `Settings` in `ApplicationPage.tsx`                                             |
-| Plugin schema form   | `src/features/identity-providers/IdentityProviderPage.tsx`                      |
+| Plugin schema form   | `src/features/identity-providers/IdentityProviderSettingsPage.tsx`              |
 | Plugin wizard        | `src/features/identity-providers/NewIdentityProviderPage.tsx` on `PluginWizard` |
 | Code editor          | `src/features/forms/LoginFormPage.tsx`                                          |
 | Full-bleed editor    | `src/features/flows/FlowsPage.tsx`                                              |

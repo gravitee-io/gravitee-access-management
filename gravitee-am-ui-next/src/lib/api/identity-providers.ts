@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { hash } from 'bcryptjs';
 import { http } from './http';
 import { type DomainRef, domainPath } from './paths';
 import type { IdentityProviderPlugin, Plugin } from './plugins';
@@ -29,9 +30,14 @@ export interface IdentityProvider extends IdentityProviderSummary {
     /** Plugin configuration, serialized as a JSON string. System providers do not return it. */
     readonly configuration?: string;
     readonly domainWhitelist?: string[];
-    readonly mappers?: Record<string, unknown>;
-    readonly roleMapper?: Record<string, unknown>;
-    readonly groupMapper?: Record<string, unknown>;
+    /** User profile attribute to raw attribute or expression. */
+    readonly mappers?: Record<string, string>;
+    /** Role id to the user expressions that get the role. */
+    readonly roleMapper?: Record<string, string[]>;
+    /** Group id to the user expressions that join the group. */
+    readonly groupMapper?: Record<string, string[]>;
+    /** True when the platform pinned the user storage of this MongoDB provider to the system cluster. */
+    readonly systemClusterRestricted?: boolean;
 }
 
 export function listIdentityProviders(ref: DomainRef): Promise<IdentityProviderSummary[]> {
@@ -43,11 +49,44 @@ export function getIdentityProvider(ref: DomainRef, identityProviderId: string):
 }
 
 export function updateIdentityProvider(ref: DomainRef, provider: IdentityProvider): Promise<IdentityProvider> {
-    const { name, type, configuration, domainWhitelist, mappers, roleMapper, groupMapper } = provider;
+    const { name, type, domainWhitelist, mappers, roleMapper, groupMapper } = provider;
+    // A system provider comes back without its configuration. Angular sends an empty one, which the API requires.
+    const configuration = provider.configuration ?? '{}';
     return http<IdentityProvider>(`${domainPath(ref)}/identities/${provider.id}`, {
         method: 'PUT',
         body: JSON.stringify({ name, type, configuration, domainWhitelist, mappers, roleMapper, groupMapper }),
     });
+}
+
+export function deleteIdentityProvider(ref: DomainRef, identityProviderId: string): Promise<void> {
+    return http<void>(`${domainPath(ref)}/identities/${identityProviderId}`, { method: 'DELETE' });
+}
+
+const INLINE_TYPE = 'inline-am-idp';
+const MASKED_PASSWORD = '********';
+// bcryptjs 3 writes $2b$, older tools $2a$ or $2y$.
+const BCRYPT_HASH = /^\$2[aby]\$/;
+
+interface InlineUser {
+    readonly password: string;
+}
+
+/**
+ * Serializes a plugin configuration for a create or an update. An inline provider with the BCrypt encoder gets its new
+ * passwords hashed first, as the Angular `ProviderService.enhanceConfiguration` does: the plugin stores them as sent.
+ */
+export async function serializeConfiguration(type: string, configuration: Record<string, unknown>): Promise<string> {
+    if (type !== INLINE_TYPE || configuration.passwordEncoder !== 'BCrypt' || !Array.isArray(configuration.users)) {
+        return JSON.stringify(configuration);
+    }
+    const users = await Promise.all(
+        (configuration.users as InlineUser[]).map(async user =>
+            BCRYPT_HASH.test(user.password) || user.password === MASKED_PASSWORD
+                ? user
+                : { ...user, password: await hash(user.password, 10) },
+        ),
+    );
+    return JSON.stringify({ ...configuration, users });
 }
 
 export function getIdentityProviderSchema(type: string): Promise<Record<string, unknown>> {

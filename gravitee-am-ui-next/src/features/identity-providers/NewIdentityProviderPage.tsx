@@ -19,10 +19,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PluginWizard } from '../../app/components/PluginWizard';
 import { TagInput } from '../../app/components/TagInput';
-import { createIdentityProvider, getIdentityProviderSchema, listIdentityProviderPlugins } from '../../lib/api/identity-providers';
+import { listCertificates } from '../../lib/api/certificates';
+import { listDataSources } from '../../lib/api/data-sources';
+import {
+    createIdentityProvider,
+    getIdentityProviderSchema,
+    listIdentityProviderPlugins,
+    serializeConfiguration,
+} from '../../lib/api/identity-providers';
+import { getInstallationConfiguration } from '../../lib/api/management-api';
 import type { IdentityProviderPlugin } from '../../lib/api/plugins';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
+import { enrichCreationSchema } from './provider-schema';
 
 /** The Angular step 1 pre-fills the whitelist of these two plugins. */
 const DEFAULT_WHITELIST: Record<string, string[]> = {
@@ -41,12 +50,20 @@ export function NewIdentityProviderPage() {
         queryFn: listIdentityProviderPlugins,
         staleTime: Infinity,
     });
+    // The Angular route resolves these before the wizard opens. They enrich the plugin schema.
+    const certificates = useQuery({ queryKey: ['certificates', ref], queryFn: () => listCertificates(ref) });
+    const dataSources = useQuery({
+        queryKey: ['data-sources', ref.organizationId, ref.environmentId],
+        queryFn: () => listDataSources(ref.organizationId, ref.environmentId),
+    });
+    const installation = useQuery({ queryKey: ['installation'], queryFn: getInstallationConfiguration, staleTime: Infinity });
+    const ready = certificates.data && dataSources.data && installation.data;
     const create = useMutation({
-        mutationFn: ({ plugin, name, config }: { plugin: IdentityProviderPlugin; name: string; config: Record<string, unknown> }) =>
+        mutationFn: async ({ plugin, name, config }: { plugin: IdentityProviderPlugin; name: string; config: Record<string, unknown> }) =>
             createIdentityProvider(ref, {
                 name,
                 type: plugin.id,
-                configuration: JSON.stringify(config),
+                configuration: await serializeConfiguration(plugin.id, config),
                 external: plugin.external,
                 domainWhitelist: plugin.external ? whitelist : [],
             }),
@@ -72,10 +89,18 @@ export function NewIdentityProviderPage() {
             pickDescription="Choose how your users will connect to the authorization server. That could be an Active Directory or a corporate authentication service."
             configureDescription="Configure your identity provider."
             noun="providers"
-            plugins={plugins}
-            pluginsError={error}
-            schemaKey="identity-provider-schema"
-            getSchema={plugin => getIdentityProviderSchema(plugin.id)}
+            plugins={ready ? plugins : undefined}
+            pluginsError={error ?? certificates.error ?? dataSources.error ?? installation.error}
+            // The enriched schema holds the domain's certificates and the environment's data sources.
+            schemaKey={`identity-provider-creation-schema:${ref.environmentId}:${ref.domainId}`}
+            getSchema={async plugin =>
+                enrichCreationSchema(await getIdentityProviderSchema(plugin.id), {
+                    type: plugin.id,
+                    certificates: certificates.data ?? [],
+                    dataSources: dataSources.data ?? [],
+                    systemClusterRestricted: installation.data?.systemClusterRestricted === true,
+                })
+            }
             onSelect={plugin => setWhitelist(DEFAULT_WHITELIST[plugin.id] ?? [])}
             extraFields={plugin =>
                 plugin.external && (

@@ -17,15 +17,20 @@ import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { listDataSources } from '../../../lib/api/data-sources';
 import { createIdentityProvider, getIdentityProviderSchema, listIdentityProviderPlugins } from '../../../lib/api/identity-providers';
 import { LicenseScope } from '../../../lib/session/license';
 import { NewIdentityProviderPage } from '../NewIdentityProviderPage';
 
-vi.mock('../../../lib/api/identity-providers', () => ({
+vi.mock('../../../lib/api/identity-providers', async importOriginal => ({
+    ...(await importOriginal<object>()),
     createIdentityProvider: vi.fn(),
     getIdentityProviderSchema: vi.fn(),
     listIdentityProviderPlugins: vi.fn(),
 }));
+vi.mock('../../../lib/api/certificates', () => ({ listCertificates: vi.fn().mockResolvedValue([]) }));
+vi.mock('../../../lib/api/data-sources', () => ({ listDataSources: vi.fn() }));
+vi.mock('../../../lib/api/management-api', () => ({ getInstallationConfiguration: vi.fn().mockResolvedValue({}) }));
 vi.mock('../../../lib/session/domain', () => ({
     useCurrentDomain: () => ({
         domain: { id: 'd1', hrid: 'acme', name: 'Acme', enabled: true },
@@ -60,6 +65,7 @@ function renderPage() {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(listDataSources).mockResolvedValue([]);
     vi.mocked(listIdentityProviderPlugins).mockResolvedValue([
         { id: 'mongo-am-idp', name: 'MongoDB', external: false },
         { id: 'ldap-am-idp', name: 'LDAP', displayName: 'LDAP / AD', feature: 'am-idp-ldap', external: false },
@@ -123,6 +129,20 @@ describe('NewIdentityProviderPage', () => {
             }),
         );
         expect(await screen.findByText('Detail page')).toBeInTheDocument();
+    });
+
+    it('offers the data sources of the environment in a data source field', async () => {
+        vi.mocked(listDataSources).mockResolvedValue([{ id: 'ds-1', name: 'Users cluster' }]);
+        vi.mocked(getIdentityProviderSchema).mockResolvedValue({
+            type: 'object',
+            properties: { datasource: { type: 'string', title: 'Data source', widget: 'datasource' } },
+        });
+        renderPage();
+
+        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+        expect(await screen.findByRole('combobox', { name: /Data source/ })).toBeInTheDocument();
     });
 
     it('requires a name', async () => {

@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-20",
-    "angularCommit": "75e8fd2e60",
+    "angularCommit": "03b73f1fe9",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1878,14 +1878,15 @@
                         "identities": "IdentitiesResolver",
                         "datasources": "DataSourcesResolver"
                     },
-                    "status": "in-progress",
+                    "status": "done",
                     "class": "B",
                     "reactFiles": [
                         "src/features/identity-providers/NewIdentityProviderPage.tsx",
+                        "src/features/identity-providers/provider-schema.ts",
                         "src/app/components/PluginWizard.tsx"
                     ],
                     "blockers": [],
-                    "notes": "Built in Stage 1 story 6 as the first user of PluginWizard. Missing: the schema enrichers for certificates, data sources and the system cluster hints (provider.form.enricher.ts), the MongoDB storage guidance, and the BCrypt pre-hash of the inline provider users (ProviderService.enhanceConfiguration). The detail page lacks the same enrichers."
+                    "notes": ""
                 },
                 {
                     "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId",
@@ -1906,10 +1907,10 @@
                         "provider": "ProviderResolver",
                         "datasources": "DataSourcesResolver"
                     },
-                    "status": "in-progress",
+                    "status": "done",
                     "class": "B",
                     "reactFiles": [
-                        "src/features/identity-providers/IdentityProviderPage.tsx"
+                        "src/features/identity-providers/IdentityProviderLayout.tsx"
                     ],
                     "blockers": [],
                     "notes": ""
@@ -1932,10 +1933,12 @@
                     "resolvers": {
                         "certificates": "CertificatesResolver"
                     },
-                    "status": "in-progress",
+                    "status": "done",
                     "class": "B",
                     "reactFiles": [
-                        "src/features/identity-providers/IdentityProviderPage.tsx"
+                        "src/features/identity-providers/IdentityProviderSettingsPage.tsx",
+                        "src/features/identity-providers/provider-schema.ts",
+                        "src/features/identity-providers/redirect-uri.ts"
                     ],
                     "blockers": [],
                     "notes": ""
@@ -1956,9 +1959,11 @@
                     ],
                     "guards": [],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/identity-providers/IdentityProviderMappersPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1980,9 +1985,12 @@
                     "resolvers": {
                         "roles": "RolesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/identity-providers/IdentityProviderRolesPage.tsx",
+                        "src/features/identity-providers/ExpressionMapperPanel.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2004,9 +2012,12 @@
                     "resolvers": {
                         "groups": "GroupsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/identity-providers/IdentityProviderGroupsPage.tsx",
+                        "src/features/identity-providers/ExpressionMapperPanel.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -2035,12 +2046,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "in-progress",
+            "status": "done",
             "class": "B",
             "order": 1,
             "blockers": [],
-            "notes": "Pilot. The two-step plugin wizard built here repeats in certificates, factors, resources, bot-detection, device-identifier, extensionGrants, the alert notifiers and the audit reporters. List and detail settings exist; create, delete, mappers, roles and groups remain.",
-            "angularCommit": null
+            "notes": "Pilot. The two-step plugin wizard built here repeats in certificates, factors, resources, bot-detection, device-identifier, extensionGrants, the alert notifiers and the audit reporters.\n\nBrief.\nPages: settings/providers → IdentityProvidersPage → IdentityProvidersPage.tsx; providers/new → CreateIdentityProviderPage → NewIdentityProviderPage.tsx; providers/:providerId → IdentityProviderLayout → IdentityProviderLayout.tsx (index redirects to settings); …/settings → IdentityProviderSettingsPage → IdentityProviderSettingsPage.tsx; …/mappers → IdentityProviderMappersPage → IdentityProviderMappersPage.tsx; …/roles → IdentityProviderRolesPage → IdentityProviderRolesPage.tsx; …/groups → IdentityProviderGroupsPage → IdentityProviderGroupsPage.tsx. Folder src/features/identity-providers/, kept from Stage 1.\nEndpoints: GET, POST domain/identities; GET, PUT, DELETE domain/identities/:id (PUT sends name, type, configuration, domainWhitelist, mappers, roleMapper, groupMapper); GET /platform/plugins/identities and ?external=true; GET /platform/plugins/identities/:type/schema; GET domain/roles?page&size=50, every page (RoleService.findAllByDomain); GET domain/groups?page=0&size=100; GET domain/certificates; GET environment/data-sources; GET /platform/configuration/installation; GET domain/entrypoints.\nPermissions: the providers subtree domain_identity_provider_list (parent route AuthGuard). List: create domain_identity_provider_create, open domain_identity_provider_read, delete domain_identity_provider_delete. Settings: save domain_identity_provider_update, delete domain_identity_provider_delete. Mappers, roles, groups: add, edit, remove domain_identity_provider_update.\nLicence: no route feature. The settings Save sits in LicenseGuard with the plugin's feature, as the Angular licenseGuard on SAVE. The wizard locks the plugins.\nKit parts: PluginWizard, ConfirmDialog, SaveBar, TagInput, PageHeader, ErrorPanel, NotFoundPanel.\nPrototype additions left out: the list Category column (no field in the plugin catalogue), the list Last updated column (no updatedAt in the identities list), the organization scope (organization unit, later).\nAngular behaviour added back: delete from the list; the certificate, data source and system cluster schema enrichers on create and settings (provider.form.enricher.ts, DataSourcesService.applyDataSourceSelection); boolean defaults only when unset, then no schema defaults; the pinned storage fields sent back as stored; the BCrypt pre-hash of inline users on create and update (ProviderService.enhanceConfiguration, bcryptjs 3.0.3, added with approval); the MongoDB storage guidance; the redirect URI from the domain entrypoint and vhost (DomainService.getEntrypoint, EntrypointService.resolveBaseUrl); the role list from every page; system primary-owner roles disabled; the open link and name gated by domain_identity_provider_read.\nNot ported: the plugin schema description, which Angular renders as raw HTML.\n\nVerification, 2026-10-20. yarn typecheck, lint, test (88 tests) and build pass. console-next Playwright: identity-providers.spec.ts, 3 tests, passes (system provider opens on User mappers with no Settings tab; a user mapper saves; the list deletes a provider). Browser journeys on :4201 against the local Management API, network calls recorded per action: list GET identities and both plugin lists; settings GET identity, schema, certificates, data-sources, installation; save PUT identities/:id with the seven Angular fields, a new inline BCrypt password sent as a $2b$ hash and a kept one as ********; roles GET roles?page=0&size=50 then PUT with roleMapper; groups GET groups?page=0&size=100 then PUT with groupMapper; mappers PUT with mappers; delete DELETE identities/:id then GET identities; create GET certificates, data-sources, installation, schema. The calls match the Angular services and resolvers read for the brief. A system provider, which the API returns without configuration, is saved with configuration \"{}\" as Angular does. The Angular console was not run side by side: :4200 serves the Gamma console on this stack.",
+            "angularCommit": "03b73f1fe9"
         },
         {
             "id": "resources",
