@@ -102,7 +102,7 @@ export const setupSelectiveConsentFixture = async (): Promise<SelectiveConsentFi
               ],
             },
           },
-          identityProviders: new Set([{ identity: idp.id, priority: 0 }]),
+          identityProviders: [{ identity: idp.id, priority: 0 }],
         },
         created.id,
       ),

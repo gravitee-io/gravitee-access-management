@@ -139,7 +139,7 @@ export const test = base.extend<WebAuthnFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
       }),
     );
 

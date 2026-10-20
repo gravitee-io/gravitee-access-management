@@ -69,7 +69,7 @@ npx "$OPENAPI_GENERATOR_CLI" generate \
   -psortParamsByRequiredFlag=false \
   -plegacyDiscriminatorBehavior=false \
   --import-mappings=DateTime=Date \
-  --type-mappings=DateTime=Date,object=any \
+  --type-mappings=DateTime=Date,object=any,set=Array \
   --reserved-words-mappings=configuration=configuration \
   --skip-validate-spec
 
@@ -93,6 +93,14 @@ if [ -f "$SDK_OUTPUT_PATH/models/ProtectedResourceFeature.ts" ]; then
     echo "[INFO] Fixed discriminator mapping to handle both uppercase and lowercase type values in ProtectedResourceFeature.ts"
   fi
 fi
+
+# set=Array types uniqueItems arrays as arrays, but the model template still converts them to and from a Set.
+# Keep them as arrays, so the jest SDK and gravitee-am-ui-next, which reads raw JSON, agree on one type.
+find "$SDK_OUTPUT_PATH/models" -name "*.ts" -exec sed -i.bak3 -E \
+  -e "s/new Set\((\(json\['[A-Za-z0-9_]+'\] as Array<any>\)\.map\([A-Za-z0-9_]+\))\)/\1/g" \
+  -e "s/new Set\((json\['[A-Za-z0-9_]+'\])\)/\1/g" \
+  -e "s/Array\.from\((value\['[A-Za-z0-9_]+'\]) as Set<any>\)/(\1 as Array<any>)/g" \
+  {} \;
 
 # must delete .bak files
 find "$SDK_OUTPUT_PATH" -name "*.ts.bak*" -exec rm -f {} \;

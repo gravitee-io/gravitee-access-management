@@ -130,10 +130,10 @@ describe('Identity provider processing order (AM-2179)', () => {
         fixture.domain.id,
         fixture.accessToken,
         {
-          identityProviders: new Set([
+          identityProviders: [
             { identity: fixture.inmemoryIdp1.id, priority: 1 },
             { identity: fixture.inmemoryIdp2.id, priority: 2 },
-          ]),
+          ],
         } as any,
         fixture.appIdpPriority.id,
       );

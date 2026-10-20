@@ -84,7 +84,7 @@ export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevo
       domain.id,
       accessToken,
       {
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
         settings: {
           oauth: {
             redirectUris: [CIMD_REDIRECT_URI],
@@ -110,7 +110,7 @@ export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevo
       domain.id,
       accessToken,
       {
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
         settings: {
           oauth: {
             redirectUris: [CIMD_REDIRECT_URI],

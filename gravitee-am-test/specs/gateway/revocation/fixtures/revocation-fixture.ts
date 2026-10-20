@@ -236,7 +236,7 @@ const createRevocationApp = async (
         scopeSettings: REVOCATION_TEST.DEFAULT_SCOPES,
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   });
 
   expect(application.settings.oauth.clientId).toEqual(expect.any(String));

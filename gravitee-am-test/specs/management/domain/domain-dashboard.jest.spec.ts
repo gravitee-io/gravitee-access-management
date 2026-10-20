@@ -63,7 +63,7 @@ async function setupDomainWithApp(name: string): Promise<DomainDefinition> {
         scopeSettings: [{ scope: 'openid', defaultScope: true }],
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   });
 
   const user = await buildCreateAndTestUser(domain.id, accessToken, 0);

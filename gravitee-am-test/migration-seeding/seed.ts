@@ -336,7 +336,7 @@ async function configureApplication(
           challenge: { active: true, type: 'REQUIRED' },
         } }),
       },
-      identityProviders: new Set([{ identity: options.idpId, priority: 0 }]),
+      identityProviders: [{ identity: options.idpId, priority: 0 }],
     },
   });
 }

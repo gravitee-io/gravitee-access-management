@@ -67,7 +67,7 @@ export const initEnv = async (applicationConfiguration, domainConfiguration = nu
       ...defaultApplicationConfiguration.settings,
       ...applicationConfiguration.settings,
     },
-    identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: customIdp.id, priority: 0 }],
   });
 
   const startedDomain = await startDomain(domain.id, accessToken);

@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -164,6 +165,7 @@ export * from './NewServiceResource';
 export * from './NewTag';
 export * from './NewTheme';
 export * from './NewTrustDomain';
+export * from './NewTrustedDomain';
 export * from './NewUser';
 export * from './NotifierPlugin';
 export * from './OIDCSettings';
@@ -238,6 +240,7 @@ export * from './ServiceResource';
 export * from './SessionSettings';
 export * from './SpiffeApplicationSettings';
 export * from './SpiffeDomainSettings';
+export * from './SpiffeTrustSettings';
 export * from './StatusEntity';
 export * from './Step';
 export * from './StepUpAuthenticationSettings';
@@ -247,8 +250,10 @@ export * from './ThemeEntity';
 export * from './TokenClaim';
 export * from './TokenExchangeOAuthSettings';
 export * from './TokenExchangeSettings';
+export * from './TokenExchangeTrustSettings';
 export * from './TrustDomain';
 export * from './TrustDomainKeyMaterial';
+export * from './TrustedDomain';
 export * from './TrustedIssuer';
 export * from './UMASettings';
 export * from './UpdateAuthenticationDeviceNotifier';
@@ -274,6 +279,7 @@ export * from './UpdateScope';
 export * from './UpdateServiceResource';
 export * from './UpdateTag';
 export * from './UpdateTrustDomain';
+export * from './UpdateTrustedDomain';
 export * from './UpdateUser';
 export * from './UpdateUserWithId';
 export * from './User';

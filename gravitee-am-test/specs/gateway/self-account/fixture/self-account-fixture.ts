@@ -148,7 +148,7 @@ export const setupFixture = async (domainSettings: any, domainNamePrefix = 'self
             ],
           },
         },
-        identityProviders: new Set([{ identity: idpSet.values().next().value.id, priority: -1 }]),
+        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {
@@ -219,7 +219,7 @@ export const setupFactorFixture = async (domainNamePrefix = 'self-account-factor
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: idpSet.values().next().value.id, priority: -1 }]),
+        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {
@@ -289,7 +289,7 @@ export const setupRecoveryCodeFixture = async (): Promise<SelfAccountRecoveryCod
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: idpSet.values().next().value.id, priority: -1 }]),
+        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
       },
       app.id,
     ).then((updatedApp) => {
@@ -325,7 +325,7 @@ export const setupRecoveryCodeFixture = async (): Promise<SelfAccountRecoveryCod
       domain.id,
       accessToken,
       {
-        factors: new Set([recoveryCodeFactor.id]),
+        factors: [recoveryCodeFactor.id],
         settings: {
           mfa: {
             factor: {

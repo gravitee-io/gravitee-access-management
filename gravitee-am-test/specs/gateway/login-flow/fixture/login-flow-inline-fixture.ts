@@ -118,7 +118,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(inmemoryIdp2.id).toBeDefined();
 
   const appSso1 = await createTestApp(uniqueName('app-sso1', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([{ identity: inmemoryIdp1.id, priority: -1 }]),
+    identityProviders: [{ identity: inmemoryIdp1.id, priority: -1 }],
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -127,7 +127,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(appSso1.id).toBeDefined();
 
   const appSso2 = await createTestApp(uniqueName('app-sso2', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([{ identity: defaultIdpId, priority: -1 }]),
+    identityProviders: [{ identity: defaultIdpId, priority: -1 }],
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -136,9 +136,9 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(appSso2.id).toBeDefined();
 
   const appSelectionRule = await createTestApp(uniqueName('app-selection-rule', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([
+    identityProviders: [
       { identity: inmemoryIdp1.id, selectionRule: "{#request.params['username'] matches 'user' }", priority: -1 },
-    ]),
+    ],
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -148,10 +148,10 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
 
   // Two IDPs, both with rules; first matches username "user" → authenticates via inmemoryIdp1
   const appSelectionRuleTwoMatch = await createTestApp(uniqueName('app-selection-rule-two-match', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([
+    identityProviders: [
       { identity: inmemoryIdp1.id, selectionRule: "{#request.params['username'] matches 'user' }", priority: -1 },
       { identity: inmemoryIdp2.id, selectionRule: "{#request.params['username'] matches 'something-else' }", priority: -1 },
-    ]),
+    ],
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -161,10 +161,10 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
 
   // Two IDPs; first has a non-matching rule, second has no rule (fallback) → authenticates via inmemoryIdp2
   const appSelectionRuleOneFallback = await createTestApp(uniqueName('app-selection-rule-one-fallback', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([
+    identityProviders: [
       { identity: inmemoryIdp1.id, selectionRule: "{#request.params['username'] matches 'something-else' }", priority: -1 },
       { identity: inmemoryIdp2.id, priority: -1 },
-    ]),
+    ],
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -174,10 +174,10 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
 
   // Two IDPs, both with non-matching rules → no IDP selected → login fails
   const appSelectionRuleNoneMatch = await createTestApp(uniqueName('app-selection-rule-none-match', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([
+    identityProviders: [
       { identity: inmemoryIdp1.id, selectionRule: "{#request.params['username'] matches 'something-else' }", priority: -1 },
       { identity: inmemoryIdp2.id, selectionRule: "{#request.params['username'] matches 'something-else' }", priority: -1 },
-    ]),
+    ],
     settings: {
       oauth: INLINE_IDP_OAUTH_SETTINGS,
       advanced: { skipConsent: true },
@@ -186,7 +186,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(appSelectionRuleNoneMatch.id).toBeDefined();
 
   const appIdentifierFirst = await createTestApp(uniqueName('app-identifier-first', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([{ identity: inmemoryIdp1.id, priority: -1 }]),
+    identityProviders: [{ identity: inmemoryIdp1.id, priority: -1 }],
     settings: {
       login: { identifierFirstEnabled: true, inherited: false },
       oauth: INLINE_IDP_OAUTH_SETTINGS,
@@ -196,10 +196,10 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   expect(appIdentifierFirst.id).toBeDefined();
 
   const appIdpPriority = await createTestApp(uniqueName('app-idp-priority', true), domain, accessToken, 'WEB', {
-    identityProviders: new Set([
+    identityProviders: [
       { identity: inmemoryIdp1.id, priority: 2 },
       { identity: inmemoryIdp2.id, priority: 1 },
-    ]),
+    ],
     settings: {
       oauth: {
         redirectUris: [REDIRECT_URI],
@@ -214,7 +214,7 @@ export const setupInlineFixture = async (): Promise<LoginFlowInlineFixture> => {
   // Wrap the last app creation in waitForSyncAfter so the gateway picks up all apps created since domain start.
   const appAccountTests = await waitForSyncAfter(domain.id, () =>
     createTestApp(uniqueName('app-account-tests2', true), domain, accessToken, 'WEB', {
-      identityProviders: new Set([{ identity: defaultIdpId, priority: -1 }]),
+      identityProviders: [{ identity: defaultIdpId, priority: -1 }],
       settings: {
         oauth: INLINE_IDP_OAUTH_SETTINGS,
         advanced: { skipConsent: true },

@@ -102,7 +102,7 @@ export const test = base.extend<{ externalOidcBundle: ExternalOidcBundle; hideLo
           },
           advanced: { skipConsent: true },
         },
-        identityProviders: new Set([{ identity: providerInlineIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: providerInlineIdp.id, priority: 0 }],
       }),
     );
 
@@ -148,7 +148,7 @@ export const test = base.extend<{ externalOidcBundle: ExternalOidcBundle; hideLo
           advanced: { skipConsent: true },
           ...(hideLoginForm ? { login: { hideForm: true, inherited: false } } : {}),
         },
-        identityProviders: new Set([{ identity: clientOidcIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: clientOidcIdp.id, priority: 0 }],
       }),
     );
 

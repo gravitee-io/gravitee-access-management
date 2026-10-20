@@ -133,7 +133,7 @@ async function createTestApplication(domain: Domain, defaultIdp: IdentityProvide
           },
           advanced: { skipConsent: true },
         },
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
       },
       app.id,
     ).then((updatedApp) => {

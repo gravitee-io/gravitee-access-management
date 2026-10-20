@@ -294,7 +294,7 @@ export const setupApiManagementLoginSocialFixture = async (): Promise<ApiManagem
   const clientId = app.settings?.oauth?.clientId ?? appName;
 
   await updateApplication(domain.id, accessToken, {
-    identityProviders: new Set([{ identity: idpInmemoryId, priority: -1 }]),
+    identityProviders: [{ identity: idpInmemoryId, priority: -1 }],
     settings: {
       oauth: {
         redirectUris: ['https://nowhere.com', 'http://localhost:8093/management/auth/login/callback'],

@@ -171,7 +171,7 @@ export const setupEnterpriseIdp = async (): Promise<EnterpriseIdpFixture> => {
               },
             },
           },
-          identityProviders: new Set([{ identity: defaultIdpId(domain.id), priority: 0 }]),
+          identityProviders: [{ identity: defaultIdpId(domain.id), priority: 0 }],
         } as any,
         created.id,
       );

@@ -46,4 +46,4 @@ if [[ $UPDATE_SDK_STATUS -ne 0 ]]; then
   exit $UPDATE_SDK_STATUS
 fi
 
-bash "$SCRIPT_DIR"/emit-management-api-types.sh
+exit 0

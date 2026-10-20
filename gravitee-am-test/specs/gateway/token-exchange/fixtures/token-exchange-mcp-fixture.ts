@@ -256,7 +256,7 @@ export const setupTokenExchangeMcpFixture = async (
           scopeSettings: scopes,
         },
       },
-      identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+      identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
     });
     expect(application).toBeDefined();
     expect(application.id).toBeDefined();

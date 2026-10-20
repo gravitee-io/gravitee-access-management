@@ -48,7 +48,7 @@ export const setupFixture = async (): Promise<LoginFlowFixture> => {
         ],
       },
     },
-    identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: customIdp.id, priority: 0 }],
   });
 
   const startedDomain = await startDomain(domain.id, accessToken);

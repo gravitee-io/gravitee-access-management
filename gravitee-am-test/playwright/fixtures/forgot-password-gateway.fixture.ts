@@ -74,7 +74,7 @@ export const test = base.extend<{ forgotPasswordBundle: ForgotPasswordGatewayBun
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-fpw-app'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           account: {

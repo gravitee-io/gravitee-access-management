@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -82,10 +83,10 @@ export interface Role {
   oauthScopes?: Array<string>;
   /**
    *
-   * @type {{ [key: string]: Set<string>; }}
+   * @type {{ [key: string]: Array<string>; }}
    * @memberof Role
    */
-  permissionAcls?: { [key: string]: Set<InnerEnum> };
+  permissionAcls?: { [key: string]: Array<InnerEnum> };
   /**
    *
    * @type {string}

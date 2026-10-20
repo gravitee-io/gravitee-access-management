@@ -430,7 +430,7 @@ export async function setupIssuerDomain(adminToken: string): Promise<IssuerDomai
             ],
           },
         },
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
       }),
     );
 

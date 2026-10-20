@@ -22,10 +22,25 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { TokenExchangeTrustSettings } from './TokenExchangeTrustSettings';
+import {
+  TokenExchangeTrustSettingsFromJSON,
+  TokenExchangeTrustSettingsFromJSONTyped,
+  TokenExchangeTrustSettingsToJSON,
+  TokenExchangeTrustSettingsToJSONTyped,
+} from './TokenExchangeTrustSettings';
+import type { SpiffeTrustSettings } from './SpiffeTrustSettings';
+import {
+  SpiffeTrustSettingsFromJSON,
+  SpiffeTrustSettingsFromJSONTyped,
+  SpiffeTrustSettingsToJSON,
+  SpiffeTrustSettingsToJSONTyped,
+} from './SpiffeTrustSettings';
 import type { JWKSet } from './JWKSet';
 import { JWKSetFromJSON, JWKSetFromJSONTyped, JWKSetToJSON, JWKSetToJSONTyped } from './JWKSet';
 import type { UserBindingCriterion } from './UserBindingCriterion';
@@ -44,15 +59,16 @@ import {
 } from './TrustDomainKeyMaterial';
 
 /**
- *
+ * Deprecated: use the /trusted-domains endpoint instead.
  * @export
  * @interface TrustDomain
  */
 export interface TrustDomain {
   /**
-   *
+   * Use spiffe.allowedAlgorithms instead.
    * @type {Array<string>}
    * @memberof TrustDomain
+   * @deprecated
    */
   allowedAlgorithms?: Array<string>;
   /**
@@ -79,11 +95,18 @@ export interface TrustDomain {
    * @type {string}
    * @memberof TrustDomain
    */
-  id?: string;
+  domainIdentifier?: string;
   /**
-   * Expected value of the "iss" claim in an external JWT. Required to accept tokens during an RFC 8693 exchange.
+   *
    * @type {string}
    * @memberof TrustDomain
+   */
+  id?: string;
+  /**
+   * Use domainIdentifier instead.
+   * @type {string}
+   * @memberof TrustDomain
+   * @deprecated
    */
   issuer?: string;
   /**
@@ -100,7 +123,7 @@ export interface TrustDomain {
    */
   keyMaterial?: TrustDomainKeyMaterial;
   /**
-   * Label the trusted domain is known by. Unique within the security domain.
+   *
    * @type {string}
    * @memberof TrustDomain
    */
@@ -118,21 +141,30 @@ export interface TrustDomain {
    */
   referenceType?: TrustDomainReferenceTypeEnum;
   /**
-   *
+   * Use keyMaterial.refreshIntervalSeconds instead.
    * @type {number}
    * @memberof TrustDomain
+   * @deprecated
    */
   refreshIntervalSeconds?: number;
   /**
-   * One-to-one mapping from external scope to domain scope. Unmapped issuer scopes are dropped (fail-closed). Applies to tokens matched by "issuer".
+   * Use tokenExchange.scopeMappings instead.
    * @type {{ [key: string]: string; }}
    * @memberof TrustDomain
+   * @deprecated
    */
   scopeMappings?: { [key: string]: string };
   /**
-   * SPIFFE trust domain matched against the "sub" of a JWT-SVID, without the "spiffe://" scheme. Required to accept SPIFFE client assertions.
+   *
+   * @type {SpiffeTrustSettings}
+   * @memberof TrustDomain
+   */
+  spiffe?: SpiffeTrustSettings;
+  /**
+   * Use spiffe.spiffeTrustDomain instead.
    * @type {string}
    * @memberof TrustDomain
+   * @deprecated
    */
   spiffeTrustDomain?: string;
   /**
@@ -142,21 +174,29 @@ export interface TrustDomain {
    */
   staticJwks?: JWKSet;
   /**
+   *
+   * @type {TokenExchangeTrustSettings}
+   * @memberof TrustDomain
+   */
+  tokenExchange?: TokenExchangeTrustSettings;
+  /**
    * Epoch timestamp in milliseconds.
    * @type {number}
    * @memberof TrustDomain
    */
   updatedAt?: number;
   /**
-   * Criteria used to locate a domain user when user binding is enabled. All criteria are combined with AND.
+   * Use tokenExchange.userBindingCriteria instead.
    * @type {Array<UserBindingCriterion>}
    * @memberof TrustDomain
+   * @deprecated
    */
   userBindingCriteria?: Array<UserBindingCriterion>;
   /**
-   * Whether the external JWT subject is resolved to a single domain user using the user binding criteria. When false, a virtual user is built from the token claims only.
+   * Use tokenExchange.userBindingEnabled instead.
    * @type {boolean}
    * @memberof TrustDomain
+   * @deprecated
    */
   userBindingEnabled?: boolean;
 }
@@ -203,6 +243,7 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     bundleSource: json['bundleSource'] == null ? undefined : json['bundleSource'],
     createdAt: json['createdAt'] == null ? undefined : json['createdAt'],
     description: json['description'] == null ? undefined : json['description'],
+    domainIdentifier: json['domainIdentifier'] == null ? undefined : json['domainIdentifier'],
     id: json['id'] == null ? undefined : json['id'],
     issuer: json['issuer'] == null ? undefined : json['issuer'],
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
@@ -212,8 +253,10 @@ export function TrustDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
     refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
     scopeMappings: json['scopeMappings'] == null ? undefined : json['scopeMappings'],
+    spiffe: json['spiffe'] == null ? undefined : SpiffeTrustSettingsFromJSON(json['spiffe']),
     spiffeTrustDomain: json['spiffeTrustDomain'] == null ? undefined : json['spiffeTrustDomain'],
     staticJwks: json['staticJwks'] == null ? undefined : JWKSetFromJSON(json['staticJwks']),
+    tokenExchange: json['tokenExchange'] == null ? undefined : TokenExchangeTrustSettingsFromJSON(json['tokenExchange']),
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
     userBindingCriteria:
       json['userBindingCriteria'] == null ? undefined : (json['userBindingCriteria'] as Array<any>).map(UserBindingCriterionFromJSON),
@@ -235,6 +278,7 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     bundleSource: value['bundleSource'],
     createdAt: value['createdAt'],
     description: value['description'],
+    domainIdentifier: value['domainIdentifier'],
     id: value['id'],
     issuer: value['issuer'],
     jwksUrl: value['jwksUrl'],
@@ -244,8 +288,10 @@ export function TrustDomainToJSONTyped(value?: TrustDomain | null, ignoreDiscrim
     referenceType: value['referenceType'],
     refreshIntervalSeconds: value['refreshIntervalSeconds'],
     scopeMappings: value['scopeMappings'],
+    spiffe: SpiffeTrustSettingsToJSON(value['spiffe']),
     spiffeTrustDomain: value['spiffeTrustDomain'],
     staticJwks: JWKSetToJSON(value['staticJwks']),
+    tokenExchange: TokenExchangeTrustSettingsToJSON(value['tokenExchange']),
     updatedAt: value['updatedAt'],
     userBindingCriteria:
       value['userBindingCriteria'] == null ? undefined : (value['userBindingCriteria'] as Array<any>).map(UserBindingCriterionToJSON),

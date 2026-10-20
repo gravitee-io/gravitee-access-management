@@ -233,7 +233,7 @@ export const setupUserManagementAppFixture = async (options?: SetupOptions): Pro
               enhanceScopesWithUserPermissions: true,
             },
           },
-          identityProviders: new Set([{ identity: identityProviderId, priority: -1 }]),
+          identityProviders: [{ identity: identityProviderId, priority: -1 }],
         });
 
         return {

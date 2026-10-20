@@ -83,7 +83,7 @@ export const setupCimdRefreshTokenFixture = async (): Promise<CimdRefreshTokenFi
       domain.id,
       accessToken,
       {
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
         settings: {
           oauth: {
             redirectUris: [CIMD_REDIRECT_URI],

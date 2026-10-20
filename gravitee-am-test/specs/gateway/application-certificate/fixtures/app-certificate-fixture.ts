@@ -150,7 +150,7 @@ async function createTestApp(
           scopeSettings: [{ scope: 'openid', defaultScope: false }],
         },
       },
-      identityProviders: new Set([{ identity: idpId, priority: 0 }]),
+      identityProviders: [{ identity: idpId, priority: 0 }],
     },
     created.id,
   );

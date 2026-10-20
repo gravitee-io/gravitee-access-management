@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -52,10 +53,10 @@ export interface PatchSAMLSettings {
   entityId?: string;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchSAMLSettings
    */
-  requiredPermissions?: Set<PatchSAMLSettingsRequiredPermissionsEnum>;
+  requiredPermissions?: Array<PatchSAMLSettingsRequiredPermissionsEnum>;
 }
 
 /**
@@ -155,7 +156,7 @@ export function PatchSAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     entityId: json['entityId'] == null ? undefined : json['entityId'],
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : json['requiredPermissions'],
   };
 }
 
@@ -172,6 +173,6 @@ export function PatchSAMLSettingsToJSONTyped(value?: PatchSAMLSettings | null, i
     certificate: value['certificate'],
     enabled: value['enabled'],
     entityId: value['entityId'],
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : (value['requiredPermissions'] as Array<any>),
   };
 }

@@ -194,7 +194,7 @@ export const setupLdapFixture = async (): Promise<LdapFixture> => {
 
     const app = await waitForSyncAfter(domain.id, () =>
       createTestApp(uniqueName('ldap-app', true), domain, accessToken, 'WEB', {
-        identityProviders: new Set([{ identity: idp.id, priority: 0 }]),
+        identityProviders: [{ identity: idp.id, priority: 0 }],
         settings: {
           oauth: {
             redirectUris: [REDIRECT_URI],

@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -435,10 +436,10 @@ export interface UserEntity {
   roles?: Array<string>;
   /**
    *
-   * @type {Set<Role>}
+   * @type {Array<Role>}
    * @memberof UserEntity
    */
-  rolesPermissions?: Set<Role>;
+  rolesPermissions?: Array<Role>;
   /**
    *
    * @type {boolean}
@@ -598,7 +599,7 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
     registrationUserUri: json['registrationUserUri'] == null ? undefined : json['registrationUserUri'],
     roles: json['roles'] == null ? undefined : json['roles'],
-    rolesPermissions: json['rolesPermissions'] == null ? undefined : new Set((json['rolesPermissions'] as Array<any>).map(RoleFromJSON)),
+    rolesPermissions: json['rolesPermissions'] == null ? undefined : (json['rolesPermissions'] as Array<any>).map(RoleFromJSON),
     serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
     source: json['source'] == null ? undefined : json['source'],
     sourceId: json['sourceId'] == null ? undefined : json['sourceId'],
@@ -685,7 +686,7 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     registrationCompleted: value['registrationCompleted'],
     registrationUserUri: value['registrationUserUri'],
     roles: value['roles'],
-    rolesPermissions: value['rolesPermissions'] == null ? undefined : Array.from(value['rolesPermissions'] as Set<any>).map(RoleToJSON),
+    rolesPermissions: value['rolesPermissions'] == null ? undefined : (value['rolesPermissions'] as Array<any>).map(RoleToJSON),
     serviceAccount: value['serviceAccount'],
     source: value['source'],
     sourceId: value['sourceId'],

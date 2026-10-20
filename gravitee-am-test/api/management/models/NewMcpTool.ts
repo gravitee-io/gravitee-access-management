@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -42,16 +43,16 @@ import {
 export interface NewMcpTool extends NewProtectedResourceFeature {
   /**
    *
-   * @type {string}
-   * @memberof NewMcpTool
-   */
-  type?: NewMcpToolTypeEnum;
-  /**
-   *
    * @type {Array<string>}
    * @memberof NewMcpTool
    */
   scopes?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof NewMcpTool
+   */
+  type?: NewMcpToolTypeEnum;
 }
 
 /**
@@ -81,8 +82,8 @@ export function NewMcpToolFromJSONTyped(json: any, ignoreDiscriminator: boolean)
   }
   return {
     ...NewProtectedResourceFeatureFromJSONTyped(json, true),
-    type: json['type'] == null ? undefined : json['type'],
     scopes: json['scopes'] == null ? undefined : json['scopes'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
@@ -104,7 +105,7 @@ export function NewMcpToolToJSONTyped(value?: NewMcpTool | null, ignoreDiscrimin
 
   return {
     ...NewProtectedResourceFeatureToJSONTyped(value, true),
-    type: value['type'],
     scopes: value['scopes'],
+    type: value['type'],
   };
 }

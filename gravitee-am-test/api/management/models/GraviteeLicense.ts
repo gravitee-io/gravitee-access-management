@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -40,10 +41,10 @@ export interface GraviteeLicense {
   expiresAt?: number;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof GraviteeLicense
    */
-  features?: Set<string>;
+  features?: Array<string>;
   /**
    *
    * @type {boolean}
@@ -52,10 +53,10 @@ export interface GraviteeLicense {
   isExpired?: boolean;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof GraviteeLicense
    */
-  packs?: Set<string>;
+  packs?: Array<string>;
   /**
    *
    * @type {string}
@@ -87,9 +88,9 @@ export function GraviteeLicenseFromJSONTyped(json: any, ignoreDiscriminator: boo
   }
   return {
     expiresAt: json['expiresAt'] == null ? undefined : json['expiresAt'],
-    features: json['features'] == null ? undefined : new Set(json['features']),
+    features: json['features'] == null ? undefined : json['features'],
     isExpired: json['isExpired'] == null ? undefined : json['isExpired'],
-    packs: json['packs'] == null ? undefined : new Set(json['packs']),
+    packs: json['packs'] == null ? undefined : json['packs'],
     scope: json['scope'] == null ? undefined : json['scope'],
     tier: json['tier'] == null ? undefined : json['tier'],
   };
@@ -106,9 +107,9 @@ export function GraviteeLicenseToJSONTyped(value?: GraviteeLicense | null, ignor
 
   return {
     expiresAt: value['expiresAt'],
-    features: value['features'] == null ? undefined : Array.from(value['features'] as Set<any>),
+    features: value['features'] == null ? undefined : (value['features'] as Array<any>),
     isExpired: value['isExpired'],
-    packs: value['packs'] == null ? undefined : Array.from(value['packs'] as Set<any>),
+    packs: value['packs'] == null ? undefined : (value['packs'] as Array<any>),
     scope: value['scope'],
     tier: value['tier'],
   };

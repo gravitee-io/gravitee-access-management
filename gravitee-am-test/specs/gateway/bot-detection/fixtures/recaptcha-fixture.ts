@@ -146,7 +146,7 @@ async function createTestApp(domain: Domain, accessToken: string, idpId: string)
           scopeSettings: [{ scope: 'openid', defaultScope: true }],
         },
       },
-      identityProviders: new Set([{ identity: idpId, priority: 0 }]),
+      identityProviders: [{ identity: idpId, priority: 0 }],
     },
     created.id,
   );

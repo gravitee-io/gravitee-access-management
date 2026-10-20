@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -94,10 +95,10 @@ export interface Application {
   enabled?: boolean;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof Application
    */
-  factors?: Set<string>;
+  factors?: Array<string>;
   /**
    *
    * @type {string}
@@ -106,10 +107,10 @@ export interface Application {
   id?: string;
   /**
    *
-   * @type {Set<ApplicationIdentityProvider>}
+   * @type {Array<ApplicationIdentityProvider>}
    * @memberof Application
    */
-  identityProviders?: Set<ApplicationIdentityProvider>;
+  identityProviders?: Array<ApplicationIdentityProvider>;
   /**
    *
    * @type {string}
@@ -211,12 +212,10 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
     description: json['description'] == null ? undefined : json['description'],
     domain: json['domain'] == null ? undefined : json['domain'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
-    factors: json['factors'] == null ? undefined : new Set(json['factors']),
+    factors: json['factors'] == null ? undefined : json['factors'],
     id: json['id'] == null ? undefined : json['id'],
     identityProviders:
-      json['identityProviders'] == null
-        ? undefined
-        : new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON)),
+      json['identityProviders'] == null ? undefined : (json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON),
     kind: json['kind'] == null ? undefined : json['kind'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
@@ -246,12 +245,10 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
     description: value['description'],
     domain: value['domain'],
     enabled: value['enabled'],
-    factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
+    factors: value['factors'] == null ? undefined : (value['factors'] as Array<any>),
     id: value['id'],
     identityProviders:
-      value['identityProviders'] == null
-        ? undefined
-        : Array.from(value['identityProviders'] as Set<any>).map(ApplicationIdentityProviderToJSON),
+      value['identityProviders'] == null ? undefined : (value['identityProviders'] as Array<any>).map(ApplicationIdentityProviderToJSON),
     kind: value['kind'],
     metadata: value['metadata'],
     name: value['name'],

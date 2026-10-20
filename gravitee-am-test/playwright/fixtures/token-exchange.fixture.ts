@@ -180,7 +180,7 @@ export function createTokenExchangeFixture(config: TokenExchangeConfig = {}) {
               scopeSettings: scopes.map((s) => ({ ...s })),
             },
           },
-          identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+          identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
         }),
       );
 

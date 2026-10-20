@@ -139,7 +139,7 @@ export const test = base.extend<MfaMatrixFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }],
       }),
     );
 

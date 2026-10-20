@@ -49,7 +49,7 @@ export async function createMfaApplication(domainId: string, accessToken: string
         challenge: { active: true, type: 'REQUIRED' },
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   }, app.id);
 }
 

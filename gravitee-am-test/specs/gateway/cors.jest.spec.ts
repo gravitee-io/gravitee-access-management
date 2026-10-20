@@ -89,7 +89,7 @@ describe('CORS - Successful requests', () => {
   it('should allow requests with wildcard origin', async () => {
     await fixture.updateCorsSettings({
       enabled: true,
-      allowedOrigins: new Set(['*']),
+      allowedOrigins: ['*'],
     });
     const optionsResponse = await performOptions(process.env.AM_GATEWAY_URL, fixture.userinfoPath, {
       Origin: 'https://any-origin.com',
@@ -115,9 +115,9 @@ describe('CORS - Successful requests', () => {
   it('should allow requests with matching origin', async () => {
     await fixture.updateCorsSettings({
       enabled: true,
-      allowedOrigins: new Set(['https://example.com']),
-      allowedMethods: new Set(['GET', 'OPTIONS']),
-      allowedHeaders: new Set(['Authorization', 'Content-Type']),
+      allowedOrigins: ['https://example.com'],
+      allowedMethods: ['GET', 'OPTIONS'],
+      allowedHeaders: ['Authorization', 'Content-Type'],
       allowCredentials: true,
       maxAge: 3600,
     });
@@ -155,9 +155,9 @@ describe('CORS - Rejected requests (403)', () => {
   it('should reject requests with invalid origin', async () => {
     await fixture.updateCorsSettings({
       enabled: true,
-      allowedOrigins: new Set(['https://example.com']),
-      allowedMethods: new Set(['GET', 'OPTIONS']),
-      allowedHeaders: new Set(['Authorization', 'Content-Type']),
+      allowedOrigins: ['https://example.com'],
+      allowedMethods: ['GET', 'OPTIONS'],
+      allowedHeaders: ['Authorization', 'Content-Type'],
     });
     const optionsResponse = await performOptions(process.env.AM_GATEWAY_URL, fixture.userinfoPath, {
       Origin: 'https://malicious.com',

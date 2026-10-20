@@ -153,7 +153,7 @@ async function createTestApp(domain: Domain, accessToken: string, name: string, 
   const updated = await updateApplication(
     domain.id,
     accessToken,
-    { settings: { oauth }, identityProviders: new Set(options.identityProviders) },
+    { settings: { oauth }, identityProviders: options.identityProviders },
     created.id,
   );
   // The PUT response omits the secret; keep the one issued on creation for Basic auth

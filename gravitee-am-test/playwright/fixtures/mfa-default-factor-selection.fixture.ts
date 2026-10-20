@@ -101,7 +101,7 @@ export const test = base.extend<MfaDefaultFactorFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${defDomain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${defDomain.id}`, priority: 0 }],
       }),
     );
 

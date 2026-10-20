@@ -280,7 +280,7 @@ async function createApp(name: string, domain: Domain, accessToken: string, idpI
         ],
       },
     },
-    identityProviders: new Set([{ identity: idpId, priority: -1 }]),
+    identityProviders: [{ identity: idpId, priority: -1 }],
   });
   expect(app).toBeDefined();
   return app;

@@ -113,7 +113,7 @@ describe('Custom claims - the identity anchor is protected at configuration time
             tokenCustomClaims: [{ tokenType: 'ACCESS_TOKEN', claimName: 'gis', claimValue: 'spoofed' }],
           },
         },
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
       }),
     ).rejects.toMatchObject({
       response: { status: 400 },

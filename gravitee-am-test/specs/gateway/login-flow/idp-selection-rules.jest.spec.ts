@@ -57,7 +57,7 @@ let appUnruledAlongsideRuled: any;
 
 const buildApp = (name: string, identityProviders: any[]) =>
   createTestApp(uniqueName(name, true), fixture.domain, fixture.accessToken, 'WEB', {
-    identityProviders: new Set(identityProviders),
+    identityProviders,
     settings: { oauth: APP_OAUTH_SETTINGS, advanced: { skipConsent: true } },
   });
 

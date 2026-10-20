@@ -73,7 +73,7 @@ export const test = base.extend<{ loginFormGatewayBundle: LoginFormGatewayBundle
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-lf-app'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           advanced: { skipConsent: true },

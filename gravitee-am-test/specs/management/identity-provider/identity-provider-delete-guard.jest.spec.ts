@@ -45,7 +45,7 @@ const newIdp = () =>
 
 const appUsing = (idpId: string) =>
   createTestApp(uniqueName('guard-app', true), fixture.domain, fixture.accessToken, 'WEB', {
-    identityProviders: new Set([{ identity: idpId, priority: 0 }]),
+    identityProviders: [{ identity: idpId, priority: 0 }],
     settings: {
       oauth: {
         redirectUris: ['https://example.com/callback'],

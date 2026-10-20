@@ -165,7 +165,7 @@ async function createTemplateApplication(domainId: string, accessToken: string, 
         },
         advanced: { skipConsent: true },
       },
-      identityProviders: new Set([{ identity: idpId, priority: 0 }]),
+      identityProviders: [{ identity: idpId, priority: 0 }],
     },
     created.id,
   );

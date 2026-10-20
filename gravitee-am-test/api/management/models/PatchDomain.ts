@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -211,10 +212,10 @@ export interface PatchDomain {
   path?: string;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchDomain
    */
-  requiredPermissions?: Set<PatchDomainRequiredPermissionsEnum>;
+  requiredPermissions?: Array<PatchDomainRequiredPermissionsEnum>;
   /**
    *
    * @type {PatchSAMLSettings}
@@ -241,10 +242,10 @@ export interface PatchDomain {
   selfServiceAccountManagementSettings?: SelfServiceAccountManagementSettings;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchDomain
    */
-  tags?: Set<string>;
+  tags?: Array<string>;
   /**
    *
    * @type {TokenExchangeSettings}
@@ -391,7 +392,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     oidc: json['oidc'] == null ? undefined : PatchOIDCSettingsFromJSON(json['oidc']),
     passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
     path: json['path'] == null ? undefined : json['path'],
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : json['requiredPermissions'],
     saml: json['saml'] == null ? undefined : PatchSAMLSettingsFromJSON(json['saml']),
     scim: json['scim'] == null ? undefined : SCIMSettingsFromJSON(json['scim']),
     secretSettings: json['secretSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretSettings']),
@@ -399,7 +400,7 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
       json['selfServiceAccountManagementSettings'] == null
         ? undefined
         : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
-    tags: json['tags'] == null ? undefined : new Set(json['tags']),
+    tags: json['tags'] == null ? undefined : json['tags'],
     tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
     uma: json['uma'] == null ? undefined : UMASettingsFromJSON(json['uma']),
     vhostMode: json['vhostMode'] == null ? undefined : json['vhostMode'],
@@ -433,12 +434,12 @@ export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscrim
     oidc: PatchOIDCSettingsToJSON(value['oidc']),
     passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
     path: value['path'],
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : (value['requiredPermissions'] as Array<any>),
     saml: PatchSAMLSettingsToJSON(value['saml']),
     scim: SCIMSettingsToJSON(value['scim']),
     secretSettings: SecretExpirationSettingsToJSON(value['secretSettings']),
     selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value['selfServiceAccountManagementSettings']),
-    tags: value['tags'] == null ? undefined : Array.from(value['tags'] as Set<any>),
+    tags: value['tags'] == null ? undefined : (value['tags'] as Array<any>),
     tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
     uma: UMASettingsToJSON(value['uma']),
     vhostMode: value['vhostMode'],

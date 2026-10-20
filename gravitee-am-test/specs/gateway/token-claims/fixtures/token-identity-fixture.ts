@@ -222,7 +222,7 @@ export const setupTokenIdentityFixture = async (options: TokenIdentityOptions = 
         advanced: { skipConsent: true },
       },
       ...(options.applicationMetadata ? { metadata: options.applicationMetadata } : {}),
-      identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+      identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
     });
 
     // Created before the domain starts so the initial sync picks everything up.

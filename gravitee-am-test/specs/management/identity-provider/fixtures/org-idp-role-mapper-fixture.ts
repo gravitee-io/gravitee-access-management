@@ -306,7 +306,7 @@ async function createIdpDomain(
     domain.id,
     accessToken,
     {
-      identityProviders: new Set([{ identity: inlineIdp.id!, priority: -1 }]),
+      identityProviders: [{ identity: inlineIdp.id!, priority: -1 }],
       settings: {
         oauth: {
           redirectUris: [REDIRECT_URI, `${MANAGEMENT_URL}/management/auth/login/callback`],

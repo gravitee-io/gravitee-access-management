@@ -59,7 +59,7 @@ beforeAll(async () => {
         ],
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   });
 
   // Create user before starting domain so initial sync picks up everything

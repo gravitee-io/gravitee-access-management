@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -136,10 +137,10 @@ export interface PatchApplicationSettings {
   oauth?: PatchApplicationOAuthSettings;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchApplicationSettings
    */
-  requiredPermissions?: Set<PatchApplicationSettingsRequiredPermissionsEnum>;
+  requiredPermissions?: Array<PatchApplicationSettingsRequiredPermissionsEnum>;
   /**
    *
    * @type {RiskAssessmentSettings}
@@ -266,7 +267,7 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
     login: json['login'] == null ? undefined : PatchLoginSettingsFromJSON(json['login']),
     mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
     oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : json['requiredPermissions'],
     riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
     saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
     secretExpirationSettings:
@@ -292,7 +293,7 @@ export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSett
     login: PatchLoginSettingsToJSON(value['login']),
     mfa: PatchMFASettingsToJSON(value['mfa']),
     oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : (value['requiredPermissions'] as Array<any>),
     riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
     saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),

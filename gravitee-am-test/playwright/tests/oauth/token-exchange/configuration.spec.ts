@@ -216,7 +216,7 @@ test.describe('Token Exchange Configuration', () => {
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: defaultIdp ? new Set([{ identity: defaultIdp.id, priority: 0 }]) : new Set(),
+        identityProviders: defaultIdp ? [{ identity: defaultIdp.id, priority: 0 }] : [],
       }),
     );
     const user = await quietly(() => buildCreateAndTestUser(testDomain.id, adminToken, 0));

@@ -60,7 +60,7 @@ export const setupFixture = async (): Promise<PasswordPolicyFixture> => {
         ],
       },
     },
-    identityProviders: new Set([{ identity: customIdp1.id, priority: 0 }]),
+    identityProviders: [{ identity: customIdp1.id, priority: 0 }],
   });
 
   const domainWithOidc = await startDomain(domain.id, accessToken).then((domain) => waitForDomainStart(domain));

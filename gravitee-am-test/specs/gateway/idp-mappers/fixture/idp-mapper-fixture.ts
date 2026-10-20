@@ -95,7 +95,7 @@ export const setupIdpMapperFixture = async (): Promise<IdpMapperFixture> => {
 
     const app = await waitForSyncAfter(domain.id, () =>
       createTestApp(uniqueName('mapper-app', true), domain, accessToken, 'WEB', {
-        identityProviders: new Set([{ identity: idp.id, priority: -1 }]),
+        identityProviders: [{ identity: idp.id, priority: -1 }],
         settings: {
           oauth: {
             redirectUris: [REDIRECT_URI],

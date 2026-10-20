@@ -150,7 +150,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
         crossAppAccessSettings: bothResourceServerSettings(),
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   });
 
   // shares the agent application's certificate, so its ID token differs only in audience
@@ -163,7 +163,7 @@ export const setupIdJagFixture = async (): Promise<IdJagFixture> => {
         scopeSettings: DOMAIN_SCOPES,
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   });
 
   const startedDomain = await startDomain(domain.id, accessToken);

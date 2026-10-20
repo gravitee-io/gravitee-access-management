@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -40,22 +41,22 @@ export interface CorsSettings {
   allowCredentials?: boolean;
   /**
    * Request headers permitted on cross-origin requests.
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof CorsSettings
    */
-  allowedHeaders?: Set<string>;
+  allowedHeaders?: Array<string>;
   /**
    * HTTP methods permitted on cross-origin requests.
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof CorsSettings
    */
-  allowedMethods?: Set<string>;
+  allowedMethods?: Array<string>;
   /**
    * Origins permitted to make cross-origin requests. Use "*" to allow any origin.
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof CorsSettings
    */
-  allowedOrigins?: Set<string>;
+  allowedOrigins?: Array<string>;
   /**
    * Whether CORS handling is enabled for the domain when not inherited.
    * @type {boolean}
@@ -93,9 +94,9 @@ export function CorsSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
   }
   return {
     allowCredentials: json['allowCredentials'] == null ? undefined : json['allowCredentials'],
-    allowedHeaders: json['allowedHeaders'] == null ? undefined : new Set(json['allowedHeaders']),
-    allowedMethods: json['allowedMethods'] == null ? undefined : new Set(json['allowedMethods']),
-    allowedOrigins: json['allowedOrigins'] == null ? undefined : new Set(json['allowedOrigins']),
+    allowedHeaders: json['allowedHeaders'] == null ? undefined : json['allowedHeaders'],
+    allowedMethods: json['allowedMethods'] == null ? undefined : json['allowedMethods'],
+    allowedOrigins: json['allowedOrigins'] == null ? undefined : json['allowedOrigins'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     inherited: json['inherited'] == null ? undefined : json['inherited'],
     maxAge: json['maxAge'] == null ? undefined : json['maxAge'],
@@ -113,9 +114,9 @@ export function CorsSettingsToJSONTyped(value?: CorsSettings | null, ignoreDiscr
 
   return {
     allowCredentials: value['allowCredentials'],
-    allowedHeaders: value['allowedHeaders'] == null ? undefined : Array.from(value['allowedHeaders'] as Set<any>),
-    allowedMethods: value['allowedMethods'] == null ? undefined : Array.from(value['allowedMethods'] as Set<any>),
-    allowedOrigins: value['allowedOrigins'] == null ? undefined : Array.from(value['allowedOrigins'] as Set<any>),
+    allowedHeaders: value['allowedHeaders'] == null ? undefined : (value['allowedHeaders'] as Array<any>),
+    allowedMethods: value['allowedMethods'] == null ? undefined : (value['allowedMethods'] as Array<any>),
+    allowedOrigins: value['allowedOrigins'] == null ? undefined : (value['allowedOrigins'] as Array<any>),
     enabled: value['enabled'],
     inherited: value['inherited'],
     maxAge: value['maxAge'],

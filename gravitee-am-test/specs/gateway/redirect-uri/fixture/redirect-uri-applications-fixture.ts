@@ -90,7 +90,7 @@ const createApp = async (domainId: string, customIdpId: string, accessToken: str
       domainId,
       accessToken,
       {
-        identityProviders: new Set([{ identity: customIdpId, priority: 0 }]),
+        identityProviders: [{ identity: customIdpId, priority: 0 }],
       },
       app.id,
     ),

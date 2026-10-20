@@ -113,7 +113,7 @@ export const test = base.extend<MfaLoginFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
       }),
     );
 

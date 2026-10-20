@@ -193,7 +193,7 @@ export const setupKeycloakSamlFixture = async (
             responseTypes: ['code'],
           },
         },
-        identityProviders: new Set([{ identity: samlIdp.id, priority: -1 }]),
+        identityProviders: [{ identity: samlIdp.id, priority: -1 }],
       }),
     );
 

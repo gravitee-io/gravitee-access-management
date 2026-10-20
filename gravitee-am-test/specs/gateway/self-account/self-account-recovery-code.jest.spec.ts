@@ -71,7 +71,7 @@ describe('SelfAccount - Recovery Code', () => {
 
   it('should remove recovery factor from application', async () => {
     await patchApplication(fixture.domain.id, fixture.accessToken, {
-      factors: new Set<string>(),
+      factors: [],
       settings: { mfa: {} },
     }, fixture.application.id);
 

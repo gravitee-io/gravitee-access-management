@@ -148,7 +148,7 @@ export const test = base.extend<RoleMapperFlowFixtures>({
         mapperDomain.id,
         () =>
           createTestApp(uniqueTestName('pw-mapper-app'), mapperDomain, adminToken, 'WEB', {
-            identityProviders: new Set([{ identity: mapperIdp.id, priority: -1 }]),
+            identityProviders: [{ identity: mapperIdp.id, priority: -1 }],
             settings: {
               oauth: {
                 redirectUris: [REDIRECT_URI],

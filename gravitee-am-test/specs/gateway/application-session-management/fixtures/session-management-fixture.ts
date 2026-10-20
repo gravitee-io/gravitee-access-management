@@ -72,7 +72,7 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
         oauth: defaultOAuthSettings,
         cookieSettings,
       },
-      identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
+      identityProviders: [{ identity: customIdp.id, priority: 0 }],
     });
   };
 
@@ -96,7 +96,7 @@ export const initFixture = async (): Promise<SessionManagementGatewayFixture> =>
     settings: {
       oauth: defaultOAuthSettings,
     },
-    identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: customIdp.id, priority: 0 }],
   });
 
   const appForLifecyclePersistent = await createApp(uniqueName('lifecycle-on', true), {

@@ -139,7 +139,7 @@ const test = base.extend<CertFallbackFixtures>({
             ],
           },
         },
-        identityProviders: defaultIdp ? new Set([{ identity: defaultIdp.id, priority: 0 }]) : new Set(),
+        identityProviders: defaultIdp ? [{ identity: defaultIdp.id, priority: 0 }] : [],
       }),
     );
 
@@ -302,7 +302,7 @@ test.describe('Certificate Fallback — Token Signing', () => {
             ],
           },
         },
-        identityProviders: defaultIdp ? new Set([{ identity: defaultIdp.id, priority: 0 }]) : new Set(),
+        identityProviders: defaultIdp ? [{ identity: defaultIdp.id, priority: 0 }] : [],
       }),
     );
 

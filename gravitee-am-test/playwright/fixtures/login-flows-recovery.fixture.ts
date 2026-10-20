@@ -98,7 +98,7 @@ export const test = base.extend<RecoveryFlowFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${recoveryDomain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${recoveryDomain.id}`, priority: 0 }],
       }),
     );
 

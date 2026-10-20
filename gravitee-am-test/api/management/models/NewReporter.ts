@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -131,7 +132,8 @@ export function NewReporterToJSONTyped(value?: NewReporter | null, ignoreDiscrim
   }
 
   return {
-    attributeMappingEventTypes: value['attributeMappingEventTypes'],
+    attributeMappingEventTypes:
+      value['attributeMappingEventTypes'] == null ? undefined : (value['attributeMappingEventTypes'] as Array<any>),
     attributeMappings:
       value['attributeMappings'] == null ? undefined : (value['attributeMappings'] as Array<any>).map(ReporterAttributeMappingToJSON),
     configuration: value['configuration'],

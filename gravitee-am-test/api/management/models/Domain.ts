@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -186,10 +187,10 @@ export interface Domain {
   id?: string;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof Domain
    */
-  identities?: Set<string>;
+  identities?: Array<string>;
   /**
    *
    * @type {string}
@@ -324,10 +325,10 @@ export interface Domain {
   selfServiceAccountManagementSettings?: SelfServiceAccountManagementSettings;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof Domain
    */
-  tags?: Set<string>;
+  tags?: Array<string>;
   /**
    *
    * @type {TokenExchangeSettings}
@@ -430,7 +431,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     enabled: json['enabled'] == null ? undefined : json['enabled'],
     hrid: json['hrid'] == null ? undefined : json['hrid'],
     id: json['id'] == null ? undefined : json['id'],
-    identities: json['identities'] == null ? undefined : new Set(json['identities']),
+    identities: json['identities'] == null ? undefined : json['identities'],
     key: json['key'] == null ? undefined : json['key'],
     keyRetrievalSettings: json['keyRetrievalSettings'] == null ? undefined : KeyRetrievalSettingsFromJSON(json['keyRetrievalSettings']),
     loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
@@ -460,7 +461,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
       json['selfServiceAccountManagementSettings'] == null
         ? undefined
         : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
-    tags: json['tags'] == null ? undefined : new Set(json['tags']),
+    tags: json['tags'] == null ? undefined : json['tags'],
     tokenExchangeSettings: json['tokenExchangeSettings'] == null ? undefined : TokenExchangeSettingsFromJSON(json['tokenExchangeSettings']),
     uma: json['uma'] == null ? undefined : UMASettingsFromJSON(json['uma']),
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
@@ -494,7 +495,7 @@ export function DomainToJSONTyped(value?: Omit<Domain, 'key'> | null, ignoreDisc
     enabled: value['enabled'],
     hrid: value['hrid'],
     id: value['id'],
-    identities: value['identities'] == null ? undefined : Array.from(value['identities'] as Set<any>),
+    identities: value['identities'] == null ? undefined : (value['identities'] as Array<any>),
     keyRetrievalSettings: KeyRetrievalSettingsToJSON(value['keyRetrievalSettings']),
     loginSettings: LoginSettingsToJSON(value['loginSettings']),
     managedBy: ManagedByToJSON(value['managedBy']),
@@ -516,7 +517,7 @@ export function DomainToJSONTyped(value?: Omit<Domain, 'key'> | null, ignoreDisc
     scim: SCIMSettingsToJSON(value['scim']),
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
     selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value['selfServiceAccountManagementSettings']),
-    tags: value['tags'] == null ? undefined : Array.from(value['tags'] as Set<any>),
+    tags: value['tags'] == null ? undefined : (value['tags'] as Array<any>),
     tokenExchangeSettings: TokenExchangeSettingsToJSON(value['tokenExchangeSettings']),
     uma: UMASettingsToJSON(value['uma']),
     updatedAt: value['updatedAt'],

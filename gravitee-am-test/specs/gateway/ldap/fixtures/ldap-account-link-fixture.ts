@@ -107,7 +107,7 @@ export const setupLdapAccountLinkFixture = async (): Promise<LdapAccountLinkFixt
 
     const app = await waitForSyncAfter(domain.id, () =>
       createTestApp(uniqueName('ldap-link-app', true), domain, accessToken, 'WEB', {
-        identityProviders: new Set([{ identity: idpWithRoles.id, priority: 0 }]),
+        identityProviders: [{ identity: idpWithRoles.id, priority: 0 }],
         settings: {
           oauth: {
             redirectUris: [REDIRECT_URI],

@@ -83,17 +83,17 @@ describe('CORS settings validation', () => {
 
     const corsSettings = patchedDomain.corsSettings;
     expect(corsSettings.enabled).toBe(true);
-    expect(corsSettings.allowedOrigins.size).toBe(2);
-    expect(corsSettings.allowedOrigins.has('https://example.com')).toBe(true);
-    expect(corsSettings.allowedOrigins.has('https://app.example.com')).toBe(true);
-    expect(corsSettings.allowedMethods.size).toBe(3);
-    expect(corsSettings.allowedMethods.has('GET')).toBe(true);
-    expect(corsSettings.allowedMethods.has('POST')).toBe(true);
-    expect(corsSettings.allowedMethods.has('OPTIONS')).toBe(true);
-    expect(corsSettings.allowedHeaders.size).toBe(3);
-    expect(corsSettings.allowedHeaders.has('Authorization')).toBe(true);
-    expect(corsSettings.allowedHeaders.has('Content-Type')).toBe(true);
-    expect(corsSettings.allowedHeaders.has('X-Custom-Header')).toBe(true);
+    expect(corsSettings.allowedOrigins.length).toBe(2);
+    expect(corsSettings.allowedOrigins.includes('https://example.com')).toBe(true);
+    expect(corsSettings.allowedOrigins.includes('https://app.example.com')).toBe(true);
+    expect(corsSettings.allowedMethods.length).toBe(3);
+    expect(corsSettings.allowedMethods.includes('GET')).toBe(true);
+    expect(corsSettings.allowedMethods.includes('POST')).toBe(true);
+    expect(corsSettings.allowedMethods.includes('OPTIONS')).toBe(true);
+    expect(corsSettings.allowedHeaders.length).toBe(3);
+    expect(corsSettings.allowedHeaders.includes('Authorization')).toBe(true);
+    expect(corsSettings.allowedHeaders.includes('Content-Type')).toBe(true);
+    expect(corsSettings.allowedHeaders.includes('X-Custom-Header')).toBe(true);
     expect(corsSettings.allowCredentials).toBe(true);
     expect(corsSettings.maxAge).toBe(3600);
   });

@@ -82,7 +82,7 @@ export const test = base.extend<{ themeGatewayBundle: ThemeGatewayBundle }>({
 
     const app = await quietly(() =>
       createTestApp(uniqueTestName('pw-theme-app'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([{ identity: idp.id, priority: 0 }]),
+        identityProviders: [{ identity: idp.id, priority: 0 }],
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           advanced: { skipConsent: true },

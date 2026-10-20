@@ -192,7 +192,7 @@ export const setupRecoveryCodeFixture = async (): Promise<RecoveryCodeFixture> =
           // sign-in run through to the token the account API needs.
           advanced: { skipConsent: true },
         },
-        identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+        identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
       } as any,
       appId,
     );

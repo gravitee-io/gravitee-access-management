@@ -185,7 +185,7 @@ export const setupCloudEmailFixture = async (): Promise<CloudEmailFixture> => {
           scopeSettings: [{ scope: 'openid', defaultScope: true }],
         },
       },
-      identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+      identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
     },
   });
   const resetClientId = webApp.settings.oauth.clientId;
@@ -218,7 +218,7 @@ export const setupCloudEmailFixture = async (): Promise<CloudEmailFixture> => {
         login: { inherited: false, registerEnabled: true },
         account: { inherited: false, sendVerifyRegistrationAccountEmail: true },
       },
-      identityProviders: new Set([{ identity: `default-idp-${domain.id}`, priority: 0 }]),
+      identityProviders: [{ identity: `default-idp-${domain.id}`, priority: 0 }],
     },
   });
   const registerClientId = registerApp.settings.oauth.clientId;

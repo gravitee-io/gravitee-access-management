@@ -281,7 +281,7 @@ async function createOAuthApplication(
         },
         advanced: { skipConsent: true },
       },
-      identityProviders: new Set([{ identity: identityProviderId, priority: 0 }]),
+      identityProviders: [{ identity: identityProviderId, priority: 0 }],
     },
     created.id,
   );

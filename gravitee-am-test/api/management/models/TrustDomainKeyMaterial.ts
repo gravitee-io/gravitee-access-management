@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -53,6 +54,12 @@ export interface TrustDomainKeyMaterial {
    * @memberof TrustDomainKeyMaterial
    */
   jwksUrl?: string;
+  /**
+   * How often the JWKS endpoint is re-polled, clamped by keyRetrievalSettings.cacheTtlSeconds. Applies only when source is JWKS_URL.
+   * @type {number}
+   * @memberof TrustDomainKeyMaterial
+   */
+  refreshIntervalSeconds?: number;
   /**
    * Which of the three key sources this trusted domain uses.
    * @type {string}
@@ -90,6 +97,7 @@ export function TrustDomainKeyMaterialFromJSONTyped(json: any, ignoreDiscriminat
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     jwkSet: json['jwkSet'] == null ? undefined : JWKSetFromJSON(json['jwkSet']),
     jwksUrl: json['jwksUrl'] == null ? undefined : json['jwksUrl'],
+    refreshIntervalSeconds: json['refreshIntervalSeconds'] == null ? undefined : json['refreshIntervalSeconds'],
     source: json['source'] == null ? undefined : json['source'],
   };
 }
@@ -107,6 +115,7 @@ export function TrustDomainKeyMaterialToJSONTyped(value?: TrustDomainKeyMaterial
     certificate: value['certificate'],
     jwkSet: JWKSetToJSON(value['jwkSet']),
     jwksUrl: value['jwksUrl'],
+    refreshIntervalSeconds: value['refreshIntervalSeconds'],
     source: value['source'],
   };
 }

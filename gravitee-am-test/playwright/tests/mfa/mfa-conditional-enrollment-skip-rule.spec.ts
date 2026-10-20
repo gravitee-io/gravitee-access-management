@@ -237,7 +237,7 @@ test.describe('Conditional enrollment with an altered skip duration (AM-2827)', 
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }],
       }),
     );
 

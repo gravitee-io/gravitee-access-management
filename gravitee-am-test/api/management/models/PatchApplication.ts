@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -67,16 +68,16 @@ export interface PatchApplication {
   enabled?: boolean;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchApplication
    */
-  factors?: Set<string>;
+  factors?: Array<string>;
   /**
    *
-   * @type {Set<PatchApplicationIdentityProvider>}
+   * @type {Array<PatchApplicationIdentityProvider>}
    * @memberof PatchApplication
    */
-  identityProviders?: Set<PatchApplicationIdentityProvider>;
+  identityProviders?: Array<PatchApplicationIdentityProvider>;
   /**
    *
    * @type {string}
@@ -97,10 +98,10 @@ export interface PatchApplication {
   name?: string;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchApplication
    */
-  requiredPermissions?: Set<PatchApplicationRequiredPermissionsEnum>;
+  requiredPermissions?: Array<PatchApplicationRequiredPermissionsEnum>;
   /**
    *
    * @type {PatchApplicationSettings}
@@ -222,15 +223,15 @@ export function PatchApplicationFromJSONTyped(json: any, ignoreDiscriminator: bo
     certificate: json['certificate'] == null ? undefined : json['certificate'],
     description: json['description'] == null ? undefined : json['description'],
     enabled: json['enabled'] == null ? undefined : json['enabled'],
-    factors: json['factors'] == null ? undefined : new Set(json['factors']),
+    factors: json['factors'] == null ? undefined : json['factors'],
     identityProviders:
       json['identityProviders'] == null
         ? undefined
-        : new Set((json['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderFromJSON)),
+        : (json['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderFromJSON),
     kind: json['kind'] == null ? undefined : json['kind'],
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : json['requiredPermissions'],
     settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
     template: json['template'] == null ? undefined : json['template'],
   };
@@ -249,15 +250,15 @@ export function PatchApplicationToJSONTyped(value?: PatchApplication | null, ign
     certificate: value['certificate'],
     description: value['description'],
     enabled: value['enabled'],
-    factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
+    factors: value['factors'] == null ? undefined : (value['factors'] as Array<any>),
     identityProviders:
       value['identityProviders'] == null
         ? undefined
-        : Array.from(value['identityProviders'] as Set<any>).map(PatchApplicationIdentityProviderToJSON),
+        : (value['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderToJSON),
     kind: value['kind'],
     metadata: value['metadata'],
     name: value['name'],
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : (value['requiredPermissions'] as Array<any>),
     settings: PatchApplicationSettingsToJSON(value['settings']),
     template: value['template'],
   };

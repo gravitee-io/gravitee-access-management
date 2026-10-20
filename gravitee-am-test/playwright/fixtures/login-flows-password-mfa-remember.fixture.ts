@@ -100,7 +100,7 @@ export const test = base.extend<PasswordMfaRememberFixtures>({
             ],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${rememberDomain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${rememberDomain.id}`, priority: 0 }],
       }),
     );
 

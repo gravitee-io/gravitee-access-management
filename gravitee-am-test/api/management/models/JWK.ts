@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -40,10 +41,10 @@ export interface JWK {
   alg?: string;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof JWK
    */
-  keyOps?: Set<string>;
+  keyOps?: Array<string>;
   /**
    *
    * @type {string}
@@ -64,10 +65,10 @@ export interface JWK {
   use?: string;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof JWK
    */
-  x5c?: Set<string>;
+  x5c?: Array<string>;
   /**
    *
    * @type {string}
@@ -105,11 +106,11 @@ export function JWKFromJSONTyped(json: any, ignoreDiscriminator: boolean): JWK {
   }
   return {
     alg: json['alg'] == null ? undefined : json['alg'],
-    keyOps: json['keyOps'] == null ? undefined : new Set(json['keyOps']),
+    keyOps: json['keyOps'] == null ? undefined : json['keyOps'],
     kid: json['kid'] == null ? undefined : json['kid'],
     kty: json['kty'] == null ? undefined : json['kty'],
     use: json['use'] == null ? undefined : json['use'],
-    x5c: json['x5c'] == null ? undefined : new Set(json['x5c']),
+    x5c: json['x5c'] == null ? undefined : json['x5c'],
     x5t: json['x5t'] == null ? undefined : json['x5t'],
     x5tS256: json['x5tS256'] == null ? undefined : json['x5tS256'],
     x5u: json['x5u'] == null ? undefined : json['x5u'],
@@ -127,11 +128,11 @@ export function JWKToJSONTyped(value?: JWK | null, ignoreDiscriminator: boolean 
 
   return {
     alg: value['alg'],
-    keyOps: value['keyOps'] == null ? undefined : Array.from(value['keyOps'] as Set<any>),
+    keyOps: value['keyOps'] == null ? undefined : (value['keyOps'] as Array<any>),
     kid: value['kid'],
     kty: value['kty'],
     use: value['use'],
-    x5c: value['x5c'] == null ? undefined : Array.from(value['x5c'] as Set<any>),
+    x5c: value['x5c'] == null ? undefined : (value['x5c'] as Array<any>),
     x5t: value['x5t'],
     x5tS256: value['x5tS256'],
     x5u: value['x5u'],

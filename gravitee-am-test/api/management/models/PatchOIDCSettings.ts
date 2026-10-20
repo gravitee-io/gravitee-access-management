@@ -22,6 +22,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+// @ts-nocheck gravitee-am-ui-next imports these models, and the generated code fails its noUnusedLocals check
 
 /* tslint:disable */
 /* eslint-disable */
@@ -119,10 +120,10 @@ export interface PatchOIDCSettings {
   requestUris?: Array<string>;
   /**
    *
-   * @type {Set<string>}
+   * @type {Array<string>}
    * @memberof PatchOIDCSettings
    */
-  requiredPermissions?: Set<PatchOIDCSettingsRequiredPermissionsEnum>;
+  requiredPermissions?: Array<PatchOIDCSettingsRequiredPermissionsEnum>;
   /**
    *
    * @type {PatchSecurityProfileSettings}
@@ -239,7 +240,7 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : json['requiredPermissions'],
     securityProfileSettings:
       json['securityProfileSettings'] == null ? undefined : PatchSecurityProfileSettingsFromJSON(json['securityProfileSettings']),
     workloadIdentitySettings:
@@ -264,7 +265,7 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     requestUris: value['requestUris'],
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : (value['requiredPermissions'] as Array<any>),
     securityProfileSettings: PatchSecurityProfileSettingsToJSON(value['securityProfileSettings']),
     workloadIdentitySettings: PatchSpiffeDomainSettingsToJSON(value['workloadIdentitySettings']),
   };

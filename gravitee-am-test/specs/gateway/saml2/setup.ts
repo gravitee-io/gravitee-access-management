@@ -504,7 +504,7 @@ async function createProviderApp(
   return createTestApp(appName, domain, accessToken, 'web', {
     // clientId: clientId, // Pass the specific client ID here
     settings: providerSettings,
-    identityProviders: new Set([{ identity: idpId, priority: -1 }]),
+    identityProviders: [{ identity: idpId, priority: -1 }],
   });
 }
 
@@ -523,7 +523,7 @@ async function createClientApp(domain: Domain, accessToken: string, idpId: strin
 
   return createTestApp(appName, domain, accessToken, 'web', {
     settings: clientSettings,
-    identityProviders: new Set([{ identity: idpId, priority: -1 }]),
+    identityProviders: [{ identity: idpId, priority: -1 }],
   });
 }
 

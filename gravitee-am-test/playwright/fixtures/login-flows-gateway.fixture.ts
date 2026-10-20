@@ -117,7 +117,7 @@ export const test = base.extend<{ loginFlowsBundle: LoginFlowsGatewayBundle }>({
 
     const appIdentifierFirst = await quietly(() =>
       createTestApp(uniqueTestName('pwlf-app-if'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([{ identity: idpIf.id, priority: 0 }]),
+        identityProviders: [{ identity: idpIf.id, priority: 0 }],
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           login: { identifierFirstEnabled: true, inherited: false },
@@ -128,7 +128,7 @@ export const test = base.extend<{ loginFlowsBundle: LoginFlowsGatewayBundle }>({
 
     const appIdpDual = await quietly(() =>
       createTestApp(uniqueTestName('pwlf-app-idp-sel'), domain, adminToken, 'WEB', {
-        identityProviders: new Set([
+        identityProviders: [
           {
             identity: idpA.id,
             selectionRule: "{#request.params['username'] matches 'pwlf_sel1' }",
@@ -139,7 +139,7 @@ export const test = base.extend<{ loginFlowsBundle: LoginFlowsGatewayBundle }>({
             selectionRule: "{#request.params['username'] matches 'pwlf_sel2' }",
             priority: -1,
           },
-        ]),
+        ],
         settings: {
           oauth: oauthWebSettings(REDIRECT_URI),
           advanced: { skipConsent: true },

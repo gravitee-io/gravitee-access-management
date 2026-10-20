@@ -84,7 +84,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
         skipConsent: true,
       },
     },
-    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
+    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
   });
   expect(application).toBeDefined();
   expect(application.id).toBeDefined();

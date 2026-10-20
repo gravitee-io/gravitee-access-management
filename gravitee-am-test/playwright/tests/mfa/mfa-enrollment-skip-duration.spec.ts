@@ -124,7 +124,7 @@ test.describe('Optional enrolment skip duration (AM-2821)', () => {
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
           },
         },
-        identityProviders: new Set([{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }]),
+        identityProviders: [{ identity: `default-idp-${matrixDomain.id}`, priority: 0 }],
       }),
     );
 
