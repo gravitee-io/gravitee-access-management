@@ -36,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -103,6 +104,23 @@ public class DefaultTokenValidatorTest {
             assertEquals("audience-123", validatedToken.getAudience().get(0));
             return true;
         });
+    }
+
+    @Test
+    public void testValidateLightweightTokenKeepsDomain() {
+        JWT jwt = createValidJWT();
+        jwt.setInternalSub("idp-source:user-123");
+        when(jwtService.decodeAndVerify(eq(TOKEN), ArgumentMatchers.<Maybe<String>>any(), eq(JWTService.TokenType.ACCESS_TOKEN)))
+                .thenReturn(Single.just(jwt));
+
+        TestObserver<ValidatedToken> testObserver = validator.validate(TOKEN, settings, domain, client).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertNoErrors();
+        testObserver.assertValue(validatedToken -> DOMAIN_ID.equals(validatedToken.getDomain())
+                && validatedToken.getClaims().keySet().equals(Set.of(
+                        Claims.ISS, Claims.SUB, Claims.AUD, Claims.EXP, Claims.IAT, Claims.NBF, Claims.JTI,
+                        Claims.SCOPE, Claims.CLIENT_ID, Claims.GIO_INTERNAL_SUB, Claims.DOMAIN)));
     }
 
     @Test

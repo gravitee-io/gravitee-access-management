@@ -20,12 +20,13 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { getDefaultIdp } from '@management-commands/idp-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createTestApp } from '@utils-commands/application-commands';
-import { introspectToken as introspectOidcToken, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { introspectToken as introspectOidcToken, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { getDomainManagerUrl } from '@management-commands/service/utils';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
+import { ApplicationLightweightJwtSettings } from '@management-models/ApplicationLightweightJwtSettings';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { TokenClaim } from '@management-models/TokenClaim';
 import { User } from '@management-models/User';
@@ -34,6 +35,8 @@ import request from 'supertest';
 export const TOKEN_EXCHANGE_GRANT = 'urn:ietf:params:oauth:grant-type:token-exchange';
 export const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
 export const ID_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id_token';
+export const REFRESH_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:refresh_token';
+export const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
 
 /**
  * OIDC configuration returned from well-known endpoint
@@ -100,6 +103,24 @@ export interface TokenExchangeFixture {
    * `extraParams` is appended to the form body verbatim.
    */
   exchange: (subjectToken: string, extraParams?: string) => Promise<Record<string, any>>;
+
+  /** Send a token exchange request without asserting the response status. */
+  requestExchange: (exchangeRequest: TokenExchangeRequest) => Promise<request.Response>;
+
+  /** Call /oidc/userinfo with the supplied access token. */
+  userinfo: (accessToken: string) => Promise<Record<string, any>>;
+}
+
+/** RFC 8693 token request parameters, with token types as URNs such as {@link ACCESS_TOKEN_TYPE}. Undefined ones are omitted. */
+export interface TokenExchangeRequest {
+  subjectToken: string;
+  subjectTokenType?: string;
+  actorToken?: string;
+  actorTokenType?: string;
+  requestedTokenType?: string;
+  scope?: string;
+  /** Basic credentials of the client performing the exchange; defaults to the fixture application. */
+  basicAuth?: string;
 }
 
 /**
@@ -188,7 +209,7 @@ export interface TokenExchangeFixtureConfig {
   grantTypes?: string[];
   scopes?: { scope: string; defaultScope: boolean }[];
   tokenCustomClaims?: TokenClaim[];
-  lightweightJwtSettings?: { enabled: boolean };
+  lightweightJwtSettings?: ApplicationLightweightJwtSettings;
   allowedSubjectTokenTypes?: string[];
   // Delegation settings
   allowImpersonation?: boolean;
@@ -308,25 +329,38 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       }).expect(200);
     };
 
+    const requestExchange = async (exchangeRequest: TokenExchangeRequest): Promise<request.Response> => {
+      const params: Record<string, string | undefined> = {
+        grant_type: TOKEN_EXCHANGE_GRANT,
+        subject_token: exchangeRequest.subjectToken,
+        subject_token_type: exchangeRequest.subjectTokenType,
+        actor_token: exchangeRequest.actorToken,
+        actor_token_type: exchangeRequest.actorTokenType,
+        requested_token_type: exchangeRequest.requestedTokenType,
+        scope: exchangeRequest.scope,
+      };
+      const body = Object.entries(params)
+        .filter(([, value]) => value !== undefined)
+        .map(([name, value]) => `${name}=${value}`)
+        .join('&');
+      return performPost(oidc.token_endpoint, '', body, {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${exchangeRequest.basicAuth ?? basicAuth}`,
+      });
+    };
+
     const exchangeToken = async (
       subjectToken: string,
       subjectTokenType: 'access_token' | 'refresh_token',
       actorToken?: string,
     ): Promise<string> => {
-      const actorParams = actorToken ? `&actor_token=${actorToken}&actor_token_type=urn:ietf:params:oauth:token-type:access_token` : '';
-
-      const response = await performPost(
-        oidc.token_endpoint,
-        '',
-        `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-          `&subject_token=${subjectToken}` +
-          `&subject_token_type=urn:ietf:params:oauth:token-type:${subjectTokenType}` +
-          actorParams,
-        {
-          'Content-type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${basicAuth}`,
-        },
-      ).expect(200);
+      const response = await requestExchange({
+        subjectToken,
+        subjectTokenType: `urn:ietf:params:oauth:token-type:${subjectTokenType}`,
+        actorToken,
+        actorTokenType: actorToken ? ACCESS_TOKEN_TYPE : undefined,
+      });
+      expect(response.status).toBe(200);
 
       const exchangedToken = response.body.access_token;
       expect(exchangedToken).toBeDefined();
@@ -343,6 +377,13 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
           Authorization: `Basic ${basicAuth}`,
         },
       ).expect(200);
+      return response.body;
+    };
+
+    const userinfo = async (accessTokenValue: string): Promise<Record<string, any>> => {
+      const response = await performGet(oidc.userinfo_endpoint, '', {
+        Authorization: `Bearer ${accessTokenValue}`,
+      }).expect(200);
       return response.body;
     };
 
@@ -367,6 +408,8 @@ export const setupTokenExchangeFixture = async (config: TokenExchangeFixtureConf
       revokeToken,
       exchangeToken,
       exchange,
+      requestExchange,
+      userinfo,
       cleanup,
     };
   } catch (error) {

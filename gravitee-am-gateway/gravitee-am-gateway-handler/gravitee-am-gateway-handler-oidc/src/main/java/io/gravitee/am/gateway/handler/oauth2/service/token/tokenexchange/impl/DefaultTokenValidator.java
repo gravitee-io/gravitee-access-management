@@ -75,7 +75,7 @@ public class DefaultTokenValidator implements TokenValidator {
                     return TokenValidationUtils.buildValidatedToken(claims,
                             jwt.getExp(), jwt.getIat(), jwt.getNbf(),
                             scopes, audience,
-                            supportedTokenType, domain, null);
+                            supportedTokenType, null);
                 })
                 .onErrorResumeNext(error -> {
                     if (error instanceof InvalidRequestException) {
