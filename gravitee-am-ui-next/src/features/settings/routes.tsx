@@ -19,13 +19,14 @@ import { DOMAIN_SETTINGS_NAV_GROUPS, navItems } from '../../app/navigation';
 import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
 import { certificateRoutes } from '../certificates/routes';
+import { factorRoutes } from '../factors/routes';
 import { flowRoutes } from '../flows/routes';
 import { formRoutes } from '../forms/routes';
 import { identityProviderRoutes } from '../identity-providers/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
 /** Domain settings the console has built. Every other settings item gets a placeholder. */
-const BUILT_SETTINGS = new Set(['general', 'providers', 'certificates', 'forms', 'flows']);
+const BUILT_SETTINGS = new Set(['general', 'providers', 'certificates', 'factors', 'forms', 'flows']);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
 export const domainSettingsRoutes = (
@@ -48,6 +49,7 @@ export const domainSettingsRoutes = (
         />
         {identityProviderRoutes}
         {certificateRoutes}
+        {factorRoutes}
         {formRoutes}
         {flowRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)

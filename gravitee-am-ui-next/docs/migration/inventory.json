@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-20",
-    "angularCommit": "358fb34187",
+    "angularCommit": "a86832205d",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1770,9 +1770,11 @@
                     "resolvers": {
                         "factors": "FactorsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/factors/FactorsPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1801,9 +1803,12 @@
                         "resources": "FactorResourcesResolver",
                         "resourcePlugins": "ResourcePluginsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/factors/CreateFactorPage.tsx",
+                        "src/features/factors/factor-schema.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1833,9 +1838,12 @@
                         "resources": "FactorResourcesResolver",
                         "resourcePlugins": "ResourcePluginsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/factors/FactorPage.tsx",
+                        "src/features/factors/factor-schema.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -1858,12 +1866,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 4,
             "blockers": [],
-            "notes": "Plugin wizard. Factor schemas are not surveyed yet. An Angular Playwright page object exists.",
-            "angularCommit": null
+            "notes": "Plugin wizard. Factor schemas are not surveyed yet. An Angular Playwright page object exists.\n\nBrief.\nPages: settings/factors → FactorsPage → FactorsPage.tsx; factors/new → CreateFactorPage → CreateFactorPage.tsx; factors/:factorId → FactorPage → FactorPage.tsx. Folder src/features/factors/.\nEndpoints: GET domain/factors; GET domain/factors/:id; POST domain/factors (name, type, factorType, configuration); PUT domain/factors/:id (name, type, configuration); DELETE domain/factors/:id; GET /platform/plugins/factors; GET /platform/plugins/factors/:type/schema; GET domain/resources (an error counts as no resources, as findByDomainWhenPermitted does); GET /platform/plugins/resources?expand=icon.\nPermissions: the factors subtree domain_factor_list (parent route AuthGuard). List: Add domain_factor_create; open link domain_factor_read. Create route domain_factor_create. Detail route domain_factor_read; save domain_factor_update (editMode); delete domain_factor_delete.\nLicence: no route feature. The detail Save sits in LicenseGuard with the plugin's feature (PluginFeatureService.getFeature$('factor', type)). The wizard locks the plugins (decorateCatalog$).\nKit parts: PluginWizard, ConfirmDialog, SaveBar, PageHeader, ErrorPanel, NotFoundPanel.\nPrototype additions left out: the list plugin Type column and the Last updated column (no endpoint data: GET factors returns id, name and factorType only); factorType derived server-side (not in AM: NewFactor requires factorType, and Angular step 2 sends the schema default); the \"No compatible service exists yet\" description on an empty resource field (not in AM: Angular only disables the field).\nAngular behaviour added back: factorType from the schema default in the create payload; the Angular step 1 display names of the factor plugins; the graviteeResource field as a select of the category-compatible resources, read-only when none (applyForGraviteeResource, also inside array items); the FIDO2 WebAuthn notes on create and detail; the open link gated by domain_factor_read; the Save licence guard; the name required on the detail page.\nNot in Angular, so not ported: search and pagination (the Angular list is a client table of all factors).\nSchema defaults: the create POST and the detail form fill the schema defaults under the entered values (Graphene extractDefaults), as the Angular json-schema-form does; without them the read-only OTP fields were never sent, and the detail form stayed dirty after a save. The plugin configuration factory ignores unknown fields (FAIL_ON_UNKNOWN_PROPERTIES false). The untyped factorType schema property has no Graphene renderer, so JsonSchemaForm omits it and logs a warning; the host Factor type field shows it.\nResources: listResourcesWhenPermitted mirrors findByDomainWhenPermitted (a failed list counts as none) but lets a 401 reach the login chain. The wizard schema key carries the resource list's update time, so a new resource rebuilds the select.\nFollow-ups outside the unit, from the code review: PluginWizard starts its configuration at {}, so a required field with a default (the email factor's returnDigits) must be picked by hand, and the providers and certificates wizards drop untouched defaults; seed ConfigureForm with extractDefaults. LicenseGuard wraps the whole SaveBar here and in certificates and providers, so Discard also opens the upgrade dialog when the licence lacks the feature; Angular guards Save only. A schema load error hides the whole detail page, so a factor whose plugin is gone cannot be deleted (same shape as certificates). nameResolver is copied in four files.\n\nVerification, 2026-10-20. yarn typecheck, lint, test (154 tests, 24 in the unit) and build pass. console-next Playwright: factors.spec.ts, 3 tests, passes with the 9 other console-next tests (an OTP factor created with the wizard, POST body checked for factorType TOTP; a rename on the detail page saves and the Save button disables; a delete after the confirm dialog lands on the first-use state). Browser journeys on :4201 against the local Management API, network calls recorded per action: list GET factors; create GET /platform/plugins/factors, GET resources, GET /platform/plugins/resources?expand=icon, GET the plugin schema, POST factors with name, type, factorType TOTP and the configuration with the schema defaults; detail GET factors/:id plus the same three lookups; save PUT factors/:id with name, type, configuration; delete DELETE factors/:id, then GET factors. The calls match the Angular services read for the brief. The graviteeResource select (email, SMS, call factors) is covered by the unit tests only: the stack has no resource. The Angular console was not run side by side: :4200 serves the Gamma console on this stack.",
+            "angularCommit": "a86832205d"
         },
         {
             "id": "providers",
