@@ -123,8 +123,6 @@ To configure common features such as:
 * chaos testing (see
 https://github.com/kubernetes/charts/tree/master/stable/chaoskube[chaoskube]
 chart)
-* configuration database (see
-https://github.com/bitnami/charts/tree/master/bitnami/mongodb[mongodb]
 
 [cols=",,",options="header",]
 |===
@@ -138,7 +136,7 @@ https://github.com/bitnami/charts/tree/master/bitnami/mongodb[mongodb]
 
 ===== MongoDB connections
 
-There are three ways to configure MongoDB connections.
+MongoDB must be provisioned outside this chart. There are three ways to configure MongoDB connections.
 
 The most simple is to provide the
 https://docs.mongodb.com/manual/reference/connection-string/[MongoDB
@@ -201,23 +199,6 @@ define the following configuration options:
 |`+mongo.sslEnabled+` |Enable SSL connection to MongoDB |`+false+`
 |`+mongo.socketKeepAlive+` |Enable keep alive for socket |`+false+`
 |===
-
-==== Mongo ReplicaSet
-
-[cols=",,",options="header",]
-|===
-|Parameter |Description |Default
-|`+mongodb-replicaset.enabled+` |Enable deployment of Mongo replicaset
-|`+false+`
-|===
-
-See
-https://github.com/bitnami/charts/tree/master/bitnami/mongodb[MongoDB
-replicaset] for detailed documentation on helm chart.
-
-Please be aware that the mongodb-replicaset installed by Gravitee is NOT recommended in production and it is just for testing purpose and running AM locally.
-
-NOTE: You may encounter issues while running this Helm Charts on Apple Silicon M1 (see https://github.com/bitnami/charts/issues/7305). If you want to deploy MongoDB on M1 we encourage you to switch to an other Helm Charts for deploying MongoDB.
 
 ==== Proxy configuration for HTTP clients
 
@@ -610,45 +591,6 @@ For PBKDF2, the number of iterations, the salt length and the algorithm can be s
 |mongo.socketKeepAlive |bool |`+false+` |
 
 |mongo.sslEnabled |bool |`+false+` |
-
-|mongodb-replicaset.auth.adminPassword |string |`+"password"+` |
-
-|mongodb-replicaset.auth.adminUser |string |`+"username"+` |
-
-|mongodb-replicaset.auth.enabled |bool |`+false+` |
-
-|mongodb-replicaset.auth.key |string |`+"keycontent"+` |
-
-|mongodb-replicaset.auth.metricsPassword |string |`+"password"+` |
-
-|mongodb-replicaset.auth.metricsUser |string |`+"metrics"+` |
-
-|mongodb-replicaset.configmap |object |`+{}+` |
-
-|mongodb-replicaset.enabled |bool |`+false+` |
-
-|mongodb-replicaset.image.repository |string |`+"mongo"+` |
-
-|mongodb-replicaset.image.tag |float |`+3.6+` |
-
-|mongodb-replicaset.persistentVolume.accessModes[0] |string
-|`+"ReadWriteOnce"+` |
-
-|mongodb-replicaset.persistentVolume.enabled |bool |`+true+` |
-
-|mongodb-replicaset.persistentVolume.size |string |`+"1Gi"+` |
-
-|mongodb-replicaset.replicaSetName |string |`+"rs0"+` |
-
-|mongodb-replicaset.replicas |int |`+3+` |
-
-|mongodb-replicaset.resources.limits.cpu |string |`+"500m"+` |
-
-|mongodb-replicaset.resources.limits.memory |string |`+"512Mi"+` |
-
-|mongodb-replicaset.resources.requests.cpu |string |`+"100m"+` |
-
-|mongodb-replicaset.resources.requests.memory |string |`+"256Mi"+` |
 
 |smtp.enabled |bool |`+true+` |
 
