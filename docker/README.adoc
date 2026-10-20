@@ -80,16 +80,19 @@ All of this comes from https://docs.postgresql.fr/12/ssl-tcp.html[PSQL Documenta
 
 First generate certificates using `generate-certificates.sh`
 
-To be used by Postgres, the right permissions have to be set on these files:
+Next to the certificates, create a `pg_hba.conf` that only accepts TLS connections over the network:
 ----
-chown 1001 server.key.pem
-chown 1001 server.crt.pem
-chown 1001 ca.crt.pem
+cat > pg_hba.conf <<'EOF'
+local   all  all                trust
+hostssl all  all  0.0.0.0/0     scram-sha-256
+hostssl all  all  ::/0          scram-sha-256
+EOF
 ----
 
-Finally, you can start Postgres container:
+Finally, you can start Postgres container. It first copies the private key with the owner and permissions Postgres requires:
 ----
-docker run --rm -e POSTGRESQL_PASSWORD=p@ssw0rd -e POSTGRESQL_TLS_KEY_FILE=/ca/server.key.pem -e POSTGRESQL_TLS_CERT_FILE=/ca/server.crt.pem -e POSTGRESQL_ENABLE_TLS=yes -e POSTGRESQL_TLS_ENFORCE=yes  -v $PWD:/ca/ -p 5432:5432 --name poc-psql bitnami/postgresql
+docker run --rm -e POSTGRES_PASSWORD=p@ssw0rd -v $PWD:/ca:ro -p 5432:5432 --name poc-psql postgres:18.4 \
+  sh -c 'install -o postgres -m 600 /ca/server.key.pem /tmp/server.key.pem && exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/ca/server.crt.pem -c ssl_key_file=/tmp/server.key.pem -c hba_file=/ca/pg_hba.conf'
 ----
 
 

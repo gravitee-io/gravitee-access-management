@@ -21,10 +21,8 @@
 # extensibleObject is auxiliary and permits memberUid alongside groupOfNames.
 #
 # NOTE: the GROUPS are deliberately NOT in this file — see ldap/groups.ldif.
-# The memberof overlay only stamps memberOf onto a user when the group naming it
-# is written AFTER the overlay is installed. Groups therefore have to be added by
-# openldap-init once the overlay is in place; seeding them here would leave every
-# user without memberOf.
+# This file is loaded with slapadd, which bypasses the memberof overlay, so groups
+# seeded here would leave every user without memberOf.
 
 dn: dc=gravitee,dc=io
 objectClass: top

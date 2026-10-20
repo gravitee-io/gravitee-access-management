@@ -1,0 +1,37 @@
+# MongoDB chart for migration test (official mongo image, standalone).
+fullnameOverride: mongo-mongodb
+
+securityContext:
+  # mongodb user of the official image
+  runAsUser: 999
+  runAsGroup: 999
+
+image:
+  repository: mongo
+  tag: "8.2"
+  pullPolicy: IfNotPresent
+
+auth:
+  # K8s secret *name* only (keys: mongodb-root-password, mongodb-passwords).
+  existingSecret: mongo-mongodb-auth
+  rootUsername: root
+  username: gravitee
+  # Database the user is created in, and authenticates against.
+  database: gravitee
+  # Further databases the user gets readWrite on.
+  extraDatabases: []
+
+service:
+  port: 27017
+
+persistence:
+  enabled: false
+  size: 5Gi
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 512Mi

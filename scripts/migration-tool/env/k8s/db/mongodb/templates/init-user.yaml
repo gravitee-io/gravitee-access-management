@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mongo.name" . }}-init
+  labels:
+    {{- include "mongo.labels" . | nindent 4 }}
+data:
+  # Run once by the image entrypoint on an empty data directory, as root.
+  01-create-user.js: |
+    db.getSiblingDB({{ .Values.auth.database | quote }}).createUser({
+      user: {{ .Values.auth.username | quote }},
+      pwd: process.env.MONGODB_USER_PASSWORD,
+      roles: [
+        { role: 'readWrite', db: {{ .Values.auth.database | quote }} },
+        {{- range .Values.auth.extraDatabases }}
+        { role: 'readWrite', db: {{ . | quote }} },
+        {{- end }}
+      ],
+    });

@@ -719,6 +719,10 @@ cmd_up() {
     log "Pulled mode: ${reg}/am-*:${VERSION}"
     compose pull gateway management $( [ "$WANT_UI" -eq 1 ] && echo webui ) \
       || die "Image pull failed. Check the tag/registry and 'docker login ${reg}'."
+    # OpenLDAP has no published image; build it locally if requested.
+    if [ "$WANT_LDAP" -eq 1 ]; then
+      compose build openldap openldap-init || die "OpenLDAP image build failed — see output above."
+    fi
     log "Starting stack (no build)…"
     local up_args=(); [ "$DETACH" -eq 1 ] && up_args+=(-d); up_args+=(--no-build)
     start_stack "${up_args[@]}" ${SERVICES[@]+"${SERVICES[@]}"}

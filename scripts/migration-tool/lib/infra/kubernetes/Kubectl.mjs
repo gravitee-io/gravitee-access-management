@@ -46,7 +46,7 @@ export class Kubectl {
     }
 
     /**
-     * Create a generic secret from literal key-value pairs (for Bitnami MongoDB auth.existingSecret).
+     * Create a generic secret from literal key-value pairs.
      * @param {string} name - Secret name
      * @param {Record<string, string>} literals - Keys and string values (no sensitive data in logs)
      */
