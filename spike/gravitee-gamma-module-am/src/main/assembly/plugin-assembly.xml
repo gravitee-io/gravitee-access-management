@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<assembly>
+    <id>plugin</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <!-- No ui/ folder: the tile opens the AM console, so there is no federated remote to ship. -->
+    <files>
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}.jar</source>
+        </file>
+    </files>
+</assembly>

@@ -1,0 +1,118 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { hash } from 'bcryptjs';
+import { http } from './http';
+import { type DomainRef, domainPath } from './paths';
+import type { IdentityProviderPlugin, Plugin } from './plugins';
+
+export interface IdentityProviderSummary {
+    readonly id: string;
+    readonly name: string;
+    readonly type: string;
+    readonly system: boolean;
+    readonly external: boolean;
+}
+
+export interface IdentityProvider extends IdentityProviderSummary {
+    /** Plugin configuration, serialized as a JSON string. System providers do not return it. */
+    readonly configuration?: string;
+    readonly domainWhitelist?: string[];
+    /** User profile attribute to raw attribute or expression. */
+    readonly mappers?: Record<string, string>;
+    /** Role id to the user expressions that get the role. */
+    readonly roleMapper?: Record<string, string[]>;
+    /** Group id to the user expressions that join the group. */
+    readonly groupMapper?: Record<string, string[]>;
+    /** True when the platform pinned the user storage of this MongoDB provider to the system cluster. */
+    readonly systemClusterRestricted?: boolean;
+}
+
+export function listIdentityProviders(ref: DomainRef): Promise<IdentityProviderSummary[]> {
+    return http<IdentityProviderSummary[]>(`${domainPath(ref)}/identities`);
+}
+
+export function getIdentityProvider(ref: DomainRef, identityProviderId: string): Promise<IdentityProvider> {
+    return http<IdentityProvider>(`${domainPath(ref)}/identities/${identityProviderId}`);
+}
+
+export function updateIdentityProvider(ref: DomainRef, provider: IdentityProvider): Promise<IdentityProvider> {
+    const { name, type, domainWhitelist, mappers, roleMapper, groupMapper } = provider;
+    // A system provider comes back without its configuration. Angular sends an empty one, which the API requires.
+    const configuration = provider.configuration ?? '{}';
+    return http<IdentityProvider>(`${domainPath(ref)}/identities/${provider.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, type, configuration, domainWhitelist, mappers, roleMapper, groupMapper }),
+    });
+}
+
+export function deleteIdentityProvider(ref: DomainRef, identityProviderId: string): Promise<void> {
+    return http<void>(`${domainPath(ref)}/identities/${identityProviderId}`, { method: 'DELETE' });
+}
+
+const INLINE_TYPE = 'inline-am-idp';
+const MASKED_PASSWORD = '********';
+// bcryptjs 3 writes $2b$, older tools $2a$ or $2y$.
+const BCRYPT_HASH = /^\$2[aby]\$/;
+
+interface InlineUser {
+    readonly password: string;
+}
+
+/**
+ * Serializes a plugin configuration for a create or an update. An inline provider with the BCrypt encoder gets its new
+ * passwords hashed first, as the Angular `ProviderService.enhanceConfiguration` does: the plugin stores them as sent.
+ */
+export async function serializeConfiguration(type: string, configuration: Record<string, unknown>): Promise<string> {
+    if (type !== INLINE_TYPE || configuration.passwordEncoder !== 'BCrypt' || !Array.isArray(configuration.users)) {
+        return JSON.stringify(configuration);
+    }
+    const users = await Promise.all(
+        (configuration.users as InlineUser[]).map(async user =>
+            BCRYPT_HASH.test(user.password) || user.password === MASKED_PASSWORD
+                ? user
+                : { ...user, password: await hash(user.password, 10) },
+        ),
+    );
+    return JSON.stringify({ ...configuration, users });
+}
+
+export function getIdentityProviderSchema(type: string): Promise<Record<string, unknown>> {
+    return http<Record<string, unknown>>(`/platform/plugins/identities/${type}/schema`);
+}
+
+export interface NewIdentityProvider {
+    readonly name: string;
+    readonly type: string;
+    /** Plugin configuration, serialized as a JSON string. */
+    readonly configuration: string;
+    readonly external: boolean;
+    readonly domainWhitelist: readonly string[];
+}
+
+export function createIdentityProvider(ref: DomainRef, provider: NewIdentityProvider): Promise<IdentityProvider> {
+    return http<IdentityProvider>(`${domainPath(ref)}/identities`, { method: 'POST', body: JSON.stringify(provider) });
+}
+
+const EXPAND = 'expand=icon&expand=displayName&expand=labels';
+
+/** The built-in plugins, then the social and enterprise plugins, as the Angular `IdentitiesResolver` loads them. */
+export async function listIdentityProviderPlugins(): Promise<IdentityProviderPlugin[]> {
+    const [builtIn, external] = await Promise.all([
+        http<Plugin[]>(`/platform/plugins/identities?${EXPAND}`),
+        http<Plugin[]>(`/platform/plugins/identities?external=true&${EXPAND}`),
+    ]);
+    return [...builtIn.map(plugin => ({ ...plugin, external: false })), ...external.map(plugin => ({ ...plugin, external: true }))];
+}
