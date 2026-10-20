@@ -37,8 +37,10 @@ import { SaveBar } from '../../app/components/SaveBar';
 import { APPLICATION_NAV_GROUPS } from '../../app/navigation';
 import { type ApplicationDetail, getApplication, patchApplication } from '../../lib/api/applications';
 import { isNotFound } from '../../lib/api/http';
+import { listApplicationPermissions } from '../../lib/api/permissions';
 import { useSectionSidebar } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
+import { LoadPermissionScope, usePermissions } from '../../lib/session/permissions';
 import { FlowsPage } from '../flows/FlowsPage';
 import { APPLICATION_TYPE_LABELS } from './application-types';
 
@@ -90,6 +92,7 @@ interface SettingsValues {
 
 function Settings({ application }: { readonly application: ApplicationDetail }) {
     const { ref } = useCurrentDomain();
+    const canEdit = usePermissions().has('application_settings_update');
     const queryClient = useQueryClient();
     const form = useForm<SettingsValues>({
         defaultValues: { name: application.name, description: application.description ?? '', enabled: application.enabled },
@@ -110,22 +113,29 @@ function Settings({ application }: { readonly application: ApplicationDetail }) 
         <form noValidate onSubmit={form.handleSubmit(values => save.mutate(values))} className="flex max-w-2xl flex-col gap-4">
             <Field data-invalid={!!nameError}>
                 <FieldLabel htmlFor="name">Name</FieldLabel>
-                <Input id="name" aria-invalid={!!nameError} {...form.register('name', { required: 'Name is required' })} />
+                <Input
+                    id="name"
+                    aria-invalid={!!nameError}
+                    disabled={!canEdit}
+                    {...form.register('name', { required: 'Name is required' })}
+                />
                 {nameError && <FieldError errors={[nameError]} />}
             </Field>
             <Field>
                 <FieldLabel htmlFor="description">Description</FieldLabel>
-                <Textarea id="description" rows={3} {...form.register('description')} />
+                <Textarea id="description" rows={3} disabled={!canEdit} {...form.register('description')} />
             </Field>
             <Field orientation="horizontal">
                 <Controller
                     control={form.control}
                     name="enabled"
-                    render={({ field }) => <Switch id="enabled" checked={field.value} onCheckedChange={field.onChange} />}
+                    render={({ field }) => (
+                        <Switch id="enabled" checked={field.value} disabled={!canEdit} onCheckedChange={field.onChange} />
+                    )}
                 />
                 <FieldLabel htmlFor="enabled">Enabled</FieldLabel>
             </Field>
-            <SaveBar dirty={form.formState.isDirty} saving={save.isPending} onDiscard={() => form.reset()} />
+            <SaveBar canEdit={canEdit} dirty={form.formState.isDirty} saving={save.isPending} onDiscard={() => form.reset()} />
         </form>
     );
 }
@@ -157,7 +167,14 @@ export function ApplicationLayout() {
     if (!application) {
         return <Spinner />;
     }
-    return <ApplicationSections application={application} />;
+    return (
+        <LoadPermissionScope
+            queryKey={['application-permissions', ref, application.id]}
+            queryFn={() => listApplicationPermissions(ref, application.id)}
+        >
+            <ApplicationSections application={application} />
+        </LoadPermissionScope>
+    );
 }
 
 function ApplicationSections({ application }: { readonly application: ApplicationDetail }) {

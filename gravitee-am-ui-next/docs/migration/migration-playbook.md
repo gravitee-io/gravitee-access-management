@@ -109,8 +109,12 @@ Check: every `path` in the unit's inventory entry resolves to a React route. The
 
 ### 4.4 Permissions and licence
 
-- Wrap each route that has `effectivePerms` with the permission route element and the same list.
-- Gate each create, update and delete action with the AM permission from the brief.
+- Wrap each route whose `guards` has `AuthGuard` in `<RequirePermission anyOf={perms}>`, with that route's own `perms`
+  list. The parent routes carry their own, so `effectivePerms` is for reading, not for the element.
+- Gate each create, update and delete action with `<Can all={[...]}>` or `usePermissions().has()` and the AM
+  permission from the brief.
+- When the unit introduces a new scope, such as a protected resource, load its list with `LoadPermissionScope` in the
+  scope component.
 - Wrap each route with a `licenseFeature` with the licence route element. Guard the gated action's click with the
   licence click guard.
 - Hide a route and its nav item when the page has `hideInCloudMode` and the installation is managed.

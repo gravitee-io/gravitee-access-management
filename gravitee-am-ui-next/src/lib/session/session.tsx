@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactNode, use } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { type CurrentUser, type Environment, getCurrentUser, listEnvironments } from '../api/management-api';
+import { PermissionScope } from './permissions';
 
 export interface Session {
     readonly user: CurrentUser;
@@ -48,7 +49,11 @@ export function SessionGate({ children }: { readonly children: ReactNode }) {
     const { data, error } = useQuery({ queryKey: ['session'], queryFn: loadSession, staleTime: Infinity });
 
     if (data) {
-        return <SessionContext value={data}>{children}</SessionContext>;
+        return (
+            <SessionContext value={data}>
+                <PermissionScope permissions={data.user.permissions}>{children}</PermissionScope>
+            </SessionContext>
+        );
     }
     if (error && !('status' in error && error.status === 401)) {
         return (

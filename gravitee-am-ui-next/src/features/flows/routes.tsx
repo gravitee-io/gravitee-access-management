@@ -15,5 +15,11 @@
  */
 import { Route } from 'react-router-dom';
 import { lazyPage } from '../../lib/routing/lazyPage';
+import { RequirePermission } from '../../lib/session/permissions';
 
-export const flowRoutes = <Route path="flows" element={lazyPage(() => import('./FlowsPage'), 'FlowsPage')} />;
+export const flowRoutes = (
+    <Route
+        path="flows"
+        element={<RequirePermission anyOf={['domain_flow_list']}>{lazyPage(() => import('./FlowsPage'), 'FlowsPage')}</RequirePermission>}
+    />
+);

@@ -129,8 +129,12 @@ src/
 - Permission strings are AM names with underscores, taken from the Angular route `perms.only` list or the template
   `hasPermission` directive, for example `domain_scope_create`. The prototype's Gamma-style strings such as
   `domain-scope:create` are not AM names.
-- The permission and licence hooks are Stage 1 foundation stories. Until they exist, record the strings of a page in
-  its inventory entry and do not fake a gate.
+- `src/lib/session/permissions.tsx` holds the model. `usePermissions()` gives `has(...names)` for all-of and
+  `hasAny(...names)` for any-of. `<RequirePermission anyOf={[...]}>` wraps a route that Angular guards with `AuthGuard`,
+  with that route's own `perms.only` list. `<Can all={[...]}>` gates a button or a column, as `*hasPermission` does. A
+  scope's list loads through `LoadPermissionScope` before its pages render. Reference: `ApplicationPage.tsx`.
+- The licence hook is a Stage 1 foundation story. Until it exists, record the feature of a page in its inventory entry
+  and do not fake a gate.
 - Licence features are the 42 `AM_*` names in `../gravitee-am-ui/src/app/components/gio-license/gio-license-data.ts`.
 
 ## 9. Porting a page
@@ -143,7 +147,7 @@ Replace in every prototype page:
 | Prototype                                            | Console                                                                           |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------- |
 | `useJson`, `send`, `amUrls`, `*Urls`                 | `useQuery`, `useMutation`, functions in `src/lib/api/`                            |
-| `useHasPermission` and Gamma-style strings           | The permission hook and AM strings                                                |
+| `useHasPermission` and Gamma-style strings           | `usePermissions()` or `<Can>` and AM strings                                      |
 | `useDomain()` from `DomainLayout`                    | `useCurrentDomain()`                                                              |
 | `useEnvironment()` stub, `buildEnvPath()`            | `useCurrentEnvironment()`, `basePath`, `domainsPath`                              |
 | `/environments/:env/am/domains/:domainId`            | `/environments/:envHrid/domains/:domainHrid`                                      |

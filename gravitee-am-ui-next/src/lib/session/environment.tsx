@@ -16,6 +16,8 @@
 import { createContext, use } from 'react';
 import { Navigate, Outlet, useParams } from 'react-router-dom';
 import type { Environment } from '../api/management-api';
+import { listEnvironmentPermissions } from '../api/permissions';
+import { LoadPermissionScope } from './permissions';
 import { useSession } from './session';
 
 const EnvironmentContext = createContext<Environment | null>(null);
@@ -31,7 +33,7 @@ export function useCurrentEnvironment(): Environment {
 /** Resolves `:envHrid` against the user's environments. `/auth/cockpit` lands on `/environments/<hrid>`. */
 export function EnvironmentScope() {
     const { envHrid } = useParams();
-    const { environments } = useSession();
+    const { user, environments } = useSession();
     const environment = environments.find(env => envHrid !== undefined && env.hrids.includes(envHrid));
 
     if (!environment) {
@@ -39,7 +41,12 @@ export function EnvironmentScope() {
     }
     return (
         <EnvironmentContext value={environment}>
-            <Outlet />
+            <LoadPermissionScope
+                queryKey={['environment-permissions', user.org, environment.id]}
+                queryFn={() => listEnvironmentPermissions(user.org, environment.id)}
+            >
+                <Outlet />
+            </LoadPermissionScope>
         </EnvironmentContext>
     );
 }

@@ -99,8 +99,9 @@ Check: every `path` of the unit's inventory entry resolves to a route, and the p
 
 ## Step 6: permissions and licence
 
-Wrap each route with `effectivePerms` in the permission route element with the same list. Gate each create, update
-and delete action with the AM name from the brief. Wrap each route with a `licenseFeature` in the licence route
+Wrap each route whose `guards` has `AuthGuard` in `<RequirePermission anyOf={perms}>` from
+`src/lib/session/permissions.tsx`, with that route's own `perms` list. Gate each create, update and delete action with
+`<Can all={[...]}>` or `usePermissions().has()` and the AM name from the brief. Wrap each route with a `licenseFeature` in the licence route
 element and guard the action's click. Hide a `hideInCloudMode` page when the installation is managed.
 
 Check: a test renders the page without the permission and asserts the action is absent.

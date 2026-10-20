@@ -22,7 +22,9 @@ import { NotFoundPanel } from '../../app/components/NotFoundPanel';
 import { type Domain, getDomainByHrid } from '../api/domains';
 import { isNotFound } from '../api/http';
 import type { DomainRef } from '../api/paths';
+import { listDomainPermissions } from '../api/permissions';
 import { useCurrentEnvironment } from './environment';
+import { LoadPermissionScope } from './permissions';
 import { useSession } from './session';
 
 interface DomainScopeValue {
@@ -77,7 +79,9 @@ export function DomainScope() {
     const ref = { organizationId: user.org, environmentId: environment.id, domainId: domain.id };
     return (
         <DomainContext value={{ domain, ref, domainsPath, basePath: `${domainsPath}/${domain.hrid}` }}>
-            <Outlet />
+            <LoadPermissionScope queryKey={['domain-permissions', ref]} queryFn={() => listDomainPermissions(ref)}>
+                <Outlet />
+            </LoadPermissionScope>
         </DomainContext>
     );
 }

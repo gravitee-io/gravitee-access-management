@@ -76,10 +76,10 @@ five. Do not send the whole entity back.
 
 ### 1.3 Permissions
 
-| Prototype                                              | Console                                                                | Mode           |
-| ------------------------------------------------------ | ---------------------------------------------------------------------- | -------------- |
-| `useHasPermission({ anyOf: ['domain-scope:create'] })` | `usePermissions().hasAny(['domain_scope_create'])`                     | Manual         |
-| `canCreate ? <Button> : null`                          | `<Can perms={['domain_scope_create']}><Button /></Can>` or the boolean | Semi-automatic |
+| Prototype                                              | Console                                                              | Mode           |
+| ------------------------------------------------------ | -------------------------------------------------------------------- | -------------- |
+| `useHasPermission({ anyOf: ['domain-scope:create'] })` | `usePermissions().has('domain_scope_create')`                        | Manual         |
+| `canCreate ? <Button> : null`                          | `<Can all={['domain_scope_create']}><Button /></Can>` or the boolean | Semi-automatic |
 
 The AM name comes from the Angular source, in this order of preference:
 
@@ -90,8 +90,9 @@ The AM name comes from the Angular source, in this order of preference:
 The prototype string is a hint for the resource and the action, nothing more. `domain-scope:create` points at
 `domain_scope_create`. `domain-settings:update` points at `domain_settings_update`. Check each one.
 
-The permission hook is a Stage 1 story. Until it lands, write the AM strings into the inventory entry and leave the
-action visible.
+The model lives in `src/lib/session/permissions.tsx`. A route that Angular guards with `AuthGuard` gets
+`<RequirePermission anyOf={perms}>` with that route's own `perms` list from the inventory. A scope's list loads through
+`LoadPermissionScope` in the scope component, as `ApplicationLayout` does for an application.
 
 ### 1.4 Session and scope
 
@@ -195,7 +196,7 @@ uncovered list is in `migration-inventory.md`.
 | Angular                                                          | React                                                             | Mode           |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------- | -------------- |
 | A route with `component`                                         | A `<Route>` with `lazyPage()` in the area's `routes.tsx`          | Semi-automatic |
-| `canActivate: [AuthGuard]` with `data.perms.only`                | The permission route element with the same list                   | Semi-automatic |
+| `canActivate: [AuthGuard]` with `data.perms.only`                | `<RequirePermission anyOf={perms}>` with the route's own list     | Semi-automatic |
 | `canActivate: [LicenseGuard]` with `data.licenseOptions.feature` | The licence route element with the same feature                   | Semi-automatic |
 | `canActivate: [CloudModeGuard]`, `menu.hideInCloudMode`          | Hide the route and the nav item when the installation is managed  | Semi-automatic |
 | `data.types.only: ['WEB', ...]` on an application section        | Filter the section nav groups by `application.type` in the layout | Manual         |

@@ -15,5 +15,11 @@
  */
 import { Route } from 'react-router-dom';
 import { lazyPage } from '../../lib/routing/lazyPage';
+import { RequirePermission } from '../../lib/session/permissions';
 
-export const domainRoutes = <Route path="domains" element={lazyPage(() => import('./DomainsPage'), 'DomainsPage')} />;
+export const domainRoutes = (
+    <Route
+        path="domains"
+        element={<RequirePermission anyOf={['domain_list']}>{lazyPage(() => import('./DomainsPage'), 'DomainsPage')}</RequirePermission>}
+    />
+);
