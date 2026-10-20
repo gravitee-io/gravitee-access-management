@@ -75,7 +75,7 @@ Create `src/lib/api/<unit>.ts`.
 - One function per Angular service method the unit uses: `listX(ref, page, size, query)`, `getX(ref, id)`,
   `createX(ref, body)`, `updateX(ref, id, body)`, `patchX(ref, id, patch)`, `deleteX(ref, id)`. Same path, same
   parameters, same payload fields.
-- Build the path with the shared `domainPath` helper. Stage 1 story 1 exports it from `src/lib/api/paths.ts`.
+- Build the path with `domainPath(ref)` and `searchParam(query)` from `src/lib/api/paths.ts`.
 
 Check: every endpoint in the brief has a function. No function has an endpoint the brief does not list.
 
@@ -97,8 +97,11 @@ permission string, no `@mirrors`, no `interface` passed to a resolver.
 
 ### 4.3 Routes and navigation
 
-- Create `src/features/<unit>/routes.tsx` that exports the unit's `<Route>` elements, with the Angular path segments.
-- Mount it in `src/app/App.tsx` through `React.lazy`, in place of the placeholder routes for the unit's keys.
+- Create `src/features/<unit>/routes.tsx` that exports the unit's `<Route>` elements, with the Angular path segments
+  and `lazyPage()` for each page.
+- Mount it in `src/features/settings/routes.tsx` for a domain setting, in `src/features/organization/routes.tsx` for an
+  organization unit, or in `src/app/App.tsx` for a top-level section, in place of the placeholder routes for the unit's
+  keys.
 - Check `src/app/navigation.ts`: the unit's nav key and title exist. Add a missing one with the Angular `menu.label`.
 - Set `useBreadcrumbs` on a page and `useSectionSidebar` on a layout, with absolute paths from `basePath`.
 

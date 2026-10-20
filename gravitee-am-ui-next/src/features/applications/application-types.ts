@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { ApplicationType } from '../../lib/api/management-api';
+import type { ApplicationType } from '../../lib/api/applications';
 
 export const APPLICATION_TYPE_LABELS: Record<ApplicationType, string> = {
     web: 'Web',

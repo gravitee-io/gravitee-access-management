@@ -27,7 +27,7 @@ import {
     useSidebar,
 } from '@gravitee/graphene-core';
 import { CheckIcon, ChevronsUpDownIcon, GlobeIcon, ListIcon } from '@gravitee/graphene-core/icons';
-import type { Domain } from '../../lib/api/management-api';
+import type { Domain } from '../../lib/api/domains';
 
 interface DomainSwitcherProps {
     readonly domains: readonly Domain[];

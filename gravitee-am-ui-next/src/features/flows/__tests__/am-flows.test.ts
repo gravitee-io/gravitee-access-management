@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { describe, expect, it } from 'vitest';
-import type { AmFlow } from '../../../lib/api/management-api';
+import type { AmFlow } from '../../../lib/api/flows';
 import { AM_FLOW_MODEL, toAmFlows, toStudioFlow } from '../am-flows';
 
 const LOGIN: AmFlow = {

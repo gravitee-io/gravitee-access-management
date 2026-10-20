@@ -21,7 +21,7 @@ import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
-import { type IdentityProviderSummary, listIdentityProviders } from '../../lib/api/management-api';
+import { type IdentityProviderSummary, listIdentityProviders } from '../../lib/api/identity-providers';
 import { useCurrentDomain } from '../../lib/session/domain';
 
 const columns: ColumnDef<IdentityProviderSummary, unknown>[] = [

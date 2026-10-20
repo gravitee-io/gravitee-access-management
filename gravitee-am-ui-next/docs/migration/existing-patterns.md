@@ -24,7 +24,7 @@ cookie and redirects to `/environments/<hrid>`. The console must keep that route
 
 ## 2. Routing
 
-One route tree in `App.tsx`, no lazy routes, no route objects.
+One route tree. `App.tsx` mounts each area's `routes.tsx`, and pages load through `lazyPage()`. No route objects.
 
 ```
 /login, /login/callback, /logout, /logout/callback
@@ -89,9 +89,10 @@ that the Angular `AuthGuard` loads are not loaded.
   `undefined`.
 - `httpText(path)` returns the body as text, for AsciiDoc documentation.
 
-`src/lib/api/management-api.ts` is one file with the types and the functions for domains, applications, identity
-providers, forms, flows and policies. Functions are plain `async` functions that return the payload. Paths follow the
-Angular services, under `/organizations/:org/environments/:env/domains/:id`.
+`src/lib/api/` holds one file per area: `domains.ts`, `applications.ts`, `identity-providers.ts`, `forms.ts` and
+`flows.ts`, each with its types and functions. `management-api.ts` keeps the user, the environments and `Page<T>`.
+`paths.ts` holds `DomainRef`, `domainPath(ref)` and `searchParam(query)`. Functions are plain `async` functions that
+return the payload. Paths follow the Angular services, under `/organizations/:org/environments/:env/domains/:id`.
 
 Conventions in the functions:
 
@@ -225,8 +226,7 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 | No licence hook, no upgrade dialog                              | EE features are not gated                   |
 | No confirm dialog, no save bar, no wizard, no memberships panel | Create and delete flows cannot be ported    |
 | No error or not-found panel                                     | Each page writes its own one-line error     |
-| One route tree, one API file, one navigation file               | Parallel agents collide on three files      |
-| No lazy routes                                                  | Each page adds to the initial bundle        |
+| One navigation file                                             | Parallel agents collide on it               |
 | No Playwright project                                           | Behaviour parity has no automated check     |
 | No README                                                       | Setup lives in the spike plan               |
 

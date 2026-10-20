@@ -5,3 +5,4 @@ node_modules/
 .yarn/
 docs/migration/inventory.json
 docs/migration/migration-inventory.md
+CLAUDE.md

@@ -194,7 +194,7 @@ uncovered list is in `migration-inventory.md`.
 
 | Angular                                                          | React                                                             | Mode           |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------- | -------------- |
-| A route with `component`                                         | A `<Route>` in the area's `routes.tsx`, lazy from `App.tsx`       | Semi-automatic |
+| A route with `component`                                         | A `<Route>` with `lazyPage()` in the area's `routes.tsx`          | Semi-automatic |
 | `canActivate: [AuthGuard]` with `data.perms.only`                | The permission route element with the same list                   | Semi-automatic |
 | `canActivate: [LicenseGuard]` with `data.licenseOptions.feature` | The licence route element with the same feature                   | Semi-automatic |
 | `canActivate: [CloudModeGuard]`, `menu.hideInCloudMode`          | Hide the route and the nav item when the installation is managed  | Semi-automatic |

@@ -16,33 +16,18 @@
 import { LayoutSlotsProvider, Toaster, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import {
-    ApplicationFlowsPage,
-    ApplicationGeneralPage,
-    ApplicationLayout,
-    ApplicationOverviewPage,
-} from '../features/applications/ApplicationPage';
-import { ApplicationsPage } from '../features/applications/ApplicationsPage';
-import { LoginCallback, LoginRedirect, LogoutCallback, LogoutRedirect } from '../features/auth/AuthRoutes';
-import { DomainsPage } from '../features/domains/DomainsPage';
-import { FlowsPage } from '../features/flows/FlowsPage';
-import { LoginFormPage } from '../features/forms/LoginFormPage';
-import { IdentityProviderPage } from '../features/identity-providers/IdentityProviderPage';
-import { IdentityProvidersPage } from '../features/identity-providers/IdentityProvidersPage';
-import { OrganizationLayout } from '../features/organization/OrganizationLayout';
-import { DomainSettingsLayout } from '../features/settings/DomainSettingsLayout';
+import { applicationRoutes } from '../features/applications/routes';
+import { authRoutes } from '../features/auth/routes';
+import { domainRoutes } from '../features/domains/routes';
+import { organizationRoutes } from '../features/organization/routes';
+import { domainSettingsRoutes } from '../features/settings/routes';
 import { redirectToLogin } from '../lib/api/auth';
 import { HttpError } from '../lib/api/http';
 import { DomainScope } from '../lib/session/domain';
 import { EnvironmentScope, RootRedirect } from '../lib/session/environment';
 import { SessionGate } from '../lib/session/session';
 import { Shell } from './Shell';
-import { DomainPlaceholderPage, PlaceholderPage } from './components/PlaceholderPage';
-import { APPLICATION_NAV_GROUPS, DOMAIN_SETTINGS_NAV_GROUPS, navItems, ORGANIZATION_NAV_GROUPS } from './navigation';
-
-/** Domain settings the spike has built. Every other settings item gets a placeholder. */
-const BUILT_DOMAIN_SETTINGS = new Set(['providers', 'forms', 'flows']);
-const BUILT_APPLICATION_SECTIONS = new Set(['overview', 'design/flows', 'settings/general']);
+import { DomainPlaceholderPage } from './components/PlaceholderPage';
 
 const queryClient = new QueryClient({
     queryCache: new QueryCache({
@@ -60,6 +45,10 @@ const queryClient = new QueryClient({
     },
 });
 
+/**
+ * The route tree. Each feature area exports its routes from its own `routes.tsx`, with the pages loaded on first
+ * navigation. This file mounts the areas under the session, environment and domain scopes.
+ */
 export function App() {
     return (
         <QueryClientProvider client={queryClient}>
@@ -67,10 +56,7 @@ export function App() {
                 <LayoutSlotsProvider>
                     <BrowserRouter>
                         <Routes>
-                            <Route path="/login" element={<LoginRedirect />} />
-                            <Route path="/login/callback" element={<LoginCallback />} />
-                            <Route path="/logout" element={<LogoutRedirect />} />
-                            <Route path="/logout/callback" element={<LogoutCallback />} />
+                            {authRoutes}
                             <Route
                                 path="*"
                                 element={
@@ -79,26 +65,11 @@ export function App() {
                                             <Route path="/environments/:envHrid" element={<EnvironmentScope />}>
                                                 <Route element={<Shell />}>
                                                     <Route index element={<Navigate to="domains" replace />} />
-                                                    <Route path="domains" element={<DomainsPage />} />
+                                                    {domainRoutes}
                                                     <Route path="domains/:domainHrid" element={<DomainScope />}>
                                                         <Route index element={<Navigate to="dashboard" replace />} />
                                                         <Route path="dashboard" element={<DomainPlaceholderPage title="Dashboard" />} />
-                                                        <Route path="applications" element={<ApplicationsPage />} />
-                                                        <Route path="applications/:applicationId" element={<ApplicationLayout />}>
-                                                            <Route index element={<Navigate to="overview" replace />} />
-                                                            <Route path="overview" element={<ApplicationOverviewPage />} />
-                                                            <Route path="design/flows" element={<ApplicationFlowsPage />} />
-                                                            <Route path="settings/general" element={<ApplicationGeneralPage />} />
-                                                            {navItems(APPLICATION_NAV_GROUPS)
-                                                                .filter(item => !BUILT_APPLICATION_SECTIONS.has(item.key))
-                                                                .map(item => (
-                                                                    <Route
-                                                                        key={item.key}
-                                                                        path={item.key}
-                                                                        element={<PlaceholderPage title={item.title} />}
-                                                                    />
-                                                                ))}
-                                                        </Route>
+                                                        {applicationRoutes}
                                                         <Route path="agents" element={<DomainPlaceholderPage title="Agents" />} />
                                                         <Route path="mcp-servers" element={<DomainPlaceholderPage title="MCP Servers" />} />
                                                         <Route
@@ -106,36 +77,9 @@ export function App() {
                                                             element={<DomainPlaceholderPage title="Authorization" />}
                                                         />
                                                         <Route path="alerts" element={<DomainPlaceholderPage title="Alerts" />} />
-                                                        <Route path="settings" element={<DomainSettingsLayout />}>
-                                                            <Route index element={<Navigate to="general" replace />} />
-                                                            <Route path="providers" element={<IdentityProvidersPage />} />
-                                                            <Route
-                                                                path="providers/:identityProviderId"
-                                                                element={<IdentityProviderPage />}
-                                                            />
-                                                            <Route path="forms" element={<LoginFormPage />} />
-                                                            <Route path="flows" element={<FlowsPage />} />
-                                                            {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
-                                                                .filter(item => !BUILT_DOMAIN_SETTINGS.has(item.key))
-                                                                .map(item => (
-                                                                    <Route
-                                                                        key={item.key}
-                                                                        path={item.key}
-                                                                        element={<PlaceholderPage title={item.title} />}
-                                                                    />
-                                                                ))}
-                                                        </Route>
+                                                        {domainSettingsRoutes}
                                                     </Route>
-                                                    <Route path="organization" element={<OrganizationLayout />}>
-                                                        <Route index element={<Navigate to="general" replace />} />
-                                                        {navItems(ORGANIZATION_NAV_GROUPS).map(item => (
-                                                            <Route
-                                                                key={item.key}
-                                                                path={item.key}
-                                                                element={<PlaceholderPage title={item.title} />}
-                                                            />
-                                                        ))}
-                                                    </Route>
+                                                    {organizationRoutes}
                                                 </Route>
                                             </Route>
                                             <Route path="*" element={<RootRedirect />} />

@@ -17,10 +17,10 @@ import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { listDomains } from '../../../lib/api/management-api';
+import { listDomains } from '../../../lib/api/domains';
 import { DomainsPage } from '../DomainsPage';
 
-vi.mock('../../../lib/api/management-api', () => ({ listDomains: vi.fn() }));
+vi.mock('../../../lib/api/domains', () => ({ listDomains: vi.fn() }));
 vi.mock('../../../lib/session/session', () => ({ useSession: () => ({ user: { org: 'DEFAULT' } }) }));
 vi.mock('../../../lib/session/environment', () => ({
     useCurrentEnvironment: () => ({ id: 'env-1', name: 'Development', hrids: ['dev'] }),

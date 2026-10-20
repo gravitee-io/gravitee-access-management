@@ -89,8 +89,10 @@ as the generic of a `useForm` that uses `jsonSchemaResolver`. Run `yarn typechec
 
 ## Step 5: routes
 
-Create `src/features/<unit>/routes.tsx` with the unit's `<Route>` elements and the Angular path segments. Mount it
-lazily in `src/app/App.tsx` in place of the unit's placeholder routes. Confirm the nav key in `src/app/navigation.ts`.
+Create `src/features/<unit>/routes.tsx` with the unit's `<Route>` elements, the Angular path segments and `lazyPage()`
+for each page. Mount it in `src/features/settings/routes.tsx` for a domain setting, in
+`src/features/organization/routes.tsx` for an organization unit, or in `src/app/App.tsx` for a top-level section, in
+place of the unit's placeholder. Confirm the nav key in `src/app/navigation.ts`.
 Set `useBreadcrumbs` on pages and `useSectionSidebar` on layouts, with absolute paths from `basePath`.
 
 Check: every `path` of the unit's inventory entry resolves to a route, and the placeholder is gone.

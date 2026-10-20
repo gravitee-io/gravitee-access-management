@@ -21,7 +21,7 @@ import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
-import { type Application, listApplications } from '../../lib/api/management-api';
+import { type Application, listApplications } from '../../lib/api/applications';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { APPLICATION_TYPE_LABELS } from './application-types';

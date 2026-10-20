@@ -32,7 +32,7 @@ yarn typecheck && yarn lint && yarn test && yarn build
 | Part           | Choice                                                                                               | Where                                                                               |
 | -------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | UI             | React 19, `@gravitee/graphene-core` 3.23.1, Tier 2 Tailwind 4                                        | `package.json`, `src/styles.css`                                                    |
-| Routing        | react-router 7, one `BrowserRouter`, nested routes                                                   | `src/app/App.tsx`                                                                   |
+| Routing        | react-router 7, one `BrowserRouter`, nested routes, one `routes.tsx` per area                        | `src/app/App.tsx`, `src/features/<area>/routes.tsx`                                 |
 | Data           | TanStack Query 5                                                                                     | `src/app/App.tsx` for the client, pages for the queries                             |
 | Forms          | react-hook-form 7 with Graphene `Field` parts. Plugin schemas through Graphene `JsonSchemaForm`      | `src/features/applications/ApplicationPage.tsx`, `src/features/identity-providers/` |
 | Editors        | Monaco through Graphene `CodeEditor`, workers set in `src/monaco-setup.ts`                           | `src/features/forms/LoginFormPage.tsx`                                              |
@@ -48,11 +48,12 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (routes), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
-  features/<area>/  pages, <area>-specific helpers, __tests__/
-  lib/api/        http.ts, auth.ts, management-api.ts, gamma-api.ts
-  lib/session/    session.tsx (user, environments), environment.tsx (:envHrid), domain.tsx (:domainHrid, DomainRef, basePath)
+  features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
+  lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
+  lib/routing/    lazyPage.tsx
+  lib/session/    session.tsx (user, environments), environment.tsx (:envHrid), domain.tsx (:domainHrid, ref, basePath)
   lib/layout/     useBreadcrumbs.ts, useSectionSidebar.tsx
   test/           setup.ts
 ```
@@ -60,6 +61,10 @@ src/
 - One folder per feature area under `src/features/`. The area name follows the Angular folder under
   `gravitee-am-ui/src/app/domain/settings/`, for example `scopes`, `certificates`, `users`.
 - Shared parts used by two or more areas go in `src/app/components/` or `src/lib/`. Do not import from a sibling area.
+- Each area exports its `<Route>` elements from `routes.tsx`. A page loads through `lazyPage()`, so the area lands in
+  its own chunk. `App.tsx` mounts the top-level areas. `src/features/settings/routes.tsx` mounts the domain settings
+  units and `src/features/organization/routes.tsx` the organization units, each in place of its placeholder. A
+  `routes.tsx` may import a sibling's `routes.tsx` for that purpose. A page may not.
 - Tests sit in `__tests__/` beside the code they test.
 - Every new file starts with the Apache licence header, as `src/lib/api/http.ts` does.
 
@@ -77,10 +82,10 @@ src/
 
 ## 5. Data access
 
-- API functions live in `src/lib/api/`. They call `http<T>(path, init)` from `http.ts`, which sends the session cookie,
-  echoes `X-Xsrf-Token`, and throws `HttpError` with the status.
+- API functions and entity types live in `src/lib/api/<area>.ts`, one file per area. They call `http<T>(path, init)`
+  from `http.ts`, which sends the session cookie, echoes `X-Xsrf-Token`, and throws `HttpError` with the status.
 - Paths are the Management API paths the Angular service calls, under `/organizations/:org/environments/:env/domains/:id`.
-  Build them from `DomainRef`. Do not invent an endpoint. Check `../docs/mapi/openapi.yaml` when in doubt.
+  Build them with `domainPath(ref)` and `searchParam(query)` from `src/lib/api/paths.ts`. Do not invent an endpoint. Check `../docs/mapi/openapi.yaml` when in doubt.
 - Query keys: `['<entity>', ref, id]` for a detail, `['<entities>', ref, page, size, query]` for a list.
 - A mutation `onSuccess` sets the detail key with the response and invalidates the list key, then `toast.success`.
   `onError` shows `toast.error` with the message. See `ApplicationPage.tsx`.
@@ -157,7 +162,7 @@ Do not:
 ## 10. Tests
 
 - Render a page under `QueryClientProvider` with `retry: false`, `MemoryRouter`, `LayoutSlotsProvider` and
-  `TooltipProvider`. Mock the API module with `vi.mock`. Mock the session hooks. Reference:
+  `TooltipProvider`. Mock the area's API module with `vi.mock`. Mock the session hooks. Reference:
   `src/features/domains/__tests__/DomainsPage.test.tsx`.
 - Assert the Angular behaviour: the function called, its arguments, the rendered rows, the empty states, the toast.
   Do not assert a prototype-only behaviour.

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import type { Flow, FlowModel, Policy, SaveOutput, Step } from '@gravitee/graphene-policy-studio';
-import type { AmFlow, FlowStep, PolicyPlugin } from '../../lib/api/management-api';
+import type { AmFlow, FlowStep, PolicyPlugin } from '../../lib/api/flows';
 
 // The studio runs at organization scope, where a flow has request and response steps. AM's pre steps
 // go in `request` and post steps in `response`. The studio id carries the AM flow type, so the

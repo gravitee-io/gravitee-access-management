@@ -38,7 +38,7 @@ import {
     getIdentityProviderSchema,
     type IdentityProvider,
     updateIdentityProvider,
-} from '../../lib/api/management-api';
+} from '../../lib/api/identity-providers';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { type AdaptedSchema, adaptAmSchema } from './am-schema';

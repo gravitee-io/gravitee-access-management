@@ -18,7 +18,7 @@ import { type Policy, PolicyStudio, type SaveOutput } from '@gravitee/graphene-p
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import { PageHeader } from '../../app/components/PageHeader';
-import { type AmFlow, getPolicyDocumentation, getPolicySchema, listFlows, listPolicies, updateFlows } from '../../lib/api/management-api';
+import { type AmFlow, getPolicyDocumentation, getPolicySchema, listFlows, listPolicies, updateFlows } from '../../lib/api/flows';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { adaptAmSchema } from '../identity-providers/am-schema';
 import { AM_FLOW_MODEL, toAmFlows, toStudioFlow, toStudioPolicy } from './am-flows';

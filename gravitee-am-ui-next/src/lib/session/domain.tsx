@@ -17,7 +17,8 @@ import { Spinner } from '@gravitee/graphene-core';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, use } from 'react';
 import { Outlet, useParams } from 'react-router-dom';
-import { type Domain, type DomainRef, getDomainByHrid } from '../api/management-api';
+import { type Domain, getDomainByHrid } from '../api/domains';
+import type { DomainRef } from '../api/paths';
 import { useCurrentEnvironment } from './environment';
 import { useSession } from './session';
 

@@ -32,7 +32,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Outlet, useOutletContext, useParams } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
 import { APPLICATION_NAV_GROUPS } from '../../app/navigation';
-import { type ApplicationDetail, getApplication, patchApplication } from '../../lib/api/management-api';
+import { type ApplicationDetail, getApplication, patchApplication } from '../../lib/api/applications';
 import { useSectionSidebar } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { FlowsPage } from '../flows/FlowsPage';
