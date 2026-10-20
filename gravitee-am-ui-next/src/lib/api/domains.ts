@@ -23,6 +23,11 @@ export interface VirtualHost {
     readonly overrideEntrypoint?: boolean;
 }
 
+export interface CertificateSettings {
+    /** The id of the certificate used when the selected one fails to load or sign. */
+    readonly fallbackCertificate?: string | null;
+}
+
 export interface Domain {
     readonly id: string;
     readonly hrid: string;
@@ -34,6 +39,7 @@ export interface Domain {
     readonly vhosts?: readonly VirtualHost[];
     readonly createdAt?: number;
     readonly updatedAt?: number;
+    readonly certificateSettings?: CertificateSettings;
 }
 
 export function listDomains(organizationId: string, environmentId: string, page: number, size: number, query = ''): Promise<Page<Domain>> {
@@ -52,4 +58,8 @@ export interface Entrypoint {
 
 export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
     return http<Entrypoint[]>(`${domainPath(ref)}/entrypoints`);
+}
+
+export function updateCertificateSettings(ref: DomainRef, certificateSettings: CertificateSettings): Promise<Domain> {
+    return http<Domain>(`${domainPath(ref)}/certificate-settings`, { method: 'PUT', body: JSON.stringify(certificateSettings) });
 }

@@ -16,19 +16,21 @@
 import { Navigate, Route } from 'react-router-dom';
 import { PlaceholderPage } from '../../app/components/PlaceholderPage';
 import { DOMAIN_SETTINGS_NAV_GROUPS, navItems } from '../../app/navigation';
+import { certificateRoutes } from '../certificates/routes';
 import { flowRoutes } from '../flows/routes';
 import { formRoutes } from '../forms/routes';
 import { identityProviderRoutes } from '../identity-providers/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
 /** Domain settings the console has built. Every other settings item gets a placeholder. */
-const BUILT_SETTINGS = new Set(['providers', 'forms', 'flows']);
+const BUILT_SETTINGS = new Set(['providers', 'certificates', 'forms', 'flows']);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
 export const domainSettingsRoutes = (
     <Route path="settings" element={<DomainSettingsLayout />}>
         <Route index element={<Navigate to="general" replace />} />
         {identityProviderRoutes}
+        {certificateRoutes}
         {formRoutes}
         {flowRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)

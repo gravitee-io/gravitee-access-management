@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-20",
-    "angularCommit": "03b73f1fe9",
+    "angularCommit": "b12275e1e8",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1508,9 +1508,14 @@
                     "resolvers": {
                         "certificates": "CertificatesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/certificates/CertificatesPage.tsx",
+                        "src/features/certificates/certificate-types.ts",
+                        "src/features/certificates/routes.tsx",
+                        "src/lib/api/certificates.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1530,9 +1535,13 @@
                     ],
                     "guards": [],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/certificates/CreateCertificatePage.tsx",
+                        "src/features/certificates/routes.tsx",
+                        "src/lib/api/certificates.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1559,9 +1568,13 @@
                     "resolvers": {
                         "certificate": "CertificateResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/certificates/CertificatePage.tsx",
+                        "src/features/certificates/routes.tsx",
+                        "src/lib/api/certificates.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -1583,12 +1596,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 2,
             "blockers": [],
-            "notes": "Plugin wizard plus a settings form and an expiry status. An Angular Playwright page object exists.",
-            "angularCommit": null
+            "notes": "Plugin wizard plus a settings form and an expiry status. An Angular Playwright page object exists.\n\nBrief.\nPages: settings/certificates → CertificatesPage → CertificatesPage.tsx; certificates/new → CreateCertificatePage → CreateCertificatePage.tsx; certificates/:certificateId → CertificatePage → CertificatePage.tsx. Folder src/features/certificates/.\nEndpoints: GET domain/certificates; GET domain/certificates/:id; POST domain/certificates (name, type, configuration); PUT domain/certificates/:id (name, type, configuration); DELETE domain/certificates/:id; GET domain/certificates/:id/keys; POST domain/certificates/rotate; PUT domain/certificate-settings (fallbackCertificate); GET /platform/plugins/certificates; GET /platform/plugins/certificates/:type/schema.\nPermissions: the certificates subtree domain_certificate_list (parent route AuthGuard). List: Add, Rotate system key and Settings domain_certificate_create (one hasPermission block in Angular); open link domain_certificate_read; delete domain_certificate_delete; public key ungated. Detail route domain_certificate_read; save domain_certificate_update; delete domain_certificate_delete.\nLicence: no route feature. The detail Save sits in LicenseGuard with the plugin's feature (PluginFeatureService.getFeature$('certificate', type)). The wizard locks the plugins.\nKit parts: PluginWizard, ConfirmDialog, SaveBar, PageHeader, ErrorPanel, NotFoundPanel.\nPrototype additions left out: the list Last updated column (no updatedAt in the certificate list); the fallback saved through updateDomain (not in AM: Angular calls PUT certificate-settings); the fallback dialog None item and Clear that saves at once (not in AM: Clear empties the selection, Confirm saves); Settings gated by domain update (not in AM: Angular gates it with domain_certificate_create); the type name from the plugin catalogue with Custom as fallback (not in AM: Angular displayType map, else the type id).\nAngular behaviour added back: the second reload 5 s after a rotation; Rotate disabled while a rotation runs; the open link gated by domain_certificate_read; the Angular display names of the plugin cards; the Save licence guard; the name required on the detail page.\nNot ported: Angular clears the name and configuration after a failed create; the wizard keeps them and shows the error toast. The keystore file fields (widget \"file\") render as a plain input with the unsupported Alert, as the conversion rules say until Graphene ships a file field; the value is the Angular JSON string {name, type, size, content}.\n\nVerification, 2026-10-20. yarn typecheck, lint, test (109 tests, 21 in the unit) and build pass. console-next Playwright: certificates.spec.ts, 3 tests, passes with the 5 other console-next tests (fallback set from the settings dialog and read back from GET domain; a near-expiry certificate shows the warning, then deletes from the row menu; a rename on the detail page saves). Browser journeys on :4201 against the local Management API, network calls recorded per action: list GET certificates; public key GET certificates/:id/keys; fallback PUT certificate-settings with fallbackCertificate, then GET domain; rotate POST certificates/rotate, then GET certificates twice (the second 5 s later); detail GET certificates/:id, GET /platform/plugins/certificates, GET the plugin schema; save PUT certificates/:id with name, type, configuration; create GET /platform/plugins/certificates and the schema. The create POST is covered by the unit test only: the pkcs12 and jks schemas need a keystore file, which the plain input takes as the Angular JSON string. The calls match the Angular services read for the brief. The Angular console was not run side by side: :4200 serves the Gamma console on this stack.",
+            "angularCommit": "b12275e1e8"
         },
         {
             "id": "device-identifier",
