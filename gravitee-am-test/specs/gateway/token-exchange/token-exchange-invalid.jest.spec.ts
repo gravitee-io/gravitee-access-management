@@ -22,6 +22,7 @@ import { setup } from '../../test-fixture';
 import {
   ACCESS_TOKEN_TYPE,
   ID_TOKEN_TYPE,
+  JWT_TOKEN_TYPE,
   setupTokenExchangeFixture,
   TOKEN_EXCHANGE_GRANT,
   TOKEN_EXCHANGE_TEST,
@@ -30,8 +31,6 @@ import {
 import { setupTrustedIssuerFixture, TrustedIssuerFixture } from './fixtures/trusted-issuer-fixture';
 
 setup(240000);
-
-const JWT_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:jwt';
 
 const SUBJECT_CLAIMS = "#context.attributes['token_exchange']['subject']['subject_token_claims']";
 
@@ -105,15 +104,6 @@ afterAll(async () => {
   await externalFixture?.cleanup();
 });
 
-/** Raw exchange that asserts nothing, so each test can inspect the status itself. */
-const rawExchange = (fixture: TokenExchangeFixture, subjectToken: string, extraParams = '') =>
-  performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${ACCESS_TOKEN_TYPE}${extraParams}`,
-    { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${fixture.basicAuth}` },
-  );
-
 const exchangeExternalJwt = (externalJwt: string) =>
   performPost(
     externalFixture.oidc.token_endpoint,
@@ -122,20 +112,11 @@ const exchangeExternalJwt = (externalJwt: string) =>
     { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${externalFixture.basicAuth}` },
   );
 
-/** Exchange declaring an arbitrary subject_token_type. */
-const exchangeAs = (fixture: TokenExchangeFixture, subjectToken: string, subjectTokenType: string) =>
-  performPost(
-    fixture.oidc.token_endpoint,
-    '',
-    `grant_type=${TOKEN_EXCHANGE_GRANT}&subject_token=${subjectToken}&subject_token_type=${subjectTokenType}`,
-    { 'Content-type': 'application/x-www-form-urlencoded', Authorization: `Basic ${fixture.basicAuth}` },
-  );
-
 describe('Token Exchange with a subject token that is not of its declared type', () => {
   it('should refuse an ID token declared as an access token', async () => {
     const { idToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
 
-    const response = await exchangeAs(defaultFixture, idToken, ACCESS_TOKEN_TYPE).expect(400);
+    const response = await defaultFixture.requestExchange({ subjectToken: idToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.access_token).toBeUndefined();
@@ -144,7 +125,7 @@ describe('Token Exchange with a subject token that is not of its declared type',
   it('should refuse an access token declared as an ID token', async () => {
     const { accessToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
 
-    const response = await exchangeAs(defaultFixture, accessToken, ID_TOKEN_TYPE).expect(400);
+    const response = await defaultFixture.requestExchange({ subjectToken: accessToken, subjectTokenType: ID_TOKEN_TYPE }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
   });
@@ -153,7 +134,7 @@ describe('Token Exchange with a subject token that is not of its declared type',
     const { accessToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
     await defaultFixture.revokeToken(accessToken, 'access_token');
 
-    const response = await exchangeAs(defaultFixture, accessToken, ID_TOKEN_TYPE).expect(400);
+    const response = await defaultFixture.requestExchange({ subjectToken: accessToken, subjectTokenType: ID_TOKEN_TYPE }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.access_token).toBeUndefined();
@@ -162,7 +143,7 @@ describe('Token Exchange with a subject token that is not of its declared type',
   it('should keep accepting an ID token declared as an ID token', async () => {
     const { idToken } = await defaultFixture.obtainSubjectToken('openid%20profile');
 
-    const response = await exchangeAs(defaultFixture, idToken, ID_TOKEN_TYPE).expect(200);
+    const response = await defaultFixture.requestExchange({ subjectToken: idToken, subjectTokenType: ID_TOKEN_TYPE }).expect(200);
 
     expect(response.body.access_token).toBeDefined();
   });
@@ -170,7 +151,7 @@ describe('Token Exchange with a subject token that is not of its declared type',
 
 describe('Token Exchange with invalid tokens', () => {
   it('should reject a subject token with a tampered signature', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { obtainSubjectToken, requestExchange } = defaultFixture;
 
     // Given: obtain a valid subject token, then corrupt its signature.
     const { accessToken: validToken } = await obtainSubjectToken('openid%20profile');
@@ -178,15 +159,7 @@ describe('Token Exchange with invalid tokens', () => {
     const tamperedToken = `${parts[0]}.${parts[1]}.invalidsignatureXXXXXXXXXXX`;
 
     // When: present the tampered token for exchange.
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${tamperedToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({ subjectToken: tamperedToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(400);
 
     // Then: invalid_request with a generic description.
     expect(response.body.error).toBe('invalid_request');
@@ -194,7 +167,7 @@ describe('Token Exchange with invalid tokens', () => {
   });
 
   it('should reject a tampered actor token in delegation', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     // Given: valid subject and actor tokens; tamper the actor token's signature.
     const { accessToken: subjectToken } = await obtainSubjectToken('openid%20profile');
@@ -203,19 +176,12 @@ describe('Token Exchange with invalid tokens', () => {
     const tamperedActorToken = `${parts[0]}.${parts[1]}.invalidsignatureXXXXXXXXXXX`;
 
     // When: present the tampered actor token for delegation exchange.
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-        `&actor_token=${tamperedActorToken}` +
-        `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: tamperedActorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(400);
 
     // Then: invalid_request with a generic description.
     expect(response.body.error).toBe('invalid_request');
@@ -225,7 +191,7 @@ describe('Token Exchange with invalid tokens', () => {
   it('should refuse a subject token whose copied claim was edited after signing', async () => {
     const { accessToken: subjectToken } = await subjectClaimFixture.obtainSubjectToken();
 
-    const genuine = await subjectClaimFixture.exchange(subjectToken);
+    const { body: genuine } = await subjectClaimFixture.requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
     expect(parseJwt(genuine.access_token).payload['subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
 
     // unlike the tampered-signature cases above, this carries the ORIGINAL signature - correct
@@ -234,7 +200,7 @@ describe('Token Exchange with invalid tokens', () => {
     expect(parseJwt(forged).payload['jti']).toEqual(FORGED_JTI);
     expect(forged.split('.')[2]).toEqual(subjectToken.split('.')[2]);
 
-    const response = await rawExchange(subjectClaimFixture, forged).expect(400);
+    const response = await subjectClaimFixture.requestExchange({ subjectToken: forged, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
     expect(response.body.error_description).toEqual('The presented token is invalid');
@@ -244,14 +210,14 @@ describe('Token Exchange with invalid tokens', () => {
   it('should refuse an unsigned subject token declaring alg none', async () => {
     const { accessToken: subjectToken } = await subjectClaimFixture.obtainSubjectToken();
 
-    const genuine = await subjectClaimFixture.exchange(subjectToken);
+    const { body: genuine } = await subjectClaimFixture.requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
     expect(parseJwt(genuine.access_token).payload['subject_jti']).toEqual(parseJwt(subjectToken).payload['jti']);
 
     const unsigned = unsign(forgeClaim(subjectToken, 'jti', FORGED_JTI));
     expect(parseJwt(unsigned).header['alg']).toEqual('none');
     expect(parseJwt(unsigned).payload['jti']).toEqual(FORGED_JTI);
 
-    const response = await rawExchange(subjectClaimFixture, unsigned).expect(400);
+    const response = await subjectClaimFixture.requestExchange({ subjectToken: unsigned, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
     expect(response.body).not.toHaveProperty('access_token');
@@ -261,12 +227,16 @@ describe('Token Exchange with invalid tokens', () => {
     const { accessToken: ownToken } = await subjectClaimFixture.obtainSubjectToken();
     const { accessToken: foreignToken } = await defaultFixture.obtainSubjectToken();
 
-    const genuine = await subjectClaimFixture.exchange(ownToken);
+    const { body: genuine } = await subjectClaimFixture
+      .requestExchange({ subjectToken: ownToken, subjectTokenType: ACCESS_TOKEN_TYPE })
+      .expect(200);
     expect(parseJwt(genuine.access_token).payload['subject_jti']).toEqual(parseJwt(ownToken).payload['jti']);
 
     // correctly signed, but by another domain's certificate: a valid signature is not enough,
     // it has to be valid under the trust anchor of the domain being asked
-    const response = await rawExchange(subjectClaimFixture, foreignToken).expect(400);
+    const response = await subjectClaimFixture
+      .requestExchange({ subjectToken: foreignToken, subjectTokenType: ACCESS_TOKEN_TYPE })
+      .expect(400);
 
     expect(response.body.error).toEqual('invalid_request');
     expect(response.body).not.toHaveProperty('access_token');

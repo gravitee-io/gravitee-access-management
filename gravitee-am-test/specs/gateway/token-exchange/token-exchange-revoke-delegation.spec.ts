@@ -15,7 +15,6 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { setup } from '../../test-fixture';
 import { setupTokenExchangeFixture, TokenExchangeFixture, TOKEN_EXCHANGE_TEST } from './fixtures/token-exchange-fixture';
 
@@ -49,23 +48,15 @@ describe('Token Exchange revoke delegation', () => {
       actorToken?: string,
       actorTokenType?: 'access_token' | 'refresh_token',
     ) => {
-      const { oidc, basicAuth } = delegationFixture;
-      const actorParams = actorToken && actorTokenType
-        ? `&actor_token=${actorToken}&actor_token_type=urn:ietf:params:oauth:token-type:${actorTokenType}`
-        : '';
-
-      const response = await performPost(
-        oidc.token_endpoint,
-        '',
-        `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-        `&subject_token=${subjectToken}` +
-        `&subject_token_type=urn:ietf:params:oauth:token-type:${subjectTokenType}` +
-        actorParams,
-        {
-          'Content-type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${basicAuth}`,
-        },
-      ).expect(400);
+      const tokenTypeUrn = (tokenType: string) => `urn:ietf:params:oauth:token-type:${tokenType}`;
+      const response = await delegationFixture
+        .requestExchange({
+          subjectToken,
+          subjectTokenType: tokenTypeUrn(subjectTokenType),
+          actorToken,
+          actorTokenType: actorTokenType ? tokenTypeUrn(actorTokenType) : undefined,
+        })
+        .expect(400);
 
       expect(response.body.error).toBe('invalid_request');
       expect(response.body.error_description).toBeDefined();

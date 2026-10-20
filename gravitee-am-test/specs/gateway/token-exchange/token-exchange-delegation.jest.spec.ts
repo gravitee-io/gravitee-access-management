@@ -19,9 +19,12 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { setup } from '../../test-fixture';
 import {
+  ACCESS_TOKEN_TYPE,
+  ID_TOKEN_TYPE,
+  REFRESH_TOKEN_TYPE,
   setupTokenExchangeFixture,
-  TokenExchangeFixture,
   TOKEN_EXCHANGE_TEST,
+  TokenExchangeFixture,
 } from './fixtures/token-exchange-fixture';
 
 setup(120000);
@@ -103,7 +106,7 @@ afterAll(async () => {
 
 describe('Token Exchange Delegation (RFC 8693)', () => {
   it('should exchange token with actor_token and include act claim', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken, obtainActorToken, user } = delegationFixture;
+    const { application, obtainSubjectToken, obtainActorToken, user, requestExchange } = delegationFixture;
 
     // Obtain subject token (the user on whose behalf the action is performed)
     const { accessToken: subjectToken } = await obtainSubjectToken();
@@ -111,19 +114,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     // Obtain actor token (the entity performing the action)
     const { accessToken: actorToken } = await obtainActorToken();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(response.body.access_token).toBeDefined();
@@ -146,98 +142,66 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should reject delegation when delegation is not allowed', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = impersonationOnlyFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = impersonationOnlyFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description.toLowerCase()).toContain('delegation');
   });
 
   it('should reject when actor_token_type is not allowed', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { refreshToken: actorRefreshToken } = await obtainActorToken();
     expect(actorRefreshToken).toBeDefined();
 
     // refresh_token is not in the allowed actor token types
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorRefreshToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:refresh_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actorRefreshToken,
+      actorTokenType: REFRESH_TOKEN_TYPE,
+    }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('actor_token_type');
   });
 
   it('should reject when actor_token is provided without actor_token_type', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorToken}`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({ subjectToken, subjectTokenType: ACCESS_TOKEN_TYPE, actorToken }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('actor_token_type');
   });
 
   it('should use id_token as actor_token when allowed', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { application, obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { idToken: actorIdToken } = await obtainActorToken();
     expect(actorIdToken).toBeDefined();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorIdToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:id_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actorIdToken,
+      actorTokenType: ID_TOKEN_TYPE,
+    }).expect(200);
 
     expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(response.body.access_token).toBeDefined();
@@ -248,25 +212,18 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should reject delegation when maxDelegationDepth is exceeded', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = limitedDepthFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = limitedDepthFixture;
 
     const { accessToken: initialSubjectToken } = await obtainSubjectToken();
     const { accessToken: initialActorToken } = await obtainActorToken();
 
     // First delegation creates a token with an "act" claim (depth = 1)
-    const firstExchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${initialSubjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${initialActorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const firstExchangeResponse = await requestExchange({
+      subjectToken: initialSubjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: initialActorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     const delegatedToken = firstExchangeResponse.body.access_token;
     expect(delegatedToken).toBeDefined();
@@ -281,44 +238,30 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     // Second delegation should fail because the subject_token already has depth 1
     // and adding another actor would make depth 2, exceeding maxDelegationDepth = 1.
     // Per RFC 8693 Section 4.1, the delegation chain is tracked via the subject token's "act" claim.
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${delegatedToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${newActorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken: delegatedToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: newActorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('Maximum delegation depth exceeded');
   });
 
   it('should calculate delegation depth from subject_token, not actor_token (RFC 8693)', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = limitedDepthFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = limitedDepthFixture;
 
     // Create a delegated token (with act claim) to use as actor_token
     const { accessToken: subjectForActor } = await obtainSubjectToken();
     const { accessToken: actorForActor } = await obtainActorToken();
 
-    const actorWithActResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectForActor}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorForActor}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const actorWithActResponse = await requestExchange({
+      subjectToken: subjectForActor,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actorForActor,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     const actorTokenWithAct = actorWithActResponse.body.access_token;
     const actorDecoded = parseJwt(actorTokenWithAct);
@@ -333,19 +276,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     // - subject_token has no act claim (depth = 0)
     // - resulting depth would be 1, which equals maxDelegationDepth = 1
     // - the actor_token's act claim is NOT counted for depth calculation
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${freshSubjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorTokenWithAct}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({
+      subjectToken: freshSubjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actorTokenWithAct,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     // Verify the exchange succeeded and has an act claim
     const resultDecoded = parseJwt(response.body.access_token);
@@ -356,26 +292,19 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should allow delegation up to maxDelegationDepth and reject beyond', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture; // maxDelegationDepth = 3
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture; // maxDelegationDepth = 3
 
     // Build a delegation chain step by step
     const { accessToken: token0 } = await obtainSubjectToken(); // depth 0, no act claim
 
     // First delegation: depth 0 → 1
     const { accessToken: actor1 } = await obtainActorToken();
-    const response1 = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${token0}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actor1}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response1 = await requestExchange({
+      subjectToken: token0,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actor1,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
     const token1 = response1.body.access_token;
     const decoded1 = parseJwt(token1);
     expect(decoded1.payload['act']).toBeDefined();
@@ -383,19 +312,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
 
     // Second delegation: depth 1 → 2
     const { accessToken: actor2 } = await obtainActorToken();
-    const response2 = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${token1}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actor2}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response2 = await requestExchange({
+      subjectToken: token1,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actor2,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
     const token2 = response2.body.access_token;
     const decoded2 = parseJwt(token2);
     expect(decoded2.payload['act']).toBeDefined();
@@ -404,19 +326,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
 
     // Third delegation: depth 2 → 3
     const { accessToken: actor3 } = await obtainActorToken();
-    const response3 = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${token2}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actor3}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response3 = await requestExchange({
+      subjectToken: token2,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actor3,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
     const token3 = response3.body.access_token;
     const decoded3 = parseJwt(token3);
     expect(decoded3.payload['act']).toBeDefined();
@@ -426,44 +341,30 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
 
     // Fourth delegation: depth 3 → 4, should FAIL (maxDelegationDepth = 3)
     const { accessToken: actor4 } = await obtainActorToken();
-    const response4 = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${token3}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actor4}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response4 = await requestExchange({
+      subjectToken: token3,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actor4,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(400);
 
     expect(response4.body.error).toBe('invalid_request');
     expect(response4.body.error_description).toContain('Maximum delegation depth exceeded');
   });
 
   it('should introspect delegation token and return act claim', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
 
     // Exchange with delegation
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     // Introspect the delegation token
     const introspectResponse = await performPost(
@@ -482,26 +383,19 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should nest act claims correctly in chained delegation (RFC 8693 Section 4.1)', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     // Step 1: Get initial subject and actor tokens
     const { accessToken: initialSubjectToken } = await obtainSubjectToken();
     const { accessToken: actor1Token } = await obtainActorToken();
 
     // Step 2: First delegation - creates token with act: {sub: actor1}
-    const firstExchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${initialSubjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actor1Token}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const firstExchangeResponse = await requestExchange({
+      subjectToken: initialSubjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actor1Token,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     const firstDelegatedToken = firstExchangeResponse.body.access_token;
     const firstDecoded = parseJwt(firstDelegatedToken);
@@ -518,19 +412,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     // Step 4: Second delegation - use first delegated token as subject_token
     // Per RFC 8693 Section 4.1, the resulting token should have nested act claim:
     // act: {sub: actor2, act: {sub: actor1}}
-    const secondExchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${firstDelegatedToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actor2Token}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const secondExchangeResponse = await requestExchange({
+      subjectToken: firstDelegatedToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actor2Token,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     const secondDelegatedToken = secondExchangeResponse.body.access_token;
     const secondDecoded = parseJwt(secondDelegatedToken);
@@ -551,7 +438,7 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should preserve subject identity in delegation token', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken, user } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, user, requestExchange } = delegationFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
@@ -561,19 +448,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     const subjectSub = subjectDecoded.payload['sub'];
     const subjectGis = subjectDecoded.payload['gis'];
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     // The exchanged token should preserve the subject's identity
     const decoded = parseJwt(response.body.access_token);
@@ -582,7 +462,7 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should include actor gis in act claim for V2 domain identification', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     const { accessToken: subjectToken } = await obtainSubjectToken();
     const { accessToken: actorToken } = await obtainActorToken();
@@ -593,19 +473,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     const actorGis = actorDecoded.payload['gis'];
     expect(actorGis).toBeDefined(); // Actor token should have gis
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({
+      subjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     // The exchanged token's act claim should include actor's sub and gis
     const decoded = parseJwt(response.body.access_token);
@@ -616,7 +489,7 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
   });
 
   it('should include actor_act when actor token is itself delegated', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationFixture;
 
     // Step 1: Create a delegated token to use as the actor token
     const { accessToken: firstSubjectToken } = await obtainSubjectToken();
@@ -627,19 +500,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     const firstActorGis = firstActorDecoded.payload['gis'];
 
     // First delegation - creates a token with act claim
-    const firstDelegationResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${firstSubjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${firstActorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const firstDelegationResponse = await requestExchange({
+      subjectToken: firstSubjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: firstActorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     const delegatedActorToken = firstDelegationResponse.body.access_token;
     const delegatedActorDecoded = parseJwt(delegatedActorToken);
@@ -648,19 +514,12 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
     // Step 2: Use the delegated token as actor_token for another delegation
     const { accessToken: secondSubjectToken } = await obtainSubjectToken();
 
-    const secondDelegationResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${secondSubjectToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${delegatedActorToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const secondDelegationResponse = await requestExchange({
+      subjectToken: secondSubjectToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: delegatedActorToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     // Verify the resulting token has actor_act
     const finalTokenDecoded = parseJwt(secondDelegationResponse.body.access_token);
@@ -680,7 +539,7 @@ describe('Token Exchange Delegation (RFC 8693)', () => {
 
 describe('Token Exchange Delegation custom claims (actor_token EL exposure)', () => {
   it('should expose actor_token claims to EL custom token claims during delegation', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, obtainActorToken } = delegationCustomClaimsFixture;
+    const { obtainSubjectToken, obtainActorToken, requestExchange } = delegationCustomClaimsFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken();
     const { accessToken: actorAccessToken } = await obtainActorToken();
@@ -693,19 +552,12 @@ describe('Token Exchange Delegation custom claims (actor_token EL exposure)', ()
     expect(actorSub).toBeDefined();
     expect(actorJti).not.toBe(subjectDecoded.payload['jti']);
 
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectAccessToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token` +
-      `&actor_token=${actorAccessToken}` +
-      `&actor_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({
+      subjectToken: subjectAccessToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      actorToken: actorAccessToken,
+      actorTokenType: ACCESS_TOKEN_TYPE,
+    }).expect(200);
 
     const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
 
@@ -721,21 +573,11 @@ describe('Token Exchange Delegation custom claims (actor_token EL exposure)', ()
   });
 
   it('should omit actor_token EL custom claims for impersonation (no actor token)', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = delegationCustomClaimsFixture;
+    const { obtainSubjectToken, requestExchange } = delegationCustomClaimsFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken();
 
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
-      `&subject_token=${subjectAccessToken}` +
-      `&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
 
     const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
 

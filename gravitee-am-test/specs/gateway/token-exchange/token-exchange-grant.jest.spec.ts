@@ -19,6 +19,10 @@ import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { setup } from '../../test-fixture';
 import {
+  ACCESS_TOKEN_TYPE,
+  ID_TOKEN_TYPE,
+  JWT_TOKEN_TYPE,
+  REFRESH_TOKEN_TYPE,
   setupTokenExchangeFixture,
   TokenExchangeFixture,
 } from './fixtures/token-exchange-fixture';
@@ -86,21 +90,13 @@ afterAll(async () => {
 
 describe('Token Exchange grant', () => {
   it('should exchange subject token and keep expiration constraints', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, application, basicAuth, obtainSubjectToken, requestExchange } = defaultFixture;
 
     // Given: subject token has openid, profile, offline_access.
     const { accessToken: subjectAccessToken, expiresIn: subjectExpiresIn } = await obtainSubjectToken();
 
     // When: exchange without scope param.
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
 
     const exchangedToken = exchangeResponse.body;
     expect(exchangedToken.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
@@ -139,61 +135,37 @@ describe('Token Exchange grant', () => {
   });
 
   it('should keep gis claim from subject token', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { obtainSubjectToken, requestExchange } = defaultFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken();
     const subjectDecoded = parseJwt(subjectAccessToken);
     const subjectGis = subjectDecoded.payload['gis'];
     expect(subjectGis).toBeDefined();
 
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
 
     const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
     expect(exchangedDecoded.payload['gis']).toBe(subjectGis);
   });
 
   it('should expose full user profile in context during local token exchange', async () => {
-    const { oidc, basicAuth, obtainSubjectToken, user } = customClaimsFixture;
+    const { obtainSubjectToken, user, requestExchange } = customClaimsFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken();
 
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
 
     const exchangedDecoded = parseJwt(exchangeResponse.body.access_token);
     expect(exchangedDecoded.payload['am_tx_user_email']).toBe(user.email);
   });
 
   it('should exchange refresh token when allowed', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, application, basicAuth, obtainSubjectToken, requestExchange } = defaultFixture;
 
     const { refreshToken } = await obtainSubjectToken();
     expect(refreshToken).toBeDefined();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${refreshToken}&subject_token_type=urn:ietf:params:oauth:token-type:refresh_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({ subjectToken: refreshToken, subjectTokenType: REFRESH_TOKEN_TYPE }).expect(200);
 
     expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(response.body.access_token).toBeDefined();
@@ -216,20 +188,12 @@ describe('Token Exchange grant', () => {
   });
 
   it('should exchange id token when allowed', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { oidc, application, basicAuth, obtainSubjectToken, requestExchange } = defaultFixture;
 
     const { idToken } = await obtainSubjectToken();
     expect(idToken).toBeDefined();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${idToken}&subject_token_type=urn:ietf:params:oauth:token-type:id_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({ subjectToken: idToken, subjectTokenType: ID_TOKEN_TYPE }).expect(200);
 
     expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(response.body.access_token).toBeDefined();
@@ -252,40 +216,28 @@ describe('Token Exchange grant', () => {
   });
 
   it('should reject when requested_token_type is not supported', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { obtainSubjectToken, requestExchange } = defaultFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&requested_token_type=urn:ietf:params:oauth:token-type:refresh_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken: subjectAccessToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      requestedTokenType: REFRESH_TOKEN_TYPE,
+    }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('requested_token_type');
   });
 
   it('should NOT include id_token in response when exchanging access token with openid scope', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { obtainSubjectToken, requestExchange } = defaultFixture;
 
     // Obtain a subject token with openid scope
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
 
     // Exchange the token without specifying requested_token_type (defaults to access_token)
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
 
     // Per RFC 8693, token exchange response should NOT include id_token unless explicitly requested
     expect(exchangeResponse.body.access_token).toBeDefined();
@@ -294,21 +246,17 @@ describe('Token Exchange grant', () => {
   });
 
   it('should include granted scopes in response when client requests subset', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { obtainSubjectToken, requestExchange } = defaultFixture;
 
     // Given: subject token has openid, profile, offline_access.
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile%20offline_access');
 
     // When: exchange with scope=openid.
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&scope=openid`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({
+      subjectToken: subjectAccessToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      scope: 'openid',
+    }).expect(200);
 
     // Then: response and JWT have scope openid.
     expect(exchangeResponse.body.access_token).toBeDefined();
@@ -318,20 +266,12 @@ describe('Token Exchange grant', () => {
   });
 
   it('should issue new token with no scopes when subject token has no scopes', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = noScopeFixture;
+    const { obtainSubjectToken, requestExchange } = noScopeFixture;
 
     // Given: subject token with no scopes.
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('');
 
-    const exchangeResponse = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const exchangeResponse = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: ACCESS_TOKEN_TYPE }).expect(200);
 
     expect(exchangeResponse.body.access_token).toBeDefined();
     expect(exchangeResponse.body.scope).toBeUndefined();
@@ -340,21 +280,17 @@ describe('Token Exchange grant', () => {
   });
 
   it('should return 400 invalid_scope when requested scope is not a subset of subject token scopes', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { obtainSubjectToken, requestExchange } = defaultFixture;
 
     // Given: subject token has openid, profile only.
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
 
     // When: request scope=offline_access (not in subject).
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:access_token&scope=offline_access`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken: subjectAccessToken,
+      subjectTokenType: ACCESS_TOKEN_TYPE,
+      scope: 'offline_access',
+    }).expect(400);
 
     // Then: 400 invalid_scope.
     expect(response.body.error).toBe('invalid_scope');
@@ -363,18 +299,10 @@ describe('Token Exchange grant', () => {
   });
 
   it('should exchange jwt subject token when allowed', async () => {
-    const { oidc, application, basicAuth, obtainSubjectToken } = defaultFixture;
+    const { application, obtainSubjectToken, requestExchange } = defaultFixture;
     const { accessToken: subjectAccessToken } = await obtainSubjectToken();
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(200);
+    const response = await requestExchange({ subjectToken: subjectAccessToken, subjectTokenType: JWT_TOKEN_TYPE }).expect(200);
 
     expect(response.body.issued_token_type).toBe('urn:ietf:params:oauth:token-type:access_token');
     expect(response.body.access_token).toBeDefined();
@@ -384,19 +312,14 @@ describe('Token Exchange grant', () => {
   });
 
   it('should reject when subject_token_type is not allowed', async () => {
-    const { oidc, basicAuth, obtainSubjectToken } = restrictedFixture;
+    const { obtainSubjectToken, requestExchange } = restrictedFixture;
 
     const { accessToken: subjectAccessToken } = await obtainSubjectToken('openid%20profile');
 
-    const response = await performPost(
-      oidc.token_endpoint,
-      '',
-      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange&subject_token=${subjectAccessToken}&subject_token_type=urn:ietf:params:oauth:token-type:saml1`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicAuth}`,
-      },
-    ).expect(400);
+    const response = await requestExchange({
+      subjectToken: subjectAccessToken,
+      subjectTokenType: 'urn:ietf:params:oauth:token-type:saml1',
+    }).expect(400);
 
     expect(response.body.error).toBe('invalid_request');
     expect(response.body.error_description).toContain('subject_token_type');
