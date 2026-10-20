@@ -104,8 +104,9 @@ Conventions in the functions:
 - A create-or-update pair is one function that branches on `id`, as `saveForm` does.
 - `getIdentityProviderSchema(type)` and `getPolicySchema(id)` return the raw plugin schema for the adapter.
 
-Entity types come from the models generated from `../docs/mapi/openapi.yaml`. The jest SDK script writes `.d.ts` copies
-to `../gravitee-am-management-api-types/`, and the console imports them as `@am-models/<Model>`. The spec marks almost
+Entity types come from the jest SDK models in `../gravitee-am-test/api/management/models/`, generated from
+`../docs/mapi/openapi.yaml`. The console imports them as `@am-models/<Model>`. Each model starts with `@ts-nocheck`,
+because its generated code fails the console's `noUnusedLocals` check. The spec marks almost
 every response field optional, so `ApiModel<Model, 'id' | 'name'>` from `src/lib/api/model.ts` makes the fields the API
 always sends required. Where the spec is wrong, the type overrides the field with `Omit`, with a comment: response enums
 are lowercase on the wire, and some endpoints name the wrong schema. A type stays hand-written when the spec has no

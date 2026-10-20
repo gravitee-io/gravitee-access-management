@@ -86,8 +86,8 @@ src/
 - API functions and entity types live in `src/lib/api/<area>.ts`, one file per area. They call `http<T>(path, init)`
   from `http.ts`, which sends the session cookie, echoes `X-Xsrf-Token`, and throws `HttpError` with the status.
 - Entity types are `ApiModel<Model, requiredKeys>` from `src/lib/api/model.ts`, over a generated model imported with
-  `import type` from `@am-models/<Model>`. The models are `.d.ts` files in `../gravitee-am-management-api-types/`. Do not
-  edit them: `npm run update:sdk:mapi -- ../docs/mapi/openapi.yaml` in `../gravitee-am-test` writes them with the jest SDK.
+  `import type` from `@am-models/<Model>`. The models are the jest SDK models in `../gravitee-am-test/api/management/models/`.
+  Do not edit them: `npm run update:sdk:mapi -- ../docs/mapi/openapi.yaml` in `../gravitee-am-test` writes them.
 - The spec is wrong in places. Response enums are lowercase on the wire, for example `type: 'web'`. Override such a
   field with `Omit` and a comment. Keep a type hand-written when the spec has no schema for the response.
 - Paths are the Management API paths the Angular service calls, under `/organizations/:org/environments/:env/domains/:id`.
