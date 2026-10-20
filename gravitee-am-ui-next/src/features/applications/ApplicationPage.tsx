@@ -33,6 +33,7 @@ import { Link, Outlet, useOutletContext, useParams } from 'react-router-dom';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { NotFoundPanel } from '../../app/components/NotFoundPanel';
 import { PageHeader } from '../../app/components/PageHeader';
+import { SaveBar } from '../../app/components/SaveBar';
 import { APPLICATION_NAV_GROUPS } from '../../app/navigation';
 import { type ApplicationDetail, getApplication, patchApplication } from '../../lib/api/applications';
 import { isNotFound } from '../../lib/api/http';
@@ -124,11 +125,7 @@ function Settings({ application }: { readonly application: ApplicationDetail }) 
                 />
                 <FieldLabel htmlFor="enabled">Enabled</FieldLabel>
             </Field>
-            <div>
-                <Button type="submit" disabled={!form.formState.isDirty || save.isPending}>
-                    Save
-                </Button>
-            </div>
+            <SaveBar dirty={form.formState.isDirty} saving={save.isPending} onDiscard={() => form.reset()} />
         </form>
     );
 }

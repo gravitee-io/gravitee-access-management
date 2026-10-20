@@ -66,7 +66,7 @@ The path and the query parameters come from the Angular `ScopeService.findByDoma
 | `await send('PATCH', url, body)` inside a handler with `try`, `toast`, `reload()` | `useMutation({ mutationFn, onSuccess, onError })`, then `mutate(values)` from the handler | Semi-automatic |
 | `toast.success('Scope updated')`                                                  | Same call, in `onSuccess`                                                                 | Automatic      |
 | `toast.error(reason instanceof Error ? reason.message : '...')`                   | `onError: error => toast.error(\`Could not update the scope. ${error.message}\`)`         | Automatic      |
-| A delete after `ConfirmDialog`                                                    | The kit confirm dialog, then `remove.mutate(id)`                                          | Semi-automatic |
+| A delete after `ConfirmDialog`                                                    | `ConfirmDialog`, then `remove.mutate(id)`                                                 | Semi-automatic |
 
 `onSuccess` of an update sets the detail key with the response and invalidates the list key. `onSuccess` of a delete
 invalidates the list key and navigates to the list. `onSuccess` of a create navigates to the new entity.
@@ -124,7 +124,7 @@ every page. Examples: `bot-detection`, `device-identifier`, `extensionGrants`, `
 | `useLayoutConfig({ viewMode: 'context', contextSidebar, leading })` in a layout | `useSectionSidebar({ title, badges, groups, base, crumbs })` | Automatic |
 | `PageHeader` from `components/protocols/SettingsKit`                            | `PageHeader` from `src/app/components/PageHeader.tsx`        | Automatic |
 | `LoadError`, `StateGap`                                                         | `ErrorPanel` and `NotFoundPanel` from `src/app/components/`  | Automatic |
-| `ConfirmDialog` from `components/amUi`                                          | The kit confirm dialog                                       | Automatic |
+| `ConfirmDialog` from `components/amUi`                                          | `ConfirmDialog` from `src/app/components/`                   | Automatic |
 | Search `<Input>` with a 300 ms `useEffect` debounce                             | `<SearchField label onSearch />`                             | Automatic |
 
 ### 1.7 Types
@@ -180,7 +180,7 @@ uncovered list is in `migration-inventory.md`.
 | `XService` with `http.get(this.base + domainId + '/x')`                        | `listX(ref)` in `src/lib/api/x.ts` with the same path           | Semi-automatic |
 | `AppConfig.settings.domainBaseURL` with `:organizationId` and `:environmentId` | `domainPath(ref)`                                               | Automatic      |
 | `SnackbarService.open(msg)`                                                    | `toast.success(msg)` or `toast.error(msg)`                      | Automatic      |
-| `DialogService.confirm(title, text)` then `filter(res => res)`                 | The kit confirm dialog with `onConfirm`                         | Semi-automatic |
+| `DialogService.confirm(title, text)` then `filter(res => res)`                 | `ConfirmDialog` with `onConfirm`                                | Semi-automatic |
 | `AuthService.hasPermissions([...])`                                            | `usePermissions().has([...])`                                   | Semi-automatic |
 | `AuthService.hasAnyPermissions([...])`                                         | `usePermissions().hasAny([...])`                                | Semi-automatic |
 | `DomainStoreService.current`                                                   | `useCurrentDomain().domain`                                     | Automatic      |
@@ -228,7 +228,7 @@ uncovered list is in `migration-inventory.md`.
 | `@ajsf` `json-schema-form` with `[schema]` and `(onChanges)`             | `JsonSchemaForm` with `adaptAmSchema(schema)` and `jsonSchemaResolver`                       | Automatic      |
 | `app-form` custom schema widgets `material-file`, `material-multiselect` | A Graphene custom field, once GR-A ships it. Until then a plain input and an `Alert`         | Manual         |
 
-The save bar `gio-save-bar` becomes the kit save bar: it shows when `isDirty`, submits the form, and resets on
+The save bar `gio-save-bar` becomes `SaveBar`: it shows when `isDirty`, submits the form, and resets on
 discard.
 
 ### 2.5 Tables

@@ -38,7 +38,7 @@ Counts below are tag occurrences in `gravitee-am-ui/src/app/**/*.html`.
 | `mat-autocomplete`                              | 17      | `Combobox`                                       |                                                  |
 | `mat-chip-grid`, `mat-chip-row`                 | 14      | Kit tag input from `Badge` and `Input`           | No Graphene part                                 |
 | `mat-datepicker`                                | 4       | `DatePicker`, `Calendar`                         |                                                  |
-| `gio-save-bar`                                  | 1       | Kit save bar                                     | No Graphene part. Shows on `isDirty`             |
+| `gio-save-bar`                                  | 1       | `SaveBar`                                        | In `src/app/components/`. Shows on `isDirty`     |
 | `@ajsf` `json-schema-form`                      | 10      | `JsonSchemaForm` with `jsonSchemaResolver`       | Through `adaptAmSchema()`                        |
 | `material-file`, `material-multiselect` widgets | 2       | None                                             | GR-A custom field story. Plain input until then  |
 | `gv-expression-language`                        | 5       | `Input` or `Textarea` with `ElCheatSheetTrigger` |                                                  |
@@ -69,7 +69,7 @@ Validation shows inline under the field, on touch, with the Angular message. The
 | Angular                                                     | Count | Graphene                                        | Note                                                  |
 | ----------------------------------------------------------- | ----- | ----------------------------------------------- | ----------------------------------------------------- |
 | `MatDialog` with `mat-dialog-content`, `mat-dialog-actions` | 29    | `Dialog`                                        | A component per dialog with `open` and `onOpenChange` |
-| `DialogService.confirm`                                     |       | Kit confirm dialog on `Dialog`                  | `destructive` variant for delete                      |
+| `DialogService.confirm`                                     |       | `ConfirmDialog` on `Dialog`                     | `destructive` variant for delete                      |
 | Side panel                                                  |       | `Sheet`                                         | The policy studio uses one for step settings          |
 | `MatSnackBar` through `SnackbarService`                     |       | `toast` from Sonner, `Toaster` in `App.tsx`     | `success`, `error`                                    |
 | `gio-banner-info`                                           | 1     | `Alert` with `AlertTitle`, `AlertDescription`   |                                                       |
@@ -146,8 +146,8 @@ Dark mode comes from `AppLayout` `defaultTheme="system"`. No page sets a colour 
 | Need                  | Used by                                                             | Plan                                            |
 | --------------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
 | Wizard                | 12 steppers: plugin creation, domain creation, application creation | Kit, on `PageFocused` with the snippet as model |
-| Confirm dialog        | Every delete                                                        | Kit, on `Dialog`                                |
-| Save bar              | Settings forms                                                      | Kit                                             |
+| Confirm dialog        | Every delete                                                        | Built: `ConfirmDialog` on `Dialog`              |
+| Save bar              | Settings forms                                                      | Built: `SaveBar`                                |
 | Tag input             | 14 chip grids                                                       | Kit                                             |
 | Memberships panel     | Domain, application, MCP server, organization members               | Kit                                             |
 | Client secret dialogs | Applications, MCP servers, domain secrets                           | Kit                                             |

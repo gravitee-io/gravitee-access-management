@@ -48,7 +48,7 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ConfirmDialog, SaveBar, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
@@ -99,7 +99,7 @@ src/
 ## 6. Forms
 
 - Plain forms: `useForm` with `defaultValues` from the entity, `register` for inputs, `Controller` for `Switch` and
-  `Select`. The save button is disabled until `isDirty`. After a save, `form.reset` with the response.
+  `Select`. `SaveBar` from `src/app/components/` gives Save and Discard, bound to `isDirty`. After a save, `form.reset` with the response.
 - Validation rules and messages come from the Angular component or its reactive validators. Keep the messages.
 - Plugin configuration: `adaptAmSchema()` from `src/features/identity-providers/am-schema.ts` translates the AM
   schema keywords, then `JsonSchemaForm` renders it with `jsonSchemaResolver`. Show the adapter's `unsupported` list
