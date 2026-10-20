@@ -500,8 +500,8 @@ Next: the Stage 1 foundation stories in `execution-plan.md` section 2, then the 
 Stories 1 to 8 are committed on `spike/am-gamma`, one commit each, from `a54eff553c` to `65ebe667f2`: the per-area
 routes, the error and not-found panels, the confirm dialog and save bar, the permission model, the licence model,
 the plugin wizard with the identity provider create page, the memberships panel, and the `console-next` Playwright
-project. Story 9, the delivery, waits for Stage 3. The `console-next` spec has not run, because `gravitee-am-test`
-has no `node_modules` yet.
+project. Story 9, the delivery, waits for Stage 3. The `console-next` spec passes against `yarn serve`. Start the
+dev server first, because the project does not start one.
 
 ### Current state and how to resume (2026-10-20, after migration stage 0)
 
@@ -535,7 +535,7 @@ Next steps:
 3. Create the real `gravitee-gamma-module-am` repo and move the local folder into it. It needs a `feature` key and tests.
 4. A short spike on flows and policies with the Graphene policy studio.
 5. Step 6: findings and per-area estimates, which close AM-7769.
-6. The console migration: run `npm ci` and `npm run pw:next` in `gravitee-am-test` once, then `/migrate-area providers`.
+6. The console migration: `/migrate-area providers`. Run `npm run pw:next` in `gravitee-am-test` with `yarn serve` up.
 
 ## 7. Risks
 
