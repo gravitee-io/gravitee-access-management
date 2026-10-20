@@ -480,11 +480,26 @@ The Graphene branch is pushed as draft PR [#470](https://github.com/gravitee-io/
 | The prototype confirms before it changes inheritance | The spike saves on click | Add the confirm dialog in the port |
 | The application flows save is not tested in the browser | The page loads and the inherit switch saves. A flows save uses the domain code path with the application URL | Test it before the flows epic |
 
-### Current state and how to resume (2026-09-24, after step 4b)
+### Migration stage 0 result (2026-10-20)
+
+The Angular to React migration of the console runs as direct commits on `spike/am-gamma`. Draft PR #8666 stays the
+single review PR. The plan is `migration-plan.md` at the workspace root. Stage 0 produced:
+
+| Item | Path |
+|---|---|
+| Agent rules for the React console | `gravitee-am-ui-next/AGENTS.md` |
+| Existing patterns, conversion rules, design system map | `gravitee-am-ui-next/docs/migration/` |
+| Inventory of 221 routes in 56 units, and its generator | `gravitee-am-ui-next/docs/migration/inventory.json`, `gravitee-am-ui-next/scripts/migration/build-inventory.mjs` |
+| Playbook, automation plan, execution plan | `gravitee-am-ui-next/docs/migration/` |
+| The reusable skill, run as `/migrate-area <unit>` | `docs/agent-standards/skills/migrate-area/SKILL.md` |
+
+Next: the Stage 1 foundation stories in `execution-plan.md` section 2, then the `providers` pilot.
+
+### Current state and how to resume (2026-10-20, after migration stage 0)
 
 | Item | State |
 |---|---|
-| AM branch | `AM-7769-spike-react-console` in `gravitee-access-management`, nothing committed. `gravitee-am-ui-next/`: lint clean, 13 unit tests pass, build passes |
+| AM branch | `spike/am-gamma` in `gravitee-access-management`, draft PR #8666. Migration stage 0 is committed, see the result above. `gravitee-am-ui-next/`: typecheck and lint clean, 17 unit tests pass |
 | `am` plugin | `gravitee-gamma-module-am/` at the workspace root, no git repo. The zip is deployed in the APIM distribution `plugins/` |
 | APIM working tree | gamma-console host edits, 9 files, not committed. `nx.json` was already modified before the spike |
 | APIM distribution | Rebuilt from `master` (`afb346ca5b`). `license/license.key` is a copy of `~/Downloads/license.key`. `config/gravitee.yml` is restored from the old distribution (it holds hand-added `authz57-*` users). The old `plugins/` and `config/` are backed up in `scratchpad/dist-backup/` |
@@ -512,6 +527,7 @@ Next steps:
 3. Create the real `gravitee-gamma-module-am` repo and move the local folder into it. It needs a `feature` key and tests.
 4. A short spike on flows and policies with the Graphene policy studio.
 5. Step 6: findings and per-area estimates, which close AM-7769.
+6. The console migration: the Stage 1 stories in `gravitee-am-ui-next/docs/migration/execution-plan.md`, then `/migrate-area providers`.
 
 ## 7. Risks
 
