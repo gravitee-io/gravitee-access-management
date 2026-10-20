@@ -167,31 +167,6 @@ mongo:
 #    type:
 #    password:
 
-mongodb-replicaset:
-  initContainers:
-  enabled: false
-  architecture: replicaset
-  fullnameOverride: "mongo-mongodb-replicaset"
-  replicaSetName: rs0
-  image:
-    repository: bitnamilegacy/mongodb
-    tag: 5.0.9-debian-11-r11
-  auth:
-    enabled: false
-  resources:
-    limits:
-      cpu: 1
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 256Mi
-  persistence:
-    enabled: true
-    # storageClass: ""
-    accessModes:
-      - ReadWriteOnce
-    size: 1Gi
-
 jdbc:
   driver: mysql
   host: localhost

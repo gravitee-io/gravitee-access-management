@@ -1,0 +1,28 @@
+suite: Test NOTES
+templates:
+  - "NOTES.txt"
+tests:
+  - it: Warn when the removed MongoDB subchart is still enabled
+    set:
+      mongodb-replicaset:
+        enabled: true
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: The MongoDB subchart \\(mongodb-replicaset\\) has been removed"
+  - it: Stay silent when the removed MongoDB subchart is disabled
+    set:
+      mongodb-replicaset:
+        enabled: false
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "MongoDB subchart"
+  - it: Stay silent when the removed MongoDB subchart is not configured
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "MongoDB subchart"
+  - it: Stay silent when the removed MongoDB subchart key is left empty
+    set:
+      mongodb-replicaset: null
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "MongoDB subchart"

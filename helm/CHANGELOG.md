@@ -5,6 +5,7 @@ This file documents all notable changes to [Gravitee.io Access Management 4.x](h
 ### 4.14.0
 
 - Plugin configurations can be stored encrypted in the management repository: the keys are declared with the new `encryptionKeys` value (Management API and Gateway), and the encryption is turned on for the Management API with the new `plugins` value (`plugins.properties.configuration.encryption.enabled` and `key`)
+- BREAKING CHANGE: The `mongodb-replicaset` subchart has been removed. It ran a `bitnamilegacy/mongodb` image that no longer receives security updates, pinned to MongoDB 5.0, which is out of support. The chart no longer deploys MongoDB and `mongodb-replicaset.*` values are ignored; while `mongodb-replicaset.enabled` is still set, the install and upgrade notes print a warning. Before upgrading, move the data to a MongoDB deployed outside the chart, point `mongo.uri`, `mongo.servers` or `mongo.dbhost` at it, then remove the `mongodb-replicaset` section from your values. Upgrading a release that had the subchart enabled deletes its StatefulSet and Services; its PersistentVolumeClaims are not managed by Helm and are left in place.
 
 ### 4.13.0
 
