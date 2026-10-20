@@ -40,10 +40,15 @@ export interface Domain {
     readonly createdAt?: number;
     readonly updatedAt?: number;
     readonly certificateSettings?: CertificateSettings;
+    readonly master?: boolean;
+    readonly tags?: readonly string[];
+    readonly dataPlaneId?: string;
     readonly uma?: { readonly enabled?: boolean };
     readonly oidc?: {
         readonly clientRegistrationSettings?: { readonly allowRedirectUriParamsExpressionLanguage?: boolean };
         readonly cimdSettings?: { readonly enabled?: boolean };
+        readonly postLogoutRedirectUris?: readonly string[];
+        readonly requestUris?: readonly string[];
     };
 }
 
@@ -67,4 +72,23 @@ export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
 
 export function updateCertificateSettings(ref: DomainRef, certificateSettings: CertificateSettings): Promise<Domain> {
     return http<Domain>(`${domainPath(ref)}/certificate-settings`, { method: 'PUT', body: JSON.stringify(certificateSettings) });
+}
+
+/** The fields the Angular `DomainService.patchGeneralSettings` sends. */
+export interface DomainGeneralSettings {
+    readonly name: string;
+    readonly description?: string;
+    readonly path?: string;
+    readonly enabled: boolean;
+    readonly tags: readonly string[];
+    readonly oidc: { readonly postLogoutRedirectUris: readonly string[]; readonly requestUris: readonly string[] };
+    readonly master: boolean;
+}
+
+export function patchDomainGeneralSettings(ref: DomainRef, settings: DomainGeneralSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+export function deleteDomain(ref: DomainRef): Promise<void> {
+    return http<void>(domainPath(ref), { method: 'DELETE' });
 }
