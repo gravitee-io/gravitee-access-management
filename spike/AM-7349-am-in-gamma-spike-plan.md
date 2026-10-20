@@ -495,11 +495,19 @@ single review PR. The plan is `migration-plan.md` at the workspace root. Stage 0
 
 Next: the Stage 1 foundation stories in `execution-plan.md` section 2, then the `providers` pilot.
 
+### Migration stage 1 result (2026-10-20)
+
+Stories 1 to 8 are committed on `spike/am-gamma`, one commit each, from `a54eff553c` to `65ebe667f2`: the per-area
+routes, the error and not-found panels, the confirm dialog and save bar, the permission model, the licence model,
+the plugin wizard with the identity provider create page, the memberships panel, and the `console-next` Playwright
+project. Story 9, the delivery, waits for Stage 3. The `console-next` spec has not run, because `gravitee-am-test`
+has no `node_modules` yet.
+
 ### Current state and how to resume (2026-10-20, after migration stage 0)
 
 | Item | State |
 |---|---|
-| AM branch | `spike/am-gamma` in `gravitee-access-management`, draft PR #8666. Migration stage 0 is committed, see the result above. `gravitee-am-ui-next/`: typecheck and lint clean, 17 unit tests pass |
+| AM branch | `spike/am-gamma` in `gravitee-access-management`, draft PR #8666. Migration stages 0 and 1 are committed, see the results above. `gravitee-am-ui-next/`: typecheck and lint clean, 52 unit tests pass |
 | `am` plugin | `gravitee-gamma-module-am/` at the workspace root, no git repo. The zip is deployed in the APIM distribution `plugins/` |
 | APIM working tree | gamma-console host edits, 9 files, not committed. `nx.json` was already modified before the spike |
 | APIM distribution | Rebuilt from `master` (`afb346ca5b`). `license/license.key` is a copy of `~/Downloads/license.key`. `config/gravitee.yml` is restored from the old distribution (it holds hand-added `authz57-*` users). The old `plugins/` and `config/` are backed up in `scratchpad/dist-backup/` |
@@ -527,7 +535,7 @@ Next steps:
 3. Create the real `gravitee-gamma-module-am` repo and move the local folder into it. It needs a `feature` key and tests.
 4. A short spike on flows and policies with the Graphene policy studio.
 5. Step 6: findings and per-area estimates, which close AM-7769.
-6. The console migration: the Stage 1 stories in `gravitee-am-ui-next/docs/migration/execution-plan.md`, then `/migrate-area providers`.
+6. The console migration: run `npm ci` and `npm run pw:next` in `gravitee-am-test` once, then `/migrate-area providers`.
 
 ## 7. Risks
 
