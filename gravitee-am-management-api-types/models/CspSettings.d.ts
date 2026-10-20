@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * Content Security Policy configuration for the domain's login and consent pages.
+ * @export
+ * @interface CspSettings
+ */
+export interface CspSettings {
+    /**
+     * CSP directives, one per entry, in the form "directive-name value". A trailing semicolon is optional. Directive names must be valid CSP tokens and must not repeat; values are not interpreted. Directives that take no value, such as "upgrade-insecure-requests", may be supplied on their own. When reportOnly is enabled, a "report-uri" or "report-to" directive is required.
+     * @type {Array<string>}
+     * @memberof CspSettings
+     */
+    directives?: Array<string>;
+    /**
+     * Whether CSP is enabled for the domain when not inherited.
+     * @type {boolean}
+     * @memberof CspSettings
+     */
+    enabled?: boolean;
+    /**
+     * Whether CSP settings are inherited from the gateway defaults (gravitee.yml). When null, legacy behaviour applies: enabled=true overrides and enabled=false inherits.
+     * @type {boolean}
+     * @memberof CspSettings
+     */
+    inherited?: boolean;
+    /**
+     * When true, the policy is delivered as Content-Security-Policy-Report-Only.
+     * @type {boolean}
+     * @memberof CspSettings
+     */
+    reportOnly?: boolean;
+    /**
+     * Whether inline scripts are allowed via a per-request nonce.
+     * @type {boolean}
+     * @memberof CspSettings
+     */
+    scriptInlineNonce?: boolean;
+}
+/**
+ * Check if a given object implements the CspSettings interface.
+ */
+export declare function instanceOfCspSettings(value: object): value is CspSettings;
+export declare function CspSettingsFromJSON(json: any): CspSettings;
+export declare function CspSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): CspSettings;
+export declare function CspSettingsToJSON(json: any): CspSettings;
+export declare function CspSettingsToJSONTyped(value?: CspSettings | null, ignoreDiscriminator?: boolean): any;

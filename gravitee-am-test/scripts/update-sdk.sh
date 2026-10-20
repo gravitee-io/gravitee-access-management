@@ -16,7 +16,7 @@
 #
 
 function usage () {
-    echo "usage: bash [-x] ./update-sdk.sh [HOST_URL] [SDK_OUTPUT_PATH]"
+    echo "usage: bash [-x] ./update-sdk.sh [HOST_URL|SPEC_FILE] [SDK_OUTPUT_PATH]"
 }
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -44,6 +44,13 @@ case $SDK_OUTPUT_PATH in
   *) SDK_OUTPUT_PATH="$SCRIPT_DIR/$SDK_OUTPUT_PATH";;
 esac
 
+# A spec file, such as docs/mapi/openapi.yaml, needs no running Management API
+if [[ -f $HOST_URL ]]; then
+  SPEC_INPUT="$HOST_URL"
+else
+  SPEC_INPUT="$HOST_URL/openapi.json"
+fi
+
 OPENAPI_GENERATOR_CLI="@openapitools/openapi-generator-cli@2.23.1"
 
 echo "[INFO] OpenAPI Generator Version:"
@@ -53,7 +60,7 @@ echo "[INFO] output path will be: $SDK_OUTPUT_PATH"
 
 npx "$OPENAPI_GENERATOR_CLI" generate \
   -t "$SCRIPT_DIR/templates" \
-  -i "$HOST_URL/openapi.json" \
+  -i "$SPEC_INPUT" \
   -g typescript-fetch \
   -o "$SDK_OUTPUT_PATH" \
   -puseSingleRequestParameter=true \

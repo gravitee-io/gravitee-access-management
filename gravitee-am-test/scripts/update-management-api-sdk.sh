@@ -16,7 +16,7 @@
 #
 
 function usage () {
-    echo "usage: bash [-x] ./update-management-api-sdk.sh [MANAGEMENT_API]"
+    echo "usage: bash [-x] ./update-management-api-sdk.sh [MANAGEMENT_API|SPEC_FILE]"
 }
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -46,4 +46,4 @@ if [[ $UPDATE_SDK_STATUS -ne 0 ]]; then
   exit $UPDATE_SDK_STATUS
 fi
 
-exit 0
+bash "$SCRIPT_DIR"/emit-management-api-types.sh
