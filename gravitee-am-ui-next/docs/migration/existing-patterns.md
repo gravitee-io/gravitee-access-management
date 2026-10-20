@@ -235,7 +235,6 @@ page reuses it with the inherit switch. Hidden flow types are merged back before
 
 | Gap                   | Effect today                            |
 | --------------------- | --------------------------------------- |
-| No memberships panel  | Member pages cannot be ported           |
 | One navigation file   | Parallel agents collide on it           |
 | No Playwright project | Behaviour parity has no automated check |
 | No README             | Setup lives in the spike plan           |

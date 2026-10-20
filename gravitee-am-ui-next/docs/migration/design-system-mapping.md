@@ -149,7 +149,7 @@ Dark mode comes from `AppLayout` `defaultTheme="system"`. No page sets a colour 
 | Confirm dialog        | Every delete                                                        | Built: `ConfirmDialog` on `Dialog`                                                         |
 | Save bar              | Settings forms                                                      | Built: `SaveBar`                                                                           |
 | Tag input             | 14 chip grids                                                       | Built: `TagInput`                                                                          |
-| Memberships panel     | Domain, application, MCP server, organization members               | Kit                                                                                        |
+| Memberships panel     | Domain, application, MCP server, organization members               | Built: `MembershipsPanel`                                                                  |
 | Client secret dialogs | Applications, MCP servers, domain secrets                           | Kit                                                                                        |
 | Custom schema widgets | `datasource`, file, multiselect                                     | GR-A custom field story                                                                    |
 | Upgrade dialog        | 21 `licenseGuard` sites                                             | Built: `UpgradeDialog`, `UpgradePanel`                                                     |
