@@ -71,6 +71,7 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -337,6 +338,9 @@ public class DomainServiceTest {
 
     @Mock
     private AuthorizationEngineService authorizationEngineService;
+
+    @Mock
+    private BotDetectionServiceProxy botDetectionService;
 
     @Test
     public void shouldDelegateFindById() {
@@ -1108,6 +1112,7 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1126,6 +1131,7 @@ public class DomainServiceTest {
         verify(deviceIdentifierService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(serviceResourceService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(authorizationEngineService, times(1)).deleteByDomain(DOMAIN_ID);
+        verify(botDetectionService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
         verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -1176,6 +1182,7 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
