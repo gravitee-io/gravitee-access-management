@@ -25,6 +25,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
@@ -280,6 +281,8 @@ public class DomainServiceImpl implements DomainService {
     private ServiceResourceService serviceResourceService;
     @Autowired
     private AuthorizationEngineService authorizationEngineService;
+    @Autowired
+    private BotDetectionServiceProxy botDetectionService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -708,6 +711,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete certificate credentials
                             .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(authorizationEngineService.deleteByDomain(domainId))
+                            .andThen(botDetectionService.deleteByDomain(domainId))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)

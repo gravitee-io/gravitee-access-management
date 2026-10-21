@@ -19,6 +19,7 @@ import com.google.common.collect.Sets;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -307,6 +308,22 @@ public class BotDetectionServiceTest {
         botDetectionService.delete(DOMAIN, "other-id").test().assertError(BotDetectionNotFoundException.class);
 
         verify(botDetectionRepository, never()).delete(any());
+    }
+
+    @Test
+    public void shouldDeleteByDomain() {
+        when(botDetectionRepository.deleteByReference(Reference.domain(DOMAIN))).thenReturn(Completable.complete());
+
+        botDetectionService.deleteByDomain(DOMAIN).test().assertComplete().assertNoErrors();
+
+        verify(botDetectionRepository).deleteByReference(Reference.domain(DOMAIN));
+    }
+
+    @Test
+    public void shouldDeleteByDomain_technicalException() {
+        when(botDetectionRepository.deleteByReference(Reference.domain(DOMAIN))).thenReturn(Completable.error(TechnicalException::new));
+
+        botDetectionService.deleteByDomain(DOMAIN).test().assertError(TechnicalManagementException.class);
     }
 
     private static BotDetection otherDomainBotDetection() {
