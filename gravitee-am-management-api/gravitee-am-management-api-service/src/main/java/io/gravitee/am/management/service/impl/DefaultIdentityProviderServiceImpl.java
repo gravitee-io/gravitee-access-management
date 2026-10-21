@@ -63,6 +63,8 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     private static final int TABLE_NAME_MAX_LENGTH = 50;
     private static final String PASSWORD_ENCODER = "passwordEncoder";
     private static final String PASSWORD_ENCODER_OPTIONS = "passwordEncoderOptions";
+    public static final String HIDDEN_VALUE = "********";
+    public static final String LEGACY_IDENTITIES_DEFAULT_PLAINTEXT_SENSITIVE_DATA = "legacy.identities.default.plaintextSensitiveData";
 
     private static final Set<String> SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "PBKDF2-SHA1", "PBKDF2-SHA256", "PBKDF2-SHA512", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
     private static final Map<String, String> PBKDF2_PASSWORD_ENCODER_MAP = Map.of(
@@ -218,7 +220,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             // dash are forbidden in table name, replace them in domainName by underscore
             configMap.put("usersTable", "idp_users_" + tableSuffix);
             configMap.put("user", jdbcUser());
-            configMap.put(PASSWORD, (jdbcPassword() == null ? null : jdbcPassword()));
+            configMap.put(PASSWORD, hideSensitiveData() ? "\"" + HIDDEN_VALUE + "\"" : (jdbcPassword() == null ? null : "\"" + jdbcPassword() + "\""));
             configMap.put("autoProvisioning", idpProvisioning());
             configMap.put("selectUserByUsernameQuery", "SELECT * FROM idp_users_" + tableSuffix + " WHERE username = %s");
             configMap.put("selectUserByEmailQuery", "SELECT * FROM idp_users_" + tableSuffix + " WHERE email = %s");
@@ -230,6 +232,10 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             updatePasswordEncoderOptions(configMap, encoder);
         }
         return configMap;
+    }
+
+    private boolean hideSensitiveData() {
+        return !environment.getProperty(LEGACY_IDENTITIES_DEFAULT_PLAINTEXT_SENSITIVE_DATA, Boolean.class, true);
     }
 
     public String addOptionsToURI(String mongoUri) {
