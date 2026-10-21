@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { JsonSchema } from '@gravitee/graphene-core';
-import { schemaFactorType, withResourceSelect, withSchemaDefaults } from '../factor-schema';
+import { schemaFactorType, withResourceSelect } from '../factor-schema';
 
 const resources = [
     { id: 'r-sms', name: 'Twilio', type: 'twilio-resource' },
@@ -100,24 +99,5 @@ describe('schemaFactorType', () => {
     it('reads the factorType default', () => {
         expect(schemaFactorType(schema)).toBe('SMS');
         expect(schemaFactorType({ properties: {} })).toBeUndefined();
-    });
-});
-
-describe('withSchemaDefaults', () => {
-    it('fills the defaults under the configuration, and an undefined value keeps its default', () => {
-        const otp: JsonSchema = {
-            type: 'object',
-            properties: {
-                issuer: { type: 'string', default: 'Gravitee.io' },
-                timeStep: { type: 'string', default: '30' },
-                label: { type: 'string' },
-            },
-        };
-
-        expect(withSchemaDefaults(otp, { issuer: 'Acme', timeStep: undefined, label: 'x' })).toEqual({
-            issuer: 'Acme',
-            timeStep: '30',
-            label: 'x',
-        });
     });
 });

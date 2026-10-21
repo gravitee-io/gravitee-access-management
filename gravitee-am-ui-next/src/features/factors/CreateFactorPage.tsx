@@ -19,10 +19,10 @@ import { useNavigate } from 'react-router-dom';
 import { PluginWizard } from '../../app/components/PluginWizard';
 import { createFactor, type FactorPlugin, getFactorSchema, listFactorPlugins } from '../../lib/api/factors';
 import { listResourcePlugins, listResourcesWhenPermitted } from '../../lib/api/resources';
-import { adaptAmSchema } from '../../lib/forms/am-schema';
+import { adaptAmSchema, withSchemaDefaults } from '../../lib/forms/am-schema';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
-import { factorPluginName, isFido2, schemaFactorType, withResourceSelect, withSchemaDefaults } from './factor-schema';
+import { factorPluginName, isFido2, schemaFactorType, withResourceSelect } from './factor-schema';
 
 /** The raw plugin schema. The wizard reads it for the form, the factor type field and the POST for its `factorType` default. */
 const schemaQuery = (type: string) => ({ queryKey: ['factor-schema', type], queryFn: () => getFactorSchema(type), staleTime: Infinity });

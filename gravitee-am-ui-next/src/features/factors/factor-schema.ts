@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { extractDefaults, type JsonSchema } from '@gravitee/graphene-core';
 import type { Resource, ResourcePlugin } from '../../lib/api/resources';
 
 type SchemaNode = Record<string, unknown>;
@@ -42,17 +41,6 @@ export function isFido2(type: string): boolean {
 export function schemaFactorType(schema: SchemaNode): string | undefined {
     const properties = schema.properties as Record<string, SchemaNode> | undefined;
     return properties?.factorType?.default as string | undefined;
-}
-
-/**
- * The configuration over the schema defaults, as the Angular form fills them. An undefined value, which the wizard form
- * holds for an untouched field, does not hide its default.
- */
-export function withSchemaDefaults(schema: JsonSchema, configuration: Record<string, unknown>): Record<string, unknown> {
-    return {
-        ...(extractDefaults(schema) as Record<string, unknown>),
-        ...Object.fromEntries(Object.entries(configuration).filter(([, value]) => value !== undefined)),
-    };
 }
 
 function applyForGraviteeResource(property: SchemaNode, usable: readonly Resource[], name?: string): void {

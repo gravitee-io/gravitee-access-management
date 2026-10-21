@@ -48,12 +48,12 @@ import { SaveBar } from '../../app/components/SaveBar';
 import { deleteFactor, type Factor, getFactor, getFactorSchema, listFactorPlugins, updateFactor } from '../../lib/api/factors';
 import { isNotFound } from '../../lib/api/http';
 import { listResourcePlugins, listResourcesWhenPermitted } from '../../lib/api/resources';
-import { type AdaptedSchema, adaptAmSchema } from '../../lib/forms/am-schema';
+import { type AdaptedSchema, adaptAmSchema, withSchemaDefaults } from '../../lib/forms/am-schema';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { LicenseGuard } from '../../lib/session/license';
 import { Can, usePermissions } from '../../lib/session/permissions';
-import { isFido2, schemaFactorType, withResourceSelect, withSchemaDefaults } from './factor-schema';
+import { isFido2, schemaFactorType, withResourceSelect } from './factor-schema';
 
 // A type alias, not an interface: Graphene's resolvers constrain the values to `Record<string, unknown>`.
 type FactorValues = {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { JsonSchema } from '@gravitee/graphene-core';
+import { extractDefaults, type JsonSchema } from '@gravitee/graphene-core';
 
 type SchemaNode = Record<string, unknown>;
 
@@ -75,4 +75,15 @@ function adaptNode(node: SchemaNode, path: string, unsupported: string[]): Schem
 export function adaptAmSchema(schema: SchemaNode): AdaptedSchema {
     const unsupported: string[] = [];
     return { schema: adaptNode(schema, '', unsupported) as JsonSchema, unsupported };
+}
+
+/**
+ * The configuration over the schema defaults, as the Angular form fills them. An undefined value, which the wizard form
+ * holds for an untouched field, does not hide its default.
+ */
+export function withSchemaDefaults(schema: JsonSchema, configuration: Record<string, unknown>): Record<string, unknown> {
+    return {
+        ...(extractDefaults(schema) as Record<string, unknown>),
+        ...Object.fromEntries(Object.entries(configuration).filter(([, value]) => value !== undefined)),
+    };
 }
