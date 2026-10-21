@@ -42,7 +42,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type ReactNode, useMemo, useState } from 'react';
 import { type Control, type Resolver, type ResolverResult, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { type AdaptedSchema, adaptAmSchema } from '../../lib/forms/am-schema';
+import { type AdaptedSchema, adaptAmSchema, withSchemaDefaults } from '../../lib/forms/am-schema';
 import { useLicense, LicenseGuard } from '../../lib/session/license';
 import { ErrorPanel } from './ErrorPanel';
 
@@ -183,7 +183,13 @@ function ConfigureForm<P extends WizardPlugin>({
             ),
         [adapted.schema],
     );
-    const form = useForm<PluginWizardValues>({ resolver, mode: 'onTouched', criteriaMode: 'all', defaultValues: { name: '', config: {} } });
+    // The Angular json-schema-form fills the schema defaults, so the user does not pick a required field that has one.
+    const form = useForm<PluginWizardValues>({
+        resolver,
+        mode: 'onTouched',
+        criteriaMode: 'all',
+        defaultValues: { name: '', config: withSchemaDefaults(adapted.schema, {}) },
+    });
     const nameError = form.formState.errors.name;
 
     return (
