@@ -121,6 +121,11 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
         return botDetectionService.delete(domain, botDetectionId, principal);
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return botDetectionService.deleteByDomain(domain);
+    }
+
     private Single<BotDetection> filterSensitiveData(BotDetection botDetection) {
         return botDetectionPluginService.getSchema(botDetection.getType())
                 .map(Optional::ofNullable)

@@ -84,6 +84,7 @@ import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
+import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -406,6 +407,9 @@ public class DomainServiceTest {
     @Mock
     private LoginAttemptManagementService loginAttemptService;
 
+    @Mock
+    private BotDetectionServiceProxy botDetectionService;
+
     private List<DomainDataPlaneCleanup> dataPlaneCleanups;
 
     @BeforeEach
@@ -424,7 +428,6 @@ public class DomainServiceTest {
         Mockito.lenient().when(trustedIssuerProjection.apply(any(Domain.class), any(), any())).thenReturn(Completable.complete());
         Mockito.lenient().when(trustedIssuerProjection.mirror(any(Domain.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
     }
-
     /**
      * The stores the domain deletion purges are collected by Spring, so the test has to hand them over
      * itself. Every one of them completes unless a test says otherwise.
@@ -1842,6 +1845,7 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scopeService.deleteByDomain(domain)).thenReturn(complete());
+        when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1866,6 +1870,7 @@ public class DomainServiceTest {
         InOrder purgeThenReporters = inOrder(domainGroupService, reporterService);
         purgeThenReporters.verify(domainGroupService).purgeDataPlane(domain, null);
         purgeThenReporters.verify(reporterService).delete(REPORTER_ID);
+        verify(botDetectionService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
@@ -1907,6 +1912,7 @@ public class DomainServiceTest {
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scopeService.deleteByDomain(domain)).thenReturn(complete());
+        when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
     }
 
     @Test
