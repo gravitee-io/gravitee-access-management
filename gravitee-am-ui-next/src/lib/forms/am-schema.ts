@@ -24,7 +24,7 @@ export interface AdaptedSchema {
 }
 
 // angular-schema-form keywords with no Graphene meaning, dropped after translation.
-const DROPPED_KEYWORDS = ['id', 'widget', 'x-schema-form', 'titleMap', 'htmlClass', 'readonly', 'sensitive', 'sensitive-uri'];
+const DROPPED_KEYWORDS = ['id', 'widget', 'x-schema-form', 'titleMap', 'htmlClass', 'readonly', 'sensitive', 'sensitive-uri', 'condition'];
 
 const FORMAT_BY_WIDGET: Record<string, string> = { password: 'password', textarea: 'text' };
 
@@ -33,7 +33,90 @@ function titleMapOf(node: SchemaNode): Record<string, string> | undefined {
     return (formOptions?.titleMap ?? node.titleMap) as Record<string, string> | undefined;
 }
 
-function adaptNode(node: SchemaNode, path: string, unsupported: string[]): SchemaNode {
+type Literal = string | number | boolean;
+
+const MODEL_PATH = String.raw`model\.([\w.]+)`;
+const LITERAL = String.raw`'([^']*)'|"([^"]*)"|(-?\d+(?:\.\d+)?)|(true|false)`;
+const TRUTHY_TERM = new RegExp(`^${MODEL_PATH}$`);
+const EQUALS_TERM = new RegExp(`^${MODEL_PATH}\\s*===?\\s*(?:${LITERAL})$`);
+const UNSET_OR_EQUALS_TERM = new RegExp(`^!${MODEL_PATH}\\s*\\|\\|\\s*model\\.\\1\\s*===?\\s*(?:${LITERAL})$`);
+
+function literalOf([quoted, doubleQuoted, number, boolean]: (string | undefined)[]): Literal {
+    if (quoted !== undefined || doubleQuoted !== undefined) {
+        return (quoted ?? doubleQuoted)!;
+    }
+    return number !== undefined ? Number(number) : boolean === 'true';
+}
+
+function defaultAt(root: SchemaNode, path: string): unknown {
+    let node: SchemaNode | undefined = root;
+    for (const key of path.split('.')) {
+        node = (node?.properties as Record<string, SchemaNode> | undefined)?.[key];
+    }
+    return node?.default;
+}
+
+/** The `&&` operands of an expression, split at depth 0, each without its outer parentheses. */
+function conjunctionTerms(expression: string): string[] {
+    const terms: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < expression.length; i++) {
+        const char = expression[i];
+        depth += char === '(' ? 1 : char === ')' ? -1 : 0;
+        if (depth === 0 && expression.startsWith('&&', i)) {
+            terms.push(expression.slice(start, i));
+            start = i + 2;
+        }
+    }
+    terms.push(expression.slice(start));
+    return terms.map(term =>
+        term
+            .trim()
+            .replace(/^\((.*)\)$/s, '$1')
+            .trim(),
+    );
+}
+
+/**
+ * The angular-schema-form `condition` as a Graphene `displayIf`, or undefined when Graphene cannot express it. A
+ * condition is a conjunction of `model.x`, `model.x === literal`, and `(!model.x || model.x === literal)` where the
+ * literal is the schema default of `x`: the forms fill the defaults, so an unset value takes it.
+ */
+function displayIfOf(condition: unknown, root: SchemaNode): { $eq: Record<string, Literal> } | undefined {
+    const body = typeof condition === 'string' ? condition : (condition as SchemaNode | undefined)?.functionBody;
+    if (typeof body !== 'string') {
+        return undefined;
+    }
+    const $eq: Record<string, Literal> = {};
+    for (const term of conjunctionTerms(
+        body
+            .trim()
+            .replace(/^return\s+/, '')
+            .replace(/;$/, ''),
+    )) {
+        let match: RegExpMatchArray | null;
+        let key: string;
+        let value: Literal;
+        if ((match = term.match(TRUTHY_TERM))) {
+            [key, value] = [match[1], true];
+        } else if ((match = term.match(EQUALS_TERM))) {
+            [key, value] = [match[1], literalOf(match.slice(2))];
+        } else if ((match = term.match(UNSET_OR_EQUALS_TERM)) && defaultAt(root, match[1]) === literalOf(match.slice(2))) {
+            [key, value] = [match[1], literalOf(match.slice(2))];
+        } else {
+            return undefined;
+        }
+        const path = `value.${key}`;
+        if (path in $eq && $eq[path] !== value) {
+            return undefined;
+        }
+        $eq[path] = value;
+    }
+    return { $eq };
+}
+
+function adaptNode(node: SchemaNode, path: string, unsupported: string[], root: SchemaNode = node): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
 
     const widget = node.widget as string | undefined;
@@ -52,17 +135,25 @@ function adaptNode(node: SchemaNode, path: string, unsupported: string[]): Schem
     if (titleMap) {
         adapted.gioConfig = { ...(adapted.gioConfig as SchemaNode | undefined), enumLabelMap: titleMap };
     }
+    if (node.condition !== undefined) {
+        const displayIf = displayIfOf(node.condition, root);
+        if (displayIf) {
+            adapted.gioConfig = { ...(adapted.gioConfig as SchemaNode | undefined), displayIf };
+        } else {
+            unsupported.push(`${path} (condition)`);
+        }
+    }
 
     if (node.properties) {
         adapted.properties = Object.fromEntries(
             Object.entries(node.properties as Record<string, SchemaNode>).map(([key, child]) => [
                 key,
-                adaptNode(child, path ? `${path}.${key}` : key, unsupported),
+                adaptNode(child, path ? `${path}.${key}` : key, unsupported, root),
             ]),
         );
     }
     if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
-        adapted.items = adaptNode(node.items as SchemaNode, `${path}[]`, unsupported);
+        adapted.items = adaptNode(node.items as SchemaNode, `${path}[]`, unsupported, root);
     }
     return adapted;
 }
@@ -70,7 +161,7 @@ function adaptNode(node: SchemaNode, path: string, unsupported: string[]): Schem
 /**
  * Translates an AM plugin schema, written for angular-schema-form, into the dialect of Graphene's JsonSchemaForm:
  * `widget: password|textarea` becomes a `format`, `titleMap` becomes `gioConfig.enumLabelMap`, `readonly` becomes
- * `readOnly`, and `sensitive` fields render as passwords.
+ * `readOnly`, `sensitive` fields render as passwords, and a `condition` becomes `gioConfig.displayIf`.
  */
 export function adaptAmSchema(schema: SchemaNode): AdaptedSchema {
     const unsupported: string[] = [];

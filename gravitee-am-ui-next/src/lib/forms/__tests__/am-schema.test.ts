@@ -58,6 +58,51 @@ describe('adaptAmSchema', () => {
         expect(schema.properties?.datasourceId).toEqual({ type: 'string', title: 'Data source ID' });
         expect(unsupported).toEqual(['datasourceId (widget "datasource")']);
     });
+
+    it('translates the SMTP conditions into displayIf, reading an unset value as its default', () => {
+        const { schema, unsupported } = adaptAmSchema({
+            type: 'object',
+            properties: {
+                authentication: { type: 'boolean', default: false },
+                authenticationType: { type: 'string', default: 'basic', enum: ['basic', 'oauth2'], condition: 'model.authentication' },
+                username: {
+                    type: 'string',
+                    condition: {
+                        functionBody: "return model.authentication && (!model.authenticationType || model.authenticationType === 'basic');",
+                    },
+                },
+                oauth2Configuration: {
+                    type: 'object',
+                    condition: { functionBody: "return model.authentication && model.authenticationType === 'oauth2';" },
+                    properties: { tokenEndpoint: { type: 'string' } },
+                },
+            },
+        });
+
+        expect(schema.properties?.authenticationType?.gioConfig).toEqual({ displayIf: { $eq: { 'value.authentication': true } } });
+        expect(schema.properties?.username?.gioConfig).toEqual({
+            displayIf: { $eq: { 'value.authentication': true, 'value.authenticationType': 'basic' } },
+        });
+        expect(schema.properties?.oauth2Configuration?.gioConfig).toEqual({
+            displayIf: { $eq: { 'value.authentication': true, 'value.authenticationType': 'oauth2' } },
+        });
+        expect(unsupported).toEqual([]);
+    });
+
+    it('reports a condition displayIf cannot express and keeps the field visible', () => {
+        const { schema, unsupported } = adaptAmSchema({
+            type: 'object',
+            properties: {
+                mode: { type: 'string' },
+                port: { type: 'integer', condition: { functionBody: "return model.mode !== 'local';" } },
+                host: { type: 'string', condition: { functionBody: "return !model.mode || model.mode === 'remote';" } },
+            },
+        });
+
+        expect(schema.properties?.port).toEqual({ type: 'integer' });
+        expect(schema.properties?.host).toEqual({ type: 'string' });
+        expect(unsupported).toEqual(['port (condition)', 'host (condition)']);
+    });
 });
 
 describe('withSchemaDefaults', () => {
