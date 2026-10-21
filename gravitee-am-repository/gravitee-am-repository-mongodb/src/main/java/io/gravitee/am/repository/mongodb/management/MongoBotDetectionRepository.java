@@ -19,6 +19,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.BotDetectionRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.BotDetectionMongo;
@@ -98,6 +99,12 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(botDetectionMongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        return Completable.fromPublisher(botDetectionMongoCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_REFERENCE_TYPE, reference.type().name()))))
                 .observeOn(Schedulers.computation());
     }
 

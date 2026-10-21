@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
@@ -147,6 +148,31 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoValues();
         testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void testDeleteByReference() {
+        BotDetection toDelete = buildBotDetection();
+        toDelete.setReferenceId("domainToDelete");
+        repository.create(toDelete).blockingGet();
+        BotDetection toKeep = buildBotDetection();
+        toKeep.setReferenceId("domainToKeep");
+        repository.create(toKeep).blockingGet();
+
+        TestObserver<Void> deleteObserver = repository.deleteByReference(Reference.domain("domainToDelete")).test();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
+        deleteObserver.assertComplete();
+        deleteObserver.assertNoErrors();
+
+        TestSubscriber<BotDetection> deleted = repository.findByReference(ReferenceType.DOMAIN, "domainToDelete").test();
+        deleted.awaitDone(10, TimeUnit.SECONDS);
+        deleted.assertComplete();
+        deleted.assertNoValues();
+
+        TestSubscriber<BotDetection> kept = repository.findByReference(ReferenceType.DOMAIN, "domainToKeep").test();
+        kept.awaitDone(10, TimeUnit.SECONDS);
+        kept.assertComplete();
+        kept.assertValueCount(1);
     }
 
 }

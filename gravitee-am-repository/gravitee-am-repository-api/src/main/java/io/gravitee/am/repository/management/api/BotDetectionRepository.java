@@ -16,8 +16,10 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -29,5 +31,7 @@ public interface BotDetectionRepository extends CrudRepository<BotDetection, Str
     Flowable<BotDetection> findAll();
 
     Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId);
+
+    Completable deleteByReference(Reference reference);
 
 }
