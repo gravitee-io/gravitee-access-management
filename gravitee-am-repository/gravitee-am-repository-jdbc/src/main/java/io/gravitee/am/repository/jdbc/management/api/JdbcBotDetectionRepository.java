@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcBotDetection;
@@ -104,6 +105,15 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         LOGGER.debug("delete({})", id);
         return monoToCompletable(getTemplate().delete(JdbcBotDetection.class)
                 .matching(Query.query(where(ID_FIELD).is(id))).all().then())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        LOGGER.debug("deleteByReference({})", reference);
+        return monoToCompletable(getTemplate().delete(JdbcBotDetection.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(reference.id()).and(where(REF_TYPE_FIELD).is(reference.type().name()))))
+                .all().then())
                 .observeOn(Schedulers.computation());
     }
 }
