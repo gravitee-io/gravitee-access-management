@@ -82,4 +82,38 @@ describe('PluginWizard', () => {
             ),
         );
     });
+
+    it('shows a field again when its unset-or-equals condition holds after a toggle', async () => {
+        getSchema.mockResolvedValue({
+            type: 'object',
+            properties: {
+                authentication: { type: 'boolean', title: 'Authentication', default: false },
+                authenticationType: {
+                    type: 'string',
+                    title: 'Type',
+                    default: 'basic',
+                    enum: ['basic', 'oauth2'],
+                    condition: 'model.authentication',
+                },
+                username: {
+                    type: 'string',
+                    title: 'Username',
+                    condition: {
+                        functionBody: "return model.authentication && (!model.authenticationType || model.authenticationType === 'basic');",
+                    },
+                },
+            },
+        });
+        renderWizard();
+
+        fireEvent.click(await screen.findByRole('radio', { name: 'SMTP' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        fireEvent.click(await screen.findByRole('switch', { name: /Authentication/ }));
+        expect(await screen.findByRole('textbox', { name: 'Username' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('switch', { name: /Authentication/ }));
+        await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Username' })).not.toBeInTheDocument());
+        fireEvent.click(screen.getByRole('switch', { name: /Authentication/ }));
+
+        expect(await screen.findByRole('textbox', { name: 'Username' })).toBeInTheDocument();
+    });
 });

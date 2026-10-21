@@ -59,7 +59,7 @@ describe('adaptAmSchema', () => {
         expect(unsupported).toEqual(['datasourceId (widget "datasource")']);
     });
 
-    it('translates the SMTP conditions into displayIf, reading an unset value as its default', () => {
+    it('translates the SMTP conditions into displayIf, and an unset value passes the unset-or-equals term', () => {
         const { schema, unsupported } = adaptAmSchema({
             type: 'object',
             properties: {
@@ -81,7 +81,7 @@ describe('adaptAmSchema', () => {
 
         expect(schema.properties?.authenticationType?.gioConfig).toEqual({ displayIf: { $eq: { 'value.authentication': true } } });
         expect(schema.properties?.username?.gioConfig).toEqual({
-            displayIf: { $eq: { 'value.authentication': true, 'value.authenticationType': 'basic' } },
+            displayIf: { $eq: { 'value.authentication': true, 'value.authenticationType': ['basic', undefined, null, '', 0, false] } },
         });
         expect(schema.properties?.oauth2Configuration?.gioConfig).toEqual({
             displayIf: { $eq: { 'value.authentication': true, 'value.authenticationType': 'oauth2' } },
@@ -95,13 +95,11 @@ describe('adaptAmSchema', () => {
             properties: {
                 mode: { type: 'string' },
                 port: { type: 'integer', condition: { functionBody: "return model.mode !== 'local';" } },
-                host: { type: 'string', condition: { functionBody: "return !model.mode || model.mode === 'remote';" } },
             },
         });
 
         expect(schema.properties?.port).toEqual({ type: 'integer' });
-        expect(schema.properties?.host).toEqual({ type: 'string' });
-        expect(unsupported).toEqual(['port (condition)', 'host (condition)']);
+        expect(unsupported).toEqual(['port (condition)']);
     });
 });
 

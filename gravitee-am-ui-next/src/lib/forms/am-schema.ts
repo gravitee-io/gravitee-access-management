@@ -35,6 +35,9 @@ function titleMapOf(node: SchemaNode): Record<string, string> | undefined {
 
 type Literal = string | number | boolean;
 
+/** The values `!model.x` accepts. Graphene compares a `$eq` list with `includes`, so `undefined` matches an unset field. */
+const FALSY = [undefined, null, '', 0, false];
+
 const MODEL_PATH = String.raw`model\.([\w.]+)`;
 const LITERAL = String.raw`'([^']*)'|"([^"]*)"|(-?\d+(?:\.\d+)?)|(true|false)`;
 const TRUTHY_TERM = new RegExp(`^${MODEL_PATH}$`);
@@ -46,14 +49,6 @@ function literalOf([quoted, doubleQuoted, number, boolean]: (string | undefined)
         return (quoted ?? doubleQuoted)!;
     }
     return number !== undefined ? Number(number) : boolean === 'true';
-}
-
-function defaultAt(root: SchemaNode, path: string): unknown {
-    let node: SchemaNode | undefined = root;
-    for (const key of path.split('.')) {
-        node = (node?.properties as Record<string, SchemaNode> | undefined)?.[key];
-    }
-    return node?.default;
 }
 
 /** The `&&` operands of an expression, split at depth 0, each without its outer parentheses. */
@@ -80,15 +75,14 @@ function conjunctionTerms(expression: string): string[] {
 
 /**
  * The angular-schema-form `condition` as a Graphene `displayIf`, or undefined when Graphene cannot express it. A
- * condition is a conjunction of `model.x`, `model.x === literal`, and `(!model.x || model.x === literal)` where the
- * literal is the schema default of `x`: the forms fill the defaults, so an unset value takes it.
+ * condition is a conjunction of `model.x`, `model.x === literal`, and `(!model.x || model.x === literal)`.
  */
-function displayIfOf(condition: unknown, root: SchemaNode): { $eq: Record<string, Literal> } | undefined {
+function displayIfOf(condition: unknown): { $eq: Record<string, Literal | unknown[]> } | undefined {
     const body = typeof condition === 'string' ? condition : (condition as SchemaNode | undefined)?.functionBody;
     if (typeof body !== 'string') {
         return undefined;
     }
-    const $eq: Record<string, Literal> = {};
+    const $eq: Record<string, Literal | unknown[]> = {};
     for (const term of conjunctionTerms(
         body
             .trim()
@@ -97,13 +91,13 @@ function displayIfOf(condition: unknown, root: SchemaNode): { $eq: Record<string
     )) {
         let match: RegExpMatchArray | null;
         let key: string;
-        let value: Literal;
+        let value: Literal | unknown[];
         if ((match = term.match(TRUTHY_TERM))) {
             [key, value] = [match[1], true];
         } else if ((match = term.match(EQUALS_TERM))) {
             [key, value] = [match[1], literalOf(match.slice(2))];
-        } else if ((match = term.match(UNSET_OR_EQUALS_TERM)) && defaultAt(root, match[1]) === literalOf(match.slice(2))) {
-            [key, value] = [match[1], literalOf(match.slice(2))];
+        } else if ((match = term.match(UNSET_OR_EQUALS_TERM))) {
+            [key, value] = [match[1], [literalOf(match.slice(2)), ...FALSY]];
         } else {
             return undefined;
         }
@@ -116,7 +110,7 @@ function displayIfOf(condition: unknown, root: SchemaNode): { $eq: Record<string
     return { $eq };
 }
 
-function adaptNode(node: SchemaNode, path: string, unsupported: string[], root: SchemaNode = node): SchemaNode {
+function adaptNode(node: SchemaNode, path: string, unsupported: string[]): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
 
     const widget = node.widget as string | undefined;
@@ -136,7 +130,7 @@ function adaptNode(node: SchemaNode, path: string, unsupported: string[], root: 
         adapted.gioConfig = { ...(adapted.gioConfig as SchemaNode | undefined), enumLabelMap: titleMap };
     }
     if (node.condition !== undefined) {
-        const displayIf = displayIfOf(node.condition, root);
+        const displayIf = displayIfOf(node.condition);
         if (displayIf) {
             adapted.gioConfig = { ...(adapted.gioConfig as SchemaNode | undefined), displayIf };
         } else {
@@ -148,12 +142,12 @@ function adaptNode(node: SchemaNode, path: string, unsupported: string[], root: 
         adapted.properties = Object.fromEntries(
             Object.entries(node.properties as Record<string, SchemaNode>).map(([key, child]) => [
                 key,
-                adaptNode(child, path ? `${path}.${key}` : key, unsupported, root),
+                adaptNode(child, path ? `${path}.${key}` : key, unsupported),
             ]),
         );
     }
     if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
-        adapted.items = adaptNode(node.items as SchemaNode, `${path}[]`, unsupported, root);
+        adapted.items = adaptNode(node.items as SchemaNode, `${path}[]`, unsupported);
     }
     return adapted;
 }
