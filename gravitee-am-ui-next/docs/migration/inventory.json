@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-21",
-    "angularCommit": "f59758f0d2",
+    "angularCommit": "0068c3328c",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -262,6 +262,7 @@
                     "status": "done",
                     "class": "C",
                     "reactFiles": [
+                        "src/features/domains/DomainIndexRedirect.tsx",
                         "src/lib/session/domain.tsx",
                         "src/app/Shell.tsx"
                     ],
@@ -285,6 +286,7 @@
                     "status": "done",
                     "class": "C",
                     "reactFiles": [
+                        "src/features/domains/DomainIndexRedirect.tsx",
                         "src/lib/session/domain.tsx",
                         "src/app/Shell.tsx"
                     ],
@@ -314,9 +316,13 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "C",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/domains/DomainDashboardPage.tsx",
+                        "src/features/domains/dashboard-data.ts",
+                        "src/lib/api/analytics.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -339,12 +345,12 @@
                 "domain_list"
             ],
             "licenseFeatures": [],
-            "status": "in-progress",
+            "status": "done",
             "class": "C",
             "order": 38,
             "blockers": [],
-            "notes": "The list is built. The creation page is built. The dashboard with its chart widgets remains. Charts move to graphene-charts.",
-            "angularCommit": null
+            "notes": "All five pages are built. Dashboard brief, 2026-10-21: Pages: domains/:domainId/dashboard (DomainDashboardComponent with gv-dashboard) → DomainDashboardPage → src/features/domains/DomainDashboardPage.tsx. It replaces the Dashboard placeholder in App.tsx. Endpoints: GET {domain}/analytics?type&field&from&to&interval[&size], AnalyticsService.search, 13 calls per load: count user_login, user_registered, user, application; date_histo user_login, user_registered; group_by user_status, user_registration, application (size 20), user_login, webauthn, cba, magic_link. The spec has no response schema, so src/lib/api/analytics.ts hand-writes the count, histogram and group-by shapes from io.gravitee.am.model.analytics. Permissions: route domain_analytics_read. Create application button application_create, as the Angular *hasPermission. Licence features: none. Prototype additions left out: none without an endpoint. Kept from the prototype: the page error panel when all 13 calls fail, the + prefix only above 0, the doughnuts and breakdown lists in place of the Highcharts pies and gauge (prototypeNotes). Angular behaviour added back: every series of a histogram, failure series in the destructive colour (the prototype draws values[0] only); a per-widget \"Failed to fetch data\" when its call fails (the prototype shows a dash or \"No activity\"); registration as completed/total from the total and completed keys (the prototype sums both keys); top applications with all 20 rows behind maxItems 5 and a link to each application that metadata does not mark deleted; the time ranges as moment subtracts, 4 weeks and 3 calendar months (the prototype uses 90 days); group_by responses with no metadata, as user_status and user_registration return. Verified 2026-10-21 on stc-dev, Angular :4200 against React :4201: 13 GET .../analytics calls on load, 13 on refresh, 13 after Last 90 days, with the same type, field, interval and size, in the same order; the 90-day window is 92 days (calendar months) on both. The domain has no audit data, so the charts with data are covered by the unit tests. console-next domain-dashboard.spec.ts passes, and the console-next project passes 18 of 18. The domain index now redirects as the Angular DomainComponent: dashboard, authorization, applications, mcp-servers, then settings, by permission (DomainIndexRedirect.tsx), because the dashboard route is now gated.",
+            "angularCommit": "0068c3328c"
         },
         {
             "id": "applications",

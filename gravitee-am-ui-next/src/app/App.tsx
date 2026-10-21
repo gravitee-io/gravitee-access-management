@@ -18,7 +18,8 @@ import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-qu
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { applicationRoutes } from '../features/applications/routes';
 import { authRoutes } from '../features/auth/routes';
-import { domainRoutes } from '../features/domains/routes';
+import { DomainIndexRedirect } from '../features/domains/DomainIndexRedirect';
+import { domainDashboardRoute, domainRoutes } from '../features/domains/routes';
 import { organizationRoutes } from '../features/organization/routes';
 import { domainSettingsRoutes } from '../features/settings/routes';
 import { redirectToLogin } from '../lib/api/auth';
@@ -67,8 +68,8 @@ export function App() {
                                                     <Route index element={<Navigate to="domains" replace />} />
                                                     {domainRoutes}
                                                     <Route path="domains/:domainHrid" element={<DomainScope />}>
-                                                        <Route index element={<Navigate to="dashboard" replace />} />
-                                                        <Route path="dashboard" element={<DomainPlaceholderPage title="Dashboard" />} />
+                                                        <Route index element={<DomainIndexRedirect />} />
+                                                        {domainDashboardRoute}
                                                         {applicationRoutes}
                                                         <Route path="agents" element={<DomainPlaceholderPage title="Agents" />} />
                                                         <Route path="mcp-servers" element={<DomainPlaceholderPage title="MCP Servers" />} />
