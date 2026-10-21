@@ -15,7 +15,7 @@
  */
 import type * as httpModule from '../http';
 import { HttpError, http } from '../http';
-import { listResourcesWhenPermitted } from '../resources';
+import { getResourceSchema, listResourcesWhenPermitted, updateResource } from '../resources';
 
 vi.mock('../http', async importOriginal => ({ ...(await importOriginal<typeof httpModule>()), http: vi.fn() }));
 
@@ -39,5 +39,28 @@ describe('listResourcesWhenPermitted', () => {
         vi.mocked(http).mockRejectedValueOnce(new HttpError(401, 'Unauthorized'));
 
         await expect(listResourcesWhenPermitted(ref)).rejects.toThrow('Unauthorized');
+    });
+});
+
+describe('updateResource', () => {
+    it('sends the name, type and configuration only, as the Angular service does', async () => {
+        vi.mocked(http).mockResolvedValueOnce({});
+        const resource = { id: 'r-1', name: 'Mail', type: 'smtp-am-resource', configuration: '{}' };
+
+        await updateResource(ref, 'r-1', resource);
+
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains/d1/resources/r-1', {
+            method: 'PUT',
+            body: JSON.stringify({ name: 'Mail', type: 'smtp-am-resource', configuration: '{}' }),
+        });
+    });
+});
+
+describe('getResourceSchema', () => {
+    it('reads the 204 of a plugin that is not installed as an empty schema', async () => {
+        vi.mocked(http).mockResolvedValueOnce(undefined);
+
+        await expect(getResourceSchema('gone-am-resource')).resolves.toEqual({});
+        expect(http).toHaveBeenCalledWith('/platform/plugins/resources/gone-am-resource/schema');
     });
 });

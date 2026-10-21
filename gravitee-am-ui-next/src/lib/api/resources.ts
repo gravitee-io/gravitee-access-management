@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { NewServiceResource } from '@am-models/NewServiceResource';
 import type { ServiceResource } from '@am-models/ServiceResource';
 import { HttpError, http } from './http';
 import type { ApiModel } from './model';
@@ -22,7 +23,14 @@ import type { Plugin } from './plugins';
 /** A resource of the list. The list returns the basic fields only. */
 export type Resource = ApiModel<ServiceResource, 'id' | 'name' | 'type'>;
 
+/** A resource as the detail returns it. `configuration` is the plugin configuration, serialized as a JSON string. */
+export type ResourceDetail = ApiModel<ServiceResource, 'id' | 'name' | 'type' | 'configuration'>;
+
+export type NewResource = ApiModel<NewServiceResource>;
+
 export interface ResourcePlugin extends Plugin {
+    /** A data URI, when the request expands the icon. */
+    readonly icon?: string;
     readonly categories?: readonly string[];
 }
 
@@ -40,6 +48,35 @@ export function listResourcesWhenPermitted(ref: DomainRef): Promise<Resource[]> 
     });
 }
 
+export function getResource(ref: DomainRef, resourceId: string): Promise<ResourceDetail> {
+    return http<ResourceDetail>(`${domainPath(ref)}/resources/${resourceId}`);
+}
+
+export function createResource(ref: DomainRef, resource: NewResource): Promise<ResourceDetail> {
+    return http<ResourceDetail>(`${domainPath(ref)}/resources`, { method: 'POST', body: JSON.stringify(resource) });
+}
+
+export function updateResource(
+    ref: DomainRef,
+    resourceId: string,
+    resource: Pick<ResourceDetail, 'name' | 'type' | 'configuration'>,
+): Promise<ResourceDetail> {
+    const { name, type, configuration } = resource;
+    return http<ResourceDetail>(`${domainPath(ref)}/resources/${resourceId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, type, configuration }),
+    });
+}
+
+export function deleteResource(ref: DomainRef, resourceId: string): Promise<void> {
+    return http<void>(`${domainPath(ref)}/resources/${resourceId}`, { method: 'DELETE' });
+}
+
 export function listResourcePlugins(): Promise<ResourcePlugin[]> {
     return http<ResourcePlugin[]>('/platform/plugins/resources?expand=icon');
+}
+
+// A plugin that is not installed has no schema: the endpoint answers 204, and the form then has no configuration fields.
+export async function getResourceSchema(type: string): Promise<Record<string, unknown>> {
+    return (await http<Record<string, unknown> | undefined>(`/platform/plugins/resources/${type}/schema`)) ?? {};
 }

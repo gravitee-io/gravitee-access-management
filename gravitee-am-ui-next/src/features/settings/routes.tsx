@@ -23,10 +23,11 @@ import { factorRoutes } from '../factors/routes';
 import { flowRoutes } from '../flows/routes';
 import { formRoutes } from '../forms/routes';
 import { identityProviderRoutes } from '../identity-providers/routes';
+import { resourceRoutes } from '../resources/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
 /** Domain settings the console has built. Every other settings item gets a placeholder. */
-const BUILT_SETTINGS = new Set(['general', 'providers', 'certificates', 'factors', 'forms', 'flows']);
+const BUILT_SETTINGS = new Set(['general', 'providers', 'certificates', 'factors', 'resources', 'forms', 'flows']);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
 export const domainSettingsRoutes = (
@@ -50,6 +51,7 @@ export const domainSettingsRoutes = (
         {identityProviderRoutes}
         {certificateRoutes}
         {factorRoutes}
+        {resourceRoutes}
         {formRoutes}
         {flowRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)

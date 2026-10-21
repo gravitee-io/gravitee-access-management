@@ -1,6 +1,6 @@
 {
-    "generatedAt": "2026-10-20",
-    "angularCommit": "a86832205d",
+    "generatedAt": "2026-10-21",
+    "angularCommit": "f06d8e5ca5",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -2127,9 +2127,12 @@
                         "resources": "ResourcesResolver",
                         "resourcePlugins": "ResourcePluginsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/resources/ServicesPage.tsx",
+                        "src/features/resources/resource-types.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2154,9 +2157,12 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/resources/CreateServicePage.tsx",
+                        "src/features/resources/HttpFactorResourceNotes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2183,9 +2189,12 @@
                     "resolvers": {
                         "resource": "ResourceResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/resources/ServicePage.tsx",
+                        "src/features/resources/HttpFactorResourceNotes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -2208,12 +2217,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 5,
             "blockers": [],
-            "notes": "Plugin wizard for the resources AM calls services. An Angular Playwright page object exists.",
-            "angularCommit": null
+            "notes": "Plugin wizard for the resources AM calls services. An Angular Playwright page object exists.\n\nBrief.\nPages: settings/resources → ServicesPage → ServicesPage.tsx; resources/new → CreateServicePage → CreateServicePage.tsx; resources/:resourceId → ServicePage → ServicePage.tsx. Folder src/features/resources/. The nav key changes from the prototype's services to the Angular segment resources, with the Angular label Services.\nEndpoints: GET domain/resources; GET domain/resources/:id; POST domain/resources (name, type, configuration); PUT domain/resources/:id (name, type, configuration); DELETE domain/resources/:id; GET /platform/plugins/resources?expand=icon (list resolver and wizard step 1); GET /platform/plugins/resources/:type/schema.\nPermissions: the resources subtree domain_resource_list (parent route AuthGuard). List route domain_resource_read; Add domain_resource_create; open link domain_resource_read. Create route domain_resource_create. Detail route domain_resource_read; save domain_resource_update (editMode); delete domain_resource_delete.\nLicence: no route feature. The detail Save sits in LicenseGuard with the plugin's feature (PluginFeatureService.getFeature$('resource', type)). The wizard locks the plugins (decorateCatalog$).\nKit parts: PluginWizard, ConfirmDialog, SaveBar, PageHeader, ErrorPanel, NotFoundPanel.\nPrototype additions left out: the Last updated column (no endpoint data: GET resources returns id, name and type only, filterServiceResourceInfos).\nAngular behaviour added back: the Angular display names of the resource types (Twilio Verify, SMTP, Infobip 2FA, HTTP Factor; the raw type otherwise) in the list Type column and the wizard; the plugin icon in the list, from the plugin list the route resolves; the HTTP Factor resource notes on create and detail; the open link gated by domain_resource_read; the Save licence guard; the name required on the detail page; the schema defaults in the POST and the detail form, as the Angular json-schema-form fills them (the SMTP authentication flag, AM-7642).\nNot in Angular, so not ported: search and pagination (the Angular list is a client table of all resources).\nShared code: withSchemaDefaults moves from features/factors to lib/forms/am-schema.ts in its own commit before this unit, as playbook section 8 says.\nHidden values: Graphene drops the value of a field its displayIf hides, where Angular keeps it. The detail PUT merges the stored configuration under the form values, so a hidden stored value (the masked SMTP password) goes back as Angular sends it. A field hidden and shown again has no form value, so the stored value goes back too, and Discard resets to the stored configuration. The wizard POST does not: credentials typed and then hidden by turning authentication off are not sent (the Angular AM-7642 spec keeps them).\nDirty state: an optional field without a stored value (SMTP sslTrust, sslProtocols) registers as undefined, and RHF isDirty then differs from the stored configuration, so the detail SaveBar reads dirtyFields.\n\nRun 2026-10-21. Shared fixes, each its own commit: 723c0af8fd moves withSchemaDefaults to lib/forms/am-schema.ts; a347c530e3 fills the schema defaults in PluginWizard (the SMTP port and protocol); 88c45ccf22 translates the AM condition into gioConfig.displayIf (the SMTP credentials and OAuth2 fields); f06d8e5ca5 lets the unset-or-equals term match an unset value, so the SMTP Username shows again after authentication goes off and on. yarn typecheck, lint, test (183, 25 in the unit) and build pass. console-next resources.spec.ts: 4 of 4 pass against local-stack master-latest.\nNetwork, React :4201 against Angular :4200, same actions on a new domain: list GET domain/resources and GET /platform/plugins/resources?expand=icon in both. Create: GET schema, POST domain/resources with name, type, configuration {host, port 587, from, protocol smtp, authentication false, authenticationType basic, startTls false} in both, key order aside. Rename: PUT domain/resources/:id with name, type, configuration, the masked password sent back, in both. Delete: DELETE domain/resources/:id, then GET domain/resources, in both. Angular also sends GET /platform/plugins/resources without expand on create and detail; React reuses the cached list.\nCode review 2026-10-21, fixed: the stored value of a field hidden and shown again; Discard after a hide; the 204 schema of an uninstalled plugin (empty form, name, Save and Delete as in Angular); the POST reads the schema with fetchQuery, not a cache entry that can expire; the list shows without icons when the plugin list fails, with a mail icon as the Angular fallback; the dead read gate on the list link (the route already needs domain_resource_read); the detail cache is set on create and removed on delete.\nFollow-ups, outside this unit: ServicePage and FactorPage share nameResolver, the values type and the form shell. A shared plugin-instance form should seed optional fields, keep hidden values and merge the stored configuration, so that factors and identity providers get the same fixes.",
+            "angularCommit": "f06d8e5ca5"
         },
         {
             "id": "ciba",

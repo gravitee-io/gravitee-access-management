@@ -88,7 +88,7 @@ export const DOMAIN_SETTINGS_NAV_GROUPS: NavGroup[] = [
             { key: 'device-identifiers', title: 'Device Identifiers' },
         ],
     },
-    { label: 'Resources', items: [{ key: 'services', title: 'Services' }] },
+    { label: 'Resources', items: [{ key: 'resources', title: 'Services' }] },
     {
         label: 'User Management',
         items: [
