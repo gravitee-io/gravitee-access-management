@@ -31,7 +31,7 @@ yarn typecheck && yarn lint && yarn test && yarn build
 
 | Part           | Choice                                                                                               | Where                                                                               |
 | -------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| UI             | React 19, `@gravitee/graphene-core` 3.23.1, Tier 2 Tailwind 4                                        | `package.json`, `src/styles.css`                                                    |
+| UI             | React 19, `@gravitee/graphene-core` 3.23.1, `@gravitee/graphene-charts` 3.23.1, Tier 2 Tailwind 4    | `package.json`, `src/styles.css`                                                    |
 | Routing        | react-router 7, one `BrowserRouter`, nested routes, one `routes.tsx` per area                        | `src/app/App.tsx`, `src/features/<area>/routes.tsx`                                 |
 | Data           | TanStack Query 5                                                                                     | `src/app/App.tsx` for the client, pages for the queries                             |
 | Forms          | react-hook-form 7 with Graphene `Field` parts. Plugin schemas through Graphene `JsonSchemaForm`      | `src/features/applications/ApplicationPage.tsx`, `src/features/identity-providers/` |
@@ -138,6 +138,8 @@ src/
 - Tailwind 4: write `border-border` and `divide-border`. Bare `border` and `divide-y` paint with `currentColor`.
 - `src/styles.css` imports Graphene's CSS last. Do not import `@gravitee/graphene-core/styles` from TypeScript.
 - Do not add an `@source` line for a Graphene package to `styles.css`.
+  `graphene-charts` ships no CSS, so `styles.css` lists the chart utilities in an `@source inline(...)` line.
+  When you bump `graphene-charts`, check its `fill-*` and `stroke-*` classes against that list.
 - Page titles are a plain `<h1>` inside `PageHeader`. Graphene styles it.
 
 ## 8. Permissions and licence

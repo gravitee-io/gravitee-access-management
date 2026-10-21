@@ -270,11 +270,11 @@ discard.
 
 ### 2.8 Charts and dashboards
 
-| Angular                           | React                                                   | Mode           |
-| --------------------------------- | ------------------------------------------------------- | -------------- |
-| `gv-dashboard` with `gv-widget-*` | `@gravitee/graphene-charts`, not installed yet. Class D | Manual         |
-| `highcharts-angular`              | `graphene-charts`                                       | Manual         |
-| `app-widget-count`                | A `Card` with a number                                  | Semi-automatic |
+| Angular                           | React                                | Mode           |
+| --------------------------------- | ------------------------------------ | -------------- |
+| `gv-dashboard` with `gv-widget-*` | `@gravitee/graphene-charts`. Class D | Manual         |
+| `highcharts-angular`              | `graphene-charts`                    | Manual         |
+| `app-widget-count`                | A `Card` with a number               | Semi-automatic |
 
 ### 2.9 Lifecycle and state
 

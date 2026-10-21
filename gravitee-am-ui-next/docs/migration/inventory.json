@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-21",
-    "angularCommit": "86f287171b",
+    "angularCommit": "f59758f0d2",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -317,9 +317,7 @@
                     "status": "not-started",
                     "class": "C",
                     "reactFiles": [],
-                    "blockers": [
-                        "The dashboard needs @gravitee/graphene-charts (Metric, LineChart, BreakdownChart, DoughnutChart, as the prototype uses). gravitee-am-ui-next does not install it, and a unit run does not add a dependency. conversion-rules.md 2.8 marks it Class D."
-                    ],
+                    "blockers": [],
                     "notes": ""
                 }
             ],
@@ -344,9 +342,7 @@
             "status": "in-progress",
             "class": "C",
             "order": 38,
-            "blockers": [
-                "The dashboard needs @gravitee/graphene-charts (Metric, LineChart, BreakdownChart, DoughnutChart, as the prototype uses). gravitee-am-ui-next does not install it, and a unit run does not add a dependency. conversion-rules.md 2.8 marks it Class D."
-            ],
+            "blockers": [],
             "notes": "The list is built. The creation page is built. The dashboard with its chart widgets remains. Charts move to graphene-charts.",
             "angularCommit": null
         },

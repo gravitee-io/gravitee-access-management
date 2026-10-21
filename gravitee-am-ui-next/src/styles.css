@@ -19,3 +19,5 @@
    lands in the vendors chunk, which the page loads before this file. */
 @import '@gravitee/graphene-core/styles';
 @source './**/*.{ts,tsx}';
+/* graphene-charts draws its SVG axes with these utilities and ships no CSS. */
+@source inline('fill-foreground fill-foreground/5 fill-muted-foreground stroke-border stroke-border/20 stroke-muted-foreground');

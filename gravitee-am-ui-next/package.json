@@ -17,6 +17,7 @@
         "typecheck": "tsc --noEmit -p tsconfig.json"
     },
     "dependencies": {
+        "@gravitee/graphene-charts": "3.23.1",
         "@gravitee/graphene-core": "3.23.1",
         "@gravitee/graphene-policy-studio": "file:../spike/vendor/graphene-policy-studio-am-spike.tgz",
         "@monaco-editor/react": "4.7.0",

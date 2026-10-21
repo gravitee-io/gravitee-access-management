@@ -375,6 +375,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dagrejs/dagre@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@dagrejs/dagre@npm:3.0.0"
+  dependencies:
+    "@dagrejs/graphlib": "npm:4.0.1"
+  checksum: 10c0/f5d43819697b33864e8aced460fbf972a7151758b5f0aea8ee47315b9ab957782b2ab8beb4e1e2bff892b1820b0ff8ab8a22abc12a65ebb37e205e3a7f63a6e0
+  languageName: node
+  linkType: hard
+
+"@dagrejs/graphlib@npm:4.0.1":
+  version: 4.0.1
+  resolution: "@dagrejs/graphlib@npm:4.0.1"
+  checksum: 10c0/03ab574f2eb7d87173af0b9d8bbae87c10e225778b8144a800c663afe307ff71d851c13d96d32ec91db85e325d64914cdabbab1ce76fb043e0a5538e60bb51bd
+  languageName: node
+  linkType: hard
+
 "@date-fns/tz@npm:^1.4.1":
   version: 1.5.0
   resolution: "@date-fns/tz@npm:1.5.0"
@@ -632,6 +648,32 @@ __metadata:
   version: 5.2.8
   resolution: "@fontsource/dm-sans@npm:5.2.8"
   checksum: 10c0/34451e30b1fe29a075946b8d42d8867883e3f0ac3cb1d5d29493a311006c67d1b766369c32f39820b86a0bacf8fbd3cc2c02e55744809b8ece67141dfadcac5e
+  languageName: node
+  linkType: hard
+
+"@gravitee/graphene-charts@npm:3.23.1":
+  version: 3.23.1
+  resolution: "@gravitee/graphene-charts@npm:3.23.1"
+  dependencies:
+    "@dagrejs/dagre": "npm:3.0.0"
+    d3-array: "npm:3.2.4"
+    d3-scale: "npm:4.0.2"
+    d3-shape: "npm:3.2.0"
+  peerDependencies:
+    "@gravitee/graphene-core": ^3.23.1
+    "@xyflow/react": ^12.0.0
+    react: ^19.0.0
+    react-dom: ^19.0.0
+    react-grid-layout: ^2.0.0
+    tailwindcss: ^4.0.0
+  peerDependenciesMeta:
+    "@xyflow/react":
+      optional: true
+    react-grid-layout:
+      optional: true
+    tailwindcss:
+      optional: true
+  checksum: 10c0/74724c8fbff00919801cfc9014cb398cfdf112e21e6cecab3f35cef9a4ed3e7654e3199f6f43a8cd54d21473f83f4a4c97ec36866827509976ab65774b56be5b
   languageName: node
   linkType: hard
 
@@ -4299,6 +4341,85 @@ __metadata:
   languageName: node
   linkType: hard
 
+"d3-array@npm:2 - 3, d3-array@npm:2.10.0 - 3, d3-array@npm:3.2.4":
+  version: 3.2.4
+  resolution: "d3-array@npm:3.2.4"
+  dependencies:
+    internmap: "npm:1 - 2"
+  checksum: 10c0/08b95e91130f98c1375db0e0af718f4371ccacef7d5d257727fe74f79a24383e79aba280b9ffae655483ffbbad4fd1dec4ade0119d88c4749f388641c8bf8c50
+  languageName: node
+  linkType: hard
+
+"d3-color@npm:1 - 3":
+  version: 3.1.0
+  resolution: "d3-color@npm:3.1.0"
+  checksum: 10c0/a4e20e1115fa696fce041fbe13fbc80dc4c19150fa72027a7c128ade980bc0eeeba4bcf28c9e21f0bce0e0dbfe7ca5869ef67746541dcfda053e4802ad19783c
+  languageName: node
+  linkType: hard
+
+"d3-format@npm:1 - 3":
+  version: 3.1.2
+  resolution: "d3-format@npm:3.1.2"
+  checksum: 10c0/0de452ae07585238e7f01607a7e0066665c34609652188b6ac7dc9f424f69465a425e07d16d79bd0e5955202ac7f241c66d0c76f68a79fc6f4857c94cf420652
+  languageName: node
+  linkType: hard
+
+"d3-interpolate@npm:1.2.0 - 3":
+  version: 3.0.1
+  resolution: "d3-interpolate@npm:3.0.1"
+  dependencies:
+    d3-color: "npm:1 - 3"
+  checksum: 10c0/19f4b4daa8d733906671afff7767c19488f51a43d251f8b7f484d5d3cfc36c663f0a66c38fe91eee30f40327443d799be17169f55a293a3ba949e84e57a33e6a
+  languageName: node
+  linkType: hard
+
+"d3-path@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "d3-path@npm:3.1.0"
+  checksum: 10c0/dc1d58ec87fa8319bd240cf7689995111a124b141428354e9637aa83059eb12e681f77187e0ada5dedfce346f7e3d1f903467ceb41b379bfd01cd8e31721f5da
+  languageName: node
+  linkType: hard
+
+"d3-scale@npm:4.0.2":
+  version: 4.0.2
+  resolution: "d3-scale@npm:4.0.2"
+  dependencies:
+    d3-array: "npm:2.10.0 - 3"
+    d3-format: "npm:1 - 3"
+    d3-interpolate: "npm:1.2.0 - 3"
+    d3-time: "npm:2.1.1 - 3"
+    d3-time-format: "npm:2 - 4"
+  checksum: 10c0/65d9ad8c2641aec30ed5673a7410feb187a224d6ca8d1a520d68a7d6eac9d04caedbff4713d1e8545be33eb7fec5739983a7ab1d22d4e5ad35368c6729d362f1
+  languageName: node
+  linkType: hard
+
+"d3-shape@npm:3.2.0":
+  version: 3.2.0
+  resolution: "d3-shape@npm:3.2.0"
+  dependencies:
+    d3-path: "npm:^3.1.0"
+  checksum: 10c0/f1c9d1f09926daaf6f6193ae3b4c4b5521e81da7d8902d24b38694517c7f527ce3c9a77a9d3a5722ad1e3ff355860b014557b450023d66a944eabf8cfde37132
+  languageName: node
+  linkType: hard
+
+"d3-time-format@npm:2 - 4":
+  version: 4.1.0
+  resolution: "d3-time-format@npm:4.1.0"
+  dependencies:
+    d3-time: "npm:1 - 3"
+  checksum: 10c0/735e00fb25a7fd5d418fac350018713ae394eefddb0d745fab12bbff0517f9cdb5f807c7bbe87bb6eeb06249662f8ea84fec075f7d0cd68609735b2ceb29d206
+  languageName: node
+  linkType: hard
+
+"d3-time@npm:1 - 3, d3-time@npm:2.1.1 - 3":
+  version: 3.1.0
+  resolution: "d3-time@npm:3.1.0"
+  dependencies:
+    d3-array: "npm:2 - 3"
+  checksum: 10c0/a984f77e1aaeaa182679b46fbf57eceb6ebdb5f67d7578d6f68ef933f8eeb63737c0949991618a8d29472dbf43736c7d7f17c452b2770f8c1271191cba724ca1
+  languageName: node
+  linkType: hard
+
 "damerau-levenshtein@npm:^1.0.8":
   version: 1.0.8
   resolution: "damerau-levenshtein@npm:1.0.8"
@@ -5317,6 +5438,7 @@ __metadata:
   dependencies:
     "@eslint/compat": "npm:2.1.0"
     "@fontsource/dm-sans": "npm:5.2.8"
+    "@gravitee/graphene-charts": "npm:3.23.1"
     "@gravitee/graphene-core": "npm:3.23.1"
     "@gravitee/graphene-policy-studio": "file:../spike/vendor/graphene-policy-studio-am-spike.tgz"
     "@monaco-editor/react": "npm:4.7.0"
@@ -5539,6 +5661,13 @@ __metadata:
     hasown: "npm:^2.0.2"
     side-channel: "npm:^1.1.0"
   checksum: 10c0/03966f5e259b009a9bf1a78d60da920df198af4318ec004f57b8aef1dd3fe377fbc8cce63a96e8c810010302654de89f9e19de1cd8ad0061d15be28a695465c7
+  languageName: node
+  linkType: hard
+
+"internmap@npm:1 - 2":
+  version: 2.0.3
+  resolution: "internmap@npm:2.0.3"
+  checksum: 10c0/8cedd57f07bbc22501516fbfc70447f0c6812871d471096fad9ea603516eacc2137b633633daf432c029712df0baefd793686388ddf5737e3ea15074b877f7ed
   languageName: node
   linkType: hard
 
