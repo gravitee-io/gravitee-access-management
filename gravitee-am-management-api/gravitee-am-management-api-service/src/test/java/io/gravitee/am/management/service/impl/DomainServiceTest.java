@@ -68,6 +68,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -326,6 +327,9 @@ public class DomainServiceTest {
 
     @Mock
     private ServiceResourceService serviceResourceService;
+
+    @Mock
+    private BotDetectionServiceProxy botDetectionService;
 
 
     @Test
@@ -1091,6 +1095,7 @@ public class DomainServiceTest {
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1108,6 +1113,7 @@ public class DomainServiceTest {
         verify(userActivityService, times(1)).deleteByDomain(any());
         verify(deviceIdentifierService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(serviceResourceService, times(1)).deleteByDomain(DOMAIN_ID);
+        verify(botDetectionService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
         verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -1155,6 +1161,7 @@ public class DomainServiceTest {
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

@@ -197,6 +197,17 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        log.debug("Delete bot detections by domain {}", domain);
+        return botDetectionRepository.deleteByReference(Reference.domain(domain))
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to delete bot detections of domain {}", domain, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete bot detections of domain %s", domain), ex));
+                });
+    }
+
     private Function<BotDetection, SingleSource<? extends BotDetection>> checkBotDetectionReleasedByApp(String domainId, String botDetectionId) {
         return botDetection -> applicationService.findByDomain(domainId)
                 .flatMap(applications -> {
