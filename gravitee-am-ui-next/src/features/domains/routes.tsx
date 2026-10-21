@@ -18,8 +18,20 @@ import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
 
 export const domainRoutes = (
-    <Route
-        path="domains"
-        element={<RequirePermission anyOf={['domain_list']}>{lazyPage(() => import('./DomainsPage'), 'DomainsPage')}</RequirePermission>}
-    />
+    <Route path="domains">
+        <Route
+            index
+            element={
+                <RequirePermission anyOf={['domain_list']}>{lazyPage(() => import('./DomainsPage'), 'DomainsPage')}</RequirePermission>
+            }
+        />
+        <Route
+            path="new"
+            element={
+                <RequirePermission anyOf={['domain_create']}>
+                    {lazyPage(() => import('./CreateDomainPage'), 'CreateDomainPage')}
+                </RequirePermission>
+            }
+        />
+    </Route>
 );

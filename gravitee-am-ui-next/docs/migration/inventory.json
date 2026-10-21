@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-21",
-    "angularCommit": "f06d8e5ca5",
+    "angularCommit": "5e90770938",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -235,11 +235,13 @@
                         "environment": "EnvironmentResolver",
                         "dataPlanes": "DataPlanesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "C",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/domains/CreateDomainPage.tsx"
+                    ],
                     "blockers": [],
-                    "notes": ""
+                    "notes": "Ported 2026-10-21, ahead of the unit order, so a fresh stack can get a domain from the React console. Angular → CreateDomainPage (prototype) → CreateDomainPage.tsx. POST environment/domains with name, description (only once typed) and dataPlaneId; the data plane select shows with more than one data plane, as \"name (id)\", sorted by name. Route domain_create; the list offers Create domain in the header and the first-use state under domain_create, as the Angular add button. After the create, the page opens the new domain by its hrid (the Angular console opens it by id). The prototype intro replaces the Angular side panel (prototypeNotes). Network, Angular :4200 against React :4201 on one data plane: POST .../domains/ {dataPlaneId, name} in Angular, POST .../domains {name, dataPlaneId} in React. console-next domains-list.spec.ts: 2 of 2 pass, with a new create test."
                 },
                 {
                     "path": "environments/:envHrid/domains/:domainId",
@@ -341,7 +343,7 @@
             "class": "C",
             "order": 38,
             "blockers": [],
-            "notes": "The list is built. The creation wizard with data plane and CIMD steps and the dashboard with its chart widgets remain. Charts move to graphene-charts.",
+            "notes": "The list is built. The creation page is built. The dashboard with its chart widgets remains. Charts move to graphene-charts.",
             "angularCommit": null
         },
         {

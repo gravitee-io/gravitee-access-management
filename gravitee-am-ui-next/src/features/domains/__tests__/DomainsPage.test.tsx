@@ -19,6 +19,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { listDomains } from '../../../lib/api/domains';
 import { HttpError } from '../../../lib/api/http';
+import { PermissionScope } from '../../../lib/session/permissions';
 import { DomainsPage } from '../DomainsPage';
 
 vi.mock('../../../lib/api/domains', () => ({ listDomains: vi.fn() }));
@@ -27,17 +28,19 @@ vi.mock('../../../lib/session/environment', () => ({
     useCurrentEnvironment: () => ({ id: 'env-1', name: 'Development', hrids: ['dev'] }),
 }));
 
-function renderPage() {
+function renderPage(permissions: string[] = []) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <MemoryRouter>
-                <LayoutSlotsProvider>
-                    <TooltipProvider>
-                        <DomainsPage />
-                    </TooltipProvider>
-                </LayoutSlotsProvider>
-            </MemoryRouter>
+            <PermissionScope permissions={permissions}>
+                <MemoryRouter>
+                    <LayoutSlotsProvider>
+                        <TooltipProvider>
+                            <DomainsPage />
+                        </TooltipProvider>
+                    </LayoutSlotsProvider>
+                </MemoryRouter>
+            </PermissionScope>
         </QueryClientProvider>,
     );
 }
@@ -90,5 +93,26 @@ describe('DomainsPage', () => {
         await waitFor(() => expect(listDomains).toHaveBeenLastCalledWith('DEFAULT', 'env-1', 0, 25, 'zzz'));
         expect(await screen.findByText('No domains match your search')).toBeInTheDocument();
         expect(screen.queryByText('No security domains')).not.toBeInTheDocument();
+    });
+
+    it('offers Create domain with the domain_create permission only', async () => {
+        const page = { data: [{ id: 'd1', hrid: 'acme', name: 'Acme', enabled: true }], currentPage: 0, totalCount: 1 };
+        vi.mocked(listDomains).mockResolvedValue(page);
+
+        const { unmount } = renderPage(['domain_create']);
+        expect(await screen.findByRole('link', { name: 'Create domain' })).toHaveAttribute('href', '/new');
+        unmount();
+
+        renderPage();
+        await screen.findByRole('link', { name: 'Acme' });
+        expect(screen.queryByRole('link', { name: 'Create domain' })).not.toBeInTheDocument();
+    });
+
+    it('offers Create domain in the first-use state', async () => {
+        vi.mocked(listDomains).mockResolvedValueOnce({ data: [], currentPage: 0, totalCount: 0 });
+
+        renderPage(['domain_create']);
+
+        expect(await screen.findByRole('link', { name: 'Create domain' })).toBeInTheDocument();
     });
 });

@@ -15,6 +15,7 @@
  */
 import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
+import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import { http } from './http';
 import type { Page } from './management-api';
@@ -32,6 +33,12 @@ export type Domain = ApiModel<Omit<DomainModel, 'vhosts'> & { vhosts?: readonly 
 
 export function listDomains(organizationId: string, environmentId: string, page: number, size: number, query = ''): Promise<Page<Domain>> {
     return http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?page=${page}&size=${size}${searchParam(query)}`);
+}
+
+export type NewDomain = ApiModel<NewDomainModel>;
+
+export function createDomain(organizationId: string, environmentId: string, domain: NewDomain): Promise<Domain> {
+    return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains`, { method: 'POST', body: JSON.stringify(domain) });
 }
 
 export function getDomainByHrid(organizationId: string, environmentId: string, hrid: string): Promise<Domain> {

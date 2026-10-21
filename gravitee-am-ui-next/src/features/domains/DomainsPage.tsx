@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BadgeCell, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
-import { ShieldIcon, SearchIcon } from '@gravitee/graphene-core/icons';
+import { BadgeCell, Button, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
+import { PlusIcon, SearchIcon, ShieldIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
@@ -25,6 +25,7 @@ import { SearchField } from '../../app/components/SearchField';
 import { type Domain, listDomains } from '../../lib/api/domains';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentEnvironment } from '../../lib/session/environment';
+import { Can, usePermissions } from '../../lib/session/permissions';
 import { useSession } from '../../lib/session/session';
 
 // No sortable headers: the Management API list has no sort parameter.
@@ -59,6 +60,7 @@ const columns: ColumnDef<Domain, unknown>[] = [
 export function DomainsPage() {
     const { user } = useSession();
     const environment = useCurrentEnvironment();
+    const { has } = usePermissions();
     // Graphene pages start at 1, the Management API pages start at 0.
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
@@ -75,17 +77,32 @@ export function DomainsPage() {
         placeholderData: keepPreviousData,
     });
 
+    const isFirstUse = data?.totalCount === 0 && !query;
+    const createButton = (
+        <Button asChild>
+            <Link to="new">
+                <PlusIcon aria-hidden />
+                Create domain
+            </Link>
+        </Button>
+    );
+
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader title="Domains" description={`Security domains in ${environment.name}.`} />
+            <PageHeader
+                title="Domains"
+                description={`Security domains in ${environment.name}.`}
+                actions={!error && data && !isFirstUse && <Can all={['domain_create']}>{createButton}</Can>}
+            />
             {error ? (
                 <ErrorPanel description="Could not load the domains." error={error} />
-            ) : data?.totalCount === 0 && !query ? (
+            ) : isFirstUse ? (
                 <DataTableEmptyState
                     variant="first-use"
                     icon={<ShieldIcon />}
                     title="No security domains"
                     description="A security domain holds the applications, identity providers and policies of one realm."
+                    primaryAction={has('domain_create') ? createButton : undefined}
                 />
             ) : (
                 <DataTable

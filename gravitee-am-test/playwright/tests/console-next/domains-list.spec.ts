@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import { test, expect } from '../../fixtures/base.fixture';
+import { safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { uniqueTestName } from '../../utils/fixture-helpers';
 
 /** The domains list of the React console (gravitee-am-ui-next). Runs in the console-next project only. */
 test.describe('React console: domains list', () => {
@@ -25,5 +27,24 @@ test.describe('React console: domains list', () => {
     await page.getByRole('textbox', { name: 'Search domains' }).fill(testDomain.name);
 
     await expect(table.getByRole('link', { name: testDomain.name })).toBeVisible();
+  });
+
+  test('creates a domain and opens it', async ({ page, adminToken }) => {
+    const name = uniqueTestName('pw-next-domain');
+    await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
+
+    await page.getByRole('link', { name: 'Create domain' }).click();
+    await page.getByRole('textbox', { name: 'Name' }).fill(name);
+    const createRequest = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/domains'));
+    const createResponse = page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/domains'));
+    await page.getByRole('button', { name: 'Create domain' }).click();
+
+    expect((await createRequest).postDataJSON()).toEqual({ name, dataPlaneId: 'default' });
+    const created = await (await createResponse).json();
+    try {
+      await expect(page).toHaveURL(new RegExp(`/domains/${created.hrid}/dashboard$`));
+    } finally {
+      await safeDeleteDomain(created.id, adminToken);
+    }
   });
 });
