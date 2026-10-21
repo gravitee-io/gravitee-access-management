@@ -146,6 +146,67 @@ public class DefaultIdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldExposeMongoUriWhenPlaintextSensitiveDataEnabled() {
+        environment.setProperty("repositories.management.mongodb.uri", "mongodb://user:secret@localhost:27017/am");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("from-system-cluster:management", test.get("uri"));
+    }
+
+    @Test
+    public void shouldHideQuotedJdbcPasswordByDefault() {
+        environment.setProperty("repositories.management.type", "jdbc");
+        environment.setProperty("repositories.management.jdbc.password", "secret");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("\"" + DefaultIdentityProviderServiceImpl.HIDDEN_VALUE + "\"", test.get("password"));
+    }
+
+    @Test
+    public void shouldExposeQuotedJdbcPasswordWhenPlaintextSensitiveDataEnabled() {
+        environment.setProperty("repositories.management.type", "jdbc");
+        environment.setProperty(DefaultIdentityProviderServiceImpl.LEGACY_IDENTITIES_DEFAULT_PLAINTEXT_SENSITIVE_DATA, "true");
+        environment.setProperty("repositories.management.jdbc.password", "secret");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("\"secret\"", test.get("password"));
+    }
+
+    @Test
+    public void shouldKeepNullJdbcPasswordWhenNoneConfigured() {
+        environment.setProperty("repositories.management.type", "jdbc");
+        environment.setProperty(DefaultIdentityProviderServiceImpl.LEGACY_IDENTITIES_DEFAULT_PLAINTEXT_SENSITIVE_DATA, "true");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertNull(test.get("password"));
+    }
+
+    @Test
+    public void shouldHideJdbcPasswordWhenPlaintextSensitiveDataDisabled() {
+        environment.setProperty("repositories.management.type", "jdbc");
+        environment.setProperty(DefaultIdentityProviderServiceImpl.LEGACY_IDENTITIES_DEFAULT_PLAINTEXT_SENSITIVE_DATA, "false");
+        environment.setProperty("repositories.management.jdbc.password", "secret");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("\"" + DefaultIdentityProviderServiceImpl.HIDDEN_VALUE + "\"", test.get("password"));
+    }
+
+    @Test
+    public void shouldHideJdbcPasswordEvenWhenNoneConfiguredAndPlaintextSensitiveDataDisabled() {
+        environment.setProperty("repositories.management.type", "jdbc");
+        environment.setProperty(DefaultIdentityProviderServiceImpl.LEGACY_IDENTITIES_DEFAULT_PLAINTEXT_SENSITIVE_DATA, "false");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("\"" + DefaultIdentityProviderServiceImpl.HIDDEN_VALUE + "\"", test.get("password"));
+    }
+
+    @Test
     public void defaultIterationRoundsForBCryptIs10() {
         environment.setProperty("domains.identities.default.passwordEncoder.algorithm", "BCrypt");
 
