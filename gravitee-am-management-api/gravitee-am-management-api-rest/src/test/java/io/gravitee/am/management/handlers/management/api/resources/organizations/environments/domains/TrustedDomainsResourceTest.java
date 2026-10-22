@@ -118,9 +118,12 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        List<Map<String, Object>> body = response.readEntity(List.class);
-        assertEquals(1, body.size());
-        Map<String, Object> trustedDomain = body.get(0);
+        Map<String, Object> page = response.readEntity(Map.class);
+        assertEquals(0, page.get("page"));
+        assertEquals(1, page.get("totalCount"));
+        List<Map<String, Object>> data = (List<Map<String, Object>>) page.get("data");
+        assertEquals(1, data.size());
+        Map<String, Object> trustedDomain = data.get(0);
         assertEquals("example.org", ((Map<String, Object>) trustedDomain.get("spiffe")).get("spiffeTrustDomain"));
         Map<String, Object> keyMaterial = (Map<String, Object>) trustedDomain.get("keyMaterial");
         assertEquals("jwks_url", keyMaterial.get("source"));
