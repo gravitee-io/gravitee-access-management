@@ -15,6 +15,7 @@
  */
 import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
+import type { LoginSettings as LoginSettingsModel } from '@am-models/LoginSettings';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import { http } from './http';
@@ -79,6 +80,13 @@ export interface DomainEntrypointSettings {
 
 export function patchDomainEntrypoints(ref: DomainRef, settings: DomainEntrypointSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+export type LoginSettings = ApiModel<LoginSettingsModel>;
+
+/** The Angular `DomainService.patchLoginSettings`. */
+export function patchDomainLoginSettings(ref: DomainRef, loginSettings: LoginSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ loginSettings }) });
 }
 
 export function deleteDomain(ref: DomainRef): Promise<void> {
