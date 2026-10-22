@@ -30,6 +30,7 @@ import { loginRoutes } from '../login/routes';
 import { memberRoutes } from '../members/routes';
 import { resourceRoutes } from '../resources/routes';
 import { scopeRoutes } from '../scopes/routes';
+import { webProtectionRoutes } from '../web-protection/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
 /** Domain settings the console has built. Every other settings item gets a placeholder. */
@@ -47,6 +48,7 @@ const BUILT_SETTINGS = new Set([
     'entrypoints',
     'login',
     'members',
+    'web-protection',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -80,6 +82,7 @@ export const domainSettingsRoutes = (
         {entrypointRoutes}
         {loginRoutes}
         {memberRoutes}
+        {webProtectionRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (
