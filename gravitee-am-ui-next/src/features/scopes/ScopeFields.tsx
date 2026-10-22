@@ -34,7 +34,8 @@ import {
 } from '@gravitee/graphene-core';
 import { ClockIcon, XIcon } from '@gravitee/graphene-core/icons';
 import { type Control, Controller, type UseFormRegister, useWatch } from 'react-hook-form';
-import { consentDraftInvalid, DURATION_UNITS, type DurationUnit, humanizeSeconds } from './consent';
+import { DURATION_UNITS, type DurationUnit, humanizeSeconds } from '../../lib/forms/duration';
+import { consentDraftInvalid } from './consent';
 
 // A type alias, not an interface: react-hook-form constrains the values to `FieldValues`.
 export type ScopeFormValues = {

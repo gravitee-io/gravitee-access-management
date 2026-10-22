@@ -52,7 +52,7 @@ src/
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), model.ts (ApiModel), management-api.ts (user, environments, Page), one file per area, gamma-api.ts
-  lib/forms/      am-schema.ts (adaptAmSchema)
+  lib/forms/      am-schema.ts (adaptAmSchema), duration.ts (the moment duration units and conversions)
   lib/routing/    lazyPage.tsx
   lib/session/    session.tsx (user, environments), environment.tsx (:envHrid), domain.tsx (:domainHrid, ref, basePath)
   lib/layout/     useBreadcrumbs.ts, useSectionSidebar.tsx
