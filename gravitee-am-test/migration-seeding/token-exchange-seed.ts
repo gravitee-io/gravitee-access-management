@@ -325,7 +325,8 @@ export async function listTrustedDomains(domainId: string, accessToken: string):
   if (!response.ok) {
     throw new Error(`GET ${url} failed: ${response.status} ${await response.text()}`);
   }
-  return response.json();
+  const body = await response.json();
+  return Array.isArray(body) ? body : body.data;
 }
 
 function tokenExchangeSettingsBody(): Record<string, unknown> {

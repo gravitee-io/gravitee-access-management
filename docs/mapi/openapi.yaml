@@ -8590,9 +8590,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TrustedDomain"
+                $ref: "#/components/schemas/TrustedDomainPage"
           description: List of trusted domains
         "500":
           description: Internal server error
@@ -18964,6 +18962,19 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    TrustedDomainPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrustedDomain"
+        page:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
     TrustedIssuer:
       type: object
       deprecated: true
