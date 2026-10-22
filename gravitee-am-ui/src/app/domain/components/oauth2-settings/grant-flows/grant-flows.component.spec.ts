@@ -65,7 +65,7 @@ describe('GrantFlowsComponent', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
         { provide: DomainStoreService, useValue: mockDomainStoreService },
-        { provide: TrustDomainService, useValue: { list: () => of([]) } },
+        { provide: TrustDomainService, useValue: { listAll: () => of([]) } },
       ],
     }).compileComponents();
   });
@@ -397,14 +397,13 @@ describe('GrantFlowsComponent', () => {
   });
 
   describe('SPIFFE trust domain options', () => {
-    it('should list only SPIFFE trusted domains, valued by their SPIFFE trust domain', () => {
+    it('should list the SPIFFE trusted domains, valued by their SPIFFE trust domain', () => {
       mockDomainStoreService.current = {
         ...defaultDomainCurrent(),
         oidc: { cibaSettings: { enabled: false }, workloadIdentitySettings: { enabled: true } },
       };
-      jest.spyOn(TestBed.inject(TrustDomainService), 'list').mockReturnValue(
+      const listAll = jest.spyOn(TestBed.inject(TrustDomainService), 'listAll').mockReturnValue(
         of([
-          { name: 'xaa-only', issuer: 'https://idp.example', crossAppAccess: { enabled: true } },
           { name: 'acme', spiffeTrustDomain: 'acme' },
           { name: 'billing', spiffeTrustDomain: 'prod.example' },
         ]),
@@ -424,6 +423,7 @@ describe('GrantFlowsComponent', () => {
       })[];
       expect(options.map((o) => o.value)).toEqual(['acme', 'prod.example']);
       expect(options.map((o) => o.textContent.trim())).toEqual(['acme', 'prod.example (billing)']);
+      expect(listAll).toHaveBeenCalledWith('domain-id', 'SPIFFE');
     });
   });
 });

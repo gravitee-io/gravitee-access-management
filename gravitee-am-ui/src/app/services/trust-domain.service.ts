@@ -15,11 +15,29 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { EMPTY, Observable } from 'rxjs';
+import { expand, map, reduce } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
-import { fromTrustedDomain, toTrustedDomainRequest } from '../domain/settings/trust-domains/trust-domain.types';
+import { fromTrustedDomain, toTrustedDomainRequest, TrustDomain } from '../domain/settings/trust-domains/trust-domain.types';
+
+import { Sort } from './api.model';
+
+export interface TrustDomainPage {
+  data: TrustDomain[];
+  page: number;
+  totalCount: number;
+  nextCursor?: string;
+}
+
+export type TrustedDomainUsage = 'SPIFFE' | 'TOKEN_EXCHANGE' | 'CROSS_APP_ACCESS';
+
+export interface TrustDomainListOptions {
+  usage?: TrustedDomainUsage;
+  sort?: Sort;
+}
+
+const MAX_PAGE_SIZE = 100;
 
 @Injectable()
 export class TrustDomainService {
@@ -27,10 +45,27 @@ export class TrustDomainService {
 
   constructor(private http: HttpClient) {}
 
-  list(domainId: string): Observable<any> {
-    return this.http
-      .get<any>(this.domainBaseURL + domainId + '/trusted-domains')
-      .pipe(map((page) => (page?.data ?? []).map(fromTrustedDomain)));
+  list(domainId: string, page: number, size: number, options: TrustDomainListOptions = {}): Observable<TrustDomainPage> {
+    const usageParam = options.usage ? '&usage=' + options.usage : '';
+    const sortParam = options.sort ? `&sort=${options.sort.prop}&dir=${options.sort.dir}` : '';
+    return this.toPage(
+      this.http.get<any>(this.domainBaseURL + domainId + '/trusted-domains?page=' + page + '&limit=' + size + sortParam + usageParam),
+    );
+  }
+
+  next(nextCursor: string): Observable<TrustDomainPage> {
+    return this.toPage(this.http.get<any>(AppConfig.settings.baseURL + nextCursor));
+  }
+
+  listAll(domainId: string, usage?: TrustedDomainUsage): Observable<TrustDomain[]> {
+    return this.list(domainId, 0, MAX_PAGE_SIZE, { usage }).pipe(
+      expand((result) => (result.nextCursor ? this.next(result.nextCursor) : EMPTY)),
+      reduce((trustDomains, result) => trustDomains.concat(result.data), [] as TrustDomain[]),
+    );
+  }
+
+  private toPage(request: Observable<any>): Observable<TrustDomainPage> {
+    return request.pipe(map((result) => ({ ...result, data: (result?.data ?? []).map(fromTrustedDomain) })));
   }
 
   get(domainId: string, id: string): Observable<any> {

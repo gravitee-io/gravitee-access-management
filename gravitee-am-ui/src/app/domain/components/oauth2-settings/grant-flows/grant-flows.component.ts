@@ -111,8 +111,8 @@ export class GrantFlowsComponent implements OnInit {
   private initSpiffeSettings() {
     this.spiffeSettings = this.spiffeSettings || {};
     if (this.isSpiffeEnabledAtDomain() && this.domainId) {
-      this.trustDomainService.list(this.domainId).subscribe({
-        next: (results) => (this.trustDomains = (results || []).filter((td) => !!td.spiffeTrustDomain)),
+      this.trustDomainService.listAll(this.domainId, 'SPIFFE').subscribe({
+        next: (results) => (this.trustDomains = results),
         error: () => (this.trustDomains = []),
       });
     }

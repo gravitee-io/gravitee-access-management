@@ -42,6 +42,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -270,9 +272,9 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
         assertNotNull("nextCursor should be present when paging is incomplete", path);
         assertTrue(path.startsWith("/organizations/" + ORGANIZATION_ID + "/environments/DEFAULT/domains/" + DOMAIN_ID + "/applications/search/_cursor?"));
         assertTrue("expected encoded cursor in nextCursor: " + path,
-                path.contains("cursor=" + new CursorApiRequest("app-50", "value-50").encode()));
+                path.contains("cursor=" + URLEncoder.encode(new CursorApiRequest("app-50", "value-50").encode(), StandardCharsets.UTF_8)));
         assertTrue("expected page=1 in nextCursor: " + path, path.contains("page=1"));
-        assertTrue("expected q=alpha* in nextCursor: " + path, path.contains("q=alpha*"));
+        assertTrue("expected q=alpha%2A in nextCursor: " + path, path.contains("q=alpha%2A"));
         assertTrue("expected status=enabled in nextCursor: " + path, path.contains("status=enabled"));
         assertTrue("expected type=WEB in nextCursor: " + path, path.contains("type=WEB"));
     }
@@ -314,13 +316,13 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
         assertFalse("custom entrypoint should not be present in nextCursor: " + path,
                 path.contains("/custom-management/"));
         assertTrue("expected encoded cursor in nextCursor: " + path,
-                path.contains("cursor=" + new CursorApiRequest("app-50", "value-50").encode()));
+                path.contains("cursor=" + URLEncoder.encode(new CursorApiRequest("app-50", "value-50").encode(), StandardCharsets.UTF_8)));
         assertTrue("expected page=1 in nextCursor: " + path, path.contains("page=1"));
         assertTrue("expected q=alpha in nextCursor: " + path, path.contains("q=alpha"));
         assertTrue("expected status=enabled in nextCursor: " + path, path.contains("status=enabled"));
         assertTrue("expected type=WEB in nextCursor: " + path, path.contains("type=WEB"));
-        assertTrue("expected owner.email=owner@example.com in nextCursor: " + path,
-                path.contains("owner.email=owner@example.com"));
+        assertTrue("expected owner.email=owner%40example.com in nextCursor: " + path,
+                path.contains("owner.email=owner%40example.com"));
     }
 
     @Test
