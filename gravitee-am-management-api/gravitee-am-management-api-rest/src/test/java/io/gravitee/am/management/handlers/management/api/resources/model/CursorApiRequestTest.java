@@ -31,6 +31,14 @@ class CursorApiRequestTest {
     }
 
     @Test
+    void shouldRoundTripASortValueContainingTheSeparator() {
+        CursorApiRequest decoded = CursorApiRequest.decode(new CursorApiRequest("an-id", "a##sort##value").encode());
+
+        assertEquals("an-id", decoded.id());
+        assertEquals("a##sort##value", decoded.lastSortValue());
+    }
+
+    @Test
     void shouldRejectAMissingCursor() {
         assertEquals("Query parameter 'cursor' is required",
                 assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(null)).getMessage());

@@ -24,6 +24,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
@@ -37,6 +38,9 @@ import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustedDomainCursorRequest;
+import io.gravitee.am.model.oidc.TrustedDomainUsage;
+import io.gravitee.am.repository.management.api.TrustedDomainCursorRepository;
 import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -108,6 +112,9 @@ public class TrustDomainServiceImplTest {
     private TrustedDomainRepository repository;
 
     @Mock
+    private TrustedDomainCursorRepository cursorRepository;
+
+    @Mock
     private EventService eventService;
 
     @Mock
@@ -122,6 +129,7 @@ public class TrustDomainServiceImplTest {
         // @InjectMocks targets the @Autowired fields, but Spring's @Lazy/@Autowired makes
         // some fields not visible via constructor injection. Use reflection as a safety net.
         ReflectionTestUtils.setField(service, "repository", repository);
+        ReflectionTestUtils.setField(service, "cursorRepository", cursorRepository);
         ReflectionTestUtils.setField(service, "eventService", eventService);
         ReflectionTestUtils.setField(service, "auditService", auditService);
 
@@ -138,6 +146,19 @@ public class TrustDomainServiceImplTest {
         lenient().when(repository.findByName(any(), any(), any())).thenReturn(Maybe.empty());
         lenient().when(repository.findBySpiffeTrustDomain(any(), any(), any())).thenReturn(Maybe.empty());
         lenient().when(repository.findByIssuer(any(), any(), any())).thenReturn(Maybe.empty());
+    }
+
+    @Test
+    public void shouldFindCursorPageOfTrustedDomainsByReference() {
+        TrustedDomain trustedDomain = new TrustedDomain();
+        trustedDomain.setName("acme");
+        TrustedDomainCursorRequest cursor = TrustedDomainCursorRequest.initialCursor("name", "DESC", 1, TrustedDomainUsage.SPIFFE);
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = new CursorPage<>(List.of(trustedDomain), null, 11L);
+        when(cursorRepository.findByReferenceCursor(ReferenceType.DOMAIN, DOMAIN_ID, cursor, 10)).thenReturn(Single.just(page));
+
+        service.findByReferenceCursor(ReferenceType.DOMAIN, DOMAIN_ID, cursor, 10)
+                .test()
+                .assertValue(page);
     }
 
     @Test

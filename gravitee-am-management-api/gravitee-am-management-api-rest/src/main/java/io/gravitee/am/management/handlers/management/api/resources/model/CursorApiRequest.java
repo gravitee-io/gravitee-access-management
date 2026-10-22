@@ -36,7 +36,7 @@ public record CursorApiRequest(String id, String lastSortValue) {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Query parameter 'cursor' is not valid", e);
         }
-        String[] split = decoded.split(SEPARATOR);
+        String[] split = decoded.split(SEPARATOR, 2);
         if (split.length != 2) {
             throw new IllegalArgumentException("Query parameter 'cursor' is not valid");
         }

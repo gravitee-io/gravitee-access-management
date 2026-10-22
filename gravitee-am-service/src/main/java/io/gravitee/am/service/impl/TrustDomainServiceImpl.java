@@ -27,6 +27,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.CrossAppAccessSettings;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -34,7 +35,9 @@ import io.gravitee.am.model.oidc.SpiffeBundleSource;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
 import io.gravitee.am.model.oidc.TrustedDomain;
+import io.gravitee.am.model.oidc.TrustedDomainCursorRequest;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.repository.management.api.TrustedDomainCursorRepository;
 import io.gravitee.am.repository.management.api.TrustedDomainRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -93,6 +96,10 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     @Autowired
     private TrustedDomainRepository repository;
 
+    @Lazy
+    @Autowired
+    private TrustedDomainCursorRepository cursorRepository;
+
     @Autowired
     private EventService eventService;
 
@@ -118,6 +125,11 @@ public class TrustDomainServiceImpl implements TrustDomainService {
     @Override
     public Flowable<TrustedDomain> findByReference(ReferenceType referenceType, String referenceId) {
         return repository.findByReference(referenceType, referenceId);
+    }
+
+    @Override
+    public Single<CursorPage<TrustedDomain, TrustedDomainCursorRequest>> findByReferenceCursor(ReferenceType referenceType, String referenceId, TrustedDomainCursorRequest cursor, int limit) {
+        return cursorRepository.findByReferenceCursor(referenceType, referenceId, cursor, limit);
     }
 
     @Override
