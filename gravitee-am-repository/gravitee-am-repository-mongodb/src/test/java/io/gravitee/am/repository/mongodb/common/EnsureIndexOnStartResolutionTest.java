@@ -15,27 +15,16 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.gateway.upgrader.MongoGatewayIndexUpgrader;
-import io.gravitee.am.repository.mongodb.management.AbstractManagementMongoRepository;
+import io.gravitee.am.repository.mongodb.management.upgrader.MongoManagementIndexUpgrader;
 import io.gravitee.am.repository.mongodb.oauth2.upgrader.MongoOAuth2IndexUpgrader;
-import io.reactivex.rxjava3.core.Flowable;
-import org.bson.Document;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockingDetails;
-import static org.mockito.Mockito.when;
 
 /**
  * Pins which configuration keys switch MongoDB index management on and off, per repository scope.
@@ -130,40 +119,10 @@ public class EnsureIndexOnStartResolutionTest {
         assertThat(gatewayResolves(LEGACY_OAUTH2_KEY, "true", MODERN_MANAGEMENT_KEY, "false")).isTrue();
     }
 
-    // --- probes -----------------------------------------------------------------------------
-
-    public static class ManagementProbe extends AbstractManagementMongoRepository {
-        void createIndexOn(MongoCollection<?> collection) {
-            createIndex(collection, SOME_INDEX);
-        }
-    }
-
-    private static final Map<Document, IndexOptions> SOME_INDEX =
-            Map.of(new Document("field", 1), new IndexOptions().name("i1"));
-
     // --- helpers ----------------------------------------------------------------------------
 
     private static boolean managementCreatesIndexes(String... properties) {
-        MongoCollection<?> collection = mockCollection();
-        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-            context.setEnvironment(env(properties));
-            context.registerBean(FilterCriteriaParser.class, () -> new FilterCriteriaParser());
-            context.registerBean("managementMongoTemplate", MongoDatabase.class, () -> mock(MongoDatabase.class));
-            context.register(ManagementProbe.class);
-            context.refresh();
-
-            context.getBean(ManagementProbe.class).createIndexOn(collection);
-        }
-        return mockingDetails(collection).getInvocations().stream()
-                .anyMatch(invocation -> "createIndexes".equals(invocation.getMethod().getName()));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static MongoCollection<?> mockCollection() {
-        MongoCollection<Document> collection = mock(MongoCollection.class);
-        when(collection.createIndexes(any())).thenReturn(Flowable.empty());
-        when(collection.getNamespace()).thenReturn(new MongoNamespace("test", "probe_collection"));
-        return collection;
+        return new MongoManagementIndexUpgrader.Changelog(mock(MongoDatabase.class), repositoriesEnvironment(properties)).isEnabled();
     }
 
     private static boolean oauth2CreatesIndexes(String... properties) {
@@ -175,14 +134,10 @@ public class EnsureIndexOnStartResolutionTest {
     }
 
     private static RepositoriesEnvironment repositoriesEnvironment(String... keyValuePairs) {
-        return new RepositoriesEnvironment(env(keyValuePairs));
-    }
-
-    private static MockEnvironment env(String... keyValuePairs) {
         MockEnvironment environment = new MockEnvironment();
         for (int i = 0; i < keyValuePairs.length; i += 2) {
             environment.setProperty(keyValuePairs[i], keyValuePairs[i + 1]);
         }
-        return environment;
+        return new RepositoriesEnvironment(environment);
     }
 }

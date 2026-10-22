@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.AccountAccessToken;
@@ -30,12 +29,10 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -55,7 +52,6 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
     public void init() {
         accountTokensCollection = mongoOperations.getCollection(COLLECTION_NAME, AccountAccessTokenMongo.class);
         super.init(accountTokensCollection);
-        createIndex(accountTokensCollection, Map.of(new Document(FIELD_USER_ID, 1), new IndexOptions().name("u1")));
     }
 
 

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ManagedBy;
@@ -34,14 +33,12 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -64,7 +61,6 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     public void init() {
         reportersCollection = mongoOperations.getCollection("reporters", ReporterMongo.class);
         super.init(reportersCollection);
-        super.createIndex(reportersCollection, Map.of(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1")));
     }
 
     @Override

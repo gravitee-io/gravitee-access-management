@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.*;
@@ -32,7 +31,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
@@ -55,17 +53,6 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     public void init() {
         collection = mongoOperations.getCollection(COLLECTION_NAME, ProtectedResourceMongo.class);
         super.init(collection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(CLIENT_ID_FIELD, 1), new IndexOptions().name("d1ci1"));
-        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(TYPE_FIELD, 1).append(UPDATED_AT_FIELD, -1), new IndexOptions().name("d1t1ua_1"));
-        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(RESOURCE_IDENTIFIERS_FIELD, 1), new IndexOptions().name("d1ri1"));
-
-        // Case-insensitive indexes for search functionality
-        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(CLIENT_ID_FIELD, 1), indexOptionsWithCollation("d1ci1_ci"));
-        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(NAME_FIELD, 1), indexOptionsWithCollation("d1n1_ci"));
-
-        super.createIndex(collection, indexes);
     }
 
     @Override

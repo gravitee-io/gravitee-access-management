@@ -19,6 +19,7 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.common.MongoIndexDeclarations.Changeset;
 import io.gravitee.am.repository.mongodb.gateway.upgrader.MongoGatewayIndexUpgrader;
+import io.gravitee.am.repository.mongodb.management.upgrader.MongoManagementIndexUpgrader;
 import io.gravitee.am.repository.mongodb.oauth2.upgrader.MongoOAuth2IndexUpgrader;
 import io.gravitee.node.api.upgrader.Upgrader;
 import org.junit.Test;
@@ -39,12 +40,15 @@ public class MongoIndexUpgradersTest {
 
     @Test
     public void shouldLoadEveryShippedDeclarationFile() {
-        List.of(MongoOAuth2IndexUpgrader.RESOURCE, MongoGatewayIndexUpgrader.RESOURCE)
+        List.of(MongoManagementIndexUpgrader.RESOURCE, MongoOAuth2IndexUpgrader.RESOURCE, MongoGatewayIndexUpgrader.RESOURCE)
                 .forEach(resource -> assertThat(load(resource).indexesByCollection()).isNotEmpty());
     }
 
     @Test
     public void shouldIdentifyEachUpgraderByItsChangeset() {
+        assertThat(new MongoManagementIndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
+                .extracting(Upgrader::identifier)
+                .containsExactly(MongoManagementIndexUpgrader.class.getName() + "_initial-indexes");
         assertThat(new MongoOAuth2IndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoOAuth2IndexUpgrader.class.getName() + "_initial-indexes");
@@ -55,6 +59,8 @@ public class MongoIndexUpgradersTest {
 
     @Test
     public void shouldNeverChangeAChangeset() {
+        assertThat(changesets(MongoManagementIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
+                .containsExactly(tuple("initial-indexes", "52a83bdac197"));
         assertThat(changesets(MongoOAuth2IndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "008287bfa02e"));
         assertThat(changesets(MongoGatewayIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)

@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Acl;
@@ -34,7 +33,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
@@ -63,24 +61,13 @@ import lombok.CustomLog;
 @CustomLog
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
-    private static final String FIELD_SCOPE = "scope";
     private static final String FIELD_ASSIGNABLE_TYPE = "assignableType";
     private MongoCollection<RoleMongo> rolesCollection;
-
-    private final Set<String> UNUSED_INDEXES = Set.of("rt1ri1");
 
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
         super.init(rolesCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("rt1ri1n1s1"));
-
-        super.createIndex(rolesCollection, indexes);
-        if (ensureIndexOnStart) {
-            dropIndexes(rolesCollection, UNUSED_INDEXES::contains).subscribe();
-        }
     }
 
     @Override
