@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "b9c7d3cae5",
+    "angularCommit": "21b73a7b83",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3496,9 +3496,12 @@
                         "providers": "ProvidersResolver",
                         "identities": "IdentitiesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/password-policies/PasswordPoliciesPage.tsx",
+                        "src/features/password-policies/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -3524,9 +3527,12 @@
                     "resolvers": {
                         "identities": "IdentitiesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/password-policies/PasswordPolicyPage.tsx",
+                        "src/features/password-policies/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -3553,9 +3559,12 @@
                         "policies": "PasswordPoliciesResolver",
                         "identities": "IdentitiesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/password-policies/PasswordPolicyPage.tsx",
+                        "src/features/password-policies/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3574,12 +3583,12 @@
                 "domain_settings_update"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 26,
             "blockers": [],
-            "notes": "",
-            "angularCommit": null
+            "notes": "Pages: settings/password-policies → PasswordPoliciesPage → src/features/password-policies/PasswordPoliciesPage.tsx; settings/password-policies/new and settings/password-policies/:policyId → PasswordPolicyPage → src/features/password-policies/PasswordPolicyPage.tsx.\nEndpoints: GET, POST /organizations/:org/environments/:env/domains/:domain/password-policies; GET, PUT, DELETE .../password-policies/:policy; POST .../password-policies/:policy/default (PasswordPolicyService); GET .../identities?userProvider=true and PUT .../identities/:identity/password-policy with {passwordPolicy} (ProviderService.findUserProvidersByDomain, assignPasswordPolicy); GET /platform/plugins/identities for the provider type names (IdentitiesResolver).\nPermissions: the list and the detail need domain_settings_read, the create page domain_settings_update. Create, Set as default, Delete, the fields, the provider picker, Unlink and Save need domain_settings_update.\nLicence features: none.\nPrototype additions left out: an unlinked provider sent as passwordPolicy null (not in AM, Angular leaves the key out); the save body with every field set to null (not in AM, Angular sends the stored policy without id, reference and dates, or only the fields set on a new one); the min length 0 rejected (not in AM, the Angular check is min length below 0); the toast Password policy <name> created and Policy <name> deleted (not in AM).\nPrototype changes kept: the Default radio column is a Default badge plus a Set as default row action for domain_settings_update; edit and delete are in the row menu; the save-time toasts are inline field errors; the linked providers are badges, always shown; readers get disabled fields and no picker.\nAngular behaviour added back: the toasts Updated default Password policy, Couldn't set default Password policy, Policy <id> deleted and Password settings configuration updated; the confirm dialog Delete Password Policy; the provider type in the picker; Apply disabled until a box changes; the min, max, expiry and history range checks block Save.\nKit parts: ConfirmDialog, ErrorPanel, NotFoundPanel, PageHeader, SaveBar, SettingToggle.\n\nVerification, 2026-10-22, React console on :4201 against the local Management API, through gravitee-am-test/playwright/tests/console-next/password-policies.spec.ts (2 tests, passed) on the fixture's test domain. Create: POST .../password-policies {name, minLength 12, includeNumbers true}, then PUT .../identities/:id/password-policy {passwordPolicy <new id>}, 200; the page moved to .../password-policies/<new id>; the list gave idpsNames [Default Identity Provider] and GET identity gave passwordPolicy <new id>. List: Set as default sent POST .../password-policies/:id/default, 200, and the row showed Default; Delete after the confirm dialog sent DELETE .../password-policies/:id, 200, and the row went away. The Angular console was not running (:4200 is the Gamma console), so the calls were compared with PasswordPolicyService, ProviderService and DomainPasswordPolicyComponent.save.",
+            "angularCommit": "21b73a7b83"
         },
         {
             "id": "secrets",

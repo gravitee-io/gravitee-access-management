@@ -31,6 +31,19 @@ export function listIdentityProviders(ref: DomainRef): Promise<IdentityProviderS
     return http<IdentityProviderSummary[]>(`${domainPath(ref)}/identities`);
 }
 
+/** The Angular `ProviderService.findUserProvidersByDomain`: the providers that manage users. */
+export function listUserIdentityProviders(ref: DomainRef): Promise<IdentityProviderSummary[]> {
+    return http<IdentityProviderSummary[]>(`${domainPath(ref)}/identities?userProvider=true`);
+}
+
+/** The Angular `ProviderService.assignPasswordPolicy`. Without a policy id, the provider uses the default policy. */
+export function assignPasswordPolicy(ref: DomainRef, identityProviderId: string, passwordPolicy: string | undefined): Promise<unknown> {
+    return http<unknown>(`${domainPath(ref)}/identities/${identityProviderId}/password-policy`, {
+        method: 'PUT',
+        body: JSON.stringify({ passwordPolicy }),
+    });
+}
+
 export function getIdentityProvider(ref: DomainRef, identityProviderId: string): Promise<IdentityProvider> {
     return http<IdentityProvider>(`${domainPath(ref)}/identities/${identityProviderId}`);
 }
