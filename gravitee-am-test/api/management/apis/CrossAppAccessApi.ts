@@ -46,7 +46,7 @@ export interface ListCrossAppAccessResourceServersRequest {
  */
 export class CrossAppAccessApi extends runtime.BaseAPI {
   /**
-   * Flattens the resource servers of every trusted domain that has Cross App Access enabled. User must have the DOMAIN_SETTINGS[READ] permission on the specified domain or DOMAIN_SETTINGS[READ] permission on the specified environment or DOMAIN_SETTINGS[READ] permission on the specified organization
+   * Flattens the resource servers of every trusted domain that has Cross App Access enabled, keeping those the search term matches, up to the requested limit. User must have the DOMAIN_SETTINGS[READ] permission on the specified domain or DOMAIN_SETTINGS[READ] permission on the specified environment or DOMAIN_SETTINGS[READ] permission on the specified organization
    * List the resource servers an application of this security domain may be mapped to
    */
   async listCrossAppAccessResourceServersRaw(
@@ -111,7 +111,7 @@ export class CrossAppAccessApi extends runtime.BaseAPI {
   }
 
   /**
-   * Flattens the resource servers of every trusted domain that has Cross App Access enabled. User must have the DOMAIN_SETTINGS[READ] permission on the specified domain or DOMAIN_SETTINGS[READ] permission on the specified environment or DOMAIN_SETTINGS[READ] permission on the specified organization
+   * Flattens the resource servers of every trusted domain that has Cross App Access enabled, keeping those the search term matches, up to the requested limit. User must have the DOMAIN_SETTINGS[READ] permission on the specified domain or DOMAIN_SETTINGS[READ] permission on the specified environment or DOMAIN_SETTINGS[READ] permission on the specified organization
    * List the resource servers an application of this security domain may be mapped to
    */
   async listCrossAppAccessResourceServers(

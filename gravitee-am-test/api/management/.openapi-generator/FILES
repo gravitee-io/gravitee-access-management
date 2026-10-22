@@ -2,9 +2,11 @@ apis/AlertsApi.ts
 apis/ApplicationApi.ts
 apis/AuditApi.ts
 apis/AuthenticationDeviceNotifierApi.ts
+apis/AuthorizationDetailTypeApi.ts
 apis/AuthorizationEngineApi.ts
 apis/BotDetectionApi.ts
 apis/CertificateApi.ts
+apis/CrossAppAccessApi.ts
 apis/DataPlaneApi.ts
 apis/DataSourcesApi.ts
 apis/DefaultApi.ts
@@ -36,6 +38,7 @@ apis/ScopeApi.ts
 apis/ShardingTagsApi.ts
 apis/ThemeApi.ts
 apis/TrustDomainApi.ts
+apis/TrustedDomainApi.ts
 apis/UserApi.ts
 apis/UserNotificationsApi.ts
 apis/index.ts
@@ -51,6 +54,8 @@ models/AlertTrigger.ts
 models/AnalyticsTypeParam.ts
 models/Application.ts
 models/ApplicationAdvancedSettings.ts
+models/ApplicationCrossAppAccessResourceServer.ts
+models/ApplicationCrossAppAccessSettings.ts
 models/ApplicationEntity.ts
 models/ApplicationFactorSettings.ts
 models/ApplicationIdentityProvider.ts
@@ -70,6 +75,7 @@ models/AuditEntity.ts
 models/AuditOutcome.ts
 models/AuditPage.ts
 models/AuthenticationDeviceNotifier.ts
+models/AuthorizationDetailType.ts
 models/AuthorizationEngine.ts
 models/BotDetection.ts
 models/BulkCreateOrganizationUser.ts
@@ -97,6 +103,7 @@ models/CookieSettings.ts
 models/CorsSettings.ts
 models/Credential.ts
 models/CrossAppAccessResourceServer.ts
+models/CrossAppAccessResourceServerEntity.ts
 models/CrossAppAccessSettings.ts
 models/CspSettings.ts
 models/DPoPSettings.ts
@@ -129,6 +136,7 @@ models/GraviteeLicense.ts
 models/Group.ts
 models/GroupPage.ts
 models/I18nDictionary.ts
+models/IdJagSettings.ts
 models/IdentityProvider.ts
 models/InstallationConfiguration.ts
 models/InstallationEntity.ts
@@ -147,6 +155,7 @@ models/NewAccountAccessToken.ts
 models/NewAlertNotifier.ts
 models/NewApplication.ts
 models/NewAuthenticationDeviceNotifier.ts
+models/NewAuthorizationDetailType.ts
 models/NewAuthorizationEngine.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts
@@ -176,6 +185,7 @@ models/NewServiceResource.ts
 models/NewTag.ts
 models/NewTheme.ts
 models/NewTrustDomain.ts
+models/NewTrustedDomain.ts
 models/NewUser.ts
 models/NotifierPlugin.ts
 models/OIDCSettings.ts
@@ -250,6 +260,7 @@ models/ServiceResource.ts
 models/SessionSettings.ts
 models/SpiffeApplicationSettings.ts
 models/SpiffeDomainSettings.ts
+models/SpiffeTrustSettings.ts
 models/StatusEntity.ts
 models/Step.ts
 models/StepUpAuthenticationSettings.ts
@@ -259,8 +270,10 @@ models/ThemeEntity.ts
 models/TokenClaim.ts
 models/TokenExchangeOAuthSettings.ts
 models/TokenExchangeSettings.ts
+models/TokenExchangeTrustSettings.ts
 models/TrustDomain.ts
 models/TrustDomainKeyMaterial.ts
+models/TrustedDomain.ts
 models/TrustedIssuer.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts
@@ -286,6 +299,7 @@ models/UpdateScope.ts
 models/UpdateServiceResource.ts
 models/UpdateTag.ts
 models/UpdateTrustDomain.ts
+models/UpdateTrustedDomain.ts
 models/UpdateUser.ts
 models/UpdateUserWithId.ts
 models/User.ts

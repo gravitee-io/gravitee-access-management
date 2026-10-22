@@ -138,6 +138,8 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "upgraders",
                 
                 "authorization_engines",
+                "authorization_detail_type_versions",
+                "authorization_detail_types",
                 "protected_resources",
                 "licenses",
                 "dataplanes",

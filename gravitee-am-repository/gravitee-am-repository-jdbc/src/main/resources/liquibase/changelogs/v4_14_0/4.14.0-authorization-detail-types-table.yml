@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.14.0-authorization-detail-types-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_detail_types
+      changes:
+        - createTable:
+            tableName: authorization_detail_types
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: description, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: schema, type: clob, constraints: { nullable: true } }
+              - column: { name: discovery, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }
+              - column: { name: expires_in, type: integer, constraints: { nullable: true } }
+              - column: { name: version, type: integer, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_detail_types
+            columnNames: id
+            tableName: authorization_detail_types
+
+        # Every version of a type's name, description and schema.
+        - createTable:
+            tableName: authorization_detail_type_versions
+            columns:
+              - column: { name: authorization_detail_type_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: version, type: integer, constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: description, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: schema, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_detail_type_versions
+            columnNames: authorization_detail_type_id, version
+            tableName: authorization_detail_type_versions
+
+        - createIndex:
+            columns:
+              - column: { name: domain }
+            indexName: idx_authorization_detail_type_versions_domain
+            tableName: authorization_detail_type_versions
+
+  # Unique type per domain, ignoring case: relies on the case-insensitive default collations of
+  # MySQL, MariaDB and SQL Server.
+  - changeSet:
+      id: 4.14.0-authorization-detail-types-unique-type
+      author: GraviteeSource Team
+      dbms: mysql, mariadb, mssql
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: authorization_detail_types
+                indexName: idx_authorization_detail_types_domain_type
+      changes:
+        - createIndex:
+            columns:
+              - column: { name: domain }
+              - column: { name: type }
+            indexName: idx_authorization_detail_types_domain_type
+            tableName: authorization_detail_types
+            unique: true
+
+  - changeSet:
+      id: 4.14.0-authorization-detail-types-unique-type-postgresql
+      author: GraviteeSource Team
+      dbms: postgresql
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: authorization_detail_types
+                indexName: idx_authorization_detail_types_domain_type
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_authorization_detail_types_domain_type ON authorization_detail_types (domain, UPPER(type))

@@ -120,7 +120,7 @@ export const setupDomainReporterGatewayFixture = async (): Promise<DomainReporte
           auditTypes,
         }),
         ...(attributeMappings ? { attributeMappings } : {}),
-        ...(attributeMappingEventTypes ? { attributeMappingEventTypes } : {}),
+        ...(attributeMappingEventTypes ? { attributeMappingEventTypes: new Set(attributeMappingEventTypes) } : {}),
       }),
     );
     reporterIds.push(reporter.id);

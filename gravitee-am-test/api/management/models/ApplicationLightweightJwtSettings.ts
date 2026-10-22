@@ -39,17 +39,17 @@ export interface ApplicationLightweightJwtSettings {
    */
   allowedAccessTokenClaims?: Array<string>;
   /**
-   * Whether Lightweight JWT is enabled.
-   * @type {boolean}
-   * @memberof ApplicationLightweightJwtSettings
-   */
-  enabled?: boolean;
-  /**
    * Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it.
    * @type {Array<string>}
    * @memberof ApplicationLightweightJwtSettings
    */
   allowedIdTokenClaims?: Array<string>;
+  /**
+   * Whether Lightweight JWT is enabled.
+   * @type {boolean}
+   * @memberof ApplicationLightweightJwtSettings
+   */
+  enabled?: boolean;
 }
 
 /**
@@ -69,8 +69,8 @@ export function ApplicationLightweightJwtSettingsFromJSONTyped(json: any, ignore
   }
   return {
     allowedAccessTokenClaims: json['allowedAccessTokenClaims'] == null ? undefined : json['allowedAccessTokenClaims'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
     allowedIdTokenClaims: json['allowedIdTokenClaims'] == null ? undefined : json['allowedIdTokenClaims'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
   };
 }
 
@@ -88,7 +88,7 @@ export function ApplicationLightweightJwtSettingsToJSONTyped(
 
   return {
     allowedAccessTokenClaims: value['allowedAccessTokenClaims'],
-    enabled: value['enabled'],
     allowedIdTokenClaims: value['allowedIdTokenClaims'],
+    enabled: value['enabled'],
   };
 }

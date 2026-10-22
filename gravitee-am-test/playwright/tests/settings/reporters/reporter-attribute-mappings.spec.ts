@@ -65,7 +65,7 @@ test.describe('Reporter attribute mappings', () => {
       { exportedName: 'user_id', expression: USER_ID_EXPRESSION },
       { exportedName: 'client_ip', expression: REQUEST_IP_EXPRESSION },
     ]);
-    expect(stored.attributeMappingEventTypes).toEqual(['USER_LOGIN']);
+    expect([...(stored.attributeMappingEventTypes ?? [])]).toEqual(['USER_LOGIN']);
   });
 
   test('AM-7554: stored mappings are rendered when the reporter is reopened', async ({ page, testDomain, adminToken }, testInfo) => {
@@ -78,7 +78,7 @@ test.describe('Reporter attribute mappings', () => {
       enabled: true,
       configuration: JSON.stringify({ filename: name }),
       attributeMappings: [{ exportedName: 'user_id', expression: USER_ID_EXPRESSION }],
-      attributeMappingEventTypes: ['USER_LOGIN'],
+      attributeMappingEventTypes: new Set(['USER_LOGIN']),
     });
 
     const reporterPage = new DomainReporterPage(page);
@@ -215,7 +215,7 @@ test.describe('Reporter attribute mappings', () => {
     await reporterPage.expectSnackbar(/updated/i);
 
     const stored = await getDomainReporter(testDomain.id, adminToken, reporter.id);
-    expect(stored.attributeMappingEventTypes).toEqual(['USER_LOGIN']);
+    expect([...(stored.attributeMappingEventTypes ?? [])]).toEqual(['USER_LOGIN']);
     expect(JSON.parse(stored.configuration).auditTypes).toEqual(['USER_LOGOUT']);
   });
 
@@ -234,7 +234,7 @@ test.describe('Reporter attribute mappings', () => {
 
     // Whatever order the picker settles on, the reporter stores exactly those types.
     const stored = await getDomainReporter(testDomain.id, adminToken, reporter.id);
-    const storedOrder = stored.attributeMappingEventTypes ?? [];
+    const storedOrder = [...(stored.attributeMappingEventTypes ?? [])];
     expect([...storedOrder].sort()).toEqual([...chosen].sort());
 
     // Reopening the reporter renders the chips in the same order it stored — the order is
