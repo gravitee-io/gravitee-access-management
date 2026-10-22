@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.ActionLease;
 import io.gravitee.am.repository.management.api.ActionLeaseRepository;
@@ -24,12 +23,10 @@ import io.gravitee.am.repository.mongodb.common.model.ActionLeaseMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -47,15 +44,6 @@ public class MongoActionLeaseRepository extends AbstractManagementMongoRepositor
         this.actionLeaseCommand = new ActionLeaseCommand(actionLeaseCollection);
 
         super.init(actionLeaseCollection);
-
-        // Create unique index on action field to ensure only one lease per action
-        super.createIndex(actionLeaseCollection,
-            Map.of(new Document(ActionLeaseCommand.FIELD_ACTION, 1), new IndexOptions().name("action_unique").unique(true)), ensureIndexOnStart);
-
-        // Create TTL index on expiryDate for automatic cleanup
-        super.createIndex(actionLeaseCollection,
-            Map.of(new Document(ActionLeaseCommand.FIELD_EXPIRY_DATE, 1), new IndexOptions().name("expiry_ttl").expireAfter(0L, java.util.concurrent.TimeUnit.SECONDS)),
-            ensureIndexOnStart);
     }
 
     @Override

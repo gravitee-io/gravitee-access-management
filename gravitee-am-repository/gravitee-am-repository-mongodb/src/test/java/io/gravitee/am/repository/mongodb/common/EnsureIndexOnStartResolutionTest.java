@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.common;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.gateway.upgrader.MongoGatewayIndexUpgrader;
+import io.gravitee.am.repository.mongodb.management.upgrader.MongoManagementIndexUpgrader;
 import io.gravitee.am.repository.mongodb.oauth2.upgrader.MongoOAuth2IndexUpgrader;
 import org.junit.Test;
 import org.springframework.mock.env.MockEnvironment;
@@ -41,6 +42,28 @@ public class EnsureIndexOnStartResolutionTest {
     private static final String MODERN_OAUTH2_KEY = "repositories.oauth2.mongodb.ensureIndexOnStart";
     private static final String LEGACY_OAUTH2_KEY = "oauth2.mongodb.ensureIndexOnStart";
     private static final String MODERN_GATEWAY_KEY = "repositories.gateway.mongodb.ensureIndexOnStart";
+
+    // --- management scope -------------------------------------------------------------------
+
+    @Test
+    public void managementIndexesAreCreatedByDefault() {
+        assertThat(managementCreatesIndexes()).isTrue();
+    }
+
+    @Test
+    public void managementIndexesAreDisabledByItsModernKey() {
+        assertThat(managementCreatesIndexes(MODERN_MANAGEMENT_KEY, "false")).isFalse();
+    }
+
+    @Test
+    public void managementIndexesAreDisabledByItsLegacyKey() {
+        assertThat(managementCreatesIndexes(LEGACY_MANAGEMENT_KEY, "false")).isFalse();
+    }
+
+    @Test
+    public void managementModernKeyTakesPrecedenceOverItsLegacyKey() {
+        assertThat(managementCreatesIndexes(MODERN_MANAGEMENT_KEY, "true", LEGACY_MANAGEMENT_KEY, "false")).isTrue();
+    }
 
     // --- oauth2 scope (the token stores) ----------------------------------------------------
 
@@ -97,6 +120,10 @@ public class EnsureIndexOnStartResolutionTest {
     }
 
     // --- helpers ----------------------------------------------------------------------------
+
+    private static boolean managementCreatesIndexes(String... properties) {
+        return new MongoManagementIndexUpgrader(mock(MongoDatabase.class), repositoriesEnvironment(properties)).isEnabled();
+    }
 
     private static boolean oauth2CreatesIndexes(String... properties) {
         return new MongoOAuth2IndexUpgrader(mock(MongoDatabase.class), repositoriesEnvironment(properties)).isEnabled();

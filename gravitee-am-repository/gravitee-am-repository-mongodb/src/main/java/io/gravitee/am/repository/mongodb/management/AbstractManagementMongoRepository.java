@@ -19,7 +19,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -31,7 +30,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import java.util.regex.Pattern;
 
@@ -41,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -79,15 +76,8 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Qualifier("managementMongoTemplate")
     protected MongoDatabase mongoOperations;
 
-    @Value("${repositories.management.mongodb.ensureIndexOnStart:${management.mongodb.ensureIndexOnStart:true}}")
-    protected boolean ensureIndexOnStart;
-
     @Value("${repositories.management.mongodb.cursorMaxTime:${management.mongodb.cursorMaxTime:60000}}")
     protected int cursorMaxTimeInMs;
-
-    protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes) {
-        super.createIndex(collection, indexes, ensureIndexOnStart);
-    }
 
     protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {
         return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
@@ -104,16 +94,6 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     protected final CountOptions countOptionsWithCollation() {
         return new CountOptions()
                 .maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS)
-                .collation(CASE_INSENSITIVE_COLLATION);
-    }
-
-    /**
-     * Creates index options with case-insensitive collation.
-     * Indexes created with this collation can be used for case-insensitive equality queries.
-     */
-    protected static IndexOptions indexOptionsWithCollation(String name) {
-        return new IndexOptions()
-                .name(name)
                 .collation(CASE_INSENSITIVE_COLLATION);
     }
 

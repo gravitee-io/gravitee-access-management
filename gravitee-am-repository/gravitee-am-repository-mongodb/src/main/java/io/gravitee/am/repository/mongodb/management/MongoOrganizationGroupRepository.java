@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
@@ -33,14 +32,11 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -63,21 +59,11 @@ public class MongoOrganizationGroupRepository extends AbstractManagementMongoRep
     private static final String DISPLAY_NAME = "displayName";
     private MongoCollection<GroupMongo> groupsCollection;
 
-    private final Set<String> UNUSED_INDEXES = Set.of("rt1ri1");
-
 
     @PostConstruct
     public void init() {
         groupsCollection = mongoOperations.getCollection("groups", GroupMongo.class);
         super.init(groupsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
-
-        super.createIndex(groupsCollection, indexes);
-        if (ensureIndexOnStart) {
-            dropIndexes(groupsCollection, UNUSED_INDEXES::contains).subscribe();
-        }
     }
 
     @Override

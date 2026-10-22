@@ -1,0 +1,231 @@
+{
+  "collections": {
+    "account_access_tokens": {
+      "indexes": [
+        { "name": "u1", "key": { "userId": 1 } }
+      ]
+    },
+    "applications": {
+      "indexes": [
+        { "name": "d1", "key": { "domain": 1 } },
+        { "name": "u_1", "key": { "updatedAt": -1 } },
+        { "name": "i1", "key": { "identities": 1 } },
+        { "name": "aidp1", "key": { "identityProviders.identity": 1 } },
+        { "name": "c1", "key": { "certificate": 1 } },
+        { "name": "d1sog1", "key": { "domain": 1, "settings.oauth.grantTypes": 1 } },
+        { "name": "d1t1", "key": { "domain": 1, "type": 1 } },
+        { "name": "d1soc1_ci", "key": { "domain": 1, "settings.oauth.clientId": 1 }, "collation": { "locale": "en", "strength": 2 } },
+        { "name": "d1n1_ci", "key": { "domain": 1, "name": 1 }, "collation": { "locale": "en", "strength": 2 } },
+        { "name": "d1u1i1", "key": { "domain": 1, "updatedAt": 1, "_id": 1 } },
+        { "name": "d1u_1i_1", "key": { "domain": 1, "updatedAt": -1, "_id": -1 } },
+        { "name": "d1n1i1", "key": { "domain": 1, "name": 1, "_id": 1 } },
+        { "name": "d1n_1i_1", "key": { "domain": 1, "name": -1, "_id": -1 } }
+      ]
+    },
+    "authentication_device_notifiers": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+      ]
+    },
+    "authorization_engines": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+      ]
+    },
+    "bot_detections": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+      ]
+    },
+    "certificates": {
+      "indexes": [
+        { "name": "d1", "key": { "domain": 1 } }
+      ]
+    },
+    "cimd_metadata_documents": {
+      "indexes": [
+        { "name": "di1ci1", "key": { "domainId": 1, "clientId": 1 }, "unique": true },
+        { "name": "ea1", "key": { "expiresAt": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "cp_action_lease": {
+      "indexes": [
+        { "name": "action_unique", "key": { "action": 1 }, "unique": true },
+        { "name": "expiry_ttl", "key": { "expiryDate": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "dataplanes": {
+      "indexes": [
+        { "name": "e1", "key": { "environmentId": 1 } }
+      ]
+    },
+    "device_identifiers": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+      ]
+    },
+    "domains": {
+      "indexes": [
+        { "name": "ri1rt1h1", "key": { "referenceType": 1, "referenceId": 1, "hrid": 1 } },
+        { "name": "ri1rt1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+      ],
+      "dropped": ["ri1rt1"]
+    },
+    "emails": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "ri1rt1t1", "key": { "referenceType": 1, "referenceId": 1, "template": 1 } },
+        { "name": "ri1rc1t1", "key": { "referenceType": 1, "referenceId": 1, "client": 1, "template": 1 } }
+      ]
+    },
+    "entrypoints": {
+      "indexes": [
+        { "name": "o1", "key": { "organizationId": 1 } }
+      ]
+    },
+    "environments": {
+      "indexes": [
+        { "name": "o1", "key": { "organizationId": 1 } }
+      ]
+    },
+    "events": {
+      "indexes": [
+        { "name": "u1", "key": { "updatedAt": 1 } },
+        { "name": "u1dp1", "key": { "updatedAt": 1, "dataPlaneId": 1 } },
+        { "name": "e1", "key": { "createdAt": 1 }, "expireAfter": "${services.purge.events.retention.days:90}d" }
+      ]
+    },
+    "extension_grants": {
+      "indexes": [
+        { "name": "d1", "key": { "domain": 1 } },
+        { "name": "d1n1", "key": { "domain": 1, "name": 1 } }
+      ]
+    },
+    "factors": {
+      "indexes": [
+        { "name": "d1f1", "key": { "domain": 1, "factorType": 1 } }
+      ],
+      "dropped": ["d1"]
+    },
+    "flows": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "rt1ri1a1", "key": { "referenceType": 1, "referenceId": 1, "application": 1 } },
+        { "name": "rt1ri1id1", "key": { "referenceType": 1, "referenceId": 1, "_id": 1 } }
+      ]
+    },
+    "forms": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "rt1ri1t1", "key": { "referenceType": 1, "referenceId": 1, "template": 1 } },
+        { "name": "rt1ri1c1t1", "key": { "referenceType": 1, "referenceId": 1, "client": 1, "template": 1 } }
+      ]
+    },
+    "groups": {
+      "indexes": [
+        { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+      ],
+      "dropped": ["rt1ri1"]
+    },
+    "i18n_dictionaries": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+      ]
+    },
+    "identities": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+      ]
+    },
+    "memberships": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "ri1mi1", "key": { "referenceId": 1, "memberId": 1 } },
+        { "name": "mi1mt1", "key": { "memberId": 1, "memberType": 1 } }
+      ],
+      "dropped": ["ri1rt1"]
+    },
+    "node_monitoring": {
+      "indexes": [
+        { "name": "u1", "key": { "updatedAt": 1 } },
+        { "name": "n1t1", "key": { "nodeId": 1, "type": 1 } }
+      ]
+    },
+    "notification_acknowledgements": {
+      "indexes": [
+        { "name": "ri1rt1a1", "key": { "resourceId": 1, "type": 1, "audienceId": 1 } }
+      ]
+    },
+    "organization_users": {
+      "indexes": [
+        { "name": "rt1ri1e1", "key": { "referenceType": 1, "referenceId": 1, "email": 1 } },
+        { "name": "rt1ri1ae1", "key": { "referenceType": 1, "referenceId": 1, "additionalInformation.email": 1 } },
+        { "name": "rt1ri1d1", "key": { "referenceType": 1, "referenceId": 1, "displayName": 1 } },
+        { "name": "rt1ri1f1", "key": { "referenceType": 1, "referenceId": 1, "firstName": 1 } },
+        { "name": "rt1ri1l1", "key": { "referenceType": 1, "referenceId": 1, "lastName": 1 } },
+        { "name": "rt1ri1ext1s1", "key": { "referenceType": 1, "referenceId": 1, "externalId": 1, "source": 1 } },
+        { "name": "rt1ri1iu1ip1", "key": { "referenceType": 1, "referenceId": 1, "identities.username": 1, "identities.providerId": 1 } },
+        { "name": "rt1ri1u1s1_unique", "key": { "referenceType": 1, "referenceId": 1, "username": 1, "source": 1 }, "unique": true }
+      ],
+      "dropped": ["referenceType_1_referenceId_1_username_1_source_1", "rt1ri1u1s1", "rt1ri1", "rt1ri1ext1", "rt1ri1u1"]
+    },
+    "password_policies": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+      ]
+    },
+    "protected_resources": {
+      "indexes": [
+        { "name": "d1t1ua_1", "key": { "domainId": 1, "type": 1, "updatedAt": -1 } },
+        { "name": "d1ri1", "key": { "domainId": 1, "resourceIdentifiers": 1 } },
+        { "name": "d1ci1_ci", "key": { "domainId": 1, "clientId": 1 }, "collation": { "locale": "en", "strength": 2 } },
+        { "name": "d1n1_ci", "key": { "domainId": 1, "name": 1 }, "collation": { "locale": "en", "strength": 2 } }
+      ]
+    },
+    "reporters": {
+      "indexes": [
+        { "name": "d1", "key": { "domain": 1 } }
+      ]
+    },
+    "roles": {
+      "indexes": [
+        { "name": "rt1ri1n1s1", "key": { "referenceType": 1, "referenceId": 1, "name": 1, "scope": 1 } }
+      ],
+      "dropped": ["rt1ri1"]
+    },
+    "scopes": {
+      "indexes": [
+        { "name": "d1k1", "key": { "domain": 1, "key": 1 } }
+      ],
+      "dropped": ["d1"]
+    },
+    "service_resources": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+      ]
+    },
+    "tags": {
+      "indexes": [
+        { "name": "o1", "key": { "organizationId": 1 } }
+      ]
+    },
+    "themes": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+      ]
+    },
+    "trusted_domains": {
+      "indexes": [
+        { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 }, "unique": true },
+        { "name": "rt1ri1std1", "key": { "referenceType": 1, "referenceId": 1, "spiffe.spiffeTrustDomain": 1 }, "unique": true, "partialFilterExpression": { "spiffe.spiffeTrustDomain": { "$exists": true } } },
+        { "name": "rt1ri1di1", "key": { "referenceType": 1, "referenceId": 1, "domainIdentifier": 1 }, "unique": true, "partialFilterExpression": { "domainIdentifier": { "$exists": true } } }
+      ]
+    },
+    "user_notifications": {
+      "indexes": [
+        { "name": "a1t1s1", "key": { "audienceId": 1, "type": 1, "status": 1 } }
+      ]
+    }
+  }
+}

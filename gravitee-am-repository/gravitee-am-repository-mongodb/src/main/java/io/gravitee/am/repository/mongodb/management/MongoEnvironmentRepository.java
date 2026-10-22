@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
@@ -28,10 +27,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -54,7 +51,6 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     public void init() {
         collection = mongoOperations.getCollection("environments", EnvironmentMongo.class);
         super.init(collection);
-        super.createIndex(collection, Map.of(new Document(FIELD_ORGANIZATION_ID, 1),new IndexOptions().name("o1")));
     }
 
     @Override

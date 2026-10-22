@@ -17,7 +17,6 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
@@ -90,7 +89,6 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -125,7 +123,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_IDENTITY = "identity";
     private static final String FIELD_ENABLED = "enabled";
     // Kept for retro-compatibility
-    private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
@@ -136,29 +133,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public void init() {
         applicationsCollection = mongoOperations.getCollection("applications", ApplicationMongo.class);
         super.init(applicationsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        indexes.put(new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1soc1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
-        indexes.put(new Document(FIELD_IDENTITIES, 1), new IndexOptions().name("i1"));
-        indexes.put(new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
-        indexes.put(new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_TYPE, 1), new IndexOptions().name("d1t1"));
-
-        // Case-insensitive indexes for search functionality
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), indexOptionsWithCollation("d1soc1_ci"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), indexOptionsWithCollation("d1n1_ci"));
-
-        // Cursor pagination indexes: (domain, sortField, _id) in both directions for updatedAt and name
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_UPDATED_AT, 1).append(FIELD_ID, 1), new IndexOptions().name("d1u1i1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_UPDATED_AT, -1).append(FIELD_ID, -1), new IndexOptions().name("d1u_1i_1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1).append(FIELD_ID, 1), new IndexOptions().name("d1n1i1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, -1).append(FIELD_ID, -1), new IndexOptions().name("d1n_1i_1"));
-
-        super.createIndex(applicationsCollection, indexes);
     }
 
     @Override

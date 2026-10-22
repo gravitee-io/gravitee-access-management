@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -75,9 +73,6 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     public void init() {
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
         super.init(eventsCollection);
-        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
-        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1).append(DATA_PLANE_ID, 1), new IndexOptions().name("u1dp1")));
-        super.createIndex(eventsCollection, Map.of(new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("e1").expireAfter((long) eventsRetentionDays, TimeUnit.DAYS)));
     }
 
     @Override

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.CimdMetadataDocument;
@@ -28,12 +27,9 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -59,14 +55,6 @@ public class MongoCimdMetadataDocumentRepository extends AbstractManagementMongo
     public void init() {
         collection = mongoOperations.getCollection(COLLECTION, CimdMetadataDocumentMongo.class);
         super.init(collection);
-        super.createIndex(collection, Map.of(
-                new Document(FIELD_DOMAIN_ID, 1).append(FIELD_CLIENT_ID, 1),
-                new IndexOptions().name("di1ci1").unique(true)
-        ));
-        super.createIndex(collection, Map.of(
-                new Document(FIELD_EXPIRES_AT, 1),
-                new IndexOptions().name("ea1").expireAfter(0L, TimeUnit.SECONDS)
-        ));
     }
 
     @Override

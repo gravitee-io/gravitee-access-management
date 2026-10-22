@@ -17,7 +17,6 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reference;
@@ -47,7 +46,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Aggregates.limit;
@@ -57,7 +55,6 @@ import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Aggregates.unwind;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Filters.regex;
 import static com.mongodb.client.model.Projections.computed;
@@ -96,16 +93,6 @@ public class MongoTrustedDomainRepository extends AbstractManagementMongoReposit
     public void init() {
         collection = mongoOperations.getCollection(COLLECTION_NAME, TrustedDomainMongo.class);
         super.init(collection);
-        super.createIndex(collection, Map.of(
-                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1),
-                new IndexOptions().name("rt1ri1n1").unique(true),
-                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_SPIFFE_TRUST_DOMAIN, 1),
-                new IndexOptions().name("rt1ri1std1").unique(true)
-                        .partialFilterExpression(exists(FIELD_SPIFFE_TRUST_DOMAIN, true)),
-                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DOMAIN_IDENTIFIER, 1),
-                new IndexOptions().name("rt1ri1di1").unique(true)
-                        .partialFilterExpression(exists(FIELD_DOMAIN_IDENTIFIER, true))
-        ));
         new LegacyTrustDomainMigration(mongoOperations, COLLECTION_NAME).run().subscribe();
     }
 

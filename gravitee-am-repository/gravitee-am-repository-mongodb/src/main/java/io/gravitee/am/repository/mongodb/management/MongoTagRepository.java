@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Tag;
@@ -28,10 +27,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -50,7 +47,6 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     public void init() {
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
         super.init(tagsCollection);
-        super.createIndex(tagsCollection, Map.of(new Document(FIELD_ORGANIZATION_ID, 1), new IndexOptions().name("o1")));
     }
 
 
