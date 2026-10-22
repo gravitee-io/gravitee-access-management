@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "f510e7f492",
+    "angularCommit": "b1c018e60f",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3242,9 +3242,11 @@
                         "entrypoint": "DomainEntrypointResolver",
                         "environment": "EnvironmentResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "A",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/entrypoints/DomainEntrypointsPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3260,12 +3262,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "A",
             "order": 20,
             "blockers": [],
-            "notes": "",
-            "angularCommit": null
+            "notes": "Pages: settings/entrypoints → DomainEntrypointsPage → src/features/entrypoints/DomainEntrypointsPage.tsx.\nEndpoints: GET /organizations/:org/environments/:env/domains/:domain/entrypoints (DomainEntrypointResolver, DomainService.getEntrypoint); PATCH /organizations/:org/environments/:env/domains/:domain (path, vhostMode, vhosts), DomainService.patchEntrypoints; GET /platform/configuration/installation (CloudModeService). The environment with its domainRestrictions comes from the session list, GET /organizations/:org/environments, as EnvironmentResolver reads it.\nPermissions: the route needs domain_settings_read; the add and remove virtual host buttons, the override radio, the inputs and Save need domain_settings_update.\nLicence features: none.\nPrototype additions left out: the path pattern rule and the \"cannot be '/'\" rule in context-path mode (not in AM, Angular only requires the path); the default entrypoint picked first (not in AM, DomainService.getEntrypoint takes the only one, else the first non-default one); the switch mode button gated on the update permission (not in AM, Angular shows it to every reader outside cloud mode); the resolved URL under each virtual host (not in AM).\nAngular behaviour added back: cloud mode (installation type managed) makes the page read-only and hides the switch mode button, the add and remove buttons and Save; the host pattern built from the environment's domainRestrictions; the host autocomplete with the domainRestrictions suggestions (getHostOptions). The access URL card follows EntrypointService.resolveBaseUrl, the same rule the identity provider redirect URI uses.\nKit parts: SaveBar.\nKept from the prototype: the Access URL card, computed with EntrypointService.resolveBaseUrl, in place of the Angular side panel.\nVerification, 2026-10-22, React console on :4201 against the local Management API, on a throwaway domain ep-port-check, deleted after. Load: GET .../domains/:id/entrypoints and GET /platform/configuration/installation. Context-path save: PATCH /organizations/DEFAULT/environments/DEFAULT/domains/:id {path, vhostMode: false, vhosts: []}, toast Domain ep-port-check updated. Virtual hosts: switch, add, host auth.ep-check.example:8092, save: PATCH with {path, vhostMode: true, vhosts: [{host, path: the domain path, overrideEntrypoint: true}]}; the Access URL card showed http://auth.ep-check.example:8092/ep-port-check2. The environment has no domainRestrictions, so the host combobox was checked in the unit tests only. The Angular console was not running (:4200 is the Gamma console), so the calls were compared with DomainService.patchEntrypoints and getEntrypoint. Class A: no Playwright spec.",
+            "angularCommit": "b1c018e60f"
         },
         {
             "id": "general",

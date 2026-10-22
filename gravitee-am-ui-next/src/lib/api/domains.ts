@@ -70,6 +70,17 @@ export function patchDomainGeneralSettings(ref: DomainRef, settings: DomainGener
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
 }
 
+/** The fields the Angular `DomainService.patchEntrypoints` sends. */
+export interface DomainEntrypointSettings {
+    readonly path?: string;
+    readonly vhostMode: boolean;
+    readonly vhosts: readonly VirtualHost[];
+}
+
+export function patchDomainEntrypoints(ref: DomainRef, settings: DomainEntrypointSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
 export function deleteDomain(ref: DomainRef): Promise<void> {
     return http<void>(domainPath(ref), { method: 'DELETE' });
 }
