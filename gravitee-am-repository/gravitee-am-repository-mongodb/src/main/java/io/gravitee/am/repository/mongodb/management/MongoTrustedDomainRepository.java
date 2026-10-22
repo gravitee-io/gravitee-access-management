@@ -73,13 +73,13 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
 @Component
 public class MongoTrustedDomainRepository extends AbstractManagementMongoRepository implements TrustedDomainRepository {
 
-    private static final String COLLECTION_NAME = "trusted_domains";
+    static final String COLLECTION_NAME = "trusted_domains";
 
     private static final String FIELD_NAME = "name";
-    private static final String FIELD_DOMAIN_IDENTIFIER = "domainIdentifier";
-    private static final String FIELD_SPIFFE_TRUST_DOMAIN = "spiffe.spiffeTrustDomain";
+    static final String FIELD_DOMAIN_IDENTIFIER = "domainIdentifier";
+    static final String FIELD_SPIFFE_TRUST_DOMAIN = "spiffe.spiffeTrustDomain";
     private static final String FIELD_CROSS_APP_ACCESS = "crossAppAccess";
-    private static final String FIELD_XAA_ENABLED = FIELD_CROSS_APP_ACCESS + ".enabled";
+    static final String FIELD_XAA_ENABLED = FIELD_CROSS_APP_ACCESS + ".enabled";
     private static final String FIELD_RESOURCE_SERVERS = FIELD_CROSS_APP_ACCESS + ".resourceServers";
     private static final String FIELD_RESOURCE_SERVER_ID = FIELD_RESOURCE_SERVERS + "." + FIELD_ID;
     private static final String FIELD_RESOURCE_SERVER_NAME = FIELD_RESOURCE_SERVERS + ".name";
@@ -104,7 +104,9 @@ public class MongoTrustedDomainRepository extends AbstractManagementMongoReposit
                         .partialFilterExpression(exists(FIELD_SPIFFE_TRUST_DOMAIN, true)),
                 new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DOMAIN_IDENTIFIER, 1),
                 new IndexOptions().name("rt1ri1di1").unique(true)
-                        .partialFilterExpression(exists(FIELD_DOMAIN_IDENTIFIER, true))
+                        .partialFilterExpression(exists(FIELD_DOMAIN_IDENTIFIER, true)),
+                new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_ID, 1),
+                indexOptionsWithCollation("rt1ri1n1i1_ci")
         ));
         new LegacyTrustDomainMigration(mongoOperations, COLLECTION_NAME).run().subscribe();
     }
@@ -211,7 +213,7 @@ public class MongoTrustedDomainRepository extends AbstractManagementMongoReposit
                 .observeOn(Schedulers.computation());
     }
 
-    private TrustedDomain toEntity(TrustedDomainMongo doc) {
+    TrustedDomain toEntity(TrustedDomainMongo doc) {
         if (doc == null) {
             return null;
         }
