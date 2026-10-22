@@ -18,6 +18,7 @@ import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
 import type { LoginSettings as LoginSettingsModel } from '@am-models/LoginSettings';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
+import type { SecretExpirationSettings as SecretExpirationSettingsModel } from '@am-models/SecretExpirationSettings';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import type { WebAuthnSettings as WebAuthnSettingsModel } from '@am-models/WebAuthnSettings';
 import type { WebProtectionSettings as WebProtectionSettingsModel } from '@am-models/WebProtectionSettings';
@@ -140,6 +141,13 @@ export type WebAuthnSettings = ApiModel<
 /** The Angular `DomainService.patchWebAuthnSettings`. The Management API replaces the whole object. */
 export function patchDomainWebAuthnSettings(ref: DomainRef, webAuthnSettings: WebAuthnSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ webAuthnSettings }) });
+}
+
+export type SecretExpirationSettings = ApiModel<SecretExpirationSettingsModel>;
+
+/** The Angular `DomainSettingsSecretsComponent` save. The domain returns the settings as `secretExpirationSettings`. */
+export function patchDomainSecretSettings(ref: DomainRef, secretSettings: SecretExpirationSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ secretSettings }) });
 }
 
 export function listDomainMembers(ref: DomainRef): Promise<MembershipsResponse> {

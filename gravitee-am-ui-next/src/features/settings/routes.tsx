@@ -30,6 +30,7 @@ import { loginRoutes } from '../login/routes';
 import { memberRoutes } from '../members/routes';
 import { resourceRoutes } from '../resources/routes';
 import { scopeRoutes } from '../scopes/routes';
+import { secretsRoutes } from '../secrets/routes';
 import { webProtectionRoutes } from '../web-protection/routes';
 import { webAuthnRoutes } from '../webauthn/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
@@ -51,6 +52,7 @@ const BUILT_SETTINGS = new Set([
     'members',
     'web-protection',
     'webauthn',
+    'secrets',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -86,6 +88,7 @@ export const domainSettingsRoutes = (
         {memberRoutes}
         {webProtectionRoutes}
         {webAuthnRoutes}
+        {secretsRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (

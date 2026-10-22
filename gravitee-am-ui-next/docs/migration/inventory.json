@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "5a65138a34",
+    "angularCommit": "b9c7d3cae5",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3609,9 +3609,12 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/secrets/DomainSecretsPage.tsx",
+                        "src/features/secrets/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3627,12 +3630,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 25,
             "blockers": [],
-            "notes": "Client secret settings. The four client secret dialogs are shared with applications and MCP servers.",
-            "angularCommit": null
+            "notes": "Client secret settings. The four client secret dialogs are shared with applications and MCP servers.\n\nPages: settings/secrets → ClientSecretsPage → src/features/secrets/DomainSecretsPage.tsx.\nEndpoints: PATCH /organizations/:org/environments/:env/domains/:domain with {secretSettings: {enabled, expiryTimeSeconds}} (DomainService.patch). The page reads domain.secretExpirationSettings, which the domain store already holds; PatchDomain.secretSettings sets it.\nPermissions: the route needs domain_settings_read; the toggle, the duration and Save need domain_settings_update.\nLicence features: none.\nPrototype additions left out: reading secretSettings from the domain (not in AM, the domain carries secretExpirationSettings).\nPrototype changes kept: the stored expiry is shown in the largest unit that gives it exactly, where Angular shows the moment humanize approximation (90 days becomes 3 months, and a save without a change then stores 7889400 seconds). The units and the conversion of the entered duration are the Angular moment ones.\nAngular behaviour added back: the 90 days default when no expiry is stored; Duration is required. and Duration must be greater than 0. while expiry is on; the toast Secrets configuration updated.\nKit parts: SaveBar, SettingToggle.\n\nVerification, 2026-10-22, React console on :4201 against the local Management API, through gravitee-am-test/playwright/tests/console-next/secrets.spec.ts (2 tests, passed) on the fixture's test domain. Expiry on showed 90 Days, then 2 Weeks. Save: PATCH /organizations/DEFAULT/environments/DEFAULT/domains/:id {secretSettings {enabled true, expiryTimeSeconds 1209600}}, 200; GET domain gave secretExpirationSettings {enabled true, expiryTimeSeconds 1209600}; a reload showed 2 Weeks. A duration of 0 showed Duration must be greater than 0. and disabled Save. The Angular console was not running (:4200 is the Gamma console), so the call was compared with the component save and DomainService.patch.",
+            "angularCommit": "b9c7d3cae5"
         },
         {
             "id": "trust-domains",
