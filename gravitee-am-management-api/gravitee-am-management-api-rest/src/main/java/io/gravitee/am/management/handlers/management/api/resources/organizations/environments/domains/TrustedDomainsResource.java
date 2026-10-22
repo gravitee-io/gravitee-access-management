@@ -30,7 +30,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,6 +51,7 @@ import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collection;
 
 @Tag(name = "trusted-domain")
 public class TrustedDomainsResource extends AbstractResource {
@@ -79,7 +79,7 @@ public class TrustedDomainsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of trusted domains",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TrustedDomain.class)))),
+                            schema = @Schema(implementation = TrustedDomainPage.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -91,6 +91,7 @@ public class TrustedDomainsResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
                 .flatMapPublisher(domain -> trustDomainService.findByReference(ReferenceType.DOMAIN, domainId))
                 .toList()
+                .map(trustedDomains -> new TrustedDomainPage(trustedDomains, 0, trustedDomains.size()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -135,5 +136,8 @@ public class TrustedDomainsResource extends AbstractResource {
     @Path("{trustedDomainId}")
     public TrustedDomainResource getTrustedDomainResource() {
         return resourceContext.getResource(TrustedDomainResource.class);
+    }
+
+    public record TrustedDomainPage(Collection<TrustedDomain> data, int page, long totalCount) {
     }
 }

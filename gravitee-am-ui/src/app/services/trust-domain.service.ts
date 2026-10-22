@@ -30,7 +30,7 @@ export class TrustDomainService {
   list(domainId: string): Observable<any> {
     return this.http
       .get<any>(this.domainBaseURL + domainId + '/trusted-domains')
-      .pipe(map((trustDomains) => (trustDomains ?? []).map(fromTrustedDomain)));
+      .pipe(map((page) => (page?.data ?? []).map(fromTrustedDomain)));
   }
 
   get(domainId: string, id: string): Observable<any> {
