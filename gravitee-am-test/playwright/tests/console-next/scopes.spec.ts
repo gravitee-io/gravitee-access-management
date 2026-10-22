@@ -1,0 +1,88 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { test, expect } from '../../fixtures/base.fixture';
+import { createScope, getScope } from '@management-commands/scope-management-commands';
+
+/** The scopes of a domain in the React console (gravitee-am-ui-next). Runs in the console-next project only. */
+test.describe('React console: scopes', () => {
+  const scopesUrl = (hrid: string) => `/environments/${process.env.AM_DEF_ENV_HRID}/domains/${hrid}/settings/scopes`;
+
+  test('creates a scope with a consent period', async ({ page, adminToken, testDomain }) => {
+    await page.goto(scopesUrl(testDomain.hrid));
+
+    await page.getByRole('link', { name: 'Create scope' }).first().click();
+    await page.getByRole('textbox', { name: 'Key' }).fill('pw-next-scope');
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Playwright scope');
+    await page.getByRole('textbox', { name: 'Description' }).fill('Created by Playwright');
+    await page.getByRole('spinbutton', { name: 'Duration' }).fill('2');
+    await page.getByRole('combobox', { name: 'Unit' }).click();
+    await page.getByRole('option', { name: 'Hours' }).click();
+    const createRequest = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/scopes'));
+    await page.getByRole('button', { name: 'Create scope' }).click();
+
+    expect((await createRequest).postDataJSON()).toMatchObject({ key: 'pw-next-scope', name: 'Playwright scope', expiresIn: 7200 });
+    await expect(page.getByRole('heading', { level: 1, name: 'Playwright scope' })).toBeVisible();
+    const created: any = await getScope(testDomain.id, adminToken, page.url().split('/').pop());
+    expect(created).toMatchObject({ key: 'pw-next-scope', expiresIn: 7200 });
+  });
+
+  test('toggles discovery from the list', async ({ page, adminToken, testDomain }) => {
+    const created = await createScope(testDomain.id, adminToken, {
+      key: 'pw-next-toggle',
+      name: 'Toggle',
+      description: 'Toggle',
+      discovery: false,
+    });
+    await page.goto(scopesUrl(testDomain.hrid));
+
+    const patch = page.waitForResponse(
+      (response) => response.request().method() === 'PATCH' && response.url().endsWith(`/scopes/${created.id}`),
+    );
+    await page.getByRole('switch', { name: 'List pw-next-toggle in the discovery endpoint' }).click();
+    await patch;
+
+    const saved: any = await getScope(testDomain.id, adminToken, created.id);
+    expect(saved.discovery).toBe(true);
+  });
+
+  test('renames a scope on its page', async ({ page, adminToken, testDomain }) => {
+    const created = await createScope(testDomain.id, adminToken, { key: 'pw-next-rename', name: 'Rename', description: 'Rename' });
+    await page.goto(`${scopesUrl(testDomain.hrid)}/${created.id}`);
+
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Renamed');
+    const put = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && response.url().endsWith(`/scopes/${created.id}`),
+    );
+    await page.getByRole('button', { name: 'Save' }).click();
+    await put;
+
+    const saved: any = await getScope(testDomain.id, adminToken, created.id);
+    expect(saved.name).toEqual('Renamed');
+  });
+
+  test('deletes a scope after the confirmation', async ({ page, adminToken, testDomain }) => {
+    const created = await createScope(testDomain.id, adminToken, { key: 'pw-next-delete', name: 'Delete', description: 'Delete' });
+    await page.goto(`${scopesUrl(testDomain.hrid)}/${created.id}`);
+
+    await page.getByRole('button', { name: 'Delete', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Delete Scope' }).getByRole('button', { name: 'Delete' }).click();
+
+    await expect(page).toHaveURL(new RegExp('/settings/scopes$'));
+    await expect(page.getByRole('link', { name: 'openid' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'pw-next-delete' })).toHaveCount(0);
+    await expect(getScope(testDomain.id, adminToken, created.id)).rejects.toBeTruthy();
+  });
+});

@@ -26,6 +26,7 @@ import { flowRoutes } from '../flows/routes';
 import { formRoutes } from '../forms/routes';
 import { identityProviderRoutes } from '../identity-providers/routes';
 import { resourceRoutes } from '../resources/routes';
+import { scopeRoutes } from '../scopes/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
 /** Domain settings the console has built. Every other settings item gets a placeholder. */
@@ -39,6 +40,7 @@ const BUILT_SETTINGS = new Set([
     'flows',
     'bot-detection',
     'device-identifier',
+    'scopes',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -68,6 +70,7 @@ export const domainSettingsRoutes = (
         {flowRoutes}
         {botDetectionRoutes}
         {deviceIdentifierRoutes}
+        {scopeRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (

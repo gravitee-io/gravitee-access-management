@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "da06983392",
+    "angularCommit": "f510e7f492",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -2893,9 +2893,13 @@
                     "resolvers": {
                         "scopes": "ScopesResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "A",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/scopes/ScopesPage.tsx",
+                        "src/features/scopes/routes.tsx",
+                        "src/lib/api/scopes.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2920,9 +2924,13 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "A",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/scopes/CreateScopePage.tsx",
+                        "src/features/scopes/ScopeFields.tsx",
+                        "src/lib/api/scopes.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2949,9 +2957,13 @@
                     "resolvers": {
                         "scope": "ScopeResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "A",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/scopes/ScopePage.tsx",
+                        "src/features/scopes/ScopeFields.tsx",
+                        "src/lib/api/scopes.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -2974,12 +2986,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "A",
             "order": 8,
             "blockers": [],
-            "notes": "",
-            "angularCommit": null
+            "notes": "Brief.\nPages: settings/scopes → ScopesPage → ScopesPage.tsx; settings/scopes/new → CreateScopePage → CreateScopePage.tsx; settings/scopes/:scopeId → ScopePage → ScopePage.tsx. Folder src/features/scopes/. The nav key scopes exists.\nEndpoints: GET domain/scopes?page&size[&q=*text*]; GET domain/scopes/:id; POST domain/scopes (key, name, description, discovery, parameterized, expiresIn); PUT domain/scopes/:id (name, description, expiresIn, discovery, parameterized); PATCH domain/scopes/:id ({discovery} or {parameterized}); DELETE domain/scopes/:id.\nPermissions: the scopes subtree domain_scope_list (parent route AuthGuard). List route has no own list; the key link needs domain_scope_read; Create scope domain_scope_create; the discovery and parameterized toggles domain_scope_update (and not a system scope); delete domain_scope_delete (and not a system scope). Create route domain_scope_create. Detail route domain_scope_read; Save and the editable fields domain_scope_update; delete domain_scope_delete.\nLicence: none.\nKit parts: ConfirmDialog, SaveBar, PageHeader, SearchField, ErrorPanel, NotFoundPanel.\nPrototype additions left out: none with a missing endpoint. The page size selector stays (same endpoint). \nAngular behaviour added back: the read gate on the key link; the create payload as Angular sends it (no trim, no lowercase, expiresIn only when a duration and a unit are set); the update payload of five fields; the consent period humanized as moment does (a helper, no moment dependency); the Angular list description is not in the prototype columns and stays out (the Name column replaces it); the per-page sort of system scopes first, then key.\nThe server trims whitespace in a key to underscores (it lowercases only system scope keys). The page size selector offers 10, 25 and 50: the server caps a page at 50.\n\nRun 2026-10-22. yarn typecheck, lint, test (262, 35 in the unit) and build pass. The console-next scopes.spec.ts is written and has not run (the project is fixed to :4201).\nNetwork, React :4202 against Angular :4200, domain stc-dev, records scopes-check-*, all deleted after. List: GET domain/scopes?page=0&size=25 (React), size=10 (Angular). Search: q=*addr* in both. Create: POST domain/scopes with key, name, description, discovery, expiresIn 7200 in both; React omits a switch until it is used, as Angular does. Save: PUT domain/scopes/:id with name, description, expiresIn, discovery, parameterized in both. Clear period then Save: PUT with expiresIn null in both. List toggles: PATCH {discovery} and PATCH {parameterized} in both, then GET list. Delete: DELETE domain/scopes/:id, then GET list, in both.\nDifference: Angular list pages 10 rows, React 25 (the console page size). Angular detail toggle of parameterized did not mark the form dirty in the check (Angular quirk); React saves it.\nCode review 2026-10-22, fixed: the detail form re-keyed on updatedAt so a revisit does not show a stale cache; the page size options capped at 50; the page steps back after deleting the last row of the last page; the toggles stay disabled until the list refetch lands; the unit-without-amount case is valid, as Angular; the create payload omits an unused switch; the per-page system-first sort restored; the list loading state; the Playwright delete test anchors and checks the API. Open: the consent validity is derived in three components.",
+            "angularCommit": "da06983392"
         },
         {
             "id": "spiffe",
