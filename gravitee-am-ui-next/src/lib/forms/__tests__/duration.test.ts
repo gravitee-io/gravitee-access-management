@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { humanizeSeconds, toSeconds } from '../duration';
+import { draftToSeconds, exactDuration, humanizeSeconds, toSeconds } from '../duration';
 
 describe('toSeconds', () => {
     it('converts as moment.duration(amount, unit).asSeconds() does', () => {
@@ -42,5 +42,23 @@ describe('humanizeSeconds', () => {
         [94_608_000, '3 years'],
     ])('prints %d seconds as %s', (seconds, text) => {
         expect(humanizeSeconds(seconds)).toBe(text);
+    });
+});
+
+describe('exactDuration', () => {
+    it('takes the largest unit that gives the seconds exactly', () => {
+        expect(exactDuration(7_776_000)).toEqual({ time: '90', unit: 'days' });
+        expect(exactDuration(1_209_600)).toEqual({ time: '2', unit: 'weeks' });
+        expect(exactDuration(5_270_400)).toEqual({ time: '2', unit: 'months' });
+        expect(exactDuration(31_536_000)).toEqual({ time: '1', unit: 'years' });
+        expect(exactDuration(90)).toEqual({ time: '90', unit: 'seconds' });
+    });
+});
+
+describe('draftToSeconds', () => {
+    it('converts as moment does, and gives 0 without a unit', () => {
+        expect(draftToSeconds({ time: '2', unit: 'hours' })).toBe(7_200);
+        expect(draftToSeconds({ time: '', unit: 'hours' })).toBe(0);
+        expect(draftToSeconds({ time: '', unit: '' })).toBe(0);
     });
 });

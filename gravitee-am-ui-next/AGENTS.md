@@ -48,7 +48,7 @@ Pin Graphene to the version gamma-console uses. Bump the three Graphene packages
 
 ```
 src/
-  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PluginWizard, TagInput, ValueListInput, MembershipsPanel, SettingToggle, PlaceholderPage, DomainSwitcher)
+  app/            App.tsx (mounts the areas), Shell.tsx, navigation.ts, gamma-apps.tsx, components/ (PageHeader, SearchField, ErrorPanel, NotFoundPanel, ForbiddenPanel, UpgradePanel, UpgradeDialog, ConfirmDialog, SaveBar, PluginWizard, TagInput, ValueListInput, MembershipsPanel, SettingToggle, DurationInput, PlaceholderPage, DomainSwitcher)
   config/         app-config.ts
   features/<area>/  routes.tsx, pages, <area>-specific helpers, __tests__/
   lib/api/        http.ts, auth.ts, paths.ts (DomainRef, domainPath), model.ts (ApiModel), management-api.ts (user, environments, Page), one file per area, gamma-api.ts

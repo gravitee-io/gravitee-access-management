@@ -70,3 +70,25 @@ export function humanizeSeconds(totalSeconds: number): string {
     if (years <= 1) return 'a year';
     return `${years} years`;
 }
+
+/** A duration as a form edits it: the typed amount and its unit. */
+export type DurationDraft = {
+    readonly time: string;
+    readonly unit: DurationUnit | '';
+};
+
+/** The largest unit that gives the seconds exactly, with the Angular conversion. */
+export function exactDuration(seconds: number): DurationDraft {
+    for (const { value: unit } of [...DURATION_UNITS].reverse()) {
+        const time = Math.round(seconds / toSeconds(1, unit));
+        if (time >= 1 && toSeconds(time, unit) === seconds) {
+            return { time: String(time), unit };
+        }
+    }
+    return { time: String(seconds), unit: 'seconds' };
+}
+
+/** The Angular `moment.duration(time, unit).asSeconds()`, which is 0 for an empty time. */
+export function draftToSeconds(draft: DurationDraft): number {
+    return draft.unit ? toSeconds(Number(draft.time), draft.unit) : 0;
+}

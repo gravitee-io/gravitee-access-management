@@ -23,48 +23,31 @@ import {
     FieldDescription,
     FieldError,
     FieldLabel,
-    Input,
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
     toast,
 } from '@gravitee/graphene-core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { DurationInput } from '../../app/components/DurationInput';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SaveBar } from '../../app/components/SaveBar';
 import { SettingToggle } from '../../app/components/SettingToggle';
 import { type Domain, patchDomainSecretSettings } from '../../lib/api/domains';
-import { DURATION_UNITS, type DurationUnit, toSeconds } from '../../lib/forms/duration';
+import { draftToSeconds, type DurationDraft, exactDuration } from '../../lib/forms/duration';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 
 interface FormState {
     readonly enabled: boolean;
-    readonly time: string;
-    readonly unit: DurationUnit;
+    readonly expiry: DurationDraft;
 }
 
 /** 90 days, the Angular default when the domain has no expiry. */
 const DEFAULT_EXPIRY_SECONDS = 7_776_000;
 
-/** The largest unit that gives the stored seconds exactly, with the Angular conversion. */
-function exactDuration(seconds: number): Pick<FormState, 'time' | 'unit'> {
-    for (const { value: unit } of [...DURATION_UNITS].reverse()) {
-        const time = Math.round(seconds / toSeconds(1, unit));
-        if (time >= 1 && toSeconds(time, unit) === seconds) {
-            return { time: String(time), unit };
-        }
-    }
-    return { time: String(seconds), unit: 'seconds' };
-}
-
 function fromDomain(domain: Domain): FormState {
     const settings = domain.secretExpirationSettings;
-    return { enabled: settings?.enabled ?? false, ...exactDuration(settings?.expiryTimeSeconds || DEFAULT_EXPIRY_SECONDS) };
+    return { enabled: settings?.enabled ?? false, expiry: exactDuration(settings?.expiryTimeSeconds || DEFAULT_EXPIRY_SECONDS) };
 }
 
 /**
@@ -92,8 +75,7 @@ export function DomainSecretsPage() {
 
     const save = useMutation({
         // Angular sends moment's duration of the form values, which is 0 for an empty time.
-        mutationFn: () =>
-            patchDomainSecretSettings(ref, { enabled: form.enabled, expiryTimeSeconds: toSeconds(Number(form.time), form.unit) }),
+        mutationFn: () => patchDomainSecretSettings(ref, { enabled: form.enabled, expiryTimeSeconds: draftToSeconds(form.expiry) }),
         onSuccess: updated => {
             queryClient.setQueryData(['domain', ref.organizationId, ref.environmentId, updated.hrid], updated);
             void queryClient.invalidateQueries({ queryKey: ['domains'] });
@@ -105,9 +87,9 @@ export function DomainSecretsPage() {
     const dirty = JSON.stringify(form) !== JSON.stringify(fromDomain(domain));
     const set = (patch: Partial<FormState>) => setForm(current => ({ ...current, ...patch }));
     let timeError: string | undefined;
-    if (form.enabled && form.time === '') {
+    if (form.enabled && form.expiry.time === '') {
         timeError = 'Duration is required.';
-    } else if (form.enabled && !(Number(form.time) >= 1)) {
+    } else if (form.enabled && !(Number(form.expiry.time) >= 1)) {
         timeError = 'Duration must be greater than 0.';
     }
 
@@ -135,34 +117,14 @@ export function DomainSecretsPage() {
                         {form.enabled ? (
                             <Field data-invalid={!!timeError}>
                                 <FieldLabel htmlFor="secrets-duration">Expiry time</FieldLabel>
-                                <div className="flex gap-2">
-                                    <Input
-                                        id="secrets-duration"
-                                        type="number"
-                                        min={1}
-                                        className="flex-1"
-                                        value={form.time}
-                                        disabled={!canEdit}
-                                        aria-invalid={!!timeError}
-                                        onChange={event => set({ time: event.target.value })}
-                                    />
-                                    <Select
-                                        value={form.unit}
-                                        disabled={!canEdit}
-                                        onValueChange={unit => unit && set({ unit: unit as DurationUnit })}
-                                    >
-                                        <SelectTrigger className="w-48" aria-label="Expiry time unit">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {DURATION_UNITS.map(unit => (
-                                                <SelectItem key={unit.value} value={unit.value}>
-                                                    {unit.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <DurationInput
+                                    id="secrets-duration"
+                                    label="Expiry time"
+                                    value={form.expiry}
+                                    disabled={!canEdit}
+                                    invalid={!!timeError}
+                                    onChange={expiry => set({ expiry })}
+                                />
                                 {timeError ? (
                                     <FieldError>{timeError}</FieldError>
                                 ) : (
