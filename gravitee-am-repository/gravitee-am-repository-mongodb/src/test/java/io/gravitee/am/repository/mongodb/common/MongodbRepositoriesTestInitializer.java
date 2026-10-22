@@ -22,6 +22,8 @@ import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -31,6 +33,19 @@ public class MongodbRepositoriesTestInitializer implements RepositoriesTestIniti
 
     @Autowired
     private MongoDatabase mongoDatabase;
+
+    @Autowired(required = false)
+    private List<AbstractMongoIndexUpgrader> indexUpgraders = List.of();
+
+    private boolean indexesApplied;
+
+    @Override
+    public void before(Class testClass) {
+        if (!indexesApplied) {
+            indexUpgraders.forEach(AbstractMongoIndexUpgrader::upgrade);
+            indexesApplied = true;
+        }
+    }
 
     @Override
     public void after(Class testClass) {

@@ -19,16 +19,19 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.common.MongoUpgraderConfiguration;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import java.net.URI;
 
 @Configuration
+@Import(MongoUpgraderConfiguration.class)
 @ComponentScan({
         "io.gravitee.am.repository.mongodb.gateway"
 })

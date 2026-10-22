@@ -1,0 +1,9 @@
+{
+  "collections": {
+    "events": {
+      "indexes": [
+        { "name": "e1", "key": { "createdAt": 1 }, "expireAfter": "${retention}d" }
+      ]
+    }
+  }
+}

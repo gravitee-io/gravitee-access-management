@@ -30,14 +30,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.time.Duration;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Covers what happens to indexes on the paths a clean start never exercises: restarting against a
@@ -52,7 +50,6 @@ import static org.awaitility.Awaitility.await;
  */
 public class MongoIndexLifecycleTest {
 
-    private static final Duration INDEX_CREATION_TIMEOUT = Duration.ofSeconds(30);
     private static final String DEFAULT_ID_INDEX = "_id_";
 
     private static MongodbProvider provider;
@@ -77,24 +74,13 @@ public class MongoIndexLifecycleTest {
         MongoIndexReport.clear();
     }
 
-    /**
-     * Every restart re-runs the repositories' {@code @PostConstruct} index declarations against a
-     * collection that is already indexed. That must leave the collection correctly indexed and must
-     * not accumulate duplicates.
-     */
     @Test
     public void reDeclaringTheSameIndexesLeavesTheCollectionUnchanged() {
         MongoCollection<Document> collection = collection("restart");
-        Map<Document, IndexOptions> declared = new LinkedHashMap<>();
-        declared.put(new Document("token", 1), new IndexOptions().name("t1"));
-        declared.put(new Document("expire_at", 1), new IndexOptions().name("e1"));
+        List<IndexModel> declared = List.of(index("t1", new Document("token", 1)), index("e1", new Document("expire_at", 1)));
 
-        MongoUtils.createIndex(collection, declared, true);
-        awaitIndexes(collection, DEFAULT_ID_INDEX, "t1", "e1");
-
-        // simulate the next start-up of the same version
-        MongoUtils.createIndex(collection, declared, true);
-        awaitIndexes(collection, DEFAULT_ID_INDEX, "t1", "e1");
+        MongoIndexManager.ensureIndexes(collection, declared).blockingAwait();
+        MongoIndexManager.ensureIndexes(collection, declared).blockingAwait();
 
         assertThat(indexNames(collection))
                 .as("re-declaring the same indexes must not create duplicates")
@@ -102,15 +88,108 @@ public class MongoIndexLifecycleTest {
     }
 
     @Test
-    public void createIndexDoesNothingWhenEnsureIsDisabled() {
-        MongoCollection<Document> collection = collection("disabled");
-        seedIndex(collection, "keep_me", "kept");
+    public void shouldDropARetiredIndexBeforeCreatingTheIndexThatReplacesItsKey() {
+        MongoCollection<Document> collection = collection("retired_same_key");
+        seedIndex(collection, "rt1ri1u1s1", "username");
 
-        MongoUtils.createIndex(collection, Map.of(new Document("token", 1), new IndexOptions().name("t1")), false);
+        List<MongoIndexReport.IndexOutcome> failures = MongoIndexManager.ensureDeclarations(database, declarations("""
+                { "collections": { "retired_same_key": {
+                    "indexes": [ { "name": "u1_unique", "key": { "username": 1 }, "unique": true } ],
+                    "dropped": ["rt1ri1u1s1"] } } }
+                """)).blockingGet();
 
-        assertThat(indexNames(collection))
-                .as("no index should be created when ensureIndexOnStart is off")
-                .containsExactlyInAnyOrder(DEFAULT_ID_INDEX, "keep_me");
+        assertThat(failures).isEmpty();
+        assertThat(indexNames(collection)).containsExactlyInAnyOrder(DEFAULT_ID_INDEX, "u1_unique");
+        assertThat(statusOf(collection, "rt1ri1u1s1")).isEqualTo(Status.DROPPED);
+        assertThat(statusOf(collection, "u1_unique")).isEqualTo(Status.ENSURED);
+    }
+
+    @Test
+    public void shouldIgnoreARetiredIndexThatIsAlreadyGone() {
+        MongoCollection<Document> collection = collection("retired_missing");
+
+        List<MongoIndexReport.IndexOutcome> failures = MongoIndexManager.ensureDeclarations(database, declarations("""
+                { "collections": { "retired_missing": {
+                    "indexes": [ { "name": "t1", "key": { "token": 1 } } ],
+                    "dropped": ["d1"] } } }
+                """)).blockingGet();
+
+        assertThat(failures).isEmpty();
+        assertThat(indexNames(collection)).containsExactlyInAnyOrder(DEFAULT_ID_INDEX, "t1");
+        assertThat(statusOf(collection, "d1")).isNull();
+    }
+
+    @Test
+    public void shouldNotReturnAFailureLeftByAPreviousApply() {
+        MongoCollection<Document> collection = collection("stale_failure");
+        MongoIndexReport.failed(collection.getNamespace().getFullName(), "d1", "retired index could not be checked");
+
+        List<MongoIndexReport.IndexOutcome> failures = MongoIndexManager.ensureDeclarations(database, declarations("""
+                { "collections": { "stale_failure": {
+                    "indexes": [ { "name": "t1", "key": { "token": 1 } } ],
+                    "dropped": ["d1"] } } }
+                """)).blockingGet();
+
+        assertThat(failures).isEmpty();
+        assertThat(statusOf(collection, "d1")).isNull();
+    }
+
+    @Test
+    public void shouldLeaveIndexesThatAreNeitherDeclaredNorRetired() {
+        MongoCollection<Document> collection = collection("foreign_untouched");
+        seedIndex(collection, "operator_idx", "custom");
+
+        MongoIndexManager.ensureDeclarations(database, declarations("""
+                { "collections": { "foreign_untouched": { "indexes": [ { "name": "t1", "key": { "token": 1 } } ] } } }
+                """)).blockingGet();
+
+        assertThat(indexNames(collection)).containsExactlyInAnyOrder(DEFAULT_ID_INDEX, "operator_idx", "t1");
+    }
+
+    @Test
+    public void shouldReturnTheIndexesThatCouldNotBeCreated() {
+        MongoCollection<Document> collection = collection("declared_failure");
+        insert(collection, new Document("username", "duplicate"), new Document("username", "duplicate"));
+
+        List<MongoIndexReport.IndexOutcome> failures = MongoIndexManager.ensureDeclarations(database, declarations("""
+                { "collections": { "declared_failure": { "indexes": [
+                    { "name": "u1", "key": { "username": 1 }, "unique": true },
+                    { "name": "t1", "key": { "token": 1 } } ] } } }
+                """)).blockingGet();
+
+        assertThat(failures).extracting(MongoIndexReport.IndexOutcome::index).containsExactly("u1");
+        assertThat(indexNames(collection)).containsExactlyInAnyOrder(DEFAULT_ID_INDEX, "t1");
+    }
+
+    @Test
+    public void shouldPassWhenEveryDeclaredIndexIsApplied() {
+        MongoIndexUpgrade upgrade = new MongoIndexUpgrade(database, declarations("""
+                { "collections": { "upgrade_ok": { "indexes": [ { "name": "t1", "key": { "token": 1 } } ] } } }
+                """), false);
+
+        assertThat(upgrade.apply()).isTrue();
+    }
+
+    @Test
+    public void shouldThrowSoTheUpgradeIsRetriedOnNextStartWhenAnIndexFails() {
+        insert(collection("upgrade_retry"), new Document("username", "duplicate"), new Document("username", "duplicate"));
+        MongoIndexUpgrade upgrade = new MongoIndexUpgrade(database, declarations("""
+                { "collections": { "upgrade_retry": { "indexes": [ { "name": "u1", "key": { "username": 1 }, "unique": true } ] } } }
+                """), false);
+
+        assertThatThrownBy(upgrade::apply)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upgrade_retry.u1");
+    }
+
+    @Test
+    public void shouldFailTheUpgradeInUpgradeOnlyModeWhenAnIndexFails() {
+        insert(collection("upgrade_only"), new Document("username", "duplicate"), new Document("username", "duplicate"));
+        MongoIndexUpgrade upgrade = new MongoIndexUpgrade(database, declarations("""
+                { "collections": { "upgrade_only": { "indexes": [ { "name": "u1", "key": { "username": 1 }, "unique": true } ] } } }
+                """), true);
+
+        assertThat(upgrade.apply()).isFalse();
     }
 
     @Test
@@ -378,6 +457,10 @@ public class MongoIndexLifecycleTest {
 
     // --- helpers ----------------------------------------------------------------------------
 
+    private static MongoIndexDeclarations declarations(String json) {
+        return MongoIndexDeclarations.parse("test", json);
+    }
+
     private static MongoCollection<Document> collection(String name) {
         return database.getCollection(name, Document.class);
     }
@@ -393,11 +476,6 @@ public class MongoIndexLifecycleTest {
 
     private static void dropIndexDirectly(MongoCollection<Document> collection, String indexName) {
         Completable.fromPublisher(collection.dropIndex(indexName)).blockingAwait();
-    }
-
-    private static void awaitIndexes(MongoCollection<Document> collection, String... expected) {
-        await().atMost(INDEX_CREATION_TIMEOUT)
-                .untilAsserted(() -> assertThat(indexNames(collection)).contains(expected));
     }
 
     private static List<String> indexNames(MongoCollection<Document> collection) {

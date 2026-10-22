@@ -21,6 +21,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -30,8 +31,11 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -83,6 +87,53 @@ public final class MongoIndexManager {
                     declared.forEach(model -> MongoIndexReport.ensured(collectionName, indexName(model)));
                 })
                 .onErrorResumeNext(error -> reconcile(collection, declared, error));
+    }
+
+    public static Single<List<MongoIndexReport.IndexOutcome>> ensureDeclarations(MongoDatabase database, MongoIndexDeclarations declarations) {
+        return Flowable.fromIterable(new TreeMap<>(declarations.collections()).entrySet())
+                .concatMapSingle(entry -> {
+                    final MongoCollection<Document> collection = database.getCollection(entry.getKey());
+                    final String collectionName = reportKey(collection);
+                    final Set<String> names = new HashSet<>(entry.getValue().dropped());
+                    entry.getValue().indexes().forEach(model -> names.add(indexName(model)));
+                    return Completable.fromAction(() -> MongoIndexReport.forget(collectionName, names))
+                            .andThen(dropRetired(collection, entry.getValue().dropped()))
+                            .andThen(ensureIndexes(collection, entry.getValue().indexes()))
+                            .andThen(Single.fromCallable(() -> MongoIndexReport.outcomes(collectionName).stream()
+                                    .filter(outcome -> names.contains(outcome.index()))
+                                    .toList()));
+                })
+                .flatMapIterable(outcomes -> outcomes)
+                .filter(outcome -> outcome.status() == MongoIndexReport.Status.FAILED)
+                .toList();
+    }
+
+    private static Completable dropRetired(MongoCollection<?> collection, List<String> retired) {
+        if (retired.isEmpty()) {
+            return Completable.complete();
+        }
+        final String collectionName = reportKey(collection);
+        return listIndexes(collection)
+                .flattenAsFlowable(existing -> existing.stream()
+                        .map(index -> index.getString("name"))
+                        .filter(retired::contains)
+                        .toList())
+                .concatMapCompletable(name -> dropIndex(collection, name)
+                        .doOnComplete(() -> {
+                            log.info("Dropped retired index {} of collection {}", name, collectionName);
+                            MongoIndexReport.dropped(collectionName, name);
+                        })
+                        .onErrorResumeNext(error -> {
+                            log.error("Retired index {} of collection {} could not be dropped ({}).", name, collectionName, describe(error), error);
+                            MongoIndexReport.failed(collectionName, name, "retired index could not be dropped: " + describe(error));
+                            return Completable.complete();
+                        }))
+                .onErrorResumeNext(error -> {
+                    log.error("Unable to read the indexes of collection {} to drop the retired ones.", collectionName, error);
+                    retired.forEach(name -> MongoIndexReport.failed(collectionName, name,
+                            "retired index could not be checked: " + describe(error)));
+                    return Completable.complete();
+                });
     }
 
     /**
