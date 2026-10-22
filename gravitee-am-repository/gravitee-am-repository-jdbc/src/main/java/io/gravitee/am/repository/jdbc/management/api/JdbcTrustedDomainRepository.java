@@ -176,7 +176,7 @@ public class JdbcTrustedDomainRepository extends AbstractJdbcRepository implemen
                 .observeOn(Schedulers.computation());
     }
 
-    private Single<TrustedDomain> complete(TrustedDomain td) {
+    Single<TrustedDomain> complete(TrustedDomain td) {
         Mono<TrustedDomain> flow = selectUsage(JdbcSpiffe.class, td.getId())
                 .doOnNext(row -> td.setSpiffe(toSpiffe(row)))
                 .thenReturn(td)
@@ -242,7 +242,7 @@ public class JdbcTrustedDomainRepository extends AbstractJdbcRepository implemen
         return getTemplate().delete(query(where(FIELD_TRUSTED_DOMAIN_ID).is(trustedDomainId)), type);
     }
 
-    private TrustedDomain toEntity(JdbcTrustedDomain entity) {
+    TrustedDomain toEntity(JdbcTrustedDomain entity) {
         if (entity == null) {
             return null;
         }

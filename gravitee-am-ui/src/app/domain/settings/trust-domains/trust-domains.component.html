@@ -16,16 +16,26 @@
 
 -->
 <div class="gv-page-container">
-  <div class="gv-page-content" *ngIf="!isEmpty()">
+  <div class="gv-page-content trust-domains-loading-wrapper" *ngIf="!isEmpty()">
     <ngx-datatable
       class="material"
       data-testid="trustDomainsTable"
       [columnMode]="'flex'"
       [headerHeight]="40"
+      [footerHeight]="50"
       [rowHeight]="50"
       [rows]="trustDomains"
+      [externalPaging]="true"
+      [count]="page.totalElements"
+      [offset]="page.pageNumber"
+      [limit]="page.size"
+      (page)="setPage($event)"
+      [externalSorting]="true"
+      [sortType]="SortType.single"
+      [sorts]="[sort]"
+      (sort)="applySort($event)"
     >
-      <ngx-datatable-column name="Trusted Domain" [flexGrow]="4" [cellClass]="'trust-domain-name-cell'">
+      <ngx-datatable-column name="Trusted Domain" prop="name" [flexGrow]="4" [cellClass]="'trust-domain-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="trust-domain-header" fxLayout="row">
             <div class="trust-domain-icon">
@@ -38,19 +48,19 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Usage" [flexGrow]="1">
+      <ngx-datatable-column name="Usage" [flexGrow]="1" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span class="gio-badge-neutral badge" data-testid="trustDomainUsage" [matTooltip]="usagesLabel(row)">{{
             usagesBadgeLabel(row)
           }}</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Key source" [flexGrow]="1">
+      <ngx-datatable-column name="Key source" [flexGrow]="1" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ keySourceLabel(row) }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="" [flexGrow]="1">
+      <ngx-datatable-column name="" [flexGrow]="1" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-button [routerLink]="[row.id]" data-testid="trustDomainSettingsAction" *hasPermission="['domain_trust_domain_read']">
@@ -68,6 +78,10 @@
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
+
+    <div *ngIf="isLoading" class="trust-domains-table-overlay" data-testid="trustDomainsLoading">
+      <div class="trust-domains-table-spinner"></div>
+    </div>
   </div>
 
   <app-emptystate

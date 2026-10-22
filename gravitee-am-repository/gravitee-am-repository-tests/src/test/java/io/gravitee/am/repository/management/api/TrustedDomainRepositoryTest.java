@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServer;
 import io.gravitee.am.model.oidc.CrossAppAccessResourceServerView;
@@ -27,10 +28,13 @@ import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustedDomainCursorRequest;
+import io.gravitee.am.model.oidc.TrustedDomainUsage;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +42,11 @@ import java.util.concurrent.TimeUnit;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 import static java.util.UUID.randomUUID;
 
 public class TrustedDomainRepositoryTest extends AbstractManagementTest {
@@ -50,6 +58,9 @@ public class TrustedDomainRepositoryTest extends AbstractManagementTest {
 
     @Autowired
     protected TrustedDomainRepository repository;
+
+    @Autowired
+    private TrustedDomainCursorRepository cursorRepository;
 
     private TrustedDomain buildTrustDomain(String referenceId, String name) {
         TrustedDomain td = new TrustedDomain();
@@ -122,6 +133,181 @@ public class TrustedDomainRepositoryTest extends AbstractManagementTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoErrors();
         observer.assertValue(list -> list.size() == 2);
+    }
+
+    @Test
+    public void shouldFindFirstCursorPageByReferenceSortedByName() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "charlie")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "alpha")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "bravo")).blockingGet();
+        repository.create(buildTrustDomain(randomUUID().toString(), "other")).blockingGet();
+
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, initialCursor("ASC", 0, null), 2).blockingGet();
+
+        assertEquals(List.of("alpha", "bravo"), names(page));
+        assertEquals(Long.valueOf(3), page.getTotalCount());
+        assertTrue(page.isHasNext());
+    }
+
+    @Test
+    public void shouldFollowTheNextCursor() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "charlie")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "alpha")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "bravo")).blockingGet();
+
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> firstPage = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, initialCursor("ASC", 0, null), 2).blockingGet();
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> secondPage = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, firstPage.getNextCursor(), 2).blockingGet();
+
+        assertEquals(List.of("charlie"), names(secondPage));
+        assertEquals(Long.valueOf(3), secondPage.getTotalCount());
+        assertFalse(secondPage.isHasNext());
+    }
+
+    @Test
+    public void shouldSkipToTheRequestedPageWithoutCursor() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "charlie")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "alpha")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "bravo")).blockingGet();
+
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, initialCursor("ASC", 1, null), 2).blockingGet();
+
+        assertEquals(List.of("charlie"), names(page));
+        assertFalse(page.isHasNext());
+    }
+
+    @Test
+    public void shouldWalkTheCursorPagesSortedByNameDescending() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "alpha")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "charlie")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "bravo")).blockingGet();
+
+        assertEquals(List.of("charlie", "bravo", "alpha"), walk(referenceId, initialCursor("DESC", 0, null)));
+    }
+
+    @Test
+    public void shouldWalkTheCursorPagesSortedByNameIgnoringCase() {
+        String referenceId = randomUUID().toString();
+        repository.create(buildTrustDomain(referenceId, "bravo")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "Charlie")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "alpha")).blockingGet();
+        repository.create(buildTrustDomain(referenceId, "Delta")).blockingGet();
+
+        assertEquals(List.of("alpha", "bravo", "Charlie", "Delta"), walk(referenceId, initialCursor("ASC", 0, null)));
+        assertEquals(List.of("Delta", "Charlie", "bravo", "alpha"), walk(referenceId, initialCursor("DESC", 0, null)));
+    }
+
+    @Test
+    public void shouldBreakTiesOnNamesDifferingOnlyByCaseWithTheId() {
+        String referenceId = randomUUID().toString();
+        TrustedDomain upper = buildTrustDomain(referenceId, "Alpha");
+        upper.setId(referenceId + "-b");
+        TrustedDomain lower = buildTrustDomain(referenceId, "alpha");
+        lower.setId(referenceId + "-a");
+        repository.create(upper).blockingGet();
+        try {
+            repository.create(lower).blockingGet();
+        } catch (RuntimeException e) {
+            assumeNoException("names are unique ignoring case on this database", e);
+        }
+
+        assertEquals(List.of("alpha", "Alpha"), walk(referenceId, initialCursor("ASC", 0, null)));
+        assertEquals(List.of("Alpha", "alpha"), walk(referenceId, initialCursor("DESC", 0, null)));
+    }
+
+    @Test
+    public void shouldFindCursorPageByReferenceAndSpiffeUsage() {
+        String referenceId = randomUUID().toString();
+        createOneTrustedDomainPerUsage(referenceId);
+
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, initialCursor("ASC", 0, TrustedDomainUsage.SPIFFE), 10).blockingGet();
+
+        assertEquals(List.of("spiffe"), names(page));
+        assertEquals(Long.valueOf(1), page.getTotalCount());
+    }
+
+    @Test
+    public void shouldFindCursorPageByReferenceAndTokenExchangeUsage() {
+        String referenceId = randomUUID().toString();
+        createOneTrustedDomainPerUsage(referenceId);
+
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, initialCursor("ASC", 0, TrustedDomainUsage.TOKEN_EXCHANGE), 10).blockingGet();
+
+        assertEquals(List.of("token-exchange-enabled"), names(page));
+        assertEquals(Long.valueOf(1), page.getTotalCount());
+        assertEquals(Map.of("read", "domain:read"), page.getData().get(0).getScopeMappings());
+    }
+
+    @Test
+    public void shouldFindCursorPageByReferenceAndCrossAppAccessUsage() {
+        String referenceId = randomUUID().toString();
+        createOneTrustedDomainPerUsage(referenceId);
+
+        CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, initialCursor("ASC", 0, TrustedDomainUsage.CROSS_APP_ACCESS), 10).blockingGet();
+
+        assertEquals(List.of("xaa-enabled"), names(page));
+        assertEquals(Long.valueOf(1), page.getTotalCount());
+    }
+
+    @Test
+    public void shouldKeepTheUsageAcrossCursorPages() {
+        String referenceId = randomUUID().toString();
+        createOneTrustedDomainPerUsage(referenceId);
+        repository.create(buildTrustDomain(referenceId, "spiffe-2")).blockingGet();
+
+        assertEquals(List.of("spiffe", "spiffe-2"), walk(referenceId, initialCursor("ASC", 0, TrustedDomainUsage.SPIFFE)));
+    }
+
+    @Test
+    public void shouldRejectAnUnsortableField() {
+        TrustedDomainCursorRequest cursor = TrustedDomainCursorRequest.initialCursor("createdAt", "ASC", 0, null);
+
+        assertThrows(IllegalArgumentException.class, () -> cursorRepository.findByReferenceCursor(DOMAIN, randomUUID().toString(), cursor, 10));
+    }
+
+    private void createOneTrustedDomainPerUsage(String referenceId) {
+        repository.create(buildTrustDomain(referenceId, "spiffe")).blockingGet();
+        repository.create(buildTokenExchangeTrustDomain(referenceId, "token-exchange-enabled", true)).blockingGet();
+        repository.create(buildTokenExchangeTrustDomain(referenceId, "token-exchange-disabled", false)).blockingGet();
+        repository.create(buildCrossAppAccessTrustDomain(referenceId, "xaa-enabled", true)).blockingGet();
+        repository.create(buildCrossAppAccessTrustDomain(referenceId, "xaa-disabled", false)).blockingGet();
+    }
+
+    private TrustedDomain buildTokenExchangeTrustDomain(String referenceId, String name, boolean enabled) {
+        TrustedDomain td = buildTokenExchangeTrustDomain(referenceId, "https://" + name + ".example");
+        td.setName(name);
+        td.getTokenExchange().setEnabled(enabled);
+        return td;
+    }
+
+    private TrustedDomain buildCrossAppAccessTrustDomain(String referenceId, String name, boolean enabled) {
+        TrustedDomain td = buildTrustDomain(referenceId, name);
+        td.setSpiffe(null);
+        td.setDomainIdentifier("https://" + name + ".example");
+        td.setCrossAppAccess(CrossAppAccessSettings.builder().enabled(enabled).build());
+        return td;
+    }
+
+    private static TrustedDomainCursorRequest initialCursor(String direction, int page, TrustedDomainUsage usage) {
+        return TrustedDomainCursorRequest.initialCursor("name", direction, page, usage);
+    }
+
+    private List<String> walk(String referenceId, TrustedDomainCursorRequest cursor) {
+        List<String> names = new ArrayList<>();
+        TrustedDomainCursorRequest next = cursor;
+        while (next != null) {
+            CursorPage<TrustedDomain, TrustedDomainCursorRequest> page = cursorRepository.findByReferenceCursor(DOMAIN, referenceId, next, 1).blockingGet();
+            names.addAll(names(page));
+            next = page.getNextCursor();
+        }
+        return names;
+    }
+
+    private static List<String> names(CursorPage<TrustedDomain, TrustedDomainCursorRequest> page) {
+        return page.getData().stream().map(TrustedDomain::getName).toList();
     }
 
     @Test
