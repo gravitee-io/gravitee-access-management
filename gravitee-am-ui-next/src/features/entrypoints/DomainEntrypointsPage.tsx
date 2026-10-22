@@ -45,13 +45,13 @@ import { useState } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SaveBar } from '../../app/components/SaveBar';
-import { type Domain, listDomainEntrypoints, patchDomainEntrypoints } from '../../lib/api/domains';
+import { type Domain, accessUrl, domainEntrypoint, listDomainEntrypoints, patchDomainEntrypoints } from '../../lib/api/domains';
 import { getInstallationConfiguration } from '../../lib/api/management-api';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { useCurrentEnvironment } from '../../lib/session/environment';
 import { usePermissions } from '../../lib/session/permissions';
-import { type VirtualHostRow, accessUrl, domainEntrypoint, hostOptions, hostPattern } from './entrypoint-hosts';
+import { type VirtualHostRow, hostOptions, hostPattern } from './entrypoint-hosts';
 
 interface FormState {
     readonly vhostMode: boolean;

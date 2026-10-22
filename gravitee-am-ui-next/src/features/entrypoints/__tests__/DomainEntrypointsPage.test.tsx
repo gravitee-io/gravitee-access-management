@@ -19,6 +19,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { type Domain, listDomainEntrypoints, patchDomainEntrypoints } from '../../../lib/api/domains';
+import type * as Domains from '../../../lib/api/domains';
 import { getInstallationConfiguration } from '../../../lib/api/management-api';
 import { PermissionScope } from '../../../lib/session/permissions';
 import { DomainEntrypointsPage } from '../DomainEntrypointsPage';
@@ -31,7 +32,11 @@ vi.mock('@gravitee/graphene-core', async importOriginal => ({
     ...(await importOriginal<typeof Graphene>()),
     toast: { success: vi.fn(), error: vi.fn() },
 }));
-vi.mock('../../../lib/api/domains', () => ({ listDomainEntrypoints: vi.fn(), patchDomainEntrypoints: vi.fn() }));
+vi.mock('../../../lib/api/domains', async importOriginal => ({
+    ...(await importOriginal<typeof Domains>()),
+    listDomainEntrypoints: vi.fn(),
+    patchDomainEntrypoints: vi.fn(),
+}));
 vi.mock('../../../lib/api/management-api', () => ({ getInstallationConfiguration: vi.fn() }));
 vi.mock('../../../lib/session/environment', () => ({
     useCurrentEnvironment: () => ({ id: 'env-1', name: 'Dev', hrids: ['dev'], domainRestrictions: session.domainRestrictions }),

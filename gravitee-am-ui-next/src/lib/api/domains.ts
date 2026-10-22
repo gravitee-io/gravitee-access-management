@@ -55,6 +55,23 @@ export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
     return http<Entrypoint[]>(`${domainPath(ref)}/entrypoints`);
 }
 
+/** The Angular `DomainService.getEntrypoint`: the only entrypoint, else the first one that is not the default. */
+export function domainEntrypoint(entrypoints: readonly Entrypoint[]): Entrypoint | undefined {
+    return entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find(entrypoint => !entrypoint.defaultEntrypoint) ?? entrypoints[0]);
+}
+
+/** The Angular `EntrypointService.resolveBaseUrl`: the URL applications use to reach the domain. */
+export function accessUrl(entrypointUrl: string, path: string, vhostMode: boolean, vhosts: readonly VirtualHost[]): string {
+    let base = entrypointUrl;
+    let resolvedPath = path;
+    const vhost = vhostMode ? vhosts.find(candidate => candidate.overrideEntrypoint) : undefined;
+    if (vhost) {
+        base = (/^(https?:\/\/)/.exec(entrypointUrl)?.[1] ?? '') + vhost.host;
+        resolvedPath = vhost.path;
+    }
+    return resolvedPath === '/' ? base : base + resolvedPath;
+}
+
 export function updateCertificateSettings(ref: DomainRef, certificateSettings: CertificateSettings): Promise<Domain> {
     return http<Domain>(`${domainPath(ref)}/certificate-settings`, { method: 'PUT', body: JSON.stringify(certificateSettings) });
 }

@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { Entrypoint } from '../../lib/api/domains';
-
 export interface VirtualHostRow {
     readonly host: string;
     readonly path: string;
@@ -51,21 +49,4 @@ export function hostOptions(host: string, domainRestrictions: readonly string[])
         return domainRestrictions;
     }
     return domainRestrictions.map(restriction => (prefix === '' ? restriction : `${prefix}.${restriction}`) + suffix);
-}
-
-/** The Angular `DomainService.getEntrypoint`: the only entrypoint, else the first one that is not the default. */
-export function domainEntrypoint(entrypoints: readonly Entrypoint[]): Entrypoint | undefined {
-    return entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find(entrypoint => !entrypoint.defaultEntrypoint) ?? entrypoints[0]);
-}
-
-/** The Angular `EntrypointService.resolveBaseUrl`: the URL applications use to reach the domain. */
-export function accessUrl(entrypointUrl: string, path: string, vhostMode: boolean, vhosts: readonly VirtualHostRow[]): string {
-    let base = entrypointUrl;
-    let resolvedPath = path;
-    const vhost = vhostMode ? vhosts.find(candidate => candidate.overrideEntrypoint) : undefined;
-    if (vhost) {
-        base = (/^(https?:\/\/)/.exec(entrypointUrl)?.[1] ?? '') + vhost.host;
-        resolvedPath = vhost.path;
-    }
-    return resolvedPath === '/' ? base : base + resolvedPath;
 }
