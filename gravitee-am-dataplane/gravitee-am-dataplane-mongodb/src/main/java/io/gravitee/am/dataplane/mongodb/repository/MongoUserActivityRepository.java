@@ -16,7 +16,6 @@
 
 package io.gravitee.am.dataplane.mongodb.repository;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
@@ -36,8 +35,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -66,17 +63,6 @@ public class MongoUserActivityRepository extends AbstractDataPlaneMongoRepositor
     public void init() {
         userActivityCollection = mongoDatabase.getCollection("user_activities", UserActivityMongo.class);
         MongoUtils.init(userActivityCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1)
-                .append(FIELD_REFERENCE_ID, 1)
-                .append(FIELD_USER_ACTIVITY_TYPE, 1)
-                .append(FIELD_USER_ACTIVITY_KEY, 1), new IndexOptions().name("rt1ri1uat1uak1"));
-        indexes.put(new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("c1"));
-        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
-
-        super.createIndex(userActivityCollection, indexes);
     }
 
     @Override

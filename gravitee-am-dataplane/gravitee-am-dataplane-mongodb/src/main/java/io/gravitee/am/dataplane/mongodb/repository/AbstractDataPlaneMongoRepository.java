@@ -18,21 +18,15 @@ package io.gravitee.am.dataplane.mongodb.repository;
 
 
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
-import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
-import io.gravitee.am.repository.mongodb.common.MongoUtils;
-import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,15 +47,6 @@ public class AbstractDataPlaneMongoRepository {
 
     @Autowired
     protected FilterCriteriaParser filterCriteriaParser;
-
-    protected final boolean getEnsureIndexOnStart() {
-        var ensureIndexOnStartOAuth2Old = environment.getProperty(Scope.OAUTH2.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, true);
-        return environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, ensureIndexOnStartOAuth2Old);
-    }
-
-    protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes) {
-        MongoUtils.createIndex(collection, indexes, getEnsureIndexOnStart());
-    }
 
     protected final <TResult> AggregatePublisher<TResult> withMaxTime(AggregatePublisher<TResult> query) {
         return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);

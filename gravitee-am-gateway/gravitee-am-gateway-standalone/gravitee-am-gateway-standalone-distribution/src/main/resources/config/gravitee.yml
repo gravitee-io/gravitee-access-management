@@ -451,7 +451,7 @@ repositories:
   #    sslEnabled: false
   #    threadsAllowedToBlockForConnectionMultiplier: 5
   #    cursorFinalizerEnabled: true
-  #    ensureIndexOnStart: true
+  #    ensureIndexOnStart: true    # Indexes are created, updated and dropped by the index upgrader (not run when upgrade.mode=false). Set to false to manage them yourself. Also drives the index creation of the MongoDB audit reporter and MongoDB identity providers
   #    cursorMaxTime: 60000
   #    keystore:
   #      path:                      # Path to the keystore (when sslEnabled is true, default null)
@@ -472,6 +472,7 @@ repositories:
       dbname: ${ds.mongodb.dbname}
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
+  #    ensureIndexOnStart: true    # Gateway and data plane indexes are created, updated and dropped by the index upgrader (not run when upgrade.mode=false). Set to false to manage them yourself. Falls back to repositories.oauth2 (data plane) and repositories.management (gateway)
   # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
   oauth2:
     type: mongodb
@@ -480,7 +481,7 @@ repositories:
       dbname: ${ds.mongodb.dbname}
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
-  #    ensureIndexOnStart: true
+  #    ensureIndexOnStart: true    # OAuth2 indexes are created, updated and dropped by the index upgrader (not run when upgrade.mode=false). Set to false to manage them yourself. Also the fallback of repositories.gateway.mongodb.ensureIndexOnStart for the data plane indexes
 #  ratelimit:
 #    type: redis
 #    redis:
