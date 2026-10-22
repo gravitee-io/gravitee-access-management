@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "98a1818eed",
+    "angularCommit": "8831301da0",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3676,9 +3676,12 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/trust-domains/routes.tsx",
+                        "src/features/trust-domains/TrustDomainsTabs.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -3700,9 +3703,12 @@
                     "resolvers": {
                         "trustDomains": "TrustDomainsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/trust-domains/TrustDomainsPage.tsx",
+                        "src/features/trust-domains/trust-domain.ts"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -3726,9 +3732,11 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/trust-domains/TrustDomainKeyRetrievalPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -3753,9 +3761,12 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/trust-domains/NewTrustDomainPage.tsx",
+                        "src/features/trust-domains/TrustDomainForm.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -3782,9 +3793,12 @@
                     "resolvers": {
                         "trustDomain": "TrustDomainResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/trust-domains/TrustDomainPage.tsx",
+                        "src/features/trust-domains/TrustDomainForm.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3810,12 +3824,12 @@
                 "domain_trust_domain_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 28,
             "blockers": [],
-            "notes": "A container with tabs, a create page and a key retrieval page. Angular Playwright page objects exist.",
-            "angularCommit": null
+            "notes": "A container with tabs, a create page and a key retrieval page. Angular Playwright page objects exist.\n\nPages: settings/trust-domains → (container, no prototype page) → src/features/trust-domains/routes.tsx with TrustDomainsTabs.tsx; trust-domains/domains → TrustedDomainsPage → TrustDomainsPage.tsx; trust-domains/key-retrieval → TrustedDomainKeyRetrievalPage → TrustDomainKeyRetrievalPage.tsx; trust-domains/domains/new → CreateTrustedDomainPage → NewTrustDomainPage.tsx; trust-domains/domains/:trustDomainId → TrustedDomainPage → TrustDomainPage.tsx. The create and detail pages share TrustDomainForm.tsx; trust-domain.ts holds the Angular trust-domain.types.ts helpers.\nEndpoints: GET, POST /domains/:domain/trusted-domains; GET, PUT, DELETE /domains/:domain/trusted-domains/:id (TrustDomainService, with toTrustedDomainRequest and fromTrustedDomain); PATCH /domains/:domain with {keyRetrievalSettings} (DomainService.patch); GET /domains/:domain/scopes?page=:n&size=50 until every page is read (ScopeService.findAllByDomain), only while token exchange or Cross App Access is on. All under /organizations/:org/environments/:env.\nPermissions: the container needs domain_trust_domain_list; the Key retrieval tab and route need domain_settings_read, its fields and Save domain_settings_update; the create button and the new route need domain_trust_domain_create; the row link and the detail route need domain_trust_domain_read; the form on the detail page is editable with domain_trust_domain_update; the row delete and the detail delete need domain_trust_domain_delete.\nLicence features: none.\nPrototype additions left out: none. The prototype path trusted-domains is replaced by the Angular trust-domains, and the nav key follows.\nPrototype changes kept: line tabs; the floating + as a header button; the name cell subtitle as a tooltip; the validation errors listed above the submit only once the form changed or on the detail page; the domain scope autocompletes as a Select; the danger zone card; the min-value checks on the key retrieval numbers, which Angular only hints at.\nAngular behaviour added back: the inline edit of a resource server row (Edit, Apply, Cancel, Enter and Escape), with the error Finish editing the resource server... while a row is open, which blocks Save; the delete confirmation copy Delete Trusted Domain / Are you sure you want to delete \"name\"?; the server error message in the create and update toasts; the key material sent as stored until its fields change; the domain scope Select falls back to a text input when the domain has no scopes.\nKit parts: ConfirmDialog, ErrorPanel, NotFoundPanel, PageHeader, SaveBar, SettingToggle, TagInput.\n\nVerification, 2026-10-22, React console on :4201 against the local Management API, through gravitee-am-test/playwright/tests/console-next/trust-domains.spec.ts (4 tests, passed) on the fixture's test domain. Create: the issuer https://sso.acme.com named the domain https-sso.acme.com; POST /organizations/DEFAULT/environments/DEFAULT/domains/:id/trusted-domains {name, keyMaterial {source JWK_SET, jwkSet, refreshIntervalSeconds 300}, domainIdentifier, spiffe {spiffeTrustDomain '', allowedAlgorithms []}, tokenExchange {enabled true, scopeMappings {}, userBindingEnabled false, userBindingCriteria []}, crossAppAccess {enabled false}}; the API stored keyMaterial.source jwk_set, and the page opened /trust-domains/domains/:id. Update: Cross App Access on with the resource server Calendar; PUT .../trusted-domains/:id, 200, stored crossAppAccess {enabled true, resourceServers [Calendar]}. Delete from the row menu through Delete Trusted Domain: DELETE .../trusted-domains/:id, 200, then the first-use state. Key retrieval: PATCH .../domains/:id {keyRetrievalSettings {allowUnsecuredHttpUri false, allowPrivateIpAddress true, fetchTimeoutMs 5000, maxResponseSizeKb 32, cacheTtlSeconds 300, cacheMaxEntries 80}}, 200. The Management API resolves a JWKS URL host on create, so the specs use an inline JWK set. The Angular console was not running (:4200 is the Gamma console), so the calls were compared with TrustDomainService, toTrustedDomainRequest and the key retrieval component save. The key retrieval form fills a setting the domain does not store with the Angular default, as the prototype does.",
+            "angularCommit": "8831301da0"
         },
         {
             "id": "web-protection",

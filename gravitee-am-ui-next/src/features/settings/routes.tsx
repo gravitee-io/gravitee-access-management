@@ -33,6 +33,7 @@ import { passwordPolicyRoutes } from '../password-policies/routes';
 import { resourceRoutes } from '../resources/routes';
 import { scopeRoutes } from '../scopes/routes';
 import { secretsRoutes } from '../secrets/routes';
+import { trustDomainRoutes } from '../trust-domains/routes';
 import { webProtectionRoutes } from '../web-protection/routes';
 import { webAuthnRoutes } from '../webauthn/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
@@ -57,6 +58,7 @@ const BUILT_SETTINGS = new Set([
     'secrets',
     'password-policies',
     'account',
+    'trust-domains',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -95,6 +97,7 @@ export const domainSettingsRoutes = (
         {secretsRoutes}
         {passwordPolicyRoutes}
         {accountRoutes}
+        {trustDomainRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (

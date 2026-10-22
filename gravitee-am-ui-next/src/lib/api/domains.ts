@@ -17,6 +17,7 @@ import type { AccountSettings as AccountSettingsModel } from '@am-models/Account
 import type { CorsSettings as CorsSettingsModel } from '@am-models/CorsSettings';
 import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
+import type { KeyRetrievalSettings as KeyRetrievalSettingsModel } from '@am-models/KeyRetrievalSettings';
 import type { LoginSettings as LoginSettingsModel } from '@am-models/LoginSettings';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { SecretExpirationSettings as SecretExpirationSettingsModel } from '@am-models/SecretExpirationSettings';
@@ -156,6 +157,13 @@ export type AccountSettings = ApiModel<AccountSettingsModel>;
 /** The Angular `DomainService.patchAccountSettings`. */
 export function patchDomainAccountSettings(ref: DomainRef, accountSettings: AccountSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ accountSettings }) });
+}
+
+export type KeyRetrievalSettings = ApiModel<KeyRetrievalSettingsModel>;
+
+/** The Angular `TrustDomainKeyRetrievalComponent` save. */
+export function patchDomainKeyRetrievalSettings(ref: DomainRef, keyRetrievalSettings: KeyRetrievalSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ keyRetrievalSettings }) });
 }
 
 export function listDomainMembers(ref: DomainRef): Promise<MembershipsResponse> {

@@ -34,6 +34,16 @@ export function listScopes(ref: DomainRef, page: number, size: number, query = '
     return http<Page<Scope>>(`${domainPath(ref)}/scopes?page=${page}&size=${size}${searchParam(query)}`);
 }
 
+/** The Angular `ScopeService.findAllByDomain`: every scope of the domain, read 50 at a time. */
+export async function listAllScopes(ref: DomainRef): Promise<Scope[]> {
+    const size = 50;
+    const first = await listScopes(ref, 0, size);
+    const rest = await Promise.all(
+        Array.from({ length: Math.ceil(first.totalCount / size) - 1 }, (_, index) => listScopes(ref, index + 1, size)),
+    );
+    return [first, ...rest].flatMap(page => page.data);
+}
+
 export function getScope(ref: DomainRef, scopeId: string): Promise<Scope> {
     return http<Scope>(`${domainPath(ref)}/scopes/${scopeId}`);
 }
