@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "21b73a7b83",
+    "angularCommit": "98a1818eed",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3186,9 +3186,12 @@
                         "AuthGuard"
                     ],
                     "resolvers": {},
-                    "status": "not-started",
+                    "status": "done",
                     "class": "A",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/account/DomainAccountPage.tsx",
+                        "src/features/account/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3204,12 +3207,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "A",
             "order": 27,
             "blockers": [],
-            "notes": "",
-            "angularCommit": null
+            "notes": "Pages: settings/account → UserAccountsPage → src/features/account/DomainAccountPage.tsx.\nEndpoints: PATCH /organizations/:org/environments/:env/domains/:domain with {accountSettings} (DomainService.patchAccountSettings); GET .../identities?userProvider=true (ProviderService.findUserProvidersByDomain); GET .../bot-detections (BotDetectionService.findByDomain).\nPermissions: the route needs domain_settings_read. The form is editable with domain_settings_create or domain_settings_update, as the Angular readonly flag is.\nLicence features: none.\nPrototype additions left out: the custom form fields, the confirm identity flag and the bot plugin sent as null when off (not in AM, Angular deletes the keys); the four durations saved with their defaults when the feature was never on (not in AM, Angular sends 0 for an empty duration); the new field label trimmed (not in AM); an unknown stored provider id added to the select (not in AM); \"None\" sent as null (not in AM, the Angular option has no value).\nPrototype changes kept: a stored duration is shown in the largest unit that gives it exactly, where Angular shows the moment humanize approximation; each failing rule shows its own message, and the custom form check no longer hides the MFA and remember me checks, which Angular skips once the custom form is on; the MFA switch is named MFA brute force detection, so it differs from the login one.\nAngular behaviour added back: the stored settings are spread into the payload, so keys the form does not show are kept; the defaults applied on enable (10 attempts, 12 hours, 2 hours, 14 days, 3 MFA attempts, 1 minute); the toast User Accounts Settings updated; edit with domain_settings_create alone.\nKit parts: DurationInput (shared with secrets in its own commit), SaveBar, SettingToggle.\n\nVerification, 2026-10-22, React console on :4201 against the local Management API, on a throwaway domain acct-port-check with no stored account settings, deleted after. Brute force on showed 10 attempts and 12 Hours; blocked duration set to 30 Minutes; the custom form on with no field disabled Save, then Email added; registration provider Default Identity Provider. Save: PATCH /organizations/DEFAULT/environments/DEFAULT/domains/:id {accountSettings {loginAttemptsDetectionEnabled true, maxLoginAttempts 10, resetPasswordCustomForm true, defaultIdentityProviderForRegistration, inherited false, loginAttemptsResetTime 43200, accountBlockedDuration 1800, mfaChallengeAttemptsResetTime 0, rememberMeDuration 0, resetPasswordCustomFormFields [email]}}, 200, toast User Accounts Settings updated; a reload showed 30 Minutes and the email field. The Angular console was not running (:4200 is the Gamma console), so the call was compared with AccountSettingsComponent.save and DomainSettingsAccountComponent.updateAccountSettings. Class A: no Playwright spec.",
+            "angularCommit": "98a1818eed"
         },
         {
             "id": "entrypoints",

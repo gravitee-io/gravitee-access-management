@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { AccountSettings as AccountSettingsModel } from '@am-models/AccountSettings';
 import type { CorsSettings as CorsSettingsModel } from '@am-models/CorsSettings';
 import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
@@ -148,6 +149,13 @@ export type SecretExpirationSettings = ApiModel<SecretExpirationSettingsModel>;
 /** The Angular `DomainSettingsSecretsComponent` save. The domain returns the settings as `secretExpirationSettings`. */
 export function patchDomainSecretSettings(ref: DomainRef, secretSettings: SecretExpirationSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ secretSettings }) });
+}
+
+export type AccountSettings = ApiModel<AccountSettingsModel>;
+
+/** The Angular `DomainService.patchAccountSettings`. */
+export function patchDomainAccountSettings(ref: DomainRef, accountSettings: AccountSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ accountSettings }) });
 }
 
 export function listDomainMembers(ref: DomainRef): Promise<MembershipsResponse> {

@@ -18,6 +18,7 @@ import { PlaceholderPage } from '../../app/components/PlaceholderPage';
 import { DOMAIN_SETTINGS_NAV_GROUPS, navItems } from '../../app/navigation';
 import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
+import { accountRoutes } from '../account/routes';
 import { botDetectionRoutes } from '../bot-detection/routes';
 import { certificateRoutes } from '../certificates/routes';
 import { deviceIdentifierRoutes } from '../device-identifier/routes';
@@ -55,6 +56,7 @@ const BUILT_SETTINGS = new Set([
     'webauthn',
     'secrets',
     'password-policies',
+    'account',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -92,6 +94,7 @@ export const domainSettingsRoutes = (
         {webAuthnRoutes}
         {secretsRoutes}
         {passwordPolicyRoutes}
+        {accountRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (
