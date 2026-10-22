@@ -33,11 +33,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SaveBar } from '../../app/components/SaveBar';
+import { SettingToggle } from '../../app/components/SettingToggle';
 import { type LoginSettings, patchDomainLoginSettings } from '../../lib/api/domains';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
-import { SettingToggle } from './SettingToggle';
 
 type Form = { -readonly [K in keyof LoginSettings]: LoginSettings[K] };
 
