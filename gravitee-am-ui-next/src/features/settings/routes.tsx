@@ -18,6 +18,7 @@ import { PlaceholderPage } from '../../app/components/PlaceholderPage';
 import { DOMAIN_SETTINGS_NAV_GROUPS, navItems } from '../../app/navigation';
 import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
+import { botDetectionRoutes } from '../bot-detection/routes';
 import { certificateRoutes } from '../certificates/routes';
 import { factorRoutes } from '../factors/routes';
 import { flowRoutes } from '../flows/routes';
@@ -27,7 +28,7 @@ import { resourceRoutes } from '../resources/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
 /** Domain settings the console has built. Every other settings item gets a placeholder. */
-const BUILT_SETTINGS = new Set(['general', 'providers', 'certificates', 'factors', 'resources', 'forms', 'flows']);
+const BUILT_SETTINGS = new Set(['general', 'providers', 'certificates', 'factors', 'resources', 'forms', 'flows', 'bot-detection']);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
 export const domainSettingsRoutes = (
@@ -54,6 +55,7 @@ export const domainSettingsRoutes = (
         {resourceRoutes}
         {formRoutes}
         {flowRoutes}
+        {botDetectionRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (

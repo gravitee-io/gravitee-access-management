@@ -1,6 +1,6 @@
 {
-    "generatedAt": "2026-10-21",
-    "angularCommit": "0068c3328c",
+    "generatedAt": "2026-10-22",
+    "angularCommit": "b9e58e530a",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1429,9 +1429,12 @@
                     "resolvers": {
                         "detections": "BotDetectionsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/bot-detection/BotDetectionsPage.tsx",
+                        "src/features/bot-detection/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1458,9 +1461,12 @@
                     "resolvers": {
                         "botDetectionPlugins": "BotDetectionPluginsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/bot-detection/CreateBotDetectionPage.tsx",
+                        "src/features/bot-detection/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1487,9 +1493,12 @@
                     "resolvers": {
                         "botDetection": "BotDetectionResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/bot-detection/BotDetectionPage.tsx",
+                        "src/features/bot-detection/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -1512,12 +1521,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 6,
             "blockers": [],
-            "notes": "Plugin wizard. Route segment differs from the Angular folder botdetections.",
-            "angularCommit": null
+            "notes": "Plugin wizard. Route segment differs from the Angular folder botdetections.\n\nBrief, 2026-10-21, completed 2026-10-22. Pages: settings/bot-detection (DomainSettingsBotDetectionsComponent) → BotDetectionsPage → src/features/bot-detection/BotDetectionsPage.tsx; settings/bot-detection/new (BotDetectionCreationComponent, step1 and step2) → CreateBotDetectionPage → CreateBotDetectionPage.tsx on PluginWizard; settings/bot-detection/:botDetectionId (BotDetectionComponent) → BotDetectionPage → BotDetectionPage.tsx. Endpoints: GET {domain}/bot-detections; GET {domain}/bot-detections/:id; POST {domain}/bot-detections {name, type, detectionType, configuration}; PUT {domain}/bot-detections/:id {name, type, configuration}; DELETE {domain}/bot-detections/:id; GET /platform/plugins/bot-detections; GET /platform/plugins/bot-detections/:type/schema. Permissions: list route domain_bot_detection_list, create route and Add button domain_bot_detection_create, detail route and name link domain_bot_detection_read, Save domain_bot_detection_update, Delete domain_bot_detection_delete. Licence: no route feature. The plugin feature from the catalogue guards the wizard cards (PluginWizard) and Save (LicenseGuard), as the Angular licenseGuard. Prototype additions left out: the Last updated column (not in AM: the list endpoint returns id, name, type and detectionType only); the plugin catalogue call on the list (Angular names the type with its own map, and the list keeps that map). Angular behaviour added back: detectionType in the POST, from the schema default of properties.detectionType (the prototype says it is derived server-side; NewBotDetection requires it); the read-only Detection type field on the wizard settings step. Configuration: the page drops the untyped properties.detectionType from the schema (configurationSchema), because the Angular form does not render it and its configuration has no detectionType key; Graphene extractDefaults would add it. Verification, 2026-10-22, domain stc-dev, plugin google-recaptcha-v3-am-bot-detection: React :4201 and Angular :4200 send the same calls. Create: GET /platform/plugins/bot-detections, GET /platform/plugins/bot-detections/google-recaptcha-v3-am-bot-detection/schema, POST {domain}/bot-detections {name, type, detectionType: CAPTCHA, configuration {siteKey, secretKey, serviceUrl, tokenParameterName, minScore}}. Save: PUT {domain}/bot-detections/:id {name, type, configuration} with the secretKey kept as ********. Delete: DELETE {domain}/bot-detections/:id, then the list. The list has no search in Angular, so the port has none. Playwright: gravitee-am-test/playwright/tests/console-next/bot-detection.spec.ts, 3 tests pass against :4201. Review fixes: the integration card sits outside the save form, so a copy does not submit it; snippet 2 has a copy button with the Angular toast \"Copied to clipboard\", and the snippet keeps the Angular text; a schema without a detectionType default sends no detectionType, as Angular. The type name corrects the Angular \"reCAPTHCA\" typo. Left as in the other plugin units: a schema or catalogue failure shows ErrorPanel for the whole detail page, where Angular kept the name, Save and Delete (same as ServicePage).",
+            "angularCommit": "b9e58e530a"
         },
         {
             "id": "certificates",
