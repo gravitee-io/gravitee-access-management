@@ -85,7 +85,7 @@ export const DOMAIN_SETTINGS_NAV_GROUPS: NavGroup[] = [
             { key: 'certificates', title: 'Certificates' },
             { key: 'trusted-domains', title: 'Trusted Domains' },
             { key: 'bot-detection', title: 'Bot Detection' },
-            { key: 'device-identifiers', title: 'Device Identifiers' },
+            { key: 'device-identifier', title: 'Device Identifiers' },
         ],
     },
     { label: 'Resources', items: [{ key: 'resources', title: 'Services' }] },

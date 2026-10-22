@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "b9e58e530a",
+    "angularCommit": "da06983392",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -1671,9 +1671,12 @@
                     "resolvers": {
                         "deviceIdentifiers": "DeviceIdentifiersResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/device-identifier/DeviceIdentifiersPage.tsx",
+                        "src/features/device-identifier/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1700,9 +1703,12 @@
                     "resolvers": {
                         "deviceIdentifierPlugins": "DeviceIdentifierPluginsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/device-identifier/CreateDeviceIdentifierPage.tsx",
+                        "src/features/device-identifier/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -1729,9 +1735,12 @@
                     "resolvers": {
                         "deviceIdentifier": "DeviceIdentifierResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/device-identifier/DeviceIdentifierPage.tsx",
+                        "src/features/device-identifier/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -1754,12 +1763,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 7,
             "blockers": [],
-            "notes": "Plugin wizard. Route segment differs from the Angular folder deviceidentifiers.",
-            "angularCommit": null
+            "notes": "Plugin wizard. Route segment differs from the Angular folder deviceidentifiers.\n\nBrief, 2026-10-22. Pages: settings/device-identifier (DomainSettingsDeviceIdentifiersComponent) → DeviceIdentifiersPage → src/features/device-identifier/DeviceIdentifiersPage.tsx; settings/device-identifier/new (DeviceIdentifierCreationComponent, step1 and step2) → CreateDeviceIdentifierPage → CreateDeviceIdentifierPage.tsx on PluginWizard; settings/device-identifier/:deviceIdentifierId (DeviceIdentifierComponent) → DeviceIdentifierPage → DeviceIdentifierPage.tsx. Endpoints: GET {domain}/device-identifiers; GET {domain}/device-identifiers/:id; POST {domain}/device-identifiers {name, type, configuration}; PUT {domain}/device-identifiers/:id {name, type, configuration}; DELETE {domain}/device-identifiers/:id; GET /platform/plugins/device-identifiers; GET /platform/plugins/device-identifiers/:type/schema. Permissions: list route domain_device_identifier_list, create route and Add button domain_device_identifier_create, detail route and name link domain_device_identifier_read, Save domain_device_identifier_update, Delete domain_device_identifier_delete. License: no route feature. The plugin feature from the catalog guards the wizard cards (PluginWizard) and Save (LicenseGuard), as the Angular licenseGuard; no deployed plugin has a feature today. Prototype additions left out: the Last updated column (not in AM: the list endpoint returns id, name and type only); the plugin catalog call on the list (Angular names the type with its own map); the route segment device-identifiers (Angular uses device-identifier). Angular behaviour added back: the read-only Type field with the Angular type names on the wizard settings step and the detail page; configuration \"{}\" when the plugin has no settings. Prototype kept: the text \"This plugin has no settings to configure.\" for a schema without properties (cookie-device-identifier), where Angular says \"No configuration required.\". Navigation: the settings nav key was device-identifiers; it is now device-identifier, the Angular segment, so the sidebar item opens the route. Verification, 2026-10-22, domain stc-dev: React :4201 and Angular :4200 send the same calls for fingerprintjs-v3-community-device-identifier and cookie-device-identifier. Create: POST {domain}/device-identifiers {name, type, configuration} with configuration {useCookie: false} for community and {} for cookie. Save: PUT {domain}/device-identifiers/:id {name, type, configuration} ({useCookie: true} after the toggle; {} for cookie). Delete: DELETE {domain}/device-identifiers/:id, then the list. The Angular list has no search, so the port has none. Playwright: gravitee-am-test/playwright/tests/console-next/device-identifier.spec.ts, 3 tests pass against :4201. Review fixes: the schema call maps a 204 (plugin not deployed) to {}, so the detail page keeps the name, Save and Delete; the create sets the detail cache with the response; the header badge uses the Angular type name, as the Type field. Left as in the other plugin units: LicenseGuard wraps the whole SaveBar, so a missing plugin feature also catches Discard; the form and name resolver are copies of the bot-detection page.",
+            "angularCommit": "da06983392"
         },
         {
             "id": "factors",
