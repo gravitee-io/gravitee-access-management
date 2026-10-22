@@ -21,7 +21,6 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
@@ -114,15 +113,6 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     private static final String FIELD_EXTERNAL_ID = "externalId";
     private static final String FIELD_IDENTITIES_USERNAME = "identities.username";
     private static final String FIELD_IDENTITIES_PROVIDER_ID = "identities.providerId";
-    private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE = "rt1ri1u1s1_unique";
-
-    private final Set<String> UNUSED_INDEXES = Set.of(
-            "referenceType_1_referenceId_1_username_1_source_1",
-            "rt1ri1u1s1",
-            "rt1ri1",
-            "rt1ri1ext1",
-            "rt1ri1u1"
-    );
 
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(FIELD_ID, FIELD_EXTERNAL_ID, FIELD_SOURCE);
 
@@ -135,18 +125,6 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     public void init() {
         usersCollection = mongoDatabase.getCollection("users", UserMongo.class);
         MongoUtils.init(usersCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1), new IndexOptions().name("rt1ri1e1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ADDITIONAL_INFO_EMAIL, 1), new IndexOptions().name("rt1ri1ae1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DISPLAY_NAME, 1), new IndexOptions().name("rt1ri1d1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1), new IndexOptions().name("rt1ri1f1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("rt1ri1l1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
-                new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true));
-        createOrUpdateIndexes(indexes);
     }
 
     @Override
@@ -800,19 +778,5 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                     mongoCertificate.setValue(modelCertificate.getValue());
                     return mongoCertificate;
                 }).collect(Collectors.toList());
-    }
-
-    /**
-     * Sweeps the index names retired by earlier versions, then declares the current set.
-     */
-    private void createOrUpdateIndexes(Map<Document, IndexOptions> indexes) {
-        if (getEnsureIndexOnStart()) {
-            MongoUtils.dropIndexes(usersCollection, UNUSED_INDEXES::contains)
-                    .doOnError(error -> logger.error("Unable to sweep the retired indexes of the users collection", error))
-                    // a sweep that failed must not stop the current indexes from being declared
-                    .onErrorComplete()
-                    .doOnComplete(() -> super.createIndex(usersCollection, indexes))
-                    .subscribe();
-        }
     }
 }

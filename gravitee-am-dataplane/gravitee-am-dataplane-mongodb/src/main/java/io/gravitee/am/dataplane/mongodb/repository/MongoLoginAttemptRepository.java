@@ -16,7 +16,6 @@
 package io.gravitee.am.dataplane.mongodb.repository;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
@@ -30,7 +29,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -38,9 +36,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -68,13 +64,6 @@ public class MongoLoginAttemptRepository extends AbstractDataPlaneMongoRepositor
     public void init() {
         loginAttemptsCollection = mongoDatabase.getCollection("login_attempts", LoginAttemptMongo.class);
         MongoUtils.init(loginAttemptsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("d1c1u1"));
-        // expire after index
-        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
-
-        super.createIndex(loginAttemptsCollection, indexes);
     }
 
     @Override

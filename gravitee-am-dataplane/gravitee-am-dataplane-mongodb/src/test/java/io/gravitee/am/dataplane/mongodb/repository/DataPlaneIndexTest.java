@@ -17,8 +17,10 @@ package io.gravitee.am.dataplane.mongodb.repository;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.dataplane.api.repository.test.DataPlaneTestConfigurationLoader;
+import io.gravitee.am.dataplane.mongodb.upgrader.MongoDataPlaneIndexUpgrader;
 import io.reactivex.rxjava3.core.Flowable;
 import org.bson.Document;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +74,14 @@ public class DataPlaneIndexTest {
 
     @Autowired
     private MongoDatabase mongoDatabase;
+
+    @Autowired
+    private MongoDataPlaneIndexUpgrader indexUpgrader;
+
+    @Before
+    public void applyIndexes() {
+        indexUpgrader.upgrade(null);
+    }
 
     @Test
     public void everyExpiringCollectionSelfCleans() throws Exception {
@@ -210,10 +220,6 @@ public class DataPlaneIndexTest {
         return byName;
     }
 
-    /**
-     * Repositories create their indexes from @PostConstruct via MongoUtils.createIndex, which
-     * subscribes without blocking, so poll rather than assume they have landed.
-     */
     private void awaitIndex(String collection, String indexName) throws Exception {
         Predicate<Map<String, Document>> present = byName -> byName.containsKey(indexName);
         long deadline = System.currentTimeMillis() + AWAIT_TIMEOUT_MS;

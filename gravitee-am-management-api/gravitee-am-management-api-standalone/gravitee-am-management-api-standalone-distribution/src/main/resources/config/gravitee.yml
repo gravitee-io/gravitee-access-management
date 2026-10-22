@@ -491,7 +491,7 @@ repositories:
   #    sslEnabled: false
   #    threadsAllowedToBlockForConnectionMultiplier: 5
   #    cursorFinalizerEnabled: true
-  #    ensureIndexOnStart: true
+  #    ensureIndexOnStart: true    # Indexes are created, updated and dropped by the upgrader (skipped when upgrade.mode=false). Set to false to manage them yourself
   #    cursorMaxTime: 60000
   #    keystore:
   #      path:                      # Path to the keystore (when sslEnabled is true, default null)

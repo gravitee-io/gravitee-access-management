@@ -15,19 +15,13 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.functions.Function;
-import io.reactivex.rxjava3.functions.Predicate;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,10 +50,6 @@ public abstract class AbstractMongoRepository {
         MongoUtils.init(collection);
     }
 
-    protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
-        MongoUtils.createIndex(collection, indexes, ensure);
-    }
-
     protected <D, T> Maybe<T> findOne(MongoCollection<D> collection, Bson query, Function<D, T> convertFromMongo) {
         return MongoUtils.findOne(collection, query, convertFromMongo);
     }
@@ -70,9 +60,5 @@ public abstract class AbstractMongoRepository {
 
     protected final Bson userIdMatches(UserId userId, UserIdFields userIdFields) {
        return MongoUtils.userIdMatches(userId, userIdFields);
-    }
-
-    protected Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
-        return MongoUtils.dropIndexes(collection, nameMatcher);
     }
 }

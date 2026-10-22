@@ -28,7 +28,10 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan({"io.gravitee.am.dataplane.mongodb.provider", "io.gravitee.am.dataplane.mongodb.repository"})
+@ComponentScan({
+        "io.gravitee.am.dataplane.mongodb.provider",
+        "io.gravitee.am.dataplane.mongodb.repository",
+        "io.gravitee.am.dataplane.mongodb.upgrader"})
 public class DataPlaneTestConfigurationLoader {
 
     @Bean

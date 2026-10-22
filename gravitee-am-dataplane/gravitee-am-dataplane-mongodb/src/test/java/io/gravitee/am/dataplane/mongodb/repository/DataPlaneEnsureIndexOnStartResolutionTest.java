@@ -17,22 +17,19 @@ package io.gravitee.am.dataplane.mongodb.repository;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
+import io.gravitee.am.dataplane.mongodb.upgrader.MongoDataPlaneIndexUpgrader;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**
- * Pins which configuration keys switch MongoDB index creation on and off for the data plane.
+ * Pins which configuration keys switch MongoDB index management on and off for the data plane.
  * <p>
- * Index creation never fails loudly - {@code MongoUtils.createIndex} subscribes without blocking and
- * only logs - so an operator who disables it by accident gets a healthy-looking node whose data
- * plane collections silently stop self-cleaning. That matters here because the data plane's TTL
- * indexes are the only mechanism removing expired devices, login attempts, user activities, scope
- * approvals and permission tickets on MongoDB: the scheduled purge is enabled for JDBC only.
+ * The data plane's TTL indexes are the only mechanism removing expired devices, login attempts,
+ * user activities, scope approvals and permission tickets on MongoDB: the scheduled purge is
+ * enabled for JDBC only.
  * <p>
  * The data plane resolves a different chain from every other scope, which is the reason this is
  * asserted separately rather than assumed to match the gateway.
@@ -88,24 +85,8 @@ public class DataPlaneEnsureIndexOnStartResolutionTest {
         assertThat(resolves(env(MODERN_GATEWAY_KEY, "true", MODERN_OAUTH2_KEY, "false"))).isTrue();
     }
 
-    /** Exposes the resolution method so the test does not have to reach for reflection. */
-    public static class DataPlaneProbe extends AbstractDataPlaneMongoRepository {
-        boolean ensureIndexOnStart() {
-            return getEnsureIndexOnStart();
-        }
-    }
-
     private static boolean resolves(MockEnvironment environment) {
-        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-            context.setEnvironment(environment);
-            context.registerBean(FilterCriteriaParser.class, () -> new FilterCriteriaParser());
-            context.registerBean("dataPlaneMongoDatabase", MongoDatabase.class, () -> mock(MongoDatabase.class));
-            context.registerBean(RepositoriesEnvironment.class, () -> new RepositoriesEnvironment(environment));
-            context.register(DataPlaneProbe.class);
-            context.refresh();
-
-            return context.getBean(DataPlaneProbe.class).ensureIndexOnStart();
-        }
+        return new MongoDataPlaneIndexUpgrader(mock(MongoDatabase.class), new RepositoriesEnvironment(environment)).isEnabled();
     }
 
     private static MockEnvironment env(String... keyValuePairs) {

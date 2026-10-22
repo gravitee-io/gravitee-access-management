@@ -38,7 +38,9 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan(basePackages = {"io.gravitee.am.dataplane.mongodb.repository"})
+@ComponentScan(basePackages = {
+        "io.gravitee.am.dataplane.mongodb.repository",
+        "io.gravitee.am.dataplane.mongodb.upgrader"})
 public class MongoDataPlaneSpringConfiguration {
 
     @Autowired

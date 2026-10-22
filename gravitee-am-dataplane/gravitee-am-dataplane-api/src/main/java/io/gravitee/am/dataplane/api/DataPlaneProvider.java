@@ -28,9 +28,12 @@ import io.gravitee.am.dataplane.api.repository.ResourceRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgrader;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Completable;
+
+import java.util.List;
 
 public interface DataPlaneProvider {
 
@@ -67,6 +70,10 @@ public interface DataPlaneProvider {
     PermissionTicketRepository getPermissionTicketRepository();
 
     UpgraderRepository getUpgraderRepository();
+
+    default List<DataPlaneUpgrader> getUpgraders() {
+        return List.of();
+    }
 
     boolean canHandle(String backendType);
 

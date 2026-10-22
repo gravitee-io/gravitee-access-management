@@ -16,9 +16,11 @@
 package io.gravitee.am.management.service.spring;
 
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
+import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgraderCheckService;
 import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgraderService;
 import io.gravitee.am.management.service.impl.upgrades.system.SystemUpgraderService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.service.upgrader.AmUpgraderCheckService;
 import io.gravitee.am.service.upgrader.AmUpgraderService;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
@@ -46,6 +48,8 @@ public class ManagementUpgraderConfiguration {
 
         if ("false".equalsIgnoreCase(upgradeMode)) {
             System.setProperty("liquibase.enabled", "false");
+            components.add(AmUpgraderCheckService.class);
+            components.add(DataPlaneUpgraderCheckService.class);
         }
 
         return components;
@@ -59,6 +63,16 @@ public class ManagementUpgraderConfiguration {
     @Bean
     public AmUpgraderService amUpgraderService(@Lazy @Qualifier("managementUpgraderRepository") UpgraderRepository upgraderRepository){
         return new AmUpgraderService(false, upgraderRepository, ManagementRepositoryScope.class);
+    }
+
+    @Bean
+    public AmUpgraderCheckService amUpgraderCheckService(@Lazy @Qualifier("managementUpgraderRepository") UpgraderRepository upgraderRepository) {
+        return new AmUpgraderCheckService(upgraderRepository, ManagementRepositoryScope.class);
+    }
+
+    @Bean
+    public DataPlaneUpgraderCheckService dataPlaneUpgraderCheckService(DataPlaneRegistry dataPlaneRegistry) {
+        return new DataPlaneUpgraderCheckService(dataPlaneRegistry::getAllProviders);
     }
 
     @Bean

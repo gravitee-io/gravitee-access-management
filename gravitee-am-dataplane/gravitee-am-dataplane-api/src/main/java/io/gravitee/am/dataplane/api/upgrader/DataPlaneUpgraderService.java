@@ -58,7 +58,7 @@ public class DataPlaneUpgraderService extends AbstractService<DataPlaneUpgraderS
     }
 
     private void upgrade(AtomicBoolean stopUpgrade, DataPlaneProvider dataPlaneProvider) {
-         upgraderRegistry.getDataPlaneUpgraders()
+         upgraderRegistry.getDataPlaneUpgraders(dataPlaneProvider)
                 .stream()
                 .takeWhile((upgrader) -> !stopUpgrade.get())
                 .forEach((upgrader) -> {

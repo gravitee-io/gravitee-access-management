@@ -18,6 +18,7 @@ package io.gravitee.am.dataplane.api.repository.test;
 
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.dataplane.mongodb.upgrader.MongoDataPlaneIndexUpgrader;
 import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,19 @@ public class MongoDataPlaneTestInitializer implements DataPlaneTestInitializer {
 
     @Autowired
     private MongoDatabase mongoDatabase;
+
+    @Autowired
+    private MongoDataPlaneIndexUpgrader indexUpgrader;
+
+    private boolean indexesApplied;
+
+    @Override
+    public void before(Class testClass) {
+        if (!indexesApplied) {
+            indexUpgrader.upgrade(null);
+            indexesApplied = true;
+        }
+    }
 
     @Override
     public void after(Class testClass) {

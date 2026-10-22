@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
@@ -33,9 +32,6 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Set;
-
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.*;
@@ -50,31 +46,14 @@ public class MongoCredentialRepository extends AbstractDataPlaneMongoRepository 
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREDENTIAL_ID = "credentialId";
-    private static final String FIELD_AAGUID = "aaguid";
     private static final String FIELD_CREATED_AT = "createdAt";
 
     private MongoCollection<CredentialMongo> credentialsCollection;
-
-    private final Set<String> UNUSED_INDEXES = Set.of(
-            "rt1ri1",
-            "rt1ri1un1"
-    );
 
     @PostConstruct
     public void init() {
         credentialsCollection = mongoDatabase.getCollection("webauthn_credentials", CredentialMongo.class);
         MongoUtils.init(credentialsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1uid1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_CREATED_AT, -1), new IndexOptions().name("rt1ri1un1c_1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CREDENTIAL_ID, 1), new IndexOptions().name("rt1ri1cid1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_AAGUID, 1), new IndexOptions().name("rt1ri1a1"));
-
-        super.createIndex(credentialsCollection, indexes);
-        if (getEnsureIndexOnStart()) {
-            dropIndexes(credentialsCollection, UNUSED_INDEXES::contains).subscribe();
-        }
     }
 
     @Override
