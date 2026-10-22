@@ -19,6 +19,7 @@ import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
 import type { LoginSettings as LoginSettingsModel } from '@am-models/LoginSettings';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
+import type { WebAuthnSettings as WebAuthnSettingsModel } from '@am-models/WebAuthnSettings';
 import type { WebProtectionSettings as WebProtectionSettingsModel } from '@am-models/WebProtectionSettings';
 import { http } from './http';
 import type { Page } from './management-api';
@@ -33,7 +34,10 @@ export interface CertificateSettings {
     readonly fallbackCertificate?: string | null;
 }
 
-export type Domain = ApiModel<Omit<DomainModel, 'vhosts'> & { vhosts?: readonly VirtualHost[] }, 'id' | 'hrid' | 'name' | 'enabled'>;
+export type Domain = ApiModel<
+    Omit<DomainModel, 'vhosts' | 'webAuthnSettings'> & { vhosts?: readonly VirtualHost[]; webAuthnSettings?: WebAuthnSettings },
+    'id' | 'hrid' | 'name' | 'enabled'
+>;
 
 export function listDomains(organizationId: string, environmentId: string, page: number, size: number, query = ''): Promise<Page<Domain>> {
     return http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?page=${page}&size=${size}${searchParam(query)}`);
@@ -121,6 +125,21 @@ export interface DomainWebProtectionSettings {
 
 export function patchDomainWebProtectionSettings(ref: DomainRef, settings: DomainWebProtectionSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+// The enums are lowercase on the wire, for example `cross_platform`.
+export type WebAuthnSettings = ApiModel<
+    Omit<WebAuthnSettingsModel, 'userVerification' | 'authenticatorAttachment' | 'attestationConveyancePreference' | 'certificates'> & {
+        readonly userVerification?: string;
+        readonly authenticatorAttachment?: string;
+        readonly attestationConveyancePreference?: string;
+        readonly certificates?: Readonly<Record<string, string>>;
+    }
+>;
+
+/** The Angular `DomainService.patchWebAuthnSettings`. The Management API replaces the whole object. */
+export function patchDomainWebAuthnSettings(ref: DomainRef, webAuthnSettings: WebAuthnSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ webAuthnSettings }) });
 }
 
 export function listDomainMembers(ref: DomainRef): Promise<MembershipsResponse> {

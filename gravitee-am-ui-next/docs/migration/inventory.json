@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "e056e4a76d",
+    "angularCommit": "5a65138a34",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3887,9 +3887,12 @@
                     "resolvers": {
                         "entrypoint": "DomainEntrypointResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "A",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/webauthn/DomainWebAuthnPage.tsx",
+                        "src/features/webauthn/routes.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3905,12 +3908,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "A",
             "order": 24,
             "blockers": [],
-            "notes": "",
-            "angularCommit": null
+            "notes": "Pages: settings/webauthn → WebAuthnPage → src/features/webauthn/DomainWebAuthnPage.tsx.\nEndpoints: GET /organizations/:org/environments/:env/domains/:domain/entrypoints (DomainEntrypointResolver, DomainService.getEntrypoint); PATCH /organizations/:org/environments/:env/domains/:domain (webAuthnSettings), DomainService.patchWebAuthnSettings. PatchDomain replaces webAuthnSettings as a whole.\nPermissions: the route needs domain_settings_read; the inputs, the certificate add, edit and remove actions and Save need domain_settings_update.\nLicence features: none.\nPrototype additions left out: a removed certificate sent as null and an unspecified select sent as null (not in AM, Angular sends the current settings object, which the backend replaces whole); the trim of a new certificate value (not in AM); the entrypoint picked default first (not in AM, DomainService.getEntrypoint takes the first non-default one).\nAngular behaviour added back: the inline edit of a certificate name and value, with the toast Error : attestation \"<name>\" already exists, as an Edit action in place of the double click; the duplicate toast Error : metadata \"<name>\" already exists on add; the max age min 0 rule, which blocks Save.\nKept from the prototype: the selects, checkboxes and certificate actions are disabled or hidden for a reader, where Angular leaves them enabled and hides only Save.\nKit parts: SaveBar, SettingToggle.\n\nVerification, 2026-10-22, React console on :4201 against the local Management API, on a throwaway domain wa-port-check with no stored settings, deleted after. The origin defaulted to http://localhost:8092 and the RP ID to localhost. Force registration on, user verification required, certificate packed added, a second packed showed the toast Error : metadata \"packed\" already exists, the packed value edited inline. Save: PATCH /organizations/DEFAULT/environments/DEFAULT/domains/:id {webAuthnSettings {origin, relyingPartyId, forceRegistration true, userVerification required, certificates {packed}}}, 200, toast WebAuthn configuration updated; a reload showed the saved values. Then user verification unspecified and packed removed: the PATCH left userVerification out and sent certificates {}, and the response had certificates {} and userVerification preferred, the Java default. So the Management API replaces webAuthnSettings whole. The Angular console was not running (:4200 is the Gamma console), so the call was compared with DomainService.patchWebAuthnSettings and the component save. Class A: no Playwright spec.",
+            "angularCommit": "5a65138a34"
         },
         {
             "id": "groups",
