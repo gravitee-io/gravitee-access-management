@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { SortType } from '@swimlane/ngx-datatable';
+import { EMPTY, Observable, Subject, Subscription } from 'rxjs';
+import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
 
+import { Sort } from '../../../services/api.model';
 import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { TrustDomainService } from '../../../services/trust-domain.service';
+import { TrustDomainPage, TrustDomainService } from '../../../services/trust-domain.service';
 
 import { keyMaterialSourceLabel, TrustDomain, trustDomainUsages, trustDomainUsagesLabel } from './trust-domain.types';
 
@@ -29,9 +32,16 @@ import { keyMaterialSourceLabel, TrustDomain, trustDomainUsages, trustDomainUsag
   styleUrls: ['./trust-domains.component.scss'],
   standalone: false,
 })
-export class DomainSettingsTrustDomainsComponent implements OnInit {
+export class DomainSettingsTrustDomainsComponent implements OnInit, OnDestroy {
   trustDomains: TrustDomain[];
   domainId: string;
+  page = { pageNumber: 0, size: 10, totalElements: 0 };
+  sort: Sort = { prop: 'name', dir: 'asc' };
+  isLoading = false;
+  nextCursor: string;
+  protected readonly SortType = SortType;
+  private readonly loadSubject = new Subject<{ cursor?: string }>();
+  private loadSubscription: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -42,11 +52,42 @@ export class DomainSettingsTrustDomainsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.trustDomains = this.route.snapshot.data['trustDomains'] ?? [];
+    this.applyPage(this.route.snapshot.data['trustDomains']);
+    this.loadSubscription = this.loadSubject
+      .pipe(
+        switchMap(({ cursor }) => {
+          this.isLoading = true;
+          this.nextCursor = undefined;
+          return this.pageRequest(cursor).pipe(
+            finalize(() => (this.isLoading = false)),
+            catchError(() => {
+              this.snackbarService.open('Failed to load trusted domains');
+              return EMPTY;
+            }),
+          );
+        }),
+      )
+      .subscribe((result) => this.applyPage(result));
+  }
+
+  ngOnDestroy() {
+    this.loadSubscription?.unsubscribe();
+  }
+
+  setPage(pageInfo: { offset: number }) {
+    const cursor = this.page.pageNumber + 1 === pageInfo.offset ? this.nextCursor : undefined;
+    this.page.pageNumber = pageInfo.offset;
+    this.loadSubject.next({ cursor });
+  }
+
+  applySort(event: { sorts: Sort[] }) {
+    this.sort = event.sorts[0];
+    this.page.pageNumber = 0;
+    this.loadSubject.next({});
   }
 
   isEmpty(): boolean {
-    return !this.trustDomains || this.trustDomains.length === 0;
+    return this.page.totalElements === 0;
   }
 
   usagesLabel(trustDomain: TrustDomain): string {
@@ -81,14 +122,29 @@ export class DomainSettingsTrustDomainsComponent implements OnInit {
       .pipe(
         filter((res) => res),
         switchMap(() => this.trustDomainService.delete(this.domainId, id)),
-        switchMap(() => this.trustDomainService.list(this.domainId)),
-        tap((updated) => {
-          this.trustDomains = updated;
-          this.snackbarService.open('Trusted domain deleted');
-        }),
       )
       .subscribe({
+        next: () => {
+          if (this.trustDomains.length === 1 && this.page.pageNumber > 0) {
+            this.page.pageNumber--;
+          }
+          this.snackbarService.open('Trusted domain deleted');
+          this.loadSubject.next({});
+        },
         error: () => this.snackbarService.open('Failed to delete trusted domain'),
       });
+  }
+
+  private applyPage(result?: TrustDomainPage) {
+    this.trustDomains = result?.data ?? [];
+    this.page.totalElements = result?.totalCount ?? 0;
+    this.nextCursor = result?.nextCursor;
+  }
+
+  private pageRequest(cursor?: string): Observable<TrustDomainPage> {
+    if (cursor) {
+      return this.trustDomainService.next(cursor);
+    }
+    return this.trustDomainService.list(this.domainId, this.page.pageNumber, this.page.size, { sort: this.sort });
   }
 }

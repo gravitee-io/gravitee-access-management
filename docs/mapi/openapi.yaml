@@ -8565,9 +8565,10 @@ paths:
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains:
     get:
-      description: "User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the\
-        \ specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified\
-        \ environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization"
+      description: "List trusted domains using cursor-based pagination. User must\
+        \ have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or\
+        \ DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST]\
+        \ permission on the specified organization"
       operationId: listTrustedDomains
       parameters:
       - in: path
@@ -8585,6 +8586,45 @@ paths:
         required: true
         schema:
           type: string
+      - description: "Maximum number of trusted domains per page. When omitted, every\
+          \ trusted domain is returned in a single page."
+        in: query
+        name: limit
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+      - description: Sort field. Trusted domains can only be sorted by name.
+        in: query
+        name: sort
+        schema:
+          type: string
+          default: name
+      - description: "Sort direction, ASC or DESC."
+        in: query
+        name: dir
+        schema:
+          type: string
+          default: ASC
+      - description: Zero-based index of the page to return. Requires limit.
+        in: query
+        name: page
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          minimum: 0
+      - description: Keeps only the trusted domains trusted for this usage. Empty
+          keeps every trusted domain.
+        in: query
+        name: usage
+        schema:
+          type: string
+          enum:
+          - SPIFFE
+          - TOKEN_EXCHANGE
+          - CROSS_APP_ACCESS
       responses:
         "200":
           content:
@@ -8592,6 +8632,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/TrustedDomainPage"
           description: List of trusted domains
+        "400":
+          description: "Invalid limit, sort, dir, page or usage"
         "500":
           description: Internal server error
       summary: List trusted domains registered against the security domain
@@ -8637,6 +8679,90 @@ paths:
         "500":
           description: Internal server error
       summary: Register a trusted domain on the security domain
+      tags:
+      - trusted-domain
+      - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/_cursor:
+    get:
+      description: "Follows the nextCursor returned by the trusted domains list. User\
+        \ must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain\
+        \ or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or\
+        \ DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization"
+      operationId: listTrustedDomainsCursor
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - description: Maximum number of trusted domains per page.
+        in: query
+        name: limit
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 100
+          minimum: 1
+      - description: Sort field. Trusted domains can only be sorted by name.
+        in: query
+        name: sort
+        schema:
+          type: string
+          default: name
+      - description: "Sort direction, ASC or DESC."
+        in: query
+        name: dir
+        schema:
+          type: string
+          default: ASC
+      - description: Zero-based index of the page to return.
+        in: query
+        name: page
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          minimum: 0
+      - description: Keeps only the trusted domains trusted for this usage. Empty
+          keeps every trusted domain.
+        in: query
+        name: usage
+        schema:
+          type: string
+          enum:
+          - SPIFFE
+          - TOKEN_EXCHANGE
+          - CROSS_APP_ACCESS
+      - description: "Cursor of the page to return, as found in the nextCursor of\
+          \ the previous page."
+        in: query
+        name: cursor
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrustedDomainPage"
+          description: List of trusted domains
+        "400":
+          description: "Invalid cursor, limit, sort, dir, page or usage"
+        "500":
+          description: Internal server error
+      summary: List the next page of trusted domains registered against the security
+        domain
       tags:
       - trusted-domain
       - domain
@@ -18969,6 +19095,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TrustedDomain"
+        nextCursor:
+          type: string
         page:
           type: integer
           format: int32

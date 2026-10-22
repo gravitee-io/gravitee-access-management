@@ -72,3 +72,32 @@ $color-shield: map.get(gio.$mat-success-palette, darker20);
     padding-bottom: 0 !important;
   }
 }
+
+.trust-domains-loading-wrapper {
+  position: relative;
+}
+
+.trust-domains-table-overlay {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 65%);
+  inset: 0;
+}
+
+.trust-domains-table-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgb(0 0 0 / 15%);
+  border-radius: 50%;
+  border-top-color: #1976d2;
+  animation: trust-domains-spinner 0.8s linear infinite;
+}
+
+@keyframes trust-domains-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
