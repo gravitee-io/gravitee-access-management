@@ -248,8 +248,15 @@ export function DomainEntrypointsPage() {
                                                 {domainRestrictions.length > 0 ? (
                                                     <Combobox
                                                         items={hostOptions(vhost.host, domainRestrictions)}
+                                                        // A free-text field: the selected value follows the text, and Escape keeps it.
+                                                        value={vhost.host}
+                                                        onValueChange={(host: string | null, details: { reason: string }) =>
+                                                            details.reason !== 'escape-key' && setVhost(index, { host: host ?? '' })
+                                                        }
                                                         inputValue={vhost.host}
-                                                        onInputValueChange={host => setVhost(index, { host })}
+                                                        onInputValueChange={(host, details) =>
+                                                            details.reason !== 'escape-key' && setVhost(index, { host })
+                                                        }
                                                         filter={null}
                                                         disabled={!canEdit}
                                                     >

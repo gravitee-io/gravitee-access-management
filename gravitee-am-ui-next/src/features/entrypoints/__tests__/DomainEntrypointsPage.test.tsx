@@ -135,6 +135,17 @@ describe('DomainEntrypointsPage', () => {
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
+    it('keeps a typed host when the suggestion list closes', async () => {
+        session.domainRestrictions = ['acme.io'];
+        renderPage(editor, { ...domain, vhostMode: true, vhosts: [{ host: '', path: '/', overrideEntrypoint: true }] });
+
+        const host = await screen.findByRole('combobox', { name: 'Host' });
+        fireEvent.change(host, { target: { value: 'auth' } });
+        fireEvent.keyDown(host, { key: 'Escape' });
+
+        await waitFor(() => expect(screen.getByRole('combobox', { name: 'Host' })).toHaveValue('auth'));
+    });
+
     it('shows a read-only form without domain_settings_update', async () => {
         renderPage(['domain_settings_read'], { ...domain, vhostMode: true, vhosts: [{ host: 'auth.acme.example', path: '/' }] });
 
