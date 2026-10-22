@@ -83,6 +83,7 @@ beforeEach(() => {
 describe('PasswordPolicyPage', () => {
     it('creates a policy, links the picked provider to it and opens it', async () => {
         vi.mocked(createPasswordPolicy).mockResolvedValueOnce({ id: 'pp-new', name: 'Partners only' });
+        vi.mocked(getPasswordPolicy).mockResolvedValue({ id: 'pp-new', name: 'Partners only' });
         renderPage(`${policiesPath}/new`);
 
         fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Partners only' } });
