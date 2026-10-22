@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.repository.mongodb.gateway.AbstractGatewayMongoRepository;
+import io.gravitee.am.repository.mongodb.gateway.upgrader.MongoGatewayIndexUpgrader;
 import io.gravitee.am.repository.mongodb.management.AbstractManagementMongoRepository;
-import io.gravitee.am.repository.mongodb.oauth2.AbstractOAuth2MongoRepository;
+import io.gravitee.am.repository.mongodb.oauth2.upgrader.MongoOAuth2IndexUpgrader;
 import io.reactivex.rxjava3.core.Flowable;
 import org.bson.Document;
 import org.junit.Test;
@@ -30,7 +30,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.mock.env.MockEnvironment;
 
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,18 +38,11 @@ import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.when;
 
 /**
- * Pins which configuration keys switch MongoDB index creation on and off, per repository scope.
+ * Pins which configuration keys switch MongoDB index management on and off, per repository scope.
  * <p>
- * Index creation never fails loudly - {@link MongoUtils#createIndex} subscribes without blocking and
- * only logs - so an operator who disables it by accident gets a healthy-looking node whose token
- * collections silently stop self-cleaning. The keys are worth pinning because they are not
- * consistent between scopes: each scope resolves a different chain, and two of the combinations
- * asserted below are surprising enough that they have caused production incidents.
- * <p>
- * Each scope is exercised through its real resolution path rather than by inspecting the flag.
- * Management and oauth2 read a {@code @Value} field that only Spring populates, so those run in a
- * small application context and assert the observable outcome - whether indexes are actually
- * created on the collection. Gateway resolves through a method, so it is called directly.
+ * The keys are worth pinning because they are not consistent between scopes: each scope resolves a
+ * different chain, and one of the combinations asserted below is surprising enough that it has
+ * caused production incidents.
  *
  * @author GraviteeSource Team
  */
@@ -96,21 +88,14 @@ public class EnsureIndexOnStartResolutionTest {
         assertThat(oauth2CreatesIndexes(LEGACY_OAUTH2_KEY, "false")).isFalse();
     }
 
-    /**
-     * The token stores read the legacy key only. Setting the modern, scope-prefixed key that every
-     * other repository honors leaves index creation switched on - including the TTL indexes that are
-     * the only thing deleting expired tokens on MongoDB. An operator who standardizes on the
-     * {@code repositories.*} naming will believe they have disabled index creation when they have not.
-     */
     @Test
-    public void tokenStoreIndexesIgnoreTheModernOauth2Key() {
-        // asserted as a contrast so this cannot pass merely because true is also the default
-        assertThat(oauth2CreatesIndexes(LEGACY_OAUTH2_KEY, "false"))
-                .as("the legacy key must switch token store indexes off")
-                .isFalse();
-        assertThat(oauth2CreatesIndexes(MODERN_OAUTH2_KEY, "false"))
-                .as("the modern scope-prefixed key must be ignored by the token stores")
-                .isTrue();
+    public void shouldDisableTokenStoreIndexesByTheModernOauth2Key() {
+        assertThat(oauth2CreatesIndexes(MODERN_OAUTH2_KEY, "false")).isFalse();
+    }
+
+    @Test
+    public void shouldPreferTheModernOauth2KeyOverTheLegacyOne() {
+        assertThat(oauth2CreatesIndexes(MODERN_OAUTH2_KEY, "true", LEGACY_OAUTH2_KEY, "false")).isTrue();
     }
 
     // --- gateway scope ----------------------------------------------------------------------
@@ -147,24 +132,9 @@ public class EnsureIndexOnStartResolutionTest {
 
     // --- probes -----------------------------------------------------------------------------
 
-    /** Drives the real {@code createIndex} of the management scope. */
     public static class ManagementProbe extends AbstractManagementMongoRepository {
         void createIndexOn(MongoCollection<?> collection) {
             createIndex(collection, SOME_INDEX);
-        }
-    }
-
-    /** Drives the real {@code createIndex} of the oauth2 scope, whose flag is private. */
-    public static class OAuth2Probe extends AbstractOAuth2MongoRepository {
-        void createIndexOn(MongoCollection<?> collection) {
-            createIndex(collection, SOME_INDEX);
-        }
-    }
-
-    /** The gateway scope resolves through a method, so the probe just exposes it. */
-    public static class GatewayProbe extends AbstractGatewayMongoRepository {
-        boolean ensureIndexOnStart() {
-            return getEnsureIndexOnStart();
         }
     }
 
@@ -174,31 +144,15 @@ public class EnsureIndexOnStartResolutionTest {
     // --- helpers ----------------------------------------------------------------------------
 
     private static boolean managementCreatesIndexes(String... properties) {
-        return createsIndexes(ManagementProbe.class, "managementMongoTemplate",
-                (probe, collection) -> ((ManagementProbe) probe).createIndexOn(collection), properties);
-    }
-
-    private static boolean oauth2CreatesIndexes(String... properties) {
-        return createsIndexes(OAuth2Probe.class, "oauth2MongoTemplate",
-                (probe, collection) -> ((OAuth2Probe) probe).createIndexOn(collection), properties);
-    }
-
-    /**
-     * Builds a minimal context so Spring resolves the {@code @Value} exactly as it would at runtime,
-     * then reports whether the repository actually asked the collection to create its indexes.
-     */
-    private static boolean createsIndexes(Class<?> probeType, String templateBeanName,
-                                          BiConsumer<Object, MongoCollection<?>> driveCreateIndex,
-                                          String... properties) {
         MongoCollection<?> collection = mockCollection();
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
             context.setEnvironment(env(properties));
             context.registerBean(FilterCriteriaParser.class, () -> new FilterCriteriaParser());
-            context.registerBean(templateBeanName, MongoDatabase.class, () -> mock(MongoDatabase.class));
-            context.register(probeType);
+            context.registerBean("managementMongoTemplate", MongoDatabase.class, () -> mock(MongoDatabase.class));
+            context.register(ManagementProbe.class);
             context.refresh();
 
-            driveCreateIndex.accept(context.getBean(probeType), collection);
+            context.getBean(ManagementProbe.class).createIndexOn(collection);
         }
         return mockingDetails(collection).getInvocations().stream()
                 .anyMatch(invocation -> "createIndexes".equals(invocation.getMethod().getName()));
@@ -208,24 +162,20 @@ public class EnsureIndexOnStartResolutionTest {
     private static MongoCollection<?> mockCollection() {
         MongoCollection<Document> collection = mock(MongoCollection.class);
         when(collection.createIndexes(any())).thenReturn(Flowable.empty());
-        // index creation names its collection in everything it logs and reports, so the mock has to
-        // carry a namespace the way a real collection always does
         when(collection.getNamespace()).thenReturn(new MongoNamespace("test", "probe_collection"));
         return collection;
     }
 
-    private static boolean gatewayResolves(String... properties) {
-        MockEnvironment environment = env(properties);
-        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-            context.setEnvironment(environment);
-            context.registerBean(FilterCriteriaParser.class, () -> new FilterCriteriaParser());
-            context.registerBean("gatewayMongoTemplate", MongoDatabase.class, () -> mock(MongoDatabase.class));
-            context.registerBean(RepositoriesEnvironment.class, () -> new RepositoriesEnvironment(environment));
-            context.register(GatewayProbe.class);
-            context.refresh();
+    private static boolean oauth2CreatesIndexes(String... properties) {
+        return new MongoOAuth2IndexUpgrader.Changelog(mock(MongoDatabase.class), repositoriesEnvironment(properties)).isEnabled();
+    }
 
-            return context.getBean(GatewayProbe.class).ensureIndexOnStart();
-        }
+    private static boolean gatewayResolves(String... properties) {
+        return new MongoGatewayIndexUpgrader.Changelog(mock(MongoDatabase.class), repositoriesEnvironment(properties)).isEnabled();
+    }
+
+    private static RepositoriesEnvironment repositoriesEnvironment(String... keyValuePairs) {
+        return new RepositoriesEnvironment(env(keyValuePairs));
     }
 
     private static MockEnvironment env(String... keyValuePairs) {

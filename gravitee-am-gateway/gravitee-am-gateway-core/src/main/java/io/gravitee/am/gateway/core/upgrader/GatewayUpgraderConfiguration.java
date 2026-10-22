@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.core.upgrader;
 import io.gravitee.am.common.scope.GatewayRepositoryScope;
 import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgraderService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.service.upgrader.AmReadOnlyUpgraderService;
 import io.gravitee.am.service.upgrader.AmUpgraderService;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
@@ -44,6 +45,7 @@ public class GatewayUpgraderConfiguration {
 
         if ("false".equalsIgnoreCase(upgradeMode)) {
             System.setProperty("liquibase.enabled", "false");
+            components.add(AmReadOnlyUpgraderService.class);
         }
 
         return components;
@@ -52,6 +54,11 @@ public class GatewayUpgraderConfiguration {
     @Bean
     public AmUpgraderService upgraderService(@Lazy @Qualifier("gatewayUpgraderRepository") UpgraderRepository upgraderRepository){
         return new AmUpgraderService(false, upgraderRepository, GatewayRepositoryScope.class);
+    }
+
+    @Bean
+    public AmReadOnlyUpgraderService amReadOnlyUpgraderService(@Lazy @Qualifier("gatewayUpgraderRepository") UpgraderRepository upgraderRepository) {
+        return new AmReadOnlyUpgraderService(upgraderRepository, GatewayRepositoryScope.class);
     }
 
     @Bean
