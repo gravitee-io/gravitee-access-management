@@ -27,6 +27,10 @@ yarn typecheck && yarn lint && yarn test
 
 Stop if the branch is not `spike/am-gamma`, the tree is not clean, or a command fails.
 
+If every dirty file belongs to one unit, a run of that unit stopped part way. Report the unit and the first step it
+lacks, then ask to resume it. A unit's files are `src/features/<unit>/`, `src/lib/api/<unit>.ts`, its mount line,
+its Playwright spec and its inventory entry.
+
 Read the unit entry. Stop if the unit does not exist, its `status` is `done`, or `blockers` is not empty.
 
 Check that these exist. Stop and write the missing one into the unit's `blockers` if not:
@@ -82,6 +86,11 @@ For each page, in the order list, create, detail:
 4. Add every dropped Angular behaviour in the brief, with section 2 of the rules.
 5. Order the branches: error, not found, empty, data.
 6. Use the console's `PageHeader`, `ConfirmDialog`, `ErrorPanel` and `NotFoundPanel`.
+7. Put a copy control outside every `<form>`. Graphene `CopyableText` renders a `<button>` with no `type`, so a click
+   submits the form that holds it.
+8. Read the plugin schema of a plugin page. Angular `json-schema-form` does not render a property without a `type`,
+   so its value is not in the configuration. Graphene `extractDefaults` adds that property's default. Remove such a
+   property from the schema before `adaptAmSchema`, as `configurationSchema()` in `src/features/bot-detection/` does.
 
 Check with a search over `src/features/<unit>/`: no `gamma-baby`, `useJson`, `send(`, `amUrls`, `/am/`,
 `useHasPermission`, `buildEnvPath`, `useScenario`, `@mirrors`, no permission string with `-` or `:`, no `interface`
@@ -113,6 +122,15 @@ Under `src/features/<unit>/__tests__/`, with the harness of `src/features/domain
 list renders with the call arguments, search, first use, save with the Angular payload fields, gated action, delete
 through the confirm dialog, and plain tests for any helper. Assert the Angular behaviour, never a prototype addition.
 
+For a plugin page, copy the real schema into the mock. Do not write a schema by hand. Get it from the local stack:
+
+```bash
+T=$(curl -s -X POST -u admin:adminadmin http://localhost:8093/management/auth/token | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+curl -s -H "Authorization: Bearer $T" http://localhost:8093/management/platform/plugins/<kind>/<pluginId>/schema
+```
+
+The platform path has no organization segment. Assert the parsed `configuration` with `toEqual`, so an extra key fails.
+
 ## Step 8: verify
 
 ```bash
@@ -123,14 +141,21 @@ Stop if one fails and you cannot fix it inside the unit.
 
 Then in the browser against the local stack: `yarn serve`, open each page, run list, search, create, edit, save and
 delete. Record the Management API calls per action. Run the same actions on the Angular console on `:4200` and compare
-method, path and payload fields. Write the result into the unit's `notes`.
+method, path and payload fields. `configuration` is a JSON string: parse it on both sides and compare its keys. Write
+the result into the unit's `notes`. Use the `ui-tester` skill with the maps `am-ui-next` and `am-console`. A 504 on
+`/gamma/organizations/DEFAULT/modules` means that `:8083` is down. It does not come from the page.
 
-Class B and above: run or add the unit's Playwright spec. Class D: run the `graphene-review` skill on the unit.
+Class B and above: run or add the unit's Playwright spec. Class D: run the `graphene-review` skill on the unit. Most
+units have no Angular spec. Then add `gravitee-am-test/playwright/tests/console-next/<unit>.spec.ts` in the shape of
+`console-next/resources.spec.ts`, with the helpers in `gravitee-am-test/api/commands/management/`. After a Save, wait
+for the PUT response. A disabled Save is not proof, because `SaveBar` disables Save while the save runs. Run it with
+`npx playwright test --project=console-next <spec>` from `gravitee-am-test/`.
 
 ## Step 9: record
 
 In `inventory.json`: each page `status: done` with `reactFiles`, or `out-of-scope` with `outOfScope`; the unit
-`status`, `angularCommit` from `git -C .. rev-parse --short=10 HEAD`, `notes`, empty `blockers`. Then:
+`status`, `angularCommit` from `git -C .. rev-parse --short=10 HEAD`, `notes`, empty `blockers`. Keep the survey note
+at the start of the unit `notes`, then a blank line, then the brief and the verification. Then:
 
 ```bash
 node scripts/migration/build-inventory.mjs
@@ -138,6 +163,7 @@ node scripts/migration/build-inventory.mjs
 
 ## Step 10: review and commit
 
+Run `git add -N` on the new files first, because `code-review` reads `git diff` and does not see untracked files.
 Run the `code-review` skill on the diff and fix what it finds. Run the `commit` skill with the subject
 `feat(ui-next): port <unit>`, the inventory files included. Push.
 
