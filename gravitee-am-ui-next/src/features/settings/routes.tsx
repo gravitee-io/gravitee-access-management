@@ -27,6 +27,7 @@ import { flowRoutes } from '../flows/routes';
 import { formRoutes } from '../forms/routes';
 import { identityProviderRoutes } from '../identity-providers/routes';
 import { loginRoutes } from '../login/routes';
+import { memberRoutes } from '../members/routes';
 import { resourceRoutes } from '../resources/routes';
 import { scopeRoutes } from '../scopes/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
@@ -45,6 +46,7 @@ const BUILT_SETTINGS = new Set([
     'scopes',
     'entrypoints',
     'login',
+    'members',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -77,6 +79,7 @@ export const domainSettingsRoutes = (
         {scopeRoutes}
         {entrypointRoutes}
         {loginRoutes}
+        {memberRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (

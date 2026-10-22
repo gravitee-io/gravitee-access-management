@@ -1,6 +1,6 @@
 {
     "generatedAt": "2026-10-22",
-    "angularCommit": "c878741fff",
+    "angularCommit": "8e738dcbc4",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -3444,9 +3444,11 @@
                     "resolvers": {
                         "members": "MembershipsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/members/DomainMembersPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -3461,12 +3463,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 22,
             "blockers": [],
-            "notes": "The prototype page builds on the shared memberships panel, which the kit provides.",
-            "angularCommit": null
+            "notes": "The prototype page builds on the shared memberships panel, which the kit provides.\n\nPages: settings/members → DomainMembersPage → src/features/members/DomainMembersPage.tsx.\nEndpoints: GET /organizations/:org/environments/:env/domains/:domain/members (MembershipsResolver, DomainService.members); POST .../domains/:domain/members (memberId, memberType, role), DomainService.addMember; DELETE .../domains/:domain/members/:membershipId, DomainService.removeMember. The MembershipsPanel kit part adds GET /organizations/:org/roles?type=DOMAIN and the organization user and group search, as the Angular memberships dialog does.\nPermissions: the route needs domain_member_list; Add member needs domain_member_create; the role select needs domain_member_update; the delete action needs domain_member_delete.\nLicence features: none.\nPrototype additions left out: none. The prototype's single canEdit flag becomes the three Angular permissions.\nAngular behaviour added back: none beyond the kit part.\nKit parts: MembershipsPanel with roleType DOMAIN and resourceLabel security domain.\nVerification, 2026-10-22. console-next Playwright: members.spec.ts, 2 tests, passes on :4201 against the local Management API. The list shows the primary owner with no role select and no delete action. Add member with an organization group and DOMAIN_USER: POST .../domains/:id/members {memberId, memberType: GROUP, role}, 2xx, the row appears and GET .../members lists it. Delete after the Delete member dialog: DELETE .../domains/:id/members/:membershipId, 2xx, the row goes and GET .../members no longer lists it. The Angular console was not running (:4200 is the Gamma console), so the calls were compared with DomainService.members, addMember and removeMember.",
+            "angularCommit": "8e738dcbc4"
         },
         {
             "id": "password-policies",

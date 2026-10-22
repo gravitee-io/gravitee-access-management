@@ -20,6 +20,7 @@ import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import { http } from './http';
 import type { Page } from './management-api';
+import type { MembershipsResponse, NewMembership } from './memberships';
 import type { ApiModel } from './model';
 import { type DomainRef, domainPath, environmentPath, searchParam } from './paths';
 
@@ -87,6 +88,19 @@ export type LoginSettings = ApiModel<LoginSettingsModel>;
 /** The Angular `DomainService.patchLoginSettings`. */
 export function patchDomainLoginSettings(ref: DomainRef, loginSettings: LoginSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ loginSettings }) });
+}
+
+export function listDomainMembers(ref: DomainRef): Promise<MembershipsResponse> {
+    return http<MembershipsResponse>(`${domainPath(ref)}/members`);
+}
+
+/** Adds a member to the domain, or changes the role of one. */
+export function addDomainMember(ref: DomainRef, member: NewMembership): Promise<unknown> {
+    return http<unknown>(`${domainPath(ref)}/members`, { method: 'POST', body: JSON.stringify(member) });
+}
+
+export function removeDomainMember(ref: DomainRef, membershipId: string): Promise<void> {
+    return http<void>(`${domainPath(ref)}/members/${membershipId}`, { method: 'DELETE' });
 }
 
 export function deleteDomain(ref: DomainRef): Promise<void> {
