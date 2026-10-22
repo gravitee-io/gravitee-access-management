@@ -167,6 +167,27 @@ Run `git add -N` on the new files first, because `code-review` reads `git diff` 
 Run the `code-review` skill on the diff and fix what it finds. Run the `commit` skill with the subject
 `feat(ui-next): port <unit>`, the inventory files included. Push.
 
+## Parallel runs
+
+Two runs can go at the same time: this session on `spike/am-gamma`, and one agent in a worktree.
+
+1. Create the worktree yourself from the repository root:
+   `git worktree add -b port/<unit> .claude/worktrees/port-<unit> spike/am-gamma`. Do not use the Agent
+   `isolation: "worktree"` option, because it cuts the branch from `master`, which has no `gravitee-am-ui-next/`.
+2. Tell the agent to work only in that worktree, to accept the branch `port/<unit>` at step 0, and to run
+   `yarn install` there first.
+3. Tell the agent to serve on port 4202 with `yarn serve --port 4202`. The `console-next` Playwright project is fixed
+   to :4201, so the agent writes its spec but does not run it.
+4. Tell the agent to run `build-inventory.mjs` with `--prototype /Users/stuart.clark/workspace/am-gamma/gamma-baby`,
+   because the default prototype path does not resolve from a nested worktree.
+5. Tell the agent to commit once on `port/<unit>`, and not to push or rebase.
+6. When the agent reports, rebase `port/<unit>` onto `spike/am-gamma` in the worktree. `settings/routes.tsx` conflicts
+   when both units add a `BUILT_SETTINGS` entry and a mount line: keep both. Run `build-inventory.mjs` again, then the
+   four checks.
+7. Run `git merge --ff-only port/<unit>` in the main checkout. Format and run the agent's Playwright spec on :4201,
+   then repeat any browser check the agent did not run after its last fix. Amend the commit with any fix, and push.
+8. Remove the worktree with `git worktree remove`, and delete the branch.
+
 ## Do not
 
 - Redesign beyond the prototype page.
