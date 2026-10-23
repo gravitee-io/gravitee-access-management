@@ -437,6 +437,42 @@ public class JdbcAuditReporterTest {
         assertReportEqualsTo(audit, test);
     }
 
+    @Test
+    public void testReporter_unstorableAuditIsDroppedAndOthersAreStored() {
+        Audit validBefore = buildRandomAudit("testReporter_unstorable");
+        Audit unstorable = buildRandomAudit("testReporter_unstorable");
+        // audit_entities.id is limited to 64 characters
+        unstorable.getTarget().setId("x".repeat(65));
+        Audit validAfter = buildRandomAudit("testReporter_unstorable");
+
+        // same batch (flush interval) for the 3 audits
+        auditReporter.report(validBefore);
+        auditReporter.report(unstorable);
+        auditReporter.report(validAfter);
+
+        waitBulkLoadFlush();
+
+        assertStored(validBefore);
+        assertStored(validAfter);
+        auditReporter.findById(unstorable.getReferenceType(), unstorable.getReferenceId(), unstorable.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS).assertNoErrors().assertNoValues();
+
+        // the reporter must keep storing the audits of the following batches
+        Audit nextBatch = buildRandomAudit("testReporter_unstorable");
+        auditReporter.report(nextBatch);
+
+        waitBulkLoadFlush();
+
+        assertStored(nextBatch);
+    }
+
+    private void assertStored(Audit audit) {
+        TestObserver<Audit> test = auditReporter.findById(audit.getReferenceType(), audit.getReferenceId(), audit.getId()).test();
+        test.awaitDone(10, TimeUnit.SECONDS);
+        test.assertNoErrors();
+        assertReportEqualsTo(audit, test);
+    }
+
     protected void assertReportEqualsTo(Audit audit, TestObserver<Audit> test) {
         test.assertValue(a -> a.getType().equals(audit.getType()));
         test.assertValue(a -> a.getTarget() != null);
