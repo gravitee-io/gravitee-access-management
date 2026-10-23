@@ -766,7 +766,7 @@
                             <path>
                                 <groupId>org.projectlombok</groupId>
                                 <artifactId>lombok</artifactId>
-                                <version>1.18.46</version>
+                                <version>1.18.48</version>
                             </path>
                             <path>
                                 <groupId>io.vertx</groupId>
