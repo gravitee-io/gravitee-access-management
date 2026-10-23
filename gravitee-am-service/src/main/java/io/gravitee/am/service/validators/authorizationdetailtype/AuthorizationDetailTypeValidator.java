@@ -43,6 +43,7 @@ public class AuthorizationDetailTypeValidator implements Validator<Authorization
         return validateType(element.getType())
                 .or(() -> validateName(element.getName()))
                 .or(() -> validateDescription(element.getDescription()))
+                .or(() -> validateExpiresIn(element.getExpiresIn()))
                 .or(() -> element.getSchema() == null ? Optional.empty() : schemaValidator.validate(element.getType(), element.getSchema()));
     }
 
@@ -72,6 +73,13 @@ public class AuthorizationDetailTypeValidator implements Validator<Authorization
     private static Optional<String> validateDescription(String description) {
         if (description != null && description.length() > DESCRIPTION_MAX_LENGTH) {
             return Optional.of("Description must be at most " + DESCRIPTION_MAX_LENGTH + " characters");
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<String> validateExpiresIn(Integer expiresIn) {
+        if (expiresIn != null && expiresIn < 1) {
+            return Optional.of("Expires in must be greater than 0");
         }
         return Optional.empty();
     }

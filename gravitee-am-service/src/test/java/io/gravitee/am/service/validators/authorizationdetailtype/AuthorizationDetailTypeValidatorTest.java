@@ -92,6 +92,29 @@ class AuthorizationDetailTypeValidatorTest {
         assertThat(validator.validate(type)).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1, Integer.MIN_VALUE})
+    void shouldRejectExpiresInBelowOne(int expiresIn) {
+        AuthorizationDetailType type = build(TYPE, null);
+        type.setExpiresIn(expiresIn);
+
+        assertThat(validator.validate(type)).contains("Expires in must be greater than 0");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 3600, Integer.MAX_VALUE})
+    void shouldAcceptPositiveExpiresIn(int expiresIn) {
+        AuthorizationDetailType type = build(TYPE, null);
+        type.setExpiresIn(expiresIn);
+
+        assertThat(validator.validate(type)).isEmpty();
+    }
+
+    @Test
+    void shouldAcceptMissingExpiresIn() {
+        assertThat(validator.validate(build(TYPE, null))).isEmpty();
+    }
+
     @Test
     void shouldAcceptValidSchema() {
         assertThat(validator.validate(build(TYPE, validSchema("")))).isEmpty();

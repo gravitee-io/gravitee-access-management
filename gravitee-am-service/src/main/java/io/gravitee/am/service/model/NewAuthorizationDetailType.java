@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.service.validators.authorizationdetailtype.AuthorizationDetailTypeValidator;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
@@ -61,5 +62,6 @@ public class NewAuthorizationDetailType {
     private boolean discovery;
 
     @Schema(description = "Expiration time for user consent, in seconds. Absent means the gateway default applies.")
+    @Min(value = 1, message = "Expires in must be greater than 0")
     private Integer expiresIn;
 }

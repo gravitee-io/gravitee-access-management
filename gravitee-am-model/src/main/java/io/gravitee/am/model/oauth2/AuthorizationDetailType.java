@@ -65,7 +65,7 @@ public class AuthorizationDetailType {
     @Schema(description = "Whether the type is advertised through discovery.")
     private boolean discovery;
 
-    @Schema(description = "Expiration time for user consent, in seconds. Absent means the gateway default applies.")
+    @Schema(description = "Expiration time for user consent, in seconds. Absent means the gateway default applies.", minimum = "1")
     private Integer expiresIn;
 
     @Schema(type = "java.lang.Long")

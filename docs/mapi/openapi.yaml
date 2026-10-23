@@ -13732,6 +13732,7 @@ components:
           format: int32
           description: "Expiration time for user consent, in seconds. Absent means\
             \ the gateway default applies."
+          minimum: 1
         id:
           type: string
         name:
@@ -15779,6 +15780,7 @@ components:
           format: int32
           description: "Expiration time for user consent, in seconds. Absent means\
             \ the gateway default applies."
+          minimum: 1
         name:
           type: string
           example: Payment initiation

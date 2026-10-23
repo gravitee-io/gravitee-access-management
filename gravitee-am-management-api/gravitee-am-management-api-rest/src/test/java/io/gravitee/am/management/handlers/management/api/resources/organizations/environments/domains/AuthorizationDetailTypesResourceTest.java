@@ -119,6 +119,17 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
     }
 
     @Test
+    void shouldRejectExpiresInBelowOne() {
+        stubDomain();
+
+        final Response response = post(Map.of("type", "payment_initiation", "name", "Payment initiation", "expiresIn", 0));
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Expires in must be greater than 0"));
+        verify(authorizationDetailTypeService, never()).create(any(), any(), any());
+    }
+
+    @Test
     void shouldRejectTypeOutsideVisibleAscii() {
         stubDomain();
 

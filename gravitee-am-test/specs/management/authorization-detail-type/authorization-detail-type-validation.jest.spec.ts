@@ -84,6 +84,12 @@ describe('Validation of name and description', () => {
   });
 });
 
+describe('Validation of expiresIn', () => {
+  it.each([0, -1])('should reject an expiresIn of %d', async (expiresIn) => {
+    await expectRejected(newType(uniqueType(), { expiresIn }), 'Expires in must be greater than 0');
+  });
+});
+
 describe('Validation of schema', () => {
   it(jira`should reject a schema longer than 65536 characters ${'AM-7923'}`, async () => {
     const type = uniqueType();
