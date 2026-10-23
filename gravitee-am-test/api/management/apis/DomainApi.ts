@@ -61,6 +61,9 @@ import {
   AuthenticationDeviceNotifier,
   AuthenticationDeviceNotifierFromJSON,
   AuthenticationDeviceNotifierToJSON,
+  AuthorizationDetailType,
+  AuthorizationDetailTypeFromJSON,
+  AuthorizationDetailTypeToJSON,
   AuthorizationEngine,
   AuthorizationEngineFromJSON,
   AuthorizationEngineToJSON,
@@ -163,6 +166,9 @@ import {
   NewAuthenticationDeviceNotifier,
   NewAuthenticationDeviceNotifierFromJSON,
   NewAuthenticationDeviceNotifierToJSON,
+  NewAuthorizationDetailType,
+  NewAuthorizationDetailTypeFromJSON,
+  NewAuthorizationDetailTypeToJSON,
   NewAuthorizationEngine,
   NewAuthorizationEngineFromJSON,
   NewAuthorizationEngineToJSON,
@@ -531,6 +537,13 @@ export interface CreateAuthenticationDeviceNotifierRequest {
   environmentId: string;
   domain: string;
   newAuthenticationDeviceNotifier: NewAuthenticationDeviceNotifier;
+}
+
+export interface CreateAuthorizationDetailTypeRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  newAuthorizationDetailType: NewAuthorizationDetailType;
 }
 
 export interface CreateAuthorizationEngineRequest {
@@ -1138,6 +1151,13 @@ export interface GetAuthenticationDeviceNotifierRequest {
   environmentId: string;
   domain: string;
   authDeviceNotifier: string;
+}
+
+export interface GetAuthorizationDetailTypeRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  authorizationDetailTypeId: string;
 }
 
 export interface GetBotDetectionRequest {
@@ -3466,6 +3486,85 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.createAuthenticationDeviceNotifierRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission on the specified organization
+   * Create an RFC 9396 authorization detail type on the security domain
+   */
+  async createAuthorizationDetailTypeRaw(
+    requestParameters: CreateAuthorizationDetailTypeRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<AuthorizationDetailType>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.newAuthorizationDetailType === null || requestParameters.newAuthorizationDetailType === undefined) {
+      throw new runtime.RequiredError(
+        'newAuthorizationDetailType',
+        'Required parameter requestParameters.newAuthorizationDetailType was null or undefined when calling createAuthorizationDetailType.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewAuthorizationDetailTypeToJSON(requestParameters.newAuthorizationDetailType),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationDetailTypeFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission on the specified organization
+   * Create an RFC 9396 authorization detail type on the security domain
+   */
+  async createAuthorizationDetailType(
+    requestParameters: CreateAuthorizationDetailTypeRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<AuthorizationDetailType> {
+    const response = await this.createAuthorizationDetailTypeRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**
@@ -9918,6 +10017,83 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<AuthenticationDeviceNotifier> {
     const response = await this.getAuthenticationDeviceNotifierRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission on the specified organization
+   * Get an authorization detail type
+   */
+  async getAuthorizationDetailTypeRaw(
+    requestParameters: GetAuthorizationDetailTypeRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<AuthorizationDetailType>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.authorizationDetailTypeId === null || requestParameters.authorizationDetailTypeId === undefined) {
+      throw new runtime.RequiredError(
+        'authorizationDetailTypeId',
+        'Required parameter requestParameters.authorizationDetailTypeId was null or undefined when calling getAuthorizationDetailType.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types/{authorizationDetailTypeId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'authorizationDetailTypeId'}}`, encodeURIComponent(String(requestParameters.authorizationDetailTypeId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationDetailTypeFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission on the specified organization
+   * Get an authorization detail type
+   */
+  async getAuthorizationDetailType(
+    requestParameters: GetAuthorizationDetailTypeRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<AuthorizationDetailType> {
+    const response = await this.getAuthorizationDetailTypeRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

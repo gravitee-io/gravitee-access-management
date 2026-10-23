@@ -76,7 +76,7 @@ export const setupDomainReporterFixture = async (): Promise<DomainReporterFixtur
       enabled: options.enabled ?? true,
       configuration: options.configuration ?? kafkaConfig(),
       attributeMappings: mappingsOf(options),
-      attributeMappingEventTypes: options.attributeMappingEventTypes,
+      attributeMappingEventTypes: options.attributeMappingEventTypes && new Set(options.attributeMappingEventTypes),
     });
     createdReporterIds.push(reporter.id);
     return reporter;
@@ -89,7 +89,7 @@ export const setupDomainReporterFixture = async (): Promise<DomainReporterFixtur
       enabled: options.enabled ?? reporter.enabled,
       configuration: options.configuration ?? kafkaConfig(),
       attributeMappings: mappingsOf(options),
-      attributeMappingEventTypes: options.attributeMappingEventTypes,
+      attributeMappingEventTypes: options.attributeMappingEventTypes && new Set(options.attributeMappingEventTypes),
     });
 
   const systemReporter = async (): Promise<Reporter> => {

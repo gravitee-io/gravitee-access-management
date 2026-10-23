@@ -336,6 +336,7 @@ export const PatchDomainRequiredPermissionsEnum = {
   DomainI18NDictionary: 'DOMAIN_I18N_DICTIONARY',
   DomainTheme: 'DOMAIN_THEME',
   DomainTrustDomain: 'DOMAIN_TRUST_DOMAIN',
+  DomainAuthorizationDetailType: 'DOMAIN_AUTHORIZATION_DETAIL_TYPE',
   Application: 'APPLICATION',
   ApplicationSettings: 'APPLICATION_SETTINGS',
   ApplicationIdentityProvider: 'APPLICATION_IDENTITY_PROVIDER',
