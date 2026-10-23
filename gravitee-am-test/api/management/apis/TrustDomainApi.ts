@@ -79,7 +79,7 @@ export interface UpdateTrustDomainRequest {
  */
 export class TrustDomainApi extends runtime.BaseAPI {
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization. Deprecated: use POST /trusted-domains instead.
    * Register a trust domain on the security domain
    */
   async createTrustDomainRaw(
@@ -146,7 +146,7 @@ export class TrustDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization. Deprecated: use POST /trusted-domains instead.
    * Register a trust domain on the security domain
    */
   async createTrustDomain(
@@ -380,7 +380,7 @@ export class TrustDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization. Deprecated: use PUT /trusted-domains/{trustedDomainId} instead.
    * Update a trust domain
    */
   async updateTrustDomainRaw(
@@ -455,7 +455,7 @@ export class TrustDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization. Deprecated: use PUT /trusted-domains/{trustedDomainId} instead.
    * Update a trust domain
    */
   async updateTrustDomain(

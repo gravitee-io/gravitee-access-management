@@ -79,6 +79,7 @@ import io.gravitee.am.service.AlertNotifierService;
 import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateCredentialService;
@@ -391,6 +392,9 @@ public class DomainServiceTest {
 
     @Mock
     private AuthorizationEngineService authorizationEngineService;
+
+    @Mock
+    private AuthorizationDetailTypeService authorizationDetailTypeService;
 
     @Mock
     private io.gravitee.am.service.CimdClientStateService cimdClientStateService;
@@ -1846,6 +1850,7 @@ public class DomainServiceTest {
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scopeService.deleteByDomain(domain)).thenReturn(complete());
         when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(authorizationDetailTypeService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1864,6 +1869,7 @@ public class DomainServiceTest {
         verify(authorizationEngineService, times(1)).deleteByDomain(DOMAIN_ID);
         // the scopes are control plane rows, so they go before the domain does rather than with the purge
         verify(scopeService, times(1)).deleteByDomain(domain);
+        verify(authorizationDetailTypeService, times(1)).deleteByDomain(DOMAIN_ID);
         // every store holding domain data in the data plane is purged, none of them named here
         dataPlaneCleanups.forEach(store -> verify(store, times(1)).purgeDataPlane(domain, null));
         // the purge audits what it drops, so it has to run while the domain's reporters are still there
@@ -1913,6 +1919,7 @@ public class DomainServiceTest {
         when(authorizationEngineService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scopeService.deleteByDomain(domain)).thenReturn(complete());
         when(botDetectionService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(authorizationDetailTypeService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
     }
 
     @Test

@@ -62,6 +62,7 @@ import io.gravitee.am.service.AlertNotifierService;
 import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.CertificateService;
@@ -302,6 +303,8 @@ public class DomainServiceImpl implements DomainService {
     private ServiceResourceService serviceResourceService;
     @Autowired
     private AuthorizationEngineService authorizationEngineService;
+    @Autowired
+    private AuthorizationDetailTypeService authorizationDetailTypeService;
     @Autowired
     private CimdClientStateService cimdClientStateService;
 
@@ -821,6 +824,7 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete scopes, which are control plane rows: their approvals go with the data plane
                             .andThen(scopeService.deleteByDomain(domain))
+                            .andThen(authorizationDetailTypeService.deleteByDomain(domainId))
                             // delete email templates
                             .andThen(emailTemplateService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(emailTemplate -> emailTemplateService.delete(emailTemplate.getId()))

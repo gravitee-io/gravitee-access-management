@@ -32,6 +32,7 @@ tags:
 - name: alerts
 - name: application
 - name: audit
+- name: authorization detail type
 - name: authorization engine
 - name: bot detection
 - name: certificate
@@ -3030,6 +3031,94 @@ paths:
       summary: Update an Authentication Device Notifier
       tags:
       - Authentication Device Notifier
+      - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types:
+    post:
+      description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE]\
+        \ permission on the specified organization"
+      operationId: createAuthorizationDetailType
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewAuthorizationDetailType"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationDetailType"
+          description: Authorization detail type successfully created
+        "400":
+          description: "Invalid authorization detail type, or one with the same type\
+            \ already exists"
+        "500":
+          description: Internal server error
+      summary: Create an RFC 9396 authorization detail type on the security domain
+      tags:
+      - authorization detail type
+      - domain
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types/{authorizationDetailTypeId}
+  : get:
+      description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission\
+        \ on the specified organization"
+      operationId: getAuthorizationDetailType
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authorizationDetailTypeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationDetailType"
+          description: Authorization detail type
+        "404":
+          description: Authorization detail type not found
+        "500":
+          description: Internal server error
+      summary: Get an authorization detail type
+      tags:
+      - authorization detail type
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines:
     get:
@@ -13755,6 +13844,48 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    AuthorizationDetailType:
+      type: object
+      properties:
+        createdAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        description:
+          type: string
+          maxLength: 1024
+        discovery:
+          type: boolean
+          description: Whether the type is advertised through discovery.
+        domain:
+          type: string
+        expiresIn:
+          type: integer
+          format: int32
+          description: "Expiration time for user consent, in seconds. Absent means\
+            \ the gateway default applies."
+          minimum: 1
+        id:
+          type: string
+        name:
+          type: string
+          maxLength: 255
+        schema:
+          type: string
+          description: "JSON Schema 2020-12 the authorization_details objects of this\
+            \ type must satisfy, returned exactly as submitted."
+          maxLength: 65536
+        type:
+          type: string
+          description: "Value of the \"type\" member of the authorization_details\
+            \ objects this entry describes. Unique within the domain, ignoring case."
+          example: payment_initiation
+          maxLength: 512
+          pattern: "^[\\x21-\\x7E]*$"
+        updatedAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
     AuthorizationEngine:
       type: object
       properties:
@@ -15765,6 +15896,47 @@ components:
       - configuration
       - name
       - type
+    NewAuthorizationDetailType:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1024
+          minLength: 0
+        discovery:
+          type: boolean
+          default: false
+          description: Whether the type is advertised through discovery.
+        expiresIn:
+          type: integer
+          format: int32
+          description: "Expiration time for user consent, in seconds. Absent means\
+            \ the gateway default applies."
+          minimum: 1
+        name:
+          type: string
+          example: Payment initiation
+          maxLength: 255
+          minLength: 0
+        schema:
+          type: string
+          description: JSON Schema 2020-12 the authorization_details objects of this
+            type must satisfy; a schema without "$schema" is read as 2020-12. Its
+            root must be an object whose "type" property is constant to this entry's
+            type and required. Only local references ("#...") are allowed.
+          maxLength: 65536
+          minLength: 0
+        type:
+          type: string
+          description: "Value of the \"type\" member of the authorization_details\
+            \ objects this entry describes. Unique within the domain, ignoring case."
+          example: payment_initiation
+          maxLength: 512
+          minLength: 0
+          pattern: "^[\\x21-\\x7E]*$"
+      required:
+      - name
+      - type
     NewAuthorizationEngine:
       type: object
       properties:
@@ -16872,6 +17044,7 @@ components:
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
             - DOMAIN_TRUST_DOMAIN
+            - DOMAIN_AUTHORIZATION_DETAIL_TYPE
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -17197,6 +17370,7 @@ components:
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
             - DOMAIN_TRUST_DOMAIN
+            - DOMAIN_AUTHORIZATION_DETAIL_TYPE
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -17431,6 +17605,7 @@ components:
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
             - DOMAIN_TRUST_DOMAIN
+            - DOMAIN_AUTHORIZATION_DETAIL_TYPE
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -17668,6 +17843,7 @@ components:
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
             - DOMAIN_TRUST_DOMAIN
+            - DOMAIN_AUTHORIZATION_DETAIL_TYPE
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
@@ -17835,6 +18011,7 @@ components:
             - DOMAIN_I18N_DICTIONARY
             - DOMAIN_THEME
             - DOMAIN_TRUST_DOMAIN
+            - DOMAIN_AUTHORIZATION_DETAIL_TYPE
             - APPLICATION
             - APPLICATION_SETTINGS
             - APPLICATION_IDENTITY_PROVIDER
