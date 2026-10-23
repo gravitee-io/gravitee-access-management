@@ -28,7 +28,9 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Test;
@@ -313,6 +315,36 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> u.getUsername().equals(updatedUser.getUsername()));
+    }
+
+    @Test
+    public void shouldNotDuplicateChildEntities_onConcurrentUpdates() {
+        User user = buildUser();
+        User userCreated = organizationUserRepository.create(user).blockingGet();
+
+        final int concurrentUpdates = 10;
+        for (int round = 0; round < 3; round++) {
+            Flowable.range(0, concurrentUpdates)
+                    .flatMapSingle(i -> organizationUserRepository.update(new User(userCreated)).subscribeOn(Schedulers.io()), false, concurrentUpdates)
+                    .test()
+                    .awaitDone(30, TimeUnit.SECONDS)
+                    .assertComplete()
+                    .assertNoErrors()
+                    .assertValueCount(concurrentUpdates);
+        }
+
+        TestObserver<User> testObserver = organizationUserRepository.findById(userCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getEmails().size() == user.getEmails().size());
+        testObserver.assertValue(u -> u.getPhotos().size() == user.getPhotos().size());
+        testObserver.assertValue(u -> u.getPhoneNumbers().size() == user.getPhoneNumbers().size());
+        testObserver.assertValue(u -> u.getIms().size() == user.getIms().size());
+        testObserver.assertValue(u -> u.getRoles().size() == user.getRoles().size());
+        testObserver.assertValue(u -> u.getDynamicRoles().size() == user.getDynamicRoles().size());
+        testObserver.assertValue(u -> u.getEntitlements().size() == user.getEntitlements().size());
+        testObserver.assertValue(u -> u.getAddresses().size() == user.getAddresses().size());
     }
 
     @Test
