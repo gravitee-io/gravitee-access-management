@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.PushedAuthorizationRequestMongo;
@@ -34,8 +33,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -57,9 +54,6 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
     public void init() {
         parCollection = mongoOperations.getCollection("pushed_authorization_requests", PushedAuthorizationRequestMongo.class);
         super.init(parCollection);
-
-        // expire after index
-        super.createIndex(parCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS)));
     }
 
     @Override

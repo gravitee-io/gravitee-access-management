@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management.upgrader;
+package io.gravitee.am.repository.mongodb.common;
 
 import io.gravitee.node.api.upgrader.Upgrader;
 import lombok.CustomLog;
@@ -33,20 +33,21 @@ public class MongoUpgraderConfiguration {
             // test mode
             return;
         }
-        var isUpgradeMode = config.get().getProperty("upgrade.mode", Boolean.class);
-        if (isUpgradeMode == null || isUpgradeMode) {
-            //expose Upgrader beans from the plugin to the parent context, so they're visible to the UpgraderService
-            Optional.ofNullable(pluginApplicationContext.getParent())
-                    .map(ConfigurableApplicationContext.class::cast)
-                    .map(ConfigurableApplicationContext::getBeanFactory)
-                    .ifPresent(parentBeanFactory -> registerUpgraders(pluginApplicationContext, parentBeanFactory));
-
-        }
-
+        //expose Upgrader beans from the plugin to the parent context, so they're visible to the UpgraderService
+        Optional.ofNullable(pluginApplicationContext.getParent())
+                .map(ConfigurableApplicationContext.class::cast)
+                .map(ConfigurableApplicationContext::getBeanFactory)
+                .ifPresent(parentBeanFactory -> registerUpgraders(pluginApplicationContext, parentBeanFactory));
     }
 
     private void registerUpgraders(ApplicationContext pluginContext, ConfigurableListableBeanFactory parentBeanFactory) {
-        pluginContext.getBeansOfType(Upgrader.class).forEach(parentBeanFactory::registerSingleton);
+        pluginContext.getBeansOfType(Upgrader.class).forEach((name, upgrader) -> {
+            if (upgrader instanceof AbstractMongoIndexUpgrader indexUpgrader && !indexUpgrader.isEnabled()) {
+                log.info("Mongo index management disabled for {} (ensureIndexOnStart=false)", indexUpgrader.getClass().getSimpleName());
+                return;
+            }
+            parentBeanFactory.registerSingleton(name, upgrader);
+        });
     }
 
 }

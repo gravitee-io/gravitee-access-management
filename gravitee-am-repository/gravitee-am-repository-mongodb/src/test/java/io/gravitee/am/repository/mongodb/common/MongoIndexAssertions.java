@@ -32,10 +32,9 @@ import static org.awaitility.Awaitility.await;
 /**
  * Assertions over the indexes a repository actually created in MongoDB.
  * <p>
- * Repositories declare their indexes in {@code @PostConstruct} hooks that delegate to
- * {@link MongoUtils#createIndex}, which subscribes without blocking and only logs failures. A node
- * whose index creation failed still starts and reports itself healthy, so reading the index
- * catalog back out of the database is the only way to know the declaration took effect.
+ * Indexes are declared in {@code mongodb/indexes/*.json} and applied by the index upgraders. A node
+ * whose index creation failed still starts, so reading the index catalog back out of the database
+ * is the only way to know the declaration took effect.
  *
  * @author GraviteeSource Team
  */

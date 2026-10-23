@@ -1,0 +1,56 @@
+{
+  "collections": {
+    "access_tokens": {
+      "indexes": [
+        { "name": "t1", "key": { "token": 1 } },
+        { "name": "c1", "key": { "client": 1 } },
+        { "name": "ac1", "key": { "authorization_code": 1 } },
+        { "name": "s1", "key": { "subject": 1 } },
+        { "name": "d1c1s1", "key": { "domain": 1, "client": 1, "subject": 1 } },
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "authorization_codes": {
+      "indexes": [
+        { "name": "c1", "key": { "code": 1 } },
+        { "name": "t1", "key": { "transactionId": 1 } },
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "ciba_auth_requests": {
+      "indexes": [
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "pushed_authorization_requests": {
+      "indexes": [
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "refresh_tokens": {
+      "indexes": [
+        { "name": "t1", "key": { "token": 1 } },
+        { "name": "s1", "key": { "subject": 1 } },
+        { "name": "d1c1s1", "key": { "domain": 1, "client": 1, "subject": 1 } },
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "request_objects": {
+      "indexes": [
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "tokens": {
+      "indexes": [
+        { "name": "t1", "key": { "jti": 1 } },
+        { "name": "c1", "key": { "client": 1 } },
+        { "name": "ac1", "key": { "authorization_code": 1 } },
+        { "name": "s1", "key": { "subject": 1 } },
+        { "name": "pj1", "key": { "parent_jtis": 1 } },
+        { "name": "d1c1s1", "key": { "domain": 1, "client": 1, "subject": 1 } },
+        { "name": "d1s1", "key": { "domain": 1, "subject": 1 } },
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    }
+  }
+}

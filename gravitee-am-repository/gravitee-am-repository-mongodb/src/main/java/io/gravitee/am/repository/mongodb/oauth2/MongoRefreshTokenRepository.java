@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
@@ -29,12 +28,9 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -58,13 +54,6 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     public void init() {
         refreshTokenCollection = mongoOperations.getCollection("refresh_tokens", RefreshTokenMongo.class);
         super.init(refreshTokenCollection);
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_TOKEN, 1), new IndexOptions().name("t1"));
-        indexes.put(new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
-        // expire after index
-        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
-        super.createIndex(refreshTokenCollection, indexes);
     }
 
     @Override

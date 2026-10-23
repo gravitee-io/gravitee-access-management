@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.UserId;
@@ -33,7 +32,6 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Filters.gt;
@@ -48,19 +46,6 @@ public class MongoTokenRepository extends AbstractOAuth2MongoRepository implemen
     public void init() {
         tokenCollection = mongoOperations.getCollection(COLLECTION_NAME, TokenMongo.class);
         super.init(tokenCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_JTI, 1), new IndexOptions().name("t1"));
-        indexes.put(new Document(FIELD_CLIENT, 1), new IndexOptions().name("c1"));
-        indexes.put(new Document(FIELD_AUTHORIZATION_CODE, 1), new IndexOptions().name("ac1"));
-        indexes.put(new Document(FIELD_SUBJECT, 1), new IndexOptions().name("s1"));
-        indexes.put(new Document(FIELD_PARENT_JTIS, 1), new IndexOptions().name("pj1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1c1s1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_SUBJECT, 1), new IndexOptions().name("d1s1"));
-        // expire after index
-        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
-
-        super.createIndex(tokenCollection, indexes);
     }
 
     @Override

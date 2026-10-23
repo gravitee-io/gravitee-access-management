@@ -1,0 +1,31 @@
+{
+  "collections": {
+    "auth_flow_ctx": {
+      "indexes": [
+        { "name": "t1v_1", "key": { "transactionId": 1, "version": -1 } },
+        { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "dp_action_lease": {
+      "indexes": [
+        { "name": "action_unique", "key": { "action": 1 }, "unique": true },
+        { "name": "expiry_ttl", "key": { "expiryDate": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "dp_email_staging": {
+      "indexes": [
+        { "name": "updated_at_idx", "key": { "referenceType": 1, "referenceId": 1, "updatedAt": 1 } }
+      ]
+    },
+    "rate_limit": {
+      "indexes": [
+        { "name": "u1c1f1", "key": { "userId": 1, "client": 1, "factorId": 1 } }
+      ]
+    },
+    "verify_attempt": {
+      "indexes": [
+        { "name": "u1c1f1", "key": { "userId": 1, "client": 1, "factorId": 1 } }
+      ]
+    }
+  }
+}
