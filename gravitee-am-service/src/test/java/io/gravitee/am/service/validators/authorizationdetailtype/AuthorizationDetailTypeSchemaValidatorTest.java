@@ -289,7 +289,7 @@ class AuthorizationDetailTypeSchemaValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"#/$defs/missing", "#/properties/type/const", "#anchor", "#/$defs/amount/type", "#/x-hidden"})
+    @ValueSource(strings = {"#/$defs/missing", "#/properties/type/const", "#anchor", "#/$defs/amount/type", "#/x-hidden", "#/%", "#/%zz", "#/$defs/%2"})
     void shouldRejectReferenceThatIsNotASubschema(String ref) {
         assertThat(validator.validate(TYPE, validSchema(
                 "\"x-hidden\": {\"type\": \"string\"}, \"$defs\": {\"amount\": {\"type\": \"string\"}, \"a\": {\"$ref\": \"" + ref + "\"}},")))

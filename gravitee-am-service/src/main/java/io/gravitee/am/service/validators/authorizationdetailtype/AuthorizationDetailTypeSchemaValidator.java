@@ -214,7 +214,12 @@ final class AuthorizationDetailTypeSchemaValidator {
          * The canonical pointer of a {@code #...} reference, or empty when its fragment is not a JSON pointer.
          */
         private static Optional<String> resolve(String ref) {
-            String fragment = URLDecoder.decode(ref.substring(1).replace("+", "%2B"), StandardCharsets.UTF_8);
+            String fragment;
+            try {
+                fragment = URLDecoder.decode(ref.substring(1).replace("+", "%2B"), StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException e) {
+                return Optional.empty();
+            }
             if (fragment.isEmpty()) {
                 return Optional.of(ROOT);
             }

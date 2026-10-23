@@ -85,7 +85,7 @@ describe('Validation of name and description', () => {
 });
 
 describe('Validation of expiresIn', () => {
-  it.each([0, -1])('should reject an expiresIn of %d', async (expiresIn) => {
+  it.each([0, -1])(jira`should reject an expiresIn of %d ${'AM-7922'}`, async (expiresIn) => {
     await expectRejected(newType(uniqueType(), { expiresIn }), 'Expires in must be greater than 0');
   });
 });
@@ -225,6 +225,7 @@ describe('Validation of schema references', () => {
   it.each([
     ['is missing', '#/$defs/missing'],
     ['points into an unknown keyword', '#/x-hidden'],
+    ['has a malformed escape', '#/%zz'],
   ])(jira`should reject a reference that %s ${'AM-7923'}`, async (_, ref) => {
     const type = uniqueType();
 
