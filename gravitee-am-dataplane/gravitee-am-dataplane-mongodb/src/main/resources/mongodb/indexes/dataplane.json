@@ -1,0 +1,104 @@
+{
+  "collections": {
+    "cert_credentials": {
+      "indexes": [
+        { "name": "rt1ri1uid1", "key": { "referenceType": 1, "referenceId": 1, "userId": 1 } },
+        { "name": "rt1ri1s1i1s1", "key": { "referenceType": 1, "referenceId": 1, "certificateSubjectDN": 1, "certificateIssuerDN": 1, "certificateSerialNumber": 1 } },
+        { "name": "rt1ri1ct1", "key": { "referenceType": 1, "referenceId": 1, "certificateThumbprint": 1 } }
+      ]
+    },
+    "cimd_client_states": {
+      "indexes": [
+        { "name": "di1ci1", "key": { "domainId": 1, "clientId": 1 }, "unique": true }
+      ]
+    },
+    "devices": {
+      "indexes": [
+        { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } },
+        { "name": "ri1rt1u1", "key": { "referenceId": 1, "referenceType": 1, "userId": 1 } },
+        { "name": "ri1rt1c1d1", "key": { "referenceId": 1, "referenceType": 1, "client": 1, "deviceId": 1 } },
+        { "name": "ri1rt1c1u1di1d1", "key": { "referenceId": 1, "referenceType": 1, "client": 1, "userId": 1, "deviceIdentifierId": 1, "deviceId": 1 } },
+        { "name": "e1", "key": { "expires_at": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "groups": {
+      "indexes": [
+        { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+      ],
+      "dropped": ["rt1ri1"]
+    },
+    "login_attempts": {
+      "indexes": [
+        { "name": "d1c1u1", "key": { "domain": 1, "client": 1, "username": 1 } },
+        { "name": "e1", "key": { "expireAt": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "password_histories": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "rt1ri1u1", "key": { "referenceType": 1, "referenceId": 1, "userId": 1 } }
+      ]
+    },
+    "scope_approvals": {
+      "indexes": [
+        { "name": "t1", "key": { "transactionId": 1 } },
+        { "name": "d1u1", "key": { "domain": 1, "userId": 1 } },
+        { "name": "d1c1u1s1", "key": { "domain": 1, "clientId": 1, "userId": 1, "scope": 1 } },
+        { "name": "d1ue1us1", "key": { "domain": 1, "userExternalId": 1, "userSource": 1 } },
+        { "name": "d1c1ue1us1s1", "key": { "domain": 1, "clientId": 1, "userExternalId": 1, "userSource": 1, "scope": 1 } },
+        { "name": "e1", "key": { "expiresAt": 1 }, "expireAfterSeconds": 0 }
+      ],
+      "dropped": ["d1c1u1"]
+    },
+    "uma_access_policies": {
+      "indexes": [
+        { "name": "d1", "key": { "domain": 1 } },
+        { "name": "r1", "key": { "resource": 1 } },
+        { "name": "d1r1", "key": { "domain": 1, "resource": 1 } },
+        { "name": "u_1", "key": { "updatedAt": -1 } }
+      ]
+    },
+    "uma_permission_ticket": {
+      "indexes": [
+        { "name": "e1", "key": { "expireAt": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "uma_resource_set": {
+      "indexes": [
+        { "name": "d1", "key": { "domain": 1 } },
+        { "name": "d1c1", "key": { "domain": 1, "clientId": 1 } },
+        { "name": "d1c1u1", "key": { "domain": 1, "clientId": 1, "userId": 1 } }
+      ]
+    },
+    "user_activities": {
+      "indexes": [
+        { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+        { "name": "rt1ri1uat1uak1", "key": { "referenceType": 1, "referenceId": 1, "userActivityType": 1, "userActivityKey": 1 } },
+        { "name": "c1", "key": { "createdAt": 1 } },
+        { "name": "e1", "key": { "expireAt": 1 }, "expireAfterSeconds": 0 }
+      ]
+    },
+    "users": {
+      "indexes": [
+        { "name": "rt1ri1e1", "key": { "referenceType": 1, "referenceId": 1, "email": 1 } },
+        { "name": "rt1ri1ae1", "key": { "referenceType": 1, "referenceId": 1, "additionalInformation.email": 1 } },
+        { "name": "rt1ri1d1", "key": { "referenceType": 1, "referenceId": 1, "displayName": 1 } },
+        { "name": "rt1ri1f1", "key": { "referenceType": 1, "referenceId": 1, "firstName": 1 } },
+        { "name": "rt1ri1l1", "key": { "referenceType": 1, "referenceId": 1, "lastName": 1 } },
+        { "name": "rt1ri1ext1s1", "key": { "referenceType": 1, "referenceId": 1, "externalId": 1, "source": 1 } },
+        { "name": "rt1ri1iu1ip1", "key": { "referenceType": 1, "referenceId": 1, "identities.username": 1, "identities.providerId": 1 } },
+        { "name": "rt1ri1u1s1_unique", "key": { "referenceType": 1, "referenceId": 1, "username": 1, "source": 1 }, "unique": true }
+      ],
+      "dropped": ["referenceType_1_referenceId_1_username_1_source_1", "rt1ri1u1s1", "rt1ri1", "rt1ri1ext1", "rt1ri1u1"]
+    },
+    "webauthn_credentials": {
+      "indexes": [
+        { "name": "rt1ri1uid1", "key": { "referenceType": 1, "referenceId": 1, "userId": 1 } },
+        { "name": "rt1ri1un1c_1", "key": { "referenceType": 1, "referenceId": 1, "username": 1, "createdAt": -1 } },
+        { "name": "rt1ri1cid1", "key": { "referenceType": 1, "referenceId": 1, "credentialId": 1 } },
+        { "name": "rt1ri1a1", "key": { "referenceType": 1, "referenceId": 1, "aaguid": 1 } }
+      ],
+      "dropped": ["rt1ri1", "rt1ri1un1"]
+    }
+  }
+}

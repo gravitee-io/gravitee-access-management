@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
@@ -64,14 +63,6 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
     public void init() {
         certificateCredentialsCollection = mongoDatabase.getCollection(COLLECTION_NAME, CertificateCredentialMongo.class);
         MongoUtils.init(certificateCredentialsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        // Index for findByUserId
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1uid1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SUBJECT_DN, 1).append(FIELD_CERTIFICATE_ISSUER_DN, 1).append(FIELD_CERTIFICATE_SERIAL_NUMBER, 1), new IndexOptions().name("rt1ri1s1i1s1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_THUMBPRINT, 1), new IndexOptions().name("rt1ri1ct1"));
-
-        super.createIndex(certificateCredentialsCollection, indexes);
     }
 
     @Override

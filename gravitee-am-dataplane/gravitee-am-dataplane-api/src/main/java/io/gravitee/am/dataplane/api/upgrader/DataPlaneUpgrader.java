@@ -22,8 +22,13 @@ public interface DataPlaneUpgrader {
 
     boolean upgrade(DataPlaneProvider dataPlaneProvider);
 
+    default String version() {
+        return null;
+    }
+
     default String identifier(DataPlaneDescription description) {
         String dataPlaneId = description.id();
-        return dataPlaneId + "_" + this.getClass().getName();
+        String identifier = dataPlaneId + "_" + this.getClass().getName();
+        return version() != null ? identifier + "_" + version() : identifier;
     }
 }

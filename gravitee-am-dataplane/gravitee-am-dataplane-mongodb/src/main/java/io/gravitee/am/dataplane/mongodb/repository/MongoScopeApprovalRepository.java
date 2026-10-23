@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
@@ -30,14 +29,10 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -45,9 +40,6 @@ import static com.mongodb.client.model.Filters.gte;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.DEFAULT_USER_FIELDS;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_EXTERNAL_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_SOURCE;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.dropIndexes;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.userIdMatches;
 
 /**
@@ -58,40 +50,16 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.userIdMatches;
 @Component
 public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoRepository implements ScopeApprovalRepository {
 
-    private static final String FIELD_TRANSACTION_ID = "transactionId";
-    private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_EXPIRES_AT = "expiresAt";
     private static final String FIELD_SCOPE = "scope";
     private MongoCollection<ScopeApprovalMongo> scopeApprovalsCollection;
-
-    private final Set<String> UNUSED_INDEXES = Set.of("d1c1u1");
 
 
     @PostConstruct
     public void init() {
         scopeApprovalsCollection = mongoDatabase.getCollection("scope_approvals", ScopeApprovalMongo.class);
         MongoUtils.init(scopeApprovalsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("d1u1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1u1s1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1)
-                .append(FIELD_USER_EXTERNAL_ID, 1)
-                .append(FIELD_USER_SOURCE, 1), new IndexOptions().name("d1ue1us1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1)
-                .append(FIELD_CLIENT_ID, 1)
-                .append(FIELD_USER_EXTERNAL_ID, 1)
-                .append(FIELD_USER_SOURCE, 1)
-                .append(FIELD_SCOPE, 1), new IndexOptions().name("d1c1ue1us1s1"));
-        // expire after index
-        indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
-
-        super.createIndex(scopeApprovalsCollection, indexes);
-        if (getEnsureIndexOnStart()) {
-            dropIndexes(scopeApprovalsCollection, UNUSED_INDEXES::contains).subscribe();
-        }
     }
 
     @Override

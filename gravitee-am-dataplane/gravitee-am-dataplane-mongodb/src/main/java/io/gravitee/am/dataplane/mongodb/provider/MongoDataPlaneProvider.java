@@ -31,7 +31,9 @@ import io.gravitee.am.dataplane.api.repository.ResourceRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgrader;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
+import io.gravitee.am.dataplane.mongodb.upgrader.MongoDataPlaneIndexUpgrader;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
@@ -44,6 +46,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
+
+import java.util.List;
 
 @CustomLog
 @Getter
@@ -103,9 +107,15 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Qualifier("dataPlaneMongoDatabase")
     private MongoDatabase mongoDatabase;
 
+    @Autowired
+    private MongoDataPlaneIndexUpgrader indexUpgrader;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
+        if (!indexUpgrader.isEnabled()) {
+            log.info("Mongo index management disabled for data plane {} (ensureIndexOnStart=false)", dataPlaneDescription.id());
+        }
     }
 
     @Override
@@ -123,6 +133,11 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Override
     public UpgraderRepository getUpgraderRepository() {
         return upgraderRepository;
+    }
+
+    @Override
+    public List<DataPlaneUpgrader> getUpgraders() {
+        return indexUpgrader.isEnabled() ? List.of(indexUpgrader) : List.of();
     }
 
     @Override
