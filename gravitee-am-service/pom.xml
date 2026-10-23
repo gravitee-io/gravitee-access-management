@@ -149,6 +149,13 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- JSON Schema validation (networknt), same version as the plugin configuration validators -->
+        <dependency>
+            <groupId>io.gravitee.json</groupId>
+            <artifactId>gravitee-json-validation</artifactId>
+            <version>${gravitee-plugin-validator.version}</version>
+        </dependency>
+
         <!-- Json patch -->
         <dependency>
             <groupId>com.github.fge</groupId>

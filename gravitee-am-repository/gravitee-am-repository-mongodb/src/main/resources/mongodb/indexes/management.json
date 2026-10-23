@@ -161,6 +161,16 @@
         "roles": ["rt1ri1"],
         "scopes": ["d1"]
       }
+    },
+    {
+      "id": "authorization-detail-types",
+      "create": {
+        "authorization_detail_types": [
+          { "name": "d1t1_ci", "key": { "domain": 1, "type": 1 }, "unique": true, "collation": { "locale": "en", "strength": 2 } },
+          { "name": "d1t1i1_ci", "key": { "domain": 1, "type": 1, "_id": 1 }, "collation": { "locale": "en", "strength": 2 } },
+          { "name": "d1n1i1_ci", "key": { "domain": 1, "name": 1, "_id": 1 }, "collation": { "locale": "en", "strength": 2 } }
+        ]
+      }
     }
   ]
 }

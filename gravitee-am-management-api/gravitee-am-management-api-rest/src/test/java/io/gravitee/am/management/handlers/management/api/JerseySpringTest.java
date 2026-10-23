@@ -36,6 +36,7 @@ import io.gravitee.am.management.service.trustdomain.TrustedIssuerProjection;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.validators.tokenexchange.TokenExchangeSettingsValidatorImpl;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.TrustDomainService;
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
@@ -356,6 +357,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected TrustDomainService trustDomainService;
+
+    @Autowired
+    protected AuthorizationDetailTypeService authorizationDetailTypeService;
 
     @Autowired
     protected AuthorizationEngineManager authorizationEngineManager;
@@ -783,6 +787,11 @@ public abstract class JerseySpringTest {
         @Bean
         public TrustDomainService trustDomainService() {
             return mock(TrustDomainService.class);
+        }
+
+        @Bean
+        public AuthorizationDetailTypeService authorizationDetailTypeService() {
+            return mock(AuthorizationDetailTypeService.class);
         }
 
         @Bean

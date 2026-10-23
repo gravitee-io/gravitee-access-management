@@ -502,6 +502,54 @@ public class RoleServiceTest {
                         Set.of(Acl.READ, Acl.LIST), role.getPermissionAcls().get(Permission.DATA_PLANE)));
     }
 
+    @Test
+    public void shouldGrantAuthorizationDetailTypesLikeScopes() {
+        List<Role> roles = new ArrayList<>(seededRoles(roleService::createOrUpdateSystemRoles));
+        roles.addAll(seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)));
+
+        Role domainUser = roles.stream()
+                .filter(role -> role.getName().equals(DefaultRole.DOMAIN_USER.name()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(Set.of(Acl.LIST), domainUser.getPermissionAcls().get(Permission.DOMAIN_AUTHORIZATION_DETAIL_TYPE));
+
+        List<Role> domainOwners = roles.stream()
+                .filter(role -> role.getName().endsWith("_OWNER"))
+                .filter(role -> role.getPermissionAcls().containsKey(Permission.DOMAIN_SCOPE))
+                .toList();
+        assertFalse("no owner role was seeded with the DOMAIN_SCOPE permission", domainOwners.isEmpty());
+        domainOwners.forEach(role ->
+                assertEquals("unexpected DOMAIN_AUTHORIZATION_DETAIL_TYPE acls on " + role.getName(),
+                        Acl.all(), role.getPermissionAcls().get(Permission.DOMAIN_AUTHORIZATION_DETAIL_TYPE)));
+    }
+
+    @Test
+    public void shouldAddAuthorizationDetailTypesToExistingDefaultRoles() {
+        when(roleRepository.findByNameAndAssignableType(any(), any(), anyString(), any())).thenAnswer(invocation -> {
+            Role existing = new Role();
+            existing.setId("existing-" + invocation.getArgument(2));
+            existing.setReferenceType(invocation.getArgument(0));
+            existing.setReferenceId(invocation.getArgument(1));
+            existing.setName(invocation.getArgument(2));
+            existing.setAssignableType(invocation.getArgument(3));
+            existing.setDefaultRole(true);
+            return Maybe.just(existing);
+        });
+        when(roleRepository.update(any(Role.class))).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
+
+        roleService.createDefaultRoles(ORGANIZATION_ID).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        ArgumentCaptor<Role> updated = ArgumentCaptor.forClass(Role.class);
+        verify(roleRepository, atLeastOnce()).update(updated.capture());
+        Role domainUser = updated.getAllValues().stream()
+                .filter(role -> role.getName().equals(DefaultRole.DOMAIN_USER.name()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("existing-" + DefaultRole.DOMAIN_USER.name(), domainUser.getId());
+        assertEquals(Set.of(Acl.LIST), domainUser.getPermissionAcls().get(Permission.DOMAIN_AUTHORIZATION_DETAIL_TYPE));
+    }
+
     /** Runs a seeding call against an empty repository and returns the roles it created. */
     private List<Role> seededRoles(Supplier<Completable> seeding) {
         when(roleRepository.findByNameAndAssignableType(any(), any(), anyString(), any())).thenReturn(Maybe.empty());

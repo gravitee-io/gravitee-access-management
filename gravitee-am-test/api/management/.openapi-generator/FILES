@@ -2,6 +2,7 @@ apis/AlertsApi.ts
 apis/ApplicationApi.ts
 apis/AuditApi.ts
 apis/AuthenticationDeviceNotifierApi.ts
+apis/AuthorizationDetailTypeApi.ts
 apis/AuthorizationEngineApi.ts
 apis/BotDetectionApi.ts
 apis/CertificateApi.ts
@@ -74,6 +75,7 @@ models/AuditEntity.ts
 models/AuditOutcome.ts
 models/AuditPage.ts
 models/AuthenticationDeviceNotifier.ts
+models/AuthorizationDetailType.ts
 models/AuthorizationEngine.ts
 models/BotDetection.ts
 models/BulkCreateOrganizationUser.ts
@@ -153,6 +155,7 @@ models/NewAccountAccessToken.ts
 models/NewAlertNotifier.ts
 models/NewApplication.ts
 models/NewAuthenticationDeviceNotifier.ts
+models/NewAuthorizationDetailType.ts
 models/NewAuthorizationEngine.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts

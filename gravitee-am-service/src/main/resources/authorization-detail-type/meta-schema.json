@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gravitee:am:authorization-detail-type:meta-schema",
+  "$comment": "\"message\" holds the error reported for each keyword it names.",
+  "allOf": [
+    { "$ref": "urn:gravitee:am:authorization-detail-type:meta-schema:subschema" },
+    {
+      "required": ["type"],
+      "message": { "required": "Schema must declare \"type\": \"object\" at its root" },
+      "properties": {
+        "type": {
+          "const": "object",
+          "message": { "const": "Schema must declare \"type\": \"object\" at its root" }
+        }
+      }
+    },
+    {
+      "$comment": "The validator checks that the constant equals the type.",
+      "required": ["properties", "required"],
+      "message": { "required": "Schema must constrain \"type\": its root must declare properties.type.const and list \"type\" in required" },
+      "properties": {
+        "required": {
+          "contains": { "const": "type" },
+          "message": { "contains": "Schema must constrain \"type\": its root must list \"type\" in required" }
+        },
+        "properties": {
+          "required": ["type"],
+          "message": { "required": "Schema must constrain \"type\": its root must declare properties.type.const" },
+          "properties": {
+            "type": {
+              "required": ["const"],
+              "message": { "required": "Schema must constrain \"type\": its root must declare properties.type.const" },
+              "properties": {
+                "const": {
+                  "type": "string",
+                  "message": { "type": "Schema must constrain \"type\": properties.type.const must be a string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "subschema": {
+      "$id": "urn:gravitee:am:authorization-detail-type:meta-schema:subschema",
+      "$comment": "The \"meta\" dynamic anchor makes the 2020-12 meta-schema apply this resource to every nested subschema.",
+      "$dynamicAnchor": "meta",
+      "allOf": [{ "$ref": "https://json-schema.org/draft/2020-12/schema" }],
+      "properties": {
+        "$schema": {
+          "const": "https://json-schema.org/draft/2020-12/schema",
+          "message": { "const": "Schema must use JSON Schema 2020-12 ($schema must be absent or \"https://json-schema.org/draft/2020-12/schema\")" }
+        },
+        "$ref": {
+          "pattern": "^#",
+          "message": { "pattern": "Schema must only contain local references (starting with \"#\")" }
+        },
+        "$id": { "not": {}, "message": { "not": "Schema must not declare \"$id\"" } },
+        "$anchor": { "not": {}, "message": { "not": "Schema must not declare \"$anchor\"" } },
+        "$dynamicAnchor": { "not": {}, "message": { "not": "Schema must not declare \"$dynamicAnchor\"" } },
+        "$dynamicRef": { "not": {}, "message": { "not": "Schema must not declare \"$dynamicRef\"" } },
+        "$vocabulary": { "not": {}, "message": { "not": "Schema must not declare \"$vocabulary\"" } },
+        "$recursiveAnchor": { "not": {}, "message": { "not": "Schema must not declare \"$recursiveAnchor\"" } },
+        "$recursiveRef": { "not": {}, "message": { "not": "Schema must not declare \"$recursiveRef\"" } },
+        "definitions": { "not": {}, "message": { "not": "Schema must declare reusable subschemas in \"$defs\", not \"definitions\"" } },
+        "dependencies": { "not": {}, "message": { "not": "Schema must use \"dependentSchemas\" or \"dependentRequired\", not \"dependencies\"" } }
+      }
+    }
+  }
+}
