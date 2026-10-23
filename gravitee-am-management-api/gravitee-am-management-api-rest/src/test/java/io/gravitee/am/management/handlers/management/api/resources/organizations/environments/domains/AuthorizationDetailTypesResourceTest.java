@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
@@ -33,11 +34,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -204,6 +209,108 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
         final Response response = post(Map.of("type", "payment_initiation", "name", "Payment initiation"));
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    void shouldListWithoutSchema() {
+        AuthorizationDetailType listed = AuthorizationDetailType.builder()
+                .id("adt-1")
+                .domain(DOMAIN_ID)
+                .type("payment_initiation")
+                .name("Payment initiation")
+                .schema("{\"type\":\"object\"}")
+                .discovery(true)
+                .expiresIn(3600)
+                .build();
+        doReturn(Single.just(new Page<>(List.of(listed), 1, 3))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 1, 2);
+
+        final Response response = list(Map.of("page", 1, "size", 2));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        Map<String, Object> body = response.readEntity(Map.class);
+        assertEquals(1, body.get("currentPage"));
+        assertEquals(3, body.get("totalCount"));
+        List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
+        assertEquals(1, data.size());
+        assertEquals("adt-1", data.get(0).get("id"));
+        assertEquals("payment_initiation", data.get(0).get("type"));
+        assertEquals(3600, data.get(0).get("expiresIn"));
+        assertFalse(data.get(0).containsKey("schema"));
+    }
+
+    @Test
+    void shouldListFirstPageOfFiftyByDefault() {
+        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+
+        final Response response = list(Map.of());
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        verify(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+    }
+
+    @Test
+    void shouldCapPageSizeAtFifty() {
+        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+
+        final Response response = list(Map.of("size", 100));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        verify(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+    }
+
+    @Test
+    void shouldSearchWhenQueryIsGiven() {
+        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).search(DOMAIN_ID, "payment*", 0, 50);
+
+        final Response response = list(Map.of("q", "payment*"));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        verify(authorizationDetailTypeService).search(DOMAIN_ID, "payment*", 0, 50);
+        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    void shouldListAllWhenQueryIsBlank() {
+        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+
+        final Response response = list(Map.of("q", " "));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        verify(authorizationDetailTypeService, never()).search(anyString(), anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    void shouldRejectNegativePage() {
+        final Response response = list(Map.of("page", -1));
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    void shouldRejectSizeBelowOne() {
+        final Response response = list(Map.of("size", 0));
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    void shouldRejectListWithoutPermission() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SCOPE);
+
+        final Response response = list(Map.of());
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+    }
+
+    private Response list(Map<String, Object> queryParams) {
+        var target = target("domains").path(DOMAIN_ID).path("authorization-detail-types");
+        for (Map.Entry<String, Object> param : queryParams.entrySet()) {
+            target = target.queryParam(param.getKey(), param.getValue());
+        }
+        return target.request().get();
     }
 
     private Response post(Map<String, Object> body) {

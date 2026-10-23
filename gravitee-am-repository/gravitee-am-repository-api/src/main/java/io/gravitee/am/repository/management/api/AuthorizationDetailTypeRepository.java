@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
@@ -35,6 +36,17 @@ public interface AuthorizationDetailTypeRepository extends CrudRepository<Author
     Single<AuthorizationDetailType> create(AuthorizationDetailType item);
 
     Flowable<AuthorizationDetailType> findByDomain(String domain);
+
+    /**
+     * Orders by {@code type}, ignoring case.
+     */
+    Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size);
+
+    /**
+     * Matches {@code type} ignoring case, where {@code *} stands for any characters and every other character is literal.
+     * Orders by {@code type}, ignoring case.
+     */
+    Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size);
 
     Maybe<AuthorizationDetailType> findByDomainAndId(String domain, String id);
 

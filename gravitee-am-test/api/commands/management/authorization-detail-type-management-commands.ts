@@ -16,6 +16,7 @@
 import { getAuthorizationDetailTypeApi } from './service/utils';
 import { ApiResponse } from '../../management/runtime';
 import { AuthorizationDetailType } from '@management-models/AuthorizationDetailType';
+import { AuthorizationDetailTypePage } from '@management-models/AuthorizationDetailTypePage';
 import { NewAuthorizationDetailType } from '@management-models/NewAuthorizationDetailType';
 
 export const createAuthorizationDetailType = (
@@ -52,4 +53,22 @@ export const getAuthorizationDetailType = (
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     authorizationDetailTypeId,
+  });
+
+export interface ListAuthorizationDetailTypesParams {
+  page?: number;
+  size?: number;
+  q?: string;
+}
+
+export const listAuthorizationDetailTypes = (
+  domainId: string,
+  accessToken: string,
+  params: ListAuthorizationDetailTypesParams = {},
+): Promise<AuthorizationDetailTypePage> =>
+  getAuthorizationDetailTypeApi(accessToken).listAuthorizationDetailTypes({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    ...params,
   });
