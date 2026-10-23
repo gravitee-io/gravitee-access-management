@@ -19,6 +19,7 @@ import com.mongodb.ErrorCategory;
 import com.mongodb.MongoWriteException;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
@@ -31,12 +32,18 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.regex;
 
 /**
  * @author GraviteeSource Team
@@ -69,6 +76,40 @@ public class MongoAuthorizationDetailTypeRepository extends AbstractManagementMo
         return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_DOMAIN, domain))).collation(CASE_INSENSITIVE_COLLATION))
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size) {
+        return findPage(eq(FIELD_DOMAIN, domain), page, size);
+    }
+
+    @Override
+    public Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size) {
+        Bson typeFilter = query.contains("*")
+                ? regex(FIELD_TYPE, toAnchoredPattern(query))
+                : eq(FIELD_TYPE, query);
+        return findPage(and(eq(FIELD_DOMAIN, domain), typeFilter), page, size);
+    }
+
+    private Single<Page<AuthorizationDetailType>> findPage(Bson filter, int page, int size) {
+        Single<Long> count = Observable.fromPublisher(collection.countDocuments(filter, countOptionsWithCollation())).first(0L);
+        Single<List<AuthorizationDetailType>> data = Observable.fromPublisher(withMaxTime(collection.find(filter))
+                        .collation(CASE_INSENSITIVE_COLLATION)
+                        .sort(new Document(FIELD_TYPE, 1))
+                        .skip(size * page)
+                        .limit(size))
+                .map(this::convert)
+                .toList();
+        return Single.zip(count, data, (total, types) -> new Page<>(types, page, total))
+                .observeOn(Schedulers.computation());
+    }
+
+    private static Pattern toAnchoredPattern(String query) {
+        // -1 keeps the empty parts around leading and trailing wildcards
+        String regex = Arrays.stream(query.split("\\*+", -1))
+                .map(part -> part.isEmpty() ? "" : Pattern.quote(part))
+                .collect(Collectors.joining(".*", "^", "$"));
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
 
     @Override

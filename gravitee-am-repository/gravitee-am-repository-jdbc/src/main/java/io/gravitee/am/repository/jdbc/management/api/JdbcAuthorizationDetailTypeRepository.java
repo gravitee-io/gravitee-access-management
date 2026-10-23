@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthorizationDetailType;
@@ -36,8 +37,11 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -72,6 +76,10 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
             COL_UPDATED_AT
     );
 
+    private static final String FROM_DOMAIN = " FROM " + JdbcAuthorizationDetailType.TABLE_NAME + " WHERE " + COL_DOMAIN + " = :domain";
+    private static final String ORDER_BY_TYPE = "UPPER(" + COL_TYPE + ")";
+    private static final char LIKE_ESCAPE = '!';
+
     private String insertStatement;
     private String updateStatement;
 
@@ -100,6 +108,57 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
         LOGGER.debug("findByDomain({})", domain);
         return authorizationDetailTypeRepository.findByDomain(domain)
                 .map(this::toEntity);
+    }
+
+    @Override
+    public Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size) {
+        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
+        return findPage(FROM_DOMAIN, Map.of("domain", domain), page, size);
+    }
+
+    @Override
+    public Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size) {
+        LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
+        String upperQuery = query.toUpperCase(Locale.ROOT);
+        String condition = query.contains("*")
+                ? " AND UPPER(" + COL_TYPE + ") LIKE :value ESCAPE '" + LIKE_ESCAPE + "'"
+                : " AND UPPER(" + COL_TYPE + ") = :value";
+        String value = query.contains("*")
+                ? escapeLike(upperQuery).replaceAll("\\*+", "%")
+                : upperQuery;
+        return findPage(FROM_DOMAIN + condition, Map.of("domain", domain, "value", value), page, size);
+    }
+
+    /**
+     * Escapes the LIKE special characters of every supported database, including SQL Server's {@code [}.
+     */
+    private static String escapeLike(String value) {
+        StringBuilder escaped = new StringBuilder(value.length());
+        for (char c : value.toCharArray()) {
+            if (c == LIKE_ESCAPE || c == '%' || c == '_' || c == '[') {
+                escaped.append(LIKE_ESCAPE);
+            }
+            escaped.append(c);
+        }
+        return escaped.toString();
+    }
+
+    private Single<Page<AuthorizationDetailType>> findPage(String fromWhere, Map<String, String> parameters, int page, int size) {
+        DatabaseClient.GenericExecuteSpec select = getTemplate().getDatabaseClient()
+                .sql("SELECT *" + fromWhere + databaseDialectHelper.buildPagingClause(ORDER_BY_TYPE, true, page, size));
+        DatabaseClient.GenericExecuteSpec count = getTemplate().getDatabaseClient().sql("SELECT COUNT(*)" + fromWhere);
+        for (Map.Entry<String, String> parameter : parameters.entrySet()) {
+            select = select.bind(parameter.getKey(), parameter.getValue());
+            count = count.bind(parameter.getKey(), parameter.getValue());
+        }
+        Single<List<AuthorizationDetailType>> data = fluxToFlowable(select
+                        .map((row, rowMetadata) -> rowMapper.read(JdbcAuthorizationDetailType.class, row))
+                        .all())
+                .map(this::toEntity)
+                .toList();
+        Single<Long> total = monoToSingle(count.map((row, rowMetadata) -> row.get(0, Long.class)).first());
+        return Single.zip(data, total, (types, totalCount) -> new Page<>(types, page, totalCount))
+                .observeOn(Schedulers.computation());
     }
 
     @Override

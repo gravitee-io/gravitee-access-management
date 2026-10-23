@@ -58,6 +58,7 @@ export * from './AuditOutcome';
 export * from './AuditPage';
 export * from './AuthenticationDeviceNotifier';
 export * from './AuthorizationDetailType';
+export * from './AuthorizationDetailTypePage';
 export * from './AuthorizationEngine';
 export * from './BotDetection';
 export * from './BulkCreateOrganizationUser';

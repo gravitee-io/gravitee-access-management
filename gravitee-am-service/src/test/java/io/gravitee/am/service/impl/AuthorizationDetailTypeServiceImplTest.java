@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -50,6 +51,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -216,6 +218,36 @@ class AuthorizationDetailTypeServiceImplTest {
         when(repository.findByDomainAndId("other-domain", "id-1")).thenReturn(Maybe.empty());
 
         service.findById("other-domain", "id-1").test().assertComplete().assertNoValues();
+    }
+
+    @Test
+    void shouldFindPageByDomain() {
+        Page<AuthorizationDetailType> page = new Page<>(List.of(AuthorizationDetailType.builder().id("id-1").build()), 1, 3);
+        when(repository.findByDomain(DOMAIN_ID, 1, 2)).thenReturn(Single.just(page));
+
+        service.findByDomain(DOMAIN_ID, 1, 2).test().assertValue(page);
+    }
+
+    @Test
+    void shouldWrapFindPageFailure() {
+        when(repository.findByDomain(DOMAIN_ID, 0, 50)).thenReturn(Single.error(new RuntimeException("boom")));
+
+        service.findByDomain(DOMAIN_ID, 0, 50).test().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    void shouldSearch() {
+        Page<AuthorizationDetailType> page = new Page<>(List.of(AuthorizationDetailType.builder().id("id-1").build()), 0, 1);
+        when(repository.search(DOMAIN_ID, "payment*", 0, 50)).thenReturn(Single.just(page));
+
+        service.search(DOMAIN_ID, "payment*", 0, 50).test().assertValue(page);
+    }
+
+    @Test
+    void shouldWrapSearchFailure() {
+        when(repository.search(DOMAIN_ID, "payment*", 0, 50)).thenReturn(Single.error(new RuntimeException("boom")));
+
+        service.search(DOMAIN_ID, "payment*", 0, 50).test().assertError(TechnicalManagementException.class);
     }
 
     @Test

@@ -3033,6 +3033,65 @@ paths:
       - Authentication Device Notifier
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types:
+    get:
+      description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
+        \ on the specified organization. Types are ordered by type, ignoring case.\
+        \ Each returned type omits its schema; read the type by its id to get it."
+      operationId: listAuthorizationDetailTypes
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - description: "Page number, starting at 0"
+        in: query
+        name: page
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          minimum: 0
+      - description: "Page size, at most 50; a larger value is reduced to 50"
+        in: query
+        name: size
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+      - description: "Type to match, ignoring case; * matches any characters"
+        in: query
+        name: q
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationDetailTypePage"
+          description: A page of the domain's authorization detail types
+        "400":
+          description: Invalid page or size
+        "500":
+          description: Internal server error
+      summary: List the authorization detail types of a security domain
+      tags:
+      - authorization detail type
+      - domain
     post:
       description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission\
         \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission\
@@ -13754,6 +13813,19 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    AuthorizationDetailTypePage:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          format: int32
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizationDetailType"
+        totalCount:
+          type: integer
+          format: int64
     AuthorizationEngine:
       type: object
       properties:

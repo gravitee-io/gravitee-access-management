@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
@@ -24,6 +25,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.UUID.randomUUID;
@@ -205,6 +207,109 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
 
         assertEquals(0L, (long) repository.findByDomain(domain).count().blockingGet());
         assertFalse(repository.findById(other.getId()).isEmpty().blockingGet());
+    }
+
+    @Test
+    public void shouldFindPageByDomainOrderedByTypeIgnoringCase() {
+        String domain = randomUUID().toString();
+        createAll(domain, "files_access", "Payment_Status", "account_information");
+        repository.create(build(randomUUID().toString(), "other_domain")).blockingGet();
+
+        Page<AuthorizationDetailType> first = repository.findByDomain(domain, 0, 2).blockingGet();
+        Page<AuthorizationDetailType> second = repository.findByDomain(domain, 1, 2).blockingGet();
+
+        assertEquals(List.of("account_information", "files_access"), types(first));
+        assertEquals(0, first.getCurrentPage());
+        assertEquals(3L, first.getTotalCount());
+        assertEquals(List.of("Payment_Status"), types(second));
+        assertEquals(1, second.getCurrentPage());
+    }
+
+    @Test
+    public void shouldFindEmptyPageBeyondTheLast() {
+        String domain = randomUUID().toString();
+        createAll(domain, "payment_initiation");
+
+        Page<AuthorizationDetailType> page = repository.findByDomain(domain, 5, 2).blockingGet();
+
+        assertTrue(page.getData().isEmpty());
+        assertEquals(1L, page.getTotalCount());
+    }
+
+    @Test
+    public void shouldFindEmptyPageForDomainWithoutTypes() {
+        Page<AuthorizationDetailType> page = repository.findByDomain(randomUUID().toString(), 0, 50).blockingGet();
+
+        assertTrue(page.getData().isEmpty());
+        assertEquals(0L, page.getTotalCount());
+    }
+
+    @Test
+    public void shouldSearchExactTypeIgnoringCase() {
+        String domain = randomUUID().toString();
+        createAll(domain, "payment_initiation", "payment_status");
+        repository.create(build(randomUUID().toString(), "payment_initiation")).blockingGet();
+
+        Page<AuthorizationDetailType> page = repository.search(domain, "PAYMENT_Initiation", 0, 50).blockingGet();
+
+        assertEquals(List.of("payment_initiation"), types(page));
+        assertEquals(1L, page.getTotalCount());
+    }
+
+    @Test
+    public void shouldSearchWithWildcard() {
+        String domain = randomUUID().toString();
+        createAll(domain, "payment_initiation", "Payment_Status", "files_access", "my_payment");
+
+        Page<AuthorizationDetailType> page = repository.search(domain, "payment*", 0, 50).blockingGet();
+
+        assertEquals(List.of("payment_initiation", "Payment_Status"), types(page));
+        assertEquals(2L, page.getTotalCount());
+    }
+
+    @Test
+    public void shouldSearchWithWildcardInTheMiddle() {
+        String domain = randomUUID().toString();
+        createAll(domain, "payment_initiation", "payment_status", "payment_initiation_v2");
+
+        Page<AuthorizationDetailType> page = repository.search(domain, "pay*initiation", 0, 50).blockingGet();
+
+        assertEquals(List.of("payment_initiation"), types(page));
+    }
+
+    @Test
+    public void shouldPageSearchResults() {
+        String domain = randomUUID().toString();
+        createAll(domain, "payment_c", "payment_a", "payment_b", "files_access");
+
+        Page<AuthorizationDetailType> page = repository.search(domain, "payment*", 1, 2).blockingGet();
+
+        assertEquals(List.of("payment_c"), types(page));
+        assertEquals(1, page.getCurrentPage());
+        assertEquals(3L, page.getTotalCount());
+    }
+
+    @Test
+    public void shouldTakeLikeAndRegexCharactersLiterally() {
+        String domain = randomUUID().toString();
+        createAll(domain, "payment_initiation", "paymentXinitiation", "a%b", "aXb", "a[b]", "ab", "a.b", "a\\b");
+
+        assertEquals(List.of("payment_initiation"), types(repository.search(domain, "payment_initiation", 0, 50).blockingGet()));
+        assertEquals(List.of("payment_initiation"), types(repository.search(domain, "payment_*", 0, 50).blockingGet()));
+        assertEquals(List.of("a%b"), types(repository.search(domain, "a%*", 0, 50).blockingGet()));
+        assertEquals(List.of("a[b]"), types(repository.search(domain, "a[b]*", 0, 50).blockingGet()));
+        assertEquals(List.of("a.b"), types(repository.search(domain, "a.*", 0, 50).blockingGet()));
+        assertEquals(List.of("a\\b"), types(repository.search(domain, "a\\*", 0, 50).blockingGet()));
+    }
+
+    private void createAll(String domain, String... types) {
+        for (String type : types) {
+            repository.create(build(domain, type)).blockingGet();
+        }
+    }
+
+    private static List<String> types(Page<AuthorizationDetailType> page) {
+        return page.getData().stream().map(AuthorizationDetailType::getType).toList();
     }
 
     private static AuthorizationDetailType build(String domain, String type) {
