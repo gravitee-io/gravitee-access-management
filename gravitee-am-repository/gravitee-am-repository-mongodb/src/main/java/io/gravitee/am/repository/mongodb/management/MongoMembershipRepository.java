@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Membership;
@@ -32,12 +31,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -59,22 +54,10 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     private static final String FIELD_ROLE = "role";
     private MongoCollection<MembershipMongo> membershipsCollection;
 
-    private final Set<String> unusedIndexes = Set.of("ri1rt1");
-
     @PostConstruct
     public void init() {
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
         super.init(membershipsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1), new IndexOptions().name("ri1mi1"));
-        indexes.put(new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1), new IndexOptions().name("mi1mt1"));
-
-        super.createIndex(membershipsCollection, indexes);
-        if (ensureIndexOnStart) {
-            dropIndexes(membershipsCollection, unusedIndexes::contains).subscribe();
-        }
     }
 
     @Override

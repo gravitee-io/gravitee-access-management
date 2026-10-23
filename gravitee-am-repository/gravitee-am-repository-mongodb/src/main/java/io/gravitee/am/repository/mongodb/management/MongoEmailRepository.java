@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Email;
@@ -29,10 +28,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -56,13 +52,6 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     public void init() {
         emailsCollection = mongoOperations.getCollection("emails", EmailMongo.class);
         super.init(emailsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("ri1rt1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("ri1rt1t1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1), new IndexOptions().name("ri1rc1t1"));
-
-        super.createIndex(emailsCollection, indexes);
     }
 
     @Override

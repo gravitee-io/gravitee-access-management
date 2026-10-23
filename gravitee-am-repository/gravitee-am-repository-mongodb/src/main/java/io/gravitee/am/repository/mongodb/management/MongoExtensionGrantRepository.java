@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
@@ -28,10 +27,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -52,12 +48,6 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     public void init() {
         extensionGrantsCollection = mongoOperations.getCollection("extension_grants", ExtensionGrantMongo.class);
         super.init(extensionGrantsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
-
-        super.createIndex(extensionGrantsCollection,indexes);
     }
 
     @Override

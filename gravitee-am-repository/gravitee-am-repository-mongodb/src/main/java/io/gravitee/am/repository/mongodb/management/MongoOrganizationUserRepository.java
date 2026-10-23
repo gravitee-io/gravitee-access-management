@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -50,10 +49,8 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -86,39 +83,13 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
     private static final String FIELD_EMAIL = "email";
     private static final String FIELD_ADDITIONAL_INFO_EMAIL = "additionalInformation.email";
     private static final String FIELD_EXTERNAL_ID = "externalId";
-    private static final String FIELD_IDENTITIES_USERNAME = "identities.username";
-    private static final String FIELD_IDENTITIES_PROVIDER_ID = "identities.providerId";
-    private static final String INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE = "rt1ri1u1s1_unique";
-
-    private final Set<String> UNUSED_INDEXES = Set.of(
-            "referenceType_1_referenceId_1_username_1_source_1",
-            "rt1ri1u1s1",
-            "rt1ri1",
-            "rt1ri1ext1",
-            "rt1ri1u1"
-    );
 
     private MongoCollection<OrganizationUserMongo> usersCollection;
 
     @PostConstruct
     public void init() {
-        initCollection("organization_users");
-    }
-
-    private void initCollection(String collectionName) {
-        usersCollection = mongoOperations.getCollection(collectionName, OrganizationUserMongo.class);
+        usersCollection = mongoOperations.getCollection("organization_users", OrganizationUserMongo.class);
         super.init(usersCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1), new IndexOptions().name("rt1ri1e1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ADDITIONAL_INFO_EMAIL, 1), new IndexOptions().name("rt1ri1ae1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DISPLAY_NAME, 1), new IndexOptions().name("rt1ri1d1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1), new IndexOptions().name("rt1ri1f1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("rt1ri1l1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
-        super.createIndex(usersCollection, indexes);
-        createOrUpdateIndex();
     }
 
     @Override
@@ -647,19 +618,6 @@ public class MongoOrganizationUserRepository extends AbstractManagementMongoRepo
                     mongoCertificate.setValue(modelCertificate.getValue());
                     return mongoCertificate;
                 }).collect(Collectors.toList());
-    }
-
-    private void createOrUpdateIndex() {
-        if (ensureIndexOnStart) {
-            dropIndexes(usersCollection, UNUSED_INDEXES::contains)
-                    .doOnError(error -> log.error("Unable to sweep the retired indexes of the organization_users collection", error))
-                    // a sweep that failed must not stop the current indexes from being declared
-                    .onErrorComplete()
-                    .doOnComplete(() -> super.createIndex(usersCollection,
-                            Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1),
-                                    new IndexOptions().name(INDEX_REFERENCE_TYPE_REFERENCE_ID_USERNAME_SOURCE_NAME_UNIQUE).unique(true))))
-                    .subscribe();
-        }
     }
 
 }

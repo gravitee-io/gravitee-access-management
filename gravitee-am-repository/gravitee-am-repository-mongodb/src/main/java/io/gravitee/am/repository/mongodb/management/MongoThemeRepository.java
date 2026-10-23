@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
@@ -28,10 +27,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -51,7 +48,6 @@ public class MongoThemeRepository extends AbstractManagementMongoRepository impl
     public void init() {
         themesCollection = mongoOperations.getCollection("themes", ThemeMongo.class);
         super.init(themesCollection);
-        super.createIndex(themesCollection, Map.of(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1")));
     }
 
     @Override

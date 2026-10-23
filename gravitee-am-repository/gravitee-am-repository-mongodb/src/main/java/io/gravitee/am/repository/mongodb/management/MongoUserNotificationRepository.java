@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.notification.UserNotification;
@@ -33,7 +32,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -50,7 +48,6 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
 
     public static final String FIELD_AUDIENCE = "audienceId";
     public static final String FIELD_STATUS = "status";
-    public static final String FIELD_TYPE = "type";
     public static final int NOTIFICATION_LIMIT = 20;
     public static final String FIELD_CREATED_AT = "created_at";
 
@@ -60,7 +57,6 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
     protected void init() {
         this.mongoCollection = mongoOperations.getCollection(COLLECTION_NAME, UserNotificationMongo.class);
         super.init(mongoCollection);
-        createIndex(this.mongoCollection, Map.of(new Document(FIELD_AUDIENCE, 1).append(FIELD_TYPE, 1).append(FIELD_STATUS, 1), new IndexOptions().name("a1t1s1")));
     }
 
     @Override

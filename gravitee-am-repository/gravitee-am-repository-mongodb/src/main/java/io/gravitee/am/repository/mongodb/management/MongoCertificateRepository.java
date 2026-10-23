@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Certificate;
@@ -56,7 +55,6 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     public void init() {
         certificatesCollection = mongoOperations.getCollection("certificates", CertificateMongo.class);
         super.init(certificatesCollection);
-        super.createIndex(certificatesCollection, Map.of(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1")));
     }
 
     @Override
