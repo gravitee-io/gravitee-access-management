@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.jdbc.audit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Throwables;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.ReferenceType;
@@ -43,6 +44,9 @@ import io.gravitee.reporter.api.Reporter;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.R2dbcBadGrammarException;
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
+import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
 import io.reactivex.rxjava3.core.Flowable;
@@ -57,13 +61,15 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PermissionDeniedDataAccessException;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.BadSqlGrammarException;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
@@ -185,6 +191,16 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Autowired
     protected MappingR2dbcConverter rowMapper;
+
+    /**
+     * Number of retries (after the first attempt) of an audit that cannot be stored before dropping it.
+     */
+    static final int MAX_INSERT_RETRIES = 2;
+
+    /**
+     * Number of audits inserted concurrently (one transaction each) when a batch cannot be stored as a whole.
+     */
+    static final int FALLBACK_CONCURRENCY = 4;
 
     private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
 
@@ -463,11 +479,43 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             return Flowable.empty();
         }
 
-        return Flowable.fromPublisher(Flux.just(audits).concatMap(this::bulkInsertReport))
-                .doOnError(error -> LOGGER.error("Error during bulk loading", error));
+        return Flowable.fromPublisher(Mono.defer(() -> bulkInsertReport(audits)))
+                .onErrorResumeNext(error -> {
+                    // the batch is inserted in a single transaction, a single faulty audit rolls back all the others.
+                    LOGGER.warn("Error during bulk loading of {} audits, insert them one by one: {}", audits.size(), error.getMessage());
+                    return Flowable.fromIterable(audits).flatMap(this::insertSingleAudit, FALLBACK_CONCURRENCY);
+                });
     }
 
+    /**
+     * Insert one audit in its own transaction. The insertion is retried at most {@link #MAX_INSERT_RETRIES} times
+     * (only if the error may be transient, see {@link #isRetryable(Throwable)}) then the audit is dropped, so a faulty audit can never block the following ones.
+     */
+    private Flowable<Long> insertSingleAudit(Audit audit) {
+        return Flowable.fromPublisher(Mono.defer(() -> bulkInsertReport(List.of(audit))))
+                .retry((attempt, error) -> attempt <= MAX_INSERT_RETRIES && isRetryable(error))
+                .onErrorResumeNext(error -> {
+                    LOGGER.error("Unable to store audit id={} type={} referenceType={} referenceId={} in report_audits_{} table of {} database, audit dropped",
+                            audit.getId(), audit.getType(), audit.getReferenceType(), audit.getReferenceId(),
+                            configuration.getTableSuffix(), configuration.getDatabase(), error);
+                    return Flowable.empty();
+                });
+    }
 
+    /**
+     * Errors which are related to the audit content (invalid statement, value too long, constraint violation...)
+     * or to the permissions will fail the same way at each attempt. Other errors (connection, timeout, rollback...)
+     * may be transient.
+     */
+    static boolean isRetryable(Throwable error) {
+        return Throwables.getCausalChain(error).stream().noneMatch(t ->
+                t instanceof BadSqlGrammarException
+                        || t instanceof DataIntegrityViolationException
+                        || t instanceof PermissionDeniedDataAccessException
+                        || t instanceof R2dbcBadGrammarException
+                        || t instanceof R2dbcDataIntegrityViolationException
+                        || t instanceof R2dbcPermissionDeniedException);
+    }
 
     private Mono<Long> bulkInsertReport(List<Audit> audits) {
         TransactionalOperator trx = TransactionalOperator.create(tm);
@@ -626,11 +674,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                     configuration.getFlushInterval(),
                     TimeUnit.SECONDS,
                     configuration.getBulkActions())
-                    .flatMap(list -> bulk(list)
-                            .doOnError(error -> LOGGER.error("An error occurred while inserting into report_audits_{} table of {} database",
-                                    configuration.getTableSuffix(), configuration.getDatabase(), error))
-                            .retry()
-                    )
+                    .flatMap(this::bulk)
                     .subscribe();
 
             ready = true;
