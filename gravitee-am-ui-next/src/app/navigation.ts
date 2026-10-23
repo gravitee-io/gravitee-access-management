@@ -103,7 +103,7 @@ export const DOMAIN_SETTINGS_NAV_GROUPS: NavGroup[] = [
         label: 'OAuth 2.0',
         items: [
             { key: 'scopes', title: 'Scopes' },
-            { key: 'extension-grants', title: 'Extension Grants' },
+            { key: 'extensionGrants', title: 'Extension Grants' },
             { key: 'uma', title: 'UMA' },
             { key: 'token-exchange', title: 'Token Exchange' },
             { key: 'cimd', title: 'CIMD' },

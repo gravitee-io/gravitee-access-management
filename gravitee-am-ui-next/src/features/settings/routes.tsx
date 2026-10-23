@@ -23,6 +23,7 @@ import { botDetectionRoutes } from '../bot-detection/routes';
 import { certificateRoutes } from '../certificates/routes';
 import { deviceIdentifierRoutes } from '../device-identifier/routes';
 import { entrypointRoutes } from '../entrypoints/routes';
+import { extensionGrantRoutes } from '../extension-grants/routes';
 import { factorRoutes } from '../factors/routes';
 import { flowRoutes } from '../flows/routes';
 import { formRoutes } from '../forms/routes';
@@ -59,6 +60,7 @@ const BUILT_SETTINGS = new Set([
     'password-policies',
     'account',
     'trust-domains',
+    'extensionGrants',
 ]);
 
 /** The settings section of a domain. A ported unit mounts its routes here, in place of its placeholder. */
@@ -98,6 +100,7 @@ export const domainSettingsRoutes = (
         {passwordPolicyRoutes}
         {accountRoutes}
         {trustDomainRoutes}
+        {extensionGrantRoutes}
         {navItems(DOMAIN_SETTINGS_NAV_GROUPS)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (

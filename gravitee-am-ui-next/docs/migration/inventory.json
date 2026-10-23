@@ -1,6 +1,6 @@
 {
-    "generatedAt": "2026-10-22",
-    "angularCommit": "8831301da0",
+    "generatedAt": "2026-10-23",
+    "angularCommit": "cdd77d2252",
     "prototypeCommit": "9c72ed4a26",
     "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
     "counts": {
@@ -2668,9 +2668,11 @@
                     "resolvers": {
                         "extensionGrants": "ExtensionGrantsResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/extension-grants/ExtensionGrantsPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2697,9 +2699,11 @@
                     "resolvers": {
                         "identityProviders": "ProvidersResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/extension-grants/CreateExtensionGrantPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 },
@@ -2727,9 +2731,11 @@
                         "extensionGrant": "ExtensionGrantResolver",
                         "identityProviders": "ProvidersResolver"
                     },
-                    "status": "not-started",
+                    "status": "done",
                     "class": "B",
-                    "reactFiles": [],
+                    "reactFiles": [
+                        "src/features/extension-grants/ExtensionGrantPage.tsx"
+                    ],
                     "blockers": [],
                     "notes": ""
                 }
@@ -2752,12 +2758,12 @@
                 "domain_settings_read"
             ],
             "licenseFeatures": [],
-            "status": "not-started",
+            "status": "done",
             "class": "B",
             "order": 9,
             "blockers": [],
-            "notes": "Plugin wizard. The route segment keeps the Angular camel case.",
-            "angularCommit": null
+            "notes": "Plugin wizard. The route segment keeps the Angular camel case.\n\nBrief, 2026-10-23. Pages: settings/extensionGrants (DomainSettingsExtensionGrantsComponent) → ExtensionGrantsPage → src/features/extension-grants/ExtensionGrantsPage.tsx; settings/extensionGrants/new (ExtensionGrantCreationComponent, step1 and step2) → CreateExtensionGrantPage → CreateExtensionGrantPage.tsx on PluginWizard; settings/extensionGrants/:extensionGrantId (ExtensionGrantComponent) → ExtensionGrantPage → ExtensionGrantPage.tsx. Endpoints: GET {domain}/extensionGrants; GET {domain}/extensionGrants/:id; POST {domain}/extensionGrants {name, type, grantType, configuration}; PUT {domain}/extensionGrants/:id {name, type, configuration, grantType, identityProvider, createUser, userExists}; DELETE {domain}/extensionGrants/:id; GET {domain}/identities (ProvidersResolver, detail page); GET /platform/plugins/extensionGrants; GET /platform/plugins/extensionGrants/:type/schema. Permissions: list route domain_extension_grant_list (the parent AuthGuard), create route and Create button domain_extension_grant_create, detail route and name link domain_extension_grant_read, list Delete and detail Delete domain_extension_grant_delete, detail fields and Save domain_extension_grant_update. Licence: no route feature. The plugin feature from the catalog guards the wizard cards (PluginWizard) and Save (LicenseGuard), as the Angular licenseGuard. Prototype additions left out: the Last updated column (not in AM: the list returns id, name, type and grantType only); the route segment extension-grants (Angular uses extensionGrants); the None item of the identity provider select (not in AM: the Angular mat-select cannot clear the provider). Angular behaviour added back: the read-only Grant type field from the schema default of properties.grantType on the wizard settings step and the detail page; grantType in the POST from that default, and on the PUT when the grant has none; the schema description on the detail page; the Save stays disabled until a change. Configuration: the page drops the untyped properties.grantType from the schema, because the Angular form does not render it and its configuration has no grantType key. The create route resolves the identity providers in Angular but does not use them, so the port does not call GET {domain}/identities there. Configuration arrays: the Angular form leaves out an untouched array, also one with a schema default (XAA userBindingCriteria default []), where the Graphene form holds []; toConfiguration drops an empty array whose schema default is absent or empty from the POST and PUT, and toFormConfiguration adds [] to the detail defaults so the form is not dirty on load. Navigation: the settings nav key was extension-grants; it is now extensionGrants, the Angular segment. Verification, 2026-10-23, local stack master-latest with the universe licence, domain eg-check, React :4201 and Angular :4300 (the am-management-ui image; the Gamma console holds :4200). Same calls for jwtbearer-am-extension-grant and xaa-am-extension-grant (feature am-extgrant-xaa). Create: GET /platform/plugins/extensionGrants, GET /platform/plugins/extensionGrants/:type/schema, POST {domain}/extensionGrants {name, type, grantType urn:ietf:params:oauth:grant-type:jwt-bearer, configuration} with configuration {publicKeyResolver: GIVEN_KEY, publicKey} for JWT Bearer and {} for XAA. Save: PUT {domain}/extensionGrants/:id with the seven Angular fields; userExists true after the toggle; identityProvider after the select; XAA sends createUser false and userExists true, the values the API set on create, as Angular. Delete: DELETE {domain}/extensionGrants/:id, then the list. Save is disabled on load on both consoles. The Angular list has no search, so the port has none. Playwright: gravitee-am-test/playwright/tests/console-next/extension-grants.spec.ts, 3 tests pass against :4201. Review fixes: Create stops with an error toast when the schema has no grant type, as Angular disables Create; the PUT leaves grantType out when neither the grant nor the schema has one, where an empty string failed the API pattern; a cleared list with a non-empty schema default is sent as []. Left as in the other plugin units: LicenseGuard wraps the whole SaveBar, so a missing plugin feature also catches Discard; HTML in plugin field descriptions shows as text, as the shared adaptAmSchema leaves it; the name resolver and the untyped-property helpers are copies of the bot-detection ones.",
+            "angularCommit": "cdd77d2252"
         },
         {
             "id": "oidc-profile",
