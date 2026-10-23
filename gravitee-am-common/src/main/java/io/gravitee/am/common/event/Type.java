@@ -57,5 +57,6 @@ public enum Type {
     TRUST_DOMAIN,
     LICENSE,
     ENTRYPOINT,
-    DATA_PLANE
+    DATA_PLANE,
+    AUTHORIZATION_DETAIL_TYPE
 }

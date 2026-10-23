@@ -51,7 +51,8 @@ public class MongoIndexUpgradersTest {
                 .containsExactly(MongoManagementIndexUpgrader.class.getName() + "_initial-indexes",
                         MongoManagementIndexUpgrader.class.getName() + "_drop-redundant-indexes",
                         MongoManagementIndexUpgrader.class.getName() + "_drop-unused-indexes",
-                        MongoManagementIndexUpgrader.class.getName() + "_reporters-reference-index");
+                        MongoManagementIndexUpgrader.class.getName() + "_reporters-reference-index",
+                        MongoManagementIndexUpgrader.class.getName() + "_authorization-detail-types");
         assertThat(new MongoOAuth2IndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoOAuth2IndexUpgrader.class.getName() + "_initial-indexes",
@@ -67,7 +68,8 @@ public class MongoIndexUpgradersTest {
                 .containsExactly(tuple("initial-indexes", "52a83bdac197"),
                         tuple("drop-redundant-indexes", "7447f69f771e"),
                         tuple("drop-unused-indexes", "19720b5b4d76"),
-                        tuple("reporters-reference-index", "f7b2ef6e63f0"));
+                        tuple("reporters-reference-index", "f7b2ef6e63f0"),
+                        tuple("authorization-detail-types", "1a66a065b30d"));
         assertThat(changesets(MongoOAuth2IndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "008287bfa02e"),
                         tuple("drop-unused-indexes", "616d86399633"));

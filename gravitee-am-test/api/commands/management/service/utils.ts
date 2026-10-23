@@ -36,6 +36,7 @@ import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
 import { ProtectedResourceApi } from '@management-apis/ProtectedResourceApi';
 import { TrustDomainApi } from '@management-apis/TrustDomainApi';
+import { AuthorizationDetailTypeApi } from '@management-apis/AuthorizationDetailTypeApi';
 import { CrossAppAccessApi } from '@management-apis/CrossAppAccessApi';
 import { DefaultApi } from '@management-apis/DefaultApi';
 import { AlertsApi } from '@management-apis/AlertsApi';
@@ -84,6 +85,10 @@ export function getCrossAppAccessApi(accessToken) {
 
 export function getTrustDomainApi(accessToken) {
   return new TrustDomainApi(createAccessTokenConfig(accessToken));
+}
+
+export function getAuthorizationDetailTypeApi(accessToken) {
+  return new AuthorizationDetailTypeApi(createAccessTokenConfig(accessToken));
 }
 
 export function getAuthenticationDeviceNotifierApi(accessToken) {
