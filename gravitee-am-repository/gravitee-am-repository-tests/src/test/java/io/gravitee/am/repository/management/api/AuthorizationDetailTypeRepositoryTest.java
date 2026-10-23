@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
-import io.gravitee.am.model.oauth2.AuthorizationDetailTypeVersion;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -62,7 +61,6 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
                 && SCHEMA.equals(found.getSchema())
                 && found.isDiscovery()
                 && found.getExpiresIn() == 3600
-                && found.getVersion() == 1
                 && found.getCreatedAt() != null
                 && found.getUpdatedAt() != null);
     }
@@ -82,55 +80,6 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
         assertEquals(null, found.getSchema());
         assertFalse(found.isDiscovery());
         assertEquals(null, found.getExpiresIn());
-
-        AuthorizationDetailTypeVersion version = repository.findVersion(created.getId(), 1).blockingGet();
-        assertEquals(null, version.description());
-        assertEquals(null, version.schema());
-    }
-
-    @Test
-    public void shouldStoreTheCreatedContentAsItsVersion() {
-        String domain = randomUUID().toString();
-        AuthorizationDetailType created = repository.create(build(domain, "payment_initiation")).blockingGet();
-
-        TestObserver<AuthorizationDetailTypeVersion> observer = repository.findVersion(created.getId(), 1).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-
-        observer.assertComplete();
-        observer.assertNoErrors();
-        observer.assertValue(version -> version.authorizationDetailTypeId().equals(created.getId())
-                && version.version() == 1
-                && version.domain().equals(domain)
-                && version.name().equals("Payment initiation")
-                && version.description().equals("Initiates a payment")
-                && SCHEMA.equals(version.schema())
-                && version.createdAt() != null);
-    }
-
-    @Test
-    public void shouldNotFindAVersionThatWasNeverStored() {
-        AuthorizationDetailType created = repository.create(build(randomUUID().toString(), "payment_initiation")).blockingGet();
-
-        TestObserver<AuthorizationDetailTypeVersion> observer = repository.findVersion(created.getId(), 2).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-
-        observer.assertComplete();
-        observer.assertNoValues();
-    }
-
-    @Test
-    public void shouldRejectASecondCopyOfTheSameVersion() {
-        String domain = randomUUID().toString();
-        AuthorizationDetailType first = repository.create(build(domain, "payment_initiation")).blockingGet();
-        AuthorizationDetailType second = build(domain, "payment_initiation");
-        second.setId(first.getId());
-        second.setName("Overwritten");
-
-        TestObserver<AuthorizationDetailType> observer = repository.create(second).test();
-        observer.awaitDone(10, TimeUnit.SECONDS);
-
-        observer.assertError(Exception.class);
-        assertEquals("Payment initiation", repository.findVersion(first.getId(), 1).blockingGet().name());
     }
 
     @Test
@@ -143,7 +92,6 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
 
         assertEquals("Renamed", updated.getName());
         assertFalse(repository.findById(created.getId()).blockingGet().isDiscovery());
-        assertEquals("Payment initiation", repository.findVersion(created.getId(), 1).blockingGet().name());
     }
 
     @Test
@@ -227,14 +175,12 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
     public void shouldRejectTheSameTypeIgnoringCase() {
         String domain = randomUUID().toString();
         repository.create(build(domain, "payment_initiation")).blockingGet();
-        AuthorizationDetailType variant = build(domain, "Payment_INITIATION");
 
-        TestObserver<AuthorizationDetailType> observer = repository.create(variant).test();
+        TestObserver<AuthorizationDetailType> observer = repository.create(build(domain, "Payment_INITIATION")).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
         observer.assertError(UniqueConstraintViolationException.class);
         assertEquals(1L, (long) repository.findByDomain(domain).count().blockingGet());
-        assertTrue(repository.findVersion(variant.getId(), 1).isEmpty().blockingGet());
     }
 
     @Test
@@ -244,13 +190,12 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
         repository.delete(created.getId()).blockingAwait();
 
         assertTrue(repository.findById(created.getId()).isEmpty().blockingGet());
-        assertTrue(repository.findVersion(created.getId(), 1).isEmpty().blockingGet());
     }
 
     @Test
     public void shouldDeleteByDomain() {
         String domain = randomUUID().toString();
-        AuthorizationDetailType deleted = repository.create(build(domain, "payment_initiation")).blockingGet();
+        repository.create(build(domain, "payment_initiation")).blockingGet();
         repository.create(build(domain, "account_information")).blockingGet();
         AuthorizationDetailType other = repository.create(build(randomUUID().toString(), "payment_initiation")).blockingGet();
 
@@ -259,9 +204,7 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
         observer.assertComplete();
 
         assertEquals(0L, (long) repository.findByDomain(domain).count().blockingGet());
-        assertTrue(repository.findVersion(deleted.getId(), 1).isEmpty().blockingGet());
         assertFalse(repository.findById(other.getId()).isEmpty().blockingGet());
-        assertFalse(repository.findVersion(other.getId(), 1).isEmpty().blockingGet());
     }
 
     private static AuthorizationDetailType build(String domain, String type) {
@@ -274,7 +217,6 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
                 .schema(SCHEMA)
                 .discovery(true)
                 .expiresIn(3600)
-                .version(1)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

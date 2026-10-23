@@ -17,10 +17,8 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
-import io.gravitee.am.model.oauth2.AuthorizationDetailTypeVersion;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthorizationDetailType;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthorizationDetailTypeVersion;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringAuthorizationDetailTypeRepository;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
@@ -35,15 +33,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
-import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
@@ -61,10 +56,8 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
     public static final String COL_SCHEMA = "schema";
     public static final String COL_DISCOVERY = "discovery";
     public static final String COL_EXPIRES_IN = "expires_in";
-    public static final String COL_VERSION = "version";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
-    public static final String COL_AUTHORIZATION_DETAIL_TYPE_ID = "authorization_detail_type_id";
 
     private static final List<String> columns = List.of(
             COL_ID,
@@ -75,24 +68,12 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
             COL_SCHEMA,
             COL_DISCOVERY,
             COL_EXPIRES_IN,
-            COL_VERSION,
             COL_CREATED_AT,
             COL_UPDATED_AT
     );
 
-    private static final List<String> versionColumns = List.of(
-            COL_AUTHORIZATION_DETAIL_TYPE_ID,
-            COL_VERSION,
-            COL_DOMAIN,
-            COL_NAME,
-            COL_DESCRIPTION,
-            COL_SCHEMA,
-            COL_CREATED_AT
-    );
-
     private String insertStatement;
     private String updateStatement;
-    private String insertVersionStatement;
 
     @Autowired
     private SpringAuthorizationDetailTypeRepository authorizationDetailTypeRepository;
@@ -105,7 +86,6 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
     public void afterPropertiesSet() throws Exception {
         this.insertStatement = createInsertStatement(JdbcAuthorizationDetailType.TABLE_NAME, columns);
         this.updateStatement = createUpdateStatement(JdbcAuthorizationDetailType.TABLE_NAME, columns, List.of(COL_ID));
-        this.insertVersionStatement = createInsertStatement(JdbcAuthorizationDetailTypeVersion.TABLE_NAME, versionColumns);
     }
 
     @Override
@@ -113,19 +93,6 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
         LOGGER.debug("findById({})", id);
         return authorizationDetailTypeRepository.findById(id)
                 .map(this::toEntity);
-    }
-
-    @Override
-    public Maybe<AuthorizationDetailTypeVersion> findVersion(String authorizationDetailTypeId, int version) {
-        LOGGER.debug("findVersion({}, {})", authorizationDetailTypeId, version);
-        return monoToMaybe(getTemplate().getDatabaseClient()
-                .sql("SELECT * FROM " + JdbcAuthorizationDetailTypeVersion.TABLE_NAME
-                        + " WHERE " + COL_AUTHORIZATION_DETAIL_TYPE_ID + " = :id AND " + COL_VERSION + " = :version")
-                .bind("id", authorizationDetailTypeId)
-                .bind("version", version)
-                .map((row, rowMetadata) -> rowMapper.read(JdbcAuthorizationDetailTypeVersion.class, row))
-                .first())
-                .map(this::toVersion);
     }
 
     @Override
@@ -154,11 +121,8 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
     public Single<AuthorizationDetailType> create(AuthorizationDetailType item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create authorizationDetailType with id {}", item.getId());
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> insert = bindVersion(getTemplate().getDatabaseClient().sql(insertVersionStatement), AuthorizationDetailTypeVersion.of(item))
-                .fetch().rowsUpdated()
-                .then(bind(getTemplate().getDatabaseClient().sql(insertStatement), item).fetch().rowsUpdated());
-        return monoToSingle(insert.as(trx::transactional))
+        DatabaseClient.GenericExecuteSpec insertSpec = bind(getTemplate().getDatabaseClient().sql(insertStatement), item);
+        return monoToSingle(insertSpec.fetch().rowsUpdated())
                 .onErrorResumeNext(ex -> Single.error(ex instanceof DuplicateKeyException
                         ? new UniqueConstraintViolationException("Authorization detail type " + item.getType() + " already exists in domain " + item.getDomain(), ex)
                         : ex))
@@ -175,27 +139,17 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> delete = getTemplate().delete(JdbcAuthorizationDetailTypeVersion.class)
-                .matching(Query.query(where(COL_AUTHORIZATION_DETAIL_TYPE_ID).is(id)))
-                .all()
-                .then(getTemplate().delete(JdbcAuthorizationDetailType.class)
-                        .matching(Query.query(where(COL_ID).is(id)))
-                        .all());
-        return monoToCompletable(delete.as(trx::transactional));
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailType.class)
+                .matching(Query.query(where(COL_ID).is(id)))
+                .all());
     }
 
     @Override
     public Completable deleteByDomain(String domain) {
         LOGGER.debug("deleteByDomain({})", domain);
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Long> delete = getTemplate().delete(JdbcAuthorizationDetailTypeVersion.class)
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailType.class)
                 .matching(Query.query(where(COL_DOMAIN).is(domain)))
-                .all()
-                .then(getTemplate().delete(JdbcAuthorizationDetailType.class)
-                        .matching(Query.query(where(COL_DOMAIN).is(domain)))
-                        .all());
-        return monoToCompletable(delete.as(trx::transactional))
+                .all())
                 .observeOn(Schedulers.computation());
     }
 
@@ -208,23 +162,7 @@ public class JdbcAuthorizationDetailTypeRepository extends AbstractJdbcRepositor
         spec = addQuotedField(spec, COL_SCHEMA, item.getSchema(), String.class);
         spec = addQuotedField(spec, COL_DISCOVERY, item.isDiscovery(), Boolean.class);
         spec = addQuotedField(spec, COL_EXPIRES_IN, item.getExpiresIn(), Integer.class);
-        spec = addQuotedField(spec, COL_VERSION, item.getVersion(), Integer.class);
         spec = addQuotedField(spec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         return addQuotedField(spec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-    }
-
-    private DatabaseClient.GenericExecuteSpec bindVersion(DatabaseClient.GenericExecuteSpec spec, AuthorizationDetailTypeVersion version) {
-        spec = addQuotedField(spec, COL_AUTHORIZATION_DETAIL_TYPE_ID, version.authorizationDetailTypeId(), String.class);
-        spec = addQuotedField(spec, COL_VERSION, version.version(), Integer.class);
-        spec = addQuotedField(spec, COL_DOMAIN, version.domain(), String.class);
-        spec = addQuotedField(spec, COL_NAME, version.name(), String.class);
-        spec = addQuotedField(spec, COL_DESCRIPTION, version.description(), String.class);
-        spec = addQuotedField(spec, COL_SCHEMA, version.schema(), String.class);
-        return addQuotedField(spec, COL_CREATED_AT, dateConverter.convertTo(version.createdAt(), null), LocalDateTime.class);
-    }
-
-    private AuthorizationDetailTypeVersion toVersion(JdbcAuthorizationDetailTypeVersion entity) {
-        return new AuthorizationDetailTypeVersion(entity.getAuthorizationDetailTypeId(), entity.getVersion(), entity.getDomain(),
-                entity.getName(), entity.getDescription(), entity.getSchema(), dateConverter.convertFrom(entity.getCreatedAt(), null));
     }
 }

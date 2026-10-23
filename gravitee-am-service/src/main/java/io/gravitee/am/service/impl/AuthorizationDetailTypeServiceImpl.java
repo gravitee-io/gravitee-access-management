@@ -93,7 +93,6 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                 .schema(newAuthorizationDetailType.getSchema())
                 .discovery(newAuthorizationDetailType.isDiscovery())
                 .expiresIn(newAuthorizationDetailType.getExpiresIn())
-                .version(1)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

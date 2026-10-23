@@ -24,8 +24,7 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 /**
- * An RFC 9396 authorization details type recognized by a domain. Its name, description and schema are
- * versioned as {@link AuthorizationDetailTypeVersion}s.
+ * An RFC 9396 authorization details type recognized by a domain.
  */
 @Data
 @Builder(toBuilder = true)
@@ -68,9 +67,6 @@ public class AuthorizationDetailType {
 
     @Schema(description = "Expiration time for user consent, in seconds. Absent means the gateway default applies.")
     private Integer expiresIn;
-
-    @Schema(description = "Version of the current name, description and schema, starting at 1.")
-    private int version;
 
     @Schema(type = "java.lang.Long")
     private Date createdAt;

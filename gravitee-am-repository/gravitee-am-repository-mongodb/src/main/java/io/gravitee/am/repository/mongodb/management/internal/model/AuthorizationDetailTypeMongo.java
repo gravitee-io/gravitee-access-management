@@ -34,5 +34,4 @@ public class AuthorizationDetailTypeMongo extends Auditable {
     private String schema;
     private boolean discovery;
     private Integer expiresIn;
-    private int version;
 }

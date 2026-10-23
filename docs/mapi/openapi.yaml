@@ -13753,11 +13753,6 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
-        version:
-          type: integer
-          format: int32
-          description: "Version of the current name, description and schema, starting\
-            \ at 1."
     AuthorizationEngine:
       type: object
       properties:

@@ -68,7 +68,6 @@ describe('Create', () => {
       schema,
       discovery: true,
       expiresIn: 3600,
-      version: 1,
       createdAt: expect.any(Number),
     });
     expect(created.updatedAt).toEqual(created.createdAt);
@@ -77,7 +76,6 @@ describe('Create', () => {
   it(jira`should default discovery to false and leave optional fields out ${'AM-7920'}`, async () => {
     const created = await createAuthorizationDetailType(fixture.domain.id, fixture.accessToken, newType(uniqueType()));
 
-    expect(created.version).toEqual(1);
     expect(created.discovery).toBe(false);
     expect(created.expiresIn).toBeUndefined();
     expect(created.description).toBeUndefined();

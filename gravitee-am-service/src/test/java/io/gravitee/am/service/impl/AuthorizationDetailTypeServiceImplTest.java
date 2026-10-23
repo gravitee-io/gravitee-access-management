@@ -104,7 +104,6 @@ class AuthorizationDetailTypeServiceImplTest {
         assertThat(created.getSchema()).isEqualTo(SCHEMA);
         assertThat(created.isDiscovery()).isTrue();
         assertThat(created.getExpiresIn()).isEqualTo(3600);
-        assertThat(created.getVersion()).isEqualTo(1);
         assertThat(created.getCreatedAt()).isNotNull().isEqualTo(created.getUpdatedAt());
 
         ArgumentCaptor<Event> event = ArgumentCaptor.forClass(Event.class);
@@ -141,7 +140,6 @@ class AuthorizationDetailTypeServiceImplTest {
         assertThat(created.getSchema()).isNull();
         assertThat(created.isDiscovery()).isFalse();
         assertThat(created.getExpiresIn()).isNull();
-        assertThat(created.getVersion()).isEqualTo(1);
     }
 
     @Test

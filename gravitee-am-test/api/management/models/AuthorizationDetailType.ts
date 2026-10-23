@@ -92,12 +92,6 @@ export interface AuthorizationDetailType {
    * @memberof AuthorizationDetailType
    */
   updatedAt?: number;
-  /**
-   * Version of the current name, description and schema, starting at 1.
-   * @type {number}
-   * @memberof AuthorizationDetailType
-   */
-  version?: number;
 }
 
 /**
@@ -126,7 +120,6 @@ export function AuthorizationDetailTypeFromJSONTyped(json: any, ignoreDiscrimina
     schema: json['schema'] == null ? undefined : json['schema'],
     type: json['type'] == null ? undefined : json['type'],
     updatedAt: json['updatedAt'] == null ? undefined : json['updatedAt'],
-    version: json['version'] == null ? undefined : json['version'],
   };
 }
 
@@ -150,6 +143,5 @@ export function AuthorizationDetailTypeToJSONTyped(value?: AuthorizationDetailTy
     schema: value['schema'],
     type: value['type'],
     updatedAt: value['updatedAt'],
-    version: value['version'],
   };
 }

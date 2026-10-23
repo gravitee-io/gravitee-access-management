@@ -43,7 +43,6 @@ public class JdbcAuthorizationDetailType {
     private boolean discovery;
     @Column("expires_in")
     private Integer expiresIn;
-    private int version;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")

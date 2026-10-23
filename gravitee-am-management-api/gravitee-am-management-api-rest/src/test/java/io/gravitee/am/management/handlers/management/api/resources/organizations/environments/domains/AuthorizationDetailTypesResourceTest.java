@@ -67,7 +67,6 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
                 .schema("{\"type\":\"object\"}")
                 .discovery(true)
                 .expiresIn(3600)
-                .version(1)
                 .build();
         doReturn(Single.just(created)).when(authorizationDetailTypeService).create(eq(domain), any(NewAuthorizationDetailType.class), any());
 
@@ -88,7 +87,6 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
         assertEquals("{\"type\":\"object\"}", body.get("schema"));
         assertEquals(true, body.get("discovery"));
         assertEquals(3600, body.get("expiresIn"));
-        assertEquals(1, body.get("version"));
 
         ArgumentCaptor<NewAuthorizationDetailType> input = ArgumentCaptor.forClass(NewAuthorizationDetailType.class);
         verify(authorizationDetailTypeService).create(eq(domain), input.capture(), any());

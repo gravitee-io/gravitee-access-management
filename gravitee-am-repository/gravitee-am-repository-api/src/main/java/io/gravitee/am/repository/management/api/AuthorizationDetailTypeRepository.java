@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
-import io.gravitee.am.model.oauth2.AuthorizationDetailTypeVersion;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.reactivex.rxjava3.core.Completable;
@@ -30,25 +29,10 @@ import io.reactivex.rxjava3.core.Single;
 public interface AuthorizationDetailTypeRepository extends CrudRepository<AuthorizationDetailType, String> {
 
     /**
-     * Stores the type and its current content as version {@link AuthorizationDetailType#getVersion()}.
      * Fails with {@link UniqueConstraintViolationException} when the domain already has the type, ignoring case.
      */
     @Override
     Single<AuthorizationDetailType> create(AuthorizationDetailType item);
-
-    /**
-     * Replaces the type alone, storing no version.
-     */
-    @Override
-    Single<AuthorizationDetailType> update(AuthorizationDetailType item);
-
-    /**
-     * Deletes the type and its versions.
-     */
-    @Override
-    Completable delete(String id);
-
-    Maybe<AuthorizationDetailTypeVersion> findVersion(String authorizationDetailTypeId, int version);
 
     Flowable<AuthorizationDetailType> findByDomain(String domain);
 
@@ -59,8 +43,5 @@ public interface AuthorizationDetailTypeRepository extends CrudRepository<Author
      */
     Maybe<AuthorizationDetailType> findByDomainAndType(String domain, String type);
 
-    /**
-     * Deletes the types of the domain and their versions.
-     */
     Completable deleteByDomain(String domain);
 }
