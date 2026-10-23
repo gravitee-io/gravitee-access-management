@@ -25,14 +25,17 @@
 
 /* tslint:disable */
 /* eslint-disable */
+import { mapValues } from '../runtime';
 import type { TrustedIssuer } from './TrustedIssuer';
-import { TrustedIssuerFromJSON, TrustedIssuerToJSON } from './TrustedIssuer';
+import { TrustedIssuerFromJSON, TrustedIssuerFromJSONTyped, TrustedIssuerToJSON, TrustedIssuerToJSONTyped } from './TrustedIssuer';
 import type { IdJagSettings } from './IdJagSettings';
-import { IdJagSettingsFromJSON, IdJagSettingsToJSON } from './IdJagSettings';
+import { IdJagSettingsFromJSON, IdJagSettingsFromJSONTyped, IdJagSettingsToJSON, IdJagSettingsToJSONTyped } from './IdJagSettings';
 import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
 import {
   TokenExchangeOAuthSettingsFromJSON,
+  TokenExchangeOAuthSettingsFromJSONTyped,
   TokenExchangeOAuthSettingsToJSON,
+  TokenExchangeOAuthSettingsToJSONTyped,
 } from './TokenExchangeOAuthSettings';
 
 /**
@@ -84,7 +87,7 @@ export interface TokenExchangeSettings {
    */
   idJagSettings?: IdJagSettings;
   /**
-   * Maximum depth of the delegation chain (nested "act" claims). Clamped to the range 1–100.
+   * Maximum depth of the delegation chain (nested "act" claims). Range 1–100.
    * @type {number}
    * @memberof TokenExchangeSettings
    */

@@ -33,11 +33,11 @@ import { mapValues } from '../runtime';
  */
 export interface XFrameSettings {
   /**
-   * X-Frame-Options action. Supported values: DENY, SAMEORIGIN. Leave empty to omit the header.
+   * X-Frame-Options action. Omit to leave the header out.
    * @type {string}
    * @memberof XFrameSettings
    */
-  action?: string;
+  action?: XFrameSettingsActionEnum;
   /**
    * Whether X-Frame-Options is enabled for the domain when not inherited.
    * @type {boolean}
@@ -51,6 +51,15 @@ export interface XFrameSettings {
    */
   inherited?: boolean;
 }
+
+/**
+ * @export
+ */
+export const XFrameSettingsActionEnum = {
+  Deny: 'DENY',
+  Sameorigin: 'SAMEORIGIN',
+} as const;
+export type XFrameSettingsActionEnum = typeof XFrameSettingsActionEnum[keyof typeof XFrameSettingsActionEnum];
 
 /**
  * Check if a given object implements the XFrameSettings interface.
