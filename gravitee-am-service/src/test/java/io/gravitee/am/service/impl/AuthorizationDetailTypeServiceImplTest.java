@@ -160,7 +160,7 @@ class AuthorizationDetailTypeServiceImplTest {
     void shouldRejectInvalidSchemaWithoutStoringIt() {
         service.create(domain, input("payment_initiation", "{\"type\":\"object\"}"), principal()).test()
                 .assertError(error -> error instanceof InvalidAuthorizationDetailTypeException
-                        && error.getMessage().startsWith("Schema must constrain \"type\" to \"payment_initiation\""));
+                        && error.getMessage().startsWith("Schema must constrain \"type\""));
 
         verify(repository, never()).create(any());
         assertFailureAudited();

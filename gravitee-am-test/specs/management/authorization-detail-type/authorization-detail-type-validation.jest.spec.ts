@@ -103,33 +103,42 @@ describe('Validation of schema', () => {
     const type = uniqueType();
 
     await expectRejected(
-      newType(type, { schema: validSchema(type, { $schema: 'https://json-schema.org/draft/2020-12/schema' }) }),
-      'Schema must use JSON Schema Draft 7',
+      newType(type, { schema: validSchema(type, { $schema: 'http://json-schema.org/draft-07/schema#' }) }),
+      'Schema must use JSON Schema 2020-12 ($schema must be absent or \\"https://json-schema.org/draft/2020-12/schema\\"), found at #/$schema',
     );
   });
 
-  it(jira`should accept a schema declaring Draft 7 ${'AM-7923'}`, async () => {
+  it(jira`should accept a schema declaring 2020-12 ${'AM-7923'}`, async () => {
     const type = uniqueType();
 
     const created = await createAuthorizationDetailType(
       fixture.domain.id,
       fixture.accessToken,
-      newType(type, { schema: validSchema(type, { $schema: AUTHORIZATION_DETAIL_TYPE_TEST.DRAFT_7 }) }),
+      newType(type, { schema: validSchema(type, { $schema: AUTHORIZATION_DETAIL_TYPE_TEST.DIALECT }) }),
     );
 
     expect(created.type).toEqual(type);
   });
 
-  it(jira`should reject a schema failing the Draft 7 meta-schema ${'AM-7923'}`, async () => {
+  it(jira`should reject a schema failing the 2020-12 meta-schema ${'AM-7923'}`, async () => {
     const type = uniqueType();
 
-    await expectRejected(newType(type, { schema: validSchema(type, { minProperties: -1 }) }), 'Schema is not a valid JSON Schema Draft 7');
+    await expectRejected(newType(type, { schema: validSchema(type, { minProperties: -1 }) }), 'Schema is not a valid JSON Schema 2020-12');
+  });
+
+  it(jira`should reject definitions in favor of $defs ${'AM-7923'}`, async () => {
+    const type = uniqueType();
+
+    await expectRejected(
+      newType(type, { schema: validSchema(type, { definitions: { amount: { type: 'string' } } }) }),
+      'Schema must declare reusable subschemas in \\"$defs\\", not \\"definitions\\", found at #/definitions',
+    );
   });
 
   it(jira`should reject a schema whose root is not an object ${'AM-7923'}`, async () => {
     await expectRejected(
       newType(uniqueType(), { schema: JSON.stringify({ type: 'string' }) }),
-      'Schema must declare \\"type\\": \\"object\\" at its root',
+      'Schema must declare \\"type\\": \\"object\\" at its root, found at #/type',
     );
   });
 
@@ -137,8 +146,8 @@ describe('Validation of schema', () => {
     const type = uniqueType();
 
     await expectRejected(
-      newType(type, { schema: validSchema(type, { definitions: { remote: { $ref: 'https://example.org/schema.json' } } }) }),
-      'Schema must only contain local references',
+      newType(type, { schema: validSchema(type, { $defs: { remote: { $ref: 'https://example.org/schema.json' } } }) }),
+      'Schema must only contain local references (starting with \\"#\\"), found at #/$defs/remote/$ref',
     );
   });
 
@@ -146,8 +155,8 @@ describe('Validation of schema', () => {
     const type = uniqueType();
     const schema = JSON.stringify({
       type: 'object',
-      definitions: { amount: { type: 'string' } },
-      properties: { type: { const: type }, amount: { $ref: '#/definitions/amount' } },
+      $defs: { amount: { type: 'string' } },
+      properties: { type: { const: type }, amount: { $ref: '#/$defs/amount' } },
       required: ['type'],
     });
 
@@ -166,10 +175,13 @@ describe('Validation of schema', () => {
     const type = uniqueType();
     const schema = JSON.stringify({ type: 'object', properties: { type: { const: type } } });
 
-    await expectRejected(newType(type, { schema }), `Schema must constrain \\"type\\" to \\"${type}\\"`);
+    await expectRejected(
+      newType(type, { schema }),
+      'Schema must constrain \\"type\\": its root must declare properties.type.const and list \\"type\\" in required, found at #',
+    );
   });
 
-  it(jira`should accept keywords Draft 7 does not define ${'AM-7923'}`, async () => {
+  it(jira`should accept keywords 2020-12 does not define ${'AM-7923'}`, async () => {
     const type = uniqueType();
     const schema = validSchema(type, { 'x-masked': ['iban'] });
 
@@ -180,29 +192,23 @@ describe('Validation of schema', () => {
 });
 
 describe('Validation of schema references', () => {
-  it(jira`should reject a root reference beside the pinned type ${'AM-7923'}`, async () => {
-    const type = uniqueType();
-
-    await expectRejected(
-      newType(type, { schema: validSchema(type, { $ref: '#/definitions/loose', definitions: { loose: {} } }) }),
-      'Schema must not combine \\"$ref\\" with other keywords',
-    );
-  });
-
-  it(jira`should reject a reference beside the type constant ${'AM-7923'}`, async () => {
+  it(jira`should accept references beside other keywords ${'AM-7923'}`, async () => {
     const type = uniqueType();
     const schema = JSON.stringify({
       type: 'object',
-      definitions: { loose: {} },
-      properties: { type: { const: type, $ref: '#/definitions/loose' } },
+      $ref: '#/$defs/loose',
+      $defs: { loose: {} },
+      properties: { type: { const: type, $ref: '#/$defs/loose' } },
       required: ['type'],
     });
 
-    await expectRejected(newType(type, { schema }), 'at #/properties/type');
+    const created = await createAuthorizationDetailType(fixture.domain.id, fixture.accessToken, newType(type, { schema }));
+
+    expect(created.schema).toEqual(schema);
   });
 
   it.each([
-    ['a reference cycle', { definitions: { a: { $ref: '#/definitions/b' }, b: { $ref: '#/definitions/a' } } }],
+    ['a reference cycle', { $defs: { a: { $ref: '#/$defs/b' }, b: { $ref: '#/$defs/a' } } }],
     ['a root that applies itself', { allOf: [{ $ref: '#' }] }],
   ])(jira`should reject %s ${'AM-7923'}`, async (_, extra) => {
     const type = uniqueType();
@@ -210,21 +216,28 @@ describe('Validation of schema references', () => {
     await expectRejected(newType(type, { schema: validSchema(type, extra) }), 'Schema must not apply itself to the same value without end');
   });
 
-  it(jira`should reject a reference that does not resolve ${'AM-7923'}`, async () => {
+  it.each([
+    ['is missing', '#/$defs/missing'],
+    ['points into an unknown keyword', '#/x-hidden'],
+  ])(jira`should reject a reference that %s ${'AM-7923'}`, async (_, ref) => {
     const type = uniqueType();
 
     await expectRejected(
-      newType(type, { schema: validSchema(type, { definitions: { a: { $ref: '#/definitions/missing' } } }) }),
-      'Schema reference \\"#/definitions/missing\\" does not resolve to a subschema',
+      newType(type, { schema: validSchema(type, { 'x-hidden': { type: 'string' }, $defs: { a: { $ref: ref } } }) }),
+      `Schema reference \\"${ref}\\" does not resolve to a subschema`,
     );
   });
 
-  it(jira`should reject an identifier below the root ${'AM-7923'}`, async () => {
+  it.each([
+    ['an identifier', { $defs: { a: { $id: 'https://example.org/a', type: 'string' } } }, '$id', '#/$defs/a/$id'],
+    ['an anchor', { $defs: { a: { $anchor: 'a', type: 'string' } } }, '$anchor', '#/$defs/a/$anchor'],
+    ['a dynamic reference', { $defs: { a: { $dynamicRef: '#a' } } }, '$dynamicRef', '#/$defs/a/$dynamicRef'],
+  ])(jira`should reject %s ${'AM-7923'}`, async (_, extra, keyword, location) => {
     const type = uniqueType();
 
     await expectRejected(
-      newType(type, { schema: validSchema(type, { definitions: { a: { $id: '#a', type: 'string' } } }) }),
-      'Schema must not declare \\"$id\\" below its root',
+      newType(type, { schema: validSchema(type, extra) }),
+      `Schema must not declare \\"${keyword}\\", found at ${location}`,
     );
   });
 

@@ -57,7 +57,7 @@ export interface NewAuthorizationDetailType {
    */
   name: string;
   /**
-   * JSON Schema (Draft 7) the authorization_details objects of this type must satisfy. Its root must be an object whose "type" property is constant to this entry's type and required. Only local references ("#...") are allowed.
+   * JSON Schema 2020-12 the authorization_details objects of this type must satisfy; a schema without "$schema" is read as 2020-12. Its root must be an object whose "type" property is constant to this entry's type and required. Only local references ("#...") are allowed.
    * @type {string}
    * @memberof NewAuthorizationDetailType
    */

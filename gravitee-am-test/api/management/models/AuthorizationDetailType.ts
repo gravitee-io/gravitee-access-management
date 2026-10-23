@@ -75,7 +75,7 @@ export interface AuthorizationDetailType {
    */
   name?: string;
   /**
-   * JSON Schema (Draft 7) the authorization_details objects of this type must satisfy, returned exactly as submitted.
+   * JSON Schema 2020-12 the authorization_details objects of this type must satisfy, returned exactly as submitted.
    * @type {string}
    * @memberof AuthorizationDetailType
    */

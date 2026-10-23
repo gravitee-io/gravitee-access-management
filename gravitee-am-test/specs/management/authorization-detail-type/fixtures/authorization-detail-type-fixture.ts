@@ -31,7 +31,7 @@ export interface AuthorizationDetailTypeFixture extends Fixture {
 
 export const AUTHORIZATION_DETAIL_TYPE_TEST = {
   DOMAIN_NAME_PREFIX: 'adt-mgmt',
-  DRAFT_7: 'http://json-schema.org/draft-07/schema#',
+  DIALECT: 'https://json-schema.org/draft/2020-12/schema',
 } as const;
 
 export const validSchema = (type: string, extra: Record<string, unknown> = {}): string =>

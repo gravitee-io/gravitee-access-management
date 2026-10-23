@@ -50,7 +50,8 @@ public class NewAuthorizationDetailType {
     @Size(max = AuthorizationDetailType.DESCRIPTION_MAX_LENGTH, message = "Description must be at most {max} characters")
     private String description;
 
-    @Schema(description = "JSON Schema (Draft 7) the authorization_details objects of this type must satisfy. "
+    @Schema(description = "JSON Schema 2020-12 the authorization_details objects of this type must satisfy; "
+            + "a schema without \"$schema\" is read as 2020-12. "
             + "Its root must be an object whose \"type\" property is constant to this entry's type and required. "
             + "Only local references (\"#...\") are allowed.")
     @Size(max = AuthorizationDetailType.SCHEMA_MAX_LENGTH, message = "Schema must be at most {max} characters")

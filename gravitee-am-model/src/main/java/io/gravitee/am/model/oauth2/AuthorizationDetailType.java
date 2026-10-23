@@ -59,7 +59,7 @@ public class AuthorizationDetailType {
     @Schema(maxLength = DESCRIPTION_MAX_LENGTH)
     private String description;
 
-    @Schema(description = "JSON Schema (Draft 7) the authorization_details objects of this type must satisfy, "
+    @Schema(description = "JSON Schema 2020-12 the authorization_details objects of this type must satisfy, "
             + "returned exactly as submitted.", maxLength = SCHEMA_MAX_LENGTH)
     private String schema;
 

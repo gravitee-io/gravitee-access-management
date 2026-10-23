@@ -13739,8 +13739,8 @@ components:
           maxLength: 255
         schema:
           type: string
-          description: "JSON Schema (Draft 7) the authorization_details objects of\
-            \ this type must satisfy, returned exactly as submitted."
+          description: "JSON Schema 2020-12 the authorization_details objects of this\
+            \ type must satisfy, returned exactly as submitted."
           maxLength: 65536
         type:
           type: string
@@ -15791,10 +15791,10 @@ components:
           minLength: 0
         schema:
           type: string
-          description: JSON Schema (Draft 7) the authorization_details objects of
-            this type must satisfy. Its root must be an object whose "type" property
-            is constant to this entry's type and required. Only local references ("#...")
-            are allowed.
+          description: JSON Schema 2020-12 the authorization_details objects of this
+            type must satisfy; a schema without "$schema" is read as 2020-12. Its
+            root must be an object whose "type" property is constant to this entry's
+            type and required. Only local references ("#...") are allowed.
           maxLength: 65536
           minLength: 0
         type:

@@ -34,6 +34,9 @@ import {
   TrustedDomain,
   TrustedDomainFromJSON,
   TrustedDomainToJSON,
+  TrustedDomainPage,
+  TrustedDomainPageFromJSON,
+  TrustedDomainPageToJSON,
   UpdateTrustedDomain,
   UpdateTrustedDomainFromJSON,
   UpdateTrustedDomainToJSON,
@@ -317,7 +320,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   async listTrustedDomainsRaw(
     requestParameters: ListTrustedDomainsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<TrustedDomain>>> {
+  ): Promise<runtime.ApiResponse<TrustedDomainPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -364,7 +367,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TrustedDomainFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainPageFromJSON(jsonValue));
   }
 
   /**
@@ -374,7 +377,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   async listTrustedDomains(
     requestParameters: ListTrustedDomainsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<TrustedDomain>> {
+  ): Promise<TrustedDomainPage> {
     const response = await this.listTrustedDomainsRaw(requestParameters, initOverrides);
     return await response.value();
   }

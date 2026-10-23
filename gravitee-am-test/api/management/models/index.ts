@@ -256,6 +256,7 @@ export * from './TokenExchangeTrustSettings';
 export * from './TrustDomain';
 export * from './TrustDomainKeyMaterial';
 export * from './TrustedDomain';
+export * from './TrustedDomainPage';
 export * from './TrustedIssuer';
 export * from './UMASettings';
 export * from './UpdateAuthenticationDeviceNotifier';

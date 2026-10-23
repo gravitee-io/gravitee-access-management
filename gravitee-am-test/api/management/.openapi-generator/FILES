@@ -274,6 +274,7 @@ models/TokenExchangeTrustSettings.ts
 models/TrustDomain.ts
 models/TrustDomainKeyMaterial.ts
 models/TrustedDomain.ts
+models/TrustedDomainPage.ts
 models/TrustedIssuer.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts
