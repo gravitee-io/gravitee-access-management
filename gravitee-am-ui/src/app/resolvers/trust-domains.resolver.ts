@@ -25,6 +25,6 @@ export class TrustDomainsResolver {
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
-    return this.trustDomainService.list(domainId);
+    return this.trustDomainService.list(domainId, 0, 10);
   }
 }

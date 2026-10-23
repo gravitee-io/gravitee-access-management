@@ -214,7 +214,7 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
                 .replaceQueryParam(PARAM_CURSOR, new CursorApiRequest(nextCursor.getLastId(), nextCursor.getLastSortValue()).encode())
                 .replaceQueryParam(PARAM_PAGE, nextCursor.getPage())
                 .build();
-        return baseUri + "?" + uri.getQuery();
+        return baseUri + "?" + uri.getRawQuery();
     }
 
 

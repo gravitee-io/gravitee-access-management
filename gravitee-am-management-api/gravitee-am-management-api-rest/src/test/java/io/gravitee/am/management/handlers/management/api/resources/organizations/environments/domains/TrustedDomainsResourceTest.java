@@ -16,11 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.resources.model.CursorApiRequest;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserBindingCriterion;
+import io.gravitee.am.model.cursor.CursorPage;
+import io.gravitee.am.model.cursor.CursorRequest;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.KeyMaterialSource;
@@ -28,11 +31,12 @@ import io.gravitee.am.model.oidc.SpiffeTrustSettings;
 import io.gravitee.am.model.oidc.TokenExchangeTrustSettings;
 import io.gravitee.am.model.oidc.TrustedDomain;
 import io.gravitee.am.model.oidc.TrustDomainKeyMaterial;
+import io.gravitee.am.model.oidc.TrustedDomainCursorRequest;
+import io.gravitee.am.model.oidc.TrustedDomainUsage;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.InvalidTrustDomainException;
 import io.gravitee.am.service.model.NewTrustedDomain;
 import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
@@ -41,14 +45,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -109,11 +120,11 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
     @Test
     public void shouldExposeTheNestedBlocksAndNoneOfTheDeprecatedAccessors() {
         stubDomain();
-        doReturn(Flowable.just(spiffeTrustDomain(TrustDomainKeyMaterial.builder()
+        doReturn(Single.just(new CursorPage<>(List.of(spiffeTrustDomain(TrustDomainKeyMaterial.builder()
                 .source(KeyMaterialSource.JWKS_URL)
                 .jwksUrl("https://spire.example.org/keys")
-                .build())))
-                .when(trustDomainService).findByReference(ReferenceType.DOMAIN, DOMAIN_ID);
+                .build())), null, 1L)))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(), eq(Integer.MAX_VALUE - 1));
 
         final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").request().get();
 
@@ -121,6 +132,7 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
         Map<String, Object> page = response.readEntity(Map.class);
         assertEquals(0, page.get("page"));
         assertEquals(1, page.get("totalCount"));
+        assertNull(page.get("nextCursor"));
         List<Map<String, Object>> data = (List<Map<String, Object>>) page.get("data");
         assertEquals(1, data.size());
         Map<String, Object> trustedDomain = data.get(0);
@@ -132,6 +144,117 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
         assertFalse(trustedDomain.containsKey("issuer"));
         assertFalse(trustedDomain.containsKey("bundleSource"));
         assertFalse(trustedDomain.containsKey("jwksUrl"));
+    }
+
+    @Test
+    public void shouldListRequestedPageOfTrustedDomainsForUsageAndLinkTheNextPage() {
+        stubDomain();
+        TrustedDomainCursorRequest nextCursor = new TrustedDomainCursorRequest("acme", "td-1", CursorRequest.SortDirection.DESC, "name", 3, TrustedDomainUsage.TOKEN_EXCHANGE);
+        doReturn(Single.just(new CursorPage<>(List.of(tokenExchangeTrustDomain()), nextCursor, 41L)))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(cursor -> cursor.isFirstPage()
+                        && cursor.getSortDirection() == CursorRequest.SortDirection.DESC
+                        && "name".equals(cursor.getSortField())
+                        && cursor.getPage() == 2
+                        && cursor.getUsage() == TrustedDomainUsage.TOKEN_EXCHANGE), eq(10));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains")
+                .queryParam("limit", 10)
+                .queryParam("dir", "desc")
+                .queryParam("page", 2)
+                .queryParam("usage", "TOKEN_EXCHANGE")
+                .request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        Map<String, Object> page = response.readEntity(Map.class);
+        assertEquals(2, page.get("page"));
+        assertEquals(41, page.get("totalCount"));
+        List<Map<String, Object>> data = (List<Map<String, Object>>) page.get("data");
+        assertEquals("https://issuer.example.org", data.get(0).get("domainIdentifier"));
+        String next = (String) page.get("nextCursor");
+        assertTrue(next.startsWith("/organizations/DEFAULT/environments/DEFAULT/domains/" + DOMAIN_ID + "/trusted-domains/_cursor?"), next);
+        assertTrue(next.contains("cursor=" + URLEncoder.encode(new CursorApiRequest("td-1", "acme").encode(), StandardCharsets.UTF_8)), next);
+        assertTrue(next.contains("page=3"), next);
+        assertTrue(next.contains("usage=TOKEN_EXCHANGE"), next);
+        assertTrue(next.contains("dir=desc"), next);
+    }
+
+    @Test
+    public void shouldKeepTheNextCursorEncodedInTheNextPageLink() {
+        stubDomain();
+        TrustedDomainCursorRequest nextCursor = new TrustedDomainCursorRequest("partner>idp", "td-12", CursorRequest.SortDirection.ASC, "name", 1, null);
+        String encodedCursor = new CursorApiRequest("td-12", "partner>idp").encode();
+        doReturn(Single.just(new CursorPage<>(List.of(tokenExchangeTrustDomain()), nextCursor, 41L)))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(), eq(10));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains")
+                .queryParam("limit", 10)
+                .request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        String next = (String) response.readEntity(Map.class).get("nextCursor");
+        String cursorParam = Arrays.stream(next.substring(next.indexOf('?') + 1).split("&"))
+                .filter(param -> param.startsWith("cursor="))
+                .findFirst()
+                .orElseThrow()
+                .substring("cursor=".length());
+        assertTrue(encodedCursor.contains("+"), encodedCursor);
+        assertEquals(encodedCursor, URLDecoder.decode(cursorParam, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void shouldListThePageAfterTheGivenCursor() {
+        stubDomain();
+        doReturn(Single.just(new CursorPage<>(List.of(tokenExchangeTrustDomain()), null, 41L)))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(cursor -> "td-1".equals(cursor.getLastId())
+                        && "acme".equals(cursor.getLastSortValue())
+                        && cursor.getPage() == 3), eq(10));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
+                .queryParam("limit", 10)
+                .queryParam("page", 3)
+                .queryParam("cursor", new CursorApiRequest("td-1", "acme").encode())
+                .request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        Map<String, Object> page = response.readEntity(Map.class);
+        assertEquals(3, page.get("page"));
+        assertNull(page.get("nextCursor"));
+    }
+
+    @Test
+    public void shouldRejectListWithInvalidQueryParameters() {
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("page", -1));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("page", 1));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("limit", 0));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("limit", 101));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("usage", "UNKNOWN"));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("dir", "sideways"));
+        verify(trustDomainService, never()).findByReferenceCursor(any(), any(), any(), anyInt());
+    }
+
+    @Test
+    public void shouldRejectAnInvalidCursor() {
+        stubDomain();
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
+                .queryParam("cursor", "not base64!")
+                .request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        verify(trustDomainService, never()).findByReferenceCursor(any(), any(), any(), anyInt());
+    }
+
+    @Test
+    public void shouldRejectAnUnsortableField() {
+        doReturn(Single.error(new IllegalArgumentException("Invalid sort field: createdAt")))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(), anyInt());
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("sort", "createdAt"));
+    }
+
+    private int listStatus(String name, Object value) {
+        stubDomain();
+        return target("domains").path(DOMAIN_ID).path("trusted-domains").queryParam(name, value).request().get().getStatus();
     }
 
     @Test

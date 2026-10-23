@@ -73,6 +73,8 @@ export const SUFFICIENCY_ONLY_EXCLUDED: Record<string, string> = {
     'requires from/to/type query parameters',
   '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/search/_cursor':
     'requires a cursor query parameter',
+  '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/_cursor':
+    'requires a cursor query parameter',
 };
 
 /** The permission a route really enforces, preferring a confirmed override over the spec. */
