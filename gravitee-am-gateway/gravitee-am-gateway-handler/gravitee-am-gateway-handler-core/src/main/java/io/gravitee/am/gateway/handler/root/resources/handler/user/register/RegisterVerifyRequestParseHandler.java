@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.exception.UserAlreadyVerifiedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Maybe;
@@ -49,6 +50,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
     public static final String REGISTRATION_VERIFY_LINK_EXPIRED = "registration_verify_link_expired";
     public static final String UNEXPECTED_ERROR = "unexpected_error";
     private final Domain domain;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     public RegisterVerifyRequestParseHandler(Domain domain, UserService userService) {
         super(userService);
@@ -59,6 +61,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
     protected Handler<AsyncResult<UserToken>> getResultHandler(RoutingContext context, MultiMap queryParams) {
         return handler -> {
             if (handler.failed()) {
+                metricProvider.incrementRegistrationVerifyFailure();
                 final String errorKey = getErrorKey(handler.cause());
                 if(context.session()!=null){
                     context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorKey));
@@ -70,6 +73,7 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
             }
 
             if (handler.succeeded()) {
+                metricProvider.incrementRegistrationVerifySuccess();
                 UserToken userToken = handler.result();
                 context.put(ConstantKeys.USER_CONTEXT_KEY, userToken.getUser());
                 context.put(ConstantKeys.CLIENT_CONTEXT_KEY, userToken.getClient());

@@ -17,6 +17,12 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -24,7 +30,20 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
  */
 public class RegisterConfirmationRequestParseHandler extends UserTokenRequestParseHandler {
 
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+
     public RegisterConfirmationRequestParseHandler(UserService userService) {
         super(userService);
+    }
+
+    @Override
+    protected Handler<AsyncResult<UserToken>> getResultHandler(RoutingContext context, MultiMap queryParams) {
+        final Handler<AsyncResult<UserToken>> handler = super.getResultHandler(context, queryParams);
+        return result -> {
+            if (result.failed()) {
+                metricProvider.incrementRegistrationConfirmationFailure();
+            }
+            handler.handle(result);
+        };
     }
 }

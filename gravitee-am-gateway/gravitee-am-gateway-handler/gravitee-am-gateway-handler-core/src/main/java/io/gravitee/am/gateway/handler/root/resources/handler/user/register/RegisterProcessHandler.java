@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -47,6 +48,7 @@ public class RegisterProcessHandler extends UserRequestHandler {
 
     private final UserService userService;
     private final Domain domain;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     public RegisterProcessHandler(UserService userService, Domain domain) {
         this.userService = userService;
@@ -66,10 +68,12 @@ public class RegisterProcessHandler extends UserRequestHandler {
         register(client, user, getAuthenticatedUser(context), queryParams, UriBuilderRequest.resolveOrigin(context.request()), h -> {
             // if failure, return to the register page with an error
             if (h.failed()) {
+                metricProvider.incrementRegistrationFailure();
                 context.fail(h.cause());
                 return;
             }
 
+            metricProvider.incrementRegistrationSuccess();
             RegistrationResponse registrationResponse = h.result();
             // if auto login option is enabled add the user to the session
             if (registrationResponse.isAutoLogin()) {

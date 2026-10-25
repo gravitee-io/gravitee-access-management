@@ -718,7 +718,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager));
         rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
-                .handler(userTokenRequestParseHandler)
+                .handler(new RegisterConfirmationRequestParseHandler(userService))
                 .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.REGISTRATION_CONFIRMATION))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTRATION_CONFIRMATION))
@@ -743,7 +743,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
-                .handler(new BotDetectionHandler(domain, botDetectionManager, gatewayMetricProvider::incrementForgotPasswordFailure))
+                .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
 

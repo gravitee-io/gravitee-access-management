@@ -52,6 +52,9 @@ public interface Constants {
     String METRICS_MFA_ENROLLMENTS = METRICS_NAME_PREFIX + "mfa_enrollment";
     String METRICS_FORGOT_PASSWORD = METRICS_NAME_PREFIX + "forgot_password";
     String METRICS_RESET_PASSWORD = METRICS_NAME_PREFIX + "reset_password";
+    String METRICS_REGISTRATION = METRICS_NAME_PREFIX + "user_registration";
+    String METRICS_REGISTRATION_CONFIRMATION = METRICS_NAME_PREFIX + "registration_confirmation";
+    String METRICS_REGISTRATION_VERIFY = METRICS_NAME_PREFIX + "registration_verify";
 
     String TAG_STATUS = "status";
     String TAG_AUTH_STATUS = "auth_status";
