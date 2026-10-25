@@ -27,6 +27,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -49,6 +50,7 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
 
     private final UserService userService;
     private final Domain domain;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     public ForgotPasswordSubmissionEndpoint(UserService userService, Domain domain) {
         this.userService = userService;
@@ -69,11 +71,17 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
         userService.forgotPassword(parameters, client, getAuthenticatedUser(context))
                 .subscribe(
                         () -> {
+                            metricProvider.incrementForgotPasswordSuccess();
                             queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
                             resetCookieSession(context);
                             redirectToPage(context, queryParams);
                         },
                         error -> {
+                            // user not found, invalid or disabled account are failures, even if the UI hides them
+                            // the identity confirmation step is not an outcome of the request, so it is not counted
+                            if (!(error instanceof EnforceUserIdentityException)) {
+                                metricProvider.incrementForgotPasswordFailure();
+                            }
                             resetCookieSession(context);
                             // we don't want to expose potential security leaks such as guessing existing users
                             // the actual error continue to be stored in the audit logs

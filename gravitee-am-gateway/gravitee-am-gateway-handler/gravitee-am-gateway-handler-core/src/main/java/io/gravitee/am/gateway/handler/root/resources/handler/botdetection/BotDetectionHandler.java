@@ -44,9 +44,16 @@ public class BotDetectionHandler implements Handler<RoutingContext> {
 
     private final BotDetectionManager botDetectionManager;
 
+    private final Runnable onBotDetected;
+
     public BotDetectionHandler(Domain domain, BotDetectionManager botDetectionManager) {
+        this(domain, botDetectionManager, () -> {});
+    }
+
+    public BotDetectionHandler(Domain domain, BotDetectionManager botDetectionManager, Runnable onBotDetected) {
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.onBotDetected = onBotDetected;
     }
 
     @Override
@@ -78,6 +85,7 @@ public class BotDetectionHandler implements Handler<RoutingContext> {
                                 routingContext.next();
                             } else {
                                 log.warn("Bot detected for domain '{}' and client '{}'", domain.getId(), client.getId());
+                                onBotDetected.run();
                                 routingContext.fail(BAD_REQUEST_400, new BotDetectedException(DEFAULT_ERROR_MSG));
                             }
                         },

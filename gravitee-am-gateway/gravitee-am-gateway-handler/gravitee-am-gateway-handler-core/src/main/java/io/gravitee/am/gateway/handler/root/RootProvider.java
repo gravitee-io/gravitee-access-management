@@ -743,7 +743,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
-                .handler(botDetectionHandler)
+                .handler(new BotDetectionHandler(domain, botDetectionManager, gatewayMetricProvider::incrementForgotPasswordFailure))
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
 
@@ -759,7 +759,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager, identityProviderManager, deviceIdentifierManager));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
-                .handler(userTokenRequestParseHandler)
+                .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.USER_PASSWORD_RESET))
                 .handler(deviceIdentifierHandler)

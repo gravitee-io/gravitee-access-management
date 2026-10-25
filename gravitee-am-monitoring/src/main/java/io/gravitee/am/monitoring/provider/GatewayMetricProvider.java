@@ -26,6 +26,7 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_CONSENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_ERRORS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_FORGOT_PASSWORD;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDPS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDP_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_INTROSPECTS;
@@ -34,6 +35,7 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_CHALLENGES
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_ENROLLMENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCES;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCE_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_RESET_PASSWORD;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REVOKE;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_TOKENS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_USER_INFO;
@@ -141,6 +143,18 @@ public class GatewayMetricProvider {
             Tag.of(TAG_STATUS, "SUCCESS")));
 
     private final CounterHelper mfaEnrollmentFailure = new CounterHelper(METRICS_MFA_ENROLLMENTS, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper forgotPasswordSuccess = new CounterHelper(METRICS_FORGOT_PASSWORD, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper forgotPasswordFailure = new CounterHelper(METRICS_FORGOT_PASSWORD, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper resetPasswordSuccess = new CounterHelper(METRICS_RESET_PASSWORD, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper resetPasswordFailure = new CounterHelper(METRICS_RESET_PASSWORD, Tags.of(
             Tag.of(TAG_STATUS, "FAILURE")));
 
     public void incrementAppEvt() {
@@ -289,5 +303,21 @@ public class GatewayMetricProvider {
 
     public void incrementMfaEnrollmentFailure() {
         this.mfaEnrollmentFailure.increment();
+    }
+
+    public void incrementForgotPasswordSuccess() {
+        this.forgotPasswordSuccess.increment();
+    }
+
+    public void incrementForgotPasswordFailure() {
+        this.forgotPasswordFailure.increment();
+    }
+
+    public void incrementResetPasswordSuccess() {
+        this.resetPasswordSuccess.increment();
+    }
+
+    public void incrementResetPasswordFailure() {
+        this.resetPasswordFailure.increment();
     }
 }

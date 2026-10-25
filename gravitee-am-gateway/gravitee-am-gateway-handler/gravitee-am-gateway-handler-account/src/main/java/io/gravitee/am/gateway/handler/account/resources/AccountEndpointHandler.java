@@ -29,7 +29,9 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
@@ -69,6 +71,7 @@ public class AccountEndpointHandler {
     public static final String ERROR_MSG_ACCESS_TOKEN_TOO_OLD = "Access token does not conform with expiration period. Please generate a new token.";
     private final AccountService accountService;
     private final Domain domain;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     public AccountEndpointHandler(AccountService accountService, Domain domain) {
         this.accountService = accountService;
@@ -122,6 +125,7 @@ public class AccountEndpointHandler {
             final Optional<String> oldPassword = Optional.ofNullable(bodyAsJson.getString(OLD_PASSWORD_KEY));
 
             if (!tokenCanHandleResetPassword(routingContext)){
+                metricProvider.incrementResetPasswordFailure();
                 routingContext.fail(new HttpException(HttpStatusCode.UNAUTHORIZED_401, ERROR_MSG_ACCESS_TOKEN_TOO_OLD));
                 return;
             }
@@ -139,8 +143,15 @@ public class AccountEndpointHandler {
 
             accountService.resetPassword(user, client, password, principal, oldPassword)
                     .subscribe(
-                            __ -> handleNoBodyResponse(routingContext),
+                            __ -> {
+                                metricProvider.incrementResetPasswordSuccess();
+                                handleNoBodyResponse(routingContext);
+                            },
                             error -> {
+                                // password policy violations are ignored
+                                if (!(error instanceof InvalidPasswordException)) {
+                                    metricProvider.incrementResetPasswordFailure();
+                                }
                                 if (error instanceof UserProviderNotFoundException) {
                                     handleUpdateUserResponse(routingContext, "Action forbidden", FORBIDDEN_403);
                                 } else {
