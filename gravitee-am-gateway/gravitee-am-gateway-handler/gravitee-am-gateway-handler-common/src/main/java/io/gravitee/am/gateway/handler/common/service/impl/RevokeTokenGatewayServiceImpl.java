@@ -27,6 +27,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -65,6 +66,8 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
     @Autowired
     private Domain domain;
 
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -90,8 +93,14 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
                                 .initialDelay(REVOKE_RETRY_DELAY_MS, TimeUnit.MILLISECONDS)
                                 .linear()
                                 .build())
-                        .doOnComplete(() -> auditLog(revokeToken))
-                        .doOnError(error -> auditLog(revokeToken, error))
+                        .doOnComplete(() -> {
+                            metricProvider.incrementRevokeSuccess();
+                            auditLog(revokeToken);
+                        })
+                        .doOnError(error -> {
+                            metricProvider.incrementRevokeFailure();
+                            auditLog(revokeToken, error);
+                        })
                         .subscribe(() -> {}, error -> {});
             }
         }
@@ -130,6 +139,8 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete tokens by user: %s", userId), ex));
                 })
+                .doOnComplete(metricProvider::incrementRevokeSuccess)
+                .doOnError(error -> metricProvider.incrementRevokeFailure())
                 .doOnEvent(error -> { if (needAudit) {
                             auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                     .reference(new Reference(user.getReferenceType(), user.getReferenceId()))
@@ -143,7 +154,9 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
 
     @Override
     public Completable process(Domain domain, RevokeToken revokeTokenDescription) {
-        return process(revokeTokenDescription);
+        return process(revokeTokenDescription)
+                .doOnComplete(metricProvider::incrementRevokeSuccess)
+                .doOnError(error -> metricProvider.incrementRevokeFailure());
     }
 
     private Completable process(RevokeToken revokeTokenDescription) {

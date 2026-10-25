@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationT
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
@@ -43,6 +44,8 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
 
     @Autowired
     private AuditService auditService;
+
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     @Override
     public Completable revoke(RevocationTokenRequest request, Client client) {
@@ -84,10 +87,13 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                         }
                         return Completable.error(throwable);
                     })
-                    .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                            .tokenActor(client)
-                            .throwable(error)
-                            .revoked()));
+                    .doOnError(error -> {
+                        metricProvider.incrementRevokeFailure();
+                        auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                                .tokenActor(client)
+                                .throwable(error)
+                                .revoked());
+                    });
         }
 
         // The user didn't hint that this is a refresh token, so it MAY be an access
@@ -125,10 +131,13 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                     }
                     return Completable.error(throwable);
                 })
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                        .tokenActor(client)
-                        .throwable(error)
-                        .revoked()));
+                .doOnError(error -> {
+                    metricProvider.incrementRevokeFailure();
+                    auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .tokenActor(client)
+                            .throwable(error)
+                            .revoked());
+                });
     }
 
     private Completable revokeAccessToken(String token, Client client) {
@@ -142,10 +151,13 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                     }
 
                     return tokenService.deleteAccessToken(accessToken.getValue())
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .doOnComplete(() -> {
+                                metricProvider.incrementRevokeSuccess();
+                                auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                             .accessToken(accessToken.getValue())
                                             .tokenActor(client)
-                                            .revoked()));
+                                            .revoked());
+                            });
                 });
     }
 
@@ -160,10 +172,13 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                         return Completable.error(new InvalidGrantException("Cannot revoke tokens issued to other clients."));
                     }
                     return tokenService.deleteRefreshToken(refreshToken.getValue())
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .doOnComplete(() -> {
+                                metricProvider.incrementRevokeSuccess();
+                                auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                             .refreshToken(refreshToken.getValue())
                                             .tokenActor(client)
-                                            .revoked()));
+                                            .revoked());
+                            });
                 });
     }
 }
