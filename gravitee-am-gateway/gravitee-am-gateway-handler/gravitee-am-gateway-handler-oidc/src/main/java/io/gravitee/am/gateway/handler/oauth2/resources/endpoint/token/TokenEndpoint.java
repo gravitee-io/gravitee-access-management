@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFacto
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -40,6 +41,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  */
 public class TokenEndpoint implements Handler<RoutingContext> {
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
     private TokenGranter tokenGranter;
 
     public TokenEndpoint() { }
@@ -50,37 +52,50 @@ public class TokenEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        // Confidential clients or other clients issued client credentials MUST
-        // authenticate with the authorization server when making requests to the token endpoint.
-        Client client = context.get(CLIENT_CONTEXT_KEY);
-        if (client == null) {
-            throw new InvalidClientException();
-        }
-
-        TokenRequest tokenRequest = tokenRequestFactory.create(context);
-        // Check that authenticated user is matching the client_id
-        // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
-        if (tokenRequest.getClientId() != null) {
-            if (!client.getClientId().equals(tokenRequest.getClientId())) {
+        final Client client;
+        final TokenRequest tokenRequest;
+        try {
+            // Confidential clients or other clients issued client credentials MUST
+            // authenticate with the authorization server when making requests to the token endpoint.
+            client = context.get(CLIENT_CONTEXT_KEY);
+            if (client == null) {
                 throw new InvalidClientException();
             }
-        } else {
-            // set token request client_id with the authenticated client
-            tokenRequest.setClientId(client.getClientId());
-        }
 
-        // check if client has authorized grant types
-        if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
-            throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
+            tokenRequest = tokenRequestFactory.create(context);
+            // Check that authenticated user is matching the client_id
+            // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
+            if (tokenRequest.getClientId() != null) {
+                if (!client.getClientId().equals(tokenRequest.getClientId())) {
+                    throw new InvalidClientException();
+                }
+            } else {
+                // set token request client_id with the authenticated client
+                tokenRequest.setClientId(client.getClientId());
+            }
+
+            // check if client has authorized grant types
+            if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
+                throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
+            }
+        } catch (RuntimeException e) {
+            metricProvider.incrementTokenFailure();
+            throw e;
         }
 
         tokenGranter.grant(tokenRequest, tokenRequest.getHttpResponse(), client)
-                .subscribe(accessToken -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(accessToken))
-                        , context::fail);
+                .subscribe(accessToken -> {
+                            metricProvider.incrementTokenSuccess();
+                            context.response()
+                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                    .end(Json.encodePrettily(accessToken));
+                        }
+                        , error -> {
+                            metricProvider.incrementTokenFailure();
+                            context.fail(error);
+                        });
     }
 
 }

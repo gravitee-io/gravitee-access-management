@@ -243,6 +243,14 @@ public class GatewayMetricProvider {
         this.userInfoFailure.increment();
     }
 
+    public void incrementTokenSuccess() {
+        this.tokenSuccess.increment();
+    }
+
+    public void incrementTokenFailure() {
+        this.tokenFailure.increment();
+    }
+
     public void incrementRevokeSuccess() {
         this.revokeSuccess.increment();
     }
