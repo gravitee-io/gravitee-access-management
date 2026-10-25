@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
@@ -45,6 +46,7 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
     public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
 
     private final UserService userService;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
     private final boolean keepParams;
 
     public RegisterConfirmationSubmissionEndpoint(UserService userService, Environment environment) {
@@ -71,11 +73,13 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
 
             // if failure, return to the registration confirmation page with an error
             if (h.failed()) {
+                metricProvider.incrementRegistrationConfirmationFailure();
                 log.error("An error occurs while ending user registration", h.cause());
                 queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
                 redirectToPage(context, queryParams, h.cause());
                 return;
             }
+            metricProvider.incrementRegistrationConfirmationSuccess();
             // handle response
             RegistrationResponse registrationResponse = h.result();
             // if auto login option is enabled add the user to the session

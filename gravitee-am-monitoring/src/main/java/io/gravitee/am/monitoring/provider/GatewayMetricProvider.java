@@ -35,6 +35,9 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_CHALLENGES
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_ENROLLMENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCES;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCE_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REGISTRATION;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REGISTRATION_CONFIRMATION;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REGISTRATION_VERIFY;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_RESET_PASSWORD;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REVOKE;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_TOKENS;
@@ -155,6 +158,24 @@ public class GatewayMetricProvider {
             Tag.of(TAG_STATUS, "SUCCESS")));
 
     private final CounterHelper resetPasswordFailure = new CounterHelper(METRICS_RESET_PASSWORD, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper registrationSuccess = new CounterHelper(METRICS_REGISTRATION, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper registrationFailure = new CounterHelper(METRICS_REGISTRATION, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper registrationConfirmationSuccess = new CounterHelper(METRICS_REGISTRATION_CONFIRMATION, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper registrationConfirmationFailure = new CounterHelper(METRICS_REGISTRATION_CONFIRMATION, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
+    private final CounterHelper registrationVerifySuccess = new CounterHelper(METRICS_REGISTRATION_VERIFY, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper registrationVerifyFailure = new CounterHelper(METRICS_REGISTRATION_VERIFY, Tags.of(
             Tag.of(TAG_STATUS, "FAILURE")));
 
     public void incrementAppEvt() {
@@ -319,5 +340,29 @@ public class GatewayMetricProvider {
 
     public void incrementResetPasswordFailure() {
         this.resetPasswordFailure.increment();
+    }
+
+    public void incrementRegistrationSuccess() {
+        this.registrationSuccess.increment();
+    }
+
+    public void incrementRegistrationFailure() {
+        this.registrationFailure.increment();
+    }
+
+    public void incrementRegistrationConfirmationSuccess() {
+        this.registrationConfirmationSuccess.increment();
+    }
+
+    public void incrementRegistrationConfirmationFailure() {
+        this.registrationConfirmationFailure.increment();
+    }
+
+    public void incrementRegistrationVerifySuccess() {
+        this.registrationVerifySuccess.increment();
+    }
+
+    public void incrementRegistrationVerifyFailure() {
+        this.registrationVerifyFailure.increment();
     }
 }
