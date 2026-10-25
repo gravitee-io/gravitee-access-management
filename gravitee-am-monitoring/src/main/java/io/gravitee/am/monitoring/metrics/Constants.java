@@ -50,6 +50,8 @@ public interface Constants {
     String METRICS_LOGOUT = METRICS_NAME_PREFIX + "logout";
     String METRICS_MFA_CHALLENGES = METRICS_NAME_PREFIX + "mfa_challenge";
     String METRICS_MFA_ENROLLMENTS = METRICS_NAME_PREFIX + "mfa_enrollment";
+    String METRICS_FORGOT_PASSWORD = METRICS_NAME_PREFIX + "forgot_password";
+    String METRICS_RESET_PASSWORD = METRICS_NAME_PREFIX + "reset_password";
 
     String TAG_STATUS = "status";
     String TAG_AUTH_STATUS = "auth_status";

@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.User;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -37,6 +38,7 @@ import lombok.CustomLog;
 @CustomLog
 public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
 
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     @Override
     public void handle(RoutingContext context) {
@@ -63,6 +65,7 @@ public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
         // redirect user to the reset password page with an error
         if (Instant.ofEpochSecond(jwt.getIat()).isBefore(user.getLastPasswordReset().toInstant())) {
             log.debug("Token has already been used for reset password action, skip it.");
+            metricProvider.incrementResetPasswordFailure();
             queryParams.set(ConstantKeys.ERROR_PARAM_KEY, INVALID_TOKEN);
             if(context.session()!=null){
                 context.session().put(ERROR_HASH, HashUtil.generateSHA256(INVALID_TOKEN));
