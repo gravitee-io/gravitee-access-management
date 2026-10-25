@@ -26,6 +26,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -56,6 +57,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
     private final Domain domain;
     private final UserConsentService userConsentService;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     public UserConsentProcessHandler(UserConsentService userConsentService, Domain domain) {
         this.userConsentService = userConsentService;
@@ -107,6 +109,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
             final Set<String> requiredScopes = RequiredScopeUtils.requiredScopeKeys(client);
             for (String presentedScope : presentedConsent) {
                 if (requiredScopes.contains(presentedScope) && !isApproved(params.get(SCOPE_PREFIX + presentedScope))) {
+                    metricProvider.incrementConsentFailure();
                     routingContext.fail(new AccessDeniedException("Consent could not be verified"));
                     return;
                 }
@@ -136,6 +139,11 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
             boolean approved = !approvedConsent.isEmpty() || requestedConsent.isEmpty()
                     || (!userRejected && RequiredScopeUtils.canApproveWithoutSelection(client, requestedConsent, alreadyApprovedConsent));
+            if (approved) {
+                metricProvider.incrementConsentSuccess();
+            } else {
+                metricProvider.incrementConsentFailure();
+            }
             authorizationRequest.setApproved(approved);
             authorizationRequest.setScopes(approvedConsent);
             authorizationRequest.setConsents(h.result());

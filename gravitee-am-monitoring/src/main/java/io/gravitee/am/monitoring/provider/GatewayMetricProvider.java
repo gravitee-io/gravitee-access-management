@@ -243,6 +243,14 @@ public class GatewayMetricProvider {
         this.userInfoFailure.increment();
     }
 
+    public void incrementConsentSuccess() {
+        this.consentSuccess.increment();
+    }
+
+    public void incrementConsentFailure() {
+        this.consentFailure.increment();
+    }
+
     public void incrementMfaSuccess() {
         this.mfaSuccess.increment();
     }
