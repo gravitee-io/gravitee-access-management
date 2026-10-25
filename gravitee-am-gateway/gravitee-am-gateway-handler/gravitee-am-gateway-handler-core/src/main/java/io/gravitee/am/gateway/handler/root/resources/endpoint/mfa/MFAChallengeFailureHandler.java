@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -43,10 +44,12 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
     private static final String ERROR_CODE_VALUE = "send_challenge_failed";
 
     private final AuthenticationFlowContextService authenticationFlowContextService;
+    private final GatewayMetricProvider gatewayMetricProvider;
 
     public MFAChallengeFailureHandler(AuthenticationFlowContextService authenticationFlowContextService) {
         super(RootProvider.PATH_ERROR);
         this.authenticationFlowContextService = authenticationFlowContextService;
+        this.gatewayMetricProvider = new GatewayMetricProvider();
     }
 
     @Override
@@ -55,6 +58,7 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
     }
 
     private void handleException(RoutingContext context, Throwable throwable) {
+        this.gatewayMetricProvider.incrementMfaFailure();
         if (throwable != null) {
             log.warn("MFA challenge failed: {}", throwable.getMessage());
             log.debug("MFA challenge failure", throwable);

@@ -31,6 +31,7 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDP_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_INTROSPECTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_LOGOUT;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_CHALLENGES;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_MFA_ENROLLMENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCES;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCE_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_REVOKE;
@@ -136,6 +137,12 @@ public class GatewayMetricProvider {
     private final CounterHelper mfaFailure = new CounterHelper(METRICS_MFA_CHALLENGES, Tags.of(
             Tag.of(TAG_STATUS, "FAILURE")));
 
+    private final CounterHelper mfaEnrollmentSuccess = new CounterHelper(METRICS_MFA_ENROLLMENTS, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper mfaEnrollmentFailure = new CounterHelper(METRICS_MFA_ENROLLMENTS, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
+
     public void incrementAppEvt() {
         this.appEvtCounter.increment();
     }
@@ -234,5 +241,21 @@ public class GatewayMetricProvider {
 
     public void incrementUserInfoFailure() {
         this.userInfoFailure.increment();
+    }
+
+    public void incrementMfaSuccess() {
+        this.mfaSuccess.increment();
+    }
+
+    public void incrementMfaFailure() {
+        this.mfaFailure.increment();
+    }
+
+    public void incrementMfaEnrollmentSuccess() {
+        this.mfaEnrollmentSuccess.increment();
+    }
+
+    public void incrementMfaEnrollmentFailure() {
+        this.mfaEnrollmentFailure.increment();
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.common.utils.UserFacingFailureMessage;
 import io.gravitee.am.gateway.handler.common.utils.UsernameHelper;
 import io.gravitee.am.gateway.handler.root.RootProvider;
@@ -32,12 +33,15 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 
 public class MFAEnrollFailureHandler extends AbstractErrorHandler {
     private static final String ERROR_CODE_VALUE = "enrollment_channel_invalid";
+    GatewayMetricProvider gatewayMetricProvider = new GatewayMetricProvider();
+
     public MFAEnrollFailureHandler() {
         super(RootProvider.PATH_MFA_ENROLL);
     }
 
     @Override
     public void doHandle(RoutingContext context) {
+        gatewayMetricProvider.incrementMfaEnrollmentFailure();
         var errorDescription = getErrorDescription(context);
 
         updateHashValues(context, errorDescription);

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpServerRequest;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.exception.EnrollmentChannelValidationException;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
@@ -55,12 +56,29 @@ public class MFAEnrollFailureHandlerTest {
     @Mock
     Session session;
 
+    private final GatewayMetricProvider metricProvider = mock(GatewayMetricProvider.class);
+
     @Before
     public void setUp() throws Exception {
+        handler.gatewayMetricProvider = metricProvider;
         Mockito.when(ctx.response()).thenReturn(response);
         Mockito.when(ctx.request()).thenReturn(request);
         Mockito.when(ctx.session()).thenReturn(session);
         Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("test-domain");
+    }
+
+    @Test
+    public void should_count_mfa_enrollment_failure_only(){
+        // given
+        Mockito.when(ctx.failure()).thenReturn(new EnrollmentChannelValidationException("errorMessage"));
+        Mockito.when(request.uri()).thenReturn("https://am.com/mfa/enroll");
+
+        // when
+        handler.doHandle(ctx);
+
+        // verify
+        Mockito.verify(metricProvider).incrementMfaEnrollmentFailure();
+        Mockito.verify(metricProvider, Mockito.never()).incrementError();
     }
 
     @Test
