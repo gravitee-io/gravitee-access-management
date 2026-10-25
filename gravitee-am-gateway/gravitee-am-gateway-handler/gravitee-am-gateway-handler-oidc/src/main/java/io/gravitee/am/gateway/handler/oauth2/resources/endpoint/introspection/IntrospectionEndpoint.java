@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -37,6 +38,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
     private IntrospectionService introspectionService;
+    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
 
     public IntrospectionEndpoint(IntrospectionService introspectionService) {
         this.introspectionService = introspectionService;
@@ -48,13 +50,18 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
             IntrospectionRequest request = createRequest(context);
             introspectionService
                 .introspect(request)
-                .doOnSuccess(introspectionResponse -> context.response()
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .end(Json.encodePrettily(introspectionResponse)))
+                .doOnSuccess(introspectionResponse -> {
+                    // an inactive token is a valid answer of the endpoint, the call is a success
+                    metricProvider.incrementIntrospectSuccess();
+                    context.response()
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .end(Json.encodePrettily(introspectionResponse));
+                })
                 .subscribe();
         } catch (InvalidClientException | InvalidRequestException e) {
+            metricProvider.incrementIntrospectFailure();
             context.fail(e);
         }
     }
