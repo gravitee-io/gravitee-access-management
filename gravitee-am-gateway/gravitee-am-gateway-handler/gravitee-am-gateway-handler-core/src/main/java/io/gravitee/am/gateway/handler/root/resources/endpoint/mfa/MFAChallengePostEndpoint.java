@@ -43,6 +43,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
@@ -105,6 +106,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
     private final DeviceIdentifierManager deviceIdentifierManager;
     private final JWTService jwtService;
     private final String rememberDeviceCookieName;
+    private final GatewayMetricProvider gatewayMetricProvider;
 
     public MFAChallengePostEndpoint(FactorManager factorManager,
                                     UserService userService,
@@ -130,6 +132,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
         this.deviceIdentifierManager = deviceIdentifierManager;
         this.jwtService = jwtService;
         this.rememberDeviceCookieName = rememberDeviceCookieName;
+        this.gatewayMetricProvider = new GatewayMetricProvider();
     }
 
     @Override
@@ -196,7 +199,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                 if (verifyAttemptService.shouldSendEmail(client, domainDataPlane.getDomain())) {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }
-                                updateAuditLog(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
+                                reportFailure(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
                                 log.warn("MFA verification limit reached for the user: {}", endUser.getUsername());
                                 handleException(routingContext, VERIFY_ATTEMPT_ERROR_PARAM_KEY, "maximum_verify_limit");
                             } else {
@@ -219,7 +222,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
             final boolean enrolling = isEnrolling(enrolledFactor);
             if (h.failed()) {
                 String failureReason = enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE;
-                updateAuditLog(routingContext, failureReason, endUser, client, factor, factorContext, h.cause());
+                reportFailure(routingContext, failureReason, endUser, client, factor, factorContext, h.cause());
                 handleException(routingContext, ERROR_PARAM_KEY, MFA_CHALLENGE_FAILED);
                 return;
             }
@@ -236,7 +239,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         log.error("An error occurs while saving enrolled factor for the current user", fh.cause());
-                        updateAuditLog(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, fh.cause());
+                        reportFailure(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, fh.cause());
                         handleException(routingContext, ERROR_PARAM_KEY, MFA_CHALLENGE_FAILED);
                         return;
                     }
@@ -244,11 +247,11 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                     routingContext.put(ConstantKeys.USER_CONTEXT_KEY, fh.result());
                     cleanSession(routingContext);
                     updateStrongAuthStatus(routingContext);
-                    updateAuditLog(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, null);
+                    reportSuccess(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext);
                     saveDeviceAndContinue(routingContext, client, endUser);
                 });
             } else {
-                updateAuditLog(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext, null);
+                reportSuccess(routingContext, MFA_CHALLENGE, endUser, client, factor, factorContext);
                 updateStrongAuthStatus(routingContext);
                 saveDeviceAndContinue(routingContext, client, endUser);
             }
@@ -273,7 +276,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
 
 
             updateStrongAuthStatus(routingContext);
-            updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, null);
+            reportSuccess(routingContext, auditLogType, endUser, client, factor, factorContext);
             log.debug("User {} strongly authenticated", endUser.getId());
             // set the credentialId in session
             routingContext.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
@@ -424,6 +427,26 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                         updatedCredential -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
+    }
+
+    private void reportSuccess(RoutingContext routingContext, String type, User endUser, Client client,
+                               Factor factor, FactorContext factorContext) {
+        updateAuditLog(routingContext, type, endUser, client, factor, factorContext, null);
+        if (MFA_CHALLENGE.equals(type)) {
+            gatewayMetricProvider.incrementMfaSuccess();
+        } else if (MFA_ENROLLMENT.equals(type)) {
+            gatewayMetricProvider.incrementMfaEnrollmentSuccess();
+        }
+    }
+
+    private void reportFailure(RoutingContext routingContext, String type, User endUser, Client client,
+                               Factor factor, FactorContext factorContext, Throwable cause) {
+        updateAuditLog(routingContext, type, endUser, client, factor, factorContext, cause);
+        if (MFA_CHALLENGE.equals(type) || MFA_MAX_ATTEMPT_REACHED.equals(type)) {
+            gatewayMetricProvider.incrementMfaFailure();
+        } else if (MFA_ENROLLMENT.equals(type)) {
+            gatewayMetricProvider.incrementMfaEnrollmentFailure();
+        }
     }
 
     private void updateStrongAuthStatus(RoutingContext ctx) {
