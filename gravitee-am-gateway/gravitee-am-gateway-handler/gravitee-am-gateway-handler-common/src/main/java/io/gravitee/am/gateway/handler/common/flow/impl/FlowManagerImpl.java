@@ -79,7 +79,8 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                 Map.entry(Type.TOKEN, List.of(PRE_TOKEN, POST_TOKEN)),
                 Map.entry(Type.WEBAUTHN_REGISTER, List.of(PRE_WEBAUTHN_REGISTER, POST_WEBAUTHN_REGISTER)),
                 Map.entry(Type.MFA_CHALLENGE, List.of(PRE_MFA_CHALLENGE, POST_MFA_CHALLENGE)),
-                Map.entry(Type.MFA_ENROLLMENT, List.of(PRE_MFA_ENROLLMENT, POST_MFA_ENROLLMENT))
+                Map.entry(Type.MFA_ENROLLMENT, List.of(PRE_MFA_ENROLLMENT, POST_MFA_ENROLLMENT)),
+                Map.entry(Type.CONNECT, List.of(PRE_CONNECT, POST_CONNECT))
         );
     }
 
