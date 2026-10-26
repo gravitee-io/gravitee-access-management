@@ -3205,6 +3205,57 @@ paths:
       tags:
       - authorization detail type
       - domain
+    patch:
+      description: "Fields left out are unchanged and a field sent as null is cleared;\
+        \ name and discovery can't be null. User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[UPDATE]\
+        \ permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[UPDATE]\
+        \ permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[UPDATE]\
+        \ permission on the specified organization"
+      operationId: patchAuthorizationDetailType
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authorizationDetailTypeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchAuthorizationDetailType"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationDetailType"
+          description: Authorization detail type successfully updated
+        "400":
+          description: Invalid authorization detail type
+        "404":
+          description: Authorization detail type not found
+        "500":
+          description: Internal server error
+      summary: Update an authorization detail type
+      tags:
+      - authorization detail type
+      - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines:
     get:
       description: "User must have the DOMAIN_AUTHORIZATION_ENGINE[LIST] permission\
@@ -17515,6 +17566,34 @@ components:
           - AGENT
       required:
       - type
+    PatchAuthorizationDetailType:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1024
+          minLength: 0
+        discovery:
+          type: boolean
+          description: Whether the type is advertised through discovery.
+        expiresIn:
+          type: integer
+          format: int32
+          description: "Expiration time for user consent, in seconds. Absent means\
+            \ the gateway default applies."
+          minimum: 1
+        name:
+          type: string
+          maxLength: 255
+          minLength: 0
+        schema:
+          type: string
+          description: JSON Schema 2020-12 the authorization_details objects of this
+            type must satisfy; a schema without "$schema" is read as 2020-12. Its
+            root must be an object whose "type" property is constant to this entry's
+            type and required. Only local references ("#...") are allowed.
+          maxLength: 65536
+          minLength: 0
     PatchCIBASettings:
       type: object
       properties:

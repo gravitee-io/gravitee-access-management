@@ -21,6 +21,7 @@ import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
+import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -35,6 +36,8 @@ public interface AuthorizationDetailTypeService {
     Single<CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>> findByDomainCursor(String domain, AuthorizationDetailTypeCursorRequest cursor, int limit);
 
     Single<AuthorizationDetailType> create(Domain domain, NewAuthorizationDetailType newAuthorizationDetailType, User principal);
+
+    Single<AuthorizationDetailType> patch(Domain domain, String id, PatchAuthorizationDetailType patchAuthorizationDetailType, User principal);
 
     Completable deleteByDomain(String domain);
 }
