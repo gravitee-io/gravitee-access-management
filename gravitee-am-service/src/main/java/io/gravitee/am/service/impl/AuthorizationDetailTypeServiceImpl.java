@@ -35,9 +35,11 @@ import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
+import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
+import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.AuthorizationDetailTypeAuditBuilder;
 import io.gravitee.am.service.validators.authorizationdetailtype.AuthorizationDetailTypeValidator;
@@ -110,9 +112,7 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                 .updatedAt(now)
                 .build();
 
-        return Completable.defer(() -> validator.validate(toCreate)
-                        .map(error -> Completable.error(new InvalidAuthorizationDetailTypeException(error)))
-                        .orElse(Completable.complete()))
+        return validate(toCreate)
                 .andThen(Single.defer(() -> repository.findByDomainAndType(domain.getId(), toCreate.getType()).isEmpty()))
                 .flatMap(empty -> {
                     if (!empty) {
@@ -143,6 +143,50 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                         .type(EventType.AUTHORIZATION_DETAIL_TYPE_CREATED)
                         .reference(Reference.domain(domain.getId()))
                         .throwable(throwable)));
+    }
+
+    @Override
+    public Single<AuthorizationDetailType> patch(Domain domain, String id, PatchAuthorizationDetailType patchAuthorizationDetailType, User principal) {
+        log.debug("Patch authorization detail type {} for domain {}", id, domain.getId());
+        return findById(domain.getId(), id)
+                .switchIfEmpty(Single.error(new AuthorizationDetailTypeNotFoundException(id)))
+                .flatMap(existing -> {
+                    AuthorizationDetailType toUpdate = patchAuthorizationDetailType.patch(existing);
+                    toUpdate.setUpdatedAt(new Date());
+                    return update(domain, existing, toUpdate, principal);
+                });
+    }
+
+    private Single<AuthorizationDetailType> update(Domain domain, AuthorizationDetailType oldValue, AuthorizationDetailType toUpdate, User principal) {
+        return validate(toUpdate)
+                .andThen(Single.defer(() -> repository.update(toUpdate)))
+                .flatMap(updated -> {
+                    Event event = new Event(Type.AUTHORIZATION_DETAIL_TYPE, new Payload(updated.getId(), ReferenceType.DOMAIN, updated.getDomain(), Action.UPDATE));
+                    return eventService.create(event, domain).map(__ -> updated);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    log.error("An error occurs while trying to update an authorization detail type", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update an authorization detail type", ex));
+                })
+                .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(AuthorizationDetailTypeAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.AUTHORIZATION_DETAIL_TYPE_UPDATED)
+                        .oldValue(oldValue)
+                        .authorizationDetailType(updated)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationDetailTypeAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.AUTHORIZATION_DETAIL_TYPE_UPDATED)
+                        .reference(Reference.domain(domain.getId()))
+                        .throwable(throwable)));
+    }
+
+    private Completable validate(AuthorizationDetailType authorizationDetailType) {
+        return Completable.defer(() -> validator.validate(authorizationDetailType)
+                .map(error -> Completable.error(new InvalidAuthorizationDetailTypeException(error)))
+                .orElse(Completable.complete()));
     }
 
     @Override

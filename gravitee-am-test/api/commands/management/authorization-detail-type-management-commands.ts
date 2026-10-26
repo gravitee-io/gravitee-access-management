@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getAuthorizationDetailTypeApi } from './service/utils';
+import { getAuthorizationDetailTypeApi, getDomainManagerUrl } from './service/utils';
+import { performPatch } from '@gateway-commands/oauth-oidc-commands';
 import { ApiResponse } from '../../management/runtime';
 import { AuthorizationDetailType } from '@management-models/AuthorizationDetailType';
 import { AuthorizationDetailTypeCursorPage } from '@management-models/AuthorizationDetailTypeCursorPage';
 import { ListAuthorizationDetailTypesRequest } from '@management-apis/AuthorizationDetailTypeApi';
 import { NewAuthorizationDetailType } from '@management-models/NewAuthorizationDetailType';
+import { PatchAuthorizationDetailType } from '@management-models/PatchAuthorizationDetailType';
 
 export const createAuthorizationDetailType = (
   domainId: string,
@@ -54,6 +56,31 @@ export const getAuthorizationDetailType = (
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     authorizationDetailTypeId,
+  });
+
+export const patchAuthorizationDetailType = (
+  domainId: string,
+  accessToken: string,
+  authorizationDetailTypeId: string,
+  body: PatchAuthorizationDetailType,
+): Promise<AuthorizationDetailType> =>
+  getAuthorizationDetailTypeApi(accessToken).patchAuthorizationDetailType({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    authorizationDetailTypeId,
+    patchAuthorizationDetailType: body,
+  });
+
+export const patchAuthorizationDetailTypeJson = (
+  domainId: string,
+  accessToken: string,
+  authorizationDetailTypeId: string,
+  body: Record<string, unknown>,
+) =>
+  performPatch(getDomainManagerUrl(domainId), `/authorization-detail-types/${authorizationDetailTypeId}`, body, {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessToken}`,
   });
 
 export type ListAuthorizationDetailTypesParams = Omit<ListAuthorizationDetailTypesRequest, 'organizationId' | 'environmentId' | 'domain'>;

@@ -32,7 +32,7 @@ public class AuthorizationDetailTypeAuditBuilder extends ManagementAuditBuilder<
 
     public AuthorizationDetailTypeAuditBuilder authorizationDetailType(AuthorizationDetailType authorizationDetailType) {
         if (authorizationDetailType != null) {
-            if (EventType.AUTHORIZATION_DETAIL_TYPE_CREATED.equals(getType())) {
+            if (EventType.AUTHORIZATION_DETAIL_TYPE_CREATED.equals(getType()) || EventType.AUTHORIZATION_DETAIL_TYPE_UPDATED.equals(getType())) {
                 setNewValue(authorizationDetailType);
             }
             reference(Reference.domain(authorizationDetailType.getDomain()));

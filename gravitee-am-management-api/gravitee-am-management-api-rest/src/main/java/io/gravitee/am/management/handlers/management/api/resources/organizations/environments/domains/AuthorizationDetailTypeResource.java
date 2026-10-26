@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
@@ -23,15 +24,21 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
@@ -75,6 +82,39 @@ public class AuthorizationDetailTypeResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
                 .flatMap(domain -> authorizationDetailTypeService.findById(domainId, authorizationDetailTypeId))
                 .switchIfEmpty(Maybe.error(new AuthorizationDetailTypeNotFoundException(authorizationDetailTypeId)))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @PATCH
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "patchAuthorizationDetailType",
+            summary = "Update an authorization detail type",
+            description = "Fields left out are unchanged and a field sent as null is cleared; name and discovery can't be null. " +
+                    "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_AUTHORIZATION_DETAIL_TYPE[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_AUTHORIZATION_DETAIL_TYPE[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authorization detail type successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AuthorizationDetailType.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid authorization detail type"),
+            @ApiResponse(responseCode = "404", description = "Authorization detail type not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void patch(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("authorizationDetailTypeId") String authorizationDetailTypeId,
+            @Parameter(name = "authorizationDetailType", required = true) @Valid @NotNull PatchAuthorizationDetailType patchAuthorizationDetailType,
+            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_AUTHORIZATION_DETAIL_TYPE, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> authorizationDetailTypeService.patch(domain, authorizationDetailTypeId, patchAuthorizationDetailType, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 }

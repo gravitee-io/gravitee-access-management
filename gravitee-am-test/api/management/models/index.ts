@@ -189,6 +189,7 @@ export * from './PatchApplicationOAuthSettings';
 export * from './PatchApplicationSAMLSettings';
 export * from './PatchApplicationSettings';
 export * from './PatchApplicationType';
+export * from './PatchAuthorizationDetailType';
 export * from './PatchCIBASettings';
 export * from './PatchCIMDSettings';
 export * from './PatchChallengeSettings';
