@@ -1,0 +1,23 @@
+{
+    "extends": "@gravitee/graphene-core/tsconfig",
+    "compilerOptions": {
+        "types": ["vitest/globals"],
+        "target": "ES2020",
+        "lib": ["DOM", "DOM.Iterable", "ES2020"],
+        "module": "ESNext",
+        "jsx": "react-jsx",
+        "strict": true,
+        // The generated models under gravitee-am-test fail these checks.
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "bundler",
+        "useDefineForClassFields": true,
+        "paths": {
+            "@am-models/*": ["../gravitee-am-test/api/management/models/*"]
+        }
+    },
+    "include": ["src"]
+}
