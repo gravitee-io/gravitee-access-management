@@ -21,17 +21,28 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
+import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
+import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Map;
+import java.util.Optional;
 
+import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -108,13 +119,137 @@ class AuthorizationDetailTypeResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
+    @Test
+    void shouldPatch() {
+        Domain domain = stubDomain();
+        doReturn(Single.just(AuthorizationDetailType.builder()
+                .id(TYPE_ID)
+                .domain(DOMAIN_ID)
+                .type("payment_initiation")
+                .name("Renamed")
+                .build()))
+                .when(authorizationDetailTypeService).patch(eq(domain), eq(TYPE_ID), any(), any());
+
+        final Response response = patch("{\"name\":\"Renamed\",\"description\":null}");
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        Map<String, Object> body = response.readEntity(Map.class);
+        assertEquals(TYPE_ID, body.get("id"));
+        assertEquals("Renamed", body.get("name"));
+        PatchAuthorizationDetailType sent = sentPatch(domain);
+        assertEquals(Optional.of("Renamed"), sent.getName());
+        assertEquals(Optional.empty(), sent.getDescription());
+        assertNull(sent.getSchema());
+        assertNull(sent.getDiscovery());
+        assertNull(sent.getExpiresIn());
+    }
+
+    @Test
+    void shouldRejectTypeInPatch() {
+        final Response response = patch("{\"type\":\"account_information\",\"name\":\"Renamed\"}");
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Property [type] is not recognized"));
+        verify(authorizationDetailTypeService, never()).patch(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectClearingName() {
+        final Response response = patch("{\"name\":null}");
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Name is required"));
+        verify(authorizationDetailTypeService, never()).patch(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectBlankName() {
+        final Response response = patch("{\"name\":\"  \"}");
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Name is required"));
+    }
+
+    @Test
+    void shouldRejectClearingDiscovery() {
+        final Response response = patch("{\"discovery\":null}");
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Discovery can't be cleared"));
+        verify(authorizationDetailTypeService, never()).patch(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectPatchedExpiresInBelowOne() {
+        final Response response = patch("{\"expiresIn\":0}");
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Expires in must be greater than 0"));
+    }
+
+    @Test
+    void shouldReturnServiceValidationErrorOnPatch() {
+        Domain domain = stubDomain();
+        doReturn(Single.error(new InvalidAuthorizationDetailTypeException("Schema must be a JSON object")))
+                .when(authorizationDetailTypeService).patch(eq(domain), eq(TYPE_ID), any(), any());
+
+        final Response response = patch("{\"schema\":\"[]\"}");
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertTrue(response.readEntity(String.class).contains("Schema must be a JSON object"));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenPatchedTypeIsMissingOrInAnotherDomain() {
+        Domain domain = stubDomain();
+        doReturn(Single.error(new AuthorizationDetailTypeNotFoundException(TYPE_ID)))
+                .when(authorizationDetailTypeService).patch(eq(domain), eq(TYPE_ID), any(), any());
+
+        final Response response = patch("{\"name\":\"Renamed\"}");
+
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    void shouldRejectPatchWithoutPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = patch("{\"name\":\"Renamed\"}");
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(authorizationDetailTypeService, never()).patch(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectPatchHoldingOnlyTheScopePermission() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SCOPE);
+
+        final Response response = patch("{\"name\":\"Renamed\"}");
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+    }
+
     private Response get() {
         return target("domains").path(DOMAIN_ID).path("authorization-detail-types").path(TYPE_ID).request().get();
     }
 
-    private void stubDomain() {
+    private Response patch(String json) {
+        return target("domains").path(DOMAIN_ID).path("authorization-detail-types").path(TYPE_ID)
+                .request()
+                .property(SET_METHOD_WORKAROUND, true)
+                .method(HttpMethod.PATCH, Entity.json(json));
+    }
+
+    private PatchAuthorizationDetailType sentPatch(Domain domain) {
+        ArgumentCaptor<PatchAuthorizationDetailType> patch = ArgumentCaptor.forClass(PatchAuthorizationDetailType.class);
+        verify(authorizationDetailTypeService).patch(eq(domain), eq(TYPE_ID), patch.capture(), any());
+        return patch.getValue();
+    }
+
+    private Domain stubDomain() {
         Domain domain = new Domain();
         domain.setId(DOMAIN_ID);
         doReturn(Maybe.just(domain)).when(domainService).findById(DOMAIN_ID);
+        return domain;
     }
 }
