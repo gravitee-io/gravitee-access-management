@@ -61,6 +61,10 @@ executors:
     docker:
       - image: cimg/node:18.16.1
     resource_class: << parameters.class >>
+  node-console:
+    docker:
+      - image: cimg/node:24.16.0
+    resource_class: medium
 
 parameters:
   gio_action:
@@ -106,6 +110,10 @@ parameters:
     type: boolean
     default: true
     description: "Runs UI jest tests + Lint"
+  run_console:
+    type: boolean
+    default: false
+    description: "Builds gravitee-am-console with yarn"
 commands:
   create_docker_context:
     steps:
@@ -382,6 +390,29 @@ commands:
             
             ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key > private.key
             gpg --import --batch private.key
+  build_console:
+    description: Check, build and zip gravitee-am-console with yarn, into /tmp/console
+    steps:
+      - restore_cache:
+          keys:
+            - v1-console-yarn-{{ checksum "gravitee-am-console/yarn.lock" }}
+      - run:
+          name: "Build gravitee-am-console"
+          working_directory: gravitee-am-console
+          command: |
+            yarn install --immutable
+            yarn lint
+            yarn test
+            yarn build
+            export CONSOLE_VERSION=$(node -p "require('./package.json').version")
+            mkdir -p /tmp/console
+            cp -R dist /tmp/console/gravitee-am-console-${CONSOLE_VERSION}
+            cd /tmp/console
+            zip -rqm gravitee-am-console-${CONSOLE_VERSION}.zip gravitee-am-console-${CONSOLE_VERSION}
+      - save_cache:
+          key: v1-console-yarn-{{ checksum "gravitee-am-console/yarn.lock" }}
+          paths:
+            - ~/.yarn/berry/cache
   package_bundle:
     description: Package Bundle for Gravtiee AM Community Edition
     parameters:
@@ -426,6 +457,13 @@ commands:
             sha1sum gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-webui-${RELEASE_VERSION_NUMBER}.zip.sha1
             mkdir -p ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
             cp -R ~/project/gravitee-am-ui/dist/* ~/release/graviteeio-am/distributions/graviteeio-am-full-${RELEASE_VERSION_NUMBER}/graviteeio-am-management-ui-${RELEASE_VERSION_NUMBER}/
+
+            mkdir -p ~/release/graviteeio-am/components/gravitee-am-console/
+            cp /tmp/console/gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip ~/release/graviteeio-am/components/gravitee-am-console/
+            cd ~/release/graviteeio-am/components/gravitee-am-console/
+            md5sum gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip.md5
+            sha512sum gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip.sha512sum
+            sha1sum gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip > gravitee-am-console-${RELEASE_VERSION_NUMBER}.zip.sha1
             
             cd ~/release/graviteeio-am/distributions/
             zip -rm graviteeio-am-full-${RELEASE_VERSION_NUMBER}.zip graviteeio-am-full-${RELEASE_VERSION_NUMBER}
@@ -1764,6 +1802,14 @@ jobs:
                 command: |
                   mvn -s /tmp/.gravitee.settings.xml test -pl gravitee-am-ui -Dlicense.skip=true
 
+  console_build:
+    executor: node-console
+    steps:
+      - checkout
+      - build_console
+      - store_artifacts:
+          path: /tmp/console
+
   pull_requests_ce:
     executor:
       name: openjdk
@@ -1914,6 +1960,14 @@ jobs:
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install
       - save-maven-job-cache:
           jobName: releaseV2
+      - run:
+          name: "Install Node and set the gravitee-am-console version"
+          command: |
+            export NODE_VERSION=$(cat gravitee-am-console/.nvmrc)
+            curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | sudo tar -xJ -C /usr/local --strip-components=1
+            export MVN_PRJ_VERSION=$(cat /tmp/gio.maven.project.release.version)
+            sed -i "s/\"version\": \".*\"/\"version\": \"${MVN_PRJ_VERSION}\"/" gravitee-am-console/package.json gravitee-am-console/public/build.json
+      - build_console
 
       # ---
       # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotent and non immutable, whereas Nexus staging and Git release are immutable
@@ -2720,6 +2774,14 @@ workflows:
           matrix:
             parameters:
               jdbcType: ["postgres", "mysql", "mariadb", "mssql", "postgres-min", "mysql-min", "mariadb-min", "mssql-min"]
+
+  console:
+    when:
+      and:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+        - << pipeline.parameters.run_console >>
+    jobs:
+      - console_build
 
   build_branch:
     when:
