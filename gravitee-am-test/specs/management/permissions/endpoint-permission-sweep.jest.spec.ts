@@ -17,10 +17,11 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
-import { PERMISSION_ENDPOINTS, PermissionEndpoint } from './fixtures/permission-endpoints.generated';
 import {
   DOCUMENTED_PERMISSION_OVERRIDES,
   EXCLUDED_ROUTES,
+  PERMISSION_ENDPOINTS,
+  PermissionEndpoint,
   SUFFICIENCY_ONLY_EXCLUDED,
   requiredPermission,
 } from './fixtures/permission-sweep-tables';
@@ -76,21 +77,6 @@ afterAll(async () => {
   }
 });
 
-/**
- * Every management operation states the permission it requires in its OpenAPI description, and
- * fixtures/permission-endpoints.generated.ts is built from those statements. Driving the whole set
- * means a newly added endpoint is covered as soon as the spec is regenerated, instead of whenever
- * someone remembers to extend a hand-written list — which is the only way this keeps pace with an
- * API of roughly 290 permission-guarded operations.
- *
- * Generated cases are used deliberately here (GUIDELINES §8 allows it for large sets of otherwise
- * identical tests): the route is in every test name, so a failure identifies its endpoint exactly.
- *
- * What this proves: every listed endpoint refuses a caller who lacks its permission, and the
- * default role's allowance is exactly the set above. What it cannot prove is that an endpoint
- * declares the *right* permission — if it were guarded by some other permission this caller also
- * lacks, the refusal would look identical. That needs a positive per-permission matrix.
- */
 describe(`Endpoint permission sweep - ${denied.length} endpoints refuse a bare ORGANIZATION_USER`, () => {
   denied.forEach((endpoint) => {
     it(`should refuse ${endpoint.method} ${endpoint.route} (needs ${requiredPermission(endpoint)})`, async () => {
@@ -147,13 +133,13 @@ describe(`Endpoint permission sweep - ${destructive.length} deletions are refuse
  * quietly stop matching anything, and the sweep would look complete while covering less.
  */
 describe('Endpoint permission sweep - bookkeeping', () => {
-  it('should exclude only routes that exist in the generated table', () => {
+  it('should exclude only routes that the OpenAPI spec still lists', () => {
     const known = new Set(PERMISSION_ENDPOINTS.map((endpoint) => endpoint.route));
     const excluded = [...Object.keys(EXCLUDED_ROUTES), ...Object.keys(SUFFICIENCY_ONLY_EXCLUDED)];
     expect(excluded.filter((route) => !known.has(route))).toEqual([]);
   });
 
-  it('should override permissions only for routes that exist in the generated table', () => {
+  it('should override permissions only for routes that the OpenAPI spec still lists', () => {
     const known = new Set(PERMISSION_ENDPOINTS.map((endpoint) => endpoint.route));
     expect(Object.keys(DOCUMENTED_PERMISSION_OVERRIDES).filter((route) => !known.has(route))).toEqual([]);
   });
