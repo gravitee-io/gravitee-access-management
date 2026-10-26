@@ -1,0 +1,1741 @@
+{
+  "source": {
+    "branch": "spike/am-gamma",
+    "commit": "c0824cbb1d",
+    "angularCommit": "cdd77d2252",
+    "prototypePin": "79f68811a40edc9f7fac5fbc78452b71f1c4f273",
+    "generatedAt": "2026-10-23"
+  },
+  "epic": "AM-7349",
+  "stories": [
+    {
+      "key": "AM-7933",
+      "summary": "Migrate the console shell to React",
+      "blockedBy": [],
+      "units": [
+        "shell"
+      ],
+      "pages": [
+        {
+          "unit": "shell",
+          "path": "environments/:envHrid",
+          "role": "page",
+          "angularComponent": "EnvironmentComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "login",
+          "role": "page",
+          "angularComponent": "LoginComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "login/callback",
+          "role": "page",
+          "angularComponent": "LoginCallbackComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "logout",
+          "role": "page",
+          "angularComponent": "LogoutComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "logout/callback",
+          "role": "page",
+          "angularComponent": "LogoutCallbackComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "dummy",
+          "role": "page",
+          "angularComponent": "DummyComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "404",
+          "role": "page",
+          "angularComponent": "NotFoundComponent"
+        },
+        {
+          "unit": "shell",
+          "path": "",
+          "role": "page",
+          "angularComponent": "HomeComponent"
+        }
+      ],
+      "priority": "Urgent",
+      "portable": false
+    },
+    {
+      "key": "AM-7934",
+      "summary": "Build the shared component kit for the React console",
+      "blockedBy": [
+        "AM-7933"
+      ],
+      "units": [],
+      "pages": [],
+      "priority": "Urgent",
+      "portable": false
+    },
+    {
+      "key": "AM-7935",
+      "summary": "Migrate domains to React",
+      "blockedBy": [
+        "AM-7933",
+        "AM-7934",
+        "AM-7958"
+      ],
+      "units": [
+        "domains"
+      ],
+      "pages": [
+        {
+          "unit": "domains",
+          "path": "environments/:envHrid/domains",
+          "role": "page",
+          "angularComponent": "DomainsComponent"
+        },
+        {
+          "unit": "domains",
+          "path": "environments/:envHrid/domains/new",
+          "role": "page",
+          "angularComponent": "DomainCreationComponent"
+        },
+        {
+          "unit": "domains",
+          "path": "environments/:envHrid/domains/:domainId",
+          "role": "layout",
+          "angularComponent": "DomainComponent"
+        },
+        {
+          "unit": "domains",
+          "path": "environments/:envHrid/domains/:domainId",
+          "role": "page",
+          "angularComponent": "DomainComponent"
+        },
+        {
+          "unit": "domains",
+          "path": "environments/:envHrid/domains/:domainId/dashboard",
+          "role": "page",
+          "angularComponent": "DomainDashboardComponent"
+        }
+      ],
+      "priority": "Urgent",
+      "portable": true
+    },
+    {
+      "key": "AM-7936",
+      "summary": "Migrate the domain settings forms to React",
+      "blockedBy": [
+        "AM-7935"
+      ],
+      "units": [
+        "general",
+        "entrypoints",
+        "login",
+        "account",
+        "web-protection",
+        "webauthn"
+      ],
+      "pages": [
+        {
+          "unit": "general",
+          "path": "environments/:envHrid/domains/:domainId/settings",
+          "role": "layout",
+          "angularComponent": "DomainSettingsComponent"
+        },
+        {
+          "unit": "general",
+          "path": "environments/:envHrid/domains/:domainId/settings/general",
+          "role": "page",
+          "angularComponent": "DomainSettingsGeneralComponent"
+        },
+        {
+          "unit": "entrypoints",
+          "path": "environments/:envHrid/domains/:domainId/settings/entrypoints",
+          "role": "page",
+          "angularComponent": "DomainSettingsEntrypointsComponent"
+        },
+        {
+          "unit": "login",
+          "path": "environments/:envHrid/domains/:domainId/settings/login",
+          "role": "page",
+          "angularComponent": "DomainSettingsLoginComponent"
+        },
+        {
+          "unit": "account",
+          "path": "environments/:envHrid/domains/:domainId/settings/account",
+          "role": "page",
+          "angularComponent": "DomainSettingsAccountComponent"
+        },
+        {
+          "unit": "web-protection",
+          "path": "environments/:envHrid/domains/:domainId/settings/web-protection",
+          "role": "page",
+          "angularComponent": "DomainSettingsWebProtectionComponent"
+        },
+        {
+          "unit": "webauthn",
+          "path": "environments/:envHrid/domains/:domainId/settings/webauthn",
+          "role": "page",
+          "angularComponent": "DomainSettingsWebAuthnComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7937",
+      "summary": "Migrate password policies, trust domains, secrets and domain members to React",
+      "blockedBy": [
+        "AM-7935"
+      ],
+      "units": [
+        "password-policies",
+        "trust-domains",
+        "secrets",
+        "members"
+      ],
+      "pages": [
+        {
+          "unit": "password-policies",
+          "path": "environments/:envHrid/domains/:domainId/settings/password-policies",
+          "role": "page",
+          "angularComponent": "PasswordPoliciesComponent"
+        },
+        {
+          "unit": "password-policies",
+          "path": "environments/:envHrid/domains/:domainId/settings/password-policies/new",
+          "role": "page",
+          "angularComponent": "DomainPasswordPolicyComponent"
+        },
+        {
+          "unit": "password-policies",
+          "path": "environments/:envHrid/domains/:domainId/settings/password-policies/:policyId",
+          "role": "page",
+          "angularComponent": "DomainPasswordPolicyComponent"
+        },
+        {
+          "unit": "trust-domains",
+          "path": "environments/:envHrid/domains/:domainId/settings/trust-domains",
+          "role": "layout",
+          "angularComponent": "TrustDomainsContainerComponent"
+        },
+        {
+          "unit": "trust-domains",
+          "path": "environments/:envHrid/domains/:domainId/settings/trust-domains/domains",
+          "role": "page",
+          "angularComponent": "DomainSettingsTrustDomainsComponent"
+        },
+        {
+          "unit": "trust-domains",
+          "path": "environments/:envHrid/domains/:domainId/settings/trust-domains/key-retrieval",
+          "role": "page",
+          "angularComponent": "TrustDomainKeyRetrievalComponent"
+        },
+        {
+          "unit": "trust-domains",
+          "path": "environments/:envHrid/domains/:domainId/settings/trust-domains/domains/new",
+          "role": "page",
+          "angularComponent": "TrustDomainCreationComponent"
+        },
+        {
+          "unit": "trust-domains",
+          "path": "environments/:envHrid/domains/:domainId/settings/trust-domains/domains/:trustDomainId",
+          "role": "page",
+          "angularComponent": "TrustDomainComponent"
+        },
+        {
+          "unit": "secrets",
+          "path": "environments/:envHrid/domains/:domainId/settings/secrets",
+          "role": "page",
+          "angularComponent": "DomainSettingsSecretsComponent"
+        },
+        {
+          "unit": "members",
+          "path": "environments/:envHrid/domains/:domainId/settings/members",
+          "role": "page",
+          "angularComponent": "DomainSettingsMembershipsComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7938",
+      "summary": "Migrate the OIDC protocol settings forms to React",
+      "blockedBy": [
+        "AM-7935"
+      ],
+      "units": [
+        "oidc-profile",
+        "cimd",
+        "dpop",
+        "spiffe",
+        "token-exchange",
+        "uma",
+        "saml2"
+      ],
+      "pages": [
+        {
+          "unit": "oidc-profile",
+          "path": "environments/:envHrid/domains/:domainId/settings/oidc-profile",
+          "role": "page",
+          "angularComponent": "OIDCProfileComponent"
+        },
+        {
+          "unit": "cimd",
+          "path": "environments/:envHrid/domains/:domainId/settings/cimd",
+          "role": "page",
+          "angularComponent": "CimdSettingsComponent"
+        },
+        {
+          "unit": "dpop",
+          "path": "environments/:envHrid/domains/:domainId/settings/dpop",
+          "role": "page",
+          "angularComponent": "DpopSettingsComponent"
+        },
+        {
+          "unit": "spiffe",
+          "path": "environments/:envHrid/domains/:domainId/settings/spiffe",
+          "role": "page",
+          "angularComponent": "SpiffeSettingsComponent"
+        },
+        {
+          "unit": "token-exchange",
+          "path": "environments/:envHrid/domains/:domainId/settings/token-exchange",
+          "role": "page",
+          "angularComponent": "TokenExchangeSettingsComponent"
+        },
+        {
+          "unit": "uma",
+          "path": "environments/:envHrid/domains/:domainId/settings/uma",
+          "role": "page",
+          "angularComponent": "UmaComponent"
+        },
+        {
+          "unit": "saml2",
+          "path": "environments/:envHrid/domains/:domainId/settings/saml2",
+          "role": "page",
+          "angularComponent": "Saml2Component"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7939",
+      "summary": "Migrate scopes and extension grants to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7934"
+      ],
+      "units": [
+        "scopes",
+        "extensionGrants"
+      ],
+      "pages": [
+        {
+          "unit": "scopes",
+          "path": "environments/:envHrid/domains/:domainId/settings/scopes",
+          "role": "page",
+          "angularComponent": "DomainSettingsScopesComponent"
+        },
+        {
+          "unit": "scopes",
+          "path": "environments/:envHrid/domains/:domainId/settings/scopes/new",
+          "role": "page",
+          "angularComponent": "ScopeCreationComponent"
+        },
+        {
+          "unit": "scopes",
+          "path": "environments/:envHrid/domains/:domainId/settings/scopes/:scopeId",
+          "role": "page",
+          "angularComponent": "ScopeComponent"
+        },
+        {
+          "unit": "extensionGrants",
+          "path": "environments/:envHrid/domains/:domainId/settings/extensionGrants",
+          "role": "page",
+          "angularComponent": "DomainSettingsExtensionGrantsComponent"
+        },
+        {
+          "unit": "extensionGrants",
+          "path": "environments/:envHrid/domains/:domainId/settings/extensionGrants/new",
+          "role": "page",
+          "angularComponent": "ExtensionGrantCreationComponent"
+        },
+        {
+          "unit": "extensionGrants",
+          "path": "environments/:envHrid/domains/:domainId/settings/extensionGrants/:extensionGrantId",
+          "role": "page",
+          "angularComponent": "ExtensionGrantComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7940",
+      "summary": "Migrate CIBA and dynamic client registration to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7934"
+      ],
+      "units": [
+        "ciba",
+        "dcr"
+      ],
+      "pages": [
+        {
+          "unit": "ciba",
+          "path": "environments/:envHrid/domains/:domainId/settings/ciba",
+          "role": "layout",
+          "angularComponent": "CibaComponent"
+        },
+        {
+          "unit": "ciba",
+          "path": "environments/:envHrid/domains/:domainId/settings/ciba/settings",
+          "role": "page",
+          "angularComponent": "CibaSettingsComponent"
+        },
+        {
+          "unit": "ciba",
+          "path": "environments/:envHrid/domains/:domainId/settings/ciba/device-notifiers",
+          "role": "page",
+          "angularComponent": "DeviceNotifiersComponent"
+        },
+        {
+          "unit": "ciba",
+          "path": "environments/:envHrid/domains/:domainId/settings/ciba/device-notifiers/new",
+          "role": "page",
+          "angularComponent": "DeviceNotifiersCreationComponent"
+        },
+        {
+          "unit": "ciba",
+          "path": "environments/:envHrid/domains/:domainId/settings/ciba/device-notifiers/:notifierId",
+          "role": "page",
+          "angularComponent": "DeviceNotifierComponent"
+        },
+        {
+          "unit": "dcr",
+          "path": "environments/:envHrid/domains/:domainId/settings/dcr",
+          "role": "layout",
+          "angularComponent": "DomainSettingsOpenidClientRegistrationComponent"
+        },
+        {
+          "unit": "dcr",
+          "path": "environments/:envHrid/domains/:domainId/settings/dcr/settings",
+          "role": "page",
+          "angularComponent": "ClientRegistrationSettingsComponent"
+        },
+        {
+          "unit": "dcr",
+          "path": "environments/:envHrid/domains/:domainId/settings/dcr/default-scope",
+          "role": "page",
+          "angularComponent": "ClientRegistrationDefaultScopeComponent"
+        },
+        {
+          "unit": "dcr",
+          "path": "environments/:envHrid/domains/:domainId/settings/dcr/allowed-scope",
+          "role": "page",
+          "angularComponent": "ClientRegistrationAllowedScopeComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7941",
+      "summary": "Migrate domain identity providers to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7934"
+      ],
+      "units": [
+        "providers"
+      ],
+      "pages": [
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers",
+          "role": "page",
+          "angularComponent": "DomainSettingsProvidersComponent"
+        },
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers/new",
+          "role": "page",
+          "angularComponent": "ProviderCreationComponent"
+        },
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId",
+          "role": "layout",
+          "angularComponent": "ProviderComponent"
+        },
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId/settings",
+          "role": "page",
+          "angularComponent": "ProviderSettingsComponent"
+        },
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId/mappers",
+          "role": "page",
+          "angularComponent": "ProviderMappersComponent"
+        },
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId/roles",
+          "role": "page",
+          "angularComponent": "ProviderRolesComponent"
+        },
+        {
+          "unit": "providers",
+          "path": "environments/:envHrid/domains/:domainId/settings/providers/:providerId/groups",
+          "role": "page",
+          "angularComponent": "ProviderGroupsComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7942",
+      "summary": "Migrate certificates, factors, resources, bot detection and device identifiers to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7934"
+      ],
+      "units": [
+        "certificates",
+        "factors",
+        "resources",
+        "bot-detection",
+        "device-identifier"
+      ],
+      "pages": [
+        {
+          "unit": "certificates",
+          "path": "environments/:envHrid/domains/:domainId/settings/certificates",
+          "role": "page",
+          "angularComponent": "DomainSettingsCertificatesComponent"
+        },
+        {
+          "unit": "certificates",
+          "path": "environments/:envHrid/domains/:domainId/settings/certificates/new",
+          "role": "page",
+          "angularComponent": "CertificateCreationComponent"
+        },
+        {
+          "unit": "certificates",
+          "path": "environments/:envHrid/domains/:domainId/settings/certificates/:certificateId",
+          "role": "page",
+          "angularComponent": "CertificateComponent"
+        },
+        {
+          "unit": "factors",
+          "path": "environments/:envHrid/domains/:domainId/settings/factors",
+          "role": "page",
+          "angularComponent": "DomainSettingsFactorsComponent"
+        },
+        {
+          "unit": "factors",
+          "path": "environments/:envHrid/domains/:domainId/settings/factors/new",
+          "role": "page",
+          "angularComponent": "FactorCreationComponent"
+        },
+        {
+          "unit": "factors",
+          "path": "environments/:envHrid/domains/:domainId/settings/factors/:factorId",
+          "role": "page",
+          "angularComponent": "FactorComponent"
+        },
+        {
+          "unit": "resources",
+          "path": "environments/:envHrid/domains/:domainId/settings/resources",
+          "role": "page",
+          "angularComponent": "DomainSettingsResourcesComponent"
+        },
+        {
+          "unit": "resources",
+          "path": "environments/:envHrid/domains/:domainId/settings/resources/new",
+          "role": "page",
+          "angularComponent": "ResourceCreationComponent"
+        },
+        {
+          "unit": "resources",
+          "path": "environments/:envHrid/domains/:domainId/settings/resources/:resourceId",
+          "role": "page",
+          "angularComponent": "ResourceComponent"
+        },
+        {
+          "unit": "bot-detection",
+          "path": "environments/:envHrid/domains/:domainId/settings/bot-detection",
+          "role": "page",
+          "angularComponent": "DomainSettingsBotDetectionsComponent"
+        },
+        {
+          "unit": "bot-detection",
+          "path": "environments/:envHrid/domains/:domainId/settings/bot-detection/new",
+          "role": "page",
+          "angularComponent": "BotDetectionCreationComponent"
+        },
+        {
+          "unit": "bot-detection",
+          "path": "environments/:envHrid/domains/:domainId/settings/bot-detection/:botDetectionId",
+          "role": "page",
+          "angularComponent": "BotDetectionComponent"
+        },
+        {
+          "unit": "device-identifier",
+          "path": "environments/:envHrid/domains/:domainId/settings/device-identifier",
+          "role": "page",
+          "angularComponent": "DomainSettingsDeviceIdentifiersComponent"
+        },
+        {
+          "unit": "device-identifier",
+          "path": "environments/:envHrid/domains/:domainId/settings/device-identifier/new",
+          "role": "page",
+          "angularComponent": "DeviceIdentifierCreationComponent"
+        },
+        {
+          "unit": "device-identifier",
+          "path": "environments/:envHrid/domains/:domainId/settings/device-identifier/:deviceIdentifierId",
+          "role": "page",
+          "angularComponent": "DeviceIdentifierComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7943",
+      "summary": "Migrate domain users to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7934"
+      ],
+      "units": [
+        "users"
+      ],
+      "pages": [
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users",
+          "role": "page",
+          "angularComponent": "UsersComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/new",
+          "role": "page",
+          "angularComponent": "UserCreationComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId",
+          "role": "layout",
+          "angularComponent": "UserComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/profile",
+          "role": "page",
+          "angularComponent": "UserProfileComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/history",
+          "role": "page",
+          "angularComponent": "UserHistoryComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7944",
+      "summary": "Migrate the domain user detail tabs to React",
+      "blockedBy": [
+        "AM-7943"
+      ],
+      "units": [
+        "users"
+      ],
+      "pages": [
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/applications",
+          "role": "page",
+          "angularComponent": "UserApplicationsComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/applications/:appId",
+          "role": "page",
+          "angularComponent": "UserApplicationComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/factors",
+          "role": "page",
+          "angularComponent": "UserFactorsComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/credentials",
+          "role": "page",
+          "angularComponent": "UserCredentialsComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/credentials/:credentialId",
+          "role": "page",
+          "angularComponent": "UserCredentialComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/cert-credentials/:credentialId",
+          "role": "page",
+          "angularComponent": "UserCredentialComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/roles",
+          "role": "page",
+          "angularComponent": "UserRolesComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/devices",
+          "role": "page",
+          "angularComponent": "UserDevicesComponent"
+        },
+        {
+          "unit": "users",
+          "path": "environments/:envHrid/domains/:domainId/settings/users/:userId/identities",
+          "role": "page",
+          "angularComponent": "UserIdentitiesComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7945",
+      "summary": "Migrate groups, roles, SCIM and self-service account to React",
+      "blockedBy": [
+        "AM-7943"
+      ],
+      "units": [
+        "groups",
+        "roles",
+        "scim",
+        "self-service-account"
+      ],
+      "pages": [
+        {
+          "unit": "groups",
+          "path": "environments/:envHrid/domains/:domainId/settings/groups",
+          "role": "page",
+          "angularComponent": "GroupsComponent"
+        },
+        {
+          "unit": "groups",
+          "path": "environments/:envHrid/domains/:domainId/settings/groups/new",
+          "role": "page",
+          "angularComponent": "GroupCreationComponent"
+        },
+        {
+          "unit": "groups",
+          "path": "environments/:envHrid/domains/:domainId/settings/groups/:groupId",
+          "role": "layout",
+          "angularComponent": "GroupComponent"
+        },
+        {
+          "unit": "groups",
+          "path": "environments/:envHrid/domains/:domainId/settings/groups/:groupId/settings",
+          "role": "page",
+          "angularComponent": "GroupSettingsComponent"
+        },
+        {
+          "unit": "groups",
+          "path": "environments/:envHrid/domains/:domainId/settings/groups/:groupId/members",
+          "role": "page",
+          "angularComponent": "GroupMembersComponent"
+        },
+        {
+          "unit": "groups",
+          "path": "environments/:envHrid/domains/:domainId/settings/groups/:groupId/roles",
+          "role": "page",
+          "angularComponent": "GroupRolesComponent"
+        },
+        {
+          "unit": "roles",
+          "path": "environments/:envHrid/domains/:domainId/settings/roles",
+          "role": "page",
+          "angularComponent": "DomainSettingsRolesComponent"
+        },
+        {
+          "unit": "roles",
+          "path": "environments/:envHrid/domains/:domainId/settings/roles/new",
+          "role": "page",
+          "angularComponent": "RoleCreationComponent"
+        },
+        {
+          "unit": "roles",
+          "path": "environments/:envHrid/domains/:domainId/settings/roles/:roleId",
+          "role": "page",
+          "angularComponent": "RoleComponent"
+        },
+        {
+          "unit": "scim",
+          "path": "environments/:envHrid/domains/:domainId/settings/scim",
+          "role": "page",
+          "angularComponent": "ScimComponent"
+        },
+        {
+          "unit": "self-service-account",
+          "path": "environments/:envHrid/domains/:domainId/settings/self-service-account",
+          "role": "page",
+          "angularComponent": "DomainSettingsSelfServiceAccountComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7946",
+      "summary": "Migrate emails, texts and theme to React",
+      "blockedBy": [
+        "AM-7935"
+      ],
+      "units": [
+        "emails",
+        "texts",
+        "theme"
+      ],
+      "pages": [
+        {
+          "unit": "emails",
+          "path": "environments/:envHrid/domains/:domainId/settings/emails",
+          "role": "page",
+          "angularComponent": "DomainSettingsEmailsComponent"
+        },
+        {
+          "unit": "emails",
+          "path": "environments/:envHrid/domains/:domainId/settings/emails/email",
+          "role": "page",
+          "angularComponent": "DomainSettingsEmailComponent"
+        },
+        {
+          "unit": "texts",
+          "path": "environments/:envHrid/domains/:domainId/settings/texts",
+          "role": "page",
+          "angularComponent": "DomainSettingsDictionariesComponent"
+        },
+        {
+          "unit": "theme",
+          "path": "environments/:envHrid/domains/:domainId/settings/theme",
+          "role": "page",
+          "angularComponent": "DomainSettingsThemeComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7947",
+      "summary": "Migrate flows to React",
+      "blockedBy": [
+        "AM-7935"
+      ],
+      "units": [
+        "flows"
+      ],
+      "pages": [
+        {
+          "unit": "flows",
+          "path": "environments/:envHrid/domains/:domainId/settings/flows",
+          "role": "page",
+          "angularComponent": "DomainSettingsFlowsComponent"
+        }
+      ],
+      "priority": "High",
+      "portable": true
+    },
+    {
+      "key": "AM-7948",
+      "summary": "Migrate the application core pages to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7941"
+      ],
+      "units": [
+        "applications",
+        "applications-create"
+      ],
+      "pages": [
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications",
+          "role": "page",
+          "angularComponent": "ApplicationsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId",
+          "role": "layout",
+          "angularComponent": "ApplicationComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/overview",
+          "role": "page",
+          "angularComponent": "ApplicationOverviewComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/endpoints",
+          "role": "page",
+          "angularComponent": "ApplicationEndpointsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/idp",
+          "role": "page",
+          "angularComponent": "ApplicationIdPComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/analytics",
+          "role": "page",
+          "angularComponent": "ApplicationAnalyticsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings",
+          "role": "layout",
+          "angularComponent": "ApplicationAdvancedComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/general",
+          "role": "page",
+          "angularComponent": "ApplicationGeneralComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/agent",
+          "role": "page",
+          "angularComponent": "ApplicationAgentComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/metadata",
+          "role": "page",
+          "angularComponent": "ApplicationMetadataComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/members",
+          "role": "page",
+          "angularComponent": "ApplicationMembershipsComponent"
+        },
+        {
+          "unit": "applications-create",
+          "path": "environments/:envHrid/domains/:domainId/applications/new",
+          "role": "page",
+          "angularComponent": "ApplicationCreationComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7949",
+      "summary": "Migrate the application OAuth2 settings and client secrets to React",
+      "blockedBy": [
+        "AM-7948",
+        "AM-7939"
+      ],
+      "units": [
+        "applications"
+      ],
+      "pages": [
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/secrets-certificates",
+          "role": "page",
+          "angularComponent": "ApplicationSecretsCertificatesComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/oauth2",
+          "role": "page",
+          "angularComponent": "OAuth2SettingsComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7950",
+      "summary": "Migrate the application MFA and login settings to React",
+      "blockedBy": [
+        "AM-7948",
+        "AM-7942"
+      ],
+      "units": [
+        "applications"
+      ],
+      "pages": [
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/login",
+          "role": "page",
+          "angularComponent": "ApplicationLoginSettingsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/factors",
+          "role": "page",
+          "angularComponent": "ApplicationFactorsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/account",
+          "role": "page",
+          "angularComponent": "ApplicationAccountSettingsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/session",
+          "role": "page",
+          "angularComponent": "ApplicationCookieSettingsComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7951",
+      "summary": "Migrate the application design, SAML 2.0 and UMA resources to React",
+      "blockedBy": [
+        "AM-7948",
+        "AM-7946",
+        "AM-7947"
+      ],
+      "units": [
+        "applications"
+      ],
+      "pages": [
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/design",
+          "role": "layout",
+          "angularComponent": "ApplicationDesignComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/design/forms",
+          "role": "page",
+          "angularComponent": "ApplicationFormsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/design/forms/form",
+          "role": "page",
+          "angularComponent": "ApplicationFormComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/design/emails",
+          "role": "page",
+          "angularComponent": "ApplicationEmailsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/design/emails/email",
+          "role": "page",
+          "angularComponent": "ApplicationEmailComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/design/flows",
+          "role": "page",
+          "angularComponent": "ApplicationFlowsComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/saml2",
+          "role": "page",
+          "angularComponent": "ApplicationSaml2Component"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/resources",
+          "role": "page",
+          "angularComponent": "ApplicationResourcesComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/resources/:resourceId",
+          "role": "page",
+          "angularComponent": "ApplicationResourceComponent"
+        },
+        {
+          "unit": "applications",
+          "path": "environments/:envHrid/domains/:domainId/applications/:appId/settings/resources/:resourceId/policies/:policyId",
+          "role": "page",
+          "angularComponent": "ApplicationResourcePolicyComponent"
+        }
+      ],
+      "priority": "Normal",
+      "portable": true
+    },
+    {
+      "key": "AM-7952",
+      "summary": "Migrate MCP servers to React",
+      "blockedBy": [
+        "AM-7949",
+        "AM-7947"
+      ],
+      "units": [
+        "mcp-servers"
+      ],
+      "pages": [
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers",
+          "role": "page",
+          "angularComponent": "DomainMcpServersComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/new",
+          "role": "page",
+          "angularComponent": "DomainNewMcpServerComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId",
+          "role": "layout",
+          "angularComponent": "DomainMcpServerComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/overview",
+          "role": "page",
+          "angularComponent": "DomainMcpServerOverviewComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/tools",
+          "role": "page",
+          "angularComponent": "DomainMcpServerToolsComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/flows",
+          "role": "page",
+          "angularComponent": "ApplicationFlowsComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/settings",
+          "role": "layout",
+          "angularComponent": "DomainMcpServerAdvancedComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/settings/general",
+          "role": "page",
+          "angularComponent": "DomainMcpServerGeneralComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/settings/secrets-certificates",
+          "role": "page",
+          "angularComponent": "DomainMcpServerClientSecretsComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/settings/oauth2",
+          "role": "page",
+          "angularComponent": "OAuth2SettingsComponent"
+        },
+        {
+          "unit": "mcp-servers",
+          "path": "environments/:envHrid/domains/:domainId/mcp-servers/:mcpServerId/settings/members",
+          "role": "page",
+          "angularComponent": "DomainMcpServerMembershipsComponent"
+        }
+      ],
+      "priority": "Low",
+      "portable": true
+    },
+    {
+      "key": "AM-7953",
+      "summary": "Migrate agents to React",
+      "blockedBy": [
+        "AM-7948",
+        "AM-7949",
+        "AM-7950",
+        "AM-7951"
+      ],
+      "units": [
+        "agents"
+      ],
+      "pages": [
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents",
+          "role": "page",
+          "angularComponent": "AgentsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/new",
+          "role": "page",
+          "angularComponent": "AgentCreationComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId",
+          "role": "layout",
+          "angularComponent": "ApplicationComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/overview",
+          "role": "page",
+          "angularComponent": "ApplicationOverviewComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/endpoints",
+          "role": "page",
+          "angularComponent": "ApplicationEndpointsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/idp",
+          "role": "page",
+          "angularComponent": "ApplicationIdPComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/design",
+          "role": "layout",
+          "angularComponent": "ApplicationDesignComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/design/forms",
+          "role": "page",
+          "angularComponent": "ApplicationFormsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/design/forms/form",
+          "role": "page",
+          "angularComponent": "ApplicationFormComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/design/emails",
+          "role": "page",
+          "angularComponent": "ApplicationEmailsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/design/emails/email",
+          "role": "page",
+          "angularComponent": "ApplicationEmailComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/design/flows",
+          "role": "page",
+          "angularComponent": "ApplicationFlowsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/analytics",
+          "role": "page",
+          "angularComponent": "ApplicationAnalyticsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings",
+          "role": "layout",
+          "angularComponent": "ApplicationAdvancedComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/general",
+          "role": "page",
+          "angularComponent": "ApplicationGeneralComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/secrets-certificates",
+          "role": "page",
+          "angularComponent": "ApplicationSecretsCertificatesComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/agent",
+          "role": "page",
+          "angularComponent": "ApplicationAgentComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/metadata",
+          "role": "page",
+          "angularComponent": "ApplicationMetadataComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/oauth2",
+          "role": "page",
+          "angularComponent": "OAuth2SettingsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/saml2",
+          "role": "page",
+          "angularComponent": "ApplicationSaml2Component"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/login",
+          "role": "page",
+          "angularComponent": "ApplicationLoginSettingsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/members",
+          "role": "page",
+          "angularComponent": "ApplicationMembershipsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/factors",
+          "role": "page",
+          "angularComponent": "ApplicationFactorsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/account",
+          "role": "page",
+          "angularComponent": "ApplicationAccountSettingsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/session",
+          "role": "page",
+          "angularComponent": "ApplicationCookieSettingsComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/resources",
+          "role": "page",
+          "angularComponent": "ApplicationResourcesComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/resources/:resourceId",
+          "role": "page",
+          "angularComponent": "ApplicationResourceComponent"
+        },
+        {
+          "unit": "agents",
+          "path": "environments/:envHrid/domains/:domainId/agents/:appId/settings/resources/:resourceId/policies/:policyId",
+          "role": "page",
+          "angularComponent": "ApplicationResourcePolicyComponent"
+        }
+      ],
+      "priority": "Low",
+      "portable": true
+    },
+    {
+      "key": "AM-7954",
+      "summary": "Migrate audits, alerts and authorization engines to React",
+      "blockedBy": [
+        "AM-7935",
+        "AM-7934"
+      ],
+      "units": [
+        "audits",
+        "alerts",
+        "authorization-engines"
+      ],
+      "pages": [
+        {
+          "unit": "audits",
+          "path": "environments/:envHrid/domains/:domainId/settings/audits",
+          "role": "page",
+          "angularComponent": "AuditsComponent"
+        },
+        {
+          "unit": "audits",
+          "path": "environments/:envHrid/domains/:domainId/settings/audits/settings",
+          "role": "page",
+          "angularComponent": "AuditsSettingsComponent"
+        },
+        {
+          "unit": "audits",
+          "path": "environments/:envHrid/domains/:domainId/settings/audits/settings/new",
+          "role": "page",
+          "angularComponent": "ReporterComponent"
+        },
+        {
+          "unit": "audits",
+          "path": "environments/:envHrid/domains/:domainId/settings/audits/settings/:reporterId",
+          "role": "page",
+          "angularComponent": "ReporterComponent"
+        },
+        {
+          "unit": "audits",
+          "path": "environments/:envHrid/domains/:domainId/settings/audits/:auditId",
+          "role": "page",
+          "angularComponent": "AuditComponent"
+        },
+        {
+          "unit": "alerts",
+          "path": "environments/:envHrid/domains/:domainId/alerts",
+          "role": "layout",
+          "angularComponent": "DomainAlertsComponent"
+        },
+        {
+          "unit": "alerts",
+          "path": "environments/:envHrid/domains/:domainId/alerts/general",
+          "role": "page",
+          "angularComponent": "DomainAlertGeneralComponent"
+        },
+        {
+          "unit": "alerts",
+          "path": "environments/:envHrid/domains/:domainId/alerts/notifiers",
+          "role": "page",
+          "angularComponent": "DomainAlertNotifiersComponent"
+        },
+        {
+          "unit": "alerts",
+          "path": "environments/:envHrid/domains/:domainId/alerts/notifiers/new",
+          "role": "page",
+          "angularComponent": "DomainAlertNotifierCreationComponent"
+        },
+        {
+          "unit": "alerts",
+          "path": "environments/:envHrid/domains/:domainId/alerts/notifiers/:alertNotifierId",
+          "role": "page",
+          "angularComponent": "DomainAlertNotifierComponent"
+        },
+        {
+          "unit": "authorization-engines",
+          "path": "environments/:envHrid/domains/:domainId/authorization-engines",
+          "role": "page",
+          "angularComponent": "DomainSettingsAuthorizationEnginesComponent"
+        },
+        {
+          "unit": "authorization-engines",
+          "path": "environments/:envHrid/domains/:domainId/authorization-engines/new",
+          "role": "page",
+          "angularComponent": "AuthorizationEngineCreationComponent"
+        },
+        {
+          "unit": "authorization-engines",
+          "path": "environments/:envHrid/domains/:domainId/authorization-engines/:engineId/openfga",
+          "role": "page",
+          "angularComponent": "OpenFGAComponent"
+        }
+      ],
+      "priority": "Low",
+      "portable": true
+    },
+    {
+      "key": "AM-7955",
+      "summary": "Migrate the organization settings to React",
+      "blockedBy": [
+        "AM-7933",
+        "AM-7958"
+      ],
+      "units": [
+        "organization",
+        "organization-general",
+        "organization-cockpit",
+        "organization-entrypoints",
+        "organization-tags",
+        "organization-forms"
+      ],
+      "pages": [
+        {
+          "unit": "organization",
+          "path": "settings",
+          "role": "layout",
+          "angularComponent": "SettingsComponent"
+        },
+        {
+          "unit": "organization",
+          "path": "settings",
+          "role": "layout",
+          "angularComponent": "ManagementComponent"
+        },
+        {
+          "unit": "organization-general",
+          "path": "settings/general",
+          "role": "page",
+          "angularComponent": "ManagementGeneralComponent"
+        },
+        {
+          "unit": "organization-cockpit",
+          "path": "settings/cockpit",
+          "role": "page",
+          "angularComponent": "CockpitComponent"
+        },
+        {
+          "unit": "organization-entrypoints",
+          "path": "settings/entrypoints",
+          "role": "page",
+          "angularComponent": "EntrypointsComponent"
+        },
+        {
+          "unit": "organization-entrypoints",
+          "path": "settings/entrypoints/new",
+          "role": "page",
+          "angularComponent": "EntrypointCreationComponent"
+        },
+        {
+          "unit": "organization-entrypoints",
+          "path": "settings/entrypoints/:entrypointId",
+          "role": "page",
+          "angularComponent": "EntrypointComponent"
+        },
+        {
+          "unit": "organization-tags",
+          "path": "settings/tags",
+          "role": "page",
+          "angularComponent": "TagsComponent"
+        },
+        {
+          "unit": "organization-tags",
+          "path": "settings/tags/new",
+          "role": "page",
+          "angularComponent": "TagCreationComponent"
+        },
+        {
+          "unit": "organization-tags",
+          "path": "settings/tags/:tagId",
+          "role": "page",
+          "angularComponent": "TagComponent"
+        },
+        {
+          "unit": "organization-forms",
+          "path": "settings/forms",
+          "role": "page",
+          "angularComponent": "DomainSettingsFormsComponent"
+        },
+        {
+          "unit": "organization-forms",
+          "path": "settings/forms/form",
+          "role": "page",
+          "angularComponent": "DomainSettingsFormComponent"
+        }
+      ],
+      "priority": "Low",
+      "portable": true
+    },
+    {
+      "key": "AM-7956",
+      "summary": "Migrate organization members, users, groups and roles to React",
+      "blockedBy": [
+        "AM-7955",
+        "AM-7945"
+      ],
+      "units": [
+        "organization-members",
+        "organization-users",
+        "organization-groups",
+        "organization-roles"
+      ],
+      "pages": [
+        {
+          "unit": "organization-members",
+          "path": "settings/members",
+          "role": "page",
+          "angularComponent": "SettingsMembershipsComponent"
+        },
+        {
+          "unit": "organization-users",
+          "path": "settings/users",
+          "role": "page",
+          "angularComponent": "UsersComponent"
+        },
+        {
+          "unit": "organization-users",
+          "path": "settings/users/new",
+          "role": "page",
+          "angularComponent": "UserCreationComponent"
+        },
+        {
+          "unit": "organization-users",
+          "path": "settings/users/:userId",
+          "role": "layout",
+          "angularComponent": "UserComponent"
+        },
+        {
+          "unit": "organization-users",
+          "path": "settings/users/:userId/profile",
+          "role": "page",
+          "angularComponent": "UserProfileComponent"
+        },
+        {
+          "unit": "organization-groups",
+          "path": "settings/groups",
+          "role": "page",
+          "angularComponent": "GroupsComponent"
+        },
+        {
+          "unit": "organization-groups",
+          "path": "settings/groups/new",
+          "role": "page",
+          "angularComponent": "GroupCreationComponent"
+        },
+        {
+          "unit": "organization-groups",
+          "path": "settings/groups/:groupId",
+          "role": "layout",
+          "angularComponent": "GroupComponent"
+        },
+        {
+          "unit": "organization-groups",
+          "path": "settings/groups/:groupId/settings",
+          "role": "page",
+          "angularComponent": "GroupSettingsComponent"
+        },
+        {
+          "unit": "organization-groups",
+          "path": "settings/groups/:groupId/members",
+          "role": "page",
+          "angularComponent": "GroupMembersComponent"
+        },
+        {
+          "unit": "organization-roles",
+          "path": "settings/roles",
+          "role": "page",
+          "angularComponent": "ManagementRolesComponent"
+        },
+        {
+          "unit": "organization-roles",
+          "path": "settings/roles/new",
+          "role": "page",
+          "angularComponent": "RoleCreationComponent"
+        },
+        {
+          "unit": "organization-roles",
+          "path": "settings/roles/:roleId",
+          "role": "page",
+          "angularComponent": "ManagementRoleComponent"
+        }
+      ],
+      "priority": "Low",
+      "portable": true
+    },
+    {
+      "key": "AM-7957",
+      "summary": "Migrate organization identity providers and audits to React",
+      "blockedBy": [
+        "AM-7955",
+        "AM-7941",
+        "AM-7954"
+      ],
+      "units": [
+        "organization-providers",
+        "organization-audits"
+      ],
+      "pages": [
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers",
+          "role": "page",
+          "angularComponent": "DomainSettingsProvidersComponent"
+        },
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers/new",
+          "role": "page",
+          "angularComponent": "ProviderCreationComponent"
+        },
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers/:providerId",
+          "role": "layout",
+          "angularComponent": "ProviderComponent"
+        },
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers/:providerId/settings",
+          "role": "page",
+          "angularComponent": "ProviderSettingsComponent"
+        },
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers/:providerId/mappers",
+          "role": "page",
+          "angularComponent": "ProviderMappersComponent"
+        },
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers/:providerId/roles",
+          "role": "page",
+          "angularComponent": "ProviderRolesComponent"
+        },
+        {
+          "unit": "organization-providers",
+          "path": "settings/providers/:providerId/groups",
+          "role": "page",
+          "angularComponent": "ProviderGroupsComponent"
+        },
+        {
+          "unit": "organization-audits",
+          "path": "settings/audits",
+          "role": "page",
+          "angularComponent": "AuditsComponent"
+        },
+        {
+          "unit": "organization-audits",
+          "path": "settings/audits/settings",
+          "role": "page",
+          "angularComponent": "AuditsSettingsComponent"
+        },
+        {
+          "unit": "organization-audits",
+          "path": "settings/audits/settings/new",
+          "role": "page",
+          "angularComponent": "ReporterComponent"
+        },
+        {
+          "unit": "organization-audits",
+          "path": "settings/audits/settings/:reporterId",
+          "role": "page",
+          "angularComponent": "ReporterComponent"
+        },
+        {
+          "unit": "organization-audits",
+          "path": "settings/audits/:auditId",
+          "role": "page",
+          "angularComponent": "AuditComponent"
+        }
+      ],
+      "priority": "Low",
+      "portable": true
+    }
+  ]
+}
