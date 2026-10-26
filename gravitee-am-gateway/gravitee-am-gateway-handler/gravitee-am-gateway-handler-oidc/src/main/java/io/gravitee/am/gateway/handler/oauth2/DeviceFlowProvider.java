@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.gateway.handler.common.service.ratelimit.DeviceFlowRateLimiterService;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
@@ -169,6 +170,10 @@ public class DeviceFlowProvider extends AbstractProtocolProvider {
         deviceRouter.route(PATH_DEVICE).handler(xframeHandler);
         deviceRouter.route(PATH_DEVICE).handler(xssHandler);
         deviceRouter.route(PATH_DEVICE).handler(new AuthenticationFlowContextHandler(authenticationFlowContextService, environment));
+        deviceRouter.route(PATH_DEVICE).handler(context -> {
+            DeviceFlowContext.markVerificationRequest(context);
+            context.next();
+        });
 
         applyRootExtensionPoint(deviceRouter);
 

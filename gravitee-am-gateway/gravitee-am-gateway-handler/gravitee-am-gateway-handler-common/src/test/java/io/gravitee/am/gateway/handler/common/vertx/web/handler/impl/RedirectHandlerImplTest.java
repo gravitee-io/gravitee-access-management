@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.http.HttpMethod;
@@ -93,6 +94,48 @@ public class RedirectHandlerImplTest extends RxWebTestBase {
                 res -> {
                     String location = res.getHeader("Location");
                     assertFalse(location.contains(ConstantKeys.TOKEN_CONTEXT_KEY));
+                },
+                302,
+                "Found",
+                (String) null);
+    }
+
+    @Test
+    public void shouldNotForwardUserCode_whenDeviceFlowVerification() throws Exception {
+        router.route(REDIRECT_PATH)
+                .handler(rc -> {
+                    DeviceFlowContext.markVerificationRequest(rc);
+                    rc.next();
+                })
+                .handler(new RedirectHandlerImpl(REDIRECT_PATH));
+
+        testRequest(
+                HttpMethod.GET,
+                REDIRECT_PATH + "?client_id=device-client&user_code=WDJB-MJHT",
+                null,
+                res -> {
+                    String location = res.getHeader("Location");
+                    assertTrue(location.contains("client_id=device-client"));
+                    assertFalse(location.contains("user_code"));
+                },
+                302,
+                "Found",
+                (String) null);
+    }
+
+    @Test
+    public void shouldForwardUserCode_whenNotDeviceFlowVerification() throws Exception {
+        router.route(REDIRECT_PATH)
+                .handler(new RedirectHandlerImpl(REDIRECT_PATH));
+
+        testRequest(
+                HttpMethod.GET,
+                REDIRECT_PATH + "?client_id=custom-client&user_code=custom-value",
+                null,
+                res -> {
+                    String location = res.getHeader("Location");
+                    assertTrue(location.contains("client_id=custom-client"));
+                    assertTrue(location.contains("user_code=custom-value"));
                 },
                 302,
                 "Found",
