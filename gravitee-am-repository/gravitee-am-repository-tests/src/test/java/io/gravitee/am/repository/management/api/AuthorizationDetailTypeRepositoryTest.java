@@ -35,6 +35,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -97,6 +98,29 @@ public class AuthorizationDetailTypeRepositoryTest extends AbstractManagementTes
 
         assertEquals("Renamed", updated.getName());
         assertFalse(repository.findById(created.getId()).blockingGet().isDiscovery());
+    }
+
+    @Test
+    public void shouldClearOptionalFieldsOnUpdate() {
+        AuthorizationDetailType created = repository.create(build(randomUUID().toString(), "payment_initiation")).blockingGet();
+        AuthorizationDetailType before = repository.findById(created.getId()).blockingGet();
+        AuthorizationDetailType toUpdate = before.toBuilder()
+                .description(null)
+                .schema(null)
+                .expiresIn(null)
+                .updatedAt(new Date(before.getUpdatedAt().getTime() + 60_000))
+                .build();
+
+        repository.update(toUpdate).blockingGet();
+
+        AuthorizationDetailType found = repository.findById(created.getId()).blockingGet();
+        assertNull(found.getDescription());
+        assertNull(found.getSchema());
+        assertNull(found.getExpiresIn());
+        assertEquals(before.getType(), found.getType());
+        assertEquals(before.getName(), found.getName());
+        assertEquals(before.getCreatedAt(), found.getCreatedAt());
+        assertTrue(found.getUpdatedAt().after(before.getUpdatedAt()));
     }
 
     @Test

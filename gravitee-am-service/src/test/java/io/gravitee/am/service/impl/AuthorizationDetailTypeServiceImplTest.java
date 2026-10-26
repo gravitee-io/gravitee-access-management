@@ -35,9 +35,11 @@ import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepositor
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
+import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
+import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.validators.authorizationdetailtype.AuthorizationDetailTypeValidator;
 import io.reactivex.rxjava3.core.Completable;
@@ -52,7 +54,9 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -240,6 +244,98 @@ class AuthorizationDetailTypeServiceImplTest {
     }
 
     @Test
+    void shouldPatch() {
+        AuthorizationDetailType existing = existing();
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing));
+        when(repository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(), eq(domain))).thenReturn(Single.just(new Event()));
+        PatchAuthorizationDetailType patch = new PatchAuthorizationDetailType();
+        patch.setName(Optional.of("Renamed"));
+        patch.setDescription(Optional.empty());
+
+        AuthorizationDetailType updated = service.patch(domain, "id-1", patch, principal()).blockingGet();
+
+        assertThat(updated.getName()).isEqualTo("Renamed");
+        assertThat(updated.getDescription()).isNull();
+        assertThat(updated.getType()).isEqualTo("payment_initiation");
+        assertThat(updated.getSchema()).isEqualTo(SCHEMA);
+        assertThat(updated.getCreatedAt()).isEqualTo(existing.getCreatedAt());
+        assertThat(updated.getUpdatedAt()).isAfter(existing.getUpdatedAt());
+        verify(repository).update(updated);
+
+        ArgumentCaptor<Event> event = ArgumentCaptor.forClass(Event.class);
+        verify(eventService).create(event.capture(), eq(domain));
+        assertThat(event.getValue().getType()).isEqualTo(Type.AUTHORIZATION_DETAIL_TYPE);
+        assertThat(event.getValue().getPayload().getId()).isEqualTo("id-1");
+        assertThat(event.getValue().getPayload().getReferenceType()).isEqualTo(ReferenceType.DOMAIN);
+        assertThat(event.getValue().getPayload().getReferenceId()).isEqualTo(DOMAIN_ID);
+        assertThat(event.getValue().getPayload().getAction()).isEqualTo(Action.UPDATE);
+
+        Audit audit = reportedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.AUTHORIZATION_DETAIL_TYPE_UPDATED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+        assertThat(audit.getActor().getId()).isEqualTo("principal-1");
+        assertThat(audit.getReferenceType()).isEqualTo(ReferenceType.DOMAIN);
+        assertThat(audit.getReferenceId()).isEqualTo(DOMAIN_ID);
+        assertThat(audit.getTarget().getId()).isEqualTo("id-1");
+        assertThat(audit.getTarget().getType()).isEqualTo(EntityType.AUTHORIZATION_DETAIL_TYPE);
+        assertThat(audit.getOutcome().getMessage()).isEqualTo(
+                "[{\"op\":\"replace\",\"path\":\"/description\",\"value\":null},{\"op\":\"replace\",\"path\":\"/name\",\"value\":\"Renamed\"}]");
+    }
+
+    @Test
+    void shouldRejectPatchOfUnknownType() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "unknown")).thenReturn(Maybe.empty());
+
+        service.patch(domain, "unknown", new PatchAuthorizationDetailType(), principal()).test()
+                .assertError(AuthorizationDetailTypeNotFoundException.class);
+
+        verify(repository, never()).update(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
+    void shouldRejectInvalidPatchWithoutStoringIt() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        PatchAuthorizationDetailType patch = new PatchAuthorizationDetailType();
+        patch.setExpiresIn(Optional.of(0));
+
+        service.patch(domain, "id-1", patch, principal()).test()
+                .assertError(error -> error instanceof InvalidAuthorizationDetailTypeException
+                        && error.getMessage().equals("Expires in must be greater than 0"));
+
+        verify(repository, never()).update(any());
+        verify(eventService, never()).create(any(), any());
+        assertPatchFailureAudited();
+    }
+
+    @Test
+    void shouldCheckPatchedSchemaAgainstExistingType() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        PatchAuthorizationDetailType patch = new PatchAuthorizationDetailType();
+        patch.setSchema(Optional.of(SCHEMA.replace("payment_initiation", "account_information")));
+
+        service.patch(domain, "id-1", patch, principal()).test()
+                .assertError(error -> error instanceof InvalidAuthorizationDetailTypeException
+                        && error.getMessage().startsWith("Schema must constrain \"type\""));
+
+        verify(repository, never()).update(any());
+        assertPatchFailureAudited();
+    }
+
+    @Test
+    void shouldWrapPatchRepositoryFailure() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(repository.update(any())).thenReturn(Single.error(new RuntimeException("boom")));
+
+        service.patch(domain, "id-1", new PatchAuthorizationDetailType(), principal()).test()
+                .assertError(TechnicalManagementException.class);
+
+        verify(eventService, never()).create(any(), any());
+        assertPatchFailureAudited();
+    }
+
+    @Test
     void shouldDeleteByDomain() {
         when(repository.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
@@ -249,8 +345,16 @@ class AuthorizationDetailTypeServiceImplTest {
     }
 
     private void assertFailureAudited() {
+        assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_CREATED);
+    }
+
+    private void assertPatchFailureAudited() {
+        assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_UPDATED);
+    }
+
+    private void assertFailureAudited(String type) {
         Audit audit = reportedAudit();
-        assertThat(audit.getType()).isEqualTo(EventType.AUTHORIZATION_DETAIL_TYPE_CREATED);
+        assertThat(audit.getType()).isEqualTo(type);
         assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
         assertThat(audit.getActor().getId()).isEqualTo("principal-1");
         assertThat(audit.getReferenceType()).isEqualTo(ReferenceType.DOMAIN);
@@ -261,6 +365,22 @@ class AuthorizationDetailTypeServiceImplTest {
         ArgumentCaptor<AuditBuilder<?>> builder = ArgumentCaptor.forClass(AuditBuilder.class);
         verify(auditService).report(builder.capture());
         return builder.getValue().build(new ObjectMapper());
+    }
+
+    private static AuthorizationDetailType existing() {
+        Date createdAt = new Date(1_000L);
+        return AuthorizationDetailType.builder()
+                .id("id-1")
+                .domain(DOMAIN_ID)
+                .type("payment_initiation")
+                .name("Payment initiation")
+                .description("Initiates a payment")
+                .schema(SCHEMA)
+                .discovery(true)
+                .expiresIn(3600)
+                .createdAt(createdAt)
+                .updatedAt(createdAt)
+                .build();
     }
 
     private static NewAuthorizationDetailType input(String type, String schema) {
