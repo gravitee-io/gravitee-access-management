@@ -17,8 +17,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { createPersona, Persona, RbacFixture, setupRbacFixture } from './fixtures/rbac-fixture';
-import { PERMISSION_ENDPOINTS } from './fixtures/permission-endpoints.generated';
-import { EXCLUDED_ROUTES, SUFFICIENCY_ONLY_EXCLUDED, requiredPermission } from './fixtures/permission-sweep-tables';
+import { EXCLUDED_ROUTES, PERMISSION_ENDPOINTS, SUFFICIENCY_ONLY_EXCLUDED, requiredPermission } from './fixtures/permission-sweep-tables';
 import {
   createCustomOrganizationRole,
   deleteOrganizationRole,

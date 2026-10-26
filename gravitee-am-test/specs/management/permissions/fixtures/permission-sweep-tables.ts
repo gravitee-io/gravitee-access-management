@@ -14,36 +14,32 @@
  * limitations under the License.
  */
 
-import { PermissionEndpoint } from './permission-endpoints.generated';
+export interface PermissionEndpoint {
+  method: 'GET' | 'DELETE';
+  /** OpenAPI route, with {organizationId}/{environmentId}/{domain}/{application} placeholders. */
+  route: string;
+  /** Flattened permission the operation documents as required, e.g. "domain_user_list". */
+  permission: string;
+  summary: string;
+}
 
-/**
- * Shared between `endpoint-permission-sweep` (which proves a caller *without* a permission is
- * refused) and `permission-sufficiency` (which proves the documented permission *alone* admits).
- * Both drive the same generated endpoint table, so keeping these corrections in one place stops
- * the two sweeps disagreeing about what the table means.
- */
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { collect } = require('../../../../scripts/collect-permission-endpoints');
 
-/**
- * Routes whose OpenAPI description names a different permission to the one actually enforced.
- * Each was found by these sweeps and confirmed against the guard in the resource class; corrected
- * here rather than in the generated file, which stays a faithful copy of the spec.
- *
- *  - groups/tags/entrypoints are documented as ORGANIZATION[LIST] but check the resource-specific
- *    permission, which is what a caller holding only that permission demonstrates.
- *  - device-identifiers documents `domain_device_identifiers_list`, which is not a permission at
- *    all — the enum constant is singular, and the plural form makes role updates fail (AM-7477).
- */
+/** Endpoints parsed from the management OpenAPI spec. */
+export const PERMISSION_ENDPOINTS: PermissionEndpoint[] = collect();
+
+/** Routes whose OpenAPI description names a different permission from the one enforced. */
 export const DOCUMENTED_PERMISSION_OVERRIDES: Record<string, string> = {
+  // Documented as ORGANIZATION[LIST]; the resource enforces its own permission.
   '/organizations/{organizationId}/groups': 'organization_group_list',
   '/organizations/{organizationId}/tags': 'organization_tag_list',
   '/organizations/{organizationId}/entrypoints': 'organization_entrypoint_list',
+  // Documented as domain_device_identifiers_list. The constant is singular, and the plural form is rejected on role update.
   '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers': 'domain_device_identifier_list',
 };
 
-/**
- * Routes neither sweep can drive, each for a stated reason. Kept as data so the exclusions are
- * visible and countable rather than quietly missing from the generated set.
- */
+/** Parsed routes that both sweeps skip. */
 export const EXCLUDED_ROUTES: Record<string, string> = {
   // Mandatory query parameter that cannot be supplied generically — the request is rejected by
   // bean validation (400 "[formTemplate: must not be null]") before authorisation is reached.
