@@ -25,17 +25,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Trigger CircleCI Migration Test"
+        env:
+          CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+          FROM_TAG: ${{ github.event.inputs.from_tag }}
+          TO_TAG: ${{ github.event.inputs.to_tag }}
+          DB_TYPE: ${{ github.event.inputs.db_type }}
         run: |
           curl -X POST https://circleci.com/api/v2/project/gh/gravitee-io/gravitee-access-management/pipeline \
             -H "Content-Type: application/json" \
             -H "Accept: application/json" \
-            -H "Circle-Token: ${{ secrets.CCI_TOKEN }}" \
+            -H "Circle-Token: $CCI_TOKEN" \
             -d "{
-              \"branch\": \"${{ github.ref_name }}\",
+              \"branch\": \"$BRANCH\",
               \"parameters\": {
-                \"migration_test_from_tag\": \"${{ github.event.inputs.from_tag }}\",
-                \"migration_test_to_tag\": \"${{ github.event.inputs.to_tag }}\",
-                \"migration_test_db_type\": \"${{ github.event.inputs.db_type }}\",
+                \"migration_test_from_tag\": \"$FROM_TAG\",
+                \"migration_test_to_tag\": \"$TO_TAG\",
+                \"migration_test_db_type\": \"$DB_TYPE\",
                 \"migration_test_provider\": \"k8s\"
               }
             }"
