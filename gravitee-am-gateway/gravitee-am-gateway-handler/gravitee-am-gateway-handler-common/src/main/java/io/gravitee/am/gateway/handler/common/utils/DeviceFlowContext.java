@@ -58,6 +58,14 @@ public final class DeviceFlowContext {
         context.session().put(ConstantKeys.DEVICE_FLOW_CLIENT_ID_KEY, clientId);
     }
 
+    public static void markVerificationRequest(RoutingContext context) {
+        context.put(ConstantKeys.DEVICE_FLOW_VERIFICATION_CONTEXT_KEY, Boolean.TRUE);
+    }
+
+    public static boolean isVerificationRequest(RoutingContext context) {
+        return Boolean.TRUE.equals(context.get(ConstantKeys.DEVICE_FLOW_VERIFICATION_CONTEXT_KEY));
+    }
+
     public static void clear(RoutingContext context) {
         if (context.session() != null) {
             context.session().remove(ConstantKeys.DEVICE_FLOW_DEVICE_CODE_KEY);

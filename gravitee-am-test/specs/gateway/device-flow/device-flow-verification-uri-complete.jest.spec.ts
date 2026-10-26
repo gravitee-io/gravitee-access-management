@@ -74,6 +74,18 @@ describe('OAuth2 - RFC 8628 - Device Authorization Grant - complete verification
     expect(prefilled.text).toContain(`value="${body.user_code}"`);
   });
 
+  it('must keep the scanned code out of the login page URL', async () => {
+    const body = await fixture.requestDeviceCode();
+
+    const unauthenticated = await performGet(body.verification_uri_complete).expect(302);
+    expect(unauthenticated.headers['location']).toContain(`/${fixture.domain.hrid}/login`);
+    expect(unauthenticated.headers['location']).toContain(`client_id=${fixture.confidentialClientId}`);
+    expect(unauthenticated.headers['location']).not.toContain('user_code');
+
+    const loginPage = await extractXsrfTokenAndActionResponse(unauthenticated);
+    expect(loginPage.action).not.toContain('user_code');
+  });
+
   it('must not approve a scanned code without an explicit confirmation', async () => {
     const body = await fixture.requestDeviceCode();
 

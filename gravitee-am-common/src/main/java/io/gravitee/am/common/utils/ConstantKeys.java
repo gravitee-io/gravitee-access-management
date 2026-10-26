@@ -310,4 +310,5 @@ public interface ConstantKeys {
     String DEVICE_FLOW_DEVICE_CODE_KEY = "deviceFlowDeviceCode";
     String DEVICE_FLOW_CLIENT_ID_KEY = "deviceFlowClientId";
     String DEVICE_FLOW_ERROR_KEY = "deviceFlowError";
+    String DEVICE_FLOW_VERIFICATION_CONTEXT_KEY = "deviceFlowVerification";
 }

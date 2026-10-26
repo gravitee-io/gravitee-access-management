@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
@@ -26,6 +27,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 import static io.gravitee.am.common.oauth2.Parameters.USERNAME;
+import static io.gravitee.am.common.oauth2.Parameters.USER_CODE;
 import static io.gravitee.am.common.oidc.Parameters.LOGIN_HINT;
 import static io.gravitee.am.gateway.handler.common.utils.UsernameHelper.escapeUsernameParam;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -50,6 +52,9 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
         try {
             final HttpServerRequest request = context.request();
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+            if (DeviceFlowContext.isVerificationRequest(context)) {
+                queryParams.remove(USER_CODE);
+            }
 
             escapeUsernameParam(queryParams, LOGIN_HINT);
             escapeUsernameParam(queryParams, USERNAME);
