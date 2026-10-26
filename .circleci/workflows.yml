@@ -2593,7 +2593,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_postman_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -2607,7 +2607,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -2621,7 +2621,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_cloud_psql:
           context: cicd-orchestrator
           requires:
@@ -2635,14 +2635,14 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_alert_engine_mongo:
           context: cicd-orchestrator
           requires:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_alert_engine_psql:
           context: cicd-orchestrator
           requires:
@@ -2656,7 +2656,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_playwright_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -2670,7 +2670,7 @@ workflows:
             - process_pull_request
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_playwright_tests_cloud_psql:
           context: cicd-orchestrator
           requires:
@@ -2962,7 +2962,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -2986,7 +2986,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_cloud_psql:
           context: cicd-orchestrator
           requires:
@@ -3010,7 +3010,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_alert_engine_mongo:
           context: cicd-orchestrator
           requires:
@@ -3022,7 +3022,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_jest_tests_alert_engine_psql:
           context: cicd-orchestrator
           requires:
@@ -3046,7 +3046,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_playwright_tests_psql:
           context: cicd-orchestrator
           requires:
@@ -3070,7 +3070,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_playwright_tests_cloud_psql:
           context: cicd-orchestrator
           requires:
@@ -3094,7 +3094,7 @@ workflows:
             - notify-failure-on-schedule
           matrix:
             parameters:
-              mongo_version: ["8.2"]
+              mongo_version: ["9.0"]
       - run_postman_tests_psql:
           context: cicd-orchestrator
           requires:

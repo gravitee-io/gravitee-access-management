@@ -16,7 +16,7 @@
 
 services:
   mongodb:
-    image: mongo:${MONGO_VERSION:-8.2}
+    image: mongo:${MONGO_VERSION:-9.0}
     restart: always
     ports:
       - ${AM_MONGO_HOST_PORT:-27017}:27017

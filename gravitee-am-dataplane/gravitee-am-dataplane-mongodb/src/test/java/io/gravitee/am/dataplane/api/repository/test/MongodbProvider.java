@@ -42,7 +42,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 @Getter
 public class MongodbProvider implements InitializingBean, DisposableBean {
-    private static final String DEFAULT_MONGO_IMAGE = "mongo:8.0";
+    private static final String DEFAULT_MONGO_IMAGE = "mongo:9.0";
 
     private MongoDBContainer mongoDBContainer = null;
 

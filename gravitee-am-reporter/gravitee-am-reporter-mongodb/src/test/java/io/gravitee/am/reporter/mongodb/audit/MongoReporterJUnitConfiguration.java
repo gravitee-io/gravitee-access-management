@@ -48,7 +48,7 @@ public class MongoReporterJUnitConfiguration {
 
     public static final String DATABASE = "gravitee-am-reporter-test";
     public static final String COLLECTION = "reporter_audits";
-    private static final String DEFAULT_MONGO_IMAGE = "mongo:8.0";
+    private static final String DEFAULT_MONGO_IMAGE = "mongo:9.0";
 
     @Bean(destroyMethod = "stop")
     public MongoDBContainer mongoDBContainer() {
