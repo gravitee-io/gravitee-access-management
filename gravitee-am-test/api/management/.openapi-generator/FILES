@@ -207,6 +207,7 @@ models/PatchApplicationOAuthSettings.ts
 models/PatchApplicationSAMLSettings.ts
 models/PatchApplicationSettings.ts
 models/PatchApplicationType.ts
+models/PatchAuthorizationDetailType.ts
 models/PatchCIBASettings.ts
 models/PatchCIMDSettings.ts
 models/PatchChallengeSettings.ts
