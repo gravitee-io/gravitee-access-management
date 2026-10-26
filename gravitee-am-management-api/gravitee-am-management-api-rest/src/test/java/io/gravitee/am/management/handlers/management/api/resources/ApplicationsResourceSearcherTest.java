@@ -270,7 +270,7 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
         assertNotNull("nextCursor should be present when paging is incomplete", path);
         assertTrue(path.startsWith("/organizations/" + ORGANIZATION_ID + "/environments/DEFAULT/domains/" + DOMAIN_ID + "/applications/search/_cursor?"));
         assertTrue("expected encoded cursor in nextCursor: " + path,
-                path.contains("cursor=" + new CursorApiRequest("app-50", "value-50").encode()));
+                path.contains("cursor=" + CursorApiRequest.of(nextCursor).encode()));
         assertTrue("expected page=1 in nextCursor: " + path, path.contains("page=1"));
         assertTrue("expected q=alpha* in nextCursor: " + path, path.contains("q=alpha*"));
         assertTrue("expected status=enabled in nextCursor: " + path, path.contains("status=enabled"));
@@ -314,7 +314,7 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
         assertFalse("custom entrypoint should not be present in nextCursor: " + path,
                 path.contains("/custom-management/"));
         assertTrue("expected encoded cursor in nextCursor: " + path,
-                path.contains("cursor=" + new CursorApiRequest("app-50", "value-50").encode()));
+                path.contains("cursor=" + CursorApiRequest.of(nextCursor).encode()));
         assertTrue("expected page=1 in nextCursor: " + path, path.contains("page=1"));
         assertTrue("expected q=alpha in nextCursor: " + path, path.contains("q=alpha"));
         assertTrue("expected status=enabled in nextCursor: " + path, path.contains("status=enabled"));
@@ -353,7 +353,7 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
                 .queryParam("sort", "name")
                 .queryParam("dir", "ASC")
                 .queryParam("page", "3")
-                .queryParam("cursor", new CursorApiRequest("app-42", "v-42").encode())
+                .queryParam("cursor", new CursorApiRequest("app-42", "name", CursorRequest.SortDirection.ASC, "v-42").encode())
                 .queryParam("q", "foo")
                 .queryParam("status", "enabled")
                 .queryParam("type", "AGENT")
@@ -380,11 +380,22 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
                 .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
 
         final Response response = target("domains").path(DOMAIN_ID).path("applications").path("search").path("_cursor")
-                .queryParam("cursor", new CursorApiRequest("app-1", "val-1").encode()).request().get();
+                .queryParam("cursor", new CursorApiRequest("app-1", "updatedAt", CursorRequest.SortDirection.DESC, "val-1").encode()).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map responseEntity = readEntity(response, Map.class);
         assertEquals(1, ((List) responseEntity.get("data")).size());
+    }
+
+    @Test
+    public void shouldSearchCursor_rejectsACursorIssuedForAnotherSort() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("applications").path("search").path("_cursor")
+                .queryParam("sort", "updatedAt")
+                .queryParam("cursor", new CursorApiRequest("app-1", "name", CursorRequest.SortDirection.DESC, "val-1").encode()).request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
     @Test

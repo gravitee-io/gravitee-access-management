@@ -37,57 +37,64 @@ import {
 /**
  *
  * @export
- * @interface AuthorizationDetailTypePage
+ * @interface AuthorizationDetailTypeCursorPage
  */
-export interface AuthorizationDetailTypePage {
-  /**
-   *
-   * @type {number}
-   * @memberof AuthorizationDetailTypePage
-   */
-  currentPage?: number;
+export interface AuthorizationDetailTypeCursorPage {
   /**
    *
    * @type {Array<AuthorizationDetailType>}
-   * @memberof AuthorizationDetailTypePage
+   * @memberof AuthorizationDetailTypeCursorPage
    */
   data?: Array<AuthorizationDetailType>;
   /**
    *
+   * @type {string}
+   * @memberof AuthorizationDetailTypeCursorPage
+   */
+  nextCursor?: string;
+  /**
+   *
    * @type {number}
-   * @memberof AuthorizationDetailTypePage
+   * @memberof AuthorizationDetailTypeCursorPage
+   */
+  page?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof AuthorizationDetailTypeCursorPage
    */
   totalCount?: number;
 }
 
 /**
- * Check if a given object implements the AuthorizationDetailTypePage interface.
+ * Check if a given object implements the AuthorizationDetailTypeCursorPage interface.
  */
-export function instanceOfAuthorizationDetailTypePage(value: object): value is AuthorizationDetailTypePage {
+export function instanceOfAuthorizationDetailTypeCursorPage(value: object): value is AuthorizationDetailTypeCursorPage {
   return true;
 }
 
-export function AuthorizationDetailTypePageFromJSON(json: any): AuthorizationDetailTypePage {
-  return AuthorizationDetailTypePageFromJSONTyped(json, false);
+export function AuthorizationDetailTypeCursorPageFromJSON(json: any): AuthorizationDetailTypeCursorPage {
+  return AuthorizationDetailTypeCursorPageFromJSONTyped(json, false);
 }
 
-export function AuthorizationDetailTypePageFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizationDetailTypePage {
+export function AuthorizationDetailTypeCursorPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizationDetailTypeCursorPage {
   if (json == null) {
     return json;
   }
   return {
-    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
     data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(AuthorizationDetailTypeFromJSON),
+    nextCursor: json['nextCursor'] == null ? undefined : json['nextCursor'],
+    page: json['page'] == null ? undefined : json['page'],
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
 
-export function AuthorizationDetailTypePageToJSON(json: any): AuthorizationDetailTypePage {
-  return AuthorizationDetailTypePageToJSONTyped(json, false);
+export function AuthorizationDetailTypeCursorPageToJSON(json: any): AuthorizationDetailTypeCursorPage {
+  return AuthorizationDetailTypeCursorPageToJSONTyped(json, false);
 }
 
-export function AuthorizationDetailTypePageToJSONTyped(
-  value?: AuthorizationDetailTypePage | null,
+export function AuthorizationDetailTypeCursorPageToJSONTyped(
+  value?: AuthorizationDetailTypeCursorPage | null,
   ignoreDiscriminator: boolean = false,
 ): any {
   if (value == null) {
@@ -95,8 +102,9 @@ export function AuthorizationDetailTypePageToJSONTyped(
   }
 
   return {
-    currentPage: value['currentPage'],
     data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(AuthorizationDetailTypeToJSON),
+    nextCursor: value['nextCursor'],
+    page: value['page'],
     totalCount: value['totalCount'],
   };
 }

@@ -19,8 +19,10 @@ import com.mongodb.ErrorCategory;
 import com.mongodb.MongoWriteException;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.cursor.CursorPage;
+import io.gravitee.am.model.cursor.CursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AuthorizationDetailTypeMongo;
@@ -36,7 +38,6 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -49,10 +50,13 @@ import static com.mongodb.client.model.Filters.regex;
  * @author GraviteeSource Team
  */
 @Component
-public class MongoAuthorizationDetailTypeRepository extends AbstractManagementMongoRepository implements AuthorizationDetailTypeRepository {
+public class MongoAuthorizationDetailTypeRepository
+        extends AbstractMongoCursorRepository<AuthorizationDetailTypeMongo, AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>
+        implements AuthorizationDetailTypeRepository {
 
     private static final String COLLECTION_NAME = "authorization_detail_types";
     private static final String FIELD_TYPE = "type";
+    private static final String FIELD_NAME = "name";
 
     private MongoCollection<AuthorizationDetailTypeMongo> collection;
 
@@ -79,29 +83,42 @@ public class MongoAuthorizationDetailTypeRepository extends AbstractManagementMo
     }
 
     @Override
-    public Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size) {
-        return findPage(eq(FIELD_DOMAIN, domain), page, size);
+    public Single<CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>> findByDomainCursor(String domain, AuthorizationDetailTypeCursorRequest cursor, int limit) {
+        Bson filter = eq(FIELD_DOMAIN, domain);
+        if (cursor.getQuery() != null && !cursor.getQuery().isBlank()) {
+            filter = withQuery(filter, cursor.getQuery());
+        }
+        return findCursorPage(collection, filter, cursor, limit);
     }
 
     @Override
-    public Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size) {
-        Bson typeFilter = query.contains("*")
-                ? regex(FIELD_TYPE, toAnchoredPattern(query))
-                : eq(FIELD_TYPE, query);
-        return findPage(and(eq(FIELD_DOMAIN, domain), typeFilter), page, size);
+    protected AuthorizationDetailType toModel(AuthorizationDetailTypeMongo databaseModel) {
+        return convert(databaseModel);
     }
 
-    private Single<Page<AuthorizationDetailType>> findPage(Bson filter, int page, int size) {
-        Single<Long> count = Observable.fromPublisher(collection.countDocuments(filter, countOptionsWithCollation())).first(0L);
-        Single<List<AuthorizationDetailType>> data = Observable.fromPublisher(withMaxTime(collection.find(filter))
-                        .collation(CASE_INSENSITIVE_COLLATION)
-                        .sort(new Document(FIELD_TYPE, 1))
-                        .skip(size * page)
-                        .limit(size))
-                .map(this::convert)
-                .toList();
-        return Single.zip(count, data, (total, types) -> new Page<>(types, page, total))
-                .observeOn(Schedulers.computation());
+    @Override
+    protected Bson withQuery(Bson base, String query) {
+        return and(base, query.contains("*") ? regex(FIELD_TYPE, toAnchoredPattern(query)) : eq(FIELD_TYPE, query));
+    }
+
+    @Override
+    protected String sortFieldName(CursorRequest cursor) {
+        return AuthorizationDetailTypeCursorRequest.SORT_FIELD_NAME.equals(cursor.getSortField()) ? FIELD_NAME : FIELD_TYPE;
+    }
+
+    @Override
+    protected Object sortFieldValue(CursorRequest cursor) {
+        return cursor.getLastSortValue();
+    }
+
+    @Override
+    protected boolean useCollation(AuthorizationDetailTypeCursorRequest cursor) {
+        return true;
+    }
+
+    @Override
+    protected AuthorizationDetailTypeCursorRequest nextCursor(AuthorizationDetailTypeCursorRequest currentCursor, AuthorizationDetailType element) {
+        return currentCursor.next(element);
     }
 
     private static Pattern toAnchoredPattern(String query) {

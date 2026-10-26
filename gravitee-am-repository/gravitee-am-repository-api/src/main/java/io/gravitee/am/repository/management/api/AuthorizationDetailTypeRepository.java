@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.reactivex.rxjava3.core.Completable;
@@ -38,15 +39,10 @@ public interface AuthorizationDetailTypeRepository extends CrudRepository<Author
     Flowable<AuthorizationDetailType> findByDomain(String domain);
 
     /**
-     * Orders by {@code type}, ignoring case.
+     * Orders by the cursor's sort field ignoring case, then by id. A query matches {@code type} ignoring case,
+     * where {@code *} stands for any characters and every other character is literal.
      */
-    Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size);
-
-    /**
-     * Matches {@code type} ignoring case, where {@code *} stands for any characters and every other character is literal.
-     * Orders by {@code type}, ignoring case.
-     */
-    Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size);
+    Single<CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>> findByDomainCursor(String domain, AuthorizationDetailTypeCursorRequest cursor, int limit);
 
     Maybe<AuthorizationDetailType> findByDomainAndId(String domain, String id);
 

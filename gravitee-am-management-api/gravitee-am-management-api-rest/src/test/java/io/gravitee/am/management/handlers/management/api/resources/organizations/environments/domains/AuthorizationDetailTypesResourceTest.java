@@ -17,10 +17,13 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.resources.model.CursorApiRequest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.cursor.CursorPage;
+import io.gravitee.am.model.cursor.CursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
@@ -32,13 +35,18 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -212,87 +220,111 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
     }
 
     @Test
-    void shouldListWithoutSchema() {
+    void shouldListFirstPageWithoutSchemaAndLinkTheNextOne() {
         AuthorizationDetailType listed = AuthorizationDetailType.builder()
-                .id("adt-1")
+                .id("adt-2")
                 .domain(DOMAIN_ID)
-                .type("payment_initiation")
+                .type("t>>>?")
                 .name("Payment initiation")
                 .schema("{\"type\":\"object\"}")
-                .discovery(true)
                 .expiresIn(3600)
                 .build();
-        doReturn(Single.just(new Page<>(List.of(listed), 1, 3))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 1, 2);
+        AuthorizationDetailTypeCursorRequest next = AuthorizationDetailTypeCursorRequest.initialCursor("type", "ASC", 0, null).next(listed);
+        stubList(new CursorPage<>(List.of(listed), next, 3L));
 
-        final Response response = list(Map.of("page", 1, "size", 2));
+        final Response response = list(Map.of("limit", 1));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         Map<String, Object> body = response.readEntity(Map.class);
-        assertEquals(1, body.get("currentPage"));
+        assertEquals(0, body.get("page"));
         assertEquals(3, body.get("totalCount"));
         List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
-        assertEquals(1, data.size());
-        assertEquals("adt-1", data.get(0).get("id"));
-        assertEquals("payment_initiation", data.get(0).get("type"));
+        assertEquals("adt-2", data.get(0).get("id"));
         assertEquals(3600, data.get(0).get("expiresIn"));
         assertFalse(data.get(0).containsKey("schema"));
+        String nextCursor = (String) body.get("nextCursor");
+        assertTrue(nextCursor.startsWith("/organizations/DEFAULT/environments/DEFAULT/domains/" + DOMAIN_ID + "/authorization-detail-types?"));
+        assertTrue(nextCursor.contains("page=1"));
     }
 
     @Test
-    void shouldListFirstPageOfFiftyByDefault() {
-        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+    void shouldContinueFromTheNextCursorWithTheSameSortAndQuery() {
+        AuthorizationDetailType last = AuthorizationDetailType.builder().id("adt-2").type("payment_x").name("t>>>?").build();
+        AuthorizationDetailTypeCursorRequest next = AuthorizationDetailTypeCursorRequest.initialCursor("name", "DESC", 0, "pay*").next(last);
+        stubList(new CursorPage<>(List.of(last), next, 2L));
+        String nextCursor = (String) list(Map.of("sort", "name", "dir", "DESC", "q", "pay*", "limit", 1)).readEntity(Map.class).get("nextCursor");
+        reset(authorizationDetailTypeService);
+        stubList(new CursorPage<>(List.of(), null, 2L));
+
+        final Response response = list(rawQueryParams(nextCursor));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        Map<String, Object> body = response.readEntity(Map.class);
+        assertEquals(1, body.get("page"));
+        assertNull(body.get("nextCursor"));
+        AuthorizationDetailTypeCursorRequest cursor = listedCursor(1);
+        assertFalse(cursor.isFirstPage());
+        assertEquals("t>>>?", cursor.getLastSortValue());
+        assertEquals("adt-2", cursor.getLastId());
+        assertEquals("name", cursor.getSortField());
+        assertEquals(CursorRequest.SortDirection.DESC, cursor.getSortDirection());
+        assertEquals("pay*", cursor.getQuery());
+        assertEquals(1, cursor.getPage());
+    }
+
+    @Test
+    void shouldListFirstPageOfFiftySortedByTypeByDefault() {
+        stubList(new CursorPage<>(List.of(), null, 0L));
 
         final Response response = list(Map.of());
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        verify(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+        AuthorizationDetailTypeCursorRequest cursor = listedCursor(50);
+        assertTrue(cursor.isFirstPage());
+        assertEquals("type", cursor.getSortField());
+        assertEquals(CursorRequest.SortDirection.ASC, cursor.getSortDirection());
+        assertEquals(0, cursor.getPage());
+        assertNull(cursor.getQuery());
     }
 
     @Test
     void shouldCapPageSizeAtFifty() {
-        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+        stubList(new CursorPage<>(List.of(), null, 0L));
 
-        final Response response = list(Map.of("size", 100));
-
-        assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        verify(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
-    }
-
-    @Test
-    void shouldSearchWhenQueryIsGiven() {
-        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).search(DOMAIN_ID, "payment*", 0, 50);
-
-        final Response response = list(Map.of("q", "payment*"));
+        final Response response = list(Map.of("limit", 100));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        verify(authorizationDetailTypeService).search(DOMAIN_ID, "payment*", 0, 50);
-        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+        listedCursor(50);
     }
 
     @Test
     void shouldListAllWhenQueryIsBlank() {
-        doReturn(Single.just(new Page<>(List.of(), 0, 0))).when(authorizationDetailTypeService).findByDomain(DOMAIN_ID, 0, 50);
+        stubList(new CursorPage<>(List.of(), null, 0L));
 
         final Response response = list(Map.of("q", " "));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        verify(authorizationDetailTypeService, never()).search(anyString(), anyString(), anyInt(), anyInt());
+        assertNull(listedCursor(50).getQuery());
     }
 
-    @Test
-    void shouldRejectNegativePage() {
-        final Response response = list(Map.of("page", -1));
+    @ParameterizedTest
+    @MethodSource("invalidListParams")
+    void shouldRejectInvalidListParams(Map<String, Object> params) {
+        final Response response = list(params);
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+        verify(authorizationDetailTypeService, never()).findByDomainCursor(anyString(), any(), anyInt());
     }
 
-    @Test
-    void shouldRejectSizeBelowOne() {
-        final Response response = list(Map.of("size", 0));
-
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+    static Stream<Map<String, Object>> invalidListParams() {
+        return Stream.of(
+                Map.of("page", -1),
+                Map.of("limit", 0),
+                Map.of("sort", "updatedAt"),
+                Map.of("dir", "sideways"),
+                Map.of("cursor", "not base64!"),
+                Map.of("sort", "name", "cursor", new CursorApiRequest("adt-1", "type", CursorRequest.SortDirection.ASC, "payment").encode()),
+                Map.of("dir", "DESC", "cursor", new CursorApiRequest("adt-1", "type", CursorRequest.SortDirection.ASC, "payment").encode()));
     }
 
     @Test
@@ -302,7 +334,29 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
         final Response response = list(Map.of());
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
-        verify(authorizationDetailTypeService, never()).findByDomain(anyString(), anyInt(), anyInt());
+        verify(authorizationDetailTypeService, never()).findByDomainCursor(anyString(), any(), anyInt());
+    }
+
+    private void stubList(CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest> page) {
+        doReturn(Single.just(page)).when(authorizationDetailTypeService).findByDomainCursor(eq(DOMAIN_ID), any(), anyInt());
+    }
+
+    private AuthorizationDetailTypeCursorRequest listedCursor(int limit) {
+        ArgumentCaptor<AuthorizationDetailTypeCursorRequest> cursor = ArgumentCaptor.forClass(AuthorizationDetailTypeCursorRequest.class);
+        verify(authorizationDetailTypeService).findByDomainCursor(eq(DOMAIN_ID), cursor.capture(), eq(limit));
+        return cursor.getValue();
+    }
+
+    /**
+     * Splits a link's query into its parameters without decoding them.
+     */
+    private static Map<String, Object> rawQueryParams(String link) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        for (String pair : link.substring(link.indexOf('?') + 1).split("&")) {
+            String[] keyValue = pair.split("=", 2);
+            params.put(keyValue[0], keyValue[1]);
+        }
+        return params;
     }
 
     private Response list(Map<String, Object> queryParams) {

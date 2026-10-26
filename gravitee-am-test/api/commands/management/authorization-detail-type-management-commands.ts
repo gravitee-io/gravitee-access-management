@@ -16,7 +16,8 @@
 import { getAuthorizationDetailTypeApi } from './service/utils';
 import { ApiResponse } from '../../management/runtime';
 import { AuthorizationDetailType } from '@management-models/AuthorizationDetailType';
-import { AuthorizationDetailTypePage } from '@management-models/AuthorizationDetailTypePage';
+import { AuthorizationDetailTypeCursorPage } from '@management-models/AuthorizationDetailTypeCursorPage';
+import { ListAuthorizationDetailTypesRequest } from '@management-apis/AuthorizationDetailTypeApi';
 import { NewAuthorizationDetailType } from '@management-models/NewAuthorizationDetailType';
 
 export const createAuthorizationDetailType = (
@@ -55,20 +56,29 @@ export const getAuthorizationDetailType = (
     authorizationDetailTypeId,
   });
 
-export interface ListAuthorizationDetailTypesParams {
-  page?: number;
-  size?: number;
-  q?: string;
-}
+export type ListAuthorizationDetailTypesParams = Omit<ListAuthorizationDetailTypesRequest, 'organizationId' | 'environmentId' | 'domain'>;
 
 export const listAuthorizationDetailTypes = (
   domainId: string,
   accessToken: string,
   params: ListAuthorizationDetailTypesParams = {},
-): Promise<AuthorizationDetailTypePage> =>
+): Promise<AuthorizationDetailTypeCursorPage> =>
   getAuthorizationDetailTypeApi(accessToken).listAuthorizationDetailTypes({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     ...params,
   });
+
+export const followNextCursor = (domainId: string, accessToken: string, nextCursor: string): Promise<AuthorizationDetailTypeCursorPage> => {
+  const query = new URLSearchParams(nextCursor.substring(nextCursor.indexOf('?') + 1));
+  const number = (name: string) => (query.has(name) ? Number(query.get(name)) : undefined);
+  return listAuthorizationDetailTypes(domainId, accessToken, {
+    limit: number('limit'),
+    sort: (query.get('sort') ?? undefined) as ListAuthorizationDetailTypesParams['sort'],
+    dir: (query.get('dir') ?? undefined) as ListAuthorizationDetailTypesParams['dir'],
+    page: number('page'),
+    q: query.get('q') ?? undefined,
+    cursor: query.get('cursor') ?? undefined,
+  });
+};

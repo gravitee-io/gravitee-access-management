@@ -64,9 +64,9 @@ import {
   AuthorizationDetailType,
   AuthorizationDetailTypeFromJSON,
   AuthorizationDetailTypeToJSON,
-  AuthorizationDetailTypePage,
-  AuthorizationDetailTypePageFromJSON,
-  AuthorizationDetailTypePageToJSON,
+  AuthorizationDetailTypeCursorPage,
+  AuthorizationDetailTypeCursorPageFromJSON,
+  AuthorizationDetailTypeCursorPageToJSON,
   AuthorizationEngine,
   AuthorizationEngineFromJSON,
   AuthorizationEngineToJSON,
@@ -1415,9 +1415,12 @@ export interface ListAuthorizationDetailTypesRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+  limit?: number;
+  sort?: ListAuthorizationDetailTypesSortEnum;
+  dir?: ListAuthorizationDetailTypesDirEnum;
   page?: number;
-  size?: number;
   q?: string;
+  cursor?: string;
 }
 
 export interface ListAuthorizationEnginesRequest {
@@ -12729,13 +12732,13 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified organization. Types are ordered by type, ignoring case. Each returned type omits its schema; read the type by its id to get it.
-   * List the authorization detail types of a security domain
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified organization. Types are sorted ignoring case, then by id. Each returned type omits its schema; read the type by its id to get it. Follow nextCursor to get the next page.
+   * List the authorization detail types of a security domain with cursor-based pagination
    */
   async listAuthorizationDetailTypesRaw(
     requestParameters: ListAuthorizationDetailTypesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<AuthorizationDetailTypePage>> {
+  ): Promise<runtime.ApiResponse<AuthorizationDetailTypeCursorPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -12759,16 +12762,28 @@ export class DomainApi extends runtime.BaseAPI {
 
     const queryParameters: any = {};
 
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
     if (requestParameters.page !== undefined) {
       queryParameters['page'] = requestParameters.page;
     }
 
-    if (requestParameters.size !== undefined) {
-      queryParameters['size'] = requestParameters.size;
-    }
-
     if (requestParameters.q !== undefined) {
       queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -12794,17 +12809,17 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationDetailTypePageFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationDetailTypeCursorPageFromJSON(jsonValue));
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified organization. Types are ordered by type, ignoring case. Each returned type omits its schema; read the type by its id to get it.
-   * List the authorization detail types of a security domain
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission on the specified organization. Types are sorted ignoring case, then by id. Each returned type omits its schema; read the type by its id to get it. Follow nextCursor to get the next page.
+   * List the authorization detail types of a security domain with cursor-based pagination
    */
   async listAuthorizationDetailTypes(
     requestParameters: ListAuthorizationDetailTypesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<AuthorizationDetailTypePage> {
+  ): Promise<AuthorizationDetailTypeCursorPage> {
     const response = await this.listAuthorizationDetailTypesRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -20680,6 +20695,24 @@ export const ListApplicationsTypeEnum = {
   Agent: 'AGENT',
 } as const;
 export type ListApplicationsTypeEnum = typeof ListApplicationsTypeEnum[keyof typeof ListApplicationsTypeEnum];
+/**
+ * @export
+ */
+export const ListAuthorizationDetailTypesSortEnum = {
+  Type: 'type',
+  Name: 'name',
+} as const;
+export type ListAuthorizationDetailTypesSortEnum =
+  typeof ListAuthorizationDetailTypesSortEnum[keyof typeof ListAuthorizationDetailTypesSortEnum];
+/**
+ * @export
+ */
+export const ListAuthorizationDetailTypesDirEnum = {
+  Asc: 'ASC',
+  Desc: 'DESC',
+} as const;
+export type ListAuthorizationDetailTypesDirEnum =
+  typeof ListAuthorizationDetailTypesDirEnum[keyof typeof ListAuthorizationDetailTypesDirEnum];
 /**
  * @export
  */

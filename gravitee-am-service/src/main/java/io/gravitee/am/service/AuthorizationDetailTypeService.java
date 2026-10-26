@@ -17,8 +17,9 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -31,9 +32,7 @@ public interface AuthorizationDetailTypeService {
 
     Maybe<AuthorizationDetailType> findById(String domain, String id);
 
-    Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size);
-
-    Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size);
+    Single<CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>> findByDomainCursor(String domain, AuthorizationDetailTypeCursorRequest cursor, int limit);
 
     Single<AuthorizationDetailType> create(Domain domain, NewAuthorizationDetailType newAuthorizationDetailType, User principal);
 

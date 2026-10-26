@@ -25,9 +25,10 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
@@ -222,32 +223,20 @@ class AuthorizationDetailTypeServiceImplTest {
 
     @Test
     void shouldFindPageByDomain() {
-        Page<AuthorizationDetailType> page = new Page<>(List.of(AuthorizationDetailType.builder().id("id-1").build()), 1, 3);
-        when(repository.findByDomain(DOMAIN_ID, 1, 2)).thenReturn(Single.just(page));
+        AuthorizationDetailTypeCursorRequest cursor = AuthorizationDetailTypeCursorRequest.initialCursor("type", "ASC", 0, "payment*");
+        CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest> page =
+                new CursorPage<>(List.of(AuthorizationDetailType.builder().id("id-1").build()), null, 1L);
+        when(repository.findByDomainCursor(DOMAIN_ID, cursor, 2)).thenReturn(Single.just(page));
 
-        service.findByDomain(DOMAIN_ID, 1, 2).test().assertValue(page);
+        service.findByDomainCursor(DOMAIN_ID, cursor, 2).test().assertValue(page);
     }
 
     @Test
     void shouldWrapFindPageFailure() {
-        when(repository.findByDomain(DOMAIN_ID, 0, 50)).thenReturn(Single.error(new RuntimeException("boom")));
+        AuthorizationDetailTypeCursorRequest cursor = AuthorizationDetailTypeCursorRequest.initialCursor("type", "ASC", 0, null);
+        when(repository.findByDomainCursor(DOMAIN_ID, cursor, 50)).thenReturn(Single.error(new RuntimeException("boom")));
 
-        service.findByDomain(DOMAIN_ID, 0, 50).test().assertError(TechnicalManagementException.class);
-    }
-
-    @Test
-    void shouldSearch() {
-        Page<AuthorizationDetailType> page = new Page<>(List.of(AuthorizationDetailType.builder().id("id-1").build()), 0, 1);
-        when(repository.search(DOMAIN_ID, "payment*", 0, 50)).thenReturn(Single.just(page));
-
-        service.search(DOMAIN_ID, "payment*", 0, 50).test().assertValue(page);
-    }
-
-    @Test
-    void shouldWrapSearchFailure() {
-        when(repository.search(DOMAIN_ID, "payment*", 0, 50)).thenReturn(Single.error(new RuntimeException("boom")));
-
-        service.search(DOMAIN_ID, "payment*", 0, 50).test().assertError(TechnicalManagementException.class);
+        service.findByDomainCursor(DOMAIN_ID, cursor, 50).test().assertError(TechnicalManagementException.class);
     }
 
     @Test

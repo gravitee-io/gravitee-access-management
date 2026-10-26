@@ -23,10 +23,11 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
 import io.gravitee.am.service.AuditService;
@@ -82,24 +83,13 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
     }
 
     @Override
-    public Single<Page<AuthorizationDetailType>> findByDomain(String domain, int page, int size) {
+    public Single<CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>> findByDomainCursor(String domain, AuthorizationDetailTypeCursorRequest cursor, int limit) {
         log.debug("Find authorization detail types by domain: {}", domain);
-        return repository.findByDomain(domain, page, size)
+        return repository.findByDomainCursor(domain, cursor, limit)
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find the authorization detail types of domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find the authorization detail types of domain %s", domain), ex));
-                });
-    }
-
-    @Override
-    public Single<Page<AuthorizationDetailType>> search(String domain, String query, int page, int size) {
-        log.debug("Search authorization detail types of domain {} with query {}", domain, query);
-        return repository.search(domain, query, page, size)
-                .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to search the authorization detail types of domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to search the authorization detail types of domain %s", domain), ex));
                 });
     }
 

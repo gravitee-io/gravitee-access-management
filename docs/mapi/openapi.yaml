@@ -3037,8 +3037,9 @@ paths:
       description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
         \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
         \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
-        \ on the specified organization. Types are ordered by type, ignoring case.\
-        \ Each returned type omits its schema; read the type by its id to get it."
+        \ on the specified organization. Types are sorted ignoring case, then by id.\
+        \ Each returned type omits its schema; read the type by its id to get it.\
+        \ Follow nextCursor to get the next page."
       operationId: listAuthorizationDetailTypes
       parameters:
       - in: path
@@ -3056,7 +3057,34 @@ paths:
         required: true
         schema:
           type: string
-      - description: "Page number, starting at 0"
+      - description: "Page size, at most 50; a larger value is reduced to 50"
+        in: query
+        name: limit
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+      - description: Field to sort by
+        in: query
+        name: sort
+        schema:
+          type: string
+          default: type
+          enum:
+          - type
+          - name
+      - description: Sort direction
+        in: query
+        name: dir
+        schema:
+          type: string
+          default: ASC
+          enum:
+          - ASC
+          - DESC
+      - description: "Page number, starting at 0. Without a cursor, the response starts\
+          \ at this page."
         in: query
         name: page
         schema:
@@ -3064,17 +3092,14 @@ paths:
           format: int32
           default: 0
           minimum: 0
-      - description: "Page size, at most 50; a larger value is reduced to 50"
-        in: query
-        name: size
-        schema:
-          type: integer
-          format: int32
-          default: 50
-          minimum: 1
       - description: "Type to match, ignoring case; * matches any characters"
         in: query
         name: q
+        schema:
+          type: string
+      - description: "Position to continue from, as given in a previous page's nextCursor"
+        in: query
+        name: cursor
         schema:
           type: string
       responses:
@@ -3082,13 +3107,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthorizationDetailTypePage"
+                $ref: "#/components/schemas/AuthorizationDetailTypeCursorPage"
           description: A page of the domain's authorization detail types
         "400":
-          description: Invalid page or size
+          description: "Invalid limit, page, sort, dir or cursor"
         "500":
           description: Internal server error
-      summary: List the authorization detail types of a security domain
+      summary: List the authorization detail types of a security domain with cursor-based
+        pagination
       tags:
       - authorization detail type
       - domain
@@ -13813,16 +13839,18 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
-    AuthorizationDetailTypePage:
+    AuthorizationDetailTypeCursorPage:
       type: object
       properties:
-        currentPage:
-          type: integer
-          format: int32
         data:
           type: array
           items:
             $ref: "#/components/schemas/AuthorizationDetailType"
+        nextCursor:
+          type: string
+        page:
+          type: integer
+          format: int32
         totalCount:
           type: integer
           format: int64
