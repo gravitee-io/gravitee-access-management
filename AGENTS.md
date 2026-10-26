@@ -416,11 +416,11 @@ The PR workflow (`pull_requests`) runs the following test jobs:
 
 1. **`junit_tests`** — Backend unit tests (`mvn verify -pl \!gravitee-am-ui`)
 2. **`ui_tests`** — Angular tests (`mvn test -pl gravitee-am-ui`)
-3. **`run_jest_tests_mongo`** — Jest management (parallel) + gateway tests against MongoDB 8.2
+3. **`run_jest_tests_mongo`** — Jest management (parallel) + gateway tests against MongoDB 9.0
 4. **`run_jest_tests_psql`** — Jest management (parallel) + gateway tests against PostgreSQL 18.4
-5. **`run_postman_tests_mongo`** — Newman collections against MongoDB 8.2
+5. **`run_postman_tests_mongo`** — Newman collections against MongoDB 9.0
 6. **`run_postman_tests_psql`** — Newman collections against PostgreSQL 18.4
-7. **`run_playwright_tests_mongo`** — Playwright E2E tests against MongoDB 8.2
+7. **`run_playwright_tests_mongo`** — Playwright E2E tests against MongoDB 9.0
 8. **`run_playwright_tests_psql`** — Playwright E2E tests against PostgreSQL 18.4
 9. **`job-test-am-charts`** — Helm lint + unittest
 
