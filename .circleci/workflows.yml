@@ -1934,6 +1934,15 @@ jobs:
             # 2./ and then we can run the [mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=1.3.1 -DgenerateBackupPoms=false]
             mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${MVN_PRJ_VERSION} -DgenerateBackupPoms=false
 
+      - run:
+          name: "Install Node and set the gravitee-am-console version"
+          command: |
+            export NODE_VERSION=$(cat gravitee-am-console/.nvmrc)
+            curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | sudo tar -xJ -C /usr/local --strip-components=1
+            sudo corepack enable
+            export MVN_PRJ_VERSION=$(cat /tmp/gio.maven.project.release.version)
+            sed -i "s/\"version\": \".*\"/\"version\": \"${MVN_PRJ_VERSION}\"/" gravitee-am-console/package.json gravitee-am-console/public/build.json
+      - build_console
       - mvn_git_commit_id
       - when:
           condition:
@@ -1960,14 +1969,6 @@ jobs:
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean install
       - save-maven-job-cache:
           jobName: releaseV2
-      - run:
-          name: "Install Node and set the gravitee-am-console version"
-          command: |
-            export NODE_VERSION=$(cat gravitee-am-console/.nvmrc)
-            curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | sudo tar -xJ -C /usr/local --strip-components=1
-            export MVN_PRJ_VERSION=$(cat /tmp/gio.maven.project.release.version)
-            sed -i "s/\"version\": \".*\"/\"version\": \"${MVN_PRJ_VERSION}\"/" gravitee-am-console/package.json gravitee-am-console/public/build.json
-      - build_console
 
       # ---
       # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotent and non immutable, whereas Nexus staging and Git release are immutable
@@ -1977,6 +1978,11 @@ jobs:
       - run:
           name: Git release
           command: |
+            # gravitee-am-console is not a Maven module, so versions:set does not reach it.
+            sync_console_version() {
+              export CONSOLE_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q help:evaluate -Dexpression=project.version -DforceStdout)
+              sed -i "s/\"version\": \".*\"/\"version\": \"${CONSOLE_VERSION}\"/" gravitee-am-console/package.json gravitee-am-console/public/build.json
+            }
 
             export MVN_PRJ_VERSION=$(cat /tmp/gio.maven.project.release.version)
             export MVN_PRJ_VERSION_MAJOR=$(cat /tmp/gio.maven.project.release.version | awk -F '.' '{print $1}')
@@ -2014,6 +2020,7 @@ jobs:
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
               bash scripts/regen-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
               bash scripts/regen-automation-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
+              sync_console_version
               git add --update
               git commit -m 'chore: prepare next version'
 
@@ -2074,6 +2081,7 @@ jobs:
             
             bash scripts/regen-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
             bash scripts/regen-automation-oas.sh --version-only --maven-settings /tmp/.gravitee.settings.xml
+            sync_console_version
             git add --update
             git commit -m 'chore: prepare next version [skip ci]'
 

@@ -178,3 +178,4 @@ workflows:
             ^.*pom\.xml$ run-container-test true
             gravitee-am-ui/.* run_ui_tests true
             gravitee-am-console/.* run_console true
+            gravitee-am-test/api/management/models/.* run_console true

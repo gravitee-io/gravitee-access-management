@@ -29,7 +29,7 @@ yarn typecheck && yarn lint && yarn test && yarn build
 ```
 
 The console is not a Maven module. `mvn install` from the root does not build it. Build it with yarn. CircleCI runs the
-same four commands in the `console_build` job when a push changes this folder.
+same four commands in the `console_build` job when a push changes this folder or the generated models it imports.
 
 ## 2. Stack
 
