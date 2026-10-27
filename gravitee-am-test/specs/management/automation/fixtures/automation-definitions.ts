@@ -93,8 +93,10 @@ export const buildAutomationCertificateDef = (overrides: {
   key: string;
   name?: string;
   system?: boolean;
+  /** Index of the test keystore: a domain cannot hold the same keystore twice. */
+  keystore?: number;
 }): object => ({
-  ...buildCertificate(0),
+  ...buildCertificate(overrides.keystore ?? 0),
   key: overrides.key,
   name: overrides.name ?? `Automation cert ${overrides.key}`,
   ...(overrides.system !== undefined ? { system: overrides.system } : {}),

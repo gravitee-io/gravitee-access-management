@@ -111,6 +111,24 @@ export class AutomationClient {
     return performDelete(automationUrl(), `${envPath()}/domains/${domainKey}/reporters/${reporterKey}`, this.headers());
   }
 
+  // ---- Applications (under a domain) ------------------------------------
+
+  listApplications(domainKey: string) {
+    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/applications`, this.headers());
+  }
+
+  putApplication(domainKey: string, definition: object, query = '') {
+    return performPut(automationUrl(), `${envPath()}/domains/${domainKey}/applications${query}`, definition, this.headers());
+  }
+
+  getApplication(domainKey: string, applicationKey: string) {
+    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/applications/${applicationKey}`, this.headers());
+  }
+
+  deleteApplication(domainKey: string, applicationKey: string) {
+    return performDelete(automationUrl(), `${envPath()}/domains/${domainKey}/applications/${applicationKey}`, this.headers());
+  }
+
   // ---- Data planes (under an environment) --------------------------------
 
   listDataPlanes() {

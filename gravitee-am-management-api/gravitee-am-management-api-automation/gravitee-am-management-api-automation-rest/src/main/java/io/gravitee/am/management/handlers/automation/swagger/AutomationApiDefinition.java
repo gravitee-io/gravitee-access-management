@@ -72,11 +72,14 @@ public class AutomationApiDefinition implements ReaderListener {
      */
     public static final String DEFAULT_AUTOMATION_ENTRYPOINT = "/automation";
 
-    private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters", "Data Planes");
+    private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters", "Data Planes",
+            "Applications");
 
     private static final String ERROR_SCHEMA = "Error";
 
-    private static final Map<String, Set<String>> VERBATIM_ENUM_PROPERTIES = Map.of("XFrameSettings", Set.of("action"));
+    private static final Map<String, Set<String>> VERBATIM_ENUM_PROPERTIES = Map.of("XFrameSettings", Set.of("action"),
+            // the agent persona is matched case-sensitively, as the Management API exposes it
+            "AutomationApplication", Set.of("kind"));
 
     /**
      * Human-readable descriptions for each tag, keyed by tag name.
@@ -87,7 +90,8 @@ public class AutomationApiDefinition implements ReaderListener {
             "Identity Providers", "Identity providers configured under a domain to authenticate users.",
             "Certificates", "Certificates configured under a domain to sign and verify tokens.",
             "Reporters", "Reporters configured under a domain to persist audit events to a backend.",
-            "Data Planes", "Data planes configured under an environment to store the runtime data of its domains.");
+            "Data Planes", "Data planes configured under an environment to store the runtime data of its domains.",
+            "Applications", "Applications (OAuth 2.0 / OpenID Connect clients) configured under a domain.");
 
     /**
      * Descriptions and examples for the shared path parameters, keyed by parameter name. Injected onto every

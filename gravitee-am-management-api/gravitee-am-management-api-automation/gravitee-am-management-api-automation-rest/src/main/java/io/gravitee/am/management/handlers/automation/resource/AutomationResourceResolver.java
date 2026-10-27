@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -24,10 +25,12 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -48,17 +51,20 @@ public class AutomationResourceResolver {
     private final CertificateService certificateService;
     private final ReporterService reporterService;
     private final DataPlaneDefinitionService dataPlaneDefinitionService;
+    private final ApplicationService applicationService;
 
     public AutomationResourceResolver(DomainService domainService,
             IdentityProviderService identityProviderService,
             CertificateService certificateService,
             ReporterService reporterService,
-            DataPlaneDefinitionService dataPlaneDefinitionService) {
+            DataPlaneDefinitionService dataPlaneDefinitionService,
+            ApplicationService applicationService) {
         this.domainService = domainService;
         this.identityProviderService = identityProviderService;
         this.certificateService = certificateService;
         this.reporterService = reporterService;
         this.dataPlaneDefinitionService = dataPlaneDefinitionService;
+        this.applicationService = applicationService;
     }
 
     // --- domains ------------------------------------------------------------
@@ -149,6 +155,22 @@ public class AutomationResourceResolver {
                     .filter(reporter -> reporter.isManagedBy(ManagedBy.AUTOMATION_API)
                             && key.equals(reporter.getAutomationKey()))
                     .firstElement();
+        };
+    }
+
+    // --- applications -------------------------------------------------------
+
+    public Single<Application> resolveApplication(Domain domain, AutomationRef ref) {
+        return resolveApplicationMaybe(domain, ref)
+                .switchIfEmpty(Maybe.error(() -> new ApplicationNotFoundException(ref.raw())))
+                .toSingle();
+    }
+
+    public Maybe<Application> resolveApplicationMaybe(Domain domain, AutomationRef ref) {
+        return switch (ref) {
+            case AutomationRef.IdRef(String id) -> applicationService.findById(domain.getId(), id);
+            case AutomationRef.KeyRef(String key) -> applicationService.findById(domain.getId(), AutomationIds.applicationId(domain.getId(), key))
+                    .filter(app -> app.isManagedBy(ManagedBy.AUTOMATION_API) && key.equals(app.getAutomationKey()));
         };
     }
 }

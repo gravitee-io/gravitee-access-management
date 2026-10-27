@@ -35,9 +35,11 @@ import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -152,6 +154,12 @@ public abstract class AutomationJerseySpringTest {
     @Autowired
     protected DataPlaneRegistry dataPlaneRegistry;
 
+    @Autowired
+    protected ApplicationService applicationService;
+
+    @Autowired
+    protected RevokeTokenManagementService revokeTokenManagementService;
+
     @BeforeEach
     public void init() {
         // The service mocks are Spring singletons shared across the cached context, so clear any
@@ -167,6 +175,8 @@ public abstract class AutomationJerseySpringTest {
         reset(dataPlaneDefinitionService, provisionedDataPlaneLoader);
         when(provisionedDataPlaneLoader.activate(anyString())).thenReturn(Completable.complete());
         reset(trustDomainService);
+        // Fully reset: application tests stub the service per case.
+        reset(applicationService, revokeTokenManagementService);
         // The proxies pass entities through unmasked and accept every configuration unless a test stubs otherwise.
         reset(identityProviderServiceProxy, certificateServiceProxy, reporterServiceProxy);
         doAnswer(invocation -> Single.just(invocation.getArgument(0)))
@@ -284,6 +294,16 @@ public abstract class AutomationJerseySpringTest {
         }
 
         @Bean
+        public ApplicationService applicationService() {
+            return mock(ApplicationService.class);
+        }
+
+        @Bean
+        public RevokeTokenManagementService revokeTokenManagementService() {
+            return mock(RevokeTokenManagementService.class);
+        }
+
+        @Bean
         public DataPlaneDefinitionService dataPlaneDefinitionService() {
             return mock(DataPlaneDefinitionService.class);
         }
@@ -309,9 +329,10 @@ public abstract class AutomationJerseySpringTest {
                 IdentityProviderService identityProviderService,
                 CertificateService certificateService,
                 ReporterService reporterService,
-                DataPlaneDefinitionService dataPlaneDefinitionService) {
+                DataPlaneDefinitionService dataPlaneDefinitionService,
+                ApplicationService applicationService) {
             return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
-                    dataPlaneDefinitionService);
+                    dataPlaneDefinitionService, applicationService);
         }
     }
 
@@ -335,6 +356,11 @@ public abstract class AutomationJerseySpringTest {
     /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates}. */
     protected final WebTarget certificatesTarget(String domainKey) {
         return domainsTarget().path(domainKey).path("certificates");
+    }
+
+    /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/applications}. */
+    protected final WebTarget applicationsTarget(String domainKey) {
+        return domainsTarget().path(domainKey).path("applications");
     }
 
     /** {@code /organizations/{orgId}/environments/{envId}/dataplanes}. */
