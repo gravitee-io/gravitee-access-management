@@ -429,4 +429,30 @@ public class RoleRepositoryTest extends AbstractManagementTest {
             }
         );
     }
+
+    @Test
+    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+        String referenceId = "metacharacter-domain";
+        for (String name : List.of("role(1)+a", "role1a")) {
+            Role role = buildRole();
+            role.setReferenceId(referenceId);
+            role.setName(name);
+            roleRepository.create(role).blockingGet();
+        }
+
+        Map<String, List<String>> expectedNamesByQuery = Map.of(
+                "role(1)+*", List.of("role(1)+a"),
+                "role(*", List.of("role(1)+a"),
+                ".*", List.of(),
+                "zzz|*", List.of());
+
+        expectedNamesByQuery.forEach((query, expectedNames) -> {
+            TestObserver<Page<Role>> testObserver = roleRepository.search(ReferenceType.DOMAIN, referenceId, query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(roles -> roles.getData().stream().map(Role::getName).toList().equals(expectedNames));
+        });
+    }
 }
