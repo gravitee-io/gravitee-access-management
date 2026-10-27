@@ -539,7 +539,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         DatabaseClient.GenericExecuteSpec sql = bindColumns(getTemplate().getDatabaseClient().sql(updateStatement), item);
 
         Mono<Long> updateAction = sql.fetch().rowsUpdated();
-        updateAction = deleteChildEntities(item.getId()).then(updateAction);
+        // update the applications row before deleting the child rows: its row lock serializes concurrent updates
+        // of the same application (updateIfUnchanged locks in the same order), otherwise each transaction
+        // re-inserts its own copy of the child rows
+        updateAction = updateAction.flatMap(rowsUpdated -> deleteChildEntities(item.getId()).then(Mono.just(rowsUpdated)));
         updateAction = persistChildEntities(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))

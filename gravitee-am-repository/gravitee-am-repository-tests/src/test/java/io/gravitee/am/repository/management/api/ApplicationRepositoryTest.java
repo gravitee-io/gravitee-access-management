@@ -45,7 +45,10 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.test.IncompatibleDataTestUtils;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
@@ -421,6 +424,39 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         TestObserver<Application> stored = applicationRepository.findById(read.getId()).test();
         stored.awaitDone(10, TimeUnit.SECONDS);
         stored.assertValue(a -> "first".equals(a.getName()));
+    }
+
+    @Test
+    public void testUpdateAndUpdateIfUnchanged_concurrentWritesNeitherFailNorDuplicateSecrets() {
+        Application read = createAndRead(buildApplication());
+
+        final int concurrentUpdates = 10;
+        for (int round = 0; round < 3; round++) {
+            Date token = applicationRepository.findById(read.getId()).blockingGet().getUpdatedAt();
+            Flowable.range(0, concurrentUpdates)
+                    .flatMapMaybe(i -> concurrentWrite(read, token, i % 2 == 0).subscribeOn(Schedulers.io()), false, concurrentUpdates)
+                    .test()
+                    .awaitDone(30, TimeUnit.SECONDS)
+                    .assertComplete()
+                    .assertNoErrors();
+        }
+
+        TestObserver<Application> testObserver = applicationRepository.findById(read.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> a.getSecrets().size() == 1);
+    }
+
+    /** A Management API write (unconditional) or an Automation API write (conditional on {@code token}). */
+    private Maybe<Application> concurrentWrite(Application read, Date token, boolean conditional) {
+        Application write = new Application(read);
+        if (!conditional) {
+            write.setUpdatedAt(new Date());
+            return applicationRepository.update(write).toMaybe();
+        }
+        write.setUpdatedAt(new Date(Math.max(System.currentTimeMillis(), token.getTime() + 1)));
+        return applicationRepository.updateIfUnchanged(write, token);
     }
 
     private Application createAndRead(Application app) {
