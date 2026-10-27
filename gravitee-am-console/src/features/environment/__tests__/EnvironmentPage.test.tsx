@@ -81,7 +81,7 @@ describe('EnvironmentPage', () => {
 
         expect(await screen.findByRole('button', { name: 'Create a Security Domain' })).toBeDisabled();
         expect(screen.queryByRole('link', { name: 'Create a Security Domain' })).not.toBeInTheDocument();
-        expect(screen.getByText(/There is not enough permission/)).toBeInTheDocument();
+        expect(screen.getByText(/You do not have the permission to create a security domain/)).toBeInTheDocument();
     });
 
     it('shows the error when the domains cannot be loaded', async () => {

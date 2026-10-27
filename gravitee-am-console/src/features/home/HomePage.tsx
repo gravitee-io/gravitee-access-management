@@ -80,7 +80,7 @@ export function HomePage() {
     }
     return (
         <div className="mx-auto flex max-w-2xl flex-col gap-4 p-10">
-            <h1>You don&apos;t have any environment yet!</h1>
+            <h1>No environments</h1>
             <p className="text-sm text-muted-foreground">
                 Environment allows to define and isolate different parts of your organization such as <code>production</code>,{' '}
                 <code>out of production</code>, <code>internal</code> or <code>public</code>. Once initialized, you will be able to create

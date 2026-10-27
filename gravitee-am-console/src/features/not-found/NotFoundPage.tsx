@@ -22,7 +22,7 @@ export function NotFoundPage() {
         <div className="mx-auto max-w-2xl p-10">
             <NotFoundPanel
                 title="Page not found"
-                description="The page you are looking for does not exist or no longer exists. No worries, nothing is lost yet!"
+                description="The page does not exist or was removed."
                 action={
                     <Button asChild>
                         <Link to="/">Go home</Link>

@@ -41,10 +41,10 @@ export function EnvironmentPage() {
                 <EmptyMedia variant="icon">
                     <GlobeIcon />
                 </EmptyMedia>
-                <EmptyTitle>Integrate authentication and authorization to secure access for your applications and APIs.</EmptyTitle>
+                <EmptyTitle>No security domains</EmptyTitle>
                 <EmptyDescription>
-                    Identity and Access Management Platform will let you create applications, register users and manage identity providers
-                    to provide centralize authentication, authorization and user management features.
+                    A security domain holds the applications, users and identity providers that share authentication and authorization
+                    settings.
                 </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
@@ -56,7 +56,7 @@ export function EnvironmentPage() {
                     <>
                         <Button disabled>Create a Security Domain</Button>
                         <p className="text-sm text-muted-foreground">
-                            There is not enough permission, ask for support or wait for invitation to collaborate.
+                            You do not have the permission to create a security domain. Ask an administrator for access.
                         </p>
                     </>
                 )}

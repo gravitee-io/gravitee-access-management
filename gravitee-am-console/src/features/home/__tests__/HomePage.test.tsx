@@ -108,6 +108,6 @@ describe('HomePage', () => {
 
         renderHome();
 
-        expect(await screen.findByText("You don't have any environment yet!")).toBeInTheDocument();
+        expect(await screen.findByText('No environments')).toBeInTheDocument();
     });
 });
