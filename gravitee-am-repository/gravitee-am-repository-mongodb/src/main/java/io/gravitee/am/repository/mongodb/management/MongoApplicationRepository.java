@@ -104,6 +104,7 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -198,11 +199,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         Bson searchQuery = or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query));
         // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
-            String escapedQuery = escapeRegexMetacharacters(query);
-            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern));
         }
 
@@ -223,11 +220,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         Bson searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
         // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
-            String escapedQuery = escapeRegexMetacharacters(query);
-            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = and(in(FIELD_ID, applicationIds), or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern)));
         }
 
@@ -239,20 +232,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         Single<List<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
                 .observeOn(Schedulers.computation());
-    }
-
-    /**
-     * Escapes regex metacharacters in a query string, except for the asterisk (*) which is
-     * used as a wildcard. This prevents PatternSyntaxException when users search for
-     * special characters like [ ] { } etc.
-     *
-     * @param query the search query that may contain regex metacharacters
-     * @return the query with metacharacters escaped
-     */
-    private static String escapeRegexMetacharacters(String query) {
-        // Escape all regex metacharacters except * (which we use as wildcard)
-        // Metacharacters: . ^ $ | ? + \ [ ] { } ( )
-        return query.replaceAll("([\\[\\]{}()^$.|?+\\\\])", "\\\\$1");
     }
 
     @Override

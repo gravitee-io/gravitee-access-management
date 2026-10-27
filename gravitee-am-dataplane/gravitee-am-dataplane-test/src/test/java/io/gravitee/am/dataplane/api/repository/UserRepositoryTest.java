@@ -1676,6 +1676,83 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testSubscriber.assertValueCount(2);
     }
 
+    @Test
+    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+        User metacharacterUser = new User();
+        metacharacterUser.setReferenceType(ReferenceType.DOMAIN);
+        metacharacterUser.setReferenceId("domain");
+        metacharacterUser.setUsername("user(1)+a");
+        userRepository.create(metacharacterUser).blockingGet();
+
+        User plainUser = new User();
+        plainUser.setReferenceType(ReferenceType.DOMAIN);
+        plainUser.setReferenceId("domain");
+        plainUser.setUsername("user1a");
+        userRepository.create(plainUser).blockingGet();
+
+        TestObserver<Page<User>> testObserver = userRepository.search(Reference.domain("domain"), "user(1)+*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+        testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals("user(1)+a"));
+    }
+
+    @Test
+    public void shouldSearchWildcardWithMalformedRegexQuery() {
+        User metacharacterUser = new User();
+        metacharacterUser.setReferenceType(ReferenceType.DOMAIN);
+        metacharacterUser.setReferenceId("domain");
+        metacharacterUser.setUsername("user(1)+a");
+        userRepository.create(metacharacterUser).blockingGet();
+
+        TestObserver<Page<User>> testObserver = userRepository.search(Reference.domain("domain"), "user(*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldNotMatchEveryUserWithRegexOnlyWildcardQuery() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("domain");
+        user.setUsername("plainUser");
+        userRepository.create(user).blockingGet();
+
+        for (String query : List.of(".*", "zzz|*")) {
+            TestObserver<Page<User>> testObserver = userRepository.search(Reference.domain("domain"), query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(users -> users.getTotalCount() == 0 && users.getData().isEmpty());
+        }
+    }
+
+    @Test
+    public void shouldFindByDomainAndEmailOnlyOnExactMatchIgnoringCase() {
+        final String domain = "domain";
+        for (String email : List.of("test.user@test.com", "testXuser@test.com", "prefix.test.user@test.com", "test.user@test.com.evil")) {
+            User user = createUserWithRandomName();
+            user.setReferenceType(ReferenceType.DOMAIN);
+            user.setReferenceId(domain);
+            user.setEmail(email);
+            userRepository.create(user).blockingGet();
+        }
+
+        TestSubscriber<User> testSubscriber = userRepository.findByDomainAndEmail(domain, "Test.User@test.com", false).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(user -> user.getEmail().equals("test.user@test.com"));
+    }
+
     private void testSearch_strict(String query) {
         final String domain = "domain";
         // create user

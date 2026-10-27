@@ -77,6 +77,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -152,9 +153,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         Bson hridQuery;
         Bson nameQuery;
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             hridQuery = new BasicDBObject(FIELD_HRID, pattern);
             nameQuery = new BasicDBObject(FIELD_NAME, pattern);
         } else {

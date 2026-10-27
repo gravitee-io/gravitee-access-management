@@ -59,17 +59,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.caseInsensitiveExactPattern;
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -98,8 +94,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
     @Override
     public Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict) {
-        BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
-        BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
+        BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : caseInsensitiveExactPattern(email));
+        BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, (strict) ? email : caseInsensitiveExactPattern(email));
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, DOMAIN.name()),
                 eq(FIELD_REFERENCE_ID, domain),

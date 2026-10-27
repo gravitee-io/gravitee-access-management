@@ -92,6 +92,8 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.findOne;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.userIdMatches;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.caseInsensitiveExactPattern;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -173,11 +175,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                 new BasicDBObject(FIELD_FIRST_NAME, query),
                 new BasicDBObject(FIELD_LAST_NAME, query));
 
-        // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = or(
                     new BasicDBObject(FIELD_USERNAME, pattern),
                     new BasicDBObject(FIELD_EMAIL, pattern),
@@ -419,8 +418,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
     @Override
     public Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict) {
-        BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
-        BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
+        BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : caseInsensitiveExactPattern(email));
+        BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_ADDITIONAL_INFO_EMAIL, (strict) ? email : caseInsensitiveExactPattern(email));
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, DOMAIN.name()),
                 eq(FIELD_REFERENCE_ID, domain),

@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.regex;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.caseInsensitiveExactPattern;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -96,9 +97,7 @@ public class MongoOrganizationUserRepository extends AbstractUserRepository<Orga
             return super.findByUsernameAndSource(referenceType, referenceId, username, source);
         }
 
-        // Apply case-insensitive matching to the username field
-        String escapedUsername = Pattern.quote(username);
-        Pattern pattern = Pattern.compile("^" + escapedUsername + "$", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = caseInsensitiveExactPattern(username);
         return Observable.fromPublisher(withMaxTime(
                         usersCollection
                                 .find(and(
