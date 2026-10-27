@@ -24,7 +24,10 @@ let config: AppConfig | undefined;
 
 async function fetchJson(file: string): Promise<Record<string, unknown>> {
     const response = await fetch(new URL(file, document.baseURI));
-    return response.ok ? response.json() : {};
+    if (!response.ok) {
+        throw new Error(`Could not load ${file}: HTTP ${response.status}`);
+    }
+    return response.json();
 }
 
 export async function loadConfig(): Promise<AppConfig> {

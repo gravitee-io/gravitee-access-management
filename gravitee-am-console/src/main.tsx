@@ -19,6 +19,7 @@ import './styles.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
+import { ErrorPanel } from './app/components/ErrorPanel';
 import { loadConfig } from './config/app-config';
 
 const rootElement = document.getElementById('root');
@@ -26,10 +27,18 @@ if (!rootElement) {
     throw new Error('Root element #root not found');
 }
 
-loadConfig().then(() =>
-    createRoot(rootElement).render(
-        <StrictMode>
-            <App />
-        </StrictMode>,
-    ),
+const root = createRoot(rootElement);
+loadConfig().then(
+    () =>
+        root.render(
+            <StrictMode>
+                <App />
+            </StrictMode>,
+        ),
+    (error: unknown) =>
+        root.render(
+            <div className="p-6">
+                <ErrorPanel description="Could not load the console configuration." error={error} />
+            </div>,
+        ),
 );
