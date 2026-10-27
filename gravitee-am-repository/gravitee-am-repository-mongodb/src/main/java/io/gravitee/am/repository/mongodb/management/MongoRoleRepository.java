@@ -54,6 +54,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_NAME;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 import lombok.CustomLog;
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -110,11 +111,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     public Single<Page<Role>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         Bson searchQuery = new BasicDBObject(FIELD_NAME, query);
 
-        // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = new BasicDBObject(FIELD_NAME, pattern);
         }
 
