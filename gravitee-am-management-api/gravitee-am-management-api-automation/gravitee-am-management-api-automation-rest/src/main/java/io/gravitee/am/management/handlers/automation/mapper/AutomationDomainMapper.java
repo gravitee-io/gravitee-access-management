@@ -137,7 +137,7 @@ public final class AutomationDomainMapper {
         return out;
     }
 
-    private static AutomationAccountSettings toAutomationAccountSettings(AccountSettings account) {
+    static AutomationAccountSettings toAutomationAccountSettings(AccountSettings account) {
         if (account == null) {
             return null;
         }
@@ -258,7 +258,7 @@ public final class AutomationDomainMapper {
         return out;
     }
 
-    private static AccountSettings toModelAccountSettings(AutomationAccountSettings in, String domainId, List<IdentityProvider> idps) {
+    static AccountSettings toModelAccountSettings(AutomationAccountSettings in, String domainId, List<IdentityProvider> idps) {
         if (in == null) {
             return null;
         }
@@ -337,7 +337,7 @@ public final class AutomationDomainMapper {
      * A certificate's internal id is always the deterministic key-based id (certificates have no
      * conventional id, even when default), so it can be computed without a lookup or existence check.
      */
-    private static String certificateKeyToId(String domainId, String reference) {
+    static String certificateKeyToId(String domainId, String reference) {
         if (reference == null) {
             return null;
         }
@@ -353,7 +353,7 @@ public final class AutomationDomainMapper {
      * providers when possible; if the provider does not exist yet (eventual consistency) we fall back to
      * the deterministic key-based id.
      */
-    private static String identityProviderKeyToId(String domainId, String reference, List<IdentityProvider> idps) {
+    static String identityProviderKeyToId(String domainId, String reference, List<IdentityProvider> idps) {
         if (reference == null) {
             return null;
         }

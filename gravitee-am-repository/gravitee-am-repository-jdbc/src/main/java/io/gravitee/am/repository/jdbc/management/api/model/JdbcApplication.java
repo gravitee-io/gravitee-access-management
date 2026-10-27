@@ -48,6 +48,13 @@ public class JdbcApplication {
     private String settings;
 
     private String secretSettings;
+    @Column("automation_key")
+    private String automationKey;
+    @Column("managed_by")
+    private String managedBy;
+    @Column("certificate_key")
+    private String certificateKey;
+
     public JdbcApplication() {
     }
 
@@ -179,6 +186,30 @@ public class JdbcApplication {
         this.secretSettings = secretSettings;
     }
 
+    public String getAutomationKey() {
+        return automationKey;
+    }
+
+    public void setAutomationKey(String automationKey) {
+        this.automationKey = automationKey;
+    }
+
+    public String getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(String managedBy) {
+        this.managedBy = managedBy;
+    }
+
+    public String getCertificateKey() {
+        return certificateKey;
+    }
+
+    public void setCertificateKey(String certificateKey) {
+        this.certificateKey = certificateKey;
+    }
+
     @Table("application_identities")
     public static class Identity {
         @Column("application_id")
@@ -187,6 +218,8 @@ public class JdbcApplication {
         @Column("selection_rule")
         private String selectionRule;
         private int priority;
+        @Column("identity_key")
+        private String identityKey;
 
         public String getApplicationId() {
             return applicationId;
@@ -210,6 +243,14 @@ public class JdbcApplication {
 
         public int getPriority() {
             return priority;
+        }
+
+        public String getIdentityKey() {
+            return identityKey;
+        }
+
+        public void setIdentityKey(String identityKey) {
+            this.identityKey = identityKey;
         }
     }
 

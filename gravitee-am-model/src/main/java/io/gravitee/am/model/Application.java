@@ -48,12 +48,18 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Application implements Resource, Notifiable {
+public class Application implements Resource, Notifiable, Managed {
 
     /**
      * Application technical id
      */
     private String id;
+    /**
+     * Stable, human-chosen identifier used to address this application in declarative APIs
+     * (e.g. the Automation API). Set when the Automation API creates the application; null otherwise.
+     */
+    @Schema(hidden = true)
+    private String automationKey;
     /**
      * Application name
      */
@@ -97,6 +103,12 @@ public class Application implements Resource, Notifiable {
      */
     private String certificate;
     /**
+     * Reference (key or {@code id:<uuid>}) the Automation API used to set {@link #certificate};
+     * cleared when the certificate is changed through the Management API.
+     */
+    @Schema(hidden = true)
+    private String certificateKey;
+    /**
      * Application metadata
      */
     private Map<String, Object> metadata;
@@ -123,8 +135,15 @@ public class Application implements Resource, Notifiable {
 
     private List<ClientSecret> secrets;
 
+    /**
+     * Indicates the source of truth for this application.
+     */
+    @Schema(hidden = true)
+    private ManagedBy managedBy;
+
     public Application(Application other) {
         this.id = other.id;
+        this.automationKey = other.automationKey;
         this.name = other.name;
         this.type = other.type;
         this.kind = other.kind;
@@ -134,6 +153,7 @@ public class Application implements Resource, Notifiable {
         this.template = other.template;
         this.factors = other.factors;
         this.certificate = other.certificate;
+        this.certificateKey = other.certificateKey;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
         this.settings = other.settings != null ? new ApplicationSettings(other.settings) : null;
         this.identityProviders = other.identityProviders;
@@ -141,6 +161,7 @@ public class Application implements Resource, Notifiable {
         this.updatedAt = other.updatedAt;
         this.secretSettings = other.secretSettings;
         this.secrets = other.getSecrets().stream().map(ClientSecret::new).collect(Collectors.toList());
+        this.managedBy = other.managedBy;
     }
 
     public List<ClientSecret> getSecrets() {

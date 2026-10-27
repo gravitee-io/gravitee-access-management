@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.automation.resource;
 
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -23,10 +24,12 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -58,6 +61,7 @@ class AutomationResourceResolverTest {
     private CertificateService certificateService;
     private ReporterService reporterService;
     private DataPlaneDefinitionService dataPlaneDefinitionService;
+    private ApplicationService applicationService;
     private AutomationResourceResolver resolver;
 
     private Domain domain() {
@@ -73,8 +77,9 @@ class AutomationResourceResolverTest {
         certificateService = mock(CertificateService.class);
         reporterService = mock(ReporterService.class);
         dataPlaneDefinitionService = mock(DataPlaneDefinitionService.class);
+        applicationService = mock(ApplicationService.class);
         resolver = new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
-                dataPlaneDefinitionService);
+                dataPlaneDefinitionService, applicationService);
     }
 
     // --- domains (scoped by environment) ------------------------------------
@@ -232,5 +237,59 @@ class AutomationResourceResolverTest {
                 .test()
                 .assertValue(r -> r.getId().equals(RESOURCE_ID))
                 .assertNoErrors();
+    }
+
+    // --- applications -------------------------------------------------------
+
+    @Test
+    void resolveApplication_byId_returns_brownfield_application_in_scope() {
+        Application application = new Application();
+        application.setId(RESOURCE_ID);
+        application.setManagedBy(ManagedBy.NONE);
+        when(applicationService.findById(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(application));
+
+        resolver.resolveApplication(domain(), AutomationRef.parse("id:" + RESOURCE_ID))
+                .test()
+                .assertValue(app -> app.getId().equals(RESOURCE_ID))
+                .assertNoErrors();
+    }
+
+    @Test
+    void resolveApplication_byId_is_not_found_outside_the_domain() {
+        // the service scopes the lookup to the domain
+        when(applicationService.findById(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+
+        resolver.resolveApplication(domain(), AutomationRef.parse("id:" + RESOURCE_ID))
+                .test()
+                .assertError(ApplicationNotFoundException.class);
+    }
+
+    @Test
+    void resolveApplication_byKey_returns_automation_managed_application() {
+        String id = AutomationIds.applicationId(DOMAIN_ID, "mobile-app");
+        Application application = new Application();
+        application.setId(id);
+        application.setAutomationKey("mobile-app");
+        application.setManagedBy(ManagedBy.AUTOMATION_API);
+        when(applicationService.findById(DOMAIN_ID, id)).thenReturn(Maybe.just(application));
+
+        resolver.resolveApplication(domain(), AutomationRef.parse("mobile-app"))
+                .test()
+                .assertValue(app -> app.getId().equals(id))
+                .assertNoErrors();
+    }
+
+    @Test
+    void resolveApplication_byKey_requires_automation_managed() {
+        String id = AutomationIds.applicationId(DOMAIN_ID, "mobile-app");
+        Application brownfield = new Application();
+        brownfield.setId(id);
+        brownfield.setAutomationKey("mobile-app");
+        brownfield.setManagedBy(ManagedBy.NONE);
+        when(applicationService.findById(DOMAIN_ID, id)).thenReturn(Maybe.just(brownfield));
+
+        resolver.resolveApplication(domain(), AutomationRef.parse("mobile-app"))
+                .test()
+                .assertError(ApplicationNotFoundException.class);
     }
 }

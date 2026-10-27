@@ -141,6 +141,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
     public static final String ERROR_ON_CREATE = "An error occurs while trying to create an application";
     public static final String ERROR_ON_PATCH = "An error occurs while trying to patch an application";
+    public static final String ERROR_ON_UPDATE = "An error occurs while trying to update an application";
     public static final String LOCALHOST_IS_FORBIDDEN = "localhost is forbidden";
     public static final String UNSECURED_HTTP_SCHEME = "Unsecured http scheme is forbidden";
     public static final String WILDCARD_ARE_FORBIDDEN = "Wildcard are forbidden";
@@ -457,13 +458,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         if (ApplicationType.AGENT.equals(newApplication.getType())) {
             application.setKind(newApplication.getKind());
-            applyAgentDefaults(application.getKind(), oAuthSettings);
         }
 
         application.setSettings(applicationSettings);
-
-        // apply templating
-        applicationTemplateManager.apply(application);
+        applyCreationDefaults(application);
 
         return create0(domain, application, principal)
                 .onErrorResumeNext(ex -> {
@@ -787,12 +785,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.findById(id)
                 .filter(existingApplication -> belongsToDomain(existingApplication, domain))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
-                .flatMap(existingApplication -> {
-                    Application toPatch = new Application(existingApplication);
-                    toPatch.setType(type);
-                    applicationTemplateManager.changeType(toPatch);
-                    return innerUpdate(existingApplication, toPatch, principal, true);
-                })
+                .flatMap(existingApplication -> innerUpdate(existingApplication, changeType(existingApplication, type), principal, true))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -803,6 +796,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Application changeType(Application application, ApplicationType type) {
+        Application changed = new Application(application);
+        changed.setType(type);
+        applicationTemplateManager.changeType(changed);
+        return changed;
+    }
+
+    @Override
     public Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
         log.debug("Patch an application {} for domain {}", id, domain);
 
@@ -810,15 +811,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .filter(existingApplication -> belongsToDomain(existingApplication, domain.getId()))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
                 .flatMap(existingApplication -> {
-                    // Prevent un-templating an application that is currently the CIMD template
                     if (patchApplication.getTemplate() != null
                             && patchApplication.getTemplate().isPresent()
-                            && Boolean.FALSE.equals(patchApplication.getTemplate().get())
-                            && existingApplication.isTemplate()) {
-                        String cimdTemplateId = retrieveCIMDTemplateId(domain);
-                        if (existingApplication.getId() != null && existingApplication.getId().equals(cimdTemplateId)) {
-                            return Single.error(new ApplicationTemplateInUseException());
-                        }
+                            && isUntemplatingCimdTemplate(domain, existingApplication, patchApplication.getTemplate().get())) {
+                        return Single.error(new ApplicationTemplateInUseException());
                     }
                     Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
@@ -850,6 +846,117 @@ public class ApplicationServiceImpl implements ApplicationService {
                     log.error(ERROR_ON_PATCH, ex);
                     return Single.error(new TechnicalManagementException(ERROR_ON_PATCH, ex));
                 });
+    }
+
+    @Override
+    public Single<Application> validateCreate(Domain domain, Application application) {
+        return Single.defer(() -> {
+            prepareCreate(application);
+            return validateCreate0(domain, application);
+        });
+    }
+
+    @Override
+    public Single<Application> create(Domain domain, Application application, User principal) {
+        log.debug("Create a new application {} for domain {}", application.getName(), domain.getId());
+        return Single.defer(() -> {
+                    prepareCreate(application);
+                    return create0(domain, application, principal);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+                        return Single.error(ex);
+                    }
+                    log.error(ERROR_ON_CREATE, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_CREATE, ex));
+                });
+    }
+
+    @Override
+    public Single<Application> validateUpdate(Domain domain, Application existing, Application desired) {
+        return prepareUpdate(domain, existing, desired)
+                .flatMap(app -> validateUpdate0(existing, app, isTypeChanged(existing, app), false));
+    }
+
+    @Override
+    public Single<Application> update(Domain domain, Application existing, Application desired, User principal,
+                                      BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
+        log.debug("Update application {} for domain {}", existing.getId(), domain.getId());
+        return prepareUpdate(domain, existing, desired)
+                .flatMap(app -> innerUpdate(existing, app, principal, isTypeChanged(existing, app), false))
+                .flatMap(app -> {
+                    if (existing.isEnabled() && !app.isEnabled()) {
+                        return revokeTokenProcessor.apply(domain, app).onErrorComplete().toSingleDefault(app);
+                    }
+                    return Single.just(app);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+                        return Single.error(ex);
+                    }
+                    log.error(ERROR_ON_UPDATE, ex);
+                    return Single.error(new TechnicalManagementException(ERROR_ON_UPDATE, ex));
+                });
+    }
+
+    /**
+     * Same defaults as {@link #create(Domain, NewApplication, User)}, but only where the application leaves them unset.
+     * No default client secret is kept: client secrets are managed on their own.
+     */
+    private void prepareCreate(Application application) {
+        application.setCreatedAt(new Date());
+        application.setUpdatedAt(application.getCreatedAt());
+        if (application.getSettings() == null) {
+            application.setSettings(new ApplicationSettings());
+        }
+        if (application.getSettings().getOauth() == null) {
+            application.getSettings().setOauth(new ApplicationOAuthSettings());
+        }
+        var oAuthSettings = application.getSettings().getOauth();
+        if (oAuthSettings.getTokenEndpointAuthMethod() == null) {
+            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        }
+        applyCreationDefaults(application);
+        oAuthSettings.setClientSecret(null);
+    }
+
+    /**
+     * Same preparation as {@link #patch}: CIMD template guard, templating, no clear-text secret, account settings check.
+     */
+    private Single<Application> prepareUpdate(Domain domain, Application existing, Application desired) {
+        return Single.defer(() -> {
+            if (isUntemplatingCimdTemplate(domain, existing, desired.isTemplate())) {
+                return Single.error(new ApplicationTemplateInUseException());
+            }
+            applicationTemplateManager.apply(desired);
+            // since we manage hashed value for client secret, we do not initialize the
+            // clientSecret during an update.
+            if (!hasClientSecret(existing) && desired.getSettings() != null && desired.getSettings().getOauth() != null) {
+                desired.getSettings().getOauth().setClientSecret(null);
+            }
+            final AccountSettings accountSettings = desired.getSettings() != null ? desired.getSettings().getAccount() : null;
+            if (accountSettings != null && Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
+                return Single.error(new InvalidParameterException("Unexpected forgot password field"));
+            }
+            return Single.just(desired);
+        });
+    }
+
+    /**
+     * A type change relaxes the redirect_uri requirement, as {@link #updateType} does.
+     */
+    private static boolean isTypeChanged(Application existing, Application desired) {
+        return existing.getType() != desired.getType();
+    }
+
+    /**
+     * Prevent un-templating an application that is currently the CIMD template
+     */
+    private boolean isUntemplatingCimdTemplate(Domain domain, Application existingApplication, boolean template) {
+        return !template
+                && existingApplication.isTemplate()
+                && existingApplication.getId() != null
+                && existingApplication.getId().equals(retrieveCIMDTemplateId(domain));
     }
 
     private String retrieveCIMDTemplateId(Domain domain) {
@@ -964,14 +1071,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             application.setSecrets(List.of(clientSecret));
         }
 
-        // check uniqueness
-        return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), application.clientId())
-                // validate application metadata
-                .andThen(validateApplicationMetadata(application))
-                .flatMap(app -> validateCrossAppAccessEnablement(domain, null, app))
-                .flatMap(this::validateApplicationAuthMethod)
-                // set default certificate
-                .flatMap(this::setDefaultCertificate)
+        return validateCreate0(domain, application)
                 // create the application
                 .flatMap(applicationRepository::create).map(app -> {
                     if (app.getSettings() != null && app.getSettings().getOauth() != null) {
@@ -1016,15 +1116,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType) {
+        return innerUpdate(currentApplication, applicationToUpdate, principal, fromUpdateType, true);
+    }
+
+    private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType, boolean validateIdentityProviders) {
         // updated date
         applicationToUpdate.setUpdatedAt(new Date());
 
-        // validate application metadata
-        return validateApplicationMetadata(applicationToUpdate, fromUpdateType)
-                // validate identity providers
-                .flatMap(this::validateApplicationIdentityProviders)
-                .flatMap(app -> validateCrossAppAccessEnablement(currentApplication, app))
-                .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication))
+        return validateUpdate0(currentApplication, applicationToUpdate, fromUpdateType, validateIdentityProviders)
                 // update application
                 .flatMap(applicationRepository::update)
                 // create event for sync process
@@ -1034,6 +1133,40 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 .doOnSuccess(application -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).oldValue(currentApplication).application(application)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(currentApplication.getDomain())).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable)));
+    }
+
+    private Single<Application> validateCreate0(Domain domain, Application application) {
+        // check uniqueness
+        return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), application.clientId())
+                // validate application metadata
+                .andThen(validateApplicationMetadata(application))
+                .flatMap(app -> validateCrossAppAccessEnablement(domain, null, app))
+                .flatMap(this::validateApplicationAuthMethod)
+                // set default certificate
+                .flatMap(this::setDefaultCertificate);
+    }
+
+    private Single<Application> validateUpdate0(Application currentApplication, Application applicationToUpdate, boolean fromUpdateType, boolean validateIdentityProviders) {
+        // validate application metadata
+        Single<Application> validation = validateApplicationMetadata(applicationToUpdate, fromUpdateType);
+        if (validateIdentityProviders) {
+            validation = validation.flatMap(this::validateApplicationIdentityProviders);
+        }
+        return validation
+                .flatMap(app -> validateCrossAppAccessEnablement(currentApplication, app))
+                .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication));
+    }
+
+    /**
+     * Agent defaults (when the application is an agent) then the type template, which generates
+     * the missing client credentials.
+     */
+    private void applyCreationDefaults(Application application) {
+        if (application.isAgentApplication()) {
+            applyAgentDefaults(application.getKind(), application.getSettings().getOauth());
+        }
+        // apply templating
+        applicationTemplateManager.apply(application);
     }
 
     /**

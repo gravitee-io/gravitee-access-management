@@ -40,6 +40,9 @@ servers:
 security:
 - BearerAuth: []
 tags:
+- description: Applications (OAuth 2.0 / OpenID Connect clients) configured under
+    a domain.
+  name: Applications
 - description: Certificates configured under a domain to sign and verify tokens.
   name: Certificates
 - description: Data planes configured under an environment to store the runtime data
@@ -684,6 +687,396 @@ paths:
           description: "Domain not found, or not managed by the Automation API"
       summary: Get a domain
       tags:
+      - Domains
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/applications:
+    get:
+      description: Returns all applications managed by the Automation API under the
+        domain. Applications created outside the Automation API are not returned.
+        Client secrets are never returned.
+      operationId: automationListApplications
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      - description: "Key of the domain: its stable, immutable Automation identifier\
+          \ within the environment."
+        example: example-domain
+        in: path
+        name: domainKey
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                AutomationApplicationList:
+                  value:
+                  - key: mobile-app
+                    name: Mobile app
+                    type: native
+                    certificate: signing-cert
+                    identityProviders:
+                    - identity: customer-users
+                      priority: 0
+                    settings:
+                      oauth:
+                        grantTypes:
+                        - authorization_code
+                        - refresh_token
+                        redirectUris:
+                        - com.example.app:/callback
+                        scopeSettings:
+                        - scope: openid
+                          defaultScope: true
+                        - scope: profile
+                        tokenEndpointAuthMethod: none
+                        forcePKCE: true
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationApplication"
+          description: List of applications
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        "404":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 404
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "Domain not found, or not managed by the Automation API"
+      summary: List a domain's applications
+      tags:
+      - Applications
+      - Domains
+    put:
+      description: "Idempotent create-or-update. Uses the key field in the body to\
+        \ identify the application within the domain. On first apply the application\
+        \ is created; subsequent applies update it to the desired state: omitted fields\
+        \ are reset, and computed fields are computed again. No client secret is ever\
+        \ generated nor returned. The certificate and the identity providers are references\
+        \ (key or id:<uuid>) that are not checked for existence; the scopes must exist\
+        \ in the domain. The clientId is immutable once set. The type can be changed,\
+        \ except to or from agent. Disabling the application revokes its tokens. When\
+        \ dryRun is true, the endpoint validates the payload without persisting; the\
+        \ returned application carries a dryRunErrors list (absent on success, populated\
+        \ with validation errors otherwise)."
+      operationId: automationCreateOrUpdateApplication
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      - description: "Key of the domain: its stable, immutable Automation identifier\
+          \ within the environment."
+        example: example-domain
+        in: path
+        name: domainKey
+        required: true
+        schema:
+          type: string
+      - description: "When true, validates the payload without persisting. The returned\
+          \ application includes a dryRunErrors field."
+        in: query
+        name: dryRun
+        schema:
+          type: boolean
+          default: false
+      requestBody:
+        content:
+          application/json:
+            examples:
+              Mobile application:
+                description: A native mobile application using the authorization code
+                  flow with PKCE
+                value:
+                  key: mobile-app
+                  name: Mobile app
+                  type: native
+                  certificate: signing-cert
+                  identityProviders:
+                  - identity: customer-users
+                    priority: 0
+                  settings:
+                    oauth:
+                      grantTypes:
+                      - authorization_code
+                      - refresh_token
+                      redirectUris:
+                      - com.example.app:/callback
+                      scopeSettings:
+                      - scope: openid
+                        defaultScope: true
+                      - scope: profile
+                      tokenEndpointAuthMethod: none
+                      forcePKCE: true
+            schema:
+              $ref: "#/components/schemas/AutomationApplication"
+        description: Desired state of the application.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                Mobile application:
+                  description: A native mobile application using the authorization
+                    code flow with PKCE
+                  value:
+                    key: mobile-app
+                    name: Mobile app
+                    type: native
+                    certificate: signing-cert
+                    identityProviders:
+                    - identity: customer-users
+                      priority: 0
+                    settings:
+                      oauth:
+                        grantTypes:
+                        - authorization_code
+                        - refresh_token
+                        redirectUris:
+                        - com.example.app:/callback
+                        scopeSettings:
+                        - scope: openid
+                          defaultScope: true
+                        - scope: profile
+                        tokenEndpointAuthMethod: none
+                        forcePKCE: true
+              schema:
+                $ref: "#/components/schemas/AutomationApplication"
+          description: The created or updated application. When dryRun is true the
+            application includes a dryRunErrors field with any validation errors.
+        "400":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 400
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "Invalid request: a key conflict, an invalid setting, an unknown\
+            \ scope, a duplicate or changed clientId, or a type change to or from\
+            \ agent"
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        "404":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 404
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "Domain not found, or not managed by the Automation API; or\
+            \ an id:<uuid> application that does not exist"
+      summary: Create or update an application
+      tags:
+      - Applications
+      - Domains
+  /organizations/{orgId}/environments/{envId}/domains/{domainKey}/applications/{applicationKey}:
+    delete:
+      description: "Deletes an Automation-managed application by its key, or any application\
+        \ of the domain by id:<uuid>. Deleting an application that does not exist\
+        \ also returns 204."
+      operationId: automationDeleteApplication
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      - description: "Key of the domain: its stable, immutable Automation identifier\
+          \ within the environment."
+        example: example-domain
+        in: path
+        name: domainKey
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: applicationKey
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Application successfully deleted
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        default:
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 500
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Unexpected error
+      summary: Delete an application
+      tags:
+      - Applications
+      - Domains
+    get:
+      description: "Retrieves a single Automation-managed application by its key,\
+        \ or any application of the domain by id:<uuid>. Client secrets are never\
+        \ returned."
+      operationId: automationGetApplication
+      parameters:
+      - description: Identifier of the organization that owns the environment.
+        example: DEFAULT
+        in: path
+        name: orgId
+        required: true
+        schema:
+          type: string
+      - description: Identifier of the environment the resource belongs to.
+        example: DEFAULT
+        in: path
+        name: envId
+        required: true
+        schema:
+          type: string
+      - description: "Key of the domain: its stable, immutable Automation identifier\
+          \ within the environment."
+        example: example-domain
+        in: path
+        name: domainKey
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: applicationKey
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                Mobile application:
+                  description: A native mobile application using the authorization
+                    code flow with PKCE
+                  value:
+                    key: mobile-app
+                    name: Mobile app
+                    type: native
+                    certificate: signing-cert
+                    identityProviders:
+                    - identity: customer-users
+                      priority: 0
+                    settings:
+                      oauth:
+                        grantTypes:
+                        - authorization_code
+                        - refresh_token
+                        redirectUris:
+                        - com.example.app:/callback
+                        scopeSettings:
+                        - scope: openid
+                          defaultScope: true
+                        - scope: profile
+                        tokenEndpointAuthMethod: none
+                        forcePKCE: true
+              schema:
+                $ref: "#/components/schemas/AutomationApplication"
+          description: The application
+        "403":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 403
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Permission denied
+        "404":
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    http_status: 404
+                    message: A human-readable description of the error
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: "Domain or application not found, or not managed by the Automation\
+            \ API"
+      summary: Get an application
+      tags:
+      - Applications
       - Domains
   /organizations/{orgId}/environments/{envId}/domains/{domainKey}/certificates:
     get:
@@ -1778,6 +2171,65 @@ paths:
       - Domains
 components:
   schemas:
+    ApplicationCrossAppAccessResourceServer:
+      type: object
+      description: A resource server this application may request an ID-JAG for.
+      properties:
+        clientId:
+          type: string
+          description: Identifier this application is registered with at the resource
+            authorization server.
+          example: acme-calendar-client
+          maxLength: 512
+        resourceServerId:
+          type: string
+          description: "Identifier of the resource server, as generated by AM on the\
+            \ trusted domain."
+        trustDomainId:
+          type: string
+          description: Identifier of the trusted domain the resource server belongs
+            to. A hint used to resolve the resource server; the resource server identifier
+            remains authoritative.
+      title: Cross App Access resource server mapping
+    ApplicationCrossAppAccessSettings:
+      type: object
+      description: Resource servers this application may request an ID-JAG for.
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether this application participates in Cross App Access.
+        resourceServers:
+          type: array
+          description: "Resource servers this application may reach, one entry per\
+            \ resource server."
+          items:
+            $ref: "#/components/schemas/ApplicationCrossAppAccessResourceServer"
+      title: Application Cross App Access settings
+    ApplicationLightweightJwtSettings:
+      type: object
+      description: Restricts the JWT access token and the ID token returned to the
+        client to the reserved protocol claims and the allowlisted claims.
+      properties:
+        allowedAccessTokenClaims:
+          type: array
+          description: Claim names kept in the access and refresh tokens in addition
+            to the reserved claims. A listed claim is kept only if AM issues it.
+          items:
+            type: string
+            maxLength: 128
+        allowedIdTokenClaims:
+          type: array
+          description: Claim names kept in the ID token in addition to the reserved
+            claims. A listed claim is kept only if AM issues it.
+          items:
+            type: string
+            maxLength: 128
+        enabled:
+          type: boolean
+          default: false
+          description: Whether Lightweight JWT is enabled.
+      title: Application Lightweight JWT settings
     AutomationAccountSettings:
       type: object
       description: "User account settings for the domain: brute-force protection,\
@@ -1910,6 +2362,643 @@ components:
           default: false
           description: Whether to send a registration-verification email.
       title: Account settings
+    AutomationAdvancedSettings:
+      type: object
+      description: Advanced application settings.
+      properties:
+        flowsInherited:
+          type: boolean
+          default: true
+          description: Whether the domain flows are executed for this application
+            in addition to its own flows.
+        skipConsent:
+          type: boolean
+          default: false
+          description: "Whether the user consent page is skipped: requested scopes\
+            \ are granted without asking the user."
+      title: Advanced settings
+    AutomationApplication:
+      type: object
+      description: "An application (OAuth 2.0 / OIDC client) managed under a domain\
+        \ by the Automation API. The key field is the stable, immutable identity used\
+        \ for idempotent create-or-update."
+      properties:
+        certificate:
+          type: string
+          description: "Certificate signing the tokens: the key of a certificate of\
+            \ the domain, or id:<uuid>. The reference is not checked against existing\
+            \ certificates: it can name one created after the application or since\
+            \ deleted, and resolves whenever that certificate exists."
+          example: signing-cert
+        clientId:
+          type: string
+          description: "OAuth 2.0 client identifier. Generated when omitted on creation.\
+            \ Immutable once set: a different value on update is rejected with 400,\
+            \ an omitted one keeps the current value. Must be unique within the domain."
+          example: mobile-app-client
+        createdAt:
+          type: string
+          format: date-time
+          description: "Creation timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
+          readOnly: true
+        description:
+          type: string
+          description: Description of the application.
+          example: Customer mobile application
+        dryRunErrors:
+          type: array
+          description: Validation errors returned when dryRun is true. Absent when
+            validation succeeds.
+          items:
+            $ref: "#/components/schemas/DryRunError"
+          readOnly: true
+        enabled:
+          type: boolean
+          default: true
+          description: Whether the application is enabled. Disabling it revokes its
+            tokens.
+        identityProviders:
+          type: array
+          description: Identity providers users can authenticate with on this application.
+          items:
+            $ref: "#/components/schemas/AutomationApplicationIdentityProvider"
+        key:
+          type: string
+          description: "Stable, immutable identifier for the application within its\
+            \ domain. Lowercase alphanumeric and hyphens, starting and ending with\
+            \ an alphanumeric character. Used to identify the application on create-or-update."
+          example: mobile-app
+          maxLength: 255
+          minLength: 1
+          title: Key
+        kind:
+          type: string
+          description: "Agent persona. Required when type is agent, rejected otherwise."
+          enum:
+          - USER_EMBEDDED
+          - HOSTED_DELEGATED
+          - AUTONOMOUS
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+            description: Free-form metadata of the application.
+            example:
+              team: mobile
+          description: Free-form metadata of the application.
+          example:
+            team: mobile
+        name:
+          type: string
+          description: Human-readable name of the application. Also used as the OAuth
+            2.0 client name.
+          example: Mobile app
+          maxLength: 255
+          minLength: 1
+        settings:
+          $ref: "#/components/schemas/AutomationApplicationSettings"
+        template:
+          type: boolean
+          default: false
+          description: Whether the application is a registration template for dynamic
+            client registration rather than an active application.
+        type:
+          type: string
+          description: "Application type. It drives the computed OAuth 2.0 settings.\
+            \ Can be changed, except to or from agent: such a change is rejected with\
+            \ 400 (delete and recreate the application). Changing the type resets\
+            \ grantTypes, responseTypes and tokenEndpointAuthMethod to the new type's\
+            \ defaults before the payload applies."
+          enum:
+          - web
+          - native
+          - browser
+          - service
+          - resource_server
+          - agent
+          example: native
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Last-update timestamp (ISO-8601 / RFC 3339, UTC). Read-only."
+          readOnly: true
+      required:
+      - certificate
+      - key
+      - name
+      - type
+      title: Application
+    AutomationApplicationFactorSettings:
+      type: object
+      description: A factor available to the application.
+      properties:
+        id:
+          type: string
+          description: "The factor, as id:<uuid> (factors have no Automation API endpoint)."
+          example: id:5e8f1c0a-2b3d-4f5e-8a9b-0c1d2e3f4a5b
+        selectionRule:
+          type: string
+          description: "Expression Language rule selecting this factor. When empty,\
+            \ the factor is always available."
+          example: "{#context.attributes['user'].roles.contains('admin')}"
+      required:
+      - id
+      title: Application factor
+    AutomationApplicationIdentityProvider:
+      type: object
+      description: An identity provider users can authenticate with on this application.
+      properties:
+        identity:
+          type: string
+          description: "Reference to an identity provider of the domain: its key,\
+            \ or id:<uuid> for one the Automation API does not manage. The reference\
+            \ is not checked against existing identity providers: it can name one\
+            \ created after the application or since deleted, and resolves whenever\
+            \ that identity provider exists."
+          example: customer-users
+        priority:
+          type: integer
+          format: int32
+          default: 0
+          description: "Evaluation order among the application's identity providers:\
+            \ lowest first; negative values come last."
+        selectionRule:
+          type: string
+          description: "Expression Language rule selecting this identity provider\
+            \ for the current request. When empty, the identity provider is always\
+            \ selectable."
+          example: "{#request.params['idp'][0] == 'customers'}"
+      required:
+      - identity
+      title: Application identity provider
+    AutomationApplicationOAuthSettings:
+      type: object
+      description: "OAuth 2.0 and OpenID Connect settings of the application. Fields\
+        \ described as computed are filled in by AM when omitted. In crossAppAccessSettings,\
+        \ trustDomainId and resourceServerId are references by id:<uuid> only. tokenExchangeOAuthSettings,\
+        \ when omitted, is inherited from the domain."
+      properties:
+        accessTokenValiditySeconds:
+          type: integer
+          format: int32
+          default: 7200
+          description: "Access token validity, in seconds. Computed (7200) when omitted."
+        applicationType:
+          type: string
+          description: "OIDC application type, computed from the application type:\
+            \ native for native applications, web for web, browser and service applications.\
+            \ Read-only."
+          readOnly: true
+        authorizationEncryptedResponseAlg:
+          type: string
+          description: JWE alg algorithm encrypting the authorization responses (JARM).
+        authorizationEncryptedResponseEnc:
+          type: string
+          description: JWE enc algorithm encrypting the authorization responses (JARM).
+        authorizationSignedResponseAlg:
+          type: string
+          description: JWS algorithm signing the authorization responses (JARM).
+        clientName:
+          type: string
+          description: Name of the client presented to users. Always the application
+            name. Read-only.
+          readOnly: true
+        clientType:
+          type: string
+          description: "OAuth 2.0 client type, computed from the application type:\
+            \ confidential for web and service applications, public for browser and\
+            \ native applications and user_embedded agents. Read-only."
+          readOnly: true
+        clientUri:
+          type: string
+          description: URL of the application home page.
+        contacts:
+          type: array
+          description: Email addresses of the people responsible for the application.
+          example:
+          - ops@example.com
+          items:
+            type: string
+            description: Email addresses of the people responsible for the application.
+            example: "[\"ops@example.com\"]"
+        crossAppAccessSettings:
+          $ref: "#/components/schemas/ApplicationCrossAppAccessSettings"
+        defaultACRvalues:
+          type: array
+          description: Default requested Authentication Context Class Reference values.
+          items:
+            type: string
+            description: Default requested Authentication Context Class Reference
+              values.
+        defaultMaxAge:
+          type: integer
+          format: int32
+          description: "Default maximum authentication age, in seconds."
+          example: 3600
+        disableRefreshTokenRotation:
+          type: boolean
+          default: false
+          description: "Whether a refresh token stays valid when used, instead of\
+            \ being replaced by a new one."
+        dpopBoundAccessTokens:
+          type: boolean
+          default: false
+          description: Whether access tokens must be bound to a DPoP proof (RFC 9449).
+        enhanceScopesWithUserPermissions:
+          type: boolean
+          default: false
+          description: Whether the permissions of the user roles are added to the
+            scopes of the issued tokens.
+        forcePKCE:
+          type: boolean
+          default: false
+          description: "Whether the authorization code flow requires PKCE. Computed\
+            \ (true) for browser and native applications created without grantTypes,\
+            \ and for user_embedded agents."
+        forceS256CodeChallengeMethod:
+          type: boolean
+          default: false
+          description: "Whether PKCE requires the S256 code challenge method. Computed\
+            \ (true) for browser applications created without grantTypes, and for\
+            \ user_embedded agents."
+        grantTypes:
+          type: array
+          description: "OAuth 2.0 grant types the application may use. Computed when\
+            \ omitted, from the application type: web authorization_code and password;\
+            \ browser and native authorization_code; service client_credentials; resource_server\
+            \ adds client_credentials; agent per kind (user_embedded authorization_code;\
+            \ hosted_delegated authorization_code, client_credentials and token exchange;\
+            \ autonomous client_credentials and token exchange)."
+          example:
+          - authorization_code
+          - refresh_token
+          items:
+            type: string
+            description: "OAuth 2.0 grant types the application may use. Computed\
+              \ when omitted, from the application type: web authorization_code and\
+              \ password; browser and native authorization_code; service client_credentials;\
+              \ resource_server adds client_credentials; agent per kind (user_embedded\
+              \ authorization_code; hosted_delegated authorization_code, client_credentials\
+              \ and token exchange; autonomous client_credentials and token exchange)."
+            example: "[\"authorization_code\",\"refresh_token\"]"
+        idJagValiditySeconds:
+          type: integer
+          format: int32
+          default: 300
+          description: "Validity, in seconds, of the identity assertion authorization\
+            \ grants (ID-JAG) issued to the application. Computed (300) when omitted."
+        idTokenEncryptedResponseAlg:
+          type: string
+          description: JWE alg algorithm encrypting the ID tokens issued to the application.
+        idTokenEncryptedResponseEnc:
+          type: string
+          description: JWE enc algorithm encrypting the ID tokens issued to the application.
+        idTokenSignedResponseAlg:
+          type: string
+          description: JWS algorithm signing the ID tokens issued to the application.
+        idTokenValiditySeconds:
+          type: integer
+          format: int32
+          default: 14400
+          description: "ID token validity, in seconds. Computed (14400) when omitted."
+        initiateLoginUri:
+          type: string
+          description: "URI, using the https scheme, a third party can use to initiate\
+            \ a login by the application."
+          example: https://app.example.com/login
+        jwks:
+          type: object
+          additionalProperties:
+            type: object
+            description: "JSON Web Key Set of the application passed by value (RFC\
+              \ 7517 section 5): an object with a keys array of JWKs. Same use as\
+              \ jwksUri, which it excludes."
+            example:
+              keys:
+              - e: AQAB
+                kid: app-key
+                kty: RSA
+                "n": 0vx7...
+                use: sig
+          description: "JSON Web Key Set of the application passed by value (RFC 7517\
+            \ section 5): an object with a keys array of JWKs. Same use as jwksUri,\
+            \ which it excludes."
+          example:
+            keys:
+            - e: AQAB
+              kid: app-key
+              kty: RSA
+              "n": 0vx7...
+              use: sig
+        jwksUri:
+          type: string
+          description: "URL of the application JSON Web Key Set, holding the keys\
+            \ used to verify its signatures. Mutually exclusive with jwks."
+          example: https://app.example.com/.well-known/jwks.json
+        lightweightJwtSettings:
+          $ref: "#/components/schemas/ApplicationLightweightJwtSettings"
+        logoUri:
+          type: string
+          description: "URL of the application logo, displayed to users."
+        optInScopeSelection:
+          type: boolean
+          default: true
+          description: "When true, users must explicitly select each scope on the\
+            \ consent page; when false, all requested scopes are preselected and users\
+            \ can deselect them. Computed (true) when omitted."
+        policyUri:
+          type: string
+          description: URL of the application policy on the use of profile data.
+        postLogoutRedirectUris:
+          type: array
+          description: URLs the user may be redirected to after logout (post_logout_redirect_uri).
+          example:
+          - https://app.example.com/logged-out
+          items:
+            type: string
+            description: URLs the user may be redirected to after logout (post_logout_redirect_uri).
+            example: "[\"https://app.example.com/logged-out\"]"
+        redirectUris:
+          type: array
+          description: Redirection URIs. The redirect_uri of an authorization request
+            must match one of them. At least one is required for the authorization_code
+            and implicit grants.
+          example:
+          - https://app.example.com/callback
+          items:
+            type: string
+            description: Redirection URIs. The redirect_uri of an authorization request
+              must match one of them. At least one is required for the authorization_code
+              and implicit grants.
+            example: "[\"https://app.example.com/callback\"]"
+        refreshTokenValiditySeconds:
+          type: integer
+          format: int32
+          default: 14400
+          description: "Refresh token validity, in seconds. Computed (14400) when\
+            \ omitted."
+        requestObjectEncryptionAlg:
+          type: string
+          description: JWE alg algorithm the application may encrypt its request objects
+            with.
+        requestObjectEncryptionEnc:
+          type: string
+          description: JWE enc algorithm the application may encrypt its request objects
+            with.
+        requestObjectSigningAlg:
+          type: string
+          description: JWS algorithm the application signs its request objects with.
+        requestUris:
+          type: array
+          description: request_uri values pre-registered by the application.
+          items:
+            type: string
+            description: request_uri values pre-registered by the application.
+        requireAuthTime:
+          type: boolean
+          default: false
+          description: Whether the auth_time claim is required in the ID token.
+        responseTypes:
+          type: array
+          description: "OAuth 2.0 / OIDC response types the application may use. Computed\
+            \ from grantTypes when omitted: authorization_code adds code, implicit\
+            \ adds token and id_token."
+          example:
+          - code
+          items:
+            type: string
+            description: "OAuth 2.0 / OIDC response types the application may use.\
+              \ Computed from grantTypes when omitted: authorization_code adds code,\
+              \ implicit adds token and id_token."
+            example: "[\"code\"]"
+        scopeSettings:
+          type: array
+          description: "Scopes the application can request. Each scope must exist\
+            \ in the domain, otherwise the request is rejected with 400. Resource\
+            \ server applications always get the uma_protection scope."
+          items:
+            $ref: "#/components/schemas/AutomationScopeSettings"
+        sectorIdentifierUri:
+          type: string
+          description: "URL, using the https scheme, used to compute pairwise subject\
+            \ identifiers."
+        silentReAuthentication:
+          type: boolean
+          default: false
+          description: Whether the id_token_hint parameter can be used to re-authenticate
+            the user silently.
+        singleSignOut:
+          type: boolean
+          default: false
+          description: Whether logout also calls the end_session_endpoint of the external
+            OIDC provider the user authenticated with.
+        subjectType:
+          type: string
+          description: "Subject identifier type of the responses: public or pairwise."
+          example: public
+        tlsClientAuthSanDns:
+          type: string
+          description: "Expected dNSName subject alternative name of the client certificate,\
+            \ for the tls_client_auth method."
+        tlsClientAuthSanEmail:
+          type: string
+          description: "Expected rfc822Name subject alternative name of the client\
+            \ certificate, for the tls_client_auth method."
+        tlsClientAuthSanIp:
+          type: string
+          description: "Expected iPAddress subject alternative name of the client\
+            \ certificate, for the tls_client_auth method."
+        tlsClientAuthSanUri:
+          type: string
+          description: "Expected uniformResourceIdentifier subject alternative name\
+            \ of the client certificate, for the tls_client_auth method."
+        tlsClientAuthSubjectDn:
+          type: string
+          description: "Expected subject distinguished name of the client certificate,\
+            \ for the tls_client_auth method."
+          example: CN=app.example.com
+        tlsClientCertificateBoundAccessTokens:
+          type: boolean
+          default: false
+          description: Whether access tokens are bound to the client certificate (RFC
+            8705).
+        tokenCustomClaims:
+          type: array
+          description: Custom claims added to the issued tokens.
+          items:
+            $ref: "#/components/schemas/AutomationTokenClaim"
+        tokenEndpointAuthMethod:
+          type: string
+          description: "Client authentication method at the token endpoint: client_secret_basic,\
+            \ client_secret_post, client_secret_jwt, private_key_jwt, tls_client_auth,\
+            \ self_signed_tls_client_auth or none. Computed when omitted: client_secret_basic\
+            \ on creation, none for browser and native applications created without\
+            \ grantTypes, per kind for agents (user_embedded none; hosted_delegated\
+            \ and autonomous private_key_jwt)."
+          example: client_secret_basic
+        tokenEndpointAuthSigningAlg:
+          type: string
+          description: "JWS algorithm the application signs its authentication JWT\
+            \ with, for the private_key_jwt and client_secret_jwt methods."
+          example: RS256
+        tokenExchangeOAuthSettings:
+          $ref: "#/components/schemas/TokenExchangeOAuthSettings"
+        tosUri:
+          type: string
+          description: URL of the application terms of service.
+        userinfoCustomClaims:
+          type: array
+          description: Custom claims added to the UserInfo responses.
+          items:
+            $ref: "#/components/schemas/AutomationUserInfoClaim"
+        userinfoEncryptedResponseAlg:
+          type: string
+          description: JWE alg algorithm encrypting the UserInfo responses.
+        userinfoEncryptedResponseEnc:
+          type: string
+          description: JWE enc algorithm encrypting the UserInfo responses.
+        userinfoSignedResponseAlg:
+          type: string
+          description: JWS algorithm signing the UserInfo responses.
+      title: Application OAuth 2.0 / OIDC settings
+    AutomationApplicationSAMLSettings:
+      type: object
+      description: Settings of the application acting as a SAML 2.0 service provider
+        (SP).
+      properties:
+        assertionAttributes:
+          type: array
+          description: "Custom attributes of the SAML assertion. When not empty, they\
+            \ replace the default attribute set."
+          items:
+            $ref: "#/components/schemas/AutomationSamlAssertionAttribute"
+        assertionValiditySeconds:
+          type: integer
+          format: int32
+          description: "Validity, in seconds, of the issued assertion. When absent,\
+            \ the IdP default applies. Used when includeAssertionConditions is true."
+          example: 300
+        attributeConsumeServiceUrl:
+          type: string
+          description: SP endpoint the IdP sends SAML responses to (Assertion Consumer
+            Service URL).
+          example: https://app.example.com/saml/acs
+        audiences:
+          type: array
+          description: Audience URIs added to the SP entity ID in the AudienceRestriction.
+            Used when includeAssertionConditions is true.
+          items:
+            type: string
+            description: Audience URIs added to the SP entity ID in the AudienceRestriction.
+              Used when includeAssertionConditions is true.
+        certificate:
+          type: string
+          description: "The SP's PEM-encoded public key certificate, used by the IdP\
+            \ to verify SAML requests and, when assertions are encrypted, to wrap\
+            \ the symmetric key. Required when wantAssertionsEncrypted is true."
+        dataEncryptionAlgorithm:
+          type: string
+          description: Data encryption algorithm URI of encrypted assertions (XML
+            Encryption EncryptedData).
+          example: http://www.w3.org/2009/xmlenc11#aes256-gcm
+        entityId:
+          type: string
+          description: URL or URN that uniquely identifies the SP (the SAML entity
+            ID).
+          example: https://app.example.com
+        includeAssertionConditions:
+          type: boolean
+          default: false
+          description: "Whether assertions carry Conditions (validity time bounds\
+            \ and audience restriction), configured by the fields below."
+        keyTransportEncryptionAlgorithm:
+          type: string
+          description: Key transport algorithm URI of encrypted assertions (XML Encryption
+            EncryptedKey).
+          example: http://www.w3.org/2009/xmlenc11#rsa-oaep
+        nameIdMapping:
+          type: string
+          description: "Expression Language expression producing the NameID of the\
+            \ SAML response. When empty, the internal user id is used, or the user's\
+            \ email when the SP requests the email format."
+          example: "{#context.attributes['user'].username}"
+        notBeforeTimeSkewSeconds:
+          type: integer
+          format: int32
+          description: "Clock skew, in seconds, subtracted from NotBefore."
+          example: 30
+        notOnOrAfterTimeSkewSeconds:
+          type: integer
+          format: int32
+          description: "Clock skew, in seconds, added to NotOnOrAfter."
+          example: 30
+        responseBinding:
+          type: string
+          default: urn:oasis:names:tc:SAML:2.0:bindings:custom:Initial-Request
+          description: Binding used to send SAML responses to the SP. The default
+            answers with the binding of the initial request.
+        singleLogoutServiceUrl:
+          type: string
+          description: SP endpoint the IdP redirects to after a single logout.
+          example: https://app.example.com/saml/logout
+        wantAssertionsEncrypted:
+          type: boolean
+          default: false
+          description: Whether the SP requires encrypted SAML assertions.
+        wantAssertionsSigned:
+          type: boolean
+          default: false
+          description: Whether the SP requires signed SAML assertions.
+        wantResponseSigned:
+          type: boolean
+          default: true
+          description: Whether the SP requires signed SAML responses.
+      title: Application SAML 2.0 settings
+    AutomationApplicationSettings:
+      type: object
+      description: "Settings of the application. The login, account and cookieSettings\
+        \ blocks, when omitted, are inherited from the domain; any other omitted block\
+        \ is unset."
+      properties:
+        account:
+          $ref: "#/components/schemas/AutomationAccountSettings"
+        advanced:
+          $ref: "#/components/schemas/AutomationAdvancedSettings"
+        cookieSettings:
+          $ref: "#/components/schemas/AutomationCookieSettings"
+        login:
+          $ref: "#/components/schemas/LoginSettings"
+        mfa:
+          $ref: "#/components/schemas/AutomationMfaSettings"
+        oauth:
+          $ref: "#/components/schemas/AutomationApplicationOAuthSettings"
+        riskAssessment:
+          $ref: "#/components/schemas/AutomationRiskAssessmentSettings"
+        saml:
+          $ref: "#/components/schemas/AutomationApplicationSAMLSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
+        workloadIdentitySettings:
+          $ref: "#/components/schemas/AutomationWorkloadIdentitySettings"
+      title: Application settings
+    AutomationAssessmentSettings:
+      type: object
+      description: Settings of one risk assessment.
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether this assessment is enabled.
+        thresholds:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+          description: "Score threshold of each risk level: an assessment scoring\
+            \ at or above a threshold reaches that level."
+          example:
+            HIGH: 1.0
+      title: Assessment settings
     AutomationCIBASettings:
       type: object
       description: "Client-Initiated Backchannel Authentication (CIBA) settings for\
@@ -2024,6 +3113,30 @@ components:
             \ with that key exists."
           example: default
       title: Certificate settings
+    AutomationChallengeSettings:
+      type: object
+      description: When users are challenged for a second factor.
+      properties:
+        active:
+          type: boolean
+          default: false
+          description: Whether users are challenged for a second factor.
+        challengeRule:
+          type: string
+          description: "Expression Language rule of a conditional challenge: when\
+            \ it evaluates to true, the challenge is skipped."
+          example: "{#context.attributes['geoip']['country_iso_code'] == 'FR'}"
+        type:
+          type: string
+          description: "required: always challenge. conditional: challenge unless\
+            \ challengeRule evaluates to true. risk_based: challenge according to\
+            \ the risk assessment."
+          enum:
+          - required
+          - conditional
+          - risk_based
+          example: required
+      title: Challenge settings
     AutomationClientRegistrationSettings:
       type: object
       description: OpenID Connect Dynamic Client Registration configuration for the
@@ -2080,6 +3193,18 @@ components:
           description: Whether open (unauthenticated) Dynamic Client Registration
             is enabled for the domain.
       title: Client registration settings
+    AutomationCookieSettings:
+      type: object
+      description: Session cookie settings of the application.
+      properties:
+        inherited:
+          type: boolean
+          default: true
+          description: "Whether the cookie settings are inherited from the domain.\
+            \ When true, the other fields are ignored."
+        session:
+          $ref: "#/components/schemas/AutomationSessionSettings"
+      title: Cookie settings
     AutomationDataPlane:
       type: object
       description: "A data plane managed by the Automation API. Data planes store\
@@ -2294,6 +3419,76 @@ components:
       - name
       - path
       title: Domain
+    AutomationEnrollSettings:
+      type: object
+      description: When users are asked to enroll a factor.
+      properties:
+        active:
+          type: boolean
+          default: false
+          description: Whether users are asked to enroll a factor.
+        enrollmentRule:
+          type: string
+          description: "Expression Language rule of a conditional enrollment: when\
+            \ it evaluates to true, the enrollment is skipped."
+          example: "{#context.attributes['user'].roles.contains('guest')}"
+        enrollmentSkipActive:
+          type: boolean
+          default: false
+          description: Whether users can skip the enrollment.
+        enrollmentSkipRule:
+          type: string
+          description: "Expression Language rule: when it evaluates to true, users\
+            \ can skip the enrollment."
+        forceEnrollment:
+          type: boolean
+          description: Whether users must enroll a factor.
+        skipTimeSeconds:
+          type: integer
+          format: int64
+          description: "Duration, in seconds, during which a skipped enrollment is\
+            \ not asked again."
+          example: 36000
+        type:
+          type: string
+          description: "optional: users can skip the enrollment. required: users must\
+            \ enroll. conditional: enrollment required unless enrollmentRule evaluates\
+            \ to true."
+          enum:
+          - optional
+          - required
+          - conditional
+          example: required
+      title: Enroll settings
+    AutomationEnrollmentSettings:
+      type: object
+      deprecated: true
+      description: "Deprecated: use enroll. Legacy enrollment settings."
+      properties:
+        forceEnrollment:
+          type: boolean
+          description: Whether users must enroll a factor.
+        skipTimeSeconds:
+          type: integer
+          format: int64
+          description: "Duration, in seconds, during which users can skip the enrollment."
+          example: 36000
+      title: Enrollment settings (deprecated)
+    AutomationFactorSettings:
+      type: object
+      description: Factors offered to the users of the application.
+      properties:
+        applicationFactors:
+          type: array
+          description: Factors available to the application.
+          items:
+            $ref: "#/components/schemas/AutomationApplicationFactorSettings"
+        defaultFactorId:
+          type: string
+          description: "Factor proposed first, as id:<uuid> (factors have no Automation\
+            \ API endpoint)."
+          example: id:5e8f1c0a-2b3d-4f5e-8a9b-0c1d2e3f4a5b
+      title: Factor settings
     AutomationIdentityProvider:
       type: object
       description: "An identity provider managed under a domain by the Automation\
@@ -2394,6 +3589,37 @@ components:
       required:
       - key
       title: Identity provider
+    AutomationMfaSettings:
+      type: object
+      description: Multi-factor authentication settings of the application.
+      properties:
+        adaptiveAuthenticationRule:
+          type: string
+          deprecated: true
+          description: "Deprecated: use challenge.challengeRule. Expression Language\
+            \ rule of the adaptive authentication."
+        challenge:
+          $ref: "#/components/schemas/AutomationChallengeSettings"
+        enroll:
+          $ref: "#/components/schemas/AutomationEnrollSettings"
+        enrollment:
+          $ref: "#/components/schemas/AutomationEnrollmentSettings"
+        factor:
+          $ref: "#/components/schemas/AutomationFactorSettings"
+        loginRule:
+          type: string
+          description: "Legacy MFA login rule, kept for round-trip fidelity. Use challenge\
+            \ and enroll to configure when MFA applies."
+        rememberDevice:
+          $ref: "#/components/schemas/AutomationRememberDeviceSettings"
+        stepUpAuthentication:
+          $ref: "#/components/schemas/AutomationStepUpAuthenticationSettings"
+        stepUpAuthenticationRule:
+          type: string
+          deprecated: true
+          description: "Deprecated: use stepUpAuthentication. Expression Language\
+            \ rule triggering step-up authentication."
+      title: MFA settings
     AutomationOidcSettings:
       type: object
       description: OpenID Connect settings for the domain. CIMD (client identity metadata
@@ -2428,6 +3654,31 @@ components:
         workloadIdentitySettings:
           $ref: "#/components/schemas/SpiffeDomainSettings"
       title: OpenID Connect settings
+    AutomationRememberDeviceSettings:
+      type: object
+      description: "Remember device: skips the MFA challenge on a device already used\
+        \ to authenticate."
+      properties:
+        active:
+          type: boolean
+          default: false
+          description: Whether remember device is enabled.
+        deviceIdentifierId:
+          type: string
+          description: "Device identifier used to recognize devices, as id:<uuid>\
+            \ (device identifiers have no Automation API endpoint)."
+          example: id:5e8f1c0a-2b3d-4f5e-8a9b-0c1d2e3f4a5b
+        expirationTimeSeconds:
+          type: integer
+          format: int64
+          description: "Duration, in seconds, for which a device is remembered."
+          example: 36000
+        skipRememberDevice:
+          type: boolean
+          default: false
+          description: "Only used with a conditional MFA challenge: when true, remember\
+            \ device is not applied when the MFA condition evaluates to no risk."
+      title: Remember device settings
     AutomationReporter:
       type: object
       description: "A reporter managed under a domain by the Automation API. Reporters\
@@ -2515,6 +3766,38 @@ components:
       required:
       - key
       title: Reporter
+    AutomationRiskAssessmentSettings:
+      type: object
+      description: "Risk assessment of the authentication attempts, used by risk-based\
+        \ MFA. Effective only with the Enterprise Edition risk assessment plugin."
+      properties:
+        deviceAssessment:
+          $ref: "#/components/schemas/AutomationAssessmentSettings"
+        enabled:
+          type: boolean
+          default: false
+          description: Whether risk assessment is enabled.
+        geoVelocityAssessment:
+          $ref: "#/components/schemas/AutomationAssessmentSettings"
+        ipReputationAssessment:
+          $ref: "#/components/schemas/AutomationAssessmentSettings"
+      title: Risk assessment settings
+    AutomationSamlAssertionAttribute:
+      type: object
+      description: A custom attribute of the SAML assertion.
+      properties:
+        name:
+          type: string
+          description: Name of the SAML attribute.
+          example: email
+        value:
+          type: string
+          description: Expression Language expression resolved to the attribute value.
+          example: "{#context.attributes['user'].email}"
+      required:
+      - name
+      - value
+      title: SAML assertion attribute
     AutomationSamlSettings:
       type: object
       description: Settings for the domain acting as a SAML 2.0 identity provider
@@ -2537,6 +3820,127 @@ components:
             ID).
           example: https://auth.example.com/saml2/idp/entity
       title: SAML 2.0 settings
+    AutomationScopeSettings:
+      type: object
+      description: "A scope the application can request, with its settings."
+      properties:
+        defaultScope:
+          type: boolean
+          default: false
+          description: Whether the scope is granted when the authorization request
+            carries no scope parameter.
+        requiredScope:
+          type: boolean
+          default: false
+          description: Whether the user cannot deselect this scope on the consent
+            page.
+        scope:
+          type: string
+          description: "Key of a scope of the domain. The scope must exist, otherwise\
+            \ the request is rejected with 400."
+          example: openid
+        scopeApproval:
+          type: integer
+          format: int32
+          description: "Duration, in seconds, of the user consent to this scope. When\
+            \ absent, the domain scope setting applies."
+          example: 86400
+      required:
+      - scope
+      title: Scope settings
+    AutomationSessionSettings:
+      type: object
+      description: Session cookie settings.
+      properties:
+        persistent:
+          type: boolean
+          default: false
+          description: Whether the session cookie is persistent (kept after the browser
+            is closed) rather than a session cookie.
+      title: Session settings
+    AutomationStepUpAuthenticationSettings:
+      type: object
+      description: "Step-up authentication: asks for MFA again during a session when\
+        \ its rule matches."
+      properties:
+        active:
+          type: boolean
+          default: false
+          description: Whether step-up authentication is enabled.
+        stepUpAuthenticationRule:
+          type: string
+          description: "Expression Language rule: when it evaluates to true, the user\
+            \ is challenged again."
+          example: "{#request.params['scope'][0].contains('write')}"
+      title: Step-up authentication settings
+    AutomationTokenClaim:
+      type: object
+      description: A custom claim added to the tokens issued to the application.
+      properties:
+        claimName:
+          type: string
+          description: Name of the claim.
+          example: department
+        claimValue:
+          type: string
+          description: "Value of the claim: a literal or an Expression Language expression."
+          example: "{#context.attributes['user']['additionalInformation']['department']}"
+        tokenType:
+          type: string
+          description: Token the claim is added to.
+          enum:
+          - access_token
+          - refresh_token
+          - id_token
+          - id_jag
+          example: access_token
+      required:
+      - claimName
+      - claimValue
+      - tokenType
+      title: Token claim
+    AutomationUserInfoClaim:
+      type: object
+      description: A custom claim added to the UserInfo responses of the application.
+      properties:
+        claimName:
+          type: string
+          description: Name of the claim.
+          example: department
+        claimValue:
+          type: string
+          description: "Value of the claim: a literal or an Expression Language expression."
+          example: "{#context.attributes['user']['additionalInformation']['department']}"
+      required:
+      - claimName
+      - claimValue
+      title: UserInfo claim
+    AutomationWorkloadIdentitySettings:
+      type: object
+      description: SPIFFE workload identity the application authenticates with (JWT-SVID
+        client authentication).
+      properties:
+        subject:
+          type: string
+          description: "SPIFFE ID expected in the SVID sub claim, interpreted per\
+            \ subjectMatchMode."
+          example: spiffe://prod.example.org/ns/payments/sa/api
+        subjectMatchMode:
+          type: string
+          default: exact
+          description: "How subject is matched against the SVID sub claim. exact (default)\
+            \ requires equality. prefix is only allowed for hosted_delegated or autonomous\
+            \ agent applications: subject must end with / and the SVID sub is accepted\
+            \ when it starts with subject; the full SVID SPIFFE ID then becomes the\
+            \ per-instance act.sub in minted tokens."
+          enum:
+          - exact
+          - prefix
+        trustDomain:
+          type: string
+          description: Name of the trusted domain this application authenticates against.
+          example: prod.example.org
+      title: Workload identity settings
     CorsSettings:
       type: object
       description: Cross-Origin Resource Sharing configuration controlling which web

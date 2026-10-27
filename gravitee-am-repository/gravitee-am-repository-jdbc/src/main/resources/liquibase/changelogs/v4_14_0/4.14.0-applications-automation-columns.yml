@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.14.0-add-automation-columns-to-applications
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: applications
+              columnName: managed_by
+      changes:
+        - addColumn:
+            tableName: applications
+            columns:
+              - column:
+                  name: managed_by
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: automation_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: certificate_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+        - addColumn:
+            tableName: application_identities
+            columns:
+              - column:
+                  name: identity_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: true

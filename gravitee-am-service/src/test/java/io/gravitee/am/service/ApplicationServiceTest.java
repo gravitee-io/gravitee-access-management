@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -42,6 +43,7 @@ import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
@@ -49,6 +51,7 @@ import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
@@ -62,6 +65,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.impl.OAuthClientUniquenessValidator;
 import io.gravitee.am.service.impl.SecretService;
+import io.gravitee.am.service.impl.application.DefaultApplicationTemplateManager;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
@@ -93,6 +97,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -104,6 +109,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -2656,5 +2662,137 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         return client;
+    }
+
+    @Test
+    public void shouldValidateCreate_withoutPersistingNorKeepingTheGeneratedSecret() {
+        Application app = automationServiceApp();
+        generateCredentialsOnTemplate();
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateCreate(DOMAIN, app).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(validated -> CLIENT_ID.equals(validated.clientId())
+                && validated.getSettings().getOauth().getClientSecret() == null
+                && ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(validated.getSettings().getOauth().getTokenEndpointAuthMethod()));
+        verify(applicationRepository, never()).create(any());
+        verify(eventService, never()).create(any(), any());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldValidateCreate_rejectUnknownScope() {
+        Application app = automationServiceApp();
+        ApplicationScopeSettings scopeSettings = new ApplicationScopeSettings();
+        scopeSettings.setScope("unknown");
+        app.getSettings().getOauth().setScopeSettings(List.of(scopeSettings));
+        when(scopeService.validateScope(DOMAIN.getId(), List.of("unknown"))).thenReturn(Single.just(false));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateCreate(DOMAIN, app).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void shouldCreateAutomationApplication_withoutClientSecret() {
+        Application app = automationServiceApp();
+        generateCredentialsOnTemplate();
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, app, principal).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).create(argThat(created -> created.getSecrets().isEmpty()
+                && created.getSettings().getOauth().getClientSecret() == null
+                && created.getSecretSettings().size() == 1));
+        verify(eventService).create(argThat(event -> event.getPayload().getAction() == Action.CREATE), eq(DOMAIN));
+        verify(auditService).report(any());
+    }
+
+    @Test
+    public void shouldValidateUpdate_withUnknownIdentityProvider() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        Application desired = new Application(existing);
+        ApplicationIdentityProvider unknownIdp = new ApplicationIdentityProvider();
+        unknownIdp.setIdentity("not-created-yet");
+        desired.setIdentityProviders(new TreeSet<>(List.of(unknownIdp)));
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateUpdate(DOMAIN, existing, desired).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderService, never()).findById(anyString());
+        verify(applicationRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldUpdate_revokeTokensWhenDisabled() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        Application desired = new Application(existing);
+        desired.setEnabled(false);
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(revokeToken.apply(eq(DOMAIN), any())).thenReturn(Completable.complete());
+
+        TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(revokeToken, times(1)).apply(eq(DOMAIN), any());
+        verify(applicationRepository).update(argThat(updated -> !updated.isEnabled()));
+    }
+
+    @Test
+    public void shouldChangeType_withoutTouchingTheGivenApplication() {
+        var templateManager = new DefaultApplicationTemplateManager();
+        templateManager.afterPropertiesSet();
+        ReflectionTestUtils.setField(applicationService, "applicationTemplateManager", templateManager);
+        Application web = automationServiceApp();
+        web.setType(ApplicationType.WEB);
+        web.getSettings().getOauth().setGrantTypes(List.of(GrantType.AUTHORIZATION_CODE));
+
+        Application service = applicationService.changeType(web, ApplicationType.SERVICE);
+
+        assertEquals(ApplicationType.SERVICE, service.getType());
+        assertEquals(List.of(GrantType.CLIENT_CREDENTIALS), service.getSettings().getOauth().getGrantTypes());
+        assertEquals(ApplicationType.WEB, web.getType());
+        assertEquals(List.of(GrantType.AUTHORIZATION_CODE), web.getSettings().getOauth().getGrantTypes());
+    }
+
+    private static Application automationServiceApp() {
+        Application app = emptyAppWithDomain();
+        app.setName("my-client");
+        app.setType(ApplicationType.SERVICE);
+        app.setCertificate("cert-1");
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        app.setSettings(settings);
+        return app;
+    }
+
+    private void generateCredentialsOnTemplate() {
+        doAnswer(invocation -> {
+            Application app = invocation.getArgument(0);
+            app.getSettings().getOauth().setClientId(CLIENT_ID);
+            app.getSettings().getOauth().setClientSecret("client_secret");
+            return null;
+        }).when(applicationTemplateManager).apply(any());
     }
 }

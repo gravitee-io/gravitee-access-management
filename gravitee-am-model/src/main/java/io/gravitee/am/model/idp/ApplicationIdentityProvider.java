@@ -16,6 +16,8 @@
 
 package io.gravitee.am.model.idp;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -37,6 +39,12 @@ public class ApplicationIdentityProvider implements Comparable<ApplicationIdenti
     private String identity;
     private String selectionRule;
     private int priority;
+    /**
+     * Reference (key or {@code id:<uuid>}) the Automation API used to set {@link #identity}.
+     * Mirrors {@code identity}: not part of equality nor ordering.
+     */
+    @Schema(hidden = true)
+    private String identityKey;
 
     public String getIdentity() {
         return identity;
@@ -60,6 +68,14 @@ public class ApplicationIdentityProvider implements Comparable<ApplicationIdenti
 
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+
+    public String getIdentityKey() {
+        return identityKey;
+    }
+
+    public void setIdentityKey(String identityKey) {
+        this.identityKey = identityKey;
     }
 
     @Override

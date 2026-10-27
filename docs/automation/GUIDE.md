@@ -154,6 +154,14 @@ returned document, `PUT` the whole document back. Consequences:
 - `GET` then `PUT` of the same payload is a lossless, idempotent round-trip: the stored state is
   unchanged, including the secrets masked in the `GET` response (see §7). The response is not a copy of
   the request, because it masks those secrets again.
+- **Applications** follow the same rule, with three differences:
+  - an omitted `login`, `account` or `cookieSettings` block, or `oauth.tokenExchangeOAuthSettings`, is
+    **inherited from the domain** (`inherited: true`) rather than reset to `null`;
+  - fields AM computes from the application `type` (`grantTypes`, `responseTypes`,
+    `tokenEndpointAuthMethod`, `optInScopeSelection`, the token validities, …) are computed again when
+    omitted, so a client should treat them as optional and computed;
+  - `clientId` is the one exception to "omitted means reset": generated on creation when omitted, it is
+    immutable afterwards — an omitted `clientId` keeps the current one, a different one is rejected with `400`.
 
 ## 6. Cross-resource references
 
@@ -165,6 +173,22 @@ verbatim on `GET`. Use `id:<uuid>` here to reference a brownfield resource that 
 A resource the domain references by `key` can also be deleted first (any destroy order works): the
 reference stays and resolves again once a resource with that key is created. A certificate referenced by
 `id:` as the fallback, or used by an application, identity provider or protected resource, cannot be deleted.
+
+An **application** references its signing `certificate` and its `identityProviders[].identity` the same
+way (`key` or `id:`), with the same eventual consistency. Until the referenced certificate or identity
+provider exists, the gateway cannot use the application; this is expected while resources are applied in
+any order. Other references follow different rules:
+
+- **Scopes must exist**: `settings.oauth.scopeSettings[].scope` names a scope of the domain, and an
+  unknown scope is rejected with `400`.
+- **`id:` only** for resources the Automation API does not manage: MFA factors
+  (`settings.mfa.factor.defaultFactorId`, `settings.mfa.factor.applicationFactors[].id`), the device
+  identifier (`settings.mfa.rememberDevice.deviceIdentifierId`) and the Cross App Access trusted domain and
+  resource server (`settings.oauth.crossAppAccessSettings.resourceServers[]`). A key is rejected with `400`.
+- **A change made outside the Automation API reads back as `id:`.** When the certificate or an identity
+  provider of an application is changed through the Console or the Management API, `GET` returns the new
+  reference as `id:<uuid>`: a client comparing it with its manifest sees the change as drift. A Console save
+  that keeps the same certificate or identity provider keeps the `key`.
 
 ## 7. Sensitive values
 
@@ -192,6 +216,10 @@ sensitive, and the Automation API masks them:
 A new inline user sent with a masked password on update is stored with that literal value, as in the
 Management API, which keeps inline passwords by matching usernames.
 
+**Applications expose no secret.** Their client secrets are not part of the application document: none is
+returned, and none is generated when the Automation API creates an application. Client secrets will be
+managed as a resource of their own.
+
 ---
 
 # Resource reference
@@ -206,6 +234,7 @@ All paths are prefixed with
 | Certificate | `…/domains/{ref}/certificates` | `…/certificates/{ref}` | `…/certificates` | `…/certificates/{ref}` |
 | Reporter | `…/domains/{ref}/reporters` | `…/reporters/{ref}` | `…/reporters` | `…/reporters/{ref}` |
 | Data Plane | `…/dataplanes` | `…/dataplanes/{ref}` | `…/dataplanes` | `…/dataplanes/{ref}` |
+| Application | `…/domains/{ref}/applications` | `…/applications/{ref}` | `…/applications` | `…/applications/{ref}` |
 
 `{ref}` is either an automation `key` or an `id:<internalUuid>` (§2). Resource-specific fields:
 
@@ -218,6 +247,11 @@ All paths are prefixed with
 - **Data Plane** — `id`, `name`, `type` (`mongodb` or `jdbc`), `configuration`; optional `gatewayUrl`.
   `configuration` is write-only; reads return `database` and `hosts` instead. `type` is immutable, and
   so are the organization and environment, which come from the path.
+- **Application** — `key`, `name`, `type`, `certificate` (required); `description`, `kind` (agents),
+  `enabled`, `template`, `clientId`, `metadata`, `identityProviders`, and settings blocks (`oauth`,
+  `login`, `account`, `cookieSettings`, `mfa`, `saml`, `advanced`, `riskAssessment`,
+  `secretExpirationSettings`, `workloadIdentitySettings`). `type` can change, except to or from `agent`
+  (delete and recreate). Disabling an application revokes its tokens. No client secret is exposed (§7).
 
 See [`openapi.yaml`](openapi.yaml) for the full field-level contract.
 
@@ -291,6 +325,36 @@ curl -s -X PUT "$BASE/domains" \
     "path": "/customer-auth", "dataPlaneId": "default",
     "accountSettings": { "defaultIdentityProviderForRegistration": "dev-test-users" }
   }' | jq '.accountSettings.defaultIdentityProviderForRegistration'
+```
+
+### Declare an application
+
+```bash
+# the certificate and identity provider can be applied before or after the application
+curl -s -X PUT "$BASE/domains/customer-auth/applications" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "key": "mobile-app",
+    "name": "Mobile app",
+    "type": "native",
+    "certificate": "signing-cert",
+    "identityProviders": [{ "identity": "dev-test-users", "priority": 0 }],
+    "settings": {
+      "oauth": {
+        "grantTypes": ["authorization_code", "refresh_token"],
+        "redirectUris": ["com.example.app:/callback"],
+        "tokenEndpointAuthMethod": "none",
+        "forcePKCE": true,
+        "scopeSettings": [{ "scope": "openid", "defaultScope": true }]
+      }
+    }
+  }' | jq '{key, clientId, tokenEndpointAuthMethod: .settings.oauth.tokenEndpointAuthMethod}'
+
+# validate a change without applying it
+curl -s -X PUT "$BASE/domains/customer-auth/applications?dryRun=true" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{ "key": "mobile-app", "name": "Mobile app", "type": "native", "certificate": "signing-cert",
+        "settings": { "oauth": { "scopeSettings": [{ "scope": "unknown" }] } } }' | jq '.dryRunErrors'
 ```
 
 ### Declare a system resource (built from `gravitee.yml`)

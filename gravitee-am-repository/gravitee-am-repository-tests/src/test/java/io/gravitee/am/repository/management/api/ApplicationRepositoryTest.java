@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ChallengeSettings;
 import io.gravitee.am.model.EnrollSettings;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
@@ -234,6 +235,58 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(a -> a.getIdentityProviders().stream().map(ApplicationIdentityProvider::getIdentity).toList()
                 .equals(List.of("idp-a", "idp-b")));
+    }
+
+    @Test
+    public void testManagedByRoundTrips() {
+        Application app = buildApplication();
+        app.setManagedBy(ManagedBy.AUTOMATION_API);
+        Application created = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> a.getManagedBy() == ManagedBy.AUTOMATION_API);
+    }
+
+    @Test
+    public void testAutomationKeysRoundTrip() {
+        Application app = buildApplication();
+        app.setAutomationKey("mobile-app");
+        app.setCertificateKey("signing-cert");
+        var keyedIdp = new ApplicationIdentityProvider();
+        keyedIdp.setIdentity("idp-id");
+        keyedIdp.setIdentityKey("customer-users");
+        keyedIdp.setPriority(0);
+        app.setIdentityProviders(new TreeSet<>(List.of(keyedIdp)));
+        Application created = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> "mobile-app".equals(a.getAutomationKey())
+                && "signing-cert".equals(a.getCertificateKey())
+                && a.getManagedBy() == null
+                && "customer-users".equals(a.getIdentityProviders().first().getIdentityKey()));
+    }
+
+    @Test
+    public void testAutomationKeysClearedOnUpdate() {
+        Application app = buildApplication();
+        app.setAutomationKey("mobile-app");
+        app.setCertificateKey("signing-cert");
+        Application created = applicationRepository.create(app).blockingGet();
+
+        created.setCertificateKey(null);
+        applicationRepository.update(created).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> "mobile-app".equals(a.getAutomationKey()) && a.getCertificateKey() == null);
     }
 
     private void assertEqualsTo(Application app, TestObserver<Application> testObserver) {

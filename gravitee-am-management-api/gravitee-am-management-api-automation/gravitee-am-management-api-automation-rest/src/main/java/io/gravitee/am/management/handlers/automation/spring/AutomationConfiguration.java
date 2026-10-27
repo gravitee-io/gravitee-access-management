@@ -63,9 +63,10 @@ public class AutomationConfiguration {
             IdentityProviderService identityProviderService,
             CertificateService certificateService,
             ReporterService reporterService,
-            DataPlaneDefinitionService dataPlaneDefinitionService) {
+            DataPlaneDefinitionService dataPlaneDefinitionService,
+            ApplicationService applicationService) {
         return new AutomationResourceResolver(domainService, identityProviderService, certificateService, reporterService,
-                dataPlaneDefinitionService);
+                dataPlaneDefinitionService, applicationService);
     }
 
     // Each proxy bean takes the name of the management API's, which it hides in this context.
