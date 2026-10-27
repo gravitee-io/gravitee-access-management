@@ -78,8 +78,7 @@ export function Shell() {
     const { data: preferences } = useUserPreferences();
     const domains = domainPage?.data ?? [];
 
-    // `domains/new` is the creation page, not a domain.
-    const urlDomainHrid = domainMatch?.params.domainHrid === 'new' ? undefined : domainMatch?.params.domainHrid;
+    const urlDomainHrid = domainMatch?.params.domainHrid;
     const [lastDomainHrid, setLastDomainHrid] = useState<string>();
     if (urlDomainHrid && urlDomainHrid !== lastDomainHrid) {
         setLastDomainHrid(urlDomainHrid);

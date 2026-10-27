@@ -99,7 +99,7 @@
         },
         {
           "unit": "domains",
-          "path": "environments/:envHrid/domains/new",
+          "path": "environments/:envHrid/new-domain",
           "role": "page",
           "angularComponent": "DomainCreationComponent"
         },

@@ -50,7 +50,7 @@ export function EnvironmentPage() {
             <EmptyContent>
                 {canCreate ? (
                     <Button asChild>
-                        <Link to="domains/new">Create a Security Domain</Link>
+                        <Link to="new-domain">Create a Security Domain</Link>
                     </Button>
                 ) : (
                     <>

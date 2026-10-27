@@ -71,7 +71,7 @@ describe('EnvironmentPage', () => {
         renderPage(['domain_create']);
 
         const create = await screen.findByRole('link', { name: 'Create a Security Domain' });
-        expect(create).toHaveAttribute('href', '/environments/prod/domains/new');
+        expect(create).toHaveAttribute('href', '/environments/prod/new-domain');
     });
 
     it('disables the creation for a user without domain_create', async () => {

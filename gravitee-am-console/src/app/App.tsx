@@ -65,7 +65,7 @@ export function App() {
                                                 <Route element={<Shell />}>
                                                     <Route index element={<EnvironmentPage />} />
                                                     <Route path="domains" element={<PlaceholderPage title="Security Domains" />} />
-                                                    <Route path="domains/new" element={<PlaceholderPage title="New Security Domain" />} />
+                                                    <Route path="new-domain" element={<PlaceholderPage title="New Security Domain" />} />
                                                     <Route path="domains/:domainHrid">
                                                         <Route index element={<Navigate to="dashboard" replace />} />
                                                         <Route path="dashboard" element={<PlaceholderPage title="Dashboard" />} />

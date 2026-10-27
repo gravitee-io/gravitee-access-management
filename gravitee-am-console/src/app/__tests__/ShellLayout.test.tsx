@@ -63,6 +63,17 @@ describe('Shell', () => {
         expect(screen.getByText('Dashboard page')).toBeInTheDocument();
     });
 
+    it('renders the page of a domain whose hrid is new', () => {
+        vi.mocked(useEnvironmentDomains).mockReturnValue({
+            data: { data: [{ id: 'd2', hrid: 'new', name: 'New', enabled: true }], currentPage: 0, totalCount: 1 },
+            isPending: false,
+        } as never);
+
+        renderShellAt('/environments/prod/domains/new/dashboard');
+
+        expect(screen.getByText('Dashboard page')).toBeInTheDocument();
+    });
+
     it('shows the not found panel for a domain that is not in the environment', () => {
         vi.mocked(useEnvironmentDomains).mockReturnValue({
             data: { data: domains, currentPage: 0, totalCount: 1 },
