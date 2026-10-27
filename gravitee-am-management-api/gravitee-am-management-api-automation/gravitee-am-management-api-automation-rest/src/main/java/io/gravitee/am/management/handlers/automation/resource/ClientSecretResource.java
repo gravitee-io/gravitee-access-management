@@ -22,6 +22,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationSecretService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,7 +54,8 @@ public class ClientSecretResource extends AbstractAutomationResource {
                     "application by id:<uuid>. The value is never returned.")
     @ApiResponse(responseCode = "200", description = "The client secret, without its value",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = AutomationClientSecret.class)))
+                    schema = @Schema(implementation = AutomationClientSecret.class),
+                    examples = @ExampleObject(name = "CI secret", value = ClientSecretsResource.READ_EXAMPLE)))
     @ApiResponse(responseCode = "404", description = "Domain, application or client secret not found, or not managed by the Automation API")
     public void get(
             @PathParam("orgId") String organizationId,

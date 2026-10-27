@@ -62,6 +62,9 @@ import java.util.Comparator;
 @Tag(name = "Client Secrets")
 public class ClientSecretsResource extends AbstractAutomationResource {
 
+    /** A secret as returned: the value is write-only, so the request example cannot be reused. */
+    static final String READ_EXAMPLE = "{\"key\":\"ci-2026-10\",\"expiresAt\":\"2027-04-27T09:30:00.000Z\"}";
+
     @Context
     private ResourceContext resourceContext;
 
@@ -76,7 +79,8 @@ public class ClientSecretsResource extends AbstractAutomationResource {
                     "read and deleted by id:<uuid>. Secret values are never returned.")
     @ApiResponse(responseCode = "200", description = "List of client secrets",
             content = @Content(mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = AutomationClientSecret.class))))
+                    array = @ArraySchema(schema = @Schema(implementation = AutomationClientSecret.class)),
+                    examples = @ExampleObject(name = "ClientSecretList", value = "[" + READ_EXAMPLE + "]")))
     @ApiResponse(responseCode = "404", description = "Domain or application not found, or not managed by the Automation API")
     public void list(
             @PathParam("orgId") String organizationId,
@@ -119,7 +123,8 @@ public class ClientSecretsResource extends AbstractAutomationResource {
     @ApiResponse(responseCode = "200", description = "The created or unchanged client secret, without its value. When " +
             "dryRun is true the secret includes a dryRunErrors field with any validation errors.",
             content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = AutomationClientSecret.class)))
+                    schema = @Schema(implementation = AutomationClientSecret.class),
+                    examples = @ExampleObject(name = "CI secret", value = READ_EXAMPLE)))
     @ApiResponse(responseCode = "400", description = "Invalid request: a value too short or too long, a different " +
             "value for an existing secret, a key conflict, or too many secrets")
     @ApiResponse(responseCode = "404", description = "Domain or application not found, or not managed by the " +
