@@ -49,6 +49,13 @@ export interface CreateAuthorizationDetailTypeRequest {
   newAuthorizationDetailType: NewAuthorizationDetailType;
 }
 
+export interface DeleteAuthorizationDetailTypeRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  authorizationDetailTypeId: string;
+}
+
 export interface GetAuthorizationDetailTypeRequest {
   organizationId: string;
   environmentId: string;
@@ -157,6 +164,82 @@ export class AuthorizationDetailTypeApi extends runtime.BaseAPI {
   ): Promise<AuthorizationDetailType> {
     const response = await this.createAuthorizationDetailTypeRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization
+   * Delete an authorization detail type
+   */
+  async deleteAuthorizationDetailTypeRaw(
+    requestParameters: DeleteAuthorizationDetailTypeRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteAuthorizationDetailType.',
+      );
+    }
+
+    if (requestParameters.authorizationDetailTypeId === null || requestParameters.authorizationDetailTypeId === undefined) {
+      throw new runtime.RequiredError(
+        'authorizationDetailTypeId',
+        'Required parameter requestParameters.authorizationDetailTypeId was null or undefined when calling deleteAuthorizationDetailType.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types/{authorizationDetailTypeId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'authorizationDetailTypeId'}}`, encodeURIComponent(String(requestParameters.authorizationDetailTypeId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization
+   * Delete an authorization detail type
+   */
+  async deleteAuthorizationDetailType(
+    requestParameters: DeleteAuthorizationDetailTypeRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteAuthorizationDetailTypeRaw(requestParameters, initOverrides);
   }
 
   /**

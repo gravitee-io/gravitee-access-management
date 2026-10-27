@@ -3163,7 +3163,45 @@ paths:
       - authorization detail type
       - domain
   ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types/{authorizationDetailTypeId}
-  : get:
+  : delete:
+      description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE]\
+        \ permission on the specified organization"
+      operationId: deleteAuthorizationDetailType
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authorizationDetailTypeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Authorization detail type successfully deleted
+        "404":
+          description: Authorization detail type not found
+        "500":
+          description: Internal server error
+      summary: Delete an authorization detail type
+      tags:
+      - authorization detail type
+      - domain
+    get:
       description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission\
         \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission\
         \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[READ] permission\

@@ -39,5 +39,7 @@ public interface AuthorizationDetailTypeService {
 
     Single<AuthorizationDetailType> patch(Domain domain, String id, PatchAuthorizationDetailType patchAuthorizationDetailType, User principal);
 
+    Completable delete(Domain domain, String id, User principal);
+
     Completable deleteByDomain(String domain);
 }
