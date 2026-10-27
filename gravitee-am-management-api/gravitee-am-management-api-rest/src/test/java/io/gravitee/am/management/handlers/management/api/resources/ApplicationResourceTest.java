@@ -21,6 +21,7 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
@@ -121,6 +122,8 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertEquals(mockApplication.isEnabled(), application.isEnabled());
         assertEquals(mockApplication.isTemplate(), application.isTemplate());
         assertNull(application.getFactors());
+        assertEquals("client-key", application.getAutomationKey());
+        assertEquals(ManagedBy.AUTOMATION_API, application.getManagedBy());
         assertEquals(mockApplication.getCreatedAt(), application.getCreatedAt());
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
         assertNull(application.getIdentityProviders());
@@ -313,6 +316,8 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
         Application mockApplication = new Application();
         mockApplication.setId("client-id");
+        mockApplication.setAutomationKey("client-key");
+        mockApplication.setManagedBy(ManagedBy.AUTOMATION_API);
         mockApplication.setName("client-name");
         mockApplication.setDomain("domain-id");
         mockApplication.setType(ApplicationType.SERVICE);

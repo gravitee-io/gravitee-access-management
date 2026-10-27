@@ -43,6 +43,9 @@ public interface SpringApplicationRepository extends RxJava3CrudRepository<JdbcA
     @Query("select * from applications a where a.domain = :domain")
     Flowable<JdbcApplication> findByDomain(@Param("domain") String domain);
 
+    @Query("select * from applications a where a.domain = :domain and a.managed_by = :managedBy")
+    Flowable<JdbcApplication> findByDomainAndManagedBy(@Param("domain") String domain, @Param("managedBy") String managedBy);
+
     @Query("select * from applications a where a.certificate = :cert")
     Flowable<JdbcApplication> findByCertificate(@Param("cert") String certificate);
 

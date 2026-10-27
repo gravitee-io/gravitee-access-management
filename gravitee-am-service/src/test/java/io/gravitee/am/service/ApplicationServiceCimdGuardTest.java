@@ -350,6 +350,22 @@ public class ApplicationServiceCimdGuardTest {
         verify(applicationRepository, times(1)).update(argThat(app -> !app.isTemplate()));
     }
 
+    @Test
+    public void shouldNotUpdate_whenUnsettingTemplateOfCimdTemplate() {
+        Application existingApp = appWithId(CIMD_TEMPLATE_APP_ID);
+        existingApp.setTemplate(true);
+        withServiceSettings(existingApp);
+        Application desired = new Application(existingApp);
+        desired.setTemplate(false);
+
+        TestObserver<Application> observer = applicationService.update(
+                domainWithCimdTemplate(CIMD_TEMPLATE_APP_ID), existingApp, desired, principal, revokeToken).test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+
+        observer.assertError(ApplicationTemplateInUseException.class);
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------

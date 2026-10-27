@@ -25,7 +25,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -144,13 +146,17 @@ public class PatchApplication {
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
         SetterUtils.safeSet(toPatch::setFactors, this.getFactors());
+        if (this.getCertificate() != null && !Objects.equals(this.getCertificate().orElse(null), toPatch.getCertificate())) {
+            // the Automation API reference no longer designates the certificate
+            toPatch.setCertificateKey(null);
+        }
         SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
         SetterUtils.safeSet(toPatch::setMetadata, this.getMetadata());
         if (this.getSettings() != null && this.getSettings().isPresent()) {
             toPatch.setSettings(this.getSettings().get().patch(toPatch.getSettings()));
         }
         if (this.getIdentityProviders() != null && this.getIdentityProviders().isPresent()) {
-            var appIdentityProviders = buildAppIdentityProviders(getIdentityProviders().get());
+            var appIdentityProviders = buildAppIdentityProviders(getIdentityProviders().get(), toPatch.getIdentityProviders());
             toPatch.setIdentityProviders(appIdentityProviders);
         }
 
@@ -163,10 +169,21 @@ public class PatchApplication {
         return toPatch;
     }
 
-    private SortedSet<ApplicationIdentityProvider> buildAppIdentityProviders(Set<PatchApplicationIdentityProvider> applicationIdentityProviders) {
+    /**
+     * The Automation API reference of an identity provider is kept only while the identity provider stays the same.
+     */
+    private SortedSet<ApplicationIdentityProvider> buildAppIdentityProviders(Set<PatchApplicationIdentityProvider> applicationIdentityProviders,
+                                                                             Set<ApplicationIdentityProvider> currentIdentityProviders) {
+        Map<String, String> currentIdentityKeys = new HashMap<>();
+        if (currentIdentityProviders != null) {
+            currentIdentityProviders.stream()
+                    .filter(appIdp -> appIdp.getIdentityKey() != null)
+                    .forEach(appIdp -> currentIdentityKeys.putIfAbsent(appIdp.getIdentity(), appIdp.getIdentityKey()));
+        }
         return applicationIdentityProviders.stream().map(patchAppIdp -> {
             var appIdp = new ApplicationIdentityProvider();
             appIdp.setIdentity(patchAppIdp.getIdentity());
+            appIdp.setIdentityKey(currentIdentityKeys.get(patchAppIdp.getIdentity()));
             appIdp.setPriority(patchAppIdp.getPriority());
             appIdp.setSelectionRule(patchAppIdp.getSelectionRule());
             return appIdp;

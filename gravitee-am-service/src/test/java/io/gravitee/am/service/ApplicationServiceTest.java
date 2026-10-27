@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -32,6 +34,7 @@ import io.gravitee.am.model.FactorSettings;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
@@ -42,6 +45,7 @@ import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
@@ -49,6 +53,7 @@ import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
@@ -62,6 +67,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.impl.OAuthClientUniquenessValidator;
 import io.gravitee.am.service.impl.SecretService;
+import io.gravitee.am.service.impl.application.DefaultApplicationTemplateManager;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
@@ -93,6 +99,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -104,6 +111,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -509,6 +517,25 @@ public class ApplicationServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldFindByDomainAndManagedBy() {
+        when(applicationRepository.findByDomainAndManagedBy(DOMAIN.getId(), ManagedBy.AUTOMATION_API)).thenReturn(Flowable.just(emptyAppWithDomain()));
+
+        applicationService.findByDomainAndManagedBy(DOMAIN.getId(), ManagedBy.AUTOMATION_API).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValueCount(1);
+    }
+
+    @Test
+    public void shouldFindByDomainAndManagedBy_technicalException() {
+        when(applicationRepository.findByDomainAndManagedBy(DOMAIN.getId(), ManagedBy.AUTOMATION_API)).thenReturn(Flowable.error(TechnicalException::new));
+
+        applicationService.findByDomainAndManagedBy(DOMAIN.getId(), ManagedBy.AUTOMATION_API).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
     }
 
     @Test
@@ -2656,5 +2683,270 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         return client;
+    }
+
+    @Test
+    public void shouldValidateCreate_withoutPersistingNorKeepingTheGeneratedSecret() {
+        Application app = automationServiceApp();
+        generateCredentialsOnTemplate();
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateCreate(DOMAIN, app).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertValue(validated -> CLIENT_ID.equals(validated.clientId())
+                && validated.getSettings().getOauth().getClientSecret() == null
+                && ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(validated.getSettings().getOauth().getTokenEndpointAuthMethod()));
+        verify(applicationRepository, never()).create(any());
+        verify(eventService, never()).create(any(), any());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldValidateCreate_rejectUnknownScope() {
+        Application app = automationServiceApp();
+        ApplicationScopeSettings scopeSettings = new ApplicationScopeSettings();
+        scopeSettings.setScope("unknown");
+        app.getSettings().getOauth().setScopeSettings(List.of(scopeSettings));
+        when(scopeService.validateScope(DOMAIN.getId(), List.of("unknown"))).thenReturn(Single.just(false));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateCreate(DOMAIN, app).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void shouldCreateAutomationApplication_withoutClientSecret() {
+        Application app = automationServiceApp();
+        generateCredentialsOnTemplate();
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, app, principal).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).create(argThat(created -> created.getSecrets().isEmpty()
+                && created.getSettings().getOauth().getClientSecret() == null
+                && created.getSecretSettings().size() == 1));
+        verify(eventService).create(argThat(event -> event.getPayload().getAction() == Action.CREATE), eq(DOMAIN));
+        verify(auditService).report(argThat(audit -> EventType.APPLICATION_CREATED.equals(audit.getType())));
+    }
+
+    @Test
+    public void shouldValidateCreate_keepExplicitTokenEndpointAuthMethod() {
+        Application app = automationServiceApp();
+        app.getSettings().getOauth().setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateCreate(DOMAIN, app).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(validated -> ClientAuthenticationMethod.CLIENT_SECRET_POST.equals(validated.getSettings().getOauth().getTokenEndpointAuthMethod()));
+    }
+
+    @Test
+    public void shouldValidateUpdate_withUnknownIdentityProvider() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        Application desired = new Application(existing);
+        desired.setIdentityProviders(new TreeSet<>(List.of(automationIdentityProvider("not-created-yet"))));
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.validateUpdate(DOMAIN, existing, desired).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(validated -> "not-created-yet".equals(validated.getIdentityProviders().first().getIdentity()));
+        verify(identityProviderService, never()).findById(anyString());
+        verify(applicationRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldUpdate_keepAutomationIdentityProviderNotCreatedYet_andCheckTheOthers() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        ApplicationIdentityProvider consoleIdp = new ApplicationIdentityProvider();
+        consoleIdp.setIdentity("console-idp");
+        consoleIdp.setPriority(1);
+        existing.setIdentityProviders(new TreeSet<>(List.of(automationIdentityProvider("not-created-yet"), consoleIdp)));
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existing));
+        when(identityProviderService.findById("console-idp")).thenReturn(Maybe.just(new IdentityProvider()));
+        stubSuccessfulUpdate();
+
+        TestObserver<Application> testObserver = applicationService.update(new Application(existing)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(identityProviderService, never()).findById("not-created-yet");
+        verify(applicationRepository).update(argThat(updated -> updated.getIdentityProviders().size() == 2));
+    }
+
+    @Test
+    public void shouldUpdate_clearCertificateKeyWhenCertificateChanges() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        existing.setCertificateKey("signing-cert");
+        Application renewed = new Application(existing);
+        renewed.setCertificate("cert-2");
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existing));
+        stubSuccessfulUpdate();
+
+        TestObserver<Application> testObserver = applicationService.update(renewed).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).update(argThat(updated -> "cert-2".equals(updated.getCertificate()) && updated.getCertificateKey() == null));
+    }
+
+    @Test
+    public void shouldUpdate_keepCertificateKeyWhenCertificateIsUnchanged() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        existing.setCertificateKey("signing-cert");
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existing));
+        stubSuccessfulUpdate();
+
+        TestObserver<Application> testObserver = applicationService.update(new Application(existing)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).update(argThat(updated -> "signing-cert".equals(updated.getCertificateKey())));
+    }
+
+    @Test
+    public void shouldUpdate_revokeTokensWhenDisabled() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        Application desired = new Application(existing);
+        desired.setEnabled(false);
+        stubSuccessfulUpdate();
+        when(revokeToken.apply(eq(DOMAIN), any())).thenReturn(Completable.complete());
+
+        TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(revokeToken, times(1)).apply(eq(DOMAIN), any());
+        verify(applicationRepository).update(argThat(updated -> !updated.isEnabled()));
+        verify(auditService).report(argThat(audit -> EventType.APPLICATION_UPDATED.equals(audit.getType())));
+    }
+
+    @Test
+    public void shouldUpdate_notRevokeTokensWhenStillEnabled() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        existing.setEnabled(true);
+        stubSuccessfulUpdate();
+
+        TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, new Application(existing), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(revokeToken, never()).apply(any(), any());
+    }
+
+    @Test
+    public void shouldUpdate_evenWhenTokenRevocationFails() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        existing.setEnabled(true);
+        Application desired = new Application(existing);
+        desired.setEnabled(false);
+        stubSuccessfulUpdate();
+        when(revokeToken.apply(eq(DOMAIN), any())).thenReturn(Completable.error(new IllegalStateException("revocation failed")));
+
+        TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(updated -> !updated.isEnabled());
+    }
+
+    @Test
+    public void shouldUpdate_withoutRedirectUri_whenTypeChanges() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        Application desired = new Application(existing);
+        desired.setType(ApplicationType.WEB);
+        stubSuccessfulUpdate();
+
+        TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertValue(updated -> updated.getType() == ApplicationType.WEB);
+    }
+
+    @Test
+    public void shouldNotUpdate_withoutRedirectUri_whenTypeIsUnchanged() {
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        existing.setType(ApplicationType.WEB);
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+
+        TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, new Application(existing), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidRedirectUriException.class);
+        verify(applicationRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldChangeType_withoutTouchingTheGivenApplication() {
+        var templateManager = new DefaultApplicationTemplateManager();
+        templateManager.afterPropertiesSet();
+        ReflectionTestUtils.setField(applicationService, "applicationTemplateManager", templateManager);
+        Application web = automationServiceApp();
+        web.setType(ApplicationType.WEB);
+        web.getSettings().getOauth().setGrantTypes(List.of(GrantType.AUTHORIZATION_CODE));
+
+        Application service = applicationService.changeType(web, ApplicationType.SERVICE);
+
+        assertEquals(ApplicationType.SERVICE, service.getType());
+        assertEquals(List.of(GrantType.CLIENT_CREDENTIALS), service.getSettings().getOauth().getGrantTypes());
+        assertEquals(ApplicationType.WEB, web.getType());
+        assertEquals(List.of(GrantType.AUTHORIZATION_CODE), web.getSettings().getOauth().getGrantTypes());
+    }
+
+    private static Application automationServiceApp() {
+        Application app = emptyAppWithDomain();
+        app.setName("my-client");
+        app.setType(ApplicationType.SERVICE);
+        app.setCertificate("cert-1");
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setGrantTypes(List.of(GrantType.CLIENT_CREDENTIALS));
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        app.setSettings(settings);
+        return app;
+    }
+
+    private static ApplicationIdentityProvider automationIdentityProvider(String identity) {
+        ApplicationIdentityProvider idp = new ApplicationIdentityProvider();
+        idp.setIdentity(identity);
+        idp.setIdentityKey(identity);
+        return idp;
+    }
+
+    private void stubSuccessfulUpdate() {
+        when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+    }
+
+    private void generateCredentialsOnTemplate() {
+        doAnswer(invocation -> {
+            Application app = invocation.getArgument(0);
+            app.getSettings().getOauth().setClientId(CLIENT_ID);
+            app.getSettings().getOauth().setClientSecret("client_secret");
+            return null;
+        }).when(applicationTemplateManager).apply(any());
     }
 }

@@ -13174,12 +13174,17 @@ components:
           items:
             $ref: "#/components/schemas/ApplicationIdentityProvider"
           uniqueItems: true
+        key:
+          type: string
+          readOnly: true
         kind:
           type: string
           enum:
           - USER_EMBEDDED
           - HOSTED_DELEGATED
           - AUTONOMOUS
+        managedBy:
+          $ref: "#/components/schemas/ManagedBy"
         metadata:
           type: object
           additionalProperties:

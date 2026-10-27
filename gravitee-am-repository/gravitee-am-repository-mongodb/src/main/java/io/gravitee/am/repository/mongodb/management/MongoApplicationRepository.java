@@ -25,6 +25,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
@@ -128,6 +129,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
+    private static final String FIELD_MANAGED_BY = "managedBy";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
     static final String FIELD_TYPE = "type";
     private MongoCollection<ApplicationMongo> applicationsCollection;
@@ -310,6 +312,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+    public Flowable<Application> findByDomainAndManagedBy(String domain, ManagedBy managedBy) {
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(
+                        and(eq(FIELD_DOMAIN, domain), eq(FIELD_MANAGED_BY, managedBy.name())))))
+                .map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant))))
                 .map(MongoApplicationRepository::convert)
@@ -403,6 +413,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setTemplate(other.isTemplate());
         applicationMongo.setFactors(other.getFactors());
         applicationMongo.setCertificate(other.getCertificate());
+        applicationMongo.setCertificateKey(other.getCertificateKey());
         applicationMongo.setMetadata(other.getMetadata() != null ? new Document(other.getMetadata()) : null);
         applicationMongo.setSettings(convert(other.getSettings()));
         applicationMongo.setIdentityProviders(convert(other.getIdentityProviders()));
@@ -411,6 +422,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setUpdatedAt(other.getUpdatedAt());
         applicationMongo.setSecretSettings(convertToSecretSettingsMongo(other.getSecretSettings()));
         applicationMongo.setSecrets(convertToClientSecretMongo(other.getSecrets()));
+        applicationMongo.setAutomationKey(other.getAutomationKey());
+        applicationMongo.setManagedBy(other.getManagedBy() != null ? other.getManagedBy().name() : null);
 
         return applicationMongo;
     }
@@ -428,6 +441,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setTemplate(other.isTemplate());
         application.setFactors(other.getFactors());
         application.setCertificate(other.getCertificate());
+        application.setCertificateKey(other.getCertificateKey());
         application.setMetadata(other.getMetadata());
         application.setSettings(convert(other.getSettings()));
         application.setIdentityProviders(convert(other.getIdentityProviders()));
@@ -435,6 +449,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setUpdatedAt(other.getUpdatedAt());
         application.setSecretSettings(convertToSecretSettings(other.getSecretSettings()));
         application.setSecrets(convertToClientSecret(other.getSecrets()));
+        application.setAutomationKey(other.getAutomationKey());
+        application.setManagedBy(other.getManagedBy() != null ? ManagedBy.valueOf(other.getManagedBy()) : null);
         return application;
     }
 
@@ -1183,6 +1199,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         identityProviderSettings.setIdentity(idpSettingsMongo.getIdentity());
         identityProviderSettings.setSelectionRule(idpSettingsMongo.getSelectionRule());
         identityProviderSettings.setPriority(idpSettingsMongo.getPriority());
+        identityProviderSettings.setIdentityKey(idpSettingsMongo.getIdentityKey());
         return identityProviderSettings;
     }
 
@@ -1197,6 +1214,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         identityProviderSettings.setIdentity(idpSettingsMongo.getIdentity());
         identityProviderSettings.setSelectionRule(idpSettingsMongo.getSelectionRule());
         identityProviderSettings.setPriority(idpSettingsMongo.getPriority());
+        identityProviderSettings.setIdentityKey(idpSettingsMongo.getIdentityKey());
         return identityProviderSettings;
     }
 

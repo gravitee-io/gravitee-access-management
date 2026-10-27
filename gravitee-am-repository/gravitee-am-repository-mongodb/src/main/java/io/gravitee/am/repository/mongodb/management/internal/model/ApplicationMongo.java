@@ -43,6 +43,9 @@ public class ApplicationMongo extends Auditable {
     private Set<ApplicationIdentityProviderMongo> identityProviders;
     private List<ApplicationSecretSettingsMongo> secretSettings;
     private List<ClientSecretMongo> secrets;
+    private String automationKey;
+    private String managedBy;
+    private String certificateKey;
 
     public String getId() {
         return id;
@@ -170,5 +173,29 @@ public class ApplicationMongo extends Auditable {
 
     public void setSecrets(List<ClientSecretMongo> secrets) {
         this.secrets = secrets;
+    }
+
+    public String getAutomationKey() {
+        return automationKey;
+    }
+
+    public void setAutomationKey(String automationKey) {
+        this.automationKey = automationKey;
+    }
+
+    public String getManagedBy() {
+        return managedBy;
+    }
+
+    public void setManagedBy(String managedBy) {
+        this.managedBy = managedBy;
+    }
+
+    public String getCertificateKey() {
+        return certificateKey;
+    }
+
+    public void setCertificateKey(String certificateKey) {
+        this.certificateKey = certificateKey;
     }
 }
