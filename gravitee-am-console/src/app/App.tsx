@@ -27,21 +27,25 @@ import { SessionGate } from '../lib/session/session';
 import { Shell } from './Shell';
 import { PlaceholderPage } from './components/PlaceholderPage';
 
-const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-        onError: error => {
-            if (error instanceof HttpError && error.status === 401) {
-                redirectToLogin();
-            }
+export function createQueryClient(): QueryClient {
+    return new QueryClient({
+        queryCache: new QueryCache({
+            onError: error => {
+                if (error instanceof HttpError && error.status === 401) {
+                    redirectToLogin();
+                }
+            },
+        }),
+        defaultOptions: {
+            queries: {
+                retry: (failureCount, error) => !(error instanceof HttpError && error.status < 500) && failureCount < 1,
+                refetchOnWindowFocus: false,
+            },
         },
-    }),
-    defaultOptions: {
-        queries: {
-            retry: (failureCount, error) => !(error instanceof HttpError && error.status < 500) && failureCount < 1,
-            refetchOnWindowFocus: false,
-        },
-    },
-});
+    });
+}
+
+const queryClient = createQueryClient();
 
 export function App() {
     return (
