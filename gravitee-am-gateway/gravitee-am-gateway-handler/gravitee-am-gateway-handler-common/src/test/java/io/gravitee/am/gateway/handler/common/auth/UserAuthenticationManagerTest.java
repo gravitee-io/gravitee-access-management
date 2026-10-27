@@ -824,6 +824,28 @@ public class UserAuthenticationManagerTest {
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 
+    @Test
+    public void shouldCountPasswordlessSuccess_whenConnectWithPasswordlessSucceeds() {
+        when(userAuthenticationService.connectWithPasswordless(anyString(), any())).thenReturn(Single.just(new User()));
+
+        userAuthenticationManager.connectWithPasswordless(new Client(), "user-id", mock(Authentication.class)).test().assertComplete();
+
+        verify(gatewayMetricProvider).incrementSuccessfulPasswordlessAuth();
+        verify(gatewayMetricProvider, never()).incrementFailedPasswordlessAuth();
+        verify(eventManager).publishEvent(eq(AuthenticationEvent.SUCCESS_WEBAUTHN), any());
+    }
+
+    @Test
+    public void shouldCountPasswordlessFailure_whenConnectWithPasswordlessFails() {
+        when(userAuthenticationService.connectWithPasswordless(anyString(), any())).thenReturn(Single.error(new BadCredentialsException()));
+
+        userAuthenticationManager.connectWithPasswordless(new Client(), "user-id", mock(Authentication.class)).test().assertError(BadCredentialsException.class);
+
+        verify(gatewayMetricProvider).incrementFailedPasswordlessAuth();
+        verify(gatewayMetricProvider, never()).incrementSuccessfulPasswordlessAuth();
+        verify(eventManager).publishEvent(eq(AuthenticationEvent.FAILURE_WEBAUTHN), any());
+    }
+
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
         var set = new TreeSet<ApplicationIdentityProvider>();
         Arrays.stream(identities).forEach(identity -> {

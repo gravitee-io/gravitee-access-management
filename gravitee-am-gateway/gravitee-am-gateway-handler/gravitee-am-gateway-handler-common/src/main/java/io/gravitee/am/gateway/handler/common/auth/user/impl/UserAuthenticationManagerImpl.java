@@ -183,8 +183,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     @Override
     public Single<User> connectWithPasswordless(Client client, String userid, Authentication authentication) {
         return userAuthenticationService.connectWithPasswordless(userid, client)
-                .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS_WEBAUTHN, new AuthenticationDetails(authentication, domain, client, user)))
-                .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE_WEBAUTHN, new AuthenticationDetails(authentication, domain, client, throwable)));
+                .doOnSuccess(user -> {
+                    gatewayMetricProvider.incrementSuccessfulPasswordlessAuth();
+                    eventManager.publishEvent(AuthenticationEvent.SUCCESS_WEBAUTHN, new AuthenticationDetails(authentication, domain, client, user));
+                })
+                .doOnError(throwable -> {
+                    gatewayMetricProvider.incrementFailedPasswordlessAuth();
+                    eventManager.publishEvent(AuthenticationEvent.FAILURE_WEBAUTHN, new AuthenticationDetails(authentication, domain, client, throwable));
+                });
 
     }
 
