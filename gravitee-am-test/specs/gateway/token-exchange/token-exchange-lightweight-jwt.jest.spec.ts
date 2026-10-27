@@ -53,8 +53,8 @@ const TOKEN_CUSTOM_CLAIMS: TokenClaim[] = [
 // tx_subject_hidden is allowlisted, so its absence from an exchanged token means EL resolved nothing
 const LIGHTWEIGHT_JWT_SETTINGS = {
   enabled: true,
-  allowedAccessTokenClaims: ['tenant_allowed', 'tx_subject_hidden', 'tx_subject_allowed', 'tx_subject_gis', 'tx_actor_allowed'],
-  allowedIdTokenClaims: ['id_tenant_allowed'],
+  allowedAccessTokenClaims: new Set(['tenant_allowed', 'tx_subject_hidden', 'tx_subject_allowed', 'tx_subject_gis', 'tx_actor_allowed']),
+  allowedIdTokenClaims: new Set(['id_tenant_allowed']),
 };
 
 const FIXTURE_CONFIG = {

@@ -42,12 +42,14 @@ public class ApplicationLightweightJwtSettings {
     private boolean enabled;
 
     @Builder.Default
-    @ArraySchema(arraySchema = @Schema(description = "Claim names kept in the access and refresh tokens in addition to the reserved claims. A listed claim is kept only if AM issues it."),
+    @ArraySchema(arraySchema = @Schema(description = "Claim names kept in the access and refresh tokens in addition to the reserved claims. A listed claim is kept only if AM issues it. Names must be unique, must not have leading or trailing whitespace and must not contain control characters."),
+            uniqueItems = true,
             schema = @Schema(maxLength = CLAIM_NAME_MAX_LENGTH))
     private List<String> allowedAccessTokenClaims = new ArrayList<>();
 
     @Builder.Default
-    @ArraySchema(arraySchema = @Schema(description = "Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it."),
+    @ArraySchema(arraySchema = @Schema(description = "Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it. Names must be unique, must not have leading or trailing whitespace and must not contain control characters."),
+            uniqueItems = true,
             schema = @Schema(maxLength = CLAIM_NAME_MAX_LENGTH))
     private List<String> allowedIdTokenClaims = new ArrayList<>();
 

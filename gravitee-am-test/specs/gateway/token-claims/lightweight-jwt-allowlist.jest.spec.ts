@@ -22,8 +22,8 @@ setup(200000);
 
 const SCOPE = 'openid email profile';
 const ALLOWLISTS = {
-  allowedAccessTokenClaims: ['tenant', 'not_issued'],
-  allowedIdTokenClaims: ['email', 'id_tenant'],
+  allowedAccessTokenClaims: new Set(['tenant', 'not_issued']),
+  allowedIdTokenClaims: new Set(['email', 'id_tenant']),
 };
 
 let fixture: TokenIdentityFixture;
@@ -98,7 +98,18 @@ describe('Lightweight JWT allowlists - endpoints', () => {
       patchApplication(
         fixture.domain.id,
         fixture.accessToken,
-        { settings: { oauth: { lightweightJwtSettings: { enabled: true, allowedAccessTokenClaims: [' '] } } } },
+        { settings: { oauth: { lightweightJwtSettings: { enabled: true, allowedAccessTokenClaims: new Set([' ']) } } } },
+        fixture.app.id,
+      ),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
+  it('should reject a claim name with surrounding whitespace', async () => {
+    await expect(
+      patchApplication(
+        fixture.domain.id,
+        fixture.accessToken,
+        { settings: { oauth: { lightweightJwtSettings: { enabled: true, allowedAccessTokenClaims: new Set([' tenant ']) } } } },
         fixture.app.id,
       ),
     ).rejects.toMatchObject({ response: { status: 400 } });

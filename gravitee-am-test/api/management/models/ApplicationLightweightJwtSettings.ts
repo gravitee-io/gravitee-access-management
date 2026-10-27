@@ -33,23 +33,23 @@ import { mapValues } from '../runtime';
  */
 export interface ApplicationLightweightJwtSettings {
   /**
-   * Claim names kept in the access and refresh tokens in addition to the reserved claims. A listed claim is kept only if AM issues it.
-   * @type {Array<string>}
+   * Claim names kept in the access and refresh tokens in addition to the reserved claims. A listed claim is kept only if AM issues it. Names must be unique, must not have leading or trailing whitespace and must not contain control characters.
+   * @type {Set<string>}
    * @memberof ApplicationLightweightJwtSettings
    */
-  allowedAccessTokenClaims?: Array<string>;
+  allowedAccessTokenClaims?: Set<string>;
+  /**
+   * Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it. Names must be unique, must not have leading or trailing whitespace and must not contain control characters.
+   * @type {Set<string>}
+   * @memberof ApplicationLightweightJwtSettings
+   */
+  allowedIdTokenClaims?: Set<string>;
   /**
    * Whether Lightweight JWT is enabled.
    * @type {boolean}
    * @memberof ApplicationLightweightJwtSettings
    */
   enabled?: boolean;
-  /**
-   * Claim names kept in the ID token in addition to the reserved claims. A listed claim is kept only if AM issues it.
-   * @type {Array<string>}
-   * @memberof ApplicationLightweightJwtSettings
-   */
-  allowedIdTokenClaims?: Array<string>;
 }
 
 /**
@@ -68,9 +68,9 @@ export function ApplicationLightweightJwtSettingsFromJSONTyped(json: any, ignore
     return json;
   }
   return {
-    allowedAccessTokenClaims: json['allowedAccessTokenClaims'] == null ? undefined : json['allowedAccessTokenClaims'],
+    allowedAccessTokenClaims: json['allowedAccessTokenClaims'] == null ? undefined : new Set(json['allowedAccessTokenClaims']),
+    allowedIdTokenClaims: json['allowedIdTokenClaims'] == null ? undefined : new Set(json['allowedIdTokenClaims']),
     enabled: json['enabled'] == null ? undefined : json['enabled'],
-    allowedIdTokenClaims: json['allowedIdTokenClaims'] == null ? undefined : json['allowedIdTokenClaims'],
   };
 }
 
@@ -87,8 +87,9 @@ export function ApplicationLightweightJwtSettingsToJSONTyped(
   }
 
   return {
-    allowedAccessTokenClaims: value['allowedAccessTokenClaims'],
+    allowedAccessTokenClaims:
+      value['allowedAccessTokenClaims'] == null ? undefined : Array.from(value['allowedAccessTokenClaims'] as Set<any>),
+    allowedIdTokenClaims: value['allowedIdTokenClaims'] == null ? undefined : Array.from(value['allowedIdTokenClaims'] as Set<any>),
     enabled: value['enabled'],
-    allowedIdTokenClaims: value['allowedIdTokenClaims'],
   };
 }

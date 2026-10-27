@@ -179,8 +179,8 @@ export interface UserInfoCustomClaim {
 }
 
 export interface LightweightJwtAllowlists {
-  allowedAccessTokenClaims?: string[];
-  allowedIdTokenClaims?: string[];
+  allowedAccessTokenClaims?: Set<string>;
+  allowedIdTokenClaims?: Set<string>;
 }
 
 export interface TokenIdentityOptions {
