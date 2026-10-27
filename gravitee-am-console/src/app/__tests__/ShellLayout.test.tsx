@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
-import { render, screen } from '@testing-library/react';
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
+import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Domain } from '../../lib/api/domains';
 import { useEnvironmentDomains } from '../../lib/session/domains';
@@ -35,7 +36,7 @@ vi.mock('../../lib/session/domains', () => ({ useEnvironmentDomains: vi.fn() }))
 const domains: Domain[] = [{ id: 'd1', hrid: 'one', name: 'One', enabled: true }];
 
 function renderShellAt(path: string) {
-    return render(
+    return renderWithGraphene(
         <TooltipProvider>
             <LayoutSlotsProvider>
                 <MemoryRouter initialEntries={[path]}>

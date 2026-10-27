@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { Can, LoadPermissionScope, PermissionScope, RequirePermission, usePermissions } from '../permissions';
 
@@ -29,7 +30,7 @@ function Probe({ names }: { readonly names: string[] }) {
 
 describe('usePermissions', () => {
     it('unions the lists of the nested scopes, all-of for has and any-of for hasAny', () => {
-        render(
+        renderWithGraphene(
             <PermissionScope permissions={['organization_settings_read']}>
                 <PermissionScope permissions={['domain_list', 'application_list']}>
                     <Probe names={['domain_list', 'organization_settings_read']} />
@@ -47,7 +48,7 @@ describe('usePermissions', () => {
 
 describe('Can', () => {
     it('renders the children only when the user holds the permissions', () => {
-        render(
+        renderWithGraphene(
             <PermissionScope permissions={['application_settings_read']}>
                 <Can all={['application_settings_read']}>
                     <button>Read</button>
@@ -70,7 +71,7 @@ describe('Can', () => {
 
 describe('RequirePermission', () => {
     it('renders the child routes when one permission matches, else the forbidden panel', () => {
-        render(
+        renderWithGraphene(
             <PermissionScope permissions={['domain_list']}>
                 <MemoryRouter initialEntries={['/allowed']}>
                     <Routes>
@@ -95,7 +96,7 @@ describe('LoadPermissionScope', () => {
     it('loads the list before it renders the children', async () => {
         const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
         const queryFn = vi.fn().mockResolvedValue(['domain_settings_update']);
-        render(
+        renderWithGraphene(
             <QueryClientProvider client={client}>
                 <LoadPermissionScope queryKey={['domain-permissions', 'd1']} queryFn={queryFn}>
                     <Probe names={['domain_settings_update']} />

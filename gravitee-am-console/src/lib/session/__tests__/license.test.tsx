@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { buttonHarness, renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { getLicense } from '../../api/license';
 import { LicenseGuard, LicenseScope, LoadLicenseScope, RequireLicense, useLicense } from '../license';
@@ -33,7 +34,7 @@ function Probe() {
 
 describe('useLicense', () => {
     it('reports a feature the licence lacks, and never an absent feature', () => {
-        render(
+        renderWithGraphene(
             <LicenseScope license={{ tier: 'universe', features: [AmFeature.AM_IDP_LDAP] }}>
                 <Probe />
             </LicenseScope>,
@@ -44,9 +45,9 @@ describe('useLicense', () => {
 });
 
 describe('LicenseGuard', () => {
-    it('swallows the click and opens the upgrade dialog when the feature is missing', () => {
+    it('swallows the click and opens the upgrade dialog when the feature is missing', async () => {
         const onClick = vi.fn();
-        render(
+        renderWithGraphene(
             <LicenseScope license={{ features: [] }}>
                 <LicenseGuard feature={AmFeature.AM_MFA_SMS}>
                     <button onClick={onClick}>Save</button>
@@ -54,7 +55,7 @@ describe('LicenseGuard', () => {
             </LicenseScope>,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await buttonHarness({ name: 'Save' }).click();
 
         expect(onClick).not.toHaveBeenCalled();
         expect(screen.getByRole('dialog', { name: 'Enterprise feature' })).toHaveTextContent(
@@ -66,9 +67,9 @@ describe('LicenseGuard', () => {
         );
     });
 
-    it('lets the click through when the licence grants the feature, or when there is no feature', () => {
+    it('lets the click through when the licence grants the feature, or when there is no feature', async () => {
         const onClick = vi.fn();
-        render(
+        renderWithGraphene(
             <LicenseScope license={{ features: [AmFeature.AM_MFA_SMS] }}>
                 <LicenseGuard feature={AmFeature.AM_MFA_SMS}>
                     <button onClick={onClick}>Save</button>
@@ -79,8 +80,8 @@ describe('LicenseGuard', () => {
             </LicenseScope>,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+        await buttonHarness({ name: 'Save' }).click();
+        await buttonHarness({ name: 'Create' }).click();
 
         expect(onClick).toHaveBeenCalledTimes(2);
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -89,7 +90,7 @@ describe('LicenseGuard', () => {
 
 describe('RequireLicense', () => {
     it('renders the upgrade panel instead of the page when the feature is missing', () => {
-        render(
+        renderWithGraphene(
             <LicenseScope license={{ features: [] }}>
                 <MemoryRouter initialEntries={['/alerts']}>
                     <Routes>
@@ -110,7 +111,7 @@ describe('LoadLicenseScope', () => {
     it('loads the licence before it renders the children', async () => {
         vi.mocked(getLicense).mockResolvedValueOnce({ tier: 'universe', features: [AmFeature.AM_MFA_SMS] });
         const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-        render(
+        renderWithGraphene(
             <QueryClientProvider client={client}>
                 <LoadLicenseScope organizationId="DEFAULT">
                     <Probe />
@@ -125,7 +126,7 @@ describe('LoadLicenseScope', () => {
     it('treats a failed load as no licence', async () => {
         vi.mocked(getLicense).mockRejectedValueOnce(new Error('boom'));
         const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-        render(
+        renderWithGraphene(
             <QueryClientProvider client={client}>
                 <LoadLicenseScope organizationId="DEFAULT">
                     <Probe />

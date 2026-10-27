@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import { toast } from '@gravitee/graphene-core';
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { HttpError } from '../../../lib/api/http';
 import { getCurrentUser } from '../../../lib/api/management-api';
@@ -28,7 +29,7 @@ vi.mock('@gravitee/graphene-core', async importOriginal => ({
 vi.mock('../../../lib/api/management-api', () => ({ getCurrentUser: vi.fn() }));
 
 function renderAt(path: string, queryClient = new QueryClient()) {
-    return render(
+    return renderWithGraphene(
         <QueryClientProvider client={queryClient}>
             <MemoryRouter initialEntries={[path]}>
                 <Routes>

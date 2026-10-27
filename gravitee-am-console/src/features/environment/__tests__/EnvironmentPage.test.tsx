@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { listDomains } from '../../../lib/api/domains';
 import { HttpError } from '../../../lib/api/http';
@@ -33,7 +34,7 @@ function Location() {
 
 function renderPage(permissions: string[] = []) {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return render(
+    return renderWithGraphene(
         <QueryClientProvider client={queryClient}>
             <PermissionScope permissions={permissions}>
                 <MemoryRouter initialEntries={['/environments/prod']}>

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { HttpError } from '../../api/http';
 import { getLicense } from '../../api/license';
 import { getCurrentUser, listEnvironments } from '../../api/management-api';
@@ -34,7 +35,7 @@ function Probe() {
 
 function renderGate() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return render(
+    return renderWithGraphene(
         <QueryClientProvider client={queryClient}>
             <SessionGate>
                 <Probe />

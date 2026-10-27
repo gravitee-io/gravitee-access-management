@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { render, screen } from '@testing-library/react';
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
+import { screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { NotFoundPage } from '../NotFoundPage';
 
 describe('NotFoundPage', () => {
     it('says the page does not exist and links home', () => {
-        render(
+        renderWithGraphene(
             <MemoryRouter initialEntries={['/404']}>
                 <NotFoundPage />
             </MemoryRouter>,
