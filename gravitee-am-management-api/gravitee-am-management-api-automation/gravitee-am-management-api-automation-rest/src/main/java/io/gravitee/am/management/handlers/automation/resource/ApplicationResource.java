@@ -27,10 +27,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +45,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 @Tag(name = "Applications")
 public class ApplicationResource extends AbstractAutomationResource {
+
+    @Context
+    private ResourceContext resourceContext;
 
     @Autowired
     private ApplicationService applicationService;
@@ -92,5 +98,10 @@ public class ApplicationResource extends AbstractAutomationResource {
                 .flatMapCompletable(domain -> resolver.resolveApplicationMaybe(domain, applicationRef)
                         .flatMapCompletable(app -> applicationService.delete(app.getId(), principal, domain)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
+
+    @Path("/secrets")
+    public ClientSecretsResource getClientSecretsResource() {
+        return resourceContext.getResource(ClientSecretsResource.class);
     }
 }
