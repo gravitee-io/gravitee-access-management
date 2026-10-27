@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -181,6 +181,18 @@ public final class MongoUtils {
 
             return eq(name, value);
         }).orElse(null);
+    }
+
+    private static String escapeRegexMetacharacters(String query) {
+        return query.replaceAll("([\\[\\]{}()^$.|?+\\\\])", "\\\\$1");
+    }
+
+    public static Pattern wildcardPrefixPattern(String query) {
+        return Pattern.compile("^" + escapeRegexMetacharacters(query).replaceAll("\\*+", ".*"), Pattern.CASE_INSENSITIVE);
+    }
+
+    public static Pattern caseInsensitiveExactPattern(String value) {
+        return Pattern.compile("^" + Pattern.quote(value) + "$", Pattern.CASE_INSENSITIVE);
     }
 
     public static Maybe<Bson> toBsonFilter(boolean logicalOr, Bson... filter) {

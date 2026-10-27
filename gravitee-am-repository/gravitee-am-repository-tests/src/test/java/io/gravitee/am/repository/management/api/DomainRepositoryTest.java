@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -412,5 +413,32 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver1.assertValueCount(1);
         testObserver1.assertValue(d -> d.getDataPlaneId().equals("dataPlaneId"));
 
+    }
+
+    @Test
+    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+        String environmentId = "environment#metacharacter";
+        for (String name : List.of("domain(1)+a", "domain1a")) {
+            Domain domain = initDomain(name);
+            domain.setReferenceType(ReferenceType.ENVIRONMENT);
+            domain.setReferenceId(environmentId);
+            domainRepository.create(domain).blockingGet();
+        }
+
+        Map<String, List<String>> expectedNamesByQuery = Map.of(
+                "domain(1)+*", List.of("domain(1)+a"),
+                "domain(*", List.of("domain(1)+a"),
+                ".*", List.of(),
+                "zzz|*", List.of());
+
+        expectedNamesByQuery.forEach((query, expectedNames) -> {
+            TestSubscriber<Domain> testSubscriber = domainRepository.search(environmentId, query).test();
+            testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+            testSubscriber.assertComplete();
+            testSubscriber.assertNoErrors();
+            testSubscriber.assertValueCount(expectedNames.size());
+            expectedNames.forEach(name -> testSubscriber.assertValue(domain -> domain.getName().equals(name)));
+        });
     }
 }
