@@ -18,6 +18,8 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
     SidebarGroup,
@@ -26,7 +28,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@gravitee/graphene-core';
-import { CheckIcon, ChevronsUpDownIcon, GlobeIcon, ListIcon } from '@gravitee/graphene-core/icons';
+import { ChevronsUpDownIcon, GlobeIcon, ListIcon } from '@gravitee/graphene-core/icons';
 import type { Domain } from '../../lib/api/domains';
 
 interface DomainSwitcherProps {
@@ -47,8 +49,12 @@ export function DomainSwitcher({ domains, currentDomain, loading, onSelect, onMa
                 <SidebarMenuItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <SidebarMenuButton size="lg" tooltip={state === 'collapsed' ? label : undefined} aria-label="Switch domain">
-                                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                            <SidebarMenuButton
+                                size="lg"
+                                tooltip={state === 'collapsed' ? label : undefined}
+                                aria-label={`Switch domain, current ${label}`}
+                            >
+                                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
                                     <GlobeIcon className="size-4" aria-hidden />
                                 </span>
                                 <span className="grid min-w-0 flex-1 text-left leading-tight">
@@ -62,13 +68,14 @@ export function DomainSwitcher({ domains, currentDomain, loading, onSelect, onMa
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-64" align="start" side={isMobile ? 'bottom' : 'right'}>
                             <DropdownMenuLabel className="text-xs text-muted-foreground">Domains</DropdownMenuLabel>
-                            {domains.map(domain => (
-                                <DropdownMenuItem key={domain.id} onSelect={() => onSelect(domain)}>
-                                    <span className="min-w-0 flex-1 truncate">{domain.name}</span>
-                                    {!domain.enabled && <span className="text-xs text-muted-foreground">Disabled</span>}
-                                    {domain.id === currentDomain?.id && <CheckIcon className="size-4" aria-hidden />}
-                                </DropdownMenuItem>
-                            ))}
+                            <DropdownMenuRadioGroup value={currentDomain?.id ?? ''}>
+                                {domains.map(domain => (
+                                    <DropdownMenuRadioItem key={domain.id} value={domain.id} onSelect={() => onSelect(domain)}>
+                                        <span className="min-w-0 flex-1 truncate">{domain.name}</span>
+                                        {!domain.enabled && <span className="text-xs text-muted-foreground">Disabled</span>}
+                                    </DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
                             {domains.length === 0 && !loading && <DropdownMenuItem disabled>No domains yet</DropdownMenuItem>}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={onManage}>

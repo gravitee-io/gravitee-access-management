@@ -101,6 +101,9 @@ export function Shell() {
             defaultSidebarMode="hover-expand"
             defaultTheme="system"
             fullHeight
+            banner={slots.banner}
+            bannerSticky={slots.bannerSticky}
+            contentVariant={slots.contentVariant}
             viewMode={slots.viewMode}
             contextExpanded={slots.contextExpanded}
             contextSidebar={slots.contextSidebar}
