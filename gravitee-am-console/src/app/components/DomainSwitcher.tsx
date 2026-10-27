@@ -54,7 +54,7 @@ export function DomainSwitcher({ domains, currentDomain, loading, onSelect, onMa
                                 tooltip={state === 'collapsed' ? label : undefined}
                                 aria-label={`Switch domain, current ${label}`}
                             >
-                                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                                     <GlobeIcon className="size-4" aria-hidden />
                                 </span>
                                 <span className="grid min-w-0 flex-1 text-left leading-tight">
