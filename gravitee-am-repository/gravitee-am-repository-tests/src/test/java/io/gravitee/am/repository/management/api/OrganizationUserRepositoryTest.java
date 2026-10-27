@@ -466,6 +466,63 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+        User metacharacterUser = new User();
+        metacharacterUser.setReferenceType(ReferenceType.ORGANIZATION);
+        metacharacterUser.setReferenceId(ORGANIZATION_ID);
+        metacharacterUser.setUsername("user(1)+a");
+        organizationUserRepository.create(metacharacterUser).blockingGet();
+
+        User plainUser = new User();
+        plainUser.setReferenceType(ReferenceType.ORGANIZATION);
+        plainUser.setReferenceId(ORGANIZATION_ID);
+        plainUser.setUsername("user1a");
+        organizationUserRepository.create(plainUser).blockingGet();
+
+        TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "user(1)+*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+        testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals("user(1)+a"));
+    }
+
+    @Test
+    public void shouldSearchWildcardWithMalformedRegexQuery() {
+        User metacharacterUser = new User();
+        metacharacterUser.setReferenceType(ReferenceType.ORGANIZATION);
+        metacharacterUser.setReferenceId(ORGANIZATION_ID);
+        metacharacterUser.setUsername("user(1)+a");
+        organizationUserRepository.create(metacharacterUser).blockingGet();
+
+        TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "user(*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldNotMatchEveryUserWithRegexOnlyWildcardQuery() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setUsername("plainUser");
+        organizationUserRepository.create(user).blockingGet();
+
+        for (String query : List.of(".*", "zzz|*")) {
+            TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(users -> users.getTotalCount() == 0 && users.getData().isEmpty());
+        }
+    }
+
+    @Test
     public void testSearch_byUsername_paged() {
         // create user
         User user1 = new User();
