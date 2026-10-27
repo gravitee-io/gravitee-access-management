@@ -23,8 +23,20 @@ export type Domain = ApiModel<DomainModel, 'id' | 'hrid' | 'name' | 'enabled'>;
 
 const SWITCHER_PAGE_SIZE = 200;
 
-export function listDomains(organizationId: string, environmentId: string): Promise<Page<Domain>> {
-    return http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?page=0&size=${SWITCHER_PAGE_SIZE}`);
+/** Every domain of the environment, read page by page. */
+export async function listDomains(organizationId: string, environmentId: string): Promise<Page<Domain>> {
+    const page = (index: number) =>
+        http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?page=${index}&size=${SWITCHER_PAGE_SIZE}`);
+    const first = await page(0);
+    const data = [...first.data];
+    for (let index = 1; data.length < first.totalCount; index++) {
+        const next = await page(index);
+        if (next.data.length === 0) {
+            break;
+        }
+        data.push(...next.data);
+    }
+    return { data, currentPage: 0, totalCount: first.totalCount };
 }
 
 export function getDomain(organizationId: string, environmentId: string, domainId: string): Promise<Domain> {

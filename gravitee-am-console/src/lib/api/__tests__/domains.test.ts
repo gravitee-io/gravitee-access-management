@@ -18,11 +18,42 @@ import { http } from '../http';
 
 vi.mock('../http', () => ({ http: vi.fn() }));
 
-describe('domains api', () => {
-    it('lists one page of 200 domains of the environment', async () => {
-        await listDomains('DEFAULT', 'env-1');
+const domain = (id: string) => ({ id, hrid: id, name: id, enabled: true });
 
+describe('domains api', () => {
+    beforeEach(() => {
+        vi.mocked(http).mockReset();
+    });
+
+    it('lists the domains of the environment in pages of 200', async () => {
+        vi.mocked(http).mockResolvedValueOnce({ data: [domain('d1')], currentPage: 0, totalCount: 1 });
+
+        await expect(listDomains('DEFAULT', 'env-1')).resolves.toEqual({ data: [domain('d1')], currentPage: 0, totalCount: 1 });
+
+        expect(http).toHaveBeenCalledOnce();
         expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains?page=0&size=200');
+    });
+
+    it('reads the next pages until it holds every domain', async () => {
+        vi.mocked(http)
+            .mockResolvedValueOnce({ data: [domain('d1'), domain('d2')], currentPage: 0, totalCount: 3 })
+            .mockResolvedValueOnce({ data: [domain('d3')], currentPage: 1, totalCount: 3 });
+
+        const result = await listDomains('DEFAULT', 'env-1');
+
+        expect(result.data.map(item => item.id)).toEqual(['d1', 'd2', 'd3']);
+        expect(http).toHaveBeenLastCalledWith('/organizations/DEFAULT/environments/env-1/domains?page=1&size=200');
+    });
+
+    it('stops at an empty page when the total count is too high', async () => {
+        vi.mocked(http)
+            .mockResolvedValueOnce({ data: [domain('d1')], currentPage: 0, totalCount: 5 })
+            .mockResolvedValueOnce({ data: [], currentPage: 1, totalCount: 5 });
+
+        const result = await listDomains('DEFAULT', 'env-1');
+
+        expect(result.data.map(item => item.id)).toEqual(['d1']);
+        expect(http).toHaveBeenCalledTimes(2);
     });
 
     it('reads a domain by its id', async () => {
