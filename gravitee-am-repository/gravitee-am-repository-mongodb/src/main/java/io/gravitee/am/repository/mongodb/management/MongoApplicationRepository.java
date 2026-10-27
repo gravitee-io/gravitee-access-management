@@ -90,6 +90,7 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -323,6 +324,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+    public Maybe<Application> updateIfUnchanged(Application item, Date expectedUpdatedAt) {
+        ApplicationMongo application = convert(item);
+        return Single.fromPublisher(applicationsCollection.replaceOne(and(eq(FIELD_ID, application.getId()), eq(FIELD_UPDATED_AT, expectedUpdatedAt)), application))
+                .flatMapMaybe(updateResult -> updateResult.getMatchedCount() == 0 ? Maybe.empty() : findById(application.getId()))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(applicationsCollection.deleteOne(eq(FIELD_ID, id)))
                 .observeOn(Schedulers.computation());
@@ -439,6 +448,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 mongoSecret.setSettingsId(secret.getSettingsId());
                 mongoSecret.setCreatedAt(secret.getCreatedAt());
                 mongoSecret.setExpiresAt(secret.getExpiresAt());
+                mongoSecret.setAutomationKey(secret.getAutomationKey());
+                mongoSecret.setManagedBy(secret.getManagedBy() != null ? secret.getManagedBy().name() : null);
                 return mongoSecret;
             }).collect(Collectors.toList());
         }
@@ -456,6 +467,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 secret.setSettingsId(mongoSecret.getSettingsId());
                 secret.setCreatedAt(mongoSecret.getCreatedAt());
                 secret.setExpiresAt(mongoSecret.getExpiresAt());
+                secret.setAutomationKey(mongoSecret.getAutomationKey());
+                secret.setManagedBy(mongoSecret.getManagedBy() != null ? ManagedBy.valueOf(mongoSecret.getManagedBy()) : null);
                 return secret;
             }).collect(Collectors.toList());
         }
