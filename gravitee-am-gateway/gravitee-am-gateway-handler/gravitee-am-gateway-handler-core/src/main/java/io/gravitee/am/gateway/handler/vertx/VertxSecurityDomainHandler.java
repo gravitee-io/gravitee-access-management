@@ -43,6 +43,7 @@ import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.DomainReadinessService;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.authenticator.core.AuthenticatorPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
@@ -103,6 +104,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private GatewayMetricProvider metricProvider;
+
     @Value("${handlers.request.removeXForwardedHeaders:false}")
     private boolean removeXForwardedHeaders;
 
@@ -111,7 +115,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         super.doStart();
 
         // count the responses sent with an error status code (4xx, 5xx)
-        router.route().handler(new ErrorStatusMetricsHandler());
+        router.route().handler(new ErrorStatusMetricsHandler(metricProvider));
 
         if(removeXForwardedHeaders){
             log.info("Adding XForwardedHeadersSanitizer handler, headers will be removed from incoming requests");

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.event.RevokeTokenEvent;
 import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
@@ -73,6 +74,9 @@ public class RevokeTokenGatewayServiceTest {
     private RevokeTokenGatewayService tokenService = new RevokeTokenGatewayServiceImpl();
 
     @Mock
+    private GatewayMetricProvider metricProvider;
+
+    @Mock
     private BackwardCompatibleTokenRepository tokenRepository;
 
     @Mock
@@ -106,6 +110,8 @@ public class RevokeTokenGatewayServiceTest {
         user.setReferenceId(UUID.randomUUID().toString());
         TestObserver<Void> testObserver = tokenService.deleteByUser(user, false).test();
         testObserver.assertComplete();
+        verify(metricProvider).incrementRevokeSuccess();
+        verify(metricProvider, never()).incrementRevokeFailure();
         testObserver.assertNoErrors();
 
         verify(auditService, never()).report(any());

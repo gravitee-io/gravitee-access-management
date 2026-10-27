@@ -95,8 +95,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         metricProvider = mock(GatewayMetricProvider.class);
-        final LogoutEndpoint endpoint = new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient);
-        endpoint.metricProvider = metricProvider;
+        final LogoutEndpoint endpoint = new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient, metricProvider);
         router.route(HttpMethod.GET, "/logout")
                 .handler(endpoint)
                 .failureHandler(new ErrorHandler("/error"));

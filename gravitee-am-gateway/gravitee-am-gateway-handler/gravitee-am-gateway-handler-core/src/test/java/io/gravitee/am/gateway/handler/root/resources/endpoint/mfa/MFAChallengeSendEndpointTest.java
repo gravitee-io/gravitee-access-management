@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.common.factor.FactorType;
@@ -194,7 +195,7 @@ public class MFAChallengeSendEndpointTest extends RxWebTestBase {
                     ctx.next();
                 })
                 .handler(mfaChallengeSendEndpoint)
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, mock(GatewayMetricProvider.class)));
 
         testRequest(
                 HttpMethod.POST,

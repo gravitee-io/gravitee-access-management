@@ -80,6 +80,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
@@ -117,6 +118,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     public static final String PATH_ERROR = "/error";
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Autowired
     private Router router;
@@ -333,7 +337,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
-                .handler(new UserConsentProcessHandler(userConsentService, domain))
+                .handler(new UserConsentProcessHandler(userConsentService, domain, gatewayMetricProvider))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
                 .handler(new UserConsentPostEndpoint());
         oauth2Router.route(PATH_CONSENT)
@@ -347,13 +351,13 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new TokenRequestParseHandler())
                 .handler(clientAuthHandler)
                 .handler(new TokenRequestResourceValidationHandler(resourceValidationService))
-                .handler(new TokenEndpoint(tokenGranter));
+                .handler(new TokenEndpoint(tokenGranter, gatewayMetricProvider));
 
         // Introspection endpoint
         oauth2Router.route(HttpMethod.POST, PATH_INTROSPECT)
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
-                .handler(new IntrospectionEndpoint(introspectionService));
+                .handler(new IntrospectionEndpoint(introspectionService, gatewayMetricProvider));
 
         // Revocation endpoint
         oauth2Router.route(HttpMethod.OPTIONS, PATH_REVOKE)
@@ -366,7 +370,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // Error endpoint
         oauth2Router.route(HttpMethod.GET, PATH_ERROR)
-                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
+                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService, gatewayMetricProvider));
 
         // Pushed Authorization Request
         oauth2Router.route(HttpMethod.POST, PATH_PAR)

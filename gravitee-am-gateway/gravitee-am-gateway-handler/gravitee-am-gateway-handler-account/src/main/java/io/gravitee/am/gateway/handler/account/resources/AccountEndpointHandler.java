@@ -71,9 +71,10 @@ public class AccountEndpointHandler {
     public static final String ERROR_MSG_ACCESS_TOKEN_TOO_OLD = "Access token does not conform with expiration period. Please generate a new token.";
     private final AccountService accountService;
     private final Domain domain;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public AccountEndpointHandler(AccountService accountService, Domain domain) {
+    public AccountEndpointHandler(AccountService accountService, Domain domain, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.accountService = accountService;
         this.domain = domain;
     }

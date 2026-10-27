@@ -46,10 +46,11 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
     public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
 
     private final UserService userService;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
     private final boolean keepParams;
 
-    public RegisterConfirmationSubmissionEndpoint(UserService userService, Environment environment) {
+    public RegisterConfirmationSubmissionEndpoint(UserService userService, Environment environment, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.userService = userService;
         this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS, boolean.class, true);
     }

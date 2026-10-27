@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
@@ -37,6 +38,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -63,7 +65,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
         router.route(HttpMethod.POST, "/register")
                 .handler(BodyHandler.create())
-                .handler(new RegisterProcessHandler(userService, domain))
+                .handler(new RegisterProcessHandler(userService, domain, mock(GatewayMetricProvider.class)))
                 .handler(new RegisterSubmissionEndpoint(environment))
                 .failureHandler(new RegisterFailureHandler());
     }

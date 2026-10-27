@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.dpop.DPoPProofValidator;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.vertx.rxjava3.core.Vertx;
@@ -45,6 +46,9 @@ public class AccountProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Autowired
     private Domain domain;
@@ -95,7 +99,7 @@ public class AccountProvider extends AbstractProtocolProvider {
             accountRouter.route().handler(oAuth2AuthHandler);
 
             // Account profile routes
-            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService, domain);
+            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService, domain, gatewayMetricProvider);
             accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
             accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
             accountRouter.patch(AccountRoutes.PROFILE_USERNAME.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateUsername);

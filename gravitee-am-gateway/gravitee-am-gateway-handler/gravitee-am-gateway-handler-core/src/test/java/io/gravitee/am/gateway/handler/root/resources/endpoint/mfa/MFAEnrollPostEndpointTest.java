@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -183,7 +184,7 @@ public class MFAEnrollPostEndpointTest extends RxWebTestBase {
                     ctx.next();
                 })
                 .handler(mfaEnrollEndpoint)
-                .failureHandler(new MFAEnrollFailureHandler());
+                .failureHandler(new MFAEnrollFailureHandler(mock(GatewayMetricProvider.class)));
 
 
         FactorProvider factorProvider = mock(FactorProvider.class);
@@ -480,7 +481,7 @@ public class MFAEnrollPostEndpointTest extends RxWebTestBase {
                     ctx.next();
                 })
                 .handler(new MFAEnrollPostEndpoint(factorManager, userService))
-                .failureHandler(new MFAEnrollFailureHandler());
+                .failureHandler(new MFAEnrollFailureHandler(mock(GatewayMetricProvider.class)));
 
         testRequest(
                 HttpMethod.POST,

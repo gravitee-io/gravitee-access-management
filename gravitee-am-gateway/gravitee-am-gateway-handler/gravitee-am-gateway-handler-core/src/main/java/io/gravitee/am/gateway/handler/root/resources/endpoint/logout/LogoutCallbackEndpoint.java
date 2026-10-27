@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -55,8 +56,9 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
                                   JWTService jwtService,
                                   UserService userService,
                                   AuthenticationFlowContextService authenticationFlowContextService,
-                                  CertificateManager certificateManager) {
-        super(domain, userService, authenticationFlowContextService);
+                                  CertificateManager certificateManager,
+                                  GatewayMetricProvider metricProvider) {
+        super(domain, userService, authenticationFlowContextService, metricProvider);
         this.jwtService = jwtService;
         this.clientLookupService = clientLookupService;
         this.certificateManager = certificateManager;

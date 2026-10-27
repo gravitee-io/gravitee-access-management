@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
@@ -155,7 +156,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
         mfaChallengeEndpoint =
                 new MFAChallengePostEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
                         domainDataPlane, rateLimiterService, credentialService, verifyAttemptService, emailService, auditService,
-                        deviceIdentifierManager, jwtService, ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME);
+                        deviceIdentifierManager, jwtService, ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME, mock(GatewayMetricProvider.class));
 
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
@@ -169,7 +170,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
                 })
                 .handler(mfaChallengeEndpoint)
                 .handler(new FinalRedirectLocationHandler())
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, mock(GatewayMetricProvider.class)));
         when(domain.getId()).thenReturn("id");
         when(domainDataPlane.getDomain()).thenReturn(domain);
     }
@@ -260,7 +261,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
                 })
                 .handler(mfaChallengeEndpoint)
                 .handler(new FinalRedirectLocationHandler())
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, mock(GatewayMetricProvider.class)));
 
         testRequest(
                 HttpMethod.POST,

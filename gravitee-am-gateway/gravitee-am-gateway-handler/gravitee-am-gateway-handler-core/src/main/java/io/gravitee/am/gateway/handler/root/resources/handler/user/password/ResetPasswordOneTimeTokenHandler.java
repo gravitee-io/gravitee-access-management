@@ -38,7 +38,11 @@ import lombok.CustomLog;
 @CustomLog
 public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
 
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
+
+    public ResetPasswordOneTimeTokenHandler(GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
+    }
 
     @Override
     public void handle(RoutingContext context) {

@@ -50,9 +50,10 @@ public class RegisterVerifyRequestParseHandler extends UserTokenRequestParseHand
     public static final String REGISTRATION_VERIFY_LINK_EXPIRED = "registration_verify_link_expired";
     public static final String UNEXPECTED_ERROR = "unexpected_error";
     private final Domain domain;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public RegisterVerifyRequestParseHandler(Domain domain, UserService userService) {
+    public RegisterVerifyRequestParseHandler(Domain domain, UserService userService, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         super(userService);
         this.domain = domain;
     }

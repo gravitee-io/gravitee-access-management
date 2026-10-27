@@ -57,9 +57,10 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
     private final Domain domain;
     private final UserConsentService userConsentService;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public UserConsentProcessHandler(UserConsentService userConsentService, Domain domain) {
+    public UserConsentProcessHandler(UserConsentService userConsentService, Domain domain, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.userConsentService = userConsentService;
         this.domain = domain;
     }

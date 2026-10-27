@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
+import static org.mockito.Mockito.mock;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -41,7 +43,7 @@ public class ResetPasswordOneTimeTokenHandlerTest extends RxWebTestBase {
 
         router.route("/resetPassword")
                 .handler(BodyHandler.create())
-                .handler(new ResetPasswordOneTimeTokenHandler())
+                .handler(new ResetPasswordOneTimeTokenHandler(mock(GatewayMetricProvider.class)))
                 .handler(rc -> rc.response().end())
                 .failureHandler(new ErrorHandler());
     }

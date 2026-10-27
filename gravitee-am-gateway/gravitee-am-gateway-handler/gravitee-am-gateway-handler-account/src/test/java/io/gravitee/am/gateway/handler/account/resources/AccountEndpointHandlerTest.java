@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.account.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -47,6 +48,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.mockito.Mockito.mock;
 import static io.gravitee.am.common.oidc.StandardClaims.BIRTHDATE;
 import static io.gravitee.am.common.oidc.StandardClaims.EMAIL;
 import static io.gravitee.am.common.oidc.StandardClaims.FAMILY_NAME;
@@ -102,7 +104,7 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
         this.domain.setSelfServiceAccountManagementSettings(selfAccountSettings);
 
         when(user.getUsername()).thenReturn("user1");
-        accountEndpointHandler = new AccountEndpointHandler(accountService, domain);
+        accountEndpointHandler = new AccountEndpointHandler(accountService, domain, mock(GatewayMetricProvider.class));
 
         router.route()
                 .handler(BodyHandler.create())

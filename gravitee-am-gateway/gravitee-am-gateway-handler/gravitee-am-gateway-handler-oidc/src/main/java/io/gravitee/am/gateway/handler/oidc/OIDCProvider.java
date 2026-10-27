@@ -52,6 +52,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.uma.UMAProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.impl.user.UserEnhancer;
@@ -79,6 +80,9 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Vertx vertx;
+
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Autowired
     private Router router;
@@ -219,7 +223,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         userInfoAuthHandler.restoreWithheldClaims(true);
         userInfoAuthHandler.dpopProofValidator(dpopProofValidator);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager, executionContextFactory);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, discoveryService, environment, subjectManager, executionContextFactory, gatewayMetricProvider);
         oidcRouter.route("/userinfo").handler(corsHandler);
         oidcRouter
                 .route(HttpMethod.GET, "/userinfo")

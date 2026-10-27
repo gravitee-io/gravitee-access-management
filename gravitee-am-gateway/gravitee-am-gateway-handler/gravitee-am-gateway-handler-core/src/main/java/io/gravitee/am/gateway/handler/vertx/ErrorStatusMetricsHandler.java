@@ -28,10 +28,6 @@ class ErrorStatusMetricsHandler implements Handler<RoutingContext> {
 
     private final GatewayMetricProvider metricProvider;
 
-    ErrorStatusMetricsHandler() {
-        this(new GatewayMetricProvider());
-    }
-
     ErrorStatusMetricsHandler(GatewayMetricProvider metricProvider) {
         this.metricProvider = metricProvider;
     }

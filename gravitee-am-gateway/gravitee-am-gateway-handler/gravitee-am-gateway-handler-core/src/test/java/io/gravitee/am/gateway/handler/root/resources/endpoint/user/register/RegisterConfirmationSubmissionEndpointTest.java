@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
@@ -60,7 +61,7 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
         when(environment.getProperty(eq(RegisterSubmissionEndpoint.GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
-        RegisterConfirmationSubmissionEndpoint registerConfirmationSubmissionEndpoint = new RegisterConfirmationSubmissionEndpoint(userService, environment);
+        RegisterConfirmationSubmissionEndpoint registerConfirmationSubmissionEndpoint = new RegisterConfirmationSubmissionEndpoint(userService, environment, mock(GatewayMetricProvider.class));
         router.route(HttpMethod.POST, "/confirmRegistration")
                 .handler(BodyHandler.create())
                 .handler(registerConfirmationSubmissionEndpoint)

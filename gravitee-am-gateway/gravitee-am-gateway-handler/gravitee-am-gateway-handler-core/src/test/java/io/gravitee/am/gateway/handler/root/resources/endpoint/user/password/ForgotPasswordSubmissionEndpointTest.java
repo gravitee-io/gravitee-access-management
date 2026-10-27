@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.mockito.Mockito.mock;
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,7 +67,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
         super.setUp();
         reset(accountSettings);
         when(domain.getAccountSettings()).thenReturn(accountSettings);
-        ForgotPasswordSubmissionEndpoint forgotPasswordSubmissionEndpoint = new ForgotPasswordSubmissionEndpoint(userService, domain);
+        ForgotPasswordSubmissionEndpoint forgotPasswordSubmissionEndpoint = new ForgotPasswordSubmissionEndpoint(userService, domain, mock(GatewayMetricProvider.class));
         router.route(HttpMethod.POST, "/forgotPassword")
                 .handler(BodyHandler.create())
                 .handler(forgotPasswordSubmissionEndpoint)

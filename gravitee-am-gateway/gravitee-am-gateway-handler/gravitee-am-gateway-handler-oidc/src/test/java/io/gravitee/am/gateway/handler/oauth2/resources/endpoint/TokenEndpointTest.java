@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.exception.uma.UmaException;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -60,7 +61,10 @@ import static org.mockito.Mockito.when;
 public class TokenEndpointTest extends RxWebTestBase {
 
     @InjectMocks
-    private TokenEndpoint tokenEndpointHandler = new TokenEndpoint();
+    private TokenEndpoint tokenEndpointHandler;
+
+    @Mock
+    private GatewayMetricProvider metricProvider;
 
     @Mock
     private TokenGranter tokenGranter;
@@ -165,6 +169,8 @@ public class TokenEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
                 HttpStatusCode.OK_200, "OK");
+        verify(metricProvider).incrementTokenSuccess();
+        verify(metricProvider, never()).incrementTokenFailure();
     }
 
     @Test
@@ -185,6 +191,8 @@ public class TokenEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
                 HttpStatusCode.INTERNAL_SERVER_ERROR_500, "Internal Server Error");
+        verify(metricProvider).incrementTokenFailure();
+        verify(metricProvider, never()).incrementTokenSuccess();
     }
 
     @Test

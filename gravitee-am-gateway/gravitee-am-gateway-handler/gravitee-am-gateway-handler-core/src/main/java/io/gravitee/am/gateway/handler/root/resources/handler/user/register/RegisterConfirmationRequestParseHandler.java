@@ -30,9 +30,10 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class RegisterConfirmationRequestParseHandler extends UserTokenRequestParseHandler {
 
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public RegisterConfirmationRequestParseHandler(UserService userService) {
+    public RegisterConfirmationRequestParseHandler(UserService userService, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         super(userService);
     }
 

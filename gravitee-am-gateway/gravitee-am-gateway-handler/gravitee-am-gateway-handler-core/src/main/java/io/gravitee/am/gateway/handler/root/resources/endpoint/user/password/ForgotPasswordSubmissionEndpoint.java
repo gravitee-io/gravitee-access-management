@@ -50,9 +50,10 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
 
     private final UserService userService;
     private final Domain domain;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public ForgotPasswordSubmissionEndpoint(UserService userService, Domain domain) {
+    public ForgotPasswordSubmissionEndpoint(UserService userService, Domain domain, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.userService = userService;
         this.domain = domain;
     }

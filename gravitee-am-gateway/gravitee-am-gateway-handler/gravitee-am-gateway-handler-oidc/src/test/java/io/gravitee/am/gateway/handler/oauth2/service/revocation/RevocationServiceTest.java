@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.revocation;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.OAuthRevocationTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -51,6 +52,9 @@ public class RevocationServiceTest {
     private TokenService tokenService;
 
     @Mock
+    private GatewayMetricProvider metricProvider;
+
+    @Mock
     private AuditService auditService;
 
     @After
@@ -76,6 +80,8 @@ public class RevocationServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
+        verify(metricProvider).incrementRevokeFailure();
+        verify(metricProvider, never()).incrementRevokeSuccess();
 
         verify(tokenService, times(1)).getAccessToken("token", client);
         verify(tokenService, never()).deleteAccessToken(anyString());
@@ -98,6 +104,9 @@ public class RevocationServiceTest {
         TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 
         testObserver.assertComplete();
+        // nothing deleted, so neither success nor failure is reported
+        verify(metricProvider, never()).incrementRevokeSuccess();
+        verify(metricProvider, never()).incrementRevokeFailure();
         testObserver.assertNoErrors();
 
         verify(tokenService, times(1)).getAccessToken("token", client);
@@ -128,6 +137,8 @@ public class RevocationServiceTest {
 
         verify(tokenService, times(1)).getAccessToken("token", client);
         verify(tokenService, times(1)).deleteAccessToken("token");
+        verify(metricProvider).incrementRevokeSuccess();
+        verify(metricProvider, never()).incrementRevokeFailure();
         verify(tokenService, never()).getRefreshToken(anyString(), any());
         verify(tokenService, never()).deleteRefreshToken(anyString());
 

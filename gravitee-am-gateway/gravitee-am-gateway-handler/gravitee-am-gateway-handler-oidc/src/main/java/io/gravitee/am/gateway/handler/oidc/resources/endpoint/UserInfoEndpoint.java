@@ -92,7 +92,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final SubjectManager subjectManager;
     private final ExecutionContextFactory executionContextFactory;
-    private GatewayMetricProvider metricProvider;
+    private final GatewayMetricProvider metricProvider;
     private final boolean legacyOpenidScope;
 
     public UserInfoEndpoint(UserEnhancer userEnhancer,
@@ -101,7 +101,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                             OpenIDDiscoveryService openIDDiscoveryService,
                             Environment environment,
                             SubjectManager subjectManager,
-                            ExecutionContextFactory executionContextFactory) {
+                            ExecutionContextFactory executionContextFactory, GatewayMetricProvider metricProvider) {
         this.userEnhancer = userEnhancer;
         this.jwtService = jwtService;
         this.jweService = jweService;
@@ -109,7 +109,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         this.legacyOpenidScope = environment.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false);
         this.subjectManager = subjectManager;
         this.executionContextFactory = executionContextFactory;
-        this.metricProvider = new GatewayMetricProvider();
+        this.metricProvider = metricProvider;
     }
 
     @Override
