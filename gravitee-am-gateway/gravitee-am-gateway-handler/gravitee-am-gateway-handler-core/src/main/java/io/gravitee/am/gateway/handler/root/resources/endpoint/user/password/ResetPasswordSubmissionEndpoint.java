@@ -48,11 +48,12 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
     public static final String GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS = "legacy.resetPassword.keepParams";
     private final UserService userService;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
     private final boolean keepParams;
 
-    public ResetPasswordSubmissionEndpoint(UserService userService, Environment environment) {
+    public ResetPasswordSubmissionEndpoint(UserService userService, Environment environment, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.userService = userService;
         this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS, boolean.class, true);
     }

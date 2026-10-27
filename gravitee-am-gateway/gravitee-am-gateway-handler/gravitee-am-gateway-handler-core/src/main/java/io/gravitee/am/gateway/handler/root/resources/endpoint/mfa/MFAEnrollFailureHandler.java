@@ -33,10 +33,11 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 
 public class MFAEnrollFailureHandler extends AbstractErrorHandler {
     private static final String ERROR_CODE_VALUE = "enrollment_channel_invalid";
-    GatewayMetricProvider gatewayMetricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider gatewayMetricProvider;
 
-    public MFAEnrollFailureHandler() {
+    public MFAEnrollFailureHandler(GatewayMetricProvider gatewayMetricProvider) {
         super(RootProvider.PATH_MFA_ENROLL);
+        this.gatewayMetricProvider = gatewayMetricProvider;
     }
 
     @Override

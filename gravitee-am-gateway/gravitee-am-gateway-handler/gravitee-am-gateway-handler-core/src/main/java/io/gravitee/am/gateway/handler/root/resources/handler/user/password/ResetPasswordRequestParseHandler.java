@@ -31,9 +31,10 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class ResetPasswordRequestParseHandler extends UserTokenRequestParseHandler {
 
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public ResetPasswordRequestParseHandler(UserService userService) {
+    public ResetPasswordRequestParseHandler(UserService userService, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         super(userService);
     }
 

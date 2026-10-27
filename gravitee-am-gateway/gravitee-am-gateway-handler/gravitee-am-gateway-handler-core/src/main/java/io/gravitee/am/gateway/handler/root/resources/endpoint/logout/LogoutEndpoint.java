@@ -34,6 +34,7 @@ import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
@@ -78,8 +79,9 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
                           AuthenticationFlowContextService authenticationFlowContextService,
                           IdentityProviderManager identityProviderManager,
                           CertificateManager certificateManager,
-                          WebClient webClient) {
-        super(domain, userService, authenticationFlowContextService);
+                          WebClient webClient,
+                          GatewayMetricProvider metricProvider) {
+        super(domain, userService, authenticationFlowContextService, metricProvider);
         this.jwtService = jwtService;
         this.clientLookupService = clientLookupService;
         this.certificateManager = certificateManager;

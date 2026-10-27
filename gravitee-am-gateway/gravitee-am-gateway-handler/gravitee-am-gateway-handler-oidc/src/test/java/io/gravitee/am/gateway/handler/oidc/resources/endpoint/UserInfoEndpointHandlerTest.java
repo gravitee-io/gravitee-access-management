@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
@@ -107,7 +108,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         super.setUp();
 
         when(env.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false)).thenReturn(false);
-        userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, openIDDiscoveryService, env, subjectManager, executionContextFactory);
+        userInfoEndpoint = new UserInfoEndpoint(userEnhancer, jwtService, jweService, openIDDiscoveryService, env, subjectManager, executionContextFactory, mock(GatewayMetricProvider.class));
 
         router.route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoEndpoint);

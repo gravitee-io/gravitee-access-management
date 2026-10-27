@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -140,7 +141,7 @@ public class MFAChallengeGetEndpointTest extends RxWebTestBase {
                     }
                 })
                 .handler(mfaChallengeGetEndpoint)
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, mock(GatewayMetricProvider.class)));
         when(domain.getId()).thenReturn("id");
         when(domainDataPlane.getDomain()).thenReturn(domain);
     }

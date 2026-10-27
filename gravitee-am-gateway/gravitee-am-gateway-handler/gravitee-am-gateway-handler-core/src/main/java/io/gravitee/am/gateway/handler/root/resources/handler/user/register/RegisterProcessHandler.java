@@ -48,9 +48,10 @@ public class RegisterProcessHandler extends UserRequestHandler {
 
     private final UserService userService;
     private final Domain domain;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public RegisterProcessHandler(UserService userService, Domain domain) {
+    public RegisterProcessHandler(UserService userService, Domain domain, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.userService = userService;
         this.domain = domain;
     }

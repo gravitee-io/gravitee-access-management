@@ -56,8 +56,9 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
     private ThymeleafTemplateEngine engine;
     private ClientSyncService clientSyncService;
     private JWTService jwtService;
-    private GatewayMetricProvider metricProvider = new GatewayMetricProvider();
-    public ErrorEndpoint(Domain domain, ThymeleafTemplateEngine engine, ClientSyncService clientSyncService, JWTService jwtService) {
+    private final GatewayMetricProvider metricProvider;
+    public ErrorEndpoint(Domain domain, ThymeleafTemplateEngine engine, ClientSyncService clientSyncService, JWTService jwtService, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.domain = domain;
         this.engine = engine;
         this.clientSyncService = clientSyncService;

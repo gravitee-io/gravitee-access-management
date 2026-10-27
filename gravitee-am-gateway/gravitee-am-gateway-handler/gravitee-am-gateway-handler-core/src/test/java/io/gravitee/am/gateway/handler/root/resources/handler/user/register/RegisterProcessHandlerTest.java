@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -33,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
 
+import static org.mockito.Mockito.mock;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.REGISTRATION_RESPONSE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
@@ -64,7 +66,7 @@ public class RegisterProcessHandlerTest {
 
     @BeforeEach
     public void setUp() {
-        registerProcessHandler = new RegisterProcessHandler(userService, domain);
+        registerProcessHandler = new RegisterProcessHandler(userService, domain, mock(GatewayMetricProvider.class));
         context = new SpyRoutingContext("/register");
         context.put(CONTEXT_PATH, "");
         // The registration email links back to the host the user reached us on, so the handler has to

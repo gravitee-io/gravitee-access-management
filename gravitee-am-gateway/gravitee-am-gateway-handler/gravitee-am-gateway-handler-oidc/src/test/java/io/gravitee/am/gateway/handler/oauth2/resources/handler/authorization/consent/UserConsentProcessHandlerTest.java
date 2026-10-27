@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.mockito.Mockito.mock;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -100,7 +102,7 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
                 });
 
         router.route(HttpMethod.POST, "/oauth/consent")
-                .handler(new UserConsentProcessHandler(userConsentService, domain))
+                .handler(new UserConsentProcessHandler(userConsentService, domain, mock(GatewayMetricProvider.class)))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(rc -> {
                     if (rc.failure() instanceof OAuth2Exception oAuth2Exception) {

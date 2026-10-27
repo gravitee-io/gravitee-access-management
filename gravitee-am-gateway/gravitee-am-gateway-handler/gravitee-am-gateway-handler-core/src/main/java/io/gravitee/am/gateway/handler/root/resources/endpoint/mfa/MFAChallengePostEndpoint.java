@@ -121,8 +121,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                     AuditService auditService,
                                     DeviceIdentifierManager deviceIdentifierManager,
                                     JWTService jwtService,
-                                    String rememberDeviceCookieName
-    ) {
+                                    String rememberDeviceCookieName, GatewayMetricProvider gatewayMetricProvider) {
         super(factorManager, engine, applicationContext, domainDataPlane, rateLimiterService, auditService);
         this.userService = userService;
         this.deviceService = deviceService;
@@ -132,7 +131,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
         this.deviceIdentifierManager = deviceIdentifierManager;
         this.jwtService = jwtService;
         this.rememberDeviceCookieName = rememberDeviceCookieName;
-        this.gatewayMetricProvider = new GatewayMetricProvider();
+        this.gatewayMetricProvider = gatewayMetricProvider;
     }
 
     @Override

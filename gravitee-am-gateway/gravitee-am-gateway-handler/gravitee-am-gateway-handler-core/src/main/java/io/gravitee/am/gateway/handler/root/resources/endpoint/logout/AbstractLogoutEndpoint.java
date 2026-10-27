@@ -67,11 +67,13 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     protected Domain domain;
     private final AuthenticationFlowContextService authenticationFlowContextService;
     protected UserService userService;
-    protected GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    protected final GatewayMetricProvider metricProvider;
 
     protected AbstractLogoutEndpoint(Domain domain,
                                   UserService userService,
-                                  AuthenticationFlowContextService authenticationFlowContextService) {
+                                  AuthenticationFlowContextService authenticationFlowContextService,
+                                  GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.domain = domain;
         this.userService = userService;
         this.authenticationFlowContextService = authenticationFlowContextService;

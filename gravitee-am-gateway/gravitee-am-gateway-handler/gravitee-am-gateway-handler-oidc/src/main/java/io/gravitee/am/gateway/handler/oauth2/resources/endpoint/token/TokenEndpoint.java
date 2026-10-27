@@ -41,12 +41,11 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  */
 public class TokenEndpoint implements Handler<RoutingContext> {
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
     private TokenGranter tokenGranter;
 
-    public TokenEndpoint() { }
-
-    public TokenEndpoint(TokenGranter tokenGranter) {
+    public TokenEndpoint(TokenGranter tokenGranter, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.tokenGranter = tokenGranter;
     }
 

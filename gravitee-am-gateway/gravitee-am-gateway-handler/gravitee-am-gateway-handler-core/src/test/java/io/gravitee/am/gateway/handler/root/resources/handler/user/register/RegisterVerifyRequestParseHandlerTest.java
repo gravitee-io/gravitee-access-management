@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
@@ -40,6 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.util.stream.Stream;
 
+import static org.mockito.Mockito.mock;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.INVALID_TOKEN;
@@ -74,7 +76,7 @@ public class RegisterVerifyRequestParseHandlerTest {
 
     @BeforeEach
     public void setUp() {
-        registerVerifyRequestParseHandler = new RegisterVerifyRequestParseHandler(domain, userService);
+        registerVerifyRequestParseHandler = new RegisterVerifyRequestParseHandler(domain, userService, mock(GatewayMetricProvider.class));
         context = new SpyRoutingContext("/verifyRegistration");
         context.put(CONTEXT_PATH, "");
     }

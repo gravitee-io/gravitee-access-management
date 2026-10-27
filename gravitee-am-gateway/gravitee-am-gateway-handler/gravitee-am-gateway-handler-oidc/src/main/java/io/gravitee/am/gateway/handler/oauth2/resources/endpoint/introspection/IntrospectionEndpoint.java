@@ -38,9 +38,10 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
     private IntrospectionService introspectionService;
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    private final GatewayMetricProvider metricProvider;
 
-    public IntrospectionEndpoint(IntrospectionService introspectionService) {
+    public IntrospectionEndpoint(IntrospectionService introspectionService, GatewayMetricProvider metricProvider) {
+        this.metricProvider = metricProvider;
         this.introspectionService = introspectionService;
     }
 

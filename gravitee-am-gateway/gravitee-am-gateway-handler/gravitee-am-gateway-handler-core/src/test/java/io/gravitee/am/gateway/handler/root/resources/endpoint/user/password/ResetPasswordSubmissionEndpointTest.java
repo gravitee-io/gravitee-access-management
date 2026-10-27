@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -63,7 +64,7 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
         super.setUp();
         when(environment.getProperty(eq(ResetPasswordSubmissionEndpoint.GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
 
-        ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService, environment);
+        ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService, environment, mock(GatewayMetricProvider.class));
         router.route(HttpMethod.POST, "/resetPassword")
                 .handler(BodyHandler.create())
                 .handler(resetPasswordSubmissionEndpoint)

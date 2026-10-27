@@ -46,10 +46,10 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
     private final AuthenticationFlowContextService authenticationFlowContextService;
     private final GatewayMetricProvider gatewayMetricProvider;
 
-    public MFAChallengeFailureHandler(AuthenticationFlowContextService authenticationFlowContextService) {
+    public MFAChallengeFailureHandler(AuthenticationFlowContextService authenticationFlowContextService, GatewayMetricProvider gatewayMetricProvider) {
         super(RootProvider.PATH_ERROR);
         this.authenticationFlowContextService = authenticationFlowContextService;
-        this.gatewayMetricProvider = new GatewayMetricProvider();
+        this.gatewayMetricProvider = gatewayMetricProvider;
     }
 
     @Override

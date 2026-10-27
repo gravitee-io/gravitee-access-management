@@ -42,7 +42,9 @@ import static org.mockito.Mockito.mock;
 @RunWith(MockitoJUnitRunner.class)
 public class MFAEnrollFailureHandlerTest {
 
-    private MFAEnrollFailureHandler handler = new MFAEnrollFailureHandler();
+    private final GatewayMetricProvider metricProvider = mock(GatewayMetricProvider.class);
+
+    private MFAEnrollFailureHandler handler = new MFAEnrollFailureHandler(metricProvider);
 
     @Mock
     RoutingContext ctx;
@@ -56,11 +58,8 @@ public class MFAEnrollFailureHandlerTest {
     @Mock
     Session session;
 
-    private final GatewayMetricProvider metricProvider = mock(GatewayMetricProvider.class);
-
     @Before
     public void setUp() throws Exception {
-        handler.gatewayMetricProvider = metricProvider;
         Mockito.when(ctx.response()).thenReturn(response);
         Mockito.when(ctx.request()).thenReturn(request);
         Mockito.when(ctx.session()).thenReturn(session);

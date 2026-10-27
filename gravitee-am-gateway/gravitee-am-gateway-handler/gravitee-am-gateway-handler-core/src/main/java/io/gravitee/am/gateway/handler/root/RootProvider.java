@@ -491,9 +491,9 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(PATH_LOGOUT)
                 .handler(new ClientRequestParseHandler(clientLookupService).setRequired(false).setContinueOnError(true))
                 .handler(new UserRememberMeResponseHandler(rememberMeCookieName))
-                .handler(new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
+                .handler(new LogoutEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient, gatewayMetricProvider));
         rootRouter.route(PATH_LOGOUT_CALLBACK)
-                .handler(new LogoutCallbackEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, certificateManager));
+                .handler(new LogoutCallbackEndpoint(domain, clientLookupService, jwtService, userService, authenticationFlowContextService, certificateManager, gatewayMetricProvider));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain, gatewayMetricProvider, certificateManager));
@@ -554,7 +554,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_ENROLLMENT))
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain, applicationContext, ruleEngine))
-                .failureHandler(new MFAEnrollFailureHandler());
+                .failureHandler(new MFAEnrollFailureHandler(gatewayMetricProvider));
 
         rootRouter.post(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
@@ -564,7 +564,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new MFAEnrollPostEndpoint(factorManager, userService))
                 .handler(handleWhen(ctx -> Boolean.TRUE.equals(ctx.session().get(MFA_ENROLLMENT_COMPLETED_KEY)), policyChainHandler.create(ExtensionPoint.POST_MFA_ENROLLMENT)))
                 .handler(new FinalRedirectLocationHandler())
-                .failureHandler(new MFAEnrollFailureHandler());
+                .failureHandler(new MFAEnrollFailureHandler(gatewayMetricProvider));
 
         rootRouter.get(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
@@ -577,7 +577,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_CHALLENGE))
                 .handler(new MFAChallengeGetEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
                         domainDataPlane,  rateLimiterService, auditService))
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, gatewayMetricProvider));
         rootRouter.post(PATH_MFA_CHALLENGE_SEND)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
@@ -587,7 +587,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeSendEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
                         domainDataPlane, rateLimiterService, auditService))
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, gatewayMetricProvider));
         rootRouter.post(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
@@ -597,10 +597,10 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengePostEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
                         domainDataPlane, rateLimiterService, credentialService, verifyAttemptService, emailService, auditService,
-                        deviceIdentifierManager, jwtService, rememberDeviceCookieName))
+                        deviceIdentifierManager, jwtService, rememberDeviceCookieName, gatewayMetricProvider))
                 .handler(handleWhen(ctx -> Boolean.TRUE.equals(ctx.session().get(MFA_CHALLENGE_COMPLETED_KEY)), policyChainHandler.create(ExtensionPoint.POST_MFA_CHALLENGE)))
                 .handler(new FinalRedirectLocationHandler())
-                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService, gatewayMetricProvider));
 
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
@@ -703,7 +703,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(botDetectionHandler)
                 .handler(registerAccessHandler)
                 .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.USER_REGISTERED))
-                .handler(new RegisterProcessHandler(userService, domain))
+                .handler(new RegisterProcessHandler(userService, domain, gatewayMetricProvider))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
                 .handler(new RegisterSubmissionEndpoint(environment));
@@ -711,22 +711,22 @@ public class RootProvider extends AbstractProtocolProvider {
                 .failureHandler(new RegisterFailureHandler());
 
         rootRouter.route(GET, PATH_CONFIRM_REGISTRATION)
-                .handler(new RegisterConfirmationRequestParseHandler(userService))
+                .handler(new RegisterConfirmationRequestParseHandler(userService, gatewayMetricProvider))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTRATION_CONFIRMATION))
                 .handler(localeHandler)
                 .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager));
         rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
-                .handler(new RegisterConfirmationRequestParseHandler(userService))
+                .handler(new RegisterConfirmationRequestParseHandler(userService, gatewayMetricProvider))
                 .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.REGISTRATION_CONFIRMATION))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTRATION_CONFIRMATION))
-                .handler(new RegisterConfirmationSubmissionEndpoint(userService, environment));
+                .handler(new RegisterConfirmationSubmissionEndpoint(userService, environment, gatewayMetricProvider));
 
         // Registration Verify
         rootRouter.route(GET, PATH_VERIFY_REGISTRATION)
-                .handler(new RegisterVerifyRequestParseHandler(domain, userService))
+                .handler(new RegisterVerifyRequestParseHandler(domain, userService, gatewayMetricProvider))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(localeHandler)
                 .handler(new RegisterVerifyEndpoint(domain, thymeleafTemplateEngine));
@@ -745,26 +745,26 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
+                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain, gatewayMetricProvider));
 
         router.route(PATH_FORGOT_PASSWORD).failureHandler(new ErrorHandler(PATH_ERROR, true));
 
         rootRouter.route(GET, PATH_RESET_PASSWORD)
-                .handler(new ResetPasswordRequestParseHandler(userService))
+                .handler(new ResetPasswordRequestParseHandler(userService, gatewayMetricProvider))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(userTokenRequestParseHandler)
-                .handler(new ResetPasswordOneTimeTokenHandler())
+                .handler(new ResetPasswordOneTimeTokenHandler(gatewayMetricProvider))
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager, identityProviderManager, deviceIdentifierManager));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
-                .handler(new ResetPasswordRequestParseHandler(userService))
-                .handler(new ResetPasswordOneTimeTokenHandler())
+                .handler(new ResetPasswordRequestParseHandler(userService, gatewayMetricProvider))
+                .handler(new ResetPasswordOneTimeTokenHandler(gatewayMetricProvider))
                 .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.USER_PASSWORD_RESET))
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
-                .handler(new ResetPasswordSubmissionEndpoint(userService, environment));
+                .handler(new ResetPasswordSubmissionEndpoint(userService, environment, gatewayMetricProvider));
 
         rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
@@ -776,7 +776,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // error route
         rootRouter.route(GET, PATH_ERROR)
-                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
+                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService, gatewayMetricProvider));
 
         // error handler
         errorHandler(rootRouter);

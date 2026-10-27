@@ -45,7 +45,9 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
     @Autowired
     private AuditService auditService;
 
-    private final GatewayMetricProvider metricProvider = new GatewayMetricProvider();
+    @Autowired
+
+    private GatewayMetricProvider metricProvider;
 
     @Override
     public Completable revoke(RevocationTokenRequest request, Client client) {

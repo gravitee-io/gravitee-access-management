@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.In
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -43,6 +44,9 @@ public class IntrospectionEndpointTest extends RxWebTestBase {
 
     @Mock
     private IntrospectionService introspectionService;
+
+    @Mock
+    private GatewayMetricProvider metricProvider;
 
     @Override
     public void setUp() throws Exception {
@@ -133,6 +137,44 @@ public class IntrospectionEndpointTest extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK");
     }
 
+    @Test
+    public void shouldCountSuccess_whenTokenIsActive() throws Exception {
+        withClient();
+        Mockito.when(introspectionService.introspect(Mockito.any())).thenReturn(Single.just(new IntrospectionResponse(true)));
 
+        testRequest(HttpMethod.POST, "/oauth/introspect?token=accesstoken", HttpStatusCode.OK_200, "OK");
 
+        Mockito.verify(metricProvider).incrementIntrospectSuccess();
+        Mockito.verify(metricProvider, Mockito.never()).incrementIntrospectFailure();
+    }
+
+    @Test
+    public void shouldCountSuccess_whenTokenIsInactive() throws Exception {
+        withClient();
+        Mockito.when(introspectionService.introspect(Mockito.any())).thenReturn(Single.just(new IntrospectionResponse(false)));
+
+        testRequest(HttpMethod.POST, "/oauth/introspect?token=accesstoken", HttpStatusCode.OK_200, "OK");
+
+        Mockito.verify(metricProvider).incrementIntrospectSuccess();
+        Mockito.verify(metricProvider, Mockito.never()).incrementIntrospectFailure();
+    }
+
+    @Test
+    public void shouldCountFailure_whenTokenIsMissing() throws Exception {
+        withClient();
+
+        testRequest(HttpMethod.POST, "/oauth/introspect", HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+
+        Mockito.verify(metricProvider).incrementIntrospectFailure();
+        Mockito.verify(metricProvider, Mockito.never()).incrementIntrospectSuccess();
+    }
+
+    private void withClient() {
+        io.gravitee.am.model.oidc.Client client = new io.gravitee.am.model.oidc.Client();
+        client.setClientId("my-client-id");
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+    }
 }
