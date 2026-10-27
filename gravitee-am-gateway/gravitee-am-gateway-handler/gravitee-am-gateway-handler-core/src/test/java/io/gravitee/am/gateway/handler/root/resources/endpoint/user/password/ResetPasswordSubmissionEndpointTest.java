@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -59,18 +60,58 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
     @Mock
     private Environment environment;
 
+    private final GatewayMetricProvider metricProvider = mock(GatewayMetricProvider.class);
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         when(environment.getProperty(eq(ResetPasswordSubmissionEndpoint.GATEWAY_ENDPOINT_RESET_PWD_KEEP_PARAMS), any(), eq(true))).thenReturn(true);
 
-        ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService, environment, mock(GatewayMetricProvider.class));
+        ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService, environment, metricProvider);
         router.route(HttpMethod.POST, "/resetPassword")
                 .handler(BodyHandler.create())
                 .handler(resetPasswordSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
     }
 
+
+    private void resetPasswordFailsWith(Throwable error) throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        User user = new User();
+        user.setId("user-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            ((io.vertx.ext.web.impl.RoutingContextInternal) routingContext.getDelegate()).setSession(mock(Session.class));
+            routingContext.put("client", client);
+            routingContext.put("user", user);
+            routingContext.next();
+        });
+        when(userService.resetPassword(eq(client), eq(user), any())).thenReturn(Single.error(error));
+
+        testRequest(
+                HttpMethod.POST, "/resetPassword?client_id=client-id",
+                this::postPassword,
+                resp -> assertNotNull(resp.headers().get("location")),
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldCountResetPasswordFailure_whenResetFails() throws Exception {
+        resetPasswordFailsWith(new RuntimeException("technical error"));
+
+        verify(metricProvider).incrementResetPasswordFailure();
+        verify(metricProvider, never()).incrementResetPasswordSuccess();
+    }
+
+    @Test
+    public void shouldNotCountResetPasswordFailure_whenPasswordPolicyViolation() throws Exception {
+        resetPasswordFailsWith(new InvalidPasswordException("password policy violation"));
+
+        verify(metricProvider, never()).incrementResetPasswordFailure();
+        verify(metricProvider, never()).incrementResetPasswordSuccess();
+    }
 
     @Test
     public void shouldRedirectToClaimAfterForcePasswordReset() throws Exception {
