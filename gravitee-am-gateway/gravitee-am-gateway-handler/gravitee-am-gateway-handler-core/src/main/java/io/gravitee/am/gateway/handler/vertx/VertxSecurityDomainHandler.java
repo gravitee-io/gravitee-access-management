@@ -110,6 +110,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     protected void doStart() throws Exception {
         super.doStart();
 
+        // count the responses sent with an error status code (4xx, 5xx)
+        router.route().handler(new ErrorStatusMetricsHandler());
+
         if(removeXForwardedHeaders){
             log.info("Adding XForwardedHeadersSanitizer handler, headers will be removed from incoming requests");
             router.route().handler(new XForwardedHeadersSanitizer());
