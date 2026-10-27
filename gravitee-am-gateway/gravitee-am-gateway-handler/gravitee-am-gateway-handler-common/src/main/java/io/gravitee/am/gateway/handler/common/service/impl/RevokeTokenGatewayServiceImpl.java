@@ -67,7 +67,6 @@ public class RevokeTokenGatewayServiceImpl extends AbstractService implements Re
     private Domain domain;
 
     @Autowired
-
     private GatewayMetricProvider metricProvider;
 
     @Override

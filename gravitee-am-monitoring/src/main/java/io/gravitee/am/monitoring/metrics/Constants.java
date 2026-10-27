@@ -37,6 +37,7 @@ public interface Constants {
     String METRICS_PROTECTED_RESOURCE_EVENTS = METRICS_NAME_PREFIX + "protected_resource_evt";
 
     String METRICS_AUTH_EVENTS = METRICS_NAME_PREFIX + "auth_evt";
+    String METRICS_AUTH_PASSWORDLESS_EVENTS = METRICS_NAME_PREFIX + "auth_passwordless_evt";
 
     String METRICS_PROCESSED_STAGING_EMAILS = METRICS_NAME_PREFIX + "processed_staging_emails";
     String METRICS_DROPPED_EMAILS = METRICS_NAME_PREFIX + "dropped_emails";

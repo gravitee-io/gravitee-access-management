@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Tags;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_PASSWORDLESS_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_CONSENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_ERRORS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_FORGOT_PASSWORD;
@@ -97,6 +98,12 @@ public class GatewayMetricProvider {
     private final CounterHelper socialFailedAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
             Tag.of(TAG_AUTH_STATUS, "FAILURE"),
             Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_EXTERNAL)));
+
+    private final CounterHelper passwordlessSuccessfulAuth = new CounterHelper(METRICS_AUTH_PASSWORDLESS_EVENTS, Tags.of(
+            Tag.of(TAG_STATUS, "SUCCESS")));
+
+    private final CounterHelper passwordlessFailedAuth = new CounterHelper(METRICS_AUTH_PASSWORDLESS_EVENTS, Tags.of(
+            Tag.of(TAG_STATUS, "FAILURE")));
 
     private final CounterHelper introspectSuccess = new CounterHelper(METRICS_INTROSPECTS, Tags.of(
             Tag.of(TAG_STATUS, "SUCCESS")));
@@ -256,6 +263,14 @@ public class GatewayMetricProvider {
         } else {
             this.internalFailedAuth.increment();
         }
+    }
+
+    public void incrementSuccessfulPasswordlessAuth() {
+        this.passwordlessSuccessfulAuth.increment();
+    }
+
+    public void incrementFailedPasswordlessAuth() {
+        this.passwordlessFailedAuth.increment();
     }
 
     public void incrementError() {
