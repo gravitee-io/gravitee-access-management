@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { LayoutSlotsProvider, Toaster, TooltipProvider } from '@gravitee/graphene-core';
+import { LayoutSlotsProvider, ThemeProvider, Toaster, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { authRoutes } from '../features/auth/routes';
@@ -79,7 +79,14 @@ export function App() {
                                                     <Route path="organization/*" element={<PlaceholderPage title="Organization" />} />
                                                 </Route>
                                             </Route>
-                                            <Route path="*" element={<NotFoundPage />} />
+                                            <Route
+                                                path="*"
+                                                element={
+                                                    <ThemeProvider defaultMode="system">
+                                                        <NotFoundPage />
+                                                    </ThemeProvider>
+                                                }
+                                            />
                                         </Routes>
                                     </SessionGate>
                                 }
