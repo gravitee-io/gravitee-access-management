@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.model;
 
+import io.gravitee.am.model.cursor.CursorRequest.SortDirection;
 import org.junit.jupiter.api.Test;
+
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,43 +27,63 @@ class CursorApiRequestTest {
 
     @Test
     void shouldRoundTripAnEncodedCursor() {
-        CursorApiRequest decoded = CursorApiRequest.decode(new CursorApiRequest("an-id", "a-sort-value").encode());
+        CursorApiRequest decoded = CursorApiRequest.decode(cursor("a-sort-value").encode(), "name", "DESC");
 
         assertEquals("an-id", decoded.id());
+        assertEquals("name", decoded.sortField());
+        assertEquals(SortDirection.DESC, decoded.sortDirection());
         assertEquals("a-sort-value", decoded.lastSortValue());
     }
 
     @Test
-    void shouldRoundTripASortValueContainingTheSeparator() {
-        CursorApiRequest decoded = CursorApiRequest.decode(new CursorApiRequest("an-id", "a##sort##value").encode());
+    void shouldKeepASortValueContainingTheSeparator() {
+        assertEquals("a##sort##value", CursorApiRequest.decode(cursor("a##sort##value").encode(), "name", "DESC").lastSortValue());
+    }
 
-        assertEquals("an-id", decoded.id());
-        assertEquals("a##sort##value", decoded.lastSortValue());
+    @Test
+    void shouldMatchTheDirectionIgnoringCase() {
+        assertEquals(SortDirection.DESC, CursorApiRequest.decode(cursor("v").encode(), "name", "desc").sortDirection());
+    }
+
+    @Test
+    void shouldRejectACursorIssuedForAnotherSortField() {
+        assertEquals("Query parameter 'cursor' does not match the sort and dir query parameters",
+                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(cursor("v").encode(), "type", "DESC")).getMessage());
+    }
+
+    @Test
+    void shouldRejectACursorIssuedForAnotherDirection() {
+        assertEquals("Query parameter 'cursor' does not match the sort and dir query parameters",
+                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(cursor("v").encode(), "name", "ASC")).getMessage());
     }
 
     @Test
     void shouldRejectAMissingCursor() {
         assertEquals("Query parameter 'cursor' is required",
-                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(null)).getMessage());
+                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(null, "name", "DESC")).getMessage());
     }
 
     @Test
     void shouldRejectABlankCursor() {
         assertEquals("Query parameter 'cursor' is required",
-                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode("  ")).getMessage());
+                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode("  ", "name", "DESC")).getMessage());
     }
 
     @Test
     void shouldRejectACursorThatIsNotBase64() {
         assertEquals("Query parameter 'cursor' is not valid",
-                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode("not base64!")).getMessage());
+                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode("not base64!", "name", "DESC")).getMessage());
     }
 
     @Test
-    void shouldRejectACursorWithoutBothParts() {
-        String noSeparator = java.util.Base64.getEncoder().encodeToString("just-an-id".getBytes());
+    void shouldRejectACursorWithoutTheSort() {
+        String idAndValueOnly = Base64.getEncoder().encodeToString("an-id##a-sort-value".getBytes());
 
         assertEquals("Query parameter 'cursor' is not valid",
-                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(noSeparator)).getMessage());
+                assertThrows(IllegalArgumentException.class, () -> CursorApiRequest.decode(idAndValueOnly, "name", "DESC")).getMessage());
+    }
+
+    private static CursorApiRequest cursor(String lastSortValue) {
+        return new CursorApiRequest("an-id", "name", SortDirection.DESC, lastSortValue);
     }
 }

@@ -169,11 +169,11 @@ public class TrustedDomainsResource extends AbstractResource {
             @Context UriInfo uriInfo) {
         processCursorRequest(organizationId, environmentId, domainId,
                 () -> {
-                    CursorApiRequest cursorApiRequest = CursorApiRequest.decode(cursorEncoded);
+                    CursorApiRequest cursorApiRequest = CursorApiRequest.decode(cursorEncoded, sort, direction);
                     return new TrustedDomainCursorRequest(
                             cursorApiRequest.lastSortValue(),
                             cursorApiRequest.id(),
-                            CursorRequest.SortDirection.valueOf(direction.toUpperCase()),
+                            cursorApiRequest.sortDirection(),
                             sort,
                             page,
                             usage);
@@ -209,7 +209,7 @@ public class TrustedDomainsResource extends AbstractResource {
             return null;
         }
         var uri = uriInfo.getRequestUriBuilder()
-                .replaceQueryParam(PARAM_CURSOR, new CursorApiRequest(nextCursor.getLastId(), nextCursor.getLastSortValue()).encode())
+                .replaceQueryParam(PARAM_CURSOR, CursorApiRequest.of(nextCursor).encode())
                 .replaceQueryParam(PARAM_PAGE, nextCursor.getPage())
                 .build();
         return baseUri + "?" + uri.getRawQuery();

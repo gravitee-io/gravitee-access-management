@@ -91,8 +91,16 @@ public abstract class AbstractJdbcCursorRepository<T, R, C extends CursorRequest
             return "";
         }
         String comparator = cursor.getSortDirection().isAscending() ? ">" : "<";
-        return " AND (" + sortColumn + " " + comparator + " :cursorLastSortValue OR ("
-                + sortColumn + " = :cursorLastSortValue AND " + idColumn + " " + comparator + " :cursorLastId))";
+        String lastSortValue = cursorSortValueExpression(":cursorLastSortValue");
+        return " AND (" + sortColumn + " " + comparator + " " + lastSortValue + " OR ("
+                + sortColumn + " = " + lastSortValue + " AND " + idColumn + " " + comparator + " :cursorLastId))";
+    }
+
+    /**
+     * The SQL that the sort column is compared with on later pages.
+     */
+    protected String cursorSortValueExpression(String parameter) {
+        return parameter;
     }
 
     protected Single<R> completeEntity(R entity) {

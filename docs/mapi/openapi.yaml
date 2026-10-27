@@ -3033,6 +3033,91 @@ paths:
       - Authentication Device Notifier
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types:
+    get:
+      description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[LIST] permission\
+        \ on the specified organization. Types are sorted ignoring case, then by id.\
+        \ Each returned type omits its schema; read the type by its id to get it.\
+        \ Follow nextCursor to get the next page."
+      operationId: listAuthorizationDetailTypes
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - description: "Page size, at most 50; a larger value is reduced to 50"
+        in: query
+        name: limit
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+      - description: Field to sort by
+        in: query
+        name: sort
+        schema:
+          type: string
+          default: type
+          enum:
+          - type
+          - name
+      - description: Sort direction
+        in: query
+        name: dir
+        schema:
+          type: string
+          default: ASC
+          enum:
+          - ASC
+          - DESC
+      - description: "Page number, starting at 0. Without a cursor, the response starts\
+          \ at this page."
+        in: query
+        name: page
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          minimum: 0
+      - description: "Type to match, ignoring case; * matches any characters"
+        in: query
+        name: q
+        schema:
+          type: string
+      - description: "Position to continue from, as given in a previous page's nextCursor"
+        in: query
+        name: cursor
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationDetailTypeCursorPage"
+          description: A page of the domain's authorization detail types
+        "400":
+          description: "Invalid limit, page, sort, dir or cursor"
+        "500":
+          description: Internal server error
+      summary: List the authorization detail types of a security domain with cursor-based
+        pagination
+      tags:
+      - authorization detail type
+      - domain
     post:
       description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission\
         \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[CREATE] permission\
@@ -13886,6 +13971,21 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    AuthorizationDetailTypeCursorPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizationDetailType"
+        nextCursor:
+          type: string
+        page:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
     AuthorizationEngine:
       type: object
       properties:

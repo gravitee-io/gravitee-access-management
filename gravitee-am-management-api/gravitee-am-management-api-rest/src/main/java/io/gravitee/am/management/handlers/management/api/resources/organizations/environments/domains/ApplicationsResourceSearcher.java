@@ -23,7 +23,6 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationCursorRequest;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.cursor.CursorRequest;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationSearcher;
 import io.gravitee.common.http.MediaType;
@@ -116,11 +115,11 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
         Set<ApplicationExpand> expands = ApplicationExpand.convertToApplicationExpands(expandsParam);
         processCursorRequest(organizationId, environmentId, domainId,
                 () -> {
-                    CursorApiRequest cursorApiRequest = CursorApiRequest.decode(cursorEncoded);
+                    CursorApiRequest cursorApiRequest = CursorApiRequest.decode(cursorEncoded, sort, direction);
                     return new ApplicationCursorRequest(
                             cursorApiRequest.lastSortValue(),
                             cursorApiRequest.id(),
-                            CursorRequest.SortDirection.valueOf(direction.toUpperCase()),
+                            cursorApiRequest.sortDirection(),
                             sort,
                             page,
                             query,
@@ -211,7 +210,7 @@ public class ApplicationsResourceSearcher extends AbstractDomainResource {
         }
         UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
         var uri = requestUriBuilder
-                .replaceQueryParam(PARAM_CURSOR, new CursorApiRequest(nextCursor.getLastId(), nextCursor.getLastSortValue()).encode())
+                .replaceQueryParam(PARAM_CURSOR, CursorApiRequest.of(nextCursor).encode())
                 .replaceQueryParam(PARAM_PAGE, nextCursor.getPage())
                 .build();
         return baseUri + "?" + uri.getRawQuery();
