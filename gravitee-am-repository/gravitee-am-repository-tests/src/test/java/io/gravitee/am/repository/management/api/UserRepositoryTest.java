@@ -1656,6 +1656,26 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValueCount(2);
     }
 
+    @Test
+    public void shouldFindByDomainAndEmailOnlyOnExactMatchIgnoringCase() {
+        final String domain = "domain";
+        for (String email : List.of("test.user@test.com", "testXuser@test.com", "prefix.test.user@test.com", "test.user@test.com.evil")) {
+            User user = createUserWithRandomName();
+            user.setReferenceType(ReferenceType.DOMAIN);
+            user.setReferenceId(domain);
+            user.setEmail(email);
+            userRepository.create(user).blockingGet();
+        }
+
+        TestSubscriber<User> testSubscriber = userRepository.findByDomainAndEmail(domain, "Test.User@test.com", false).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(user -> user.getEmail().equals("test.user@test.com"));
+    }
+
     private void testSearch_strict(String query) {
         final String domain = "domain";
         // create user
