@@ -22,6 +22,7 @@ import {
   setupAuthorizationDetailTypeFixture,
   uniqueType,
   validSchema,
+  waitForAuditReporter,
 } from './fixtures/authorization-detail-type-fixture';
 import {
   createAuthorizationDetailType,
@@ -30,8 +31,7 @@ import {
   patchAuthorizationDetailType,
   patchAuthorizationDetailTypeJson,
 } from '@management-commands/authorization-detail-type-management-commands';
-import { auditIdsOfType, auditsOfType, waitForNewAudit } from '@management-commands/audit-management-commands';
-import { retryUntil } from '@utils-commands/retry';
+import { auditIdsOfType, waitForNewAudit } from '@management-commands/audit-management-commands';
 import { addDomainMembership, userMembership } from '@management-commands/membership-management-commands';
 import { findOrganizationRoleByName } from '@management-commands/role-management-commands';
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
@@ -217,18 +217,7 @@ describe('Not found', () => {
 });
 
 describe('Audit', () => {
-  // A new domain's audit reporter starts asynchronously, and audits sent before it is up are dropped.
-  beforeAll(async () => {
-    const probe = await createFullType();
-    await retryUntil(
-      async () => {
-        await patchAuthorizationDetailType(fixture.domain.id, fixture.accessToken, probe.id, { discovery: true });
-        return (await auditsOfType(fixture.domain.id, fixture.accessToken, UPDATED_AUDIT)).length;
-      },
-      (count) => count > 0,
-      { timeoutMillis: 30000, intervalMillis: 1000 },
-    );
-  }, 60000);
+  beforeAll(() => waitForAuditReporter(fixture), 60000);
 
   it(jira`should audit a successful update with the change ${'AM-7924'}`, async () => {
     const existing = await createFullType();

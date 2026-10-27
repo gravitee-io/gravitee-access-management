@@ -37,12 +37,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -116,5 +118,31 @@ public class AuthorizationDetailTypeResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> authorizationDetailTypeService.patch(domain, authorizationDetailTypeId, patchAuthorizationDetailType, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Operation(
+            operationId = "deleteAuthorizationDetailType",
+            summary = "Delete an authorization detail type",
+            description = "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain " +
+                    "or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment " +
+                    "or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Authorization detail type successfully deleted"),
+            @ApiResponse(responseCode = "404", description = "Authorization detail type not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("authorizationDetailTypeId") String authorizationDetailTypeId,
+            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_AUTHORIZATION_DETAIL_TYPE, Acl.DELETE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> authorizationDetailTypeService.delete(domain, authorizationDetailTypeId, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

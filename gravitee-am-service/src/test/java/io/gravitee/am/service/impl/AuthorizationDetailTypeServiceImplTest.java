@@ -336,6 +336,59 @@ class AuthorizationDetailTypeServiceImplTest {
     }
 
     @Test
+    void shouldDelete() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(repository.delete("id-1")).thenReturn(Completable.complete());
+        when(eventService.create(any(), eq(domain))).thenReturn(Single.just(new Event()));
+
+        service.delete(domain, "id-1", principal()).test().assertComplete();
+
+        verify(repository).delete("id-1");
+
+        ArgumentCaptor<Event> event = ArgumentCaptor.forClass(Event.class);
+        verify(eventService).create(event.capture(), eq(domain));
+        assertThat(event.getValue().getType()).isEqualTo(Type.AUTHORIZATION_DETAIL_TYPE);
+        assertThat(event.getValue().getPayload().getId()).isEqualTo("id-1");
+        assertThat(event.getValue().getPayload().getReferenceType()).isEqualTo(ReferenceType.DOMAIN);
+        assertThat(event.getValue().getPayload().getReferenceId()).isEqualTo(DOMAIN_ID);
+        assertThat(event.getValue().getPayload().getAction()).isEqualTo(Action.DELETE);
+
+        Audit audit = reportedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+        assertThat(audit.getActor().getId()).isEqualTo("principal-1");
+        assertThat(audit.getReferenceType()).isEqualTo(ReferenceType.DOMAIN);
+        assertThat(audit.getReferenceId()).isEqualTo(DOMAIN_ID);
+        assertThat(audit.getTarget().getId()).isEqualTo("id-1");
+        assertThat(audit.getTarget().getType()).isEqualTo(EntityType.AUTHORIZATION_DETAIL_TYPE);
+        assertThat(audit.getTarget().getAlternativeId()).isEqualTo("payment_initiation");
+    }
+
+    @Test
+    void shouldRejectDeleteOfUnknownType() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "unknown")).thenReturn(Maybe.empty());
+
+        service.delete(domain, "unknown", principal()).test()
+                .assertError(AuthorizationDetailTypeNotFoundException.class);
+
+        verify(repository, never()).delete(any());
+        verify(eventService, never()).create(any(), any());
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldWrapDeleteRepositoryFailure() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(repository.delete("id-1")).thenReturn(Completable.error(new RuntimeException("boom")));
+
+        service.delete(domain, "id-1", principal()).test()
+                .assertError(TechnicalManagementException.class);
+
+        verify(eventService, never()).create(any(), any());
+        assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED);
+    }
+
+    @Test
     void shouldDeleteByDomain() {
         when(repository.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
 
