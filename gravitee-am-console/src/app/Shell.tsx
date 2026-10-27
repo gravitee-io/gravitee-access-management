@@ -18,6 +18,7 @@ import {
     AppContextBar,
     AppLayout,
     AppSidebar,
+    Button,
     ContentHeader,
     SidebarNavigation,
     TopNavUser,
@@ -25,7 +26,7 @@ import {
 } from '@gravitee/graphene-core';
 import { GioIamIcon } from '@gravitee/graphene-core/icons';
 import { useState } from 'react';
-import { Outlet, useMatch, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useMatch, useNavigate } from 'react-router-dom';
 import type { Domain } from '../lib/api/domains';
 import type { CurrentUser } from '../lib/api/management-api';
 import { useEnvironmentDomains } from '../lib/session/domains';
@@ -33,6 +34,7 @@ import { useCurrentEnvironment } from '../lib/session/environment';
 import { useUserPreferences } from '../lib/session/preferences';
 import { useSession } from '../lib/session/session';
 import { DomainSwitcher } from './components/DomainSwitcher';
+import { NotFoundPanel } from './components/NotFoundPanel';
 import { MAIN_NAV_GROUPS, ORGANIZATION_KEY } from './navigation';
 
 const AM_APP_KEY = 'am';
@@ -83,6 +85,7 @@ export function Shell() {
         setLastDomainHrid(urlDomainHrid);
     }
     const currentDomain = pickCurrentDomain(domains, urlDomainHrid, lastDomainHrid, preferences?.defaultDomainId);
+    const unknownDomain = !!domainPage && !!urlDomainHrid && !currentDomain;
     const activeItemKey = organizationMatch ? ORGANIZATION_KEY : urlDomainHrid && (domainMatch?.params.section ?? 'dashboard');
 
     const selectItem = (key: string) => {
@@ -146,7 +149,19 @@ export function Shell() {
                 />
             }
         >
-            <Outlet />
+            {unknownDomain ? (
+                <NotFoundPanel
+                    title="Domain not found"
+                    description={`There is no security domain "${urlDomainHrid}" in this environment.`}
+                    action={
+                        <Button asChild>
+                            <Link to={domainsPath}>Go to the security domains</Link>
+                        </Button>
+                    }
+                />
+            ) : (
+                <Outlet />
+            )}
         </AppLayout>
     );
 }
