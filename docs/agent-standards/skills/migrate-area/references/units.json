@@ -284,7 +284,7 @@
           ]
         },
         {
-          "path": "environments/:envHrid/domains/new",
+          "path": "environments/:envHrid/new-domain",
           "role": "page",
           "angularComponent": "DomainCreationComponent",
           "angularFile": "domain/creation/domain-creation.component.ts",

@@ -1,6 +1,6 @@
 ---
 name: migrate-area
-description: Port one story of the AM console migration to React (epic AM-7349) from the Angular console to gravitee-am-ui-next, with the Gamma prototype page as the UI, the Angular code as the behaviour, and one pull request to master at the end. Use when the user runs /migrate-area <story key>, says "port AM-XXXX", "migrate <area> to React", or asks to continue the AM console migration. The story keys are in references/stories.json.
+description: Port one story of the AM console migration to React (epic AM-7349) from the Angular console to gravitee-am-console, with the Gamma prototype page as the UI, the Angular code as the behaviour, and one pull request to master at the end. Use when the user runs /migrate-area <story key>, says "port AM-XXXX", "migrate <area> to React", or asks to continue the AM console migration. The story keys are in references/stories.json.
 ---
 
 # Migrate one story
@@ -19,7 +19,7 @@ and its prototype pages. You follow the steps below in order. You do not make a 
 
 `units.json` is a frozen copy of the spike inventory. `spikeNotes` holds the spike's survey and, for a unit the spike
 ported, the brief and the verified Management API calls and payloads. `spikeFiles` on a page lists the spike's React
-files. Read a spike file with `git show origin/spike/am-gamma:gravitee-am-ui-next/<path>`. The spike code is a
+files, under the spike name `gravitee-am-ui-next`. Read a spike file with `git show origin/spike/am-gamma:gravitee-am-ui-next/<path>`. The spike code is a
 reference. You build the story again on a story branch from `master`.
 
 Read the data with `jq`, for example:
@@ -42,7 +42,7 @@ A story is done when `git log origin/master --grep='<key>'` finds its commit. Th
 ## Step 0: preconditions
 
 Work on a story branch named `<key>-<slug>`, for example `AM-7942-plugin-settings`. If you are on `master`, create
-it with `git switch -c <key>-<slug> origin/master`. Then run from `gravitee-am-ui-next/`:
+it with `git switch -c <key>-<slug> origin/master`. Then run from `gravitee-am-console/`:
 
 ```bash
 git fetch origin master
@@ -78,7 +78,7 @@ Do not build a shared part inside the run.
 
 Read, in this order, and do not write code before the end of the list:
 
-1. `gravitee-am-ui-next/AGENTS.md`.
+1. `gravitee-am-console/AGENTS.md`.
 2. The story entry in `stories.json`. Then, for each unit, the entry in `units.json`: every page in the story's `pages`
    with its `path`, `angularFile`, `prototypePages`, `perms`, `effectivePerms`, `guards`, `resolvers`, `menu` and flags,
    plus `spikeNotes`. A story that covers part of a unit ports only the pages it lists.
@@ -108,7 +108,7 @@ Read, in this order, and do not write code before the end of the list:
 
 ## Step 2: brief
 
-Write the brief into `gravitee-am-ui-next/docs/migration/<key>.md`, the story record. It has these lists:
+Write the brief into `gravitee-am-console/docs/migration/<key>.md`, the story record. It has these lists:
 
 - The pages, as `Angular route → prototype page → console file`.
 - The endpoints, as `METHOD path`, from the Angular service.
@@ -235,7 +235,7 @@ Append the verification to the story record: the pages checked, the calls compar
 1. Run `git add -N` on the new files, because the `code-review` skill reads `git diff` and does not see untracked files.
 2. Run the `code-review` skill on the diff and fix what it finds.
 3. Ask the user before the commit. Commit once on the story branch, with the subject
-   `feat(ui-next): <story summary>` and the footer `fixes <key>`. The story record is in the same commit.
+   `feat(console): <story summary>` and the footer `fixes <key>`. The story record is in the same commit.
 4. Ask the user before the push and the pull request.
 5. Push the branch and open a pull request to `master` with `docs/pull_request_template.md`. Put the story key in the
    issue section, and the brief and the verification from the story record in the description.

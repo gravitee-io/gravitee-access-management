@@ -424,6 +424,8 @@ The PR workflow (`pull_requests`) runs the following test jobs:
 8. **`run_playwright_tests_psql`** — Playwright E2E tests against PostgreSQL 18.4
 9. **`job-test-am-charts`** — Helm lint + unittest
 
+**`console_build`** runs in a separate `console` workflow when a push changes `gravitee-am-console/` or the generated models in `gravitee-am-test/api/management/models/`. It runs `yarn install`, `lint`, `test` and `build` on Node 24, then zips `dist/`. The `release` job builds the same zip with the release version, before the Maven deploy.
+
 **Repository testcontainer tests** run in a separate `testcontainer_tests` workflow, triggered when files under `gravitee-am-repository/`, `gravitee-am-reporter/`, `gravitee-am-dataplane/`, or `pom.xml` are modified. This tests against a matrix of MongoDB, Redis, PostgreSQL, MySQL, MariaDB, and MSSQL (current + minimum supported versions).
 
 ### Step-by-Step Validation

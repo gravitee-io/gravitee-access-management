@@ -74,6 +74,10 @@ parameters:
     type: boolean
     default: true
     description: "Runs UI jest tests + Lint"
+  run_console:
+    type: boolean
+    default: false
+    description: "Builds gravitee-am-console with yarn"
   # Migration test (trigger via API; setup continues with .circleci/workflows-migration.yml when set)
   migration_test_from_tag:
     type: string
@@ -173,3 +177,5 @@ workflows:
             gravitee-am-dataplane/.* run-container-test true
             ^.*pom\.xml$ run-container-test true
             gravitee-am-ui/.* run_ui_tests true
+            gravitee-am-console/.* run_console true
+            gravitee-am-test/api/management/models/.* run_console true

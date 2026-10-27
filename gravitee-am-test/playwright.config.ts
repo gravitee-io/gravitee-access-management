@@ -21,6 +21,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Env var defaults (mirrors api/config/dev.setup.js).
 process.env.AM_UI_URL = process.env.AM_UI_URL || 'http://localhost:4200';
+// The React console (gravitee-am-console), `yarn serve` — console-next specs only.
+process.env.AM_UI_NEXT_URL = process.env.AM_UI_NEXT_URL || 'http://localhost:4201';
 process.env.AM_MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL || 'http://localhost:8093';
 process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_ENDPOINT || process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = process.env.AM_GATEWAY_URL || 'http://localhost:8092';
@@ -88,7 +90,7 @@ export default defineConfig({
 
     {
       name: 'chromium',
-      testIgnore: '**/cloud/**',
+      testIgnore: ['**/cloud/**', '**/console-next/**'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/fixtures/.auth/admin.json',
@@ -107,6 +109,29 @@ export default defineConfig({
         storageState: { cookies: [], origins: [] },
       },
     },
+
+    // The React console migration (gravitee-am-console). Excluded from 'chromium' above. `pw:next` sets
+    // AM_CONSOLE_NEXT, so a plain `pw` run does not need `yarn serve` in gravitee-am-console.
+    ...(process.env.AM_CONSOLE_NEXT
+      ? [
+          {
+            name: 'console-next-setup',
+            testMatch: /console-next\.setup\.ts/,
+            testDir: './playwright/fixtures',
+            use: { baseURL: process.env.AM_UI_NEXT_URL },
+          },
+          {
+            name: 'console-next',
+            testMatch: '**/console-next/**',
+            use: {
+              ...devices['Desktop Chrome'],
+              baseURL: process.env.AM_UI_NEXT_URL,
+              storageState: 'playwright/fixtures/.auth/admin-next.json',
+            },
+            dependencies: ['console-next-setup'],
+          },
+        ]
+      : []),
 
     // TODO: Enable Firefox cross-browser validation once Chromium suite is stable.
     // Requires `npx playwright install firefox` and CI pipeline update.

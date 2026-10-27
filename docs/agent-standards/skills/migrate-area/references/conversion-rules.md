@@ -2,7 +2,7 @@
 
 The rules for one page port in the `migrate-area` skill. They come from the spike AM-7769 on `spike/am-gamma`, which
 ported pages from the prototype under `gamma-baby/src/modules/am/` and the Angular console under
-`gravitee-am-ui/src/app/`. A path under `src/` is a path in `gravitee-am-ui-next/`. AM-7933 and AM-7934 build the
+`gravitee-am-ui/src/app/`. A path under `src/` is a path in `gravitee-am-console/`. AM-7933 and AM-7934 build the
 shared parts these rules name.
 
 Three sources feed one console page:
