@@ -76,6 +76,7 @@ models/AuditOutcome.ts
 models/AuditPage.ts
 models/AuthenticationDeviceNotifier.ts
 models/AuthorizationDetailType.ts
+models/AuthorizationDetailTypeCursorPage.ts
 models/AuthorizationEngine.ts
 models/BotDetection.ts
 models/BulkCreateOrganizationUser.ts

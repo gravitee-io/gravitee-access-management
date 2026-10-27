@@ -15,18 +15,28 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.model;
 
+import io.gravitee.am.model.cursor.CursorRequest;
+import io.gravitee.am.model.cursor.CursorRequest.SortDirection;
+
 import java.util.Base64;
 
-public record CursorApiRequest(String id, String lastSortValue) {
+public record CursorApiRequest(String id, String sortField, SortDirection sortDirection, String lastSortValue) {
     private final static String SEPARATOR = "##";
+
+    public static CursorApiRequest of(CursorRequest next) {
+        return new CursorApiRequest(next.getLastId(), next.getSortField(), next.getSortDirection(), next.getLastSortValue());
+    }
 
     public String encode(){
         Base64.Encoder encoder = Base64.getEncoder();
-        String value = "%s%s%s".formatted(id, SEPARATOR, lastSortValue);
+        String value = String.join(SEPARATOR, id, sortField, sortDirection.name(), lastSortValue);
         return encoder.encodeToString(value.getBytes());
     }
 
-    public static CursorApiRequest decode(String value){
+    /**
+     * Fails when the cursor was issued for another sort field or direction than the request's.
+     */
+    public static CursorApiRequest decode(String value, String sortField, String direction){
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Query parameter 'cursor' is required");
         }
@@ -36,10 +46,14 @@ public record CursorApiRequest(String id, String lastSortValue) {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Query parameter 'cursor' is not valid", e);
         }
-        String[] split = decoded.split(SEPARATOR, 2);
-        if (split.length != 2) {
+        // the sort value comes last and may itself contain the separator
+        String[] split = decoded.split(SEPARATOR, 4);
+        if (split.length != 4) {
             throw new IllegalArgumentException("Query parameter 'cursor' is not valid");
         }
-        return new CursorApiRequest(split[0], split[1]);
+        if (!split[1].equals(sortField) || !split[2].equalsIgnoreCase(direction)) {
+            throw new IllegalArgumentException("Query parameter 'cursor' does not match the sort and dir query parameters");
+        }
+        return new CursorApiRequest(split[0], split[1], SortDirection.valueOf(split[2]), split[3]);
     }
 }
