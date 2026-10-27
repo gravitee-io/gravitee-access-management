@@ -16,7 +16,6 @@
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 
-// The proxy keeps the session cookie and the login chain redirects on the dev server origin.
 const managementApiUrl = process.env.AM_MAPI_URL ?? 'http://localhost:8093';
 
 export default defineConfig({

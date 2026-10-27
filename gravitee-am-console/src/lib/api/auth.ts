@@ -19,7 +19,6 @@ function consoleUrl(path: string): string {
     return new URL(path, document.baseURI).toString();
 }
 
-/** The Management API login chain sets the session cookie, then returns to `login/callback`. */
 export function redirectToLogin(): void {
     const redirectUri = encodeURIComponent(consoleUrl('login/callback'));
     window.location.assign(`${appConfig().baseURL}/auth/authorize?redirect_uri=${redirectUri}`);

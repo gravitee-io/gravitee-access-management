@@ -18,11 +18,8 @@ import { CircleXIcon } from '@gravitee/graphene-core/icons';
 import type { ReactNode } from 'react';
 
 interface NotFoundPanelProps {
-    /** Example: "Application not found". */
     readonly title: string;
-    /** Example: "No application with this id exists in Acme. It may have been deleted." */
     readonly description: string;
-    /** A way back, such as a link to the list. */
     readonly action?: ReactNode;
 }
 

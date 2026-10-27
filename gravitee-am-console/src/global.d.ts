@@ -15,5 +15,5 @@
  */
 declare module '*.css';
 declare module '@gravitee/graphene-core/styles';
-// The generated models import cross-fetch through their runtime. The console uses them as types only.
+// The generated models import cross-fetch.
 declare module 'cross-fetch';

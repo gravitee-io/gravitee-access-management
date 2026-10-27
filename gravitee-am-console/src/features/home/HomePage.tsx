@@ -22,7 +22,7 @@ import type { CurrentUser, Environment, UserPreferences } from '../../lib/api/ma
 import { useUserPreferences } from '../../lib/session/preferences';
 import { useSession } from '../../lib/session/session';
 
-// The default domain opens on the first visit of `/` only, as the Angular `consumeDefaultDomainRedirect()`.
+// The default domain opens on the first visit of `/` only.
 let defaultDomainRedirectPending = true;
 
 interface LandingPaths {

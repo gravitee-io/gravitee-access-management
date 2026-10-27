@@ -24,7 +24,7 @@ const { getDomain, getUserPreferences } = vi.hoisted(() => ({ getDomain: vi.fn()
 vi.mock('../../../lib/api/domains', () => ({ getDomain }));
 vi.mock('../../../lib/api/management-api', () => ({ getUserPreferences }));
 
-// A fresh module per case, so each case starts as a fresh application.
+// Each case imports a fresh module, which resets the first-visit redirect flag.
 let HomePage: typeof HomePageType;
 
 let environments: Environment[] = [];

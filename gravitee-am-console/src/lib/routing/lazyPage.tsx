@@ -16,7 +16,6 @@
 import { Spinner } from '@gravitee/graphene-core';
 import { type ComponentType, lazy, Suspense } from 'react';
 
-/** Loads the page module on first navigation. The fallback replaces the page only, so the layouts above stay mounted. */
 export function lazyPage<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
     const Page = lazy<ComponentType>(() => load().then(module => ({ default: module[name] })));
     return (

@@ -27,7 +27,6 @@ export class HttpError extends Error {
 // The Management API rotates the CSRF token on every response and expects the last one back on mutations.
 let xsrfToken: string | null = null;
 
-/** `path` is relative to `baseURL`, e.g. `/user`. */
 async function send(path: string, init: RequestInit): Promise<Response> {
     const headers = new Headers(init.headers);
     if (xsrfToken) {

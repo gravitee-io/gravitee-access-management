@@ -22,7 +22,6 @@ class ResizeObserverMock {
 }
 globalThis.ResizeObserver = globalThis.ResizeObserver ?? (ResizeObserverMock as unknown as typeof ResizeObserver);
 
-// Radix calls these through Pointer Events; jsdom does not implement them.
 Element.prototype.hasPointerCapture ??= (() => false) as Element['hasPointerCapture'];
 Element.prototype.setPointerCapture ??= (() => undefined) as Element['setPointerCapture'];
 Element.prototype.releasePointerCapture ??= (() => undefined) as Element['releasePointerCapture'];

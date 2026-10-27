@@ -28,7 +28,6 @@ import { navItems } from '../../app/navigation';
 
 interface SectionSidebarOptions {
     readonly title: string;
-    /** Short labels under the title, e.g. an application's type and status. */
     readonly badges?: readonly string[];
     readonly groups: NavGroup[];
     /** The absolute path the item keys are relative to. */
@@ -42,7 +41,6 @@ export function useSectionSidebar({ title, badges = [], groups, base, crumbs }: 
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(true);
-    // The longest key that prefixes the path wins, so `settings/general` beats `settings`.
     const rest = pathname.slice(base.length + 1);
     const active = navItems(groups)
         .filter(item => rest === item.key || rest.startsWith(`${item.key}/`))

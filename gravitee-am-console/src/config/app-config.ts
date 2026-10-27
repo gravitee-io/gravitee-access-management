@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/** Runtime settings read from `constants.json` and `build.json` at the web root. */
 export interface AppConfig {
     /** Management API root, e.g. `/management`. */
     readonly baseURL: string;

@@ -20,16 +20,11 @@ import { Outlet } from 'react-router-dom';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { ForbiddenPanel } from '../../app/components/ForbiddenPanel';
 
-/**
- * The permission names in effect, as AM grants them: the user's platform and organization permissions from
- * `GET /user`, plus one list per scope from `/members/permissions`. Each scope adds its list to its parent's.
- */
 const PermissionContext = createContext<readonly string[]>([]);
 
 export interface Permissions {
     /** All of the names. */
     readonly has: (...permissions: string[]) => boolean;
-    /** At least one of the names. */
     readonly hasAny: (...permissions: string[]) => boolean;
 }
 
@@ -74,7 +69,6 @@ export function LoadPermissionScope({ queryKey, queryFn, children }: LoadPermiss
 }
 
 interface RequirePermissionProps {
-    /** One match is enough. */
     readonly anyOf: readonly string[];
     readonly children?: ReactNode;
 }
@@ -88,9 +82,7 @@ export function RequirePermission({ anyOf, children }: RequirePermissionProps) {
 }
 
 interface CanProps {
-    /** Every name is required. */
     readonly all?: readonly string[];
-    /** One name is enough. */
     readonly any?: readonly string[];
     readonly children: ReactNode;
     readonly fallback?: ReactNode;

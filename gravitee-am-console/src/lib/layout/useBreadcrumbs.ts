@@ -16,7 +16,6 @@
 import { buildLinearBreadcrumbs, type LinearBreadcrumbSegment, useLayoutConfig } from '@gravitee/graphene-core';
 import { useNavigate } from 'react-router-dom';
 
-/** Pushes the page's breadcrumb trail into the shell header. The last segment is the current page. */
 export function useBreadcrumbs(segments: readonly LinearBreadcrumbSegment[]): void {
     const navigate = useNavigate();
     useLayoutConfig({ breadcrumbs: buildLinearBreadcrumbs(navigate, segments) }, [JSON.stringify(segments)]);

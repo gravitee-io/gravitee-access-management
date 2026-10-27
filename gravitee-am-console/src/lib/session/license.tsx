@@ -53,7 +53,7 @@ export function LicenseScope({ license, children }: { readonly license: License;
     return <LicenseContext value={license}>{children}</LicenseContext>;
 }
 
-/** A failed load counts as no licence. */
+/** A failed load counts as no license. */
 export function LoadLicenseScope({ organizationId, children }: { readonly organizationId: string; readonly children: ReactNode }) {
     const { data, error } = useQuery({
         queryKey: ['license', organizationId],
@@ -89,7 +89,7 @@ interface LicenseGuardProps {
     readonly children: ReactNode;
 }
 
-/** When the licence lacks the feature, a click opens the upgrade dialog and never reaches the control's handler. */
+/** When the license lacks the feature, a click opens the upgrade dialog and never reaches the control's handler. */
 export function LicenseGuard({ feature, children }: LicenseGuardProps) {
     const { isMissing } = useLicense();
     const [open, setOpen] = useState(false);

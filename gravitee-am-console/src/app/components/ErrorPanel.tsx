@@ -17,9 +17,8 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { TriangleAlertIcon } from '@gravitee/graphene-core/icons';
 
 interface ErrorPanelProps {
-    /** What did not load, as a sentence. Example: "Could not load the application." */
+    /** What did not load, as a sentence. */
     readonly description: string;
-    /** The thrown error. The message of an `Error` shows under the description. */
     readonly error?: unknown;
 }
 

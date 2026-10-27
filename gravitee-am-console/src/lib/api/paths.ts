@@ -27,7 +27,7 @@ export function domainPath(ref: DomainRef): string {
     return `${environmentPath(ref.organizationId, ref.environmentId)}/domains/${ref.domainId}`;
 }
 
-// The Management API matches `q` as a wildcard pattern, so a free-text search becomes `*text*`.
+// The Management API matches `q` as a wildcard pattern.
 export function searchParam(query: string): string {
     return query ? `&q=${encodeURIComponent(`*${query}*`)}` : '';
 }
