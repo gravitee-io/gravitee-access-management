@@ -17,7 +17,11 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@g
 import { WrenchIcon } from '@gravitee/graphene-core/icons';
 import { PageHeader } from './PageHeader';
 
-export function PlaceholderPage({ title }: { readonly title: string }) {
+interface PlaceholderPageProps {
+    readonly title: string;
+}
+
+export function PlaceholderPage({ title }: PlaceholderPageProps) {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title={title} />

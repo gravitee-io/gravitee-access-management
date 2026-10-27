@@ -31,8 +31,12 @@ export function upgradeUrl(feature: string): string {
     return `https://gravitee.io/self-hosted-trial?${params}`;
 }
 
+function isAmFeature(feature: string): feature is AmFeatureName {
+    return Object.keys(FEATURE_DESCRIPTIONS).includes(feature);
+}
+
 export function featureDescription(feature: string): string {
-    return FEATURE_DESCRIPTIONS[feature as AmFeatureName] ?? FEATURE_DESCRIPTIONS[AmFeature.AM_ENTERPRISE];
+    return FEATURE_DESCRIPTIONS[isAmFeature(feature) ? feature : AmFeature.AM_ENTERPRISE];
 }
 
 export interface LicenseState {
@@ -49,12 +53,22 @@ export function useLicense(): LicenseState {
     return useMemo(() => ({ license, isMissing: feature => !!feature?.trim() && !(license.features ?? []).includes(feature) }), [license]);
 }
 
-export function LicenseScope({ license, children }: { readonly license: License; readonly children: ReactNode }) {
+interface LicenseScopeProps {
+    readonly license: License;
+    readonly children: ReactNode;
+}
+
+export function LicenseScope({ license, children }: LicenseScopeProps) {
     return <LicenseContext value={license}>{children}</LicenseContext>;
 }
 
+interface LoadLicenseScopeProps {
+    readonly organizationId: string;
+    readonly children: ReactNode;
+}
+
 /** A failed load counts as no license. */
-export function LoadLicenseScope({ organizationId, children }: { readonly organizationId: string; readonly children: ReactNode }) {
+export function LoadLicenseScope({ organizationId, children }: LoadLicenseScopeProps) {
     const { data, error } = useQuery({
         queryKey: ['license', organizationId],
         queryFn: () => getLicense(organizationId),
@@ -93,7 +107,7 @@ interface LicenseGuardProps {
 export function LicenseGuard({ feature, children }: LicenseGuardProps) {
     const { isMissing } = useLicense();
     const [open, setOpen] = useState(false);
-    if (!isMissing(feature)) {
+    if (!feature || !isMissing(feature)) {
         return children;
     }
     return (
@@ -108,7 +122,7 @@ export function LicenseGuard({ feature, children }: LicenseGuardProps) {
             >
                 {children}
             </span>
-            <UpgradeDialog open={open} feature={feature!} description={featureDescription(feature!)} onOpenChange={setOpen} />
+            <UpgradeDialog open={open} feature={feature} description={featureDescription(feature)} onOpenChange={setOpen} />
         </>
     );
 }

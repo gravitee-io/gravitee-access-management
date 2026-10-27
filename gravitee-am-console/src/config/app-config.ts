@@ -32,7 +32,11 @@ async function fetchJson(file: string): Promise<Record<string, unknown>> {
 
 export async function loadConfig(): Promise<AppConfig> {
     const [constants, build] = await Promise.all([fetchJson('constants.json'), fetchJson('build.json')]);
-    config = { ...build, ...constants } as unknown as AppConfig;
+    const { baseURL, version } = { ...build, ...constants };
+    if (typeof baseURL !== 'string') {
+        throw new Error('constants.json has no baseURL');
+    }
+    config = { baseURL, ...(typeof version === 'string' && { version }) };
     return config;
 }
 
