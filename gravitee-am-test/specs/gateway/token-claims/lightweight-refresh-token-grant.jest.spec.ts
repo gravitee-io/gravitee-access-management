@@ -28,7 +28,7 @@ import {
 setup(200000);
 
 const SCOPE = 'openid email profile';
-const NO_ALLOWLISTS = { allowedAccessTokenClaims: [], allowedIdTokenClaims: [] };
+const NO_ALLOWLISTS = { allowedAccessTokenClaims: new Set<string>(), allowedIdTokenClaims: new Set<string>() };
 const TOKEN_CUSTOM_CLAIMS = [
   { tokenType: 'ACCESS_TOKEN' as const, claimName: 'tenant', claimValue: 'acme' },
   { tokenType: 'ACCESS_TOKEN' as const, claimName: 'region', claimValue: 'eu' },
@@ -165,10 +165,16 @@ describe('Lightweight JWT - settings changed between issuance and refresh', () =
   });
 
   it('should apply the allowlists configured at refresh time', async () => {
-    await fixture.setLightweightJwt(true, 'region', { allowedAccessTokenClaims: ['tenant'], allowedIdTokenClaims: ['email'] });
+    await fixture.setLightweightJwt(true, 'region', {
+      allowedAccessTokenClaims: new Set(['tenant']),
+      allowedIdTokenClaims: new Set(['email']),
+    });
     const initial = await fixture.passwordGrant(SCOPE);
     expect(decodeToken(initial.refresh_token).payload.tenant).toEqual('acme');
-    await fixture.setLightweightJwt(true, 'tenant', { allowedAccessTokenClaims: ['region'], allowedIdTokenClaims: ['id_tenant'] });
+    await fixture.setLightweightJwt(true, 'tenant', {
+      allowedAccessTokenClaims: new Set(['region']),
+      allowedIdTokenClaims: new Set(['id_tenant']),
+    });
 
     const refreshed = await fixture.refreshGrant(initial.refresh_token);
 

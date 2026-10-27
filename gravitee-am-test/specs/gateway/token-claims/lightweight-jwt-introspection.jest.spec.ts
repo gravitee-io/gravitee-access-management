@@ -22,7 +22,7 @@ setup(200000);
 const SCOPE = 'openid email profile';
 const ROLE = 'introspection-role';
 const GROUP = 'introspection-group';
-const ACCESS_TOKEN_ALLOWLIST = ['tenant'];
+const ACCESS_TOKEN_ALLOWLIST = new Set(['tenant']);
 const PER_TOKEN_CLAIMS = ['exp', 'iat', 'jti'];
 
 let fixture: TokenIdentityFixture;

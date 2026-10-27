@@ -24,7 +24,7 @@ setup(200000);
 retryImmediatelyForThisFile();
 
 const SCOPE = 'openid email profile';
-const ALLOWLISTS = { allowedAccessTokenClaims: ['tenant'], allowedIdTokenClaims: ['email'] };
+const ALLOWLISTS = { allowedAccessTokenClaims: new Set(['tenant']), allowedIdTokenClaims: new Set(['email']) };
 
 let fixture: TokenIdentityFixture;
 let fullUserinfo: Record<string, any>;

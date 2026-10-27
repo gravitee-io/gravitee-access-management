@@ -36,8 +36,13 @@ class ApplicationLightweightJwtValidatorTest {
     }
 
     @Test
-    void shouldAcceptClaimNamesAndDuplicates() {
-        assertThat(validator.validate(oauthSettings(List.of("tenant", "tenant"), List.of("email", "x".repeat(128))))).isEmpty();
+    void shouldAcceptClaimNames() {
+        assertThat(validator.validate(oauthSettings(List.of("tenant", "https://acme.com/roles", "my claim"), List.of("email", "x".repeat(128))))).isEmpty();
+    }
+
+    @Test
+    void shouldAcceptSameClaimNameInBothAllowlists() {
+        assertThat(validator.validate(oauthSettings(List.of("tenant"), List.of("tenant")))).isEmpty();
     }
 
     @Test
@@ -56,6 +61,30 @@ class ApplicationLightweightJwtValidatorTest {
     void shouldRejectTooLongClaimName() {
         assertThat(validator.validate(oauthSettings(List.of(), List.of("x".repeat(129)))))
                 .hasValue("lightweightJwtSettings.allowedIdTokenClaims claim names must be at most 128 characters");
+    }
+
+    @Test
+    void shouldRejectAccessTokenClaimNameWithSurroundingWhitespace() {
+        assertThat(validator.validate(oauthSettings(List.of(" tenant "), List.of())))
+                .hasValue("lightweightJwtSettings.allowedAccessTokenClaims claim names must not have leading or trailing whitespace");
+    }
+
+    @Test
+    void shouldRejectIdTokenClaimNameWithTrailingUnicodeWhitespace() {
+        assertThat(validator.validate(oauthSettings(List.of(), List.of("email\u2003"))))
+                .hasValue("lightweightJwtSettings.allowedIdTokenClaims claim names must not have leading or trailing whitespace");
+    }
+
+    @Test
+    void shouldRejectClaimNameWithControlCharacter() {
+        assertThat(validator.validate(oauthSettings(List.of("ten\nant"), List.of())))
+                .hasValue("lightweightJwtSettings.allowedAccessTokenClaims claim names must not contain control characters");
+    }
+
+    @Test
+    void shouldRejectDuplicateClaimName() {
+        assertThat(validator.validate(oauthSettings(List.of(), List.of("email", "tenant", "email"))))
+                .hasValue("lightweightJwtSettings.allowedIdTokenClaims must not contain duplicate claim names");
     }
 
     @Test

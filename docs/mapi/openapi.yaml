@@ -13288,18 +13288,24 @@ components:
       properties:
         allowedAccessTokenClaims:
           type: array
-          description: Claim names kept in the access and refresh tokens in addition
-            to the reserved claims. A listed claim is kept only if AM issues it.
+          description: "Claim names kept in the access and refresh tokens in addition\
+            \ to the reserved claims. A listed claim is kept only if AM issues it.\
+            \ Names must be unique, must not have leading or trailing whitespace and\
+            \ must not contain control characters."
           items:
             type: string
             maxLength: 128
+          uniqueItems: true
         allowedIdTokenClaims:
           type: array
-          description: Claim names kept in the ID token in addition to the reserved
-            claims. A listed claim is kept only if AM issues it.
+          description: "Claim names kept in the ID token in addition to the reserved\
+            \ claims. A listed claim is kept only if AM issues it. Names must be unique,\
+            \ must not have leading or trailing whitespace and must not contain control\
+            \ characters."
           items:
             type: string
             maxLength: 128
+          uniqueItems: true
         enabled:
           type: boolean
           default: false
