@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.BufferUnderflowException;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -77,5 +78,21 @@ public class CachingSecretResolverTest {
                 .assertResult(new Secret("secretValue"));
 
         verify(delegate, never()).resolveSecretFromUrl(secretURL);
+    }
+
+    @Test
+    public void shouldResolveFromDelegateWhenCacheReadFails() {
+        CachingSecretResolver cachingResolver = new CachingSecretResolver(delegate, cache);
+
+        SecretURL secretURL = new SecretURL("validProvider", "secretPath", "secretKey", ArrayListMultimap.create(), false);
+        when(cache.get(secretURL)).thenThrow(new BufferUnderflowException());
+        when(delegate.resolveSecretFromUrl(secretURL)).thenReturn(Single.just(new Secret("secretValue")));
+
+        cachingResolver.resolveSecretFromUrl(secretURL)
+                .test()
+                .assertComplete()
+                .assertResult(new Secret("secretValue"));
+
+        verify(cache).put(secretURL, new Secret("secretValue"));
     }
 }

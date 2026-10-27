@@ -20,12 +20,14 @@ import io.gravitee.secrets.api.core.Secret;
 import io.gravitee.secrets.api.core.SecretURL;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 
 /**
  * @author GraviteeSource Team
  */
+@Slf4j
 @RequiredArgsConstructor
 public class CachingSecretResolver implements SecretResolver {
 
@@ -34,12 +36,25 @@ public class CachingSecretResolver implements SecretResolver {
 
     @Override
     public Single<Secret> resolveSecretFromUrl(SecretURL url) {
-        Optional<Secret> cached = cache.get(url);
-        if (cached.isPresent()) {
-            return Single.just(cached.get());
-        }
+        return Single.defer(() -> {
+            final Optional<Secret> cached = readFromCache(url);
+            if (cached.isPresent()) {
+                return Single.just(cached.get());
+            }
+            return delegate.resolveSecretFromUrl(url)
+                    .doOnSuccess(value -> cache.put(url, value));
+        });
+    }
 
-        return delegate.resolveSecretFromUrl(url)
-                .doOnSuccess(value -> cache.put(url, value));
+    /**
+     * A cache failure must not break the resolution, fall back to the delegate.
+     */
+    private Optional<Secret> readFromCache(SecretURL url) {
+        try {
+            return cache.get(url);
+        } catch (Exception e) {
+            log.warn("Unable to read secret from cache, resolving it from the provider", e);
+            return Optional.empty();
+        }
     }
 }
