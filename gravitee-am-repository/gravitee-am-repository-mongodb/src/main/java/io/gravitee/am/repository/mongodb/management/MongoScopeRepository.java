@@ -42,8 +42,7 @@ import java.util.regex.Pattern;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -111,11 +110,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     public Single<Page<Scope>> search(String domain, String query, int page, int size) {
         Bson searchQuery = eq(FIELD_KEY, query);
 
-        // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = new BasicDBObject(FIELD_KEY, pattern);
         }
 

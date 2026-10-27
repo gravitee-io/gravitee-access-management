@@ -64,9 +64,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -139,11 +137,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                 new BasicDBObject(FIELD_FIRST_NAME, query),
                 new BasicDBObject(FIELD_LAST_NAME, query));
 
-        // if query contains wildcard, use the regex query
         if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = or(
                     new BasicDBObject(FIELD_USERNAME, pattern),
                     new BasicDBObject(FIELD_EMAIL, pattern),

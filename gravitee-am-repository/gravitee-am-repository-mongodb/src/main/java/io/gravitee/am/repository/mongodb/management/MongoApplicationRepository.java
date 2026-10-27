@@ -107,6 +107,7 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -217,11 +218,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         Bson searchQuery;
         if (useWildcard) {
             // Wildcard search: use regex (cannot leverage indexes efficiently)
-            // First escape regex metacharacters (except *) to prevent PatternSyntaxException
-            String escapedQuery = escapeRegexMetacharacters(query);
-            String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            Pattern pattern = wildcardPrefixPattern(query);
             searchQuery = and(in(FIELD_ID, applicationIds), or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern)));
         } else {
             // Exact match: use equality filter with collation for case-insensitive matching
