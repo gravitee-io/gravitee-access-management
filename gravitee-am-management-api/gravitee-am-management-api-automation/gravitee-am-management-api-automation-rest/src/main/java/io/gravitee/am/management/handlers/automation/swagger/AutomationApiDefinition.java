@@ -73,7 +73,7 @@ public class AutomationApiDefinition implements ReaderListener {
     public static final String DEFAULT_AUTOMATION_ENTRYPOINT = "/automation";
 
     private static final Set<String> AUTOMATION_TAGS = Set.of("Domains", "Identity Providers", "Certificates", "Reporters", "Data Planes",
-            "Applications");
+            "Applications", "Client Secrets");
 
     private static final String ERROR_SCHEMA = "Error";
 
@@ -91,7 +91,9 @@ public class AutomationApiDefinition implements ReaderListener {
             "Certificates", "Certificates configured under a domain to sign and verify tokens.",
             "Reporters", "Reporters configured under a domain to persist audit events to a backend.",
             "Data Planes", "Data planes configured under an environment to store the runtime data of its domains.",
-            "Applications", "Applications (OAuth 2.0 / OpenID Connect clients) configured under a domain.");
+            "Applications", "Applications (OAuth 2.0 / OpenID Connect clients) configured under a domain.",
+            "Client Secrets", "Client secrets of an application. A secret is immutable: rotate it by creating a new " +
+                    "one, then deleting the old one.");
 
     /**
      * Descriptions and examples for the shared path parameters, keyed by parameter name. Injected onto every
@@ -105,7 +107,9 @@ public class AutomationApiDefinition implements ReaderListener {
             "certKey", new String[]{"Key of the certificate within the domain.", "signing-cert"},
             "identityKey", new String[]{"Key of the identity within the domain.", "corporate-ldap"},
             "reporterKey", new String[]{"Key of the reporter within the domain.", "audit-kafka"},
-            "dataPlaneId", new String[]{"Id of the data plane within the environment.", "acme-eu"});
+            "dataPlaneId", new String[]{"Id of the data plane within the environment.", "acme-eu"},
+            "applicationKey", new String[]{"Key of the application within the domain, or id:<uuid>.", "mobile-app"},
+            "secretKey", new String[]{"Key of the client secret within the application, or id:<uuid>.", "ci-2026-10"});
 
     @Override
     public void beforeScan(OpenApiReader openApiReader, OpenAPI openAPI) {

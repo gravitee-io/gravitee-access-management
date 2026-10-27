@@ -221,8 +221,43 @@ A new inline user sent with a masked password on update is stored with that lite
 Management API, which keeps inline passwords by matching usernames.
 
 **Applications expose no secret.** Their client secrets are not part of the application document: none is
-returned, and none is generated when the Automation API creates an application. Client secrets will be
-managed as a resource of their own.
+returned, and none is generated when the Automation API creates an application. They are managed as a
+resource of their own, under `…/applications/{ref}/secrets`:
+
+- **You choose the value.** A `PUT` creates the secret with the `value` it carries, and the gateway accepts
+  it once it has synced the change. `value` is write-only: no response returns it. Generate it from a
+  cryptographically secure source with at least 32 bytes of entropy, for example
+  `openssl rand -base64 32 | tr '+/' '-_' | tr -d '='` (32 random bytes, 43 characters), and never reuse it
+  across applications.
+- **A secret is immutable.** `value` is required on every `PUT`: sending the stored value again changes
+  nothing (no write, audit or event), a different value is rejected with `400` "Client secret value is
+  immutable; use a new key to rotate".
+- **Rotate with a new key.** Create a secret with a new `key`, move the clients to it, then delete the old
+  one. The gateway rejects a deleted secret once it has synced the change; deleting an application's last
+  secret is allowed.
+- **Expiry is computed.** `expiresAt` comes from the application's `secretExpirationSettings`, else the
+  domain's; it is absent when the secret does not expire. The gateway rejects an expired secret, but it stays
+  stored and nothing renews it: rotate it with a new key.
+- **Limits.** `value` is at least 43 characters. An application holds at most `applications.secretsMax`
+  secrets (10 by default), Console secrets included. With BCrypt hashing (`applications.secret.algorithm`),
+  `value` is at most 72 bytes in UTF-8, since BCrypt ignores the rest. `key` is at most 64 characters, and
+  an unhashed `value` at most 374, whatever the management repository.
+- **`client_secret_jwt` stores secrets unhashed.** The gateway needs the value to verify the JWT signature,
+  so an application using this authentication method gets its secrets stored with no hashing, whatever
+  the platform algorithm. Switching an application that holds hashed secrets to `client_secret_jwt` is
+  rejected with `400`: delete its secrets, apply the application, then apply the secrets again.
+- **Console secrets are not listed.** A secret created in the Console is absent from the list; it can be
+  read, checked against a value and deleted as `id:<uuid>`, never created that way.
+- **Concurrent writes are safe.** Secrets live inside the application, so a secret `PUT` or `DELETE` and an
+  application `PUT` running at the same time are serialized: each re-reads the application and retries.
+  When the retries run out, the API answers `409`: nothing was written, send the same request again.
+  Console and Management API writes are not checked this way: a Console change to an automation-managed
+  application can be overwritten by the next apply, which is the intended outcome (the declared state wins).
+
+**Drift from the Console.** A secret renewed in the Console keeps its id but gets a new value, so clients
+using the declared value stop authenticating. The next `PUT` of that secret with the declared value is then
+rejected with the `400` "immutable" error. Fix it by rotating to a new key. A secret deleted in the Console
+heals itself: a `GET` returns `404`, and the next `PUT` creates it again with the declared value.
 
 ---
 
@@ -239,6 +274,7 @@ All paths are prefixed with
 | Reporter | `…/domains/{ref}/reporters` | `…/reporters/{ref}` | `…/reporters` | `…/reporters/{ref}` |
 | Data Plane | `…/dataplanes` | `…/dataplanes/{ref}` | `…/dataplanes` | `…/dataplanes/{ref}` |
 | Application | `…/domains/{ref}/applications` | `…/applications/{ref}` | `…/applications` | `…/applications/{ref}` |
+| Client secret | `…/applications/{ref}/secrets` | `…/secrets/{ref}` | `…/secrets` | `…/secrets/{ref}` |
 
 `{ref}` is either an automation `key` or an `id:<internalUuid>` (§2). Resource-specific fields:
 
@@ -255,7 +291,10 @@ All paths are prefixed with
   `enabled`, `template`, `clientId`, `metadata`, `identityProviders`, and settings blocks (`oauth`,
   `login`, `account`, `cookieSettings`, `mfa`, `saml`, `advanced`, `riskAssessment`,
   `secretExpirationSettings`, `workloadIdentitySettings`). `type` can change, except to or from `agent`
-  (delete and recreate). Disabling an application revokes its tokens. No client secret is exposed (§7).
+  (delete and recreate). Disabling an application revokes its tokens. Client secrets are a resource of
+  their own (§7).
+- **Client secret** — `key`, `value` (required, write-only, immutable); `expiresAt` is read-only. Only
+  secrets created by the Automation API are listed (§7).
 
 See [`openapi.yaml`](openapi.yaml) for the full field-level contract.
 
@@ -359,6 +398,22 @@ curl -s -X PUT "$BASE/domains/customer-auth/applications?dryRun=true" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{ "key": "mobile-app", "name": "Mobile app", "type": "native", "certificate": "signing-cert",
         "settings": { "oauth": { "scopeSettings": [{ "scope": "unknown" }] } } }' | jq '.dryRunErrors'
+```
+
+### Rotate a client secret
+
+```bash
+# create the new secret; the old one keeps working meanwhile
+# the body goes through stdin, so the secret never appears in curl's command line
+NEW_SECRET=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=')
+jq -n --arg value "$NEW_SECRET" '{key: "ci-2026-11", value: $value}' |
+  curl -s -X PUT "$BASE/domains/customer-auth/applications/billing-service/secrets" \
+    -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data @- | jq '{key, expiresAt}'
+
+# once every client uses the new secret, delete the old one: the gateway rejects it once it has synced
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE \
+  "$BASE/domains/customer-auth/applications/billing-service/secrets/ci-2026-10" \
+  -H "Authorization: Bearer $TOKEN"      # 204
 ```
 
 ### Declare a system resource (built from `gravitee.yml`)
