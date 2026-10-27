@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
+import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -92,7 +94,10 @@ public class TokenEndpoint implements Handler<RoutingContext> {
                                     .end(Json.encodePrettily(accessToken));
                         }
                         , error -> {
-                            metricProvider.incrementTokenFailure();
+                            // authorization_pending and slow_down are expected answers while polling, not failures
+                            if (!(error instanceof AuthorizationPendingException || error instanceof SlowDownException)) {
+                                metricProvider.incrementTokenFailure();
+                            }
                             context.fail(error);
                         });
     }
