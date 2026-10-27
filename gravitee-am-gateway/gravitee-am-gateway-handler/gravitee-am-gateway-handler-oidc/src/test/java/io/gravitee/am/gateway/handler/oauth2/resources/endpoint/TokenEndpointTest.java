@@ -23,6 +23,8 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResp
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
+import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -227,6 +229,47 @@ public class TokenEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:ietf:params:oauth:grant-type:uma-ticket",
                 HttpStatusCode.FORBIDDEN_403, "Forbidden");
+    }
+
+    @Test
+    public void shouldNotCountTokenFailure_whenAuthorizationPending() throws Exception {
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAuthorizedGrantTypes(Arrays.asList(GrantType.CIBA_GRANT_TYPE));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(tokenGranter.grant(any(TokenRequest.class), any(VertxHttpServerResponse.class), any(io.gravitee.am.model.oidc.Client.class))).thenReturn(Single.error(new AuthorizationPendingException()));
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:openid:params:grant-type:ciba",
+                400, "Bad Request");
+
+        verify(metricProvider, never()).incrementTokenFailure();
+        verify(metricProvider, never()).incrementTokenSuccess();
+    }
+
+    @Test
+    public void shouldNotCountTokenFailure_whenSlowDown() throws Exception {
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAuthorizedGrantTypes(Arrays.asList(GrantType.CIBA_GRANT_TYPE));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(tokenGranter.grant(any(TokenRequest.class), any(VertxHttpServerResponse.class), any(io.gravitee.am.model.oidc.Client.class))).thenReturn(Single.error(new SlowDownException()));
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:openid:params:grant-type:ciba",
+                400, "Bad Request");
+
+        verify(metricProvider, never()).incrementTokenFailure();
     }
 
 }
