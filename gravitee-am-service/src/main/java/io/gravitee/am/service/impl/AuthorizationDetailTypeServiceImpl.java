@@ -78,9 +78,9 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
         log.debug("Find authorization detail type by domain and ID: {} {}", domain, id);
         return repository.findByDomainAndId(domain, id)
                 .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to find an authorization detail type using its ID: {}", id, ex);
+                    log.error("An error occurred while trying to find an authorization detail type using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find an authorization detail type using its ID: %s", id), ex));
+                            String.format("An error occurred while trying to find an authorization detail type using its ID: %s", id), ex));
                 });
     }
 
@@ -89,9 +89,9 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
         log.debug("Find authorization detail types by domain: {}", domain);
         return repository.findByDomainCursor(domain, cursor, limit)
                 .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to find the authorization detail types of domain {}", domain, ex);
+                    log.error("An error occurred while trying to find the authorization detail types of domain {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find the authorization detail types of domain %s", domain), ex));
+                            String.format("An error occurred while trying to find the authorization detail types of domain %s", domain), ex));
                 });
     }
 
@@ -131,8 +131,8 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                     if (ex instanceof UniqueConstraintViolationException) {
                         return Single.error(new AuthorizationDetailTypeAlreadyExistsException(toCreate.getType(), domain.getId()));
                     }
-                    log.error("An error occurs while trying to create an authorization detail type", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create an authorization detail type", ex));
+                    log.error("An error occurred while trying to create an authorization detail type", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to create an authorization detail type", ex));
                 })
                 .doOnSuccess(created -> auditService.report(AuditBuilder.builder(AuthorizationDetailTypeAuditBuilder.class)
                         .principal(principal)
@@ -168,8 +168,8 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    log.error("An error occurs while trying to update an authorization detail type", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update an authorization detail type", ex));
+                    log.error("An error occurred while trying to update an authorization detail type", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to update an authorization detail type", ex));
                 })
                 .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(AuthorizationDetailTypeAuditBuilder.class)
                         .principal(principal)
@@ -190,13 +190,42 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
     }
 
     @Override
+    public Completable delete(Domain domain, String id, User principal) {
+        log.debug("Delete authorization detail type {} for domain {}", id, domain.getId());
+        return findById(domain.getId(), id)
+                .switchIfEmpty(Single.error(new AuthorizationDetailTypeNotFoundException(id)))
+                .flatMapCompletable(existing -> repository.delete(existing.getId())
+                        .andThen(Completable.defer(() -> {
+                            Event event = new Event(Type.AUTHORIZATION_DETAIL_TYPE, new Payload(existing.getId(), ReferenceType.DOMAIN, existing.getDomain(), Action.DELETE));
+                            return eventService.create(event, domain).ignoreElement();
+                        }))
+                        .onErrorResumeNext(ex -> {
+                            if (ex instanceof AbstractManagementException) {
+                                return Completable.error(ex);
+                            }
+                            log.error("An error occurred while trying to delete the authorization detail type {}", id, ex);
+                            return Completable.error(new TechnicalManagementException(
+                                    String.format("An error occurred while trying to delete the authorization detail type %s", id), ex));
+                        })
+                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthorizationDetailTypeAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED)
+                                .authorizationDetailType(existing)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationDetailTypeAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED)
+                                .reference(Reference.domain(domain.getId()))
+                                .throwable(throwable))));
+    }
+
+    @Override
     public Completable deleteByDomain(String domain) {
         log.debug("Delete every authorization detail type of domain {}", domain);
         return repository.deleteByDomain(domain)
                 .onErrorResumeNext(ex -> {
-                    log.error("An error occurs while trying to delete the authorization detail types of domain {}", domain, ex);
+                    log.error("An error occurred while trying to delete the authorization detail types of domain {}", domain, ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete the authorization detail types of domain %s", domain), ex));
+                            String.format("An error occurred while trying to delete the authorization detail types of domain %s", domain), ex));
                 });
     }
 }

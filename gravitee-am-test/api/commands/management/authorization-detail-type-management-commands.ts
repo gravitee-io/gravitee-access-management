@@ -83,6 +83,18 @@ export const patchAuthorizationDetailTypeJson = (
     Authorization: `Bearer ${accessToken}`,
   });
 
+export const deleteAuthorizationDetailTypeRaw = (
+  domainId: string,
+  accessToken: string,
+  authorizationDetailTypeId: string,
+): Promise<ApiResponse<void>> =>
+  getAuthorizationDetailTypeApi(accessToken).deleteAuthorizationDetailTypeRaw({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    authorizationDetailTypeId,
+  });
+
 export type ListAuthorizationDetailTypesParams = Omit<ListAuthorizationDetailTypesRequest, 'organizationId' | 'environmentId' | 'domain'>;
 
 export const listAuthorizationDetailTypes = (

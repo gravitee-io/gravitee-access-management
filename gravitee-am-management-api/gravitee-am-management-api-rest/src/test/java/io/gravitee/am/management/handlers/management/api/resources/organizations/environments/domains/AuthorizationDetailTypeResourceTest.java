@@ -25,6 +25,7 @@ import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
 import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.HttpMethod;
@@ -229,6 +230,57 @@ class AuthorizationDetailTypeResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
+    @Test
+    void shouldDelete() {
+        Domain domain = stubDomain();
+        doReturn(Completable.complete()).when(authorizationDetailTypeService).delete(eq(domain), eq(TYPE_ID), any());
+
+        final Response response = delete();
+
+        assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
+        verify(authorizationDetailTypeService).delete(eq(domain), eq(TYPE_ID), any());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletedTypeIsMissingOrInAnotherDomain() {
+        Domain domain = stubDomain();
+        doReturn(Completable.error(new AuthorizationDetailTypeNotFoundException(TYPE_ID)))
+                .when(authorizationDetailTypeService).delete(eq(domain), eq(TYPE_ID), any());
+
+        final Response response = delete();
+
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenDeletingInADomainThatDoesNotExist() {
+        doReturn(Maybe.empty()).when(domainService).findById(DOMAIN_ID);
+
+        final Response response = delete();
+
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        verify(authorizationDetailTypeService, never()).delete(any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectDeleteWithoutPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        final Response response = delete();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+        verify(authorizationDetailTypeService, never()).delete(any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectDeleteHoldingOnlyTheScopePermission() {
+        grantOnly(DOMAIN_ID, Permission.DOMAIN_SCOPE);
+
+        final Response response = delete();
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+    }
+
     private Response get() {
         return target("domains").path(DOMAIN_ID).path("authorization-detail-types").path(TYPE_ID).request().get();
     }
@@ -238,6 +290,10 @@ class AuthorizationDetailTypeResourceTest extends JerseySpringTest {
                 .request()
                 .property(SET_METHOD_WORKAROUND, true)
                 .method(HttpMethod.PATCH, Entity.json(json));
+    }
+
+    private Response delete() {
+        return target("domains").path(DOMAIN_ID).path("authorization-detail-types").path(TYPE_ID).request().delete();
     }
 
     private PatchAuthorizationDetailType sentPatch(Domain domain) {
