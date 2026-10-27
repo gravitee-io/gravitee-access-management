@@ -92,11 +92,12 @@ src/
   `../gravitee-am-test/api/management/models/`. Do not edit them.
 - The generated models fail `noUnusedLocals` and import `cross-fetch`. So `tsconfig.json` turns off the two unused
   checks, ESLint reports unused code in `src/` instead, and `src/global.d.ts` declares `cross-fetch`.
-- The spec is wrong in places. Response enums are lowercase on the wire, and a `uniqueItems` array is typed as a
-  `Set`. Override such a field in the console type with `Omit` and a comment, as `src/lib/api/license.ts` does. Do not
-  change the Java `@Schema` annotations.
+- The generated models are the source of truth for shapes. Do not read `../docs/mapi/openapi.yaml` for them. Where a
+  model is wrong, override the field in the console type with `Omit` and a comment, as `src/lib/api/license.ts` does.
+  Response enums are lowercase on the wire, and a `uniqueItems` array is typed as a `Set`.
 - Paths are the Management API paths the Angular service calls. Build them with `environmentPath()`, `domainPath(ref)`
-  and `searchParam(query)` from `src/lib/api/paths.ts`. Do not invent an endpoint. Check `../docs/mapi/openapi.yaml`.
+  and `searchParam(query)` from `src/lib/api/paths.ts`. Do not invent an endpoint. Check the generated API classes in
+  `../gravitee-am-test/api/management/apis/`.
 - Order the branches: error, then not found, then empty, then data. Render `ErrorPanel` for an error and
   `NotFoundPanel` when `isNotFound(error)` is true.
 
