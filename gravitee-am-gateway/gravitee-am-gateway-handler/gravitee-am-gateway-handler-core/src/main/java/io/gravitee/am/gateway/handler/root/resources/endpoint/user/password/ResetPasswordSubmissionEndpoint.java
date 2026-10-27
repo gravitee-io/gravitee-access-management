@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
@@ -77,7 +78,10 @@ public class ResetPasswordSubmissionEndpoint extends UserRequestHandler {
 
             // if failure, return to the reset password page with an error
             if (h.failed()) {
-                metricProvider.incrementResetPasswordFailure();
+                // password policy violations are ignored, as for the account API
+                if (!(h.cause() instanceof InvalidPasswordException)) {
+                    metricProvider.incrementResetPasswordFailure();
+                }
                 log.error("An error occurs while ending user reset password process", h.cause());
                 queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "reset_password_failed");
                 redirectToPage(context, queryParams, h.cause());
