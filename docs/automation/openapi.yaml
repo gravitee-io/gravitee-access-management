@@ -45,6 +45,9 @@ tags:
   name: Applications
 - description: Certificates configured under a domain to sign and verify tokens.
   name: Certificates
+- description: "Client secrets of an application. A secret is immutable: rotate it\
+    \ by creating a new one, then deleting the old one."
+  name: Client Secrets
 - description: Data planes configured under an environment to store the runtime data
     of its domains.
   name: Data Planes
@@ -964,7 +967,9 @@ paths:
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the application within the domain, or id:<uuid>."
+        example: mobile-app
+        in: path
         name: applicationKey
         required: true
         schema:
@@ -1026,7 +1031,9 @@ paths:
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the application within the domain, or id:<uuid>."
+        example: mobile-app
+        in: path
         name: applicationKey
         required: true
         schema:
@@ -1120,7 +1127,9 @@ paths:
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the application within the domain, or id:<uuid>."
+        example: mobile-app
+        in: path
         name: applicationKey
         required: true
         schema:
@@ -1130,10 +1139,11 @@ paths:
           content:
             application/json:
               examples:
-                AutomationClientSecretList:
+                ClientSecretList:
+                  description: ClientSecretList
                   value:
                   - key: ci-2026-10
-                    value: q8Zk3vN2xT7pR1mW9yB4cD6fH0jL5sA8eG2iK7oU3wQ
+                    expiresAt: 2027-04-27T09:30:00.000Z
               schema:
                 type: array
                 items:
@@ -1208,7 +1218,9 @@ paths:
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the application within the domain, or id:<uuid>."
+        example: mobile-app
+        in: path
         name: applicationKey
         required: true
         schema:
@@ -1240,11 +1252,10 @@ paths:
             application/json:
               examples:
                 CI secret:
-                  description: "A secret for a CI pipeline, generated from 32 random\
-                    \ bytes"
+                  description: CI secret
                   value:
                     key: ci-2026-10
-                    value: q8Zk3vN2xT7pR1mW9yB4cD6fH0jL5sA8eG2iK7oU3wQ
+                    expiresAt: 2027-04-27T09:30:00.000Z
               schema:
                 $ref: "#/components/schemas/AutomationClientSecret"
           description: "The created or unchanged client secret, without its value.\
@@ -1332,12 +1343,16 @@ paths:
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the application within the domain, or id:<uuid>."
+        example: mobile-app
+        in: path
         name: applicationKey
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the client secret within the application, or id:<uuid>."
+        example: ci-2026-10
+        in: path
         name: secretKey
         required: true
         schema:
@@ -1400,12 +1415,16 @@ paths:
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the application within the domain, or id:<uuid>."
+        example: mobile-app
+        in: path
         name: applicationKey
         required: true
         schema:
           type: string
-      - in: path
+      - description: "Key of the client secret within the application, or id:<uuid>."
+        example: ci-2026-10
+        in: path
         name: secretKey
         required: true
         schema:
@@ -1416,11 +1435,10 @@ paths:
             application/json:
               examples:
                 CI secret:
-                  description: "A secret for a CI pipeline, generated from 32 random\
-                    \ bytes"
+                  description: CI secret
                   value:
                     key: ci-2026-10
-                    value: q8Zk3vN2xT7pR1mW9yB4cD6fH0jL5sA8eG2iK7oU3wQ
+                    expiresAt: 2027-04-27T09:30:00.000Z
               schema:
                 $ref: "#/components/schemas/AutomationClientSecret"
           description: "The client secret, without its value"
