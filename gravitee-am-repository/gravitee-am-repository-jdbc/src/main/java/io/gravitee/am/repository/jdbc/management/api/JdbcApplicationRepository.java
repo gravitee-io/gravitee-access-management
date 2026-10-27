@@ -55,6 +55,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -111,6 +112,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
             COL_MANAGED_BY,
             COL_CERTIFICATE_KEY);
     public static final String IDENTITY = "identity";
+    private static final String EXPECTED_UPDATED_AT = "expected_updated_at";
 
     @Autowired
     private SpringApplicationRepository applicationRepository;
@@ -129,6 +131,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     private String insertStatement;
     private String updateStatement;
+    private String updateIfUnchangedStatement;
 
     Application toEntity(JdbcApplication entity) {
         return mapper.map(entity, Application.class);
@@ -142,6 +145,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public void afterPropertiesSet() throws Exception {
         this.insertStatement = createInsertStatement("applications", columns);
         this.updateStatement = createUpdateStatement("applications", columns, List.of(COL_ID));
+        this.updateIfUnchangedStatement = updateStatement + " AND " + databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_UPDATED_AT)) + " = :" + EXPECTED_UPDATED_AT;
     }
 
     Single<Application> completeApplication(Application entity) {
@@ -516,24 +520,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(insertStatement);
-        sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
-        sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
-        sql = addQuotedField(sql, COL_KIND, item.getKind(), String.class);
-        sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
-        sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
-        sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);
-        sql = addQuotedField(sql, COL_DESCRIPTION, item.getDescription(), String.class);
-        sql = addQuotedField(sql, COL_DOMAIN, item.getDomain(), String.class);
-        sql = addQuotedField(sql, COL_CERTIFICATE, item.getCertificate(), String.class);
-        sql = addQuotedField(sql, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
-        sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
-        sql = addQuotedField(sql, COL_SECRET_SETTINGS, JSONMapper.secretSettingsToJson(item.getSecretSettings()), String.class);
-        sql = addQuotedField(sql, COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
-        sql = addQuotedField(sql, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
-        sql = addQuotedField(sql, COL_CERTIFICATE_KEY, item.getCertificateKey(), String.class);
+        DatabaseClient.GenericExecuteSpec sql = bindColumns(getTemplate().getDatabaseClient().sql(insertStatement), item);
 
         Mono<Long> insertAction = sql.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item);
@@ -549,7 +536,38 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient().sql(updateStatement);
+        DatabaseClient.GenericExecuteSpec sql = bindColumns(getTemplate().getDatabaseClient().sql(updateStatement), item);
+
+        Mono<Long> updateAction = sql.fetch().rowsUpdated();
+        updateAction = deleteChildEntities(item.getId()).then(updateAction);
+        updateAction = persistChildEntities(updateAction, item);
+
+        return monoToSingle(updateAction.as(trx::transactional))
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Maybe<Application> updateIfUnchanged(Application item, Date expectedUpdatedAt) {
+        LOGGER.debug("Update Application with id {} if unchanged since {}", item.getId(), expectedUpdatedAt);
+
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        DatabaseClient.GenericExecuteSpec sql = bindColumns(getTemplate().getDatabaseClient().sql(updateIfUnchangedStatement), item)
+                .bind(EXPECTED_UPDATED_AT, dateConverter.convertTo(expectedUpdatedAt, null));
+
+        // the parent row is updated first: its row lock serializes concurrent writers before child rows are touched
+        Mono<Boolean> updateAction = sql.fetch().rowsUpdated()
+                .flatMap(rowsUpdated -> rowsUpdated == 0
+                        ? Mono.just(false)
+                        : persistChildEntities(deleteChildEntities(item.getId()), item).thenReturn(true));
+
+        return monoToSingle(updateAction.as(trx::transactional))
+                .flatMapMaybe(updated -> updated ? this.findById(item.getId()) : Maybe.empty())
+                .observeOn(Schedulers.computation());
+    }
+
+    private DatabaseClient.GenericExecuteSpec bindColumns(DatabaseClient.GenericExecuteSpec sql, Application item) {
         sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
         sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
         sql = addQuotedField(sql, COL_KIND, item.getKind(), String.class);
@@ -567,14 +585,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = addQuotedField(sql, COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
         sql = addQuotedField(sql, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
         sql = addQuotedField(sql, COL_CERTIFICATE_KEY, item.getCertificateKey(), String.class);
-
-        Mono<Long> updateAction = sql.fetch().rowsUpdated();
-        updateAction = deleteChildEntities(item.getId()).then(updateAction);
-        updateAction = persistChildEntities(updateAction, item);
-
-        return monoToSingle(updateAction.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle())
-                .observeOn(Schedulers.computation());
+        return sql;
     }
 
     @Override
@@ -602,8 +613,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (secrets != null && !secrets.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(secrets).concatMap(secret -> {
                 String INSERT_STMT = "INSERT INTO application_client_secrets" +
-                        "(id, application_id, name, created_at, settings_id, secret, expires_at) " +
-                        "VALUES (:id, :application_id, :name, :created_at, :settings_id, :secret, :expires_at)";
+                        "(id, application_id, name, created_at, settings_id, secret, expires_at, automation_key, managed_by) " +
+                        "VALUES (:id, :application_id, :name, :created_at, :settings_id, :secret, :expires_at, :automation_key, :managed_by)";
                 DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("id", secret.getId())
@@ -613,6 +624,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("settings_id", secret.getSettingsId())
                         .bind("secret", secret.getSecret());
                 sql = secret.getExpiresAt() == null ? sql.bindNull("expires_at", LocalDateTime.class) : sql.bind("expires_at", dateConverter.convertTo(secret.getExpiresAt(), null));
+                sql = secret.getAutomationKey() == null ? sql.bindNull("automation_key", String.class) : sql.bind("automation_key", secret.getAutomationKey());
+                sql = secret.getManagedBy() == null ? sql.bindNull("managed_by", String.class) : sql.bind("managed_by", secret.getManagedBy().name());
                 return sql.fetch().rowsUpdated();
             }).reduce(Long::sum));
         }
