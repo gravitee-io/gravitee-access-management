@@ -89,7 +89,10 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
                                     .collect(Collectors.toSet());
                             processConsent(routingContext, client, user, authorizationRequest, requestedConsent, presentedConsent, alreadyApproved);
                         },
-                        error -> routingContext.fail(error));
+                        error -> {
+                            metricProvider.incrementConsentFailure();
+                            routingContext.fail(error);
+                        });
     }
 
     private void processConsent(RoutingContext routingContext,
@@ -134,6 +137,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         // save consent
         saveConsent(routingContext, request, user, client, approvals, h -> {
             if (h.failed()) {
+                metricProvider.incrementConsentFailure();
                 routingContext.fail(h.cause());
                 return;
             }

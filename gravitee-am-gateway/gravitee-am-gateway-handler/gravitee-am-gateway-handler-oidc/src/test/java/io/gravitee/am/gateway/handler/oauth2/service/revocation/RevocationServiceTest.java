@@ -104,8 +104,8 @@ public class RevocationServiceTest {
         TestObserver testObserver = revocationTokenService.revoke(revocationTokenRequest, client).test();
 
         testObserver.assertComplete();
-        // nothing deleted, so neither success nor failure is reported
-        verify(metricProvider, never()).incrementRevokeSuccess();
+        // revoking an unknown token is a successful call (RFC 7009)
+        verify(metricProvider).incrementRevokeSuccess();
         verify(metricProvider, never()).incrementRevokeFailure();
         testObserver.assertNoErrors();
 

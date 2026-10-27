@@ -33,16 +33,26 @@ public class ResetPasswordRequestParseHandler extends UserTokenRequestParseHandl
 
     private final GatewayMetricProvider metricProvider;
 
+    /**
+     * Parse the token without counting the failures (used on the routes only displaying the page)
+     */
+    public ResetPasswordRequestParseHandler(UserService userService) {
+        this(userService, null);
+    }
+
+    /**
+     * Parse the token and count the failures as reset password failures (used on the submission route)
+     */
     public ResetPasswordRequestParseHandler(UserService userService, GatewayMetricProvider metricProvider) {
-        this.metricProvider = metricProvider;
         super(userService);
+        this.metricProvider = metricProvider;
     }
 
     @Override
     protected Handler<AsyncResult<UserToken>> getResultHandler(RoutingContext context, MultiMap queryParams) {
         final Handler<AsyncResult<UserToken>> handler = super.getResultHandler(context, queryParams);
         return result -> {
-            if (result.failed()) {
+            if (result.failed() && metricProvider != null) {
                 metricProvider.incrementResetPasswordFailure();
             }
             handler.handle(result);

@@ -66,6 +66,9 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
 
+    @Mock
+    private GatewayMetricProvider metricProvider;
+
     private Client client;
     private User user;
     private AuthorizationRequest authorizationRequest;
@@ -102,7 +105,7 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
                 });
 
         router.route(HttpMethod.POST, "/oauth/consent")
-                .handler(new UserConsentProcessHandler(userConsentService, domain, mock(GatewayMetricProvider.class)))
+                .handler(new UserConsentProcessHandler(userConsentService, domain, metricProvider))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(rc -> {
                     if (rc.failure() instanceof OAuth2Exception oAuth2Exception) {
@@ -371,5 +374,45 @@ public class UserConsentProcessHandlerTest extends RxWebTestBase {
         req.putHeader("content-type", "application/x-www-form-urlencoded");
         req.putHeader("content-length", String.valueOf(body.length()));
         req.write(Buffer.buffer(body));
+    }
+
+    @Test
+    public void shouldCountConsentFailure_whenCheckConsentFails() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.error(new RuntimeException("storage error")));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "scope.read=true&user_oauth_approval=true"),
+                HttpStatusCode.INTERNAL_SERVER_ERROR_500, "Internal Server Error", null);
+
+        verify(metricProvider).incrementConsentFailure();
+        verify(metricProvider, never()).incrementConsentSuccess();
+    }
+
+    @Test
+    public void shouldCountConsentFailure_whenSaveConsentFails() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+        when(userConsentService.saveConsent(any(), anyList(), any())).thenReturn(Single.error(new RuntimeException("storage error")));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "scope.read=true&user_oauth_approval=true"),
+                HttpStatusCode.INTERNAL_SERVER_ERROR_500, "Internal Server Error", null);
+
+        verify(metricProvider).incrementConsentFailure();
+        verify(metricProvider, never()).incrementConsentSuccess();
+    }
+
+    @Test
+    public void shouldCountConsentSuccess_whenConsentApproved() throws Exception {
+        authorizationRequest.setScopes(new HashSet<>(Set.of("read")));
+        when(userConsentService.checkConsent(any(), any())).thenReturn(Single.just(Collections.emptySet()));
+
+        testRequest(HttpMethod.POST, "/oauth/consent",
+                req -> writeForm(req, "scope.read=true&user_oauth_approval=true"),
+                HttpStatusCode.OK_200, "OK", null);
+
+        verify(metricProvider).incrementConsentSuccess();
+        verify(metricProvider, never()).incrementConsentFailure();
     }
 }
