@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -329,6 +330,102 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(a -> "renamed".equals(a.getName())
                 && "customer-users".equals(a.getIdentityProviders().first().getIdentityKey()));
+    }
+
+    @Test
+    public void testClientSecretAutomationFieldsRoundTrip() {
+        Application app = buildApplication();
+        ClientSecret automationSecret = buildClientSecret();
+        automationSecret.setName("ci-secret");
+        automationSecret.setAutomationKey("ci-secret");
+        automationSecret.setManagedBy(ManagedBy.AUTOMATION_API);
+        ClientSecret consoleSecret = buildClientSecret();
+        app.setSecrets(List.of(automationSecret, consoleSecret));
+        Application created = applicationRepository.create(app).blockingGet();
+
+        created.setName("renamed");
+        applicationRepository.update(created).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> {
+            Map<String, ClientSecret> secretsById = a.getSecrets().stream()
+                    .collect(toMap(ClientSecret::getId, s -> s));
+            ClientSecret readAutomation = secretsById.get(automationSecret.getId());
+            ClientSecret readConsole = secretsById.get(consoleSecret.getId());
+            return "ci-secret".equals(readAutomation.getAutomationKey())
+                    && readAutomation.getManagedBy() == ManagedBy.AUTOMATION_API
+                    && readConsole.getAutomationKey() == null
+                    && readConsole.getManagedBy() == null;
+        });
+    }
+
+    @Test
+    public void testUpdateIfUnchanged_matches() {
+        Application read = createAndRead(buildApplication());
+        Date token = read.getUpdatedAt();
+        read.setName("renamed");
+        read.setUpdatedAt(new Date(token.getTime() + 1));
+
+        TestObserver<Application> testObserver = applicationRepository.updateIfUnchanged(read, token).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(a -> "renamed".equals(a.getName()) && a.getSecrets().size() == 1);
+    }
+
+    @Test
+    public void testUpdateIfUnchanged_staleTokenLeavesSecretsUntouched() {
+        Application read = createAndRead(buildApplication());
+        Date token = read.getUpdatedAt();
+        String secretId = read.getSecrets().get(0).getId();
+        read.setName("renamed");
+        read.setSecrets(List.of());
+        read.setUpdatedAt(new Date(token.getTime() + 1));
+
+        TestObserver<Application> testObserver = applicationRepository.updateIfUnchanged(read, new Date(token.getTime() - 1000)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
+
+        TestObserver<Application> stored = applicationRepository.findById(read.getId()).test();
+        stored.awaitDone(10, TimeUnit.SECONDS);
+        stored.assertValue(a -> !"renamed".equals(a.getName())
+                && a.getSecrets().size() == 1
+                && secretId.equals(a.getSecrets().get(0).getId()));
+    }
+
+    @Test
+    public void testUpdateIfUnchanged_consecutiveWritesWithinOneMillisecond() {
+        Application read = createAndRead(buildApplication());
+        Date token = read.getUpdatedAt();
+        Date nextToken = new Date(token.getTime() + 1);
+
+        Application first = new Application(read);
+        first.setName("first");
+        first.setUpdatedAt(nextToken);
+        applicationRepository.updateIfUnchanged(first, token).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
+
+        Application second = new Application(read);
+        second.setName("second");
+        second.setUpdatedAt(nextToken);
+        TestObserver<Application> testObserver = applicationRepository.updateIfUnchanged(second, token).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
+
+        TestObserver<Application> stored = applicationRepository.findById(read.getId()).test();
+        stored.awaitDone(10, TimeUnit.SECONDS);
+        stored.assertValue(a -> "first".equals(a.getName()));
+    }
+
+    private Application createAndRead(Application app) {
+        Application created = applicationRepository.create(app).blockingGet();
+        return applicationRepository.findById(created.getId()).blockingGet();
     }
 
     private void assertEqualsTo(Application app, TestObserver<Application> testObserver) {

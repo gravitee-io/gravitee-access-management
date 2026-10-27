@@ -34,5 +34,7 @@ public class ClientSecretMongo {
     private String secret;
     private Date createdAt;
     private Date expiresAt;
+    private String automationKey;
+    private String managedBy;
 
 }
