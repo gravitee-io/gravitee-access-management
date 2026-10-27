@@ -111,6 +111,7 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.wildcardPrefixPattern;
 
 
 /**
@@ -221,12 +222,32 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+<<<<<<< HEAD
     public Single<Page<Application>> search(String domain, String query, ApplicationType type, int page, int size) {
         // search - use collation for non-wildcard queries to leverage case-insensitive indexes
         Bson baseQuery = buildSearchQuery(query, domain, FIELD_DOMAIN, FIELD_CLIENT_ID);
         Bson mongoQuery = type == null ? baseQuery : and(baseQuery, eq(FIELD_TYPE, type.name()));
         boolean useCollation = !isWildcardQuery(query);
         return findPage(applicationsCollection, mongoQuery, page, size, MongoApplicationRepository::convert, useCollation);
+=======
+    public Single<Page<Application>> search(String domain, String query, int page, int size) {
+        // currently search on client_id field
+        Bson searchQuery = or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query));
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            Pattern pattern = wildcardPrefixPattern(query);
+            searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern));
+        }
+
+        Bson mongoQuery = and(
+                eq(FIELD_DOMAIN, domain),
+                searchQuery);
+
+        Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
+        Single<List<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
+                .observeOn(Schedulers.computation());
+>>>>>>> 0b7e744 (fix(mongo): escape regex metacharacters in wildcard search)
     }
 
     @Override
@@ -234,6 +255,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         // Search on client_id and name fields with case-insensitive matching
         boolean useWildcard = isWildcardQuery(query);
 
+<<<<<<< HEAD
         Bson searchQuery;
         if (useWildcard) {
             // Wildcard search: use regex (cannot leverage indexes efficiently)
@@ -242,6 +264,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
             String compactQuery = escapedQuery.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+=======
+        Bson searchQuery = and(in(FIELD_ID, applicationIds), or(eq(FIELD_CLIENT_ID, query), eq(FIELD_NAME, query)));
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            Pattern pattern = wildcardPrefixPattern(query);
+>>>>>>> 0b7e744 (fix(mongo): escape regex metacharacters in wildcard search)
             searchQuery = and(in(FIELD_ID, applicationIds), or(new BasicDBObject(FIELD_CLIENT_ID, pattern), new BasicDBObject(FIELD_NAME, pattern)));
         } else {
             // Exact match: use equality filter with collation for case-insensitive matching
