@@ -60,6 +60,41 @@ public class KryoSecureSecretsCacheTest {
     }
 
     @Test
+    public void shouldReadSameSecretConcurrently() throws Exception {
+        SecretsCache cache = new KryoSecureSecretsCache(kryoPool, null, null);
+        SecretURL secretURL = new SecretURL("validProvider", "secretPath", "secretKey", ArrayListMultimap.create(), false);
+        cache.put(secretURL, new Secret("secretValue"));
+
+        final int threads = 8;
+        final java.util.concurrent.ExecutorService pool = Executors.newFixedThreadPool(threads);
+        final java.util.concurrent.atomic.AtomicInteger failures = new java.util.concurrent.atomic.AtomicInteger();
+        try {
+            final java.util.List<java.util.concurrent.Future<?>> futures = new java.util.ArrayList<>();
+            final java.util.concurrent.CyclicBarrier barrier = new java.util.concurrent.CyclicBarrier(threads);
+            for (int t = 0; t < threads; t++) {
+                futures.add(pool.submit(() -> {
+                    try {
+                        barrier.await();
+                        for (int i = 0; i < 20_000; i++) {
+                            if (!Optional.of(new Secret("secretValue")).equals(cache.get(secretURL))) {
+                                failures.incrementAndGet();
+                            }
+                        }
+                    } catch (Exception e) {
+                        failures.incrementAndGet();
+                    }
+                }));
+            }
+            for (var f : futures) {
+                f.get(60, TimeUnit.SECONDS);
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+        assertThat(failures.get()).isZero();
+    }
+
+    @Test
     public void shouldEvictSecretValueAfterTtlPasses() {
         SecretsCache cache = new KryoSecureSecretsCache(kryoPool, SHORT_CACHE_TTL, null);
         scheduleEnforcedCleanup(cache);
