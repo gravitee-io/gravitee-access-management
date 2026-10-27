@@ -40,6 +40,16 @@ public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
 
     private final GatewayMetricProvider metricProvider;
 
+    /**
+     * Check the token without counting the failures (used on the route only displaying the page)
+     */
+    public ResetPasswordOneTimeTokenHandler() {
+        this(null);
+    }
+
+    /**
+     * Check the token and count the failures as reset password failures (used on the submission route)
+     */
     public ResetPasswordOneTimeTokenHandler(GatewayMetricProvider metricProvider) {
         this.metricProvider = metricProvider;
     }
@@ -69,7 +79,9 @@ public class ResetPasswordOneTimeTokenHandler extends UserRequestHandler {
         // redirect user to the reset password page with an error
         if (Instant.ofEpochSecond(jwt.getIat()).isBefore(user.getLastPasswordReset().toInstant())) {
             log.debug("Token has already been used for reset password action, skip it.");
-            metricProvider.incrementResetPasswordFailure();
+            if (metricProvider != null) {
+                metricProvider.incrementResetPasswordFailure();
+            }
             queryParams.set(ConstantKeys.ERROR_PARAM_KEY, INVALID_TOKEN);
             if(context.session()!=null){
                 context.session().put(ERROR_HASH, HashUtil.generateSHA256(INVALID_TOKEN));

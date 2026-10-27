@@ -46,7 +46,6 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
     private AuditService auditService;
 
     @Autowired
-
     private GatewayMetricProvider metricProvider;
 
     @Override
@@ -85,6 +84,8 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                         if (throwable instanceof InvalidTokenException) {
                             log.debug("No access token {} found in the token store.", token);
                             auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
+                            // the request is valid and the expected state is reached, the call is a success (RFC 7009)
+                            metricProvider.incrementRevokeSuccess();
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
@@ -129,6 +130,8 @@ public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenServ
                     if (throwable instanceof InvalidTokenException) {
                         log.debug("No refresh token {} found in the token store.", token);
                         auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).revoked("token not found"));
+                        // the request is valid and the expected state is reached, the call is a success (RFC 7009)
+                        metricProvider.incrementRevokeSuccess();
                         return Completable.complete();
                     }
                     return Completable.error(throwable);

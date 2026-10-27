@@ -711,7 +711,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .failureHandler(new RegisterFailureHandler());
 
         rootRouter.route(GET, PATH_CONFIRM_REGISTRATION)
-                .handler(new RegisterConfirmationRequestParseHandler(userService, gatewayMetricProvider))
+                .handler(new RegisterConfirmationRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTRATION_CONFIRMATION))
                 .handler(localeHandler)
@@ -750,10 +750,10 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_FORGOT_PASSWORD).failureHandler(new ErrorHandler(PATH_ERROR, true));
 
         rootRouter.route(GET, PATH_RESET_PASSWORD)
-                .handler(new ResetPasswordRequestParseHandler(userService, gatewayMetricProvider))
+                .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(userTokenRequestParseHandler)
-                .handler(new ResetPasswordOneTimeTokenHandler(gatewayMetricProvider))
+                .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager, identityProviderManager, deviceIdentifierManager));

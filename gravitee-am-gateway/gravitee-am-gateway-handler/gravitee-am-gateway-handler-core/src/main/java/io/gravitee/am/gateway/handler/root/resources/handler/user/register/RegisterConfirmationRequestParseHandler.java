@@ -32,16 +32,26 @@ public class RegisterConfirmationRequestParseHandler extends UserTokenRequestPar
 
     private final GatewayMetricProvider metricProvider;
 
+    /**
+     * Parse the token without counting the failures (used on the routes only displaying the page)
+     */
+    public RegisterConfirmationRequestParseHandler(UserService userService) {
+        this(userService, null);
+    }
+
+    /**
+     * Parse the token and count the failures as registration confirmation failures (used on the submission route)
+     */
     public RegisterConfirmationRequestParseHandler(UserService userService, GatewayMetricProvider metricProvider) {
-        this.metricProvider = metricProvider;
         super(userService);
+        this.metricProvider = metricProvider;
     }
 
     @Override
     protected Handler<AsyncResult<UserToken>> getResultHandler(RoutingContext context, MultiMap queryParams) {
         final Handler<AsyncResult<UserToken>> handler = super.getResultHandler(context, queryParams);
         return result -> {
-            if (result.failed()) {
+            if (result.failed() && metricProvider != null) {
                 metricProvider.incrementRegistrationConfirmationFailure();
             }
             handler.handle(result);

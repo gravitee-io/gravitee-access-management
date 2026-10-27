@@ -198,7 +198,8 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
                                 if (verifyAttemptService.shouldSendEmail(client, domainDataPlane.getDomain())) {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }
-                                reportFailure(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
+                                updateAuditLog(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
+                                incrementFailureMetric(isEnrolling(enrolledFactor) ? MFA_ENROLLMENT : MFA_CHALLENGE);
                                 log.warn("MFA verification limit reached for the user: {}", endUser.getUsername());
                                 handleException(routingContext, VERIFY_ATTEMPT_ERROR_PARAM_KEY, "maximum_verify_limit");
                             } else {
@@ -268,7 +269,7 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
             if (ch.failed()) {
                 final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
                 log.error("An error has occurred while updating credential for the user {}", username, h.cause());
-                updateAuditLog(routingContext, auditLogType, endUser, client, factor, factorContext, h.cause());
+                reportFailure(routingContext, auditLogType, endUser, client, factor, factorContext, ch.cause());
                 routingContext.fail(401);
                 return;
             }
@@ -441,7 +442,11 @@ public class MFAChallengePostEndpoint extends MFAChallengeEndpoint {
     private void reportFailure(RoutingContext routingContext, String type, User endUser, Client client,
                                Factor factor, FactorContext factorContext, Throwable cause) {
         updateAuditLog(routingContext, type, endUser, client, factor, factorContext, cause);
-        if (MFA_CHALLENGE.equals(type) || MFA_MAX_ATTEMPT_REACHED.equals(type)) {
+        incrementFailureMetric(type);
+    }
+
+    private void incrementFailureMetric(String type) {
+        if (MFA_CHALLENGE.equals(type)) {
             gatewayMetricProvider.incrementMfaFailure();
         } else if (MFA_ENROLLMENT.equals(type)) {
             gatewayMetricProvider.incrementMfaEnrollmentFailure();

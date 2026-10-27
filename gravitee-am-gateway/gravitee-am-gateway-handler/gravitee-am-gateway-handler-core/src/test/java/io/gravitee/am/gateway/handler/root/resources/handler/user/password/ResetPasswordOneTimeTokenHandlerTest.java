@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -37,15 +39,54 @@ import java.util.Date;
  */
 public class ResetPasswordOneTimeTokenHandlerTest extends RxWebTestBase {
 
+    private final GatewayMetricProvider metricProvider = mock(GatewayMetricProvider.class);
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.route("/resetPassword")
                 .handler(BodyHandler.create())
-                .handler(new ResetPasswordOneTimeTokenHandler(mock(GatewayMetricProvider.class)))
+                .handler(new ResetPasswordOneTimeTokenHandler(metricProvider))
                 .handler(rc -> rc.response().end())
                 .failureHandler(new ErrorHandler());
+        router.route("/resetPasswordPage")
+                .handler(BodyHandler.create())
+                .handler(new ResetPasswordOneTimeTokenHandler())
+                .handler(rc -> rc.response().end())
+                .failureHandler(new ErrorHandler());
+    }
+
+    private void usedToken() {
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setLastPasswordReset(new Date());
+
+            JWT token = new JWT();
+            token.setIat(Instant.now().minus(1, ChronoUnit.HOURS).getEpochSecond());
+
+            routingContext.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+            routingContext.put(ConstantKeys.USER_CONTEXT_KEY, endUser);
+            routingContext.next();
+        });
+    }
+
+    @Test
+    public void shouldCountFailure_whenTokenAlreadyUsed() throws Exception {
+        usedToken();
+
+        testRequest(HttpMethod.POST, "/resetPassword", null, 302, "Found", null);
+
+        verify(metricProvider).incrementResetPasswordFailure();
+    }
+
+    @Test
+    public void shouldNotCountFailure_whenTokenAlreadyUsedOnPageRoute() throws Exception {
+        usedToken();
+
+        testRequest(HttpMethod.POST, "/resetPasswordPage", null, 302, "Found", null);
+
+        verify(metricProvider, never()).incrementResetPasswordFailure();
     }
 
     @Test
