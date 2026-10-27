@@ -27,6 +27,8 @@ export interface AuthorizationDetailTypeFixture extends Fixture {
   accessToken: string;
   /** A second domain, created on first call. */
   otherDomain: () => Promise<Domain>;
+  /** A new empty domain on every call. */
+  newDomain: () => Promise<Domain>;
 }
 
 export const AUTHORIZATION_DETAIL_TYPE_TEST = {
@@ -74,21 +76,26 @@ export const setupAuthorizationDetailTypeFixture = async (): Promise<Authorizati
     expect(domain.id).toEqual(expect.any(String));
     domains.push(domain);
 
+    const newDomain = async () => {
+      const created = (
+        await setupDomainForTest(uniqueName(AUTHORIZATION_DETAIL_TYPE_TEST.DOMAIN_NAME_PREFIX, true), {
+          accessToken,
+          waitForStart: false,
+        })
+      ).domain;
+      domains.push(created);
+      return created;
+    };
+
     let other: Domain | null = null;
     const otherDomain = async () => {
       if (!other) {
-        other = (
-          await setupDomainForTest(uniqueName(AUTHORIZATION_DETAIL_TYPE_TEST.DOMAIN_NAME_PREFIX, true), {
-            accessToken,
-            waitForStart: false,
-          })
-        ).domain;
-        domains.push(other);
+        other = await newDomain();
       }
       return other;
     };
 
-    return { domain, accessToken, otherDomain, cleanUp };
+    return { domain, accessToken, otherDomain, newDomain, cleanUp };
   } catch (error) {
     try {
       await cleanUp();

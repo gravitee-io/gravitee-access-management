@@ -19,7 +19,10 @@ import com.mongodb.ErrorCategory;
 import com.mongodb.MongoWriteException;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.cursor.CursorPage;
+import io.gravitee.am.model.cursor.CursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AuthorizationDetailTypeMongo;
@@ -31,21 +34,29 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.regex;
 
 /**
  * @author GraviteeSource Team
  */
 @Component
-public class MongoAuthorizationDetailTypeRepository extends AbstractManagementMongoRepository implements AuthorizationDetailTypeRepository {
+public class MongoAuthorizationDetailTypeRepository
+        extends AbstractMongoCursorRepository<AuthorizationDetailTypeMongo, AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>
+        implements AuthorizationDetailTypeRepository {
 
     private static final String COLLECTION_NAME = "authorization_detail_types";
     private static final String FIELD_TYPE = "type";
+    private static final String FIELD_NAME = "name";
 
     private MongoCollection<AuthorizationDetailTypeMongo> collection;
 
@@ -69,6 +80,53 @@ public class MongoAuthorizationDetailTypeRepository extends AbstractManagementMo
         return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_DOMAIN, domain))).collation(CASE_INSENSITIVE_COLLATION))
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest>> findByDomainCursor(String domain, AuthorizationDetailTypeCursorRequest cursor, int limit) {
+        Bson filter = eq(FIELD_DOMAIN, domain);
+        if (cursor.getQuery() != null && !cursor.getQuery().isBlank()) {
+            filter = withQuery(filter, cursor.getQuery());
+        }
+        return findCursorPage(collection, filter, cursor, limit);
+    }
+
+    @Override
+    protected AuthorizationDetailType toModel(AuthorizationDetailTypeMongo databaseModel) {
+        return convert(databaseModel);
+    }
+
+    @Override
+    protected Bson withQuery(Bson base, String query) {
+        return and(base, query.contains("*") ? regex(FIELD_TYPE, toAnchoredPattern(query)) : eq(FIELD_TYPE, query));
+    }
+
+    @Override
+    protected String sortFieldName(CursorRequest cursor) {
+        return AuthorizationDetailTypeCursorRequest.SORT_FIELD_NAME.equals(cursor.getSortField()) ? FIELD_NAME : FIELD_TYPE;
+    }
+
+    @Override
+    protected Object sortFieldValue(CursorRequest cursor) {
+        return cursor.getLastSortValue();
+    }
+
+    @Override
+    protected boolean useCollation(AuthorizationDetailTypeCursorRequest cursor) {
+        return true;
+    }
+
+    @Override
+    protected AuthorizationDetailTypeCursorRequest nextCursor(AuthorizationDetailTypeCursorRequest currentCursor, AuthorizationDetailType element) {
+        return currentCursor.next(element);
+    }
+
+    private static Pattern toAnchoredPattern(String query) {
+        // -1 keeps the empty parts around leading and trailing wildcards
+        String regex = Arrays.stream(query.split("\\*+", -1))
+                .map(part -> part.isEmpty() ? "" : Pattern.quote(part))
+                .collect(Collectors.joining(".*", "^", "$"));
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
 
     @Override

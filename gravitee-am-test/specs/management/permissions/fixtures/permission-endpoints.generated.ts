@@ -179,6 +179,12 @@ export const PERMISSION_ENDPOINTS: PermissionEndpoint[] = [
   },
   {
     method: 'GET',
+    route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types',
+    permission: 'domain_authorization_detail_type_list',
+    summary: 'List the authorization detail types of a security domain with cursor-based pagination',
+  },
+  {
+    method: 'GET',
     route: '/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines',
     permission: 'domain_authorization_engine_list',
     summary: 'List registered authorization engines for a security domain',
