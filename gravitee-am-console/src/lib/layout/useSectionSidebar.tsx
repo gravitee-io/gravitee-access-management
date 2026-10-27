@@ -59,7 +59,7 @@ export function useSectionSidebar({ title, badges = [], groups, base, crumbs }: 
             contextSidebar: (
                 <ContextSidebar
                     header={
-                        <div className="space-y-2 border-b px-3 pt-4 pb-4">
+                        <div className="space-y-2 border-b border-border px-3 pt-4 pb-4">
                             <p className="truncate text-sm font-semibold" title={title}>
                                 {title}
                             </p>

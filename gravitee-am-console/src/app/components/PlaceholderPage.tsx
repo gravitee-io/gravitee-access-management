@@ -21,7 +21,7 @@ export function PlaceholderPage({ title }: { readonly title: string }) {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title={title} />
-            <Empty className="border">
+            <Empty className="border border-border">
                 <EmptyHeader>
                     <EmptyMedia variant="icon">
                         <WrenchIcon />

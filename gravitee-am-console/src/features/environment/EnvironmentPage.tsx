@@ -36,7 +36,7 @@ export function EnvironmentPage() {
     }
     const canCreate = has('domain_create');
     return (
-        <Empty className="border">
+        <Empty className="border border-border">
             <EmptyHeader>
                 <EmptyMedia variant="icon">
                     <GlobeIcon />
