@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -245,5 +246,32 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(s -> s.getData().size() == 1);
         testObserver.assertValue(scopes -> scopes.getData().iterator().next().getClaims().size() == 2);
 
+    }
+
+    @Test
+    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+        String domain = "metacharacter-domain";
+        for (String key : List.of("scope(1)+a", "scope1a")) {
+            Scope scope = new Scope();
+            scope.setDomain(domain);
+            scope.setKey(key);
+            scope.setName(key);
+            scopeRepository.create(scope).blockingGet();
+        }
+
+        Map<String, List<String>> expectedKeysByQuery = Map.of(
+                "scope(1)+*", List.of("scope(1)+a"),
+                "scope(*", List.of("scope(1)+a"),
+                ".*", List.of(),
+                "zzz|*", List.of());
+
+        expectedKeysByQuery.forEach((query, expectedKeys) -> {
+            TestObserver<Page<Scope>> testObserver = scopeRepository.search(domain, query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(scopes -> scopes.getData().stream().map(Scope::getKey).toList().equals(expectedKeys));
+        });
     }
 }
