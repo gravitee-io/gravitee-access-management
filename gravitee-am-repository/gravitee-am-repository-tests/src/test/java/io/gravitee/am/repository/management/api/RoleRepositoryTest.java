@@ -19,6 +19,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.test.IncompatibleDataTestUtils;
@@ -379,5 +380,31 @@ public class RoleRepositoryTest extends AbstractManagementTest {
                 ReflectionTestUtils.setField(jdbcRole, "updatedAt", null);
             }
         );
+    }
+
+    @Test
+    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+        String referenceId = "metacharacter-domain";
+        for (String name : List.of("role(1)+a", "role1a")) {
+            Role role = buildRole();
+            role.setReferenceId(referenceId);
+            role.setName(name);
+            roleRepository.create(role).blockingGet();
+        }
+
+        Map<String, List<String>> expectedNamesByQuery = Map.of(
+                "role(1)+*", List.of("role(1)+a"),
+                "role(*", List.of("role(1)+a"),
+                ".*", List.of(),
+                "zzz|*", List.of());
+
+        expectedNamesByQuery.forEach((query, expectedNames) -> {
+            TestObserver<Page<Role>> testObserver = roleRepository.search(ReferenceType.DOMAIN, referenceId, query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(roles -> roles.getData().stream().map(Role::getName).toList().equals(expectedNames));
+        });
     }
 }
