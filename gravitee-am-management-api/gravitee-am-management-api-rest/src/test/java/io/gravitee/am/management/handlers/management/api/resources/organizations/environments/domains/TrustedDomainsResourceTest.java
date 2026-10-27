@@ -172,7 +172,7 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
         assertEquals("https://issuer.example.org", data.get(0).get("domainIdentifier"));
         String next = (String) page.get("nextCursor");
         assertTrue(next.startsWith("/organizations/DEFAULT/environments/DEFAULT/domains/" + DOMAIN_ID + "/trusted-domains/_cursor?"), next);
-        assertTrue(next.contains("cursor=" + URLEncoder.encode(new CursorApiRequest("td-1", "acme").encode(), StandardCharsets.UTF_8)), next);
+        assertTrue(next.contains("cursor=" + URLEncoder.encode(CursorApiRequest.of(nextCursor).encode(), StandardCharsets.UTF_8)), next);
         assertTrue(next.contains("page=3"), next);
         assertTrue(next.contains("usage=TOKEN_EXCHANGE"), next);
         assertTrue(next.contains("dir=desc"), next);
@@ -181,8 +181,8 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
     @Test
     public void shouldKeepTheNextCursorEncodedInTheNextPageLink() {
         stubDomain();
-        TrustedDomainCursorRequest nextCursor = new TrustedDomainCursorRequest("partner>idp", "td-12", CursorRequest.SortDirection.ASC, "name", 1, null);
-        String encodedCursor = new CursorApiRequest("td-12", "partner>idp").encode();
+        TrustedDomainCursorRequest nextCursor = new TrustedDomainCursorRequest("partner>>idp", "td-12", CursorRequest.SortDirection.ASC, "name", 1, null);
+        String encodedCursor = CursorApiRequest.of(nextCursor).encode();
         doReturn(Single.just(new CursorPage<>(List.of(tokenExchangeTrustDomain()), nextCursor, 41L)))
                 .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(), eq(10));
 
@@ -212,7 +212,7 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
                 .queryParam("limit", 10)
                 .queryParam("page", 3)
-                .queryParam("cursor", new CursorApiRequest("td-1", "acme").encode())
+                .queryParam("cursor", new CursorApiRequest("td-1", "name", CursorRequest.SortDirection.ASC, "acme").encode())
                 .request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

@@ -25,8 +25,10 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
@@ -50,6 +52,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -216,6 +219,24 @@ class AuthorizationDetailTypeServiceImplTest {
         when(repository.findByDomainAndId("other-domain", "id-1")).thenReturn(Maybe.empty());
 
         service.findById("other-domain", "id-1").test().assertComplete().assertNoValues();
+    }
+
+    @Test
+    void shouldFindPageByDomain() {
+        AuthorizationDetailTypeCursorRequest cursor = AuthorizationDetailTypeCursorRequest.initialCursor("type", "ASC", 0, "payment*");
+        CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest> page =
+                new CursorPage<>(List.of(AuthorizationDetailType.builder().id("id-1").build()), null, 1L);
+        when(repository.findByDomainCursor(DOMAIN_ID, cursor, 2)).thenReturn(Single.just(page));
+
+        service.findByDomainCursor(DOMAIN_ID, cursor, 2).test().assertValue(page);
+    }
+
+    @Test
+    void shouldWrapFindPageFailure() {
+        AuthorizationDetailTypeCursorRequest cursor = AuthorizationDetailTypeCursorRequest.initialCursor("type", "ASC", 0, null);
+        when(repository.findByDomainCursor(DOMAIN_ID, cursor, 50)).thenReturn(Single.error(new RuntimeException("boom")));
+
+        service.findByDomainCursor(DOMAIN_ID, cursor, 50).test().assertError(TechnicalManagementException.class);
     }
 
     @Test
