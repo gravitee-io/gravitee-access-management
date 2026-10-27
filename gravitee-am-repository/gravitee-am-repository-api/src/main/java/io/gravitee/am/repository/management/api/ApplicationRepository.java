@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
@@ -73,6 +74,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
     Flowable<Application> findByFactor(String factor);
 
     Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant);
+
+    Flowable<Application> findByDomainAndManagedBy(String domain, ManagedBy managedBy);
 
     Flowable<Application> findByIdIn(List<String> ids);
 

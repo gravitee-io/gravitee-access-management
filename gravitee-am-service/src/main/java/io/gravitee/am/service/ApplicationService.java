@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.ApplicationFilter;
@@ -83,6 +84,8 @@ public interface ApplicationService {
 
     Flowable<Application> findByIdIn(List<String> ids);
 
+    Flowable<Application> findByDomainAndManagedBy(String domain, ManagedBy managedBy);
+
     Maybe<Application> findById(String id);
 
     /**
@@ -98,6 +101,32 @@ public interface ApplicationService {
     Single<Application> create(Domain domain, Application application);
 
     /**
+     * Validates a new Automation-managed application without persisting, auditing or emitting events.
+     *
+     * @return the application as it would be created (computed fields filled in)
+     */
+    Single<Application> validateCreate(Domain domain, Application application);
+
+    /**
+     * Creates an Automation-managed application: the same preparation as {@link #validateCreate}, then the
+     * creation itself (owner membership, sync event, audit). No default client secret is generated.
+     */
+    Single<Application> create(Domain domain, Application application, User principal);
+
+    /**
+     * Validates the desired state of an existing application without persisting.
+     * Identity providers are not checked for existence (references are eventually consistent).
+     */
+    Single<Application> validateUpdate(Domain domain, Application existing, Application desired);
+
+    /**
+     * Updates an existing application to its desired state, revoking its tokens when it gets disabled.
+     * Identity providers are not checked for existence (references are eventually consistent).
+     */
+    Single<Application> update(Domain domain, Application existing, Application desired, User principal,
+                               BiFunction<Domain, Application, Completable> revokeTokenProcessor);
+
+    /**
      * Bootstraps an application from a CIMD URL: server-side fetches + validates the document,
      * builds the application with {@code clientId} set to the URL, persists it, then upserts the
      * {@link io.gravitee.am.model.CimdMetadataDocument} cache entry.
@@ -107,6 +136,12 @@ public interface ApplicationService {
     Single<Application> update(Application application);
 
     Single<Application> updateType(String domain, String id, ApplicationType type, User principal);
+
+    /**
+     * In-memory: copy of the application switched to {@code type}, with that type's forced template applied
+     * (what {@link #updateType} does before persisting). The given application is left untouched.
+     */
+    Application changeType(Application application, ApplicationType type);
 
     Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor);
 

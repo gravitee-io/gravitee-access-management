@@ -21,16 +21,19 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -276,4 +279,73 @@ public class PatchApplicationTest {
         assertEquals(existing, result.getSettings().getOauth().getUserinfoCustomClaims());
     }
 
+    @Test
+    public void shouldClearCertificateKeyWhenCertificateChanges() {
+        var app = new Application();
+        app.setCertificate("cert-1");
+        app.setCertificateKey("signing-cert");
+
+        var patchApplication = new PatchApplication();
+        patchApplication.setCertificate(Optional.of("cert-2"));
+
+        var patched = patchApplication.patch(app);
+        assertEquals("cert-2", patched.getCertificate());
+        assertNull(patched.getCertificateKey());
+    }
+
+    @Test
+    public void shouldKeepCertificateKeyWhenCertificateIsUnchanged() {
+        var app = new Application();
+        app.setCertificate("cert-1");
+        app.setCertificateKey("signing-cert");
+
+        var patchApplication = new PatchApplication();
+        patchApplication.setCertificate(Optional.of("cert-1"));
+
+        assertEquals("signing-cert", patchApplication.patch(app).getCertificateKey());
+    }
+
+    @Test
+    public void shouldKeepCertificateKeyWhenCertificateIsNotPatched() {
+        var app = new Application();
+        app.setCertificate("cert-1");
+        app.setCertificateKey("signing-cert");
+
+        var patchApplication = new PatchApplication();
+        patchApplication.setName(Optional.of("renamed"));
+
+        assertEquals("signing-cert", patchApplication.patch(app).getCertificateKey());
+    }
+
+    @Test
+    public void shouldKeepIdentityKeyOnlyForUnchangedIdentityProviders() {
+        var unchanged = new ApplicationIdentityProvider();
+        unchanged.setIdentity("idp-1");
+        unchanged.setIdentityKey("customer-users");
+        unchanged.setPriority(0);
+        var replaced = new ApplicationIdentityProvider();
+        replaced.setIdentity("idp-2");
+        replaced.setIdentityKey("partner-users");
+        replaced.setPriority(1);
+        var app = new Application();
+        app.setIdentityProviders(new TreeSet<>(List.of(unchanged, replaced)));
+
+        var patchApplication = new PatchApplication();
+        patchApplication.setIdentityProviders(Optional.of(Set.of(patchIdentityProvider("idp-1", 0), patchIdentityProvider("idp-3", 1))));
+
+        var identityKeys = new HashMap<String, String>();
+        patchApplication.patch(app).getIdentityProviders()
+                .forEach(appIdp -> identityKeys.put(appIdp.getIdentity(), appIdp.getIdentityKey()));
+        var expected = new HashMap<String, String>();
+        expected.put("idp-1", "customer-users");
+        expected.put("idp-3", null);
+        assertEquals(expected, identityKeys);
+    }
+
+    private static PatchApplicationIdentityProvider patchIdentityProvider(String identity, int priority) {
+        var patchAppIdp = new PatchApplicationIdentityProvider();
+        patchAppIdp.setIdentity(identity);
+        patchAppIdp.setPriority(priority);
+        return patchAppIdp;
+    }
 }

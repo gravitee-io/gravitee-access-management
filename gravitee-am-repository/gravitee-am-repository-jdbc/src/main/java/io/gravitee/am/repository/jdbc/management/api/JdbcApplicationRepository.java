@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -88,6 +89,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public static final String COL_METADATA = "metadata";
     public static final String COL_SETTINGS = "settings";
     public static final String COL_SECRET_SETTINGS = "secret_settings";
+    public static final String COL_AUTOMATION_KEY = "automation_key";
+    public static final String COL_MANAGED_BY = "managed_by";
+    public static final String COL_CERTIFICATE_KEY = "certificate_key";
 
     private static final List<String> columns = List.of(COL_ID,
             COL_TYPE,
@@ -102,7 +106,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
             COL_UPDATED_AT,
             COL_METADATA,
             COL_SETTINGS,
-            COL_SECRET_SETTINGS);
+            COL_SECRET_SETTINGS,
+            COL_AUTOMATION_KEY,
+            COL_MANAGED_BY,
+            COL_CERTIFICATE_KEY);
     public static final String IDENTITY = "identity";
 
     @Autowired
@@ -170,6 +177,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         idpSettings.setPriority(identity.getPriority());
         idpSettings.setSelectionRule(identity.getSelectionRule());
         idpSettings.setIdentity(identity.getIdentity());
+        idpSettings.setIdentityKey(identity.getIdentityKey());
         return idpSettings;
     }
 
@@ -437,6 +445,15 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
+    public Flowable<Application> findByDomainAndManagedBy(String domain, ManagedBy managedBy) {
+        LOGGER.debug("findByDomainAndManagedBy({}, {})", domain, managedBy);
+        return applicationRepository.findByDomainAndManagedBy(domain, managedBy.name())
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         LOGGER.debug("findByDomainAndExtensionGrant({}, {})", domain, extensionGrant);
         return applicationRepository.findAllByDomainAndGrant(domain, extensionGrant)
@@ -514,6 +531,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
         sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
         sql = addQuotedField(sql, COL_SECRET_SETTINGS, JSONMapper.secretSettingsToJson(item.getSecretSettings()), String.class);
+        sql = addQuotedField(sql, COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
+        sql = addQuotedField(sql, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
+        sql = addQuotedField(sql, COL_CERTIFICATE_KEY, item.getCertificateKey(), String.class);
 
         Mono<Long> insertAction = sql.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item);
@@ -544,6 +564,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
         sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
         sql = addQuotedField(sql, COL_SECRET_SETTINGS, JSONMapper.secretSettingsToJson(item.getSecretSettings()), String.class);
+        sql = addQuotedField(sql, COL_AUTOMATION_KEY, item.getAutomationKey(), String.class);
+        sql = addQuotedField(sql, COL_MANAGED_BY, item.getManagedBy() != null ? item.getManagedBy().name() : null, String.class);
+        sql = addQuotedField(sql, COL_CERTIFICATE_KEY, item.getCertificateKey(), String.class);
 
         Mono<Long> updateAction = sql.fetch().rowsUpdated();
         updateAction = deleteChildEntities(item.getId()).then(updateAction);
@@ -600,15 +623,17 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted(IDENTITY));
                 final String selectionRule = databaseDialectHelper.toSql(SqlIdentifier.quoted("selection_rule"));
                 final String priority = databaseDialectHelper.toSql(SqlIdentifier.quoted("priority"));
+                final String identityKey = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity_key"));
                 String INSERT_STMT = "INSERT INTO application_identities" +
-                        "(application_id, " + identity + ", " + selectionRule + ", " + priority + ") " +
-                        "VALUES (:app, :idpid, :selection_rule, :priority)";
-                final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
+                        "(application_id, " + identity + ", " + selectionRule + ", " + priority + ", " + identityKey + ") " +
+                        "VALUES (:app, :idpid, :selection_rule, :priority, :identity_key)";
+                DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
                         .bind("idpid", idp.getIdentity())
                         .bind("selection_rule", idp.getSelectionRule() == null ? "" : idp.getSelectionRule())
                         .bind("priority", idp.getPriority());
+                sql = idp.getIdentityKey() == null ? sql.bindNull("identity_key", String.class) : sql.bind("identity_key", idp.getIdentityKey());
                 return sql.fetch().rowsUpdated();
             }).reduce(Long::sum));
         }

@@ -27,6 +27,8 @@ public class ApplicationIdentityProviderMongo {
 
     private int priority;
 
+    private String identityKey;
+
     public String getIdentity() {
         return identity;
     }
@@ -49,5 +51,13 @@ public class ApplicationIdentityProviderMongo {
 
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+
+    public String getIdentityKey() {
+        return identityKey;
+    }
+
+    public void setIdentityKey(String identityKey) {
+        this.identityKey = identityKey;
     }
 }

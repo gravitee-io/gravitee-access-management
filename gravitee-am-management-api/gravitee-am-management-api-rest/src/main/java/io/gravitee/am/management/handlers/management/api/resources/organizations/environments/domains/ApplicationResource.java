@@ -281,6 +281,7 @@ public class ApplicationResource extends AbstractResource {
 
         if (hasAnyPermission(userPermissions, Permission.APPLICATION, Acl.READ)) {
             filteredApplication.setId(application.getId());
+            filteredApplication.setAutomationKey(application.getAutomationKey());
             filteredApplication.setName(application.getName());
             filteredApplication.setType(application.getType());
             filteredApplication.setKind(application.getKind());
@@ -290,6 +291,7 @@ public class ApplicationResource extends AbstractResource {
             filteredApplication.setTemplate(application.isTemplate());
             filteredApplication.setCreatedAt(application.getCreatedAt());
             filteredApplication.setUpdatedAt(application.getUpdatedAt());
+            filteredApplication.setManagedBy(application.getManagedBy());
         }
 
         if (hasAnyPermission(userPermissions, Permission.APPLICATION_FACTOR, Acl.READ)) {
