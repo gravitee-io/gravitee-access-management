@@ -110,24 +110,28 @@ export default defineConfig({
       },
     },
 
-    // The React console migration (gravitee-am-console). Excluded from 'chromium' above. Run explicitly via
-    // `pw:next` / `--project=console-next` against `yarn serve` in gravitee-am-console.
-    {
-      name: 'console-next-setup',
-      testMatch: /console-next\.setup\.ts/,
-      testDir: './playwright/fixtures',
-      use: { baseURL: process.env.AM_UI_NEXT_URL },
-    },
-    {
-      name: 'console-next',
-      testMatch: '**/console-next/**',
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.AM_UI_NEXT_URL,
-        storageState: 'playwright/fixtures/.auth/admin-next.json',
-      },
-      dependencies: ['console-next-setup'],
-    },
+    // The React console migration (gravitee-am-console). Excluded from 'chromium' above. `pw:next` sets
+    // AM_CONSOLE_NEXT, so a plain `pw` run does not need `yarn serve` in gravitee-am-console.
+    ...(process.env.AM_CONSOLE_NEXT
+      ? [
+          {
+            name: 'console-next-setup',
+            testMatch: /console-next\.setup\.ts/,
+            testDir: './playwright/fixtures',
+            use: { baseURL: process.env.AM_UI_NEXT_URL },
+          },
+          {
+            name: 'console-next',
+            testMatch: '**/console-next/**',
+            use: {
+              ...devices['Desktop Chrome'],
+              baseURL: process.env.AM_UI_NEXT_URL,
+              storageState: 'playwright/fixtures/.auth/admin-next.json',
+            },
+            dependencies: ['console-next-setup'],
+          },
+        ]
+      : []),
 
     // TODO: Enable Firefox cross-browser validation once Chromium suite is stable.
     // Requires `npx playwright install firefox` and CI pipeline update.
