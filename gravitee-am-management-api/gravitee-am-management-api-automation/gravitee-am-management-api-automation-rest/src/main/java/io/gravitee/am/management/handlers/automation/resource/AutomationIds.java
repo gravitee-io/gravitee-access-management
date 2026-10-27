@@ -53,6 +53,10 @@ public final class AutomationIds {
         return deterministicId(domainId, key);
     }
 
+    public static String applicationId(String domainId, String key) {
+        return deterministicId(domainId, key);
+    }
+
     public static String reporterId(String domainId, String key) {
         return deterministicId(domainId, key);
     }

@@ -115,4 +115,9 @@ public class DomainResource extends AbstractAutomationResource {
     public ReportersResource getReportersResource() {
         return resourceContext.getResource(ReportersResource.class);
     }
+
+    @Path("/applications")
+    public ApplicationsResource getApplicationsResource() {
+        return resourceContext.getResource(ApplicationsResource.class);
+    }
 }
