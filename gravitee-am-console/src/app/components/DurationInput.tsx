@@ -17,9 +17,9 @@ import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } 
 import { DURATION_UNITS, type DurationDraft, type DurationUnit } from '../../lib/forms/duration';
 
 interface DurationInputProps {
-    /** The id of the amount input, for its `FieldLabel`. */
+    /** The id of the amount input. */
     readonly id: string;
-    /** The field label. The unit select is named "<label> unit". */
+    /** Names the unit select "<label> unit". */
     readonly label: string;
     readonly value: DurationDraft;
     readonly disabled?: boolean;
@@ -27,7 +27,6 @@ interface DurationInputProps {
     readonly onChange: (value: DurationDraft) => void;
 }
 
-/** A number with a time unit, as the Angular duration fields with their `units` select. */
 export function DurationInput({ id, label, value, disabled, invalid, onChange }: DurationInputProps) {
     return (
         <div className="flex gap-2">

@@ -25,7 +25,6 @@ interface SettingToggleProps {
     readonly onChange: (checked: boolean) => void;
 }
 
-/** A labelled switch row with a description. The Angular `mat-slide-toggle` with its hint. */
 export function SettingToggle({ id, label, description, checked, disabled, onChange }: SettingToggleProps) {
     const descriptionId = `${id}-description`;
     return (

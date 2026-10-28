@@ -17,7 +17,6 @@ import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput } from '@grav
 import { useState } from 'react';
 
 interface TagInputProps {
-    /** The id of the input, for its `FieldLabel`. */
     readonly id: string;
     readonly values: readonly string[];
     readonly onChange: (values: string[]) => void;
@@ -27,7 +26,6 @@ interface TagInputProps {
     readonly disabled?: boolean;
 }
 
-/** A free-text list of tags. Enter adds the typed value. The Angular `mat-chip-grid` with an input. */
 export function TagInput({ id, values, onChange, onDuplicate, placeholder, disabled }: TagInputProps) {
     const [text, setText] = useState('');
 
@@ -50,7 +48,7 @@ export function TagInput({ id, values, onChange, onDuplicate, placeholder, disab
             value={[...values]}
             onValueChange={value => onChange(value as string[])}
             inputValue={text}
-            // Base UI clears the input on Enter. `add` clears it after an add, and a duplicate keeps the text to fix.
+            // Base UI clears the input on Enter. Ignore that, so a duplicate keeps its text.
             onInputValueChange={(value, details) => details.reason !== 'input-clear' && setText(value)}
             disabled={disabled}
         >

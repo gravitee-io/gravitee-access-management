@@ -17,22 +17,17 @@ import { Button, useLayoutConfig } from '@gravitee/graphene-core';
 import { useEffect, useRef } from 'react';
 
 interface SaveBarProps {
-    /** The id of the `<form>` that Save submits. The bar renders in the layout banner, outside the form. */
+    /** The id of the `<form>` that Save submits. */
     readonly formId: string;
-    /** `form.formState.isDirty` for a react-hook-form page. */
     readonly dirty: boolean;
-    /** `mutation.isPending`. */
     readonly saving: boolean;
-    /** Blocks Save while the form has a validation error. */
     readonly invalid?: boolean;
-    /** `() => form.reset()` for a react-hook-form page. */
     readonly onDiscard: () => void;
 }
 
-/** The sticky Save and Discard bar of a settings form, shown in the layout banner while the form is dirty. */
+/** Renders in the sticky layout banner while `dirty` is true. */
 export function SaveBar({ formId, dirty, saving, invalid = false, onDiscard }: SaveBarProps) {
-    // A page passes a new onDiscard on each render. The ref keeps it out of the banner deps, so the banner does not
-    // render the page again in a loop.
+    // onDiscard changes on each render. In the deps, it would set the banner in a loop.
     const discard = useRef(onDiscard);
     useEffect(() => {
         discard.current = onDiscard;

@@ -39,7 +39,6 @@ import { ValueListInput } from '../../app/components/ValueListInput';
 import { type DurationDraft, draftToSeconds } from '../../lib/forms/duration';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 
-// A local picture, so the page loads no image from outside the console.
 const SAMPLE_PICTURE =
     'data:image/svg+xml;utf8,' +
     encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#2563eb"/></svg>');

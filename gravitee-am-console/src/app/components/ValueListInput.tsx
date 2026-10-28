@@ -21,18 +21,17 @@ interface ValueListInputProps {
     /** The noun of one value, as in "Add redirect URI". */
     readonly label: string;
     readonly values: readonly string[];
-    /** False hides the input and the remove actions, for a user without the update permission. */
+    /** False hides the input and the remove actions. */
     readonly editable: boolean;
     readonly placeholder?: string;
     readonly emptyText: string;
     readonly onChange: (values: string[]) => void;
     /** Called instead of onChange when the typed value is already in the list. */
     readonly onDuplicate: (value: string) => void;
-    /** Called instead of onChange on a remove, so the page can confirm first, as some Angular lists do. */
+    /** Called instead of onChange on a remove. */
     readonly onRemoveRequest?: (value: string) => void;
 }
 
-/** An editable list of values, for example redirect URIs: an input with Add, and a remove action per value. */
 export function ValueListInput({
     label,
     values,

@@ -27,7 +27,6 @@ interface UserAvatarProps {
     readonly size?: 'default' | 'sm' | 'lg';
 }
 
-/** The user picture, else the first letter of the name. Replaces the Angular `app-user-avatar`. */
 export function UserAvatar({ user, size }: UserAvatarProps) {
     const name = user.username || user.name || '';
     const picture = user.picture || user.additionalInformation?.picture;

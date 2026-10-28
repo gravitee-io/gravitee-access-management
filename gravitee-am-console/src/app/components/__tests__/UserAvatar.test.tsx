@@ -17,7 +17,7 @@ import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { screen } from '@testing-library/react';
 import { UserAvatar } from '../UserAvatar';
 
-// jsdom loads no image. This stub makes every image load, so the avatar shows its picture.
+// jsdom loads no image.
 class LoadedImage extends EventTarget {
     complete = true;
     naturalWidth = 1;

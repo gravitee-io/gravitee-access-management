@@ -25,7 +25,7 @@ interface SearchFieldProps {
     readonly onSearch: (query: string) => void;
 }
 
-/** The search input of a list page, for the `DataTable` toolbar. It calls `onSearch` 300 ms after the last key press. */
+/** Calls `onSearch` with the trimmed text 300 ms after the last change. */
 export function SearchField({ label, onSearch }: SearchFieldProps) {
     const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
     useEffect(() => () => clearTimeout(timer.current), []);

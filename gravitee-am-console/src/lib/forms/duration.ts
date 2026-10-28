@@ -50,13 +50,12 @@ export function toSeconds(amount: number, unit: DurationUnit): number {
     }
 }
 
-/** A duration as a form edits it: the typed amount and its unit. */
 export type DurationDraft = {
     readonly time: string;
     readonly unit: DurationUnit | '';
 };
 
-/** The largest unit that gives the seconds exactly, with the Angular conversion. */
+/** The largest unit that gives the seconds exactly. */
 export function exactDuration(seconds: number): DurationDraft {
     for (const { value: unit } of [...DURATION_UNITS].reverse()) {
         // 4800 months is a whole number of days, so this divides by the unrounded length of one unit.
@@ -68,7 +67,7 @@ export function exactDuration(seconds: number): DurationDraft {
     return { time: String(seconds), unit: 'seconds' };
 }
 
-/** The Angular `moment.duration(time, unit).asSeconds()`, which is 0 for an empty time. */
+/** An empty time or no unit gives 0. */
 export function draftToSeconds(draft: DurationDraft): number {
     return draft.unit ? toSeconds(Number(draft.time), draft.unit) : 0;
 }

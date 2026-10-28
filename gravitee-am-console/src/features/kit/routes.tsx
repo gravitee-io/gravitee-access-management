@@ -16,5 +16,4 @@
 import { Route } from 'react-router-dom';
 import { lazyPage } from '../../lib/routing/lazyPage';
 
-/** The shared parts on one page, for development and QA with `yarn serve`. The production build drops the route. */
 export const kitRoutes = import.meta.env.DEV ? <Route path="dev/kit" element={lazyPage(() => import('./KitPage'), 'KitPage')} /> : null;

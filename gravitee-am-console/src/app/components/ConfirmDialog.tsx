@@ -30,15 +30,13 @@ interface ConfirmDialogProps {
     readonly title: string;
     readonly description: ReactNode;
     readonly confirmLabel: string;
-    /** A delete or another action that cannot be undone. */
     readonly destructive?: boolean;
-    /** True while the confirmed action runs. Both buttons are disabled and the dialog does not close. */
+    /** Disables both buttons and keeps the dialog open. */
     readonly pending?: boolean;
     readonly onOpenChange: (open: boolean) => void;
     readonly onConfirm: () => void;
 }
 
-/** Replaces the Angular `DialogService.confirm`. */
 export function ConfirmDialog({
     open,
     title,
