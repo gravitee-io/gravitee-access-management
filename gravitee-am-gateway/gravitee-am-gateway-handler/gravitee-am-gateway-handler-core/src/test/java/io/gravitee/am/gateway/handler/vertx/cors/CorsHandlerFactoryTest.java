@@ -28,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -132,6 +133,57 @@ public class CorsHandlerFactoryTest {
         assertTrue(validateCorsProperties(handlerObject, createDefaultCorsSettings()));
     }
 
+    @Test
+    public void shouldCreate_cors_settings_when_method_is_null() {
+        final CorsSettings settings = new CorsSettings();
+        settings.setInherited(false);
+        settings.setEnabled(true);
+        settings.setAllowedMethods(null);
+        settings.setAllowedOrigins(Set.of("http.foo.com", "https.bar.com/*"));
+        settings.setAllowedHeaders(Set.of("Authorization", "custom-header"));
+        settings.setMaxAge(50);
+        when(domain.getCorsSettings()).thenReturn(settings);
+
+        final CorsHandler handler = factory.getObject();
+        final CorsHandlerImpl handlerObject = (CorsHandlerImpl) handler.getDelegate();
+
+        assertTrue(validateCorsProperties(handlerObject, settings));
+    }
+
+    @Test
+    public void shouldCreate_cors_settings_when_origin_is_null() {
+        final CorsSettings settings = new CorsSettings();
+        settings.setInherited(false);
+        settings.setEnabled(true);
+        settings.setAllowedMethods(Set.of("DELETE", "PUT"));
+        settings.setAllowedOrigins(null);
+        settings.setAllowedHeaders(Set.of("Authorization", "custom-header"));
+        settings.setMaxAge(50);
+        when(domain.getCorsSettings()).thenReturn(settings);
+
+        final CorsHandler handler = factory.getObject();
+        final CorsHandlerImpl handlerObject = (CorsHandlerImpl) handler.getDelegate();
+
+        assertTrue(validateCorsProperties(handlerObject, settings));
+    }
+
+    @Test
+    public void shouldCreate_cors_settings_when_headers_is_null() {
+        final CorsSettings settings = new CorsSettings();
+        settings.setInherited(false);
+        settings.setEnabled(true);
+        settings.setAllowedMethods(Set.of("DELETE", "PUT"));
+        settings.setAllowedOrigins(Set.of("http.foo.com", "https.bar.com/*"));
+        settings.setAllowedHeaders(null);
+        settings.setMaxAge(50);
+        when(domain.getCorsSettings()).thenReturn(settings);
+
+        final CorsHandler handler = factory.getObject();
+        final CorsHandlerImpl handlerObject = (CorsHandlerImpl) handler.getDelegate();
+
+        assertTrue(validateCorsProperties(handlerObject, settings));
+    }
+
     private Boolean validateCorsProperties(CorsHandlerImpl corsHandler, CorsSettings corsSettings) {
         final String maxAgeSeconds = (String) ReflectionTestUtils.getField(corsHandler, "maxAgeSeconds");
         assertEquals(Integer.valueOf(corsSettings.getMaxAge()), Integer.valueOf(maxAgeSeconds));
@@ -140,10 +192,10 @@ public class CorsHandlerFactoryTest {
         assertEquals(corsSettings.isAllowCredentials(), allowCredentials);
 
         final Set<String> allowedMethods = (Set<String>) ReflectionTestUtils.getField(corsHandler, "allowedMethods");
-        assertEquals(corsSettings.getAllowedMethods(), allowedMethods);
+        assertEquals(Optional.ofNullable(corsSettings.getAllowedMethods()).orElse(Set.of()), allowedMethods);
 
         final Set<String> allowedHeaders = (Set<String>) ReflectionTestUtils.getField(corsHandler, "allowedHeaders");
-        assertEquals(corsSettings.getAllowedHeaders(), allowedHeaders);
+        assertEquals(Optional.ofNullable(corsSettings.getAllowedHeaders()).orElse(Set.of()), allowedHeaders);
 
         final Set<Pattern> relativeOrigins = (Set<Pattern>) ReflectionTestUtils.getField(corsHandler, "regexOrigins");
         // Note that regarding:
