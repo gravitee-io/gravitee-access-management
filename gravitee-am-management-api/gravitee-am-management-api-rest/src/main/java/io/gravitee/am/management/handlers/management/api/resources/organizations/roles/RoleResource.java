@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
@@ -102,6 +103,7 @@ public class RoleResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ROLE, Acl.UPDATE)
+                .andThen(permissionService.checkCanGrant(authenticatedUser, organizationId, Reference.organization(organizationId), updateRole.getPermissions()))
                 .andThen(roleService.update(ReferenceType.ORGANIZATION, organizationId, role, updateRole, authenticatedUser)
                         .map(this::convert))
                 .subscribe(response::resume, response::resume);
