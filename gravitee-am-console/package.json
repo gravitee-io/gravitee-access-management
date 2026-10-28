@@ -17,6 +17,7 @@
         "typecheck": "tsc --noEmit -p tsconfig.json"
     },
     "dependencies": {
+        "@gravitee/graphene-charts": "3.23.1",
         "@gravitee/graphene-core": "3.23.1",
         "@monaco-editor/react": "4.7.0",
         "@tanstack/react-query": "5.101.1",

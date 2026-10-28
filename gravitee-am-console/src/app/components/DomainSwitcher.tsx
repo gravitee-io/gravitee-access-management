@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
     SidebarGroup,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
 } from '@gravitee/graphene-core';
-import { ChevronsUpDownIcon, GlobeIcon, ListIcon } from '@gravitee/graphene-core/icons';
+import { CheckIcon, ChevronsUpDownIcon, GlobeIcon, ListIcon } from '@gravitee/graphene-core/icons';
+import { useState } from 'react';
 import type { Domain } from '../../lib/api/domains';
 
 interface DomainSwitcherProps {
@@ -41,14 +44,15 @@ interface DomainSwitcherProps {
 
 export function DomainSwitcher({ domains, currentDomain, loading, onSelect, onManage }: DomainSwitcherProps) {
     const { state, isMobile } = useSidebar();
+    const [open, setOpen] = useState(false);
     const label = currentDomain?.name ?? (loading ? 'Loading domains…' : 'No domain selected');
 
     return (
         <SidebarGroup className="z-10">
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                    <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
                             <SidebarMenuButton
                                 size="lg"
                                 tooltip={state === 'collapsed' ? label : undefined}
@@ -65,25 +69,51 @@ export function DomainSwitcher({ domains, currentDomain, loading, onSelect, onMa
                                 </span>
                                 <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                             </SidebarMenuButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-64" align="start" side={isMobile ? 'bottom' : 'right'}>
-                            <DropdownMenuLabel className="text-xs text-muted-foreground">Domains</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={currentDomain?.id ?? ''}>
-                                {domains.map(domain => (
-                                    <DropdownMenuRadioItem key={domain.id} value={domain.id} onSelect={() => onSelect(domain)}>
-                                        <span className="min-w-0 flex-1 truncate">{domain.name}</span>
-                                        {!domain.enabled && <span className="text-xs text-muted-foreground">Disabled</span>}
-                                    </DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                            {domains.length === 0 && !loading && <DropdownMenuItem disabled>No domains yet</DropdownMenuItem>}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={onManage}>
-                                <ListIcon />
-                                Manage domains
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-0" align="start" side={isMobile ? 'bottom' : 'right'}>
+                            <Command label="Find a domain">
+                                <CommandInput placeholder="Find a domain…" />
+                                <CommandList>
+                                    <CommandEmpty>{domains.length === 0 ? 'No domains yet' : 'No domains match your search'}</CommandEmpty>
+                                    {domains.length > 0 && (
+                                        <CommandGroup heading="Domains">
+                                            {domains.map(domain => (
+                                                <CommandItem
+                                                    key={domain.id}
+                                                    value={domain.id}
+                                                    keywords={[domain.name]}
+                                                    onSelect={() => {
+                                                        setOpen(false);
+                                                        onSelect(domain);
+                                                    }}
+                                                >
+                                                    <span className="min-w-0 flex-1 truncate">{domain.name}</span>
+                                                    {!domain.enabled && <span className="text-xs text-muted-foreground">Disabled</span>}
+                                                    {domain.id === currentDomain?.id && (
+                                                        <CheckIcon className="size-4" aria-label="Current domain" />
+                                                    )}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    )}
+                                    <CommandSeparator />
+                                    <CommandGroup forceMount>
+                                        <CommandItem
+                                            value="manage-domains"
+                                            forceMount
+                                            onSelect={() => {
+                                                setOpen(false);
+                                                onManage();
+                                            }}
+                                        >
+                                            <ListIcon />
+                                            Manage domains
+                                        </CommandItem>
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroup>

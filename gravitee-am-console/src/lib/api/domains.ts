@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 import type { Domain as DomainModel } from '@am-models/Domain';
+import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import { http } from './http';
 import type { Page } from './management-api';
 import type { ApiModel } from './model';
-import { environmentPath } from './paths';
+import { type DomainRef, domainPath, environmentPath, searchParam } from './paths';
 
 export type Domain = ApiModel<DomainModel, 'id' | 'hrid' | 'name' | 'enabled'>;
 
@@ -41,4 +42,33 @@ export async function listDomains(organizationId: string, environmentId: string)
 
 export function getDomain(organizationId: string, environmentId: string, domainId: string): Promise<Domain> {
     return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains/${domainId}`);
+}
+
+export function searchDomains(
+    organizationId: string,
+    environmentId: string,
+    page: number,
+    size: number,
+    query = '',
+): Promise<Page<Domain>> {
+    return http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?page=${page}&size=${size}${searchParam(query)}`);
+}
+
+export function listDomainsByIds(organizationId: string, environmentId: string, ids: readonly string[]): Promise<Page<Domain>> {
+    const params = ids.map(id => `ids=${encodeURIComponent(id)}`).join('&');
+    return http<Page<Domain>>(`${environmentPath(organizationId, environmentId)}/domains?${params}`);
+}
+
+export function getDomainByHrid(organizationId: string, environmentId: string, hrid: string): Promise<Domain> {
+    return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains/_hrid/${hrid}`);
+}
+
+export type NewDomain = ApiModel<NewDomainModel>;
+
+export function createDomain(organizationId: string, environmentId: string, domain: NewDomain): Promise<Domain> {
+    return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains`, { method: 'POST', body: JSON.stringify(domain) });
+}
+
+export function enableDomain(ref: DomainRef): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ enabled: true }) });
 }

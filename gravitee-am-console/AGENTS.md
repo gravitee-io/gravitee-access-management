@@ -56,7 +56,7 @@ src/
   features/<area>/  routes.tsx, pages, area helpers, __tests__/
   lib/api/          http.ts, auth.ts, paths.ts (DomainRef, domainPath), model.ts (ApiModel), management-api.ts, one file per area
   lib/routing/      lazyPage.tsx
-  lib/session/      session.tsx, environment.tsx, permissions.tsx, license.tsx, preferences.ts, domains.ts
+  lib/session/      session.tsx, environment.tsx, domain.tsx, permissions.tsx, license.tsx, preferences.ts, domains.ts
   lib/layout/       useBreadcrumbs.ts, useSectionSidebar.tsx
   lib/forms/        duration.ts
   test/             setup.ts
@@ -80,7 +80,8 @@ src/
 - `SessionGate` loads `GET /user`, the environments and the licence once. `useSession()` gives `user` and `environments`.
 - `EnvironmentScope` resolves `:envHrid` and loads the environment permissions. `useCurrentEnvironment()` gives the
   environment with its `id`.
-- The domain scope (`:domainHrid`, `useCurrentDomain()`) comes with the domains story.
+- `DomainScope` resolves `:domainHrid` with `GET domains/_hrid/{hrid}` and loads the domain permissions.
+  `useCurrentDomain()` gives `domain`, `ref` (the `DomainRef` for API calls), `basePath` and `domainsPath`.
 - The login chain is server-side: `redirectToLogin()` in `src/lib/api/auth.ts`. A 401 from any query starts it
   through the `QueryCache` in `App.tsx`. Pages do not handle 401.
 

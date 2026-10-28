@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getDomain, listDomains } from '../domains';
+import { createDomain, enableDomain, getDomain, getDomainByHrid, listDomains, listDomainsByIds, searchDomains } from '../domains';
 import { http } from '../http';
 
 vi.mock('../http', () => ({ http: vi.fn() }));
@@ -60,5 +60,41 @@ describe('domains api', () => {
         await getDomain('DEFAULT', 'env-1', 'd1');
 
         expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains/d1');
+    });
+
+    it('reads one page of domains, with the search as a wildcard pattern', async () => {
+        await searchDomains('DEFAULT', 'env-1', 2, 25, 'acme');
+
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains?page=2&size=25&q=*acme*');
+    });
+
+    it('reads the domains by id', async () => {
+        await listDomainsByIds('DEFAULT', 'env-1', ['d1', 'd 2']);
+
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains?ids=d1&ids=d%202');
+    });
+
+    it('reads a domain by its hrid', async () => {
+        await getDomainByHrid('DEFAULT', 'env-1', 'acme');
+
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains/_hrid/acme');
+    });
+
+    it('creates a domain', async () => {
+        await createDomain('DEFAULT', 'env-1', { name: 'Acme', dataPlaneId: 'default' });
+
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains', {
+            method: 'POST',
+            body: JSON.stringify({ name: 'Acme', dataPlaneId: 'default' }),
+        });
+    });
+
+    it('enables a domain with a patch of the enabled field', async () => {
+        await enableDomain({ organizationId: 'DEFAULT', environmentId: 'env-1', domainId: 'd1' });
+
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains/d1', {
+            method: 'PATCH',
+            body: JSON.stringify({ enabled: true }),
+        });
     });
 });
