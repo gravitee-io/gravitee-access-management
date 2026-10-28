@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service;
 
+import io.reactivex.rxjava3.core.Completable;
+import java.util.Set;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.service.impl.MembershipServiceImpl;
 import io.gravitee.am.model.Group;
@@ -645,5 +647,129 @@ public class MembershipServiceTest {
         verify(membershipRepository, times(0)).create(any(Membership.class));
         verify(eventService, times(0)).create(any());
         verify(auditService, times(0)).report(any());
+    }
+
+    private static Role primaryOwnerRole() {
+        Role role = new Role();
+        role.setId("role-primary-owner");
+        role.setName(SystemRole.DOMAIN_PRIMARY_OWNER.name());
+        role.setReferenceId(Platform.DEFAULT);
+        role.setReferenceType(ReferenceType.PLATFORM);
+        role.setSystem(true);
+        role.setAssignableType(ReferenceType.DOMAIN);
+        return role;
+    }
+
+    private static Role domainRole(String id, String name) {
+        Role role = new Role();
+        role.setId(id);
+        role.setName(name);
+        role.setReferenceId(Platform.DEFAULT);
+        role.setReferenceType(ReferenceType.PLATFORM);
+        role.setSystem(true);
+        role.setAssignableType(ReferenceType.DOMAIN);
+        return role;
+    }
+
+    private static Membership domainMembership(String id, String memberId, String roleId) {
+        Membership membership = new Membership();
+        membership.setId(id);
+        membership.setReferenceId(DOMAIN_ID);
+        membership.setReferenceType(ReferenceType.DOMAIN);
+        membership.setMemberId(memberId);
+        membership.setMemberType(MemberType.USER);
+        membership.setRoleId(roleId);
+        return membership;
+    }
+
+    @Test
+    public void shouldNotDemote_primaryOwner_whenCalledByAUser() {
+        Role primaryOwner = primaryOwnerRole();
+        Role owner = domainRole("role-owner", "DOMAIN_OWNER");
+        Membership existing = domainMembership("membership-po", "po-id", primaryOwner.getId());
+        Membership demotion = domainMembership(null, "po-id", owner.getId());
+
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "po-id")).thenReturn(Single.just(new User()));
+        when(roleService.findById(owner.getId())).thenReturn(Maybe.just(owner));
+        when(membershipRepository.findByReferenceAndMember(ReferenceType.DOMAIN, DOMAIN_ID, MemberType.USER, "po-id")).thenReturn(Maybe.just(existing));
+        when(roleService.findByIdIn(any())).thenReturn(Single.just(Set.of(primaryOwner, owner)));
+
+        TestObserver<Membership> obs = membershipService.addOrUpdate(ORGANIZATION_ID, demotion, new DefaultUser()).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+        verify(membershipRepository, never()).update(any());
+        verify(membershipRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotAssign_primaryOwnerRole_whenCalledByAUser() {
+        Role primaryOwner = primaryOwnerRole();
+        Membership takeOver = domainMembership(null, "alice-id", primaryOwner.getId());
+
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "alice-id")).thenReturn(Single.just(new User()));
+        when(roleService.findById(primaryOwner.getId())).thenReturn(Maybe.just(primaryOwner));
+        // nobody holds the role anymore, so the single primary owner check alone lets the assignment through
+        when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(criteria -> criteria.getRoleId().isPresent()))).thenReturn(Flowable.empty());
+        when(membershipRepository.findByReferenceAndMember(ReferenceType.DOMAIN, DOMAIN_ID, MemberType.USER, "alice-id")).thenReturn(Maybe.empty());
+        when(roleService.findByIdIn(any())).thenReturn(Single.just(Set.of(primaryOwner)));
+
+        TestObserver<Membership> obs = membershipService.addOrUpdate(ORGANIZATION_ID, takeOver, new DefaultUser()).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+        verify(membershipRepository, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotDelete_primaryOwnerMembership_whenCalledByAUser() {
+        Role primaryOwner = primaryOwnerRole();
+        Membership existing = domainMembership("membership-po", "po-id", primaryOwner.getId());
+
+        when(membershipRepository.findById("membership-po")).thenReturn(Maybe.just(existing));
+        when(roleService.findByIdIn(any())).thenReturn(Single.just(Set.of(primaryOwner)));
+
+        TestObserver<Void> obs = membershipService.delete(Reference.domain(DOMAIN_ID), "membership-po", new DefaultUser()).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+        verify(membershipRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldDelete_primaryOwnerMembership_whenCalledInternally() {
+        Membership existing = domainMembership("membership-po", "po-id", "role-primary-owner");
+
+        when(membershipRepository.findById("membership-po")).thenReturn(Maybe.just(existing));
+        when(membershipRepository.delete("membership-po")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> obs = membershipService.delete(Reference.domain(DOMAIN_ID), "membership-po", null).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        verify(membershipRepository).delete("membership-po");
+    }
+
+    @Test
+    public void shouldUpdate_regularMembership_whenCalledByAUser() {
+        Role owner = domainRole("role-owner", "DOMAIN_OWNER");
+        Role user = domainRole("role-user", "DOMAIN_USER");
+        Membership existing = domainMembership("membership-bob", "bob-id", user.getId());
+        Membership change = domainMembership(null, "bob-id", owner.getId());
+
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "bob-id")).thenReturn(Single.just(new User()));
+        when(roleService.findById(owner.getId())).thenReturn(Maybe.just(owner));
+        when(membershipRepository.findByReferenceAndMember(ReferenceType.DOMAIN, DOMAIN_ID, MemberType.USER, "bob-id")).thenReturn(Maybe.just(existing));
+        when(roleService.findByIdIn(any())).thenReturn(Single.just(Set.of(owner, user)));
+        when(membershipRepository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Membership> obs = membershipService.addOrUpdate(ORGANIZATION_ID, change, new DefaultUser()).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoErrors();
+        verify(membershipRepository).update(argThat(updated -> owner.getId().equals(updated.getRoleId())));
     }
 }
