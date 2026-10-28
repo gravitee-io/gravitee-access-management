@@ -45,7 +45,6 @@ import { useSession } from '../../lib/session/session';
 
 const NO_PINS: readonly string[] = [];
 
-/** The Angular `DomainsComponent`: search, "Pinned only", and the user's default and pinned domains. */
 export function DomainsPage() {
     const { user } = useSession();
     const environment = useCurrentEnvironment();
@@ -80,7 +79,6 @@ export function DomainsPage() {
         enabled: pinnedOnly && pinnedIds.length > 0,
     });
 
-    // Pinned only reads the pinned domains, then filters by name and pages in memory, as Angular does.
     const pinnedRows = useMemo(() => {
         const needle = query.toLowerCase();
         return pinnedIds.length === 0 ? [] : (pinned.data?.data ?? []).filter(domain => domain.name.toLowerCase().includes(needle));

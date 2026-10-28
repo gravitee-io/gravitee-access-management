@@ -15,7 +15,6 @@
  */
 import { test, expect } from '../../fixtures/base.fixture';
 
-/** The domain dashboard of the React console (gravitee-am-console). Runs in the console-next project only. */
 test.describe('React console: domain dashboard', () => {
   test('loads the 13 Angular widget queries and reloads them for a new time range', async ({ page, testDomain }) => {
     const analytics: URL[] = [];

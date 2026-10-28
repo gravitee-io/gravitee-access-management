@@ -27,7 +27,7 @@ export interface AnalyticsQuery {
     readonly size?: number;
 }
 
-// The spec has no schema for the responses. The shapes are io.gravitee.am.model.analytics.
+// The spec has no response schema, so these shapes follow io.gravitee.am.model.analytics.
 export interface AnalyticsCount {
     readonly value: number;
 }
@@ -45,7 +45,7 @@ export interface AnalyticsHistogram {
 
 export interface AnalyticsGroupBy {
     readonly values: Readonly<Record<string, number>>;
-    /** Set for the application field only: the name of each key, and `deleted` for an application that is gone. */
+    /** Set for the application field only, with `deleted` for an application that is gone. */
     readonly metadata?: Readonly<Record<string, { readonly name?: string; readonly deleted?: boolean }>> | null;
 }
 

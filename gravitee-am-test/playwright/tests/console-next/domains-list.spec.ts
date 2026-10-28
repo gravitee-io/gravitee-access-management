@@ -17,7 +17,6 @@ import { test, expect } from '../../fixtures/base.fixture';
 import { safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { uniqueTestName } from '../../utils/fixture-helpers';
 
-/** The domains list of the React console (gravitee-am-console). Runs in the console-next project only. */
 test.describe('React console: domains list', () => {
   test('finds a domain created via API by search', async ({ page, testDomain }) => {
     await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);

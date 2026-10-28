@@ -16,7 +16,7 @@
 import { http } from './http';
 import { environmentPath } from './paths';
 
-/** The generated `DataPlane` model holds only `delegate`. These are the fields the JSON holds. */
+/** The generated `DataPlane` model holds only `delegate`. */
 export interface DataPlane {
     readonly id: string;
     readonly name: string;

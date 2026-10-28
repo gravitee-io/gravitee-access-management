@@ -16,7 +16,6 @@
 import { Navigate } from 'react-router-dom';
 import { usePermissions } from '../../lib/session/permissions';
 
-/** The Angular `DomainComponent` redirect: the first domain section the user may open. */
 export function DomainIndexRedirect() {
     const { has } = usePermissions();
     const section = has('domain_analytics_read')

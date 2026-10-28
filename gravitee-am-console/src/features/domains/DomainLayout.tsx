@@ -21,7 +21,6 @@ import { enableDomain } from '../../lib/api/domains';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 
-/** The Angular `DomainComponent`: a banner that enables a disabled domain. */
 export function DomainLayout() {
     const { domain, ref } = useCurrentDomain();
     const { has } = usePermissions();

@@ -45,10 +45,6 @@ import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentEnvironment } from '../../lib/session/environment';
 import { useSession } from '../../lib/session/session';
 
-/**
- * The Angular `DomainCreationComponent`: name, description and data plane. The data plane select only shows when the
- * installation has more than one data plane; with a single one the domain takes it.
- */
 export function CreateDomainPage() {
     const { user } = useSession();
     const environment = useCurrentEnvironment();
@@ -66,7 +62,7 @@ export function CreateDomainPage() {
     const oneDataPlane = dataPlanes.data?.length === 1;
     const dataPlaneId = oneDataPlane ? dataPlanes.data![0].id : selectedDataPlaneId;
     const create = useMutation({
-        // The Angular form sends the fields the user filled: the description only once typed.
+        // The description goes in the payload only once the user types one.
         mutationFn: () => createDomain(user.org, environment.id, { name, description: description || undefined, dataPlaneId }),
         // The shell resolves the domain from its list, so the list must hold the new domain before the navigation.
         onSuccess: async created => {

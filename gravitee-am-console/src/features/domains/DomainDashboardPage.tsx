@@ -242,7 +242,6 @@ function RegistrationCard({ result }: Readonly<{ result: WidgetResult }>) {
     );
 }
 
-/** The Angular `DomainDashboardComponent`: the domain's audit analytics, with a quick time range and a refresh. */
 export function DomainDashboardPage() {
     const { domain, ref, basePath, domainsPath } = useCurrentDomain();
     const navigate = useNavigate();
@@ -251,7 +250,7 @@ export function DomainDashboardPage() {
     const range = TIME_RANGES.find(r => r.id === rangeId) ?? TIME_RANGES[2];
     useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: `${basePath}/dashboard` }, { label: 'Dashboard' }]);
 
-    // One call per widget, each with its own window end, as the Angular `gv-dashboard` does.
+    // Each widget call takes its own window end.
     const queries = useQueries({
         queries: WIDGET_KEYS.map(key => ({
             queryKey: ['analytics', ref, rangeId, key],

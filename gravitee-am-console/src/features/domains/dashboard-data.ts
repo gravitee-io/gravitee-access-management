@@ -31,8 +31,8 @@ export type TimeRangeId = TimeRange['id'];
 export const DEFAULT_TIME_RANGE: TimeRangeId = '1d';
 
 /**
- * The start of the range, as Angular's `moment().subtract(value, unit)`: minutes and hours are absolute time, days and
- * weeks keep the local time of day, and a month is a calendar month clamped to its last day.
+ * Minutes and hours subtract absolute time, days and weeks keep the local time of day, and a month is a calendar month
+ * clamped to its last day.
  */
 export function rangeStart(range: TimeRange, to: number): number {
     if (range.unit === 'minutes') return to - range.value * 60_000;
@@ -49,7 +49,7 @@ export function rangeStart(range: TimeRange, to: number): number {
     return start.getTime();
 }
 
-/** The widgets of the Angular `DomainDashboardComponent`, one analytics call each. */
+/** The widgets of the Angular `DomainDashboardComponent`. */
 export const WIDGETS = {
     logins: { type: 'count', field: 'user_login' },
     signUps: { type: 'count', field: 'user_registered' },
@@ -81,7 +81,7 @@ export interface Group {
     readonly key: string;
     readonly label: string;
     readonly value: number;
-    /** As the Angular top applications table: a key without metadata counts as deleted. */
+    /** A key without metadata counts as deleted. */
     readonly deleted: boolean;
 }
 
@@ -107,7 +107,6 @@ export interface Histogram {
     readonly data: readonly ({ category: string } & Record<string, number | string>)[];
 }
 
-/** Every bucket of a `date_histo` response as one series, as the Angular line widget draws them. */
 export function histogram(result: AnalyticsResponse | undefined, range: TimeRange): Histogram {
     if (!result || !('timestamp' in result)) return { series: [], data: [] };
     const intraday = range.unit === 'minutes' || range.unit === 'hours';

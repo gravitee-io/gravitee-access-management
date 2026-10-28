@@ -46,7 +46,6 @@ export function useCurrentDomain(): DomainScopeValue {
     return value;
 }
 
-/** Resolves `:domainHrid` for the pages under a security domain. */
 export function DomainScope() {
     const { domainHrid = '' } = useParams();
     const { user } = useSession();
