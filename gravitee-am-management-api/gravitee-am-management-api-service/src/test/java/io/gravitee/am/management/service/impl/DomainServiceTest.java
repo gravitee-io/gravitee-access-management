@@ -1793,6 +1793,37 @@ public class DomainServiceTest {
     }
 
     @Test
+    public void shouldRejectVhostsDifferingFromCreated_cloudMode() {
+        enableCloudMode();
+
+        domainService.validateVhosts(domainWithVhosts(true, "a.gravitee.io"), domainWithVhosts(true, "b.gravitee.io"))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    public void shouldAcceptVhostsOmittedFromDesiredState_cloudMode() {
+        enableCloudMode();
+        Domain desired = domainWithVhosts(true);
+        desired.setVhosts(null);
+
+        domainService.validateVhosts(domainWithVhosts(true, "a.gravitee.io"), desired)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+        org.junit.jupiter.api.Assertions.assertEquals("a.gravitee.io", desired.getVhosts().get(0).getHost());
+    }
+
+    @Test
+    public void shouldAcceptAnyVhosts_standalone() {
+        domainService.validateVhosts(domainWithVhosts(false), domainWithVhosts(true, "b.gravitee.io"))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+    }
+
+    @Test
     public void shouldNotPatch_changeVhosts_cloudMode() {
         enableCloudMode();
         PatchDomain patchDomain = new PatchDomain();
