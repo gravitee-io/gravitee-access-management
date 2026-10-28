@@ -348,25 +348,33 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 .append(toSql(SqlIdentifier.quoted("key")))
                 .append(") ")
                 .append(wildcardSearch ? "LIKE" : "=")
-                .append(" :value");
+                .append(" :value")
+                .append(wildcardSearch ? getLikeEscapeClause() : "");
     }
 
     protected StringBuilder buildSearchUser(boolean wildcard, StringBuilder builder) {
+        String escapeSuffix = wildcard ? getLikeEscapeClause() : "";
         return builder.append("u.reference_id = :refId")
                 .append(" AND u.reference_type = :refType")
                 .append(" AND (")
                 .append(" u.username ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR u.email ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR u.additional_information_email ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR u.display_name ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR u.first_name ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" OR u.last_name ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
+                .append(escapeSuffix)
                 .append(" ) ");
     }
 
@@ -437,6 +445,6 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 .append(" AND")
                 .append(wildcard ? " UPPER(r.name)" : " r.name")
                 .append(wildcard ? " LIKE " : " =")
-                .append(wildcard ? " UPPER(:value) " : " :value ");
+                .append(wildcard ? " UPPER(:value) " + getLikeEscapeClause() : " :value ");
     }
 }

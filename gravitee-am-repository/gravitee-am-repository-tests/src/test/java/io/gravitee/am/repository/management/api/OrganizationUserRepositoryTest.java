@@ -523,6 +523,33 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldSearchWildcardTreatingLikeWildcardsLiterally() {
+        for (String username : List.of("user_1a", "userX1a", "user%a")) {
+            User user = new User();
+            user.setReferenceType(ReferenceType.ORGANIZATION);
+            user.setReferenceId(ORGANIZATION_ID);
+            user.setUsername(username);
+            organizationUserRepository.create(user).blockingGet();
+        }
+
+        Map<String, List<String>> expectedUsernamesByQuery = Map.of(
+                "user_1*", List.of("user_1a"),
+                "user%*", List.of("user%a"),
+                "%*", List.of(),
+                "_*", List.of());
+
+        expectedUsernamesByQuery.forEach((query, expectedUsernames) -> {
+            TestObserver<Page<User>> testObserver = organizationUserRepository.search(ReferenceType.ORGANIZATION, ORGANIZATION_ID, query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(users -> users.getTotalCount() == expectedUsernames.size()
+                    && users.getData().stream().map(User::getUsername).toList().equals(expectedUsernames));
+        });
+    }
+
+    @Test
     public void testSearch_byUsername_paged() {
         // create user
         User user1 = new User();
