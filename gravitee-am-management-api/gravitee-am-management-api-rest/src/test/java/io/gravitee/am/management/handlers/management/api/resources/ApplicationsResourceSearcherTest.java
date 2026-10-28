@@ -16,8 +16,8 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.ApplicationsResourceSearcher;
 import io.gravitee.am.management.handlers.management.api.resources.model.CursorApiRequest;
+import io.gravitee.am.management.handlers.management.api.resources.model.CursorPagination;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -40,7 +40,6 @@ import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -60,6 +59,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -70,6 +72,7 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
 
     @BeforeEach
     public void stubFallbackIds() {
+        reset(applicationSearcher);
         doReturn(Flowable.empty())
                 .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
     }
@@ -270,7 +273,7 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
         final Map responseEntity = readEntity(response, Map.class);
         final String path = (String) responseEntity.get("nextCursor");
         assertNotNull("nextCursor should be present when paging is incomplete", path);
-        assertTrue(path.startsWith("/organizations/" + ORGANIZATION_ID + "/environments/DEFAULT/domains/" + DOMAIN_ID + "/applications/search/_cursor?"));
+        assertTrue(path.startsWith("/organizations/" + ORGANIZATION_ID + "/environments/DEFAULT/domains/" + DOMAIN_ID + "/applications/search?"));
         assertTrue("expected encoded cursor in nextCursor: " + path,
                 path.contains("cursor=" + URLEncoder.encode(CursorApiRequest.of(nextCursor).encode(), StandardCharsets.UTF_8)));
         assertTrue("expected page=1 in nextCursor: " + path, path.contains("page=1"));
@@ -300,16 +303,11 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
                 .queryParam("type", "WEB")
                 .queryParam("owner.email", "owner@example.com"));
 
-        final String baseUri = "/organizations/%s/environments/%s/domains/%s/applications/search/_cursor".formatted(
+        final String baseUri = "/organizations/%s/environments/%s/domains/%s/applications/search".formatted(
                 ORGANIZATION_ID,
                 "DEFAULT",
                 DOMAIN_ID);
-        final String path = ReflectionTestUtils.invokeMethod(
-                new ApplicationsResourceSearcher(),
-                "nextCursorPath",
-                nextCursor,
-                uriInfo,
-                baseUri);
+        final String path = CursorPagination.nextCursorPath(nextCursor, uriInfo, baseUri);
 
         assertNotNull("nextCursor should be present when paging is incomplete", path);
         assertTrue(path.startsWith(baseUri + "?"));
@@ -410,6 +408,127 @@ public class ApplicationsResourceSearcherTest extends JerseySpringTest {
                 .queryParam("limit", "10").request().get();
 
         verify(applicationSearcher, atLeastOnce()).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), eq(10));
+    }
+
+    @Test
+    public void shouldSearch_continuesFromTheCursor() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(page(List.of(), null, 0L)))
+                .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        final Response response = target("domains").path(DOMAIN_ID).path("applications").path("search")
+                .queryParam("sort", "name")
+                .queryParam("dir", "ASC")
+                .queryParam("page", "3")
+                .queryParam("cursor", new CursorApiRequest("app-42", "name", CursorRequest.SortDirection.ASC, "v-42").encode())
+                .queryParam("q", "foo")
+                .queryParam("status", "disabled")
+                .queryParam("type", "AGENT")
+                .request().get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final ArgumentCaptor<ApplicationCursorRequest> captor = ArgumentCaptor.forClass(ApplicationCursorRequest.class);
+        verify(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), captor.capture(), any(), anyInt());
+        final ApplicationCursorRequest req = captor.getValue();
+        assertEquals("name", req.getSortField());
+        assertEquals(CursorRequest.SortDirection.ASC, req.getSortDirection());
+        assertEquals(3, req.getPage());
+        assertEquals("v-42", req.getLastSortValue());
+        assertEquals("app-42", req.getLastId());
+        assertEquals("foo", req.getQuery());
+        assertEquals(Boolean.FALSE, req.getEnabled());
+        assertEquals(List.of(ApplicationType.AGENT), req.getTypes());
+    }
+
+    @Test
+    public void shouldSearch_continuesFromTheCursorForAUserLimitedToSomeApplications() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        // APPLICATION[LIST] is granted, APPLICATION[READ] is not
+        doReturn(Single.just(true), Single.just(false)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.just("app-1", "app-2"))
+                .when(permissionService).getReferenceIdsWithPermission(any(), eq(ReferenceType.APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
+        doReturn(Single.just(page(List.of(), null, 0L)))
+                .when(applicationSearcher).searchByDomainAndIdsCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        target("domains").path(DOMAIN_ID).path("applications").path("search")
+                .queryParam("cursor", new CursorApiRequest("app-1", "updatedAt", CursorRequest.SortDirection.DESC, "val-1").encode())
+                .request().get();
+
+        final ArgumentCaptor<ApplicationCursorRequest> captor = ArgumentCaptor.forClass(ApplicationCursorRequest.class);
+        verify(applicationSearcher).searchByDomainAndIdsCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), eq(List.of("app-1", "app-2")), captor.capture(), any(), anyInt());
+        assertEquals("app-1", captor.getValue().getLastId());
+    }
+
+    @Test
+    public void shouldSearch_rejectsAnInvalidCursor() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+
+        final Response malformed = target("domains").path(DOMAIN_ID).path("applications").path("search")
+                .queryParam("cursor", "not base64!").request().get();
+        final Response otherDirection = target("domains").path(DOMAIN_ID).path("applications").path("search")
+                .queryParam("cursor", new CursorApiRequest("app-1", "updatedAt", CursorRequest.SortDirection.ASC, "val-1").encode()).request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, malformed.getStatus());
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, otherDirection.getStatus());
+        verify(applicationSearcher, never()).searchByDomainCursor(any(), any(), any(), any(), anyInt());
+    }
+
+    @Test
+    public void shouldSearchCursor_requiresACursor() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("applications").path("search").path("_cursor").request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldSearchCursor_linksTheNextPageToItself() {
+        final ApplicationCursorRequest nextCursor = new ApplicationCursorRequest(
+                "val-2", "app-2", CursorRequest.SortDirection.DESC, "updatedAt", 1, null, null, null);
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(page(List.of(), nextCursor, 200L)))
+                .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        final Response response = target("domains").path(DOMAIN_ID).path("applications").path("search").path("_cursor")
+                .queryParam("cursor", new CursorApiRequest("app-1", "updatedAt", CursorRequest.SortDirection.DESC, "val-1").encode()).request().get();
+
+        final String path = (String) readEntity(response, Map.class).get("nextCursor");
+        assertTrue(path, path.startsWith("/organizations/" + ORGANIZATION_ID + "/environments/DEFAULT/domains/" + DOMAIN_ID + "/applications/search/_cursor?"));
+    }
+
+    @Test
+    public void shouldSearch_defaultLimit() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(page(List.of(), null, 0L)))
+                .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        target("domains").path(DOMAIN_ID).path("applications").path("search").request().get();
+
+        verify(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), eq(50));
+    }
+
+    @Test
+    public void shouldSearch_reducesALimitAboveTheMaximum() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(page(List.of(), null, 0L)))
+                .when(applicationSearcher).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), anyInt());
+
+        target("domains").path(DOMAIN_ID).path("applications").path("search").queryParam("limit", "200").request().get();
+        target("domains").path(DOMAIN_ID).path("applications").path("search").path("_cursor").queryParam("limit", "200")
+                .queryParam("cursor", new CursorApiRequest("app-1", "updatedAt", CursorRequest.SortDirection.DESC, "val-1").encode()).request().get();
+
+        verify(applicationSearcher, times(2)).searchByDomainCursor(eq(ORGANIZATION_ID), eq(DOMAIN_ID), any(ApplicationCursorRequest.class), any(), eq(100));
+    }
+
+    @Test
+    public void shouldSearch_rejectsALimitBelowOne() {
+        doReturn(Maybe.just(mockDomain())).when(domainService).findById(DOMAIN_ID);
+
+        final Response response = target("domains").path(DOMAIN_ID).path("applications").path("search").queryParam("limit", "0").request().get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        verify(applicationSearcher, never()).searchByDomainCursor(any(), any(), any(), any(), anyInt());
     }
 
     @Test

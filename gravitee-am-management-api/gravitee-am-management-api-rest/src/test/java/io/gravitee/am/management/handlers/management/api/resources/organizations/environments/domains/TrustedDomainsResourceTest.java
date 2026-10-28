@@ -64,6 +64,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -171,7 +172,7 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
         List<Map<String, Object>> data = (List<Map<String, Object>>) page.get("data");
         assertEquals("https://issuer.example.org", data.get(0).get("domainIdentifier"));
         String next = (String) page.get("nextCursor");
-        assertTrue(next.startsWith("/organizations/DEFAULT/environments/DEFAULT/domains/" + DOMAIN_ID + "/trusted-domains/_cursor?"), next);
+        assertTrue(next.startsWith("/organizations/DEFAULT/environments/DEFAULT/domains/" + DOMAIN_ID + "/trusted-domains?"), next);
         assertTrue(next.contains("cursor=" + URLEncoder.encode(CursorApiRequest.of(nextCursor).encode(), StandardCharsets.UTF_8)), next);
         assertTrue(next.contains("page=3"), next);
         assertTrue(next.contains("usage=TOKEN_EXCHANGE"), next);
@@ -209,7 +210,7 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
                         && "acme".equals(cursor.getLastSortValue())
                         && cursor.getPage() == 3), eq(10));
 
-        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
+        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains")
                 .queryParam("limit", 10)
                 .queryParam("page", 3)
                 .queryParam("cursor", new CursorApiRequest("td-1", "name", CursorRequest.SortDirection.ASC, "acme").encode())
@@ -222,11 +223,42 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldKeepTheDeprecatedCursorEndpointLinkingToItself() {
+        stubDomain();
+        TrustedDomainCursorRequest nextCursor = new TrustedDomainCursorRequest("beta", "td-2", CursorRequest.SortDirection.ASC, "name", 4, null);
+        doReturn(Single.just(new CursorPage<>(List.of(tokenExchangeTrustDomain()), nextCursor, 41L)))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(cursor -> "td-1".equals(cursor.getLastId())
+                        && cursor.getPage() == 3), eq(50));
+
+        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
+                .queryParam("page", 3)
+                .queryParam("cursor", new CursorApiRequest("td-1", "name", CursorRequest.SortDirection.ASC, "acme").encode())
+                .request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        String next = (String) response.readEntity(Map.class).get("nextCursor");
+        assertTrue(next.startsWith("/organizations/DEFAULT/environments/DEFAULT/domains/" + DOMAIN_ID + "/trusted-domains/_cursor?"), next);
+    }
+
+    @Test
+    public void shouldReduceALimitAboveTheMaximum() {
+        stubDomain();
+        doReturn(Single.just(new CursorPage<>(List.of(tokenExchangeTrustDomain()), null, 1L)))
+                .when(trustDomainService).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(), anyInt());
+
+        assertEquals(HttpStatusCode.OK_200, listStatus("limit", 200));
+        assertEquals(HttpStatusCode.OK_200, target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
+                .queryParam("limit", 200)
+                .queryParam("cursor", new CursorApiRequest("td-1", "name", CursorRequest.SortDirection.ASC, "acme").encode())
+                .request().get().getStatus());
+        verify(trustDomainService, times(2)).findByReferenceCursor(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(), eq(100));
+    }
+
+    @Test
     public void shouldRejectListWithInvalidQueryParameters() {
         assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("page", -1));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("page", 1));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("limit", 0));
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("limit", 101));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("usage", "UNKNOWN"));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("dir", "sideways"));
         verify(trustDomainService, never()).findByReferenceCursor(any(), any(), any(), anyInt());
@@ -234,13 +266,11 @@ public class TrustedDomainsResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldRejectAnInvalidCursor() {
-        stubDomain();
-
-        final Response response = target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor")
-                .queryParam("cursor", "not base64!")
-                .request().get();
-
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("cursor", "not base64!"));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, listStatus("cursor",
+                new CursorApiRequest("td-1", "name", CursorRequest.SortDirection.DESC, "acme").encode()));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400,
+                target("domains").path(DOMAIN_ID).path("trusted-domains").path("_cursor").request().get().getStatus());
         verify(trustDomainService, never()).findByReferenceCursor(any(), any(), any(), anyInt());
     }
 

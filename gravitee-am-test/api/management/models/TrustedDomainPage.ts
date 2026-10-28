@@ -43,6 +43,12 @@ export interface TrustedDomainPage {
   data?: Array<TrustedDomain>;
   /**
    *
+   * @type {string}
+   * @memberof TrustedDomainPage
+   */
+  nextCursor?: string;
+  /**
+   *
    * @type {number}
    * @memberof TrustedDomainPage
    */
@@ -72,6 +78,7 @@ export function TrustedDomainPageFromJSONTyped(json: any, ignoreDiscriminator: b
   }
   return {
     data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(TrustedDomainFromJSON),
+    nextCursor: json['nextCursor'] == null ? undefined : json['nextCursor'],
     page: json['page'] == null ? undefined : json['page'],
     totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
@@ -88,6 +95,7 @@ export function TrustedDomainPageToJSONTyped(value?: TrustedDomainPage | null, i
 
   return {
     data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(TrustedDomainToJSON),
+    nextCursor: value['nextCursor'],
     page: value['page'],
     totalCount: value['totalCount'],
   };

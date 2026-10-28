@@ -67,6 +67,24 @@ export interface ListTrustedDomainsRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+  limit?: number;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  usage?: ListTrustedDomainsUsageEnum;
+  cursor?: string;
+}
+
+export interface ListTrustedDomainsCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  usage?: ListTrustedDomainsCursorUsageEnum;
+  cursor?: string;
 }
 
 export interface UpdateTrustedDomainRequest {
@@ -314,7 +332,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List trusted domains using cursor-based pagination. Follow nextCursor to get the next page. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
    * List trusted domains registered against the security domain
    */
   async listTrustedDomainsRaw(
@@ -344,6 +362,30 @@ export class TrustedDomainApi extends runtime.BaseAPI {
 
     const queryParameters: any = {};
 
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.usage !== undefined) {
+      queryParameters['usage'] = requestParameters.usage;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     if (this.configuration && this.configuration.accessToken) {
@@ -371,7 +413,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List trusted domains using cursor-based pagination. Follow nextCursor to get the next page. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
    * List trusted domains registered against the security domain
    */
   async listTrustedDomains(
@@ -379,6 +421,99 @@ export class TrustedDomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<TrustedDomainPage> {
     const response = await this.listTrustedDomainsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Deprecated: pass the cursor to listTrustedDomains instead. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List the next page of trusted domains registered against the security domain
+   */
+  async listTrustedDomainsCursorRaw(
+    requestParameters: ListTrustedDomainsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<TrustedDomainPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listTrustedDomainsCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listTrustedDomainsCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listTrustedDomainsCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.usage !== undefined) {
+      queryParameters['usage'] = requestParameters.usage;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainPageFromJSON(jsonValue));
+  }
+
+  /**
+   * Deprecated: pass the cursor to listTrustedDomains instead. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List the next page of trusted domains registered against the security domain
+   */
+  async listTrustedDomainsCursor(
+    requestParameters: ListTrustedDomainsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<TrustedDomainPage> {
+    const response = await this.listTrustedDomainsCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -469,3 +604,22 @@ export class TrustedDomainApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const ListTrustedDomainsUsageEnum = {
+  Spiffe: 'SPIFFE',
+  TokenExchange: 'TOKEN_EXCHANGE',
+  CrossAppAccess: 'CROSS_APP_ACCESS',
+} as const;
+export type ListTrustedDomainsUsageEnum = typeof ListTrustedDomainsUsageEnum[keyof typeof ListTrustedDomainsUsageEnum];
+/**
+ * @export
+ */
+export const ListTrustedDomainsCursorUsageEnum = {
+  Spiffe: 'SPIFFE',
+  TokenExchange: 'TOKEN_EXCHANGE',
+  CrossAppAccess: 'CROSS_APP_ACCESS',
+} as const;
+export type ListTrustedDomainsCursorUsageEnum = typeof ListTrustedDomainsCursorUsageEnum[keyof typeof ListTrustedDomainsCursorUsageEnum];
