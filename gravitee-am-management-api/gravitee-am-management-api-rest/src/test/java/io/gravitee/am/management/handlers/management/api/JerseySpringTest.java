@@ -387,6 +387,10 @@ public abstract class JerseySpringTest {
         when(emailResourceValidator.validate(any())).thenReturn(Completable.complete());
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
         Mockito.lenient().when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
+        // privilege checks on the targets of the actions are covered by the PermissionService tests
+        Mockito.lenient().when(permissionService.checkCanGrant(any(), any(), any(), any())).thenReturn(Completable.complete());
+        Mockito.lenient().when(permissionService.checkCanGrantRole(any(), any(), any(), any())).thenReturn(Completable.complete());
+        Mockito.lenient().when(permissionService.checkCanManageUser(any(), any(), any())).thenReturn(Completable.complete());
     }
 
     @Configuration
