@@ -80,4 +80,21 @@ public class DatabaseDialectHelperTest {
         ScimSearch search = helper().prepareScimSearchQuery(new StringBuilder(BASE_USERS), criteria("additionalInformation.custom_key", "v", "eq"), "id", 0, 10, DatabaseDialectHelper.ScimRepository.USERS);
         assertTrue("query maps JSON key", search.getSelectQuery().contains("additional_information ->> 'custom_key'"));
     }
+
+    @Test
+    public void shouldBuildWildcardLikePattern() {
+        assertEquals("user\\_1%", helper().toWildcardLikePattern("user_1*"));
+        assertEquals("\\%%", helper().toWildcardLikePattern("%*"));
+        assertEquals("a\\\\b%", helper().toWildcardLikePattern("a\\b**"));
+        assertEquals("", helper().getLikeEscapeClause());
+    }
+
+    @Test
+    public void shouldBuildWildcardLikePatternAndEscapeClause_MsSql() {
+        MsSqlHelper helper = new MsSqlHelper(Mockito.mock(R2dbcDialect.class), null);
+
+        assertEquals("\\[a\\]\\%\\_%", helper.toWildcardLikePattern("[a]%_*"));
+        assertEquals(6, helper.buildCountUserQuery(true).split("ESCAPE '\\\\'", -1).length - 1);
+        assertTrue(helper.buildSearchUserQuery(false, 0, 10).indexOf("ESCAPE") < 0);
+    }
 }
