@@ -274,7 +274,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, query, page, size);
 
         boolean wildcardSearch = query.contains("*");
-        String wildcardValue = query.replaceAll("\\*+", "%");
+        String wildcardValue = databaseDialectHelper.toWildcardLikePattern(query);
 
         String search = this.databaseDialectHelper.buildSearchUserQuery(wildcardSearch, page, size, true);
         String count = this.databaseDialectHelper.buildCountUserQuery(wildcardSearch, true);

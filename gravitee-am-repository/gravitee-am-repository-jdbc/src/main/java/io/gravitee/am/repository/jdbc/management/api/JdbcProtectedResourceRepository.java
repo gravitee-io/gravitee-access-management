@@ -492,9 +492,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         LOGGER.debug("search({}, {}, {}, {})", domainId, query, pageSortRequest.getPage(),pageSortRequest.getSize());
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+        String escapedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(query) : query;
 
         String search = databaseDialectHelper.buildSearchProtectedResourceQuery(wildcardMatch, pageSortRequest.getPage(), pageSortRequest.getSize(), COLUMN_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountProtectedResourceQuery(wildcardMatch);
