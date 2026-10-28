@@ -16,7 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+<<<<<<< HEAD
 import io.gravitee.am.model.Organization;
+=======
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
@@ -30,12 +33,18 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
+<<<<<<< HEAD
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+=======
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -48,12 +57,15 @@ public class OrganizationUserResourceTest extends JerseySpringTest {
     private static final String ORGANIZATION_ID = "DEFAULT";
     private static final String ADMIN_ID = "admin-id";
 
+<<<<<<< HEAD
     private Organization organization() {
         final Organization organization = new Organization();
         organization.setId(ORGANIZATION_ID);
         return organization;
     }
 
+=======
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
     private void callerCannotManage(String userId) {
         doReturn(Completable.error(new ResourceForbiddenAccessException("Unable to manage a user with more privileges than yours")))
                 .when(permissionService).checkCanManageUser(any(), eq(ORGANIZATION_ID), eq(userId));
@@ -124,6 +136,7 @@ public class OrganizationUserResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
+<<<<<<< HEAD
 
     @Test
     public void shouldNotBulkDeleteUser_targetMorePrivileged() {
@@ -158,4 +171,6 @@ public class OrganizationUserResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         assertFalse(executed.get());
     }
+=======
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
 }

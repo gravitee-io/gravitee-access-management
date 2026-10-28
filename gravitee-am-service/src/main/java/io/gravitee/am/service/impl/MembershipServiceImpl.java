@@ -365,9 +365,18 @@ public class MembershipServiceImpl implements MembershipService {
         return Maybe.defer(() -> membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId()))
                 .map(Membership::getRoleId)
                 .toFlowable()
+<<<<<<< HEAD
                 .concatWith(Flowable.just(membership.getRoleId()))
                 .toList()
                 .flatMapCompletable(this::failIfPrimaryOwner);
+=======
+                .toList()
+                .flatMapCompletable(existingRoleIds -> {
+                    final List<String> roleIds = new ArrayList<>(existingRoleIds);
+                    roleIds.add(membership.getRoleId());
+                    return failIfPrimaryOwner(roleIds);
+                });
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
     }
 
     private Completable checkNotPrimaryOwner(Membership membership, User principal) {
@@ -379,7 +388,11 @@ public class MembershipServiceImpl implements MembershipService {
 
     private Completable failIfPrimaryOwner(List<String> roleIds) {
         return roleService.findByIdIn(roleIds)
+<<<<<<< HEAD
                 .flatMapCompletable(roles -> roles.stream().anyMatch(role -> role.isSystem() && role.isPrimaryOwner()) ?
+=======
+                .flatMapCompletable(roles -> roles.stream().anyMatch(role -> role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) ?
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
                         Completable.error(new ResourceForbiddenAccessException("The primary owner membership cannot be assigned, changed or removed")) :
                         Completable.complete());
     }

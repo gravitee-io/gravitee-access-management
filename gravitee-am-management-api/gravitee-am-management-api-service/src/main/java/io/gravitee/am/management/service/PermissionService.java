@@ -145,7 +145,11 @@ public class PermissionService {
             } catch (IllegalArgumentException e) {
                 return Completable.error(new InvalidRoleException(e.getMessage()));
             }
+<<<<<<< HEAD
             return checkCanGrant(caller, organizationId, scope, flattenToSet(granted));
+=======
+            return checkCanGrant(caller, organizationId, scope, granted);
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
         });
     }
 
@@ -156,12 +160,21 @@ public class PermissionService {
 
         return roleService.findById(roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
+<<<<<<< HEAD
                 .flatMapCompletable(role -> checkCanGrant(caller, organizationId, scope, flattenToSet(role.getPermissionAcls())));
     }
 
     private Completable checkCanGrant(User caller, String organizationId, Reference scope, Set<String> granted) {
 
         if (granted.isEmpty()) {
+=======
+                .flatMapCompletable(role -> checkCanGrant(caller, organizationId, scope, role.getPermissionAcls()));
+    }
+
+    private Completable checkCanGrant(User caller, String organizationId, Reference scope, Map<Permission, Set<Acl>> granted) {
+
+        if (granted == null || granted.isEmpty()) {
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
             return Completable.complete();
         }
         return isPlatformAdminOrOwner(caller.getId(), organizationId)
@@ -208,12 +221,22 @@ public class PermissionService {
                                         .map(Role::getPermissionAcls)
                                         .defaultIfEmpty(Collections.emptyMap());
                                 return Single.zip(
+<<<<<<< HEAD
                                                 findAllPermissions(caller, ReferenceType.ORGANIZATION, organizationId).map(PermissionService::flattenToSet),
                                                 findAllPermissions(target, ReferenceType.ORGANIZATION, organizationId).map(PermissionService::flattenToSet),
                                                 baseline.map(PermissionService::flattenToSet),
                                                 (held, targetHeld, defaults) -> {
                                                     final Set<String> callerHeld = new HashSet<>(held);
                                                     callerHeld.addAll(defaults);
+=======
+                                                findAllPermissions(caller, ReferenceType.ORGANIZATION, organizationId),
+                                                findAllPermissions(target, ReferenceType.ORGANIZATION, organizationId),
+                                                baseline,
+                                                (held, targetHeld, defaults) -> {
+                                                    final Map<Permission, Set<Acl>> callerHeld = new HashMap<>();
+                                                    held.forEach((permission, acls) -> callerHeld.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls));
+                                                    defaults.forEach((permission, acls) -> callerHeld.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls));
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
                                                     return missingPermissions(targetHeld, callerHeld);
                                                 })
                                         .flatMapCompletable(missing -> missing.isEmpty() ?
@@ -247,6 +270,7 @@ public class PermissionService {
     /**
      * Permissions held by the user on the reference or inherited from one of its parents.
      */
+<<<<<<< HEAD
     private Single<Set<String>> findInheritedPermissions(User user, Reference reference) {
 
         return referenceWithParents(reference)
@@ -257,6 +281,14 @@ public class PermissionService {
     private static Set<String> flattenToSet(Map<Permission, Set<Acl>> permissions) {
 
         return new HashSet<>(Permission.flatten(permissions));
+=======
+    private Single<Map<Permission, Set<Acl>>> findInheritedPermissions(User user, Reference reference) {
+
+        return referenceWithParents(reference)
+                .flatMapSingle(ref -> findAllPermissions(user, ref.type(), ref.id()))
+                .collect(HashMap::new, (Map<Permission, Set<Acl>> all, Map<Permission, Set<Acl>> permissions) ->
+                        permissions.forEach((permission, acls) -> all.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls)));
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
     }
 
     private Flowable<Reference> referenceWithParents(Reference reference) {
@@ -265,10 +297,19 @@ public class PermissionService {
                 .concatWith(parentOf(reference).flatMapPublisher(this::referenceWithParents));
     }
 
+<<<<<<< HEAD
     private static String missingPermissions(Set<String> required, Set<String> held) {
 
         return required.stream()
                 .filter(permission -> !held.contains(permission))
+=======
+    private static String missingPermissions(Map<Permission, Set<Acl>> required, Map<Permission, Set<Acl>> held) {
+
+        return required.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .filter(acl -> !held.getOrDefault(entry.getKey(), Set.of()).contains(acl))
+                        .map(acl -> entry.getKey().name().toLowerCase() + "_" + acl.name().toLowerCase()))
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
                 .sorted()
                 .collect(Collectors.joining(", "));
     }

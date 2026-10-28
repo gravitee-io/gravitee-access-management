@@ -260,7 +260,11 @@ public class RoleServiceImpl implements RoleService {
                                 Role roleToUpdate = new Role(oldRole);
                                 roleToUpdate.setName(updateRole.getName());
                                 roleToUpdate.setDescription(updateRole.getDescription());
+<<<<<<< HEAD
                                 roleToUpdate.setPermissionAcls(checkAssignable(oldRole.getAssignableType(), unflattenPermissions(updateRole.getPermissions())));
+=======
+                                roleToUpdate.setPermissionAcls(checkAssignable(oldRole, unflattenPermissions(updateRole.getPermissions())));
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
                                 roleToUpdate.setOauthScopes(updateRole.getOauthScopes());
                                 roleToUpdate.setUpdatedAt(new Date());
                                 return roleRepository.update(roleToUpdate)
@@ -300,17 +304,30 @@ public class RoleServiceImpl implements RoleService {
     /**
      * A role can only hold the permissions which are relevant with the type of reference it can be assigned to.
      */
+<<<<<<< HEAD
     private static Map<Permission, Set<Acl>> checkAssignable(ReferenceType assignableType, Map<Permission, Set<Acl>> permissions) {
         if (assignableType == null) {
             return permissions;
         }
         final String notAssignable = permissions.keySet().stream()
                 .filter(permission -> !permission.isRelevantWith(assignableType))
+=======
+    private static Map<Permission, Set<Acl>> checkAssignable(Role role, Map<Permission, Set<Acl>> permissions) {
+        if (role.getAssignableType() == null) {
+            return permissions;
+        }
+        final String notAssignable = permissions.keySet().stream()
+                .filter(permission -> !permission.isRelevantWith(role.getAssignableType()))
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
                 .map(permission -> permission.name().toLowerCase())
                 .sorted()
                 .collect(Collectors.joining(", "));
         if (!notAssignable.isEmpty()) {
+<<<<<<< HEAD
             throw new InvalidRoleException("Permissions not assignable to " + assignableType + " roles: " + notAssignable);
+=======
+            throw new InvalidRoleException("Permissions not assignable to " + role.getAssignableType() + " roles: " + notAssignable);
+>>>>>>> 804f22b (fix: enforce privilege checks on member, role and user management)
         }
         return permissions;
     }
