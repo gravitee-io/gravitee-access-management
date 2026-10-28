@@ -74,10 +74,10 @@ describe('domains api', () => {
         expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains?ids=d1&ids=d%202');
     });
 
-    it('reads a domain by its hrid', async () => {
-        await getDomainByHrid('DEFAULT', 'env-1', 'acme');
+    it('reads a domain by its encoded hrid', async () => {
+        await getDomainByHrid('DEFAULT', 'env-1', 'acme/eu');
 
-        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains/_hrid/acme');
+        expect(http).toHaveBeenCalledWith('/organizations/DEFAULT/environments/env-1/domains/_hrid/acme%2Feu');
     });
 
     it('creates a domain', async () => {

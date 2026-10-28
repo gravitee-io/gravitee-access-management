@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { groups, histogram, rangeStart, registration, sentenceCase, TIME_RANGES, widgetQuery } from '../dashboard-data';
+import { groups, histogram, rangeStart, registration, sentenceCase, seriesColor, TIME_RANGES, widgetQuery } from '../dashboard-data';
 
 const range = (id: string) => TIME_RANGES.find(r => r.id === id)!;
 
@@ -76,6 +76,13 @@ describe('dashboard-data', () => {
             { user_login_success: 3, user_login_failure: 1 },
             { user_login_success: 4, user_login_failure: 0 },
         ]);
+    });
+
+    it('colors the login outcomes with the semantic tokens and the other series with the chart palette', () => {
+        expect(seriesColor('user_login_success', 0)).toBe('var(--success)');
+        expect(seriesColor('failure', 1)).toBe('var(--destructive)');
+        expect(seriesColor('active', 0)).toBe('var(--chart-1)');
+        expect(seriesColor('locked', 6)).toBe('var(--chart-2)');
     });
 
     it('writes a key as a sentence', () => {

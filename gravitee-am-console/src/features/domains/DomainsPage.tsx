@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-    BadgeCell,
-    Button,
-    DataTable,
-    DataTableEmptyState,
-    DateCell,
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    Label,
-    Switch,
-    toast,
-} from '@gravitee/graphene-core';
-import { GlobeIcon, MoreVerticalIcon, PlusIcon, SearchIcon, StarIcon } from '@gravitee/graphene-core/icons';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BadgeCell, Button, DataTable, DataTableEmptyState, DateCell, Label, Switch } from '@gravitee/graphene-core';
+import { GlobeIcon, PlusIcon, SearchIcon, StarIcon } from '@gravitee/graphene-core/icons';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -36,36 +23,41 @@ import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type Domain, listDomainsByIds, searchDomains } from '../../lib/api/domains';
-import { type UserPreferences, updateUserPreferences } from '../../lib/api/management-api';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentEnvironment } from '../../lib/session/environment';
 import { Can, usePermissions } from '../../lib/session/permissions';
-import { useUserPreferences } from '../../lib/session/preferences';
 import { useSession } from '../../lib/session/session';
-
-const NO_PINS: readonly string[] = [];
+import { DomainActionsMenu } from './DomainActionsMenu';
+import { useDomainPreferences } from './useDomainPreferences';
 
 export function DomainsPage() {
     const { user } = useSession();
     const environment = useCurrentEnvironment();
     const { has } = usePermissions();
-    const queryClient = useQueryClient();
     const envPath = `/environments/${environment.hrids[0]}`;
     const listPath = `${envPath}/domains`;
     // Graphene pages start at 1, the Management API pages start at 0.
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useState(10);
     const [query, setQuery] = useState('');
     const [pinnedOnly, setPinnedOnly] = useState(false);
+    // A new key remounts the search field, which empties it.
+    const [searchKey, setSearchKey] = useState(0);
     const search = useCallback((text: string) => {
         setQuery(text);
         setPage(1);
     }, []);
+    const filtersActive = query !== '' || pinnedOnly;
+    const clearFilters = () => {
+        setQuery('');
+        setPinnedOnly(false);
+        setPage(1);
+        setSearchKey(key => key + 1);
+    };
     useBreadcrumbs([{ label: 'Domains' }]);
 
-    const preferences = useUserPreferences();
-    const pinnedIds = preferences.data?.pinnedDomainIds ?? NO_PINS;
-    const defaultDomainId = preferences.data?.defaultDomainId;
+    const preferences = useDomainPreferences(environment.id);
+    const { pinnedIds, defaultDomainId } = preferences;
 
     const paged = useQuery({
         queryKey: ['domains', user.org, environment.id, page, pageSize, query],
@@ -88,38 +80,6 @@ export function DomainsPage() {
     const error = (pinnedOnly ? pinned.error : paged.error) ?? preferences.error;
     const isFirstUse = !pinnedOnly && paged.data?.totalCount === 0 && !query;
 
-    const savePreferences = useMutation({
-        mutationFn: ({ next }: { next: UserPreferences; message: string }) => updateUserPreferences(next),
-        onSuccess: (updated, { message }) => {
-            queryClient.setQueryData(['user-preferences'], updated);
-            toast.success(message);
-        },
-        onError: failure => toast.error(`Could not update your preferences. ${failure.message}`),
-    });
-
-    const togglePin = (domain: Domain) => {
-        const isPinned = pinnedIds.includes(domain.id);
-        savePreferences.mutate({
-            next: {
-                ...preferences.data,
-                pinnedDomainIds: isPinned ? pinnedIds.filter(id => id !== domain.id) : [...pinnedIds, domain.id],
-            },
-            message: isPinned ? `${domain.name} unpinned` : `${domain.name} pinned`,
-        });
-    };
-
-    const toggleDefault = (domain: Domain) => {
-        const unset = defaultDomainId === domain.id;
-        savePreferences.mutate({
-            next: {
-                ...preferences.data,
-                defaultDomainId: unset ? null : domain.id,
-                defaultEnvironmentId: unset ? null : environment.id,
-            },
-            message: unset ? 'Default domain unset' : `${domain.name} is now your default domain`,
-        });
-    };
-
     const columns: ColumnDef<Domain, unknown>[] = [
         {
             accessorKey: 'name',
@@ -131,7 +91,7 @@ export function DomainsPage() {
                             {row.original.name}
                         </Link>
                         {defaultDomainId === row.original.id && (
-                            <StarIcon className="size-3.5 fill-current text-warning" aria-label="Default domain" />
+                            <StarIcon className="size-3.5 fill-current text-primary" aria-label="Default domain" />
                         )}
                     </span>
                     {row.original.description && <span className="text-sm text-muted-foreground">{row.original.description}</span>}
@@ -154,23 +114,14 @@ export function DomainsPage() {
             header: () => <span className="sr-only">Actions</span>,
             enableHiding: false,
             cell: ({ row }) => (
-                <div className="flex justify-end">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-xs" aria-label={`Actions for ${row.original.name}`}>
-                                <MoreVerticalIcon className="size-4" aria-hidden />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => toggleDefault(row.original)}>
-                                {defaultDomainId === row.original.id ? 'Unset default domain' : 'Set as default domain'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => togglePin(row.original)}>
-                                {pinnedIds.includes(row.original.id) ? 'Unpin domain' : 'Pin domain'}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                <DomainActionsMenu
+                    name={row.original.name}
+                    isDefault={defaultDomainId === row.original.id}
+                    isPinned={pinnedIds.includes(row.original.id)}
+                    disabled={!preferences.canSave}
+                    onToggleDefault={() => preferences.toggleDefault(row.original)}
+                    onTogglePin={() => preferences.togglePin(row.original)}
+                />
             ),
         },
     ];
@@ -194,13 +145,15 @@ export function DomainsPage() {
             {error ? (
                 <ErrorPanel description="Could not load the security domains." error={error} />
             ) : isFirstUse ? (
-                <DataTableEmptyState
-                    variant="first-use"
-                    icon={<GlobeIcon />}
-                    title="No security domains yet"
-                    description="A security domain lets you register applications and users and manage identity providers, for centralized authentication, authorization and user management."
-                    primaryAction={has('domain_create') ? createButton : undefined}
-                />
+                <div className="rounded-lg border border-border">
+                    <DataTableEmptyState
+                        variant="first-use"
+                        icon={<GlobeIcon />}
+                        title="No security domains yet"
+                        description="A security domain lets you register applications and users and manage identity providers, for centralized authentication, authorization and user management."
+                        primaryAction={has('domain_create') ? createButton : undefined}
+                    />
+                </div>
             ) : (
                 <DataTable
                     aria-label="Security domains"
@@ -211,7 +164,7 @@ export function DomainsPage() {
                     serverSide
                     toolbar={
                         <>
-                            <SearchField label="domains" onSearch={search} />
+                            <SearchField key={searchKey} label="domains" onSearch={search} />
                             <div className="flex items-center gap-2">
                                 <Switch
                                     id="domains-pinned-only"
@@ -225,6 +178,11 @@ export function DomainsPage() {
                                     Pinned only
                                 </Label>
                             </div>
+                            {filtersActive && (
+                                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                                    Reset
+                                </Button>
+                            )}
                         </>
                     }
                     emptyMessage={
@@ -237,6 +195,11 @@ export function DomainsPage() {
                                     ? 'Pin a domain from its actions menu to find it here.'
                                     : 'Try another name, or clear the filters.'
                             }
+                            action={
+                                <Button variant="outline" size="sm" onClick={clearFilters}>
+                                    Clear filters
+                                </Button>
+                            }
                         />
                     }
                     pagination={{
@@ -248,6 +211,7 @@ export function DomainsPage() {
                             setPageSize(size);
                             setPage(1);
                         },
+                        pageSizeOptions: [10, 25, 50, 100],
                     }}
                 />
             )}

@@ -37,7 +37,7 @@ function Banner() {
     return <>{useLayoutSlots().slots.banner}</>;
 }
 
-function renderLayout(domain: Domain, permissions: string[]) {
+function setupDomainLayoutHarness(domain: Domain, permissions: string[]) {
     vi.mocked(useCurrentDomain).mockReturnValue({
         domain,
         ref,
@@ -45,7 +45,7 @@ function renderLayout(domain: Domain, permissions: string[]) {
         domainsPath: '/environments/dev/domains',
     });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return renderWithGraphene(
+    renderWithGraphene(
         <QueryClientProvider client={client}>
             <PermissionScope permissions={permissions}>
                 <MemoryRouter>
@@ -57,29 +57,35 @@ function renderLayout(domain: Domain, permissions: string[]) {
             </PermissionScope>
         </QueryClientProvider>,
     );
+
+    return {
+        enable: () => userEvent.click(screen.getByRole('button', { name: 'Enable domain' })),
+        banner: () => screen.queryByRole('status', { name: 'Domain status' }),
+        enableButton: () => screen.queryByRole('button', { name: 'Enable domain' }),
+    };
 }
 
 describe('DomainLayout', () => {
     it('enables a disabled domain from the banner', async () => {
         vi.mocked(enableDomain).mockResolvedValue({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: true });
 
-        renderLayout({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: false }, ['domain_settings_update']);
-        expect(screen.getByRole('status', { name: 'Domain status' })).toHaveTextContent('Acme domain is disabled.');
-        await userEvent.click(screen.getByRole('button', { name: 'Enable domain' }));
+        const harness = setupDomainLayoutHarness({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: false }, ['domain_settings_update']);
+        expect(harness.banner()).toHaveTextContent('Acme domain is disabled.');
+        await harness.enable();
 
         expect(enableDomain).toHaveBeenCalledWith(ref);
         await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Domain Acme enabled'));
     });
 
     it('shows no banner without domain_settings_update', () => {
-        renderLayout({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: false }, []);
+        const harness = setupDomainLayoutHarness({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: false }, []);
 
-        expect(screen.queryByRole('button', { name: 'Enable domain' })).not.toBeInTheDocument();
+        expect(harness.enableButton()).not.toBeInTheDocument();
     });
 
     it('shows no banner for an enabled domain', () => {
-        renderLayout({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: true }, ['domain_settings_update']);
+        const harness = setupDomainLayoutHarness({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: true }, ['domain_settings_update']);
 
-        expect(screen.queryByRole('status', { name: 'Domain status' })).not.toBeInTheDocument();
+        expect(harness.banner()).not.toBeInTheDocument();
     });
 });

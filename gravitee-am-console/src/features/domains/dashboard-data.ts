@@ -26,9 +26,8 @@ export const TIME_RANGES = [
 ] as const;
 
 export type TimeRange = (typeof TIME_RANGES)[number];
-export type TimeRangeId = TimeRange['id'];
 
-export const DEFAULT_TIME_RANGE: TimeRangeId = '1d';
+export const DEFAULT_TIME_RANGE: TimeRange = TIME_RANGES[2];
 
 /**
  * Minutes and hours subtract absolute time, days and weeks keep the local time of day, and a month is a calendar month
@@ -50,7 +49,31 @@ export function rangeStart(range: TimeRange, to: number): number {
 }
 
 /** The widgets of the Angular `DomainDashboardComponent`. */
-export const WIDGETS = {
+export const WIDGET_KEYS = [
+    'logins',
+    'signUps',
+    'users',
+    'applications',
+    'loginActivity',
+    'signUpActivity',
+    'userStatus',
+    'registration',
+    'topApplications',
+    'loginType',
+    'webauthn',
+    'cba',
+    'magicLink',
+] as const;
+
+export type WidgetKey = (typeof WIDGET_KEYS)[number];
+
+interface Widget {
+    readonly type: AnalyticsType;
+    readonly field: string;
+    readonly size?: number;
+}
+
+export const WIDGETS: Readonly<Record<WidgetKey, Widget>> = {
     logins: { type: 'count', field: 'user_login' },
     signUps: { type: 'count', field: 'user_registered' },
     users: { type: 'count', field: 'user' },
@@ -64,13 +87,23 @@ export const WIDGETS = {
     webauthn: { type: 'group_by', field: 'webauthn' },
     cba: { type: 'group_by', field: 'cba' },
     magicLink: { type: 'group_by', field: 'magic_link' },
-} satisfies Record<string, { type: AnalyticsType; field: string; size?: number }>;
-
-export type WidgetKey = keyof typeof WIDGETS;
+};
 
 export function widgetQuery(key: WidgetKey, range: TimeRange, to: number): AnalyticsQuery {
-    const widget: { type: AnalyticsType; field: string; size?: number } = WIDGETS[key];
+    const widget = WIDGETS[key];
     return { type: widget.type, field: widget.field, from: rangeStart(range, to), to, interval: range.interval, size: widget.size };
+}
+
+export type WidgetResult =
+    | { readonly status: 'loading' }
+    | { readonly status: 'error' }
+    | { readonly status: 'ready'; readonly data: AnalyticsResponse | undefined };
+
+/** Login outcomes take the semantic colors; other series take the chart palette in order. */
+export function seriesColor(key: string, paletteIndex: number): string {
+    if (key.includes('failure')) return 'var(--destructive)';
+    if (key.includes('success')) return 'var(--success)';
+    return `var(--chart-${(paletteIndex % 5) + 1})`;
 }
 
 export function count(result: AnalyticsResponse | undefined): number | undefined {

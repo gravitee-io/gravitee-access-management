@@ -60,7 +60,7 @@ export function listDomainsByIds(organizationId: string, environmentId: string, 
 }
 
 export function getDomainByHrid(organizationId: string, environmentId: string, hrid: string): Promise<Domain> {
-    return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains/_hrid/${hrid}`);
+    return http<Domain>(`${environmentPath(organizationId, environmentId)}/domains/_hrid/${encodeURIComponent(hrid)}`);
 }
 
 export type NewDomain = ApiModel<NewDomainModel>;

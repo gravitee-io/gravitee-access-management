@@ -32,13 +32,22 @@ test.describe('React console: domains list', () => {
     const name = uniqueTestName('pw-next-domain');
     await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
 
+    const dataPlanesResponse = page.waitForResponse((response) => response.url().endsWith('/data-planes'));
     await page.getByRole('link', { name: 'Create domain' }).click();
+    const dataPlanes: { id: string; name: string }[] = await (await dataPlanesResponse).json();
+    const dataPlane = [...dataPlanes].sort((a, b) => a.name.localeCompare(b.name))[0];
     await page.getByRole('textbox', { name: 'Name' }).fill(name);
+    if (dataPlanes.length > 1) {
+      await page.getByRole('combobox', { name: 'Data plane' }).click();
+      await page.getByRole('option', { name: `${dataPlane.name} (${dataPlane.id})` }).click();
+    }
     const createRequest = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/domains'));
-    const createResponse = page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/domains'));
+    const createResponse = page.waitForResponse(
+      (response) => response.request().method() === 'POST' && response.url().endsWith('/domains'),
+    );
     await page.getByRole('button', { name: 'Create domain' }).click();
 
-    expect((await createRequest).postDataJSON()).toEqual({ name, dataPlaneId: 'default' });
+    expect((await createRequest).postDataJSON()).toEqual({ name, dataPlaneId: dataPlane.id });
     const created = await (await createResponse).json();
     try {
       await expect(page).toHaveURL(new RegExp(`/domains/${created.hrid}/dashboard$`));

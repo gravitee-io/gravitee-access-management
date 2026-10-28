@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
+import { LayoutSlotsProvider, toast, TooltipProvider } from '@gravitee/graphene-core';
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { listDataPlanes } from '../../../lib/api/data-planes';
 import { createDomain } from '../../../lib/api/domains';
 import { HttpError } from '../../../lib/api/http';
 import { CreateDomainPage } from '../CreateDomainPage';
 
+vi.mock('@gravitee/graphene-core', async importOriginal => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    toast: { success: vi.fn(), error: vi.fn() },
+}));
 vi.mock('../../../lib/api/data-planes', () => ({ listDataPlanes: vi.fn() }));
 vi.mock('../../../lib/api/domains', () => ({ createDomain: vi.fn() }));
 vi.mock('../../../lib/session/session', () => ({ useSession: () => ({ user: { org: 'DEFAULT' } }) }));
@@ -29,9 +35,9 @@ vi.mock('../../../lib/session/environment', () => ({
     useCurrentEnvironment: () => ({ id: 'env-1', name: 'Development', hrids: ['dev'] }),
 }));
 
-function renderPage() {
+function setupCreateDomainPageHarness() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return render(
+    renderWithGraphene(
         <QueryClientProvider client={client}>
             <MemoryRouter initialEntries={['/environments/dev/domains/new']}>
                 <LayoutSlotsProvider>
@@ -45,6 +51,18 @@ function renderPage() {
             </MemoryRouter>
         </QueryClientProvider>,
     );
+    const submitButton = () => screen.getByRole('button', { name: 'Create domain' });
+
+    return {
+        typeName: async (text: string) => userEvent.type(await screen.findByRole('textbox', { name: 'Name' }), text),
+        typeDescription: (text: string) => userEvent.type(screen.getByRole('textbox', { name: 'Description' }), text),
+        submitWhenEnabled: async () => {
+            await waitFor(() => expect(submitButton()).toBeEnabled());
+            await userEvent.click(submitButton());
+        },
+        submitButton,
+        dataPlaneSelect: () => screen.queryByRole('combobox', { name: 'Data plane' }),
+    };
 }
 
 beforeEach(() => {
@@ -55,40 +73,35 @@ beforeEach(() => {
 describe('CreateDomainPage', () => {
     it('creates the domain on the single data plane with the Angular fields, then opens it', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
-        renderPage();
+        const harness = setupCreateDomainPageHarness();
 
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Customer Identity' } });
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Create domain' })).toBeEnabled());
-        expect(screen.queryByText('Data plane')).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Create domain' }));
+        await harness.typeName('Customer Identity');
+        await harness.submitWhenEnabled();
 
-        await waitFor(() =>
-            expect(createDomain).toHaveBeenCalledWith('DEFAULT', 'env-1', {
-                name: 'Customer Identity',
-                description: undefined,
-                dataPlaneId: 'default',
-            }),
-        );
+        expect(harness.dataPlaneSelect()).not.toBeInTheDocument();
+        expect(createDomain).toHaveBeenCalledWith('DEFAULT', 'env-1', {
+            name: 'Customer Identity',
+            description: undefined,
+            dataPlaneId: 'default',
+        });
         expect(await screen.findByText('Domain page')).toBeInTheDocument();
+        expect(toast.success).toHaveBeenCalledWith('Domain Customer Identity created');
         expect(listDataPlanes).toHaveBeenCalledWith('DEFAULT', 'env-1');
     });
 
     it('sends the description once typed', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
-        renderPage();
+        const harness = setupCreateDomainPageHarness();
 
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Acme' } });
-        fireEvent.change(screen.getByRole('textbox', { name: 'Description' }), { target: { value: 'Customer realm' } });
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Create domain' })).toBeEnabled());
-        fireEvent.click(screen.getByRole('button', { name: 'Create domain' }));
+        await harness.typeName('Acme');
+        await harness.typeDescription('Customer realm');
+        await harness.submitWhenEnabled();
 
-        await waitFor(() =>
-            expect(createDomain).toHaveBeenCalledWith('DEFAULT', 'env-1', {
-                name: 'Acme',
-                description: 'Customer realm',
-                dataPlaneId: 'default',
-            }),
-        );
+        expect(createDomain).toHaveBeenCalledWith('DEFAULT', 'env-1', {
+            name: 'Acme',
+            description: 'Customer realm',
+            dataPlaneId: 'default',
+        });
     });
 
     it('requires a data plane when there are several', async () => {
@@ -96,31 +109,45 @@ describe('CreateDomainPage', () => {
             { id: 'eu', name: 'Europe' },
             { id: 'us', name: 'America' },
         ]);
-        renderPage();
+        const harness = setupCreateDomainPageHarness();
 
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Acme' } });
+        await harness.typeName('Acme');
 
         expect(await screen.findByRole('combobox', { name: 'Data plane' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Create domain' })).toBeDisabled();
+        expect(harness.submitButton()).toBeDisabled();
     });
 
     it('keeps the form when the creation fails', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
         vi.mocked(createDomain).mockRejectedValueOnce(new HttpError(400, 'Domain with name [Acme] already exists'));
-        renderPage();
+        const harness = setupCreateDomainPageHarness();
 
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Acme' } });
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Create domain' })).toBeEnabled());
-        fireEvent.click(screen.getByRole('button', { name: 'Create domain' }));
+        await harness.typeName('Acme');
+        await harness.submitWhenEnabled();
 
-        await waitFor(() => expect(createDomain).toHaveBeenCalled());
+        await waitFor(() =>
+            expect(toast.error).toHaveBeenCalledWith('Could not create the domain. Domain with name [Acme] already exists'),
+        );
         expect(await screen.findByRole('button', { name: 'Create domain' })).toBeEnabled();
         expect(screen.queryByText('Domain page')).not.toBeInTheDocument();
     });
 
+    it('says why a domain cannot be created when the environment has no data plane', async () => {
+        vi.mocked(listDataPlanes).mockResolvedValue([]);
+        const harness = setupCreateDomainPageHarness();
+
+        await harness.typeName('Acme');
+
+        expect(
+            await screen.findByText('No data plane is available in this environment, so a domain cannot be created.'),
+        ).toBeInTheDocument();
+        expect(harness.dataPlaneSelect()).not.toBeInTheDocument();
+        expect(harness.submitButton()).toBeDisabled();
+    });
+
     it('shows the error panel when the data planes do not load', async () => {
         vi.mocked(listDataPlanes).mockRejectedValue(new HttpError(500, 'Service unavailable'));
-        renderPage();
+        setupCreateDomainPageHarness();
 
         expect(await screen.findByText('Could not load the data planes, so a domain cannot be created.')).toBeInTheDocument();
     });

@@ -128,7 +128,11 @@ export function CreateDomainPage() {
                         </Field>
                         {dataPlanes.isPending ? (
                             <Skeleton className="h-9 w-full" />
-                        ) : oneDataPlane ? null : (
+                        ) : oneDataPlane ? null : dataPlanes.data.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No data plane is available in this environment, so a domain cannot be created.
+                            </p>
+                        ) : (
                             <Field>
                                 <FieldLabel htmlFor="domain-data-plane">Data plane</FieldLabel>
                                 <Select value={selectedDataPlaneId} onValueChange={setSelectedDataPlaneId}>
