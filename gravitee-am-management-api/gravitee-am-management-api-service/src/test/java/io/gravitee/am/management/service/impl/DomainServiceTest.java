@@ -39,6 +39,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Form;
@@ -157,6 +158,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -1689,6 +1691,123 @@ public class DomainServiceTest {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
         }));
+    }
+
+    private Domain domainWithVhosts(boolean vhostMode, String... hosts) {
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        domain.setVhostMode(vhostMode);
+        domain.setVhosts(java.util.Arrays.stream(hosts).map(host -> {
+            VirtualHost vhost = new VirtualHost();
+            vhost.setHost(host);
+            vhost.setPath("/");
+            return vhost;
+        }).collect(Collectors.toList()));
+        return domain;
+    }
+
+    @Test
+    public void shouldNotUpdate_enableVhostMode_cloudMode() {
+        enableCloudMode();
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domainWithVhosts(false)));
+
+        domainService.update("my-domain", domainWithVhosts(true), false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidParameterException.class);
+
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_changeVhosts_cloudMode() {
+        enableCloudMode();
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domainWithVhosts(true, "a.gravitee.io")));
+
+        domainService.update("my-domain", domainWithVhosts(true, "b.gravitee.io"), false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidParameterException.class);
+
+        verify(domainRepository, never()).update(any(Domain.class));
+    }
+
+    @Test
+    public void shouldUpdate_changeVhosts_standalone() {
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domainWithVhosts(false)));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+
+        domainService.validateUpdate("my-domain", domainWithVhosts(true, "b.gravitee.io"), false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+    }
+
+    @Test
+    public void shouldUpdate_unchangedVhosts_cloudMode() {
+        enableCloudMode();
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domainWithVhosts(true, "a.gravitee.io")));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+
+        domainService.validateUpdate("my-domain", domainWithVhosts(true, "a.gravitee.io"), false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+    }
+
+    @Test
+    public void shouldUpdate_omittedVhostsKeepExisting_cloudMode() {
+        enableCloudMode();
+        Domain incoming = domainWithVhosts(true);
+        incoming.setVhosts(null);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domainWithVhosts(true, "a.gravitee.io")));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(Completable.complete()).when(tokenExchangeSettingsValidator).validate(any());
+
+        domainService.validateUpdate("my-domain", incoming, false)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(domain -> domain.getVhosts().size() == 1 && "a.gravitee.io".equals(domain.getVhosts().get(0).getHost()));
+    }
+
+    @Test
+    public void shouldNotPatch_changeVhosts_cloudMode() {
+        enableCloudMode();
+        PatchDomain patchDomain = new PatchDomain();
+        VirtualHost vhost = new VirtualHost();
+        vhost.setHost("b.gravitee.io");
+        vhost.setPath("/");
+        patchDomain.setVhosts(Optional.of(List.of(vhost)));
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domainWithVhosts(true, "a.gravitee.io")));
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, "my-domain"), "my-domain", patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(InvalidParameterException.class);
+
+        verify(domainRepository, never()).update(any(Domain.class));
     }
 
     @Test
