@@ -176,6 +176,57 @@ describe('CORS - Rejected requests (403)', () => {
   });
 });
 
+describe('CORS - Token endpoint with a restricted origin', () => {
+  const TRUSTED_ORIGIN = 'https://app.example.test';
+  const UNTRUSTED_ORIGIN = 'https://evil.example.test';
+
+  it('should answer a browser at the trusted origin with the matching allow origin header', async () => {
+    await fixture.updateCorsSettings({
+      enabled: true,
+      allowedOrigins: new Set([TRUSTED_ORIGIN]),
+      allowedMethods: new Set(['GET', 'POST', 'OPTIONS']),
+      allowedHeaders: new Set(['Authorization', 'Content-Type']),
+    });
+
+    const response = await fixture.requestTokenFromOrigin(TRUSTED_ORIGIN);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBe(TRUSTED_ORIGIN);
+  });
+
+  it('should send no allow origin header to a browser at an untrusted origin', async () => {
+    const response = await fixture.requestTokenFromOrigin(UNTRUSTED_ORIGIN);
+
+    expect(response.status).toBe(403);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('should refuse the preflight of a browser at an untrusted origin', async () => {
+    const response = await performOptions(process.env.AM_GATEWAY_URL, fixture.tokenPath, {
+      Origin: UNTRUSTED_ORIGIN,
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'Authorization,Content-Type',
+    });
+
+    expect(response.status).toBe(403);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  // The domain restricts the origins but lists no allowed methods: the restriction on origins must hold
+  // and must not fall back to answering every origin.
+  it('should still send no allow origin header to an untrusted origin when no allowed methods are set', async () => {
+    await fixture.updateCorsSettings({
+      enabled: true,
+      allowedOrigins: new Set([TRUSTED_ORIGIN]),
+      allowedHeaders: new Set(['Authorization', 'Content-Type']),
+    });
+
+    const response = await fixture.requestTokenFromOrigin(UNTRUSTED_ORIGIN);
+
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
 afterAll(async () => {
   await fixture.cleanUp();
 });
