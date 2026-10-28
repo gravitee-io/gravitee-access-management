@@ -234,7 +234,8 @@ uncovered list is `uncoveredComponents` in `units.json`.
 | `@ajsf` `json-schema-form` with `[schema]` and `(onChanges)`             | `JsonSchemaForm` with `adaptAmSchema(schema)` and `jsonSchemaResolver`                       | Automatic      |
 | `app-form` custom schema widgets `material-file`, `material-multiselect` | A Graphene custom field, once GR-A ships it. Until then a plain input and an `Alert`         | Manual         |
 
-The save bar `gio-save-bar` becomes `SaveBar`: it shows in the sticky layout banner when `isDirty`, submits the
+Every settings form uses `SaveBar` for its Save button. This covers the Angular `type="submit"` Save button at the
+foot of a settings form, and `gio-save-bar`. `SaveBar` shows in the sticky layout banner when `isDirty`, submits the
 form named by `formId`, and resets on discard.
 
 ### 2.5 Tables
