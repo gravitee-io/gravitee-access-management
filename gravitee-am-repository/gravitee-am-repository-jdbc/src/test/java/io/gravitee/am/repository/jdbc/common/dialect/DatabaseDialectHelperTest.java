@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -237,7 +238,7 @@ public class DatabaseDialectHelperTest {
         assertEquals("app\\[test\\]", helper.escapeLikePatternValue("app[test]"));
         assertEquals("\\[", helper.escapeLikePatternValue("["));
         assertEquals("\\]", helper.escapeLikePatternValue("]"));
-        assertEquals("app\\[test\\]%name", helper.escapeLikePatternValue("app[test]%name"));
+        assertEquals("app\\[test\\]\\%name", helper.escapeLikePatternValue("app[test]%name"));
         // Test that underscore is also escaped
         assertEquals("app\\_test", helper.escapeLikePatternValue("app_test"));
         // Test backslash escaping
@@ -251,7 +252,6 @@ public class DatabaseDialectHelperTest {
 
         // Test that values without special characters are unchanged
         assertEquals("apptest", helper.escapeLikePatternValue("apptest"));
-        assertEquals("%test%", helper.escapeLikePatternValue("%test%"));
         assertEquals("app{test}", helper.escapeLikePatternValue("app{test}"));
     }
 
@@ -271,6 +271,44 @@ public class DatabaseDialectHelperTest {
 
         // PostgreSQL does not need escaping for brackets (default implementation)
         assertEquals("app[test]", helper.escapeLikePatternValue("app[test]"));
+    }
+
+    @Test
+    public void shouldEscapeLikeWildcards_Postgresql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+
+        assertEquals("100\\%\\_a\\\\b", helper.escapeLikePatternValue("100%_a\\b"));
+    }
+
+    @Test
+    public void shouldBuildWildcardLikePattern_Postgresql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        PostgresqlHelper helper = new PostgresqlHelper(dialect, null);
+
+        assertEquals("user\\_1%", helper.toWildcardLikePattern("user_1*"));
+        assertEquals("\\%%", helper.toWildcardLikePattern("%*"));
+        assertEquals("a%b%", helper.toWildcardLikePattern("a**b***"));
+        assertEquals("%", helper.toWildcardLikePattern("*"));
+    }
+
+    @Test
+    public void shouldBuildWildcardLikePattern_MsSql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        assertEquals("\\[a\\]\\%\\_%", helper.toWildcardLikePattern("[a]%_*"));
+    }
+
+    @Test
+    public void shouldAppendEscapeClauseToWildcardSearchQueries_MsSql() {
+        R2dbcDialect dialect = Mockito.mock(R2dbcDialect.class);
+        MsSqlHelper helper = new MsSqlHelper(dialect, null);
+
+        assertEquals(6, helper.buildCountUserQuery(true).split("ESCAPE '\\\\'", -1).length - 1);
+        assertTrue(helper.buildCountScopeQuery(true).contains("ESCAPE '\\'"));
+        assertTrue(helper.buildCountRoleQuery(true).contains("ESCAPE '\\'"));
+        assertFalse(helper.buildCountUserQuery(false).contains("ESCAPE"));
     }
 
     @Test

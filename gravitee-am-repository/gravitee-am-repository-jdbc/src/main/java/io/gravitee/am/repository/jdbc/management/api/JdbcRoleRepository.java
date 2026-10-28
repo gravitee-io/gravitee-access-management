@@ -198,7 +198,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, query, page, size);
 
         boolean wildcardSearch = query.contains("*");
-        String wildcardValue = query.replaceAll("\\*+", "%");
+        String wildcardValue = databaseDialectHelper.toWildcardLikePattern(query);
 
         String search = this.databaseDialectHelper.buildSearchRoleQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountRoleQuery(wildcardSearch);

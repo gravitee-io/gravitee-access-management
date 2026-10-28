@@ -383,9 +383,9 @@ public class RoleRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+    public void shouldSearchWildcardTreatingMetacharactersLiterally() {
         String referenceId = "metacharacter-domain";
-        for (String name : List.of("role(1)+a", "role1a")) {
+        for (String name : List.of("role(1)+a", "role1a", "role_1a", "roleX1a", "role%a")) {
             Role role = buildRole();
             role.setReferenceId(referenceId);
             role.setName(name);
@@ -396,7 +396,10 @@ public class RoleRepositoryTest extends AbstractManagementTest {
                 "role(1)+*", List.of("role(1)+a"),
                 "role(*", List.of("role(1)+a"),
                 ".*", List.of(),
-                "zzz|*", List.of());
+                "zzz|*", List.of(),
+                "role_1*", List.of("role_1a"),
+                "role%*", List.of("role%a"),
+                "%*", List.of());
 
         expectedNamesByQuery.forEach((query, expectedNames) -> {
             TestObserver<Page<Role>> testObserver = roleRepository.search(ReferenceType.DOMAIN, referenceId, query, 0, 10).test();
