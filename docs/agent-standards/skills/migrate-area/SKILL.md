@@ -62,14 +62,16 @@ Stop if:
 If every dirty file belongs to the story, a run of that story stopped part way. Report the first step it lacks, then
 ask to resume it.
 
-Check that the shared parts exist. Stop and name the missing part if not. AM-7933 and AM-7934 create them.
+Check that the shared parts exist. Stop and name the missing part if not. AM-7933, AM-7934, AM-7984 and AM-7985
+create them.
 
 - `src/lib/session/permissions.tsx`, when a unit has `permissions`.
 - `src/lib/session/license.tsx`, when a unit has `licenseFeatures`.
 - `src/app/components/ConfirmDialog.tsx`, when a page deletes.
-- `src/app/components/PluginWizard.tsx`, when a page's Angular folder has `creation/` with `step1` and `step2`.
+- `src/app/components/PluginWizard.tsx` (AM-7984), when a page's Angular folder has `creation/` with `step1` and
+  `step2`.
 - `src/app/components/SaveBar.tsx`, when a page is a settings form.
-- `src/app/components/MembershipsPanel.tsx`, when a page lists members.
+- `src/app/components/MembershipsPanel.tsx` (AM-7985), when a page lists members.
 - The `console-next` project in `gravitee-am-test/playwright.config.ts`, when a unit is class B or above.
 
 Do not build a shared part inside the run.

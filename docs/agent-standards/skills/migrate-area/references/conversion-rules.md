@@ -221,18 +221,21 @@ uncovered list is `uncoveredComponents` in `units.json`.
 | `(ngSubmit)="save()"` with `[disabled]="!f.valid \|\| !f.dirty"`         | `handleSubmit(values => save.mutate(values))` with `disabled={!isDirty \|\| save.isPending}` | Automatic      |
 | `mat-form-field` with `mat-label`, `mat-hint`, `mat-error`               | `Field`, `FieldLabel`, `FieldDescription`, `FieldError`                                      | Automatic      |
 | `mat-slide-toggle` with `(change)`                                       | `Controller` with `Switch` and `onCheckedChange`                                             | Automatic      |
+| `mat-slide-toggle` with a label and a hint                               | `Controller` with `SettingToggle` from `src/app/components/`                                 | Automatic      |
 | `mat-select` with `mat-option`                                           | `Controller` with `Select`                                                                   | Automatic      |
 | `mat-checkbox`                                                           | `Controller` with `Checkbox`                                                                 | Automatic      |
 | `mat-radio-group`                                                        | `Controller` with `RadioGroup`                                                               | Automatic      |
 | `mat-autocomplete`                                                       | `Combobox`                                                                                   | Semi-automatic |
 | `mat-chip-grid` for a string list                                        | `TagInput` from `src/app/components/`                                                        | Semi-automatic |
+| An input with Add over a list of values, for example redirect URIs       | `ValueListInput` from `src/app/components/`                                                  | Semi-automatic |
+| A time input with a `units` select, `TimeConverterService`               | `DurationInput`, with `exactDuration` and `draftToSeconds`                                   | Semi-automatic |
 | `mat-datepicker`                                                         | `DatePicker`                                                                                 | Automatic      |
 | `formDirective.resetForm(entity)` after save                             | `form.reset(response)`                                                                       | Automatic      |
 | `@ajsf` `json-schema-form` with `[schema]` and `(onChanges)`             | `JsonSchemaForm` with `adaptAmSchema(schema)` and `jsonSchemaResolver`                       | Automatic      |
 | `app-form` custom schema widgets `material-file`, `material-multiselect` | A Graphene custom field, once GR-A ships it. Until then a plain input and an `Alert`         | Manual         |
 
-The save bar `gio-save-bar` becomes `SaveBar`: it shows when `isDirty`, submits the form, and resets on
-discard.
+The save bar `gio-save-bar` becomes `SaveBar`: it shows in the sticky layout banner when `isDirty`, submits the
+form named by `formId`, and resets on discard.
 
 ### 2.5 Tables
 
@@ -259,7 +262,7 @@ discard.
 | `mat-horizontal-stepper` with `mat-step`           | `PluginWizard` for a plugin creation. Else one step component per `mat-step`, `Button` next and back | Semi-automatic |
 | `matTooltip`                                       | `Tooltip`                                                                                            | Automatic      |
 | `ngx-clipboard` `cbContent`                        | `CopyableText` or `CopyableCell`                                                                     | Automatic      |
-| `app-user-avatar`, `identiconHash`                 | `Avatar` with initials                                                                               | Automatic      |
+| `app-user-avatar`, `identiconHash`                 | `UserAvatar` from `src/app/components/`                                                              | Automatic      |
 
 ### 2.7 Editors and studios
 

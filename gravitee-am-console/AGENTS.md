@@ -58,6 +58,7 @@ src/
   lib/routing/      lazyPage.tsx
   lib/session/      session.tsx, environment.tsx, permissions.tsx, license.tsx, preferences.ts, domains.ts
   lib/layout/       useBreadcrumbs.ts, useSectionSidebar.tsx
+  lib/forms/        duration.ts
   test/             setup.ts
 ```
 
