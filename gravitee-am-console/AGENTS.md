@@ -58,6 +58,7 @@ src/
   lib/routing/      lazyPage.tsx
   lib/session/      session.tsx, environment.tsx, permissions.tsx, license.tsx, preferences.ts, domains.ts
   lib/layout/       useBreadcrumbs.ts, useSectionSidebar.tsx
+  lib/forms/        duration.ts
   test/             setup.ts
 ```
 
@@ -111,6 +112,7 @@ src/
 - Tailwind 4: write `border-border` and `divide-border`. Bare `border` and `divide-y` paint with `currentColor`.
 - `src/styles.css` imports Graphene's CSS last. Do not import `@gravitee/graphene-core/styles` from TypeScript.
 - Page titles are a plain `<h1>` inside `PageHeader`.
+- A settings form saves through `SaveBar` from `src/app/components/`. Do not put a Save button at the foot of the form.
 
 ## 7. Permissions and licence
 

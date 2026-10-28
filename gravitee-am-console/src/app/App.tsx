@@ -19,6 +19,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { authRoutes } from '../features/auth/routes';
 import { EnvironmentPage } from '../features/environment/EnvironmentPage';
 import { HomePage } from '../features/home/HomePage';
+import { kitRoutes } from '../features/kit/routes';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
 import { redirectToLogin } from '../lib/api/auth';
 import { HttpError } from '../lib/api/http';
@@ -77,6 +78,7 @@ export function App() {
                                                         <Route path="settings/*" element={<PlaceholderPage title="Settings" />} />
                                                     </Route>
                                                     <Route path="organization/*" element={<PlaceholderPage title="Organization" />} />
+                                                    {kitRoutes}
                                                 </Route>
                                             </Route>
                                             <Route
