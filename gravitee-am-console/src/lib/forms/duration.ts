@@ -59,7 +59,8 @@ export type DurationDraft = {
 /** The largest unit that gives the seconds exactly, with the Angular conversion. */
 export function exactDuration(seconds: number): DurationDraft {
     for (const { value: unit } of [...DURATION_UNITS].reverse()) {
-        const time = Math.round(seconds / toSeconds(1, unit));
+        // 4800 months is a whole number of days, so this divides by the unrounded length of one unit.
+        const time = Math.round((seconds * 4_800) / toSeconds(4_800, unit));
         if (time >= 1 && toSeconds(time, unit) === seconds) {
             return { time: String(time), unit };
         }

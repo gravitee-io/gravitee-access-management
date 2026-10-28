@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { buttonHarness, renderWithGraphene } from '@gravitee/graphene-core/testing';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TagInput } from '../TagInput';
 
@@ -56,6 +56,16 @@ describe('TagInput', () => {
         expect(harness.onDuplicate).toHaveBeenCalledWith('openid');
         expect(harness.onChange).not.toHaveBeenCalled();
         expect(harness.input).toHaveValue('openid');
+    });
+
+    it('does not add while an IME composes the text', async () => {
+        const harness = setupTagInputHarness();
+
+        await harness.type('email');
+        fireEvent.keyDown(harness.input, { key: 'Enter', isComposing: true });
+
+        expect(harness.onChange).not.toHaveBeenCalled();
+        expect(harness.input).toHaveValue('email');
     });
 
     it('ignores an empty value', async () => {

@@ -32,7 +32,7 @@ interface ConfirmDialogProps {
     readonly confirmLabel: string;
     /** A delete or another action that cannot be undone. */
     readonly destructive?: boolean;
-    /** True while the confirmed action runs. Both buttons are disabled. */
+    /** True while the confirmed action runs. Both buttons are disabled and the dialog does not close. */
     readonly pending?: boolean;
     readonly onOpenChange: (open: boolean) => void;
     readonly onConfirm: () => void;
@@ -50,8 +50,8 @@ export function ConfirmDialog({
     onConfirm,
 }: ConfirmDialogProps) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+        <Dialog open={open} onOpenChange={next => !pending && onOpenChange(next)}>
+            <DialogContent showCloseButton={!pending}>
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>

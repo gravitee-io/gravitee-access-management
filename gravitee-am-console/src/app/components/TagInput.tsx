@@ -64,7 +64,7 @@ export function TagInput({ id, values, onChange, onDuplicate, placeholder, disab
                     id={id}
                     placeholder={values.length === 0 ? placeholder : undefined}
                     onKeyDown={event => {
-                        if (event.key === 'Enter') {
+                        if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                             event.preventDefault();
                             add();
                         }

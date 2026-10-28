@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { buttonHarness, inputHarness, renderWithGraphene } from '@gravitee/graphene-core/testing';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { ValueListInput } from '../ValueListInput';
 
 interface HarnessProps {
@@ -72,6 +72,15 @@ describe('ValueListInput', () => {
         await inputHarness({ name: 'Add redirect URI' }).type('https://b.test/cb{Enter}');
 
         expect(harness.onChange).toHaveBeenCalledWith(['https://a.test/cb', 'https://b.test/cb']);
+    });
+
+    it('does not add while an IME composes the text', async () => {
+        const harness = setupValueListInputHarness();
+
+        await inputHarness({ name: 'Add redirect URI' }).type('https://b.test/cb');
+        fireEvent.keyDown(screen.getByRole('textbox', { name: 'Add redirect URI' }), { key: 'Enter', isComposing: true });
+
+        expect(harness.onChange).not.toHaveBeenCalled();
     });
 
     it('reports a duplicate', async () => {

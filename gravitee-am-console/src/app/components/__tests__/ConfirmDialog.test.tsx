@@ -15,6 +15,7 @@
  */
 import { buttonHarness, renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ConfirmDialog } from '../ConfirmDialog';
 
 function setupConfirmDialogHarness({ pending = false } = {}) {
@@ -66,5 +67,14 @@ describe('ConfirmDialog', () => {
 
         expect(buttonHarness({ name: 'Delete' }).isDisabled()).toBe(true);
         expect(buttonHarness({ name: 'Cancel' }).isDisabled()).toBe(true);
+    });
+
+    it('stays open on Escape while the action runs', async () => {
+        const harness = setupConfirmDialogHarness({ pending: true });
+
+        await userEvent.keyboard('{Escape}');
+
+        expect(harness.onOpenChange).not.toHaveBeenCalled();
+        expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
     });
 });

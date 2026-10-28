@@ -33,6 +33,7 @@ describe('exactDuration', () => {
         expect(exactDuration(1_209_600)).toEqual({ time: '2', unit: 'weeks' });
         expect(exactDuration(5_270_400)).toEqual({ time: '2', unit: 'months' });
         expect(exactDuration(31_536_000)).toEqual({ time: '1', unit: 'years' });
+        expect(exactDuration(toSeconds(35, 'months'))).toEqual({ time: '35', unit: 'months' });
         expect(exactDuration(90)).toEqual({ time: '90', unit: 'seconds' });
     });
 });
