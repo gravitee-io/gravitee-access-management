@@ -32,12 +32,15 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -147,5 +150,89 @@ public class LoginAttemptGatewayServiceTest {
         testObserver.assertError(throwable -> throwable.getCause().getMessage().equals("test"));
 
         verify(loginAttemptRepository).delete(any(LoginAttemptCriteria.class));
+    }
+
+    @Test
+    public void should_check_account_with_lower_cased_username() {
+        final LoginAttemptCriteria mixedCase = new LoginAttemptCriteria.Builder()
+                .client("client-1")
+                .domain("domain-1")
+                .username("John.DOE")
+                .identityProvider("idp-1")
+                .build();
+        final LoginAttempt loginAttempt = new LoginAttempt();
+        loginAttempt.setAttempts(3);
+
+        when(loginAttemptRepository.findByCriteria(argThat(c -> c != null && "john.doe".equals(c.username()))))
+                .thenReturn(Maybe.just(loginAttempt));
+
+        var testObserver = service.checkAccount(new Domain("domain-1"), mixedCase, new AccountSettings()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertValue(attempt -> attempt.getAttempts() == 3);
+    }
+
+    @Test
+    public void should_store_login_attempt_with_lower_cased_username() {
+        final LoginAttemptCriteria mixedCase = new LoginAttemptCriteria.Builder()
+                .client("client-1")
+                .domain("domain-1")
+                .username("John.DOE")
+                .identityProvider("idp-1")
+                .build();
+        final AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setMaxLoginAttempts(3);
+        accountSettings.setLoginAttemptsResetTime(60);
+
+        when(loginAttemptRepository.findByCriteria(any())).thenReturn(Maybe.empty());
+        when(loginAttemptRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        var testObserver = service.loginFailed(new Domain("domain-1"), mixedCase, accountSettings).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+
+        final ArgumentCaptor<LoginAttemptCriteria> lookup = ArgumentCaptor.forClass(LoginAttemptCriteria.class);
+        verify(loginAttemptRepository).findByCriteria(lookup.capture());
+        assertEquals("john.doe", lookup.getValue().username());
+
+        final ArgumentCaptor<LoginAttempt> created = ArgumentCaptor.forClass(LoginAttempt.class);
+        verify(loginAttemptRepository).create(created.capture());
+        assertEquals("john.doe", created.getValue().getUsername());
+    }
+
+    @Test
+    public void should_reset_with_lower_cased_username() {
+        final LoginAttemptCriteria mixedCase = new LoginAttemptCriteria.Builder()
+                .client("client-1")
+                .domain("domain-1")
+                .username("John.DOE")
+                .identityProvider("idp-1")
+                .build();
+
+        when(loginAttemptRepository.delete(any(LoginAttemptCriteria.class))).thenReturn(Completable.complete());
+
+        var testObserver = service.reset(new Domain("domain-1"), mixedCase).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+
+        verify(loginAttemptRepository).delete(argThat((LoginAttemptCriteria c) -> "john.doe".equals(c.username())));
+    }
+
+    @Test
+    public void should_delete_login_attempt_with_lower_cased_username_on_login_success() {
+        final LoginAttemptCriteria mixedCase = new LoginAttemptCriteria.Builder()
+                .client("client-1")
+                .domain("domain-1")
+                .username("John.DOE")
+                .identityProvider("idp-1")
+                .build();
+
+        when(loginAttemptRepository.delete(any(LoginAttemptCriteria.class))).thenReturn(Completable.complete());
+
+        var testObserver = service.loginSucceeded(new Domain("domain-1"), mixedCase).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+
+        verify(loginAttemptRepository).delete(argThat((LoginAttemptCriteria c) -> "john.doe".equals(c.username())));
     }
 }

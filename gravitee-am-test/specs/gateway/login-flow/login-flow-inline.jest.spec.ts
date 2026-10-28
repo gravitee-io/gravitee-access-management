@@ -364,6 +364,14 @@ describe('Account Locked - Login Attempt', () => {
       await patchDomain(fixture.domain.id, fixture.accessToken, {
         accountSettings: { inherited: false, loginAttemptsDetectionEnabled: false },
       });
+      // the application overrides the domain settings, so it must be reset too: login attempts are tracked
+      // per lower-cased username and would otherwise keep locking 'user' for the tests that follow
+      await patchApplication(
+        fixture.domain.id,
+        fixture.accessToken,
+        { settings: { account: { inherited: false, loginAttemptsDetectionEnabled: false } } },
+        fixture.appSso1.id,
+      );
       await waitForOidcReady(fixture.domain.hrid, { timeoutMs: 5000, intervalMs: 200 });
     } catch (e) {
       console.warn('Failed to reset account settings after locked-attempt tests:', e);
