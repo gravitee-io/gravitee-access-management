@@ -1135,6 +1135,7 @@ jobs:
           name: Build Management API Docker Image to Azure Registry
           when: always
           command: |
+            cp docker/management-api/blocked-certs-cve-2026-91403 /tmp/
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
@@ -1151,6 +1152,7 @@ jobs:
           name: Build Gateway Docker Image to Azure Registry
           when: always
           command: |
+            cp docker/gateway/blocked-certs-cve-2026-91403 /tmp/
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
