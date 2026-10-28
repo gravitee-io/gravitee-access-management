@@ -98,6 +98,9 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     }
 
     private Set<HttpMethod> getHttpMethods(Set<String> httpMethods) {
+        if (httpMethods == null || httpMethods.isEmpty()) {
+            return Set.of();
+        }
         return httpMethods.stream().map(HttpMethod::valueOf).collect(Collectors.toSet());
     }
 
@@ -126,7 +129,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return CorsHandler
                 .newInstance(io.vertx.ext.web.handler.CorsHandler
                         .create()
-                        .allowedHeaders(settings.getAllowedHeaders())
+                        .allowedHeaders(Optional.ofNullable(settings.getAllowedHeaders()).orElse(Set.of()))
                         .allowedMethods(getHttpMethods(settings.getAllowedMethods()))
                         .maxAgeSeconds(settings.getMaxAge())
                         .addOriginsWithRegex(List.copyOf(settings.getAllowedOrigins())))
