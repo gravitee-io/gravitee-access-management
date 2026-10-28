@@ -226,7 +226,7 @@ uncovered list is `uncoveredComponents` in `units.json`.
 | `mat-checkbox`                                                           | `Controller` with `Checkbox`                                                                 | Automatic      |
 | `mat-radio-group`                                                        | `Controller` with `RadioGroup`                                                               | Automatic      |
 | `mat-autocomplete`                                                       | `Combobox`                                                                                   | Semi-automatic |
-| `mat-chip-grid` for a string list                                        | `TagInput` from `src/app/components/`                                                        | Semi-automatic |
+| `mat-chip-grid` for a string list                                        | `TagInput` from `src/app/components/`, with `addOnBlur` for `matChipInputAddOnBlur`          | Semi-automatic |
 | An input with Add over a list of values, for example redirect URIs       | `ValueListInput` from `src/app/components/`                                                  | Semi-automatic |
 | A time input with a `units` select, `TimeConverterService`               | `DurationInput`, with `exactDuration` and `draftToSeconds`                                   | Semi-automatic |
 | `mat-datepicker`                                                         | `DatePicker`                                                                                 | Automatic      |

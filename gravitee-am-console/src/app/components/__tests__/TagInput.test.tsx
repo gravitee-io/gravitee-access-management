@@ -18,13 +18,13 @@ import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TagInput } from '../TagInput';
 
-function setupTagInputHarness(values: string[] = ['openid']) {
+function setupTagInputHarness(values: string[] = ['openid'], addOnBlur = false) {
     const onChange = vi.fn();
     const onDuplicate = vi.fn();
     renderWithGraphene(
         <>
             <label htmlFor="scopes">Scopes</label>
-            <TagInput id="scopes" values={values} onChange={onChange} onDuplicate={onDuplicate} />
+            <TagInput id="scopes" values={values} onChange={onChange} onDuplicate={onDuplicate} addOnBlur={addOnBlur} />
         </>,
     );
     const input = screen.getByRole('combobox', { name: 'Scopes' });
@@ -56,6 +56,24 @@ describe('TagInput', () => {
         expect(harness.onDuplicate).toHaveBeenCalledWith('openid');
         expect(harness.onChange).not.toHaveBeenCalled();
         expect(harness.input).toHaveValue('openid');
+    });
+
+    it('adds the typed tag on blur when addOnBlur is set', async () => {
+        const harness = setupTagInputHarness(['openid'], true);
+
+        await harness.type('email');
+        await userEvent.tab();
+
+        expect(harness.onChange).toHaveBeenCalledWith(['openid', 'email']);
+    });
+
+    it('keeps the typed tag out on blur by default', async () => {
+        const harness = setupTagInputHarness();
+
+        await harness.type('email');
+        await userEvent.tab();
+
+        expect(harness.onChange).not.toHaveBeenCalled();
     });
 
     it('does not add while an IME composes the text', async () => {

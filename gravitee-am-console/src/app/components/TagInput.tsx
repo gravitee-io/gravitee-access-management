@@ -22,11 +22,13 @@ interface TagInputProps {
     readonly onChange: (values: string[]) => void;
     /** Called instead of onChange when the typed value is already in the list. */
     readonly onDuplicate?: (value: string) => void;
+    /** Also adds the typed value when the input loses focus. */
+    readonly addOnBlur?: boolean;
     readonly placeholder?: string;
     readonly disabled?: boolean;
 }
 
-export function TagInput({ id, values, onChange, onDuplicate, placeholder, disabled }: TagInputProps) {
+export function TagInput({ id, values, onChange, onDuplicate, addOnBlur = false, placeholder, disabled }: TagInputProps) {
     const [text, setText] = useState('');
 
     function add() {
@@ -67,6 +69,7 @@ export function TagInput({ id, values, onChange, onDuplicate, placeholder, disab
                             add();
                         }
                     }}
+                    onBlur={addOnBlur ? add : undefined}
                 />
             </ComboboxChips>
         </Combobox>
