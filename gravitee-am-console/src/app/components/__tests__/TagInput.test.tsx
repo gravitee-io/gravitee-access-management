@@ -67,7 +67,7 @@ describe('TagInput', () => {
         expect(harness.onChange).toHaveBeenCalledWith(['openid', 'email']);
     });
 
-    it('keeps the typed tag out on blur by default', async () => {
+    it('does not add the typed tag on blur by default', async () => {
         const harness = setupTagInputHarness();
 
         await harness.type('email');
