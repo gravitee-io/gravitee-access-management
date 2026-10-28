@@ -617,11 +617,7 @@ public class DomainServiceImpl implements DomainService {
                             !existingDomain.getDataPlaneId().equals(domain.getDataPlaneId())){
                         return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
                     }
-                    if (CloudProperties.isManagedCloudEnabled(springEnvironment) && domain.getVhosts() == null) {
-                        // a full-state caller that omits the vhosts keeps the ones the managed installation set
-                        domain.setVhosts(existingDomain.getVhosts());
-                    }
-                    var vhostCheck = checkVhostCloudModeChange(existingDomain, domain);
+                    var vhostCheck = validateFullStateVhosts(existingDomain, domain);
                     if (vhostCheck != null) {
                         return Single.error(vhostCheck);
                     }
@@ -640,6 +636,22 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(referenceValidation)
                             .andThen(Single.just(domain));
                 });
+    }
+
+    @Override
+    public Completable validateVhosts(Domain current, Domain desired) {
+        return Completable.defer(() -> {
+            var vhostCheck = validateFullStateVhosts(current, desired);
+            return vhostCheck == null ? Completable.complete() : Completable.error(vhostCheck);
+        });
+    }
+
+    private InvalidParameterException validateFullStateVhosts(Domain current, Domain desired) {
+        if (CloudProperties.isManagedCloudEnabled(springEnvironment) && desired.getVhosts() == null) {
+            // a full-state caller that omits the vhosts keeps the ones the managed installation set
+            desired.setVhosts(current.getVhosts());
+        }
+        return checkVhostCloudModeChange(current, desired);
     }
 
     /**
