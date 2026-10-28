@@ -74,5 +74,26 @@ public interface DatabaseDialectHelper {
 
     String buildPagingClauseUsingOffset(String field, int offset, int size);
 
+    default String escapeLikePatternValue(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
+    default String toWildcardLikePattern(String query) {
+        if (query == null) {
+            return null;
+        }
+        return escapeLikePatternValue(query).replaceAll("\\*+", "%");
+    }
+
+    default String getLikeEscapeClause() {
+        return "";
+    }
+
     enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
 }

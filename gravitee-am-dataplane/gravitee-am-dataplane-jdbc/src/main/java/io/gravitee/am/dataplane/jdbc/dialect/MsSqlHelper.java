@@ -89,4 +89,20 @@ public class MsSqlHelper extends AbstractDialectHelper {
         return " ORDER BY "+ field +" OFFSET "+ offset +" ROWS FETCH NEXT " + size + " ROWS ONLY ";
     }
 
+    @Override
+    public String escapeLikePatternValue(String value) {
+        String escaped = super.escapeLikePatternValue(value);
+        if (escaped == null) {
+            return null;
+        }
+        return escaped
+                .replace("[", "\\[")
+                .replace("]", "\\]");
+    }
+
+    @Override
+    public String getLikeEscapeClause() {
+        return " ESCAPE '\\' ";
+    }
+
 }
