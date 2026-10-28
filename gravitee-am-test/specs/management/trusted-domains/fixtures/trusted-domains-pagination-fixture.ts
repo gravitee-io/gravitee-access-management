@@ -37,7 +37,6 @@ export interface TrustedDomainsPaginationFixture extends Fixture {
   listTrustedDomains: (query?: TrustedDomainsQuery) => Promise<TrustedDomainPage>;
   listTrustedDomainsStatus: (query: TrustedDomainsQuery) => Promise<number>;
   followNextCursor: (nextCursor: string) => Promise<TrustedDomainPage>;
-  cursorStatus: (cursor: string) => Promise<number>;
 }
 
 const managementUrl = (path: string) => `${process.env.AM_MANAGEMENT_URL}/management${path}`;
@@ -106,7 +105,6 @@ export const setupTrustedDomainsPaginationFixture = async (): Promise<TrustedDom
       listTrustedDomains: async (query = {}) => readPage(await get(`${trustedDomainsPath(domainId)}?${queryString(query)}`, token)),
       listTrustedDomainsStatus: async (query) => (await get(`${trustedDomainsPath(domainId)}?${queryString(query)}`, token)).status,
       followNextCursor: async (nextCursor) => readPage(await get(nextCursor, token)),
-      cursorStatus: async (cursor) => (await get(`${trustedDomainsPath(domainId)}/_cursor?${queryString({ cursor })}`, token)).status,
       cleanUp: async () => {
         await safeDeleteDomain(domainId, token);
       },

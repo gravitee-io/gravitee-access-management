@@ -154,17 +154,17 @@ describe('Paging', () => {
     expect(page.page).toEqual(1);
   });
 
-  it(jira`should return at most 50 types per page ${'AM-7931'}`, async () => {
-    const types = Array.from({ length: 51 }, (_, index) => `type_${String(index).padStart(2, '0')}`);
+  it(jira`should return 50 types per page by default and at most 100 ${'AM-7931'}`, async () => {
+    const types = Array.from({ length: 101 }, (_, index) => `type_${String(index).padStart(3, '0')}`);
     const domainId = await domainWithTypes(...types);
 
     const byDefault = await list(domainId);
-    const [capped, rest] = await walk(domainId, { limit: 100 });
+    const [capped, rest] = await walk(domainId, { limit: 200 });
 
     expect(byDefault.data).toHaveLength(50);
-    expect(byDefault.totalCount).toEqual(51);
-    expect(typesOf(capped)).toEqual(types.slice(0, 50));
-    expect(typesOf(rest)).toEqual(types.slice(50));
+    expect(byDefault.totalCount).toEqual(101);
+    expect(typesOf(capped)).toEqual(types.slice(0, 100));
+    expect(typesOf(rest)).toEqual(types.slice(100));
   });
 
   it(jira`should continue past a type containing the cursor separator ${'AM-7931'}`, async () => {

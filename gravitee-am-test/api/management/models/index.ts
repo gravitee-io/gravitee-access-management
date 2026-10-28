@@ -38,6 +38,7 @@ export * from './Application';
 export * from './ApplicationAdvancedSettings';
 export * from './ApplicationCrossAppAccessResourceServer';
 export * from './ApplicationCrossAppAccessSettings';
+export * from './ApplicationCursorPage';
 export * from './ApplicationEntity';
 export * from './ApplicationFactorSettings';
 export * from './ApplicationIdentityProvider';
