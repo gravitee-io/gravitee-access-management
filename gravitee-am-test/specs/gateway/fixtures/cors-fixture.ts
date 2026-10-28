@@ -44,6 +44,9 @@ export interface CorsFixture extends Fixture {
   getAccessToken: () => Promise<string>;
   updateCorsSettings: (corsSettings: Partial<CorsSettings>) => Promise<void>;
   userinfoPath: string;
+  tokenPath: string;
+  /** Calls the token endpoint (password grant) as a browser would from the given origin. */
+  requestTokenFromOrigin: (origin: string) => Promise<any>;
 }
 
 // Test constants
@@ -114,6 +117,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
   expect(openIdConfiguration.token_endpoint).toBeDefined();
   expect(openIdConfiguration.userinfo_endpoint).toBeDefined();
   const userinfoPath = openIdConfiguration.userinfo_endpoint.replace(process.env.AM_GATEWAY_URL, '');
+  const tokenPath = openIdConfiguration.token_endpoint.replace(process.env.AM_GATEWAY_URL, '');
 
   // Helper function to update CORS settings
   const updateCorsSettings = async (corsSettings: Partial<CorsSettings>) => {
@@ -147,6 +151,21 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
     return tokenResponse.body.access_token;
   };
 
+  // Helper function to call the token endpoint from a given origin, whatever the answer is
+  const requestTokenFromOrigin = async (origin: string) => {
+    const tokenParams = new URLSearchParams({
+      grant_type: 'password',
+      username: user.username,
+      password: TEST_CONSTANTS.USER_PASSWORD,
+      scope: 'openid',
+    });
+    return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${applicationBase64Token(application)}`,
+      Origin: origin,
+    });
+  };
+
   // Cleanup function
   const cleanUp = async () => {
     await safeDeleteDomain(domain.id, accessToken);
@@ -160,5 +179,7 @@ export const setupCorsFixture = async (): Promise<CorsFixture> => {
     getAccessToken,
     updateCorsSettings,
     userinfoPath,
+    tokenPath,
+    requestTokenFromOrigin,
   };
 };
