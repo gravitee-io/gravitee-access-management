@@ -84,6 +84,9 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
     }
 
     private Set<HttpMethod> getHttpMethods(Set<String> httpMethods) {
+        if (httpMethods == null || httpMethods.isEmpty()) {
+            return Set.of();
+        }
         return httpMethods.stream().map(HttpMethod::valueOf).collect(Collectors.toSet());
     }
 
@@ -91,7 +94,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return ofNullable(domain.getCorsSettings())
                 .filter(CorsSettings::isEnabled)
                 .map(corsSettings -> {
-                    if (corsSettings.getAllowedOrigins().isEmpty() || corsSettings.getAllowedOrigins().stream().anyMatch(origin -> origin.equals("*"))) {
+                    if (corsSettings.getAllowedOrigins() == null || corsSettings.getAllowedOrigins().isEmpty() || corsSettings.getAllowedOrigins().stream().anyMatch(origin -> origin.equals("*"))) {
                         corsSettings.setAllowedOrigins(Set.of(DEFAULT_ORIGIN_VALUE));
                     }
                     return corsSettings;
@@ -113,7 +116,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return CorsHandler
                 .newInstance(io.vertx.ext.web.handler.CorsHandler
                         .create()
-                        .allowedHeaders(settings.getAllowedHeaders())
+                        .allowedHeaders(Optional.ofNullable(settings.getAllowedHeaders()).orElse(Set.of()))
                         .allowedMethods(getHttpMethods(settings.getAllowedMethods()))
                         .maxAgeSeconds(settings.getMaxAge())
                         .addRelativeOrigins(List.copyOf(settings.getAllowedOrigins())))
