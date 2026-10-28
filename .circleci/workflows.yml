@@ -672,6 +672,27 @@ jobs:
       - restore-maven-job-cache:
           jobName: build_branch
       - azure-artifacts-token
+      - when:
+          condition:
+            equal: [ feat-AM-4899-RAR, << pipeline.git.branch >> ]
+          steps:
+            - run:
+                name: Set the RAR branch snapshot version
+                command: |
+                  # Exact branch only. A child branch keeps the version stored in git.
+                  mvn -B -s /tmp/.gravitee.settings.xml versions:set -DnewVersion=4.14.0-rar.1-SNAPSHOT -DgenerateBackupPoms=false
+                  RAR_VERSION=4.14.0-rar.1-SNAPSHOT
+                  for file in gravitee-am-ui/package.json gravitee-am-ui/build.json; do
+                    awk -v ver="$RAR_VERSION" '
+                      BEGIN { done = 0 }
+                      !done && /"version":/ {
+                        sub(/"version"[[:space:]]*:[[:space:]]*"[^"]*"/, "\"version\": \"" ver "\"")
+                        done = 1
+                      }
+                      { print }
+                    ' "$file" > "$file.tmp"
+                    mv "$file.tmp" "$file"
+                  done
       - run:
           name: Maven Package & deploy on artifactory
           command: |
@@ -1474,6 +1495,15 @@ jobs:
       - compute-azure-latest-tag
       - create_docker_context
       - azure-artifacts-token
+      - when:
+          condition:
+            equal: [ feat-AM-4899-RAR, << pipeline.git.branch >> ]
+          steps:
+            - run:
+                name: Set the RAR branch snapshot version
+                command: |
+                  # The dev Dockerfiles select the zip by this version. The build job packaged that zip.
+                  mvn -B -s /tmp/.gravitee.settings.xml versions:set -DnewVersion=4.14.0-rar.1-SNAPSHOT -DgenerateBackupPoms=false
       - run:
           name: Build Management API Docker Image to Azure Registry
           when: always
@@ -1483,13 +1513,15 @@ jobs:
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
             
             echo $IMAGE_TAG_LATEST > /tmp/built-docker-images.txt
-            echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
-            echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
 
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
+            if [ "${CIRCLE_BRANCH}" != "feat-AM-4899-RAR" ]; then
+              echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
+              echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
+              docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
+              docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
+            fi
       - run:
           name: Build Gateway Docker Image to Azure Registry
           when: always
@@ -1499,13 +1531,15 @@ jobs:
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
 
             echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
-            echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
-            echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
 
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
+            if [ "${CIRCLE_BRANCH}" != "feat-AM-4899-RAR" ]; then
+              echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
+              echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
+              docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
+              docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
+            fi
       - run:
           name: Build Web UI Docker Image to Azure Registry
           when: always
@@ -2803,6 +2837,7 @@ workflows:
             branches:
               only:
                 - master
+                - feat-AM-4899-RAR
                 - /^\d\.\d+\.x$/
       - build:
           context: cicd-orchestrator
@@ -2812,6 +2847,7 @@ workflows:
             branches:
               only:
                 - master
+                - feat-AM-4899-RAR
                 - /^\d\.\d+\.x$/
 
       - publish-images-azure-registry:
@@ -2822,6 +2858,7 @@ workflows:
             branches:
               only:
                 - master
+                - feat-AM-4899-RAR
                 - /^\d\.\d+\.x$/
 
       - gitops-deploy:
