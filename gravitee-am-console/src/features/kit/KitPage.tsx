@@ -36,7 +36,7 @@ import { SettingToggle } from '../../app/components/SettingToggle';
 import { TagInput } from '../../app/components/TagInput';
 import { UserAvatar } from '../../app/components/UserAvatar';
 import { ValueListInput } from '../../app/components/ValueListInput';
-import { type DurationDraft, draftToSeconds } from '../../lib/forms/duration';
+import { type DurationDraft, draftToSeconds, exactDuration } from '../../lib/forms/duration';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 
 const SAMPLE_PICTURE =
@@ -179,7 +179,7 @@ function SearchFieldDemo() {
 }
 
 function DurationInputDemo() {
-    const [value, setValue] = useState<DurationDraft>({ time: '2', unit: 'hours' });
+    const [value, setValue] = useState<DurationDraft>(() => exactDuration(7_200));
     return (
         <KitCard title="DurationInput" state={{ ...value, seconds: draftToSeconds(value) }}>
             <Field>
@@ -223,7 +223,19 @@ export function KitPage() {
     useBreadcrumbs([{ label: 'Component kit' }]);
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader title="Component kit" description="The shared parts of the console. This page exists only in development builds." />
+            <PageHeader
+                title="Component kit"
+                description={
+                    <>
+                        The shared parts of the console. This page exists only in development builds. The base Graphene components are in
+                        the{' '}
+                        <a className="underline" href="https://graphene.gravitee.io/" target="_blank" rel="noreferrer">
+                            Graphene Storybook
+                        </a>
+                        .
+                    </>
+                }
+            />
             <SaveBarDemo />
             <ConfirmDialogDemo />
             <SettingToggleDemo />

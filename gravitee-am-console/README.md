@@ -103,7 +103,8 @@ build.
 ## Component kit
 
 The shared parts in `src/app/components/` have a page that shows each part with its live state. Use it to try a part
-or to test it by hand.
+or to test it by hand. The base Graphene components are in the
+[Graphene Storybook](https://graphene.gravitee.io/).
 
 1. Start the AM local stack with `../docker/local-stack/local-stack.sh up`. The stack runs the Management API, but not
    this console.
