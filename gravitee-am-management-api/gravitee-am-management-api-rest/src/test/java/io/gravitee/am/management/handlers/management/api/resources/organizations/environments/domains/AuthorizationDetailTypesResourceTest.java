@@ -288,13 +288,13 @@ class AuthorizationDetailTypesResourceTest extends JerseySpringTest {
     }
 
     @Test
-    void shouldCapPageSizeAtFifty() {
+    void shouldCapPageSizeAtOneHundred() {
         stubList(new CursorPage<>(List.of(), null, 0L));
 
-        final Response response = list(Map.of("limit", 100));
+        final Response response = list(Map.of("limit", 200));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        listedCursor(50);
+        listedCursor(100);
     }
 
     @Test

@@ -46,6 +46,9 @@ import {
   Application,
   ApplicationFromJSON,
   ApplicationToJSON,
+  ApplicationCursorPage,
+  ApplicationCursorPageFromJSON,
+  ApplicationCursorPageToJSON,
   ApplicationPage,
   ApplicationPageFromJSON,
   ApplicationPageToJSON,
@@ -1894,6 +1897,7 @@ export interface SearchApplicationsRequest {
   status?: string;
   ownerEmail?: string;
   type?: Array<SearchApplicationsTypeEnum>;
+  cursor?: string;
 }
 
 export interface SearchApplicationsCursorRequest {
@@ -17500,13 +17504,13 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications using cursor-based pagination for improved performance at scale. Follow nextCursor to get the next page. User must have APPLICATION[LIST] permission on the specified domain, environment or organization. Users without APPLICATION[READ] on the domain, environment or organization only get the applications they can read.
    * List applications with cursor-based pagination
    */
   async searchApplicationsRaw(
     requestParameters: SearchApplicationsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<any>> {
+  ): Promise<runtime.ApiResponse<ApplicationCursorPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -17566,6 +17570,10 @@ export class DomainApi extends runtime.BaseAPI {
       queryParameters['type'] = requestParameters.type;
     }
 
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     if (this.configuration && this.configuration.accessToken) {
@@ -17589,29 +17597,29 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.TextApiResponse(response) as any;
+    return new runtime.JSONApiResponse(response, (jsonValue) => ApplicationCursorPageFromJSON(jsonValue));
   }
 
   /**
-   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
+   * List applications using cursor-based pagination for improved performance at scale. Follow nextCursor to get the next page. User must have APPLICATION[LIST] permission on the specified domain, environment or organization. Users without APPLICATION[READ] on the domain, environment or organization only get the applications they can read.
    * List applications with cursor-based pagination
    */
   async searchApplications(
     requestParameters: SearchApplicationsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<any> {
+  ): Promise<ApplicationCursorPage> {
     const response = await this.searchApplicationsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
   /**
-   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
-   * List applications with cursor-based pagination
+   * Deprecated: pass the cursor to searchApplications instead. User must have APPLICATION[LIST] permission on the specified domain, environment or organization. Users without APPLICATION[READ] on the domain, environment or organization only get the applications they can read.
+   * List the next page of applications with cursor-based pagination
    */
   async searchApplicationsCursorRaw(
     requestParameters: SearchApplicationsCursorRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<any>> {
+  ): Promise<runtime.ApiResponse<ApplicationCursorPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -17698,17 +17706,17 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.TextApiResponse(response) as any;
+    return new runtime.JSONApiResponse(response, (jsonValue) => ApplicationCursorPageFromJSON(jsonValue));
   }
 
   /**
-   * List applications using cursor-based pagination for improved performance at scale. User must have APPLICATION[LIST] permission on the specified domain, environment or organization.
-   * List applications with cursor-based pagination
+   * Deprecated: pass the cursor to searchApplications instead. User must have APPLICATION[LIST] permission on the specified domain, environment or organization. Users without APPLICATION[READ] on the domain, environment or organization only get the applications they can read.
+   * List the next page of applications with cursor-based pagination
    */
   async searchApplicationsCursor(
     requestParameters: SearchApplicationsCursorRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<any> {
+  ): Promise<ApplicationCursorPage> {
     const response = await this.searchApplicationsCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
