@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Organization;
@@ -150,5 +153,29 @@ public class MembersResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotAddMember_roleHoldsMoreThanTheCaller() {
+        Organization organization = new Organization();
+        organization.setId(Organization.DEFAULT);
+
+        doReturn(Single.just(organization)).when(organizationService).findById(organization.getId());
+        doReturn(Single.just(new Membership())).when(membershipService).addOrUpdate(eq(organization.getId()), any(Membership.class), any(io.gravitee.am.identityprovider.api.User.class));
+        doReturn(Completable.error(new ResourceForbiddenAccessException("Unable to grant permissions you do not hold: organization_user_delete")))
+                .when(permissionService).checkCanGrantRole(any(), eq(organization.getId()), eq(Reference.organization(organization.getId())), eq("role#1"));
+
+        NewMembership newMembership = new NewMembership();
+        newMembership.setMemberId("member#1");
+        newMembership.setMemberType(MemberType.USER);
+        newMembership.setRole("role#1");
+
+        final Response response = target("organizations")
+                .path(organization.getId())
+                .path("members")
+                .request()
+                .post(Entity.json(newMembership));
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 }

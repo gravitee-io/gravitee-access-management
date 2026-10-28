@@ -260,7 +260,7 @@ public class RoleServiceImpl implements RoleService {
                                 Role roleToUpdate = new Role(oldRole);
                                 roleToUpdate.setName(updateRole.getName());
                                 roleToUpdate.setDescription(updateRole.getDescription());
-                                roleToUpdate.setPermissionAcls(unflattenPermissions(updateRole.getPermissions()));
+                                roleToUpdate.setPermissionAcls(checkAssignable(oldRole, unflattenPermissions(updateRole.getPermissions())));
                                 roleToUpdate.setOauthScopes(updateRole.getOauthScopes());
                                 roleToUpdate.setUpdatedAt(new Date());
                                 return roleRepository.update(roleToUpdate)
@@ -295,6 +295,24 @@ public class RoleServiceImpl implements RoleService {
         } catch (IllegalArgumentException e) {
             throw new InvalidRoleException(e.getMessage());
         }
+    }
+
+    /**
+     * A role can only hold the permissions which are relevant with the type of reference it can be assigned to.
+     */
+    private static Map<Permission, Set<Acl>> checkAssignable(Role role, Map<Permission, Set<Acl>> permissions) {
+        if (role.getAssignableType() == null) {
+            return permissions;
+        }
+        final String notAssignable = permissions.keySet().stream()
+                .filter(permission -> !permission.isRelevantWith(role.getAssignableType()))
+                .map(permission -> permission.name().toLowerCase())
+                .sorted()
+                .collect(Collectors.joining(", "));
+        if (!notAssignable.isEmpty()) {
+            throw new InvalidRoleException("Permissions not assignable to " + role.getAssignableType() + " roles: " + notAssignable);
+        }
+        return permissions;
     }
 
     @Override

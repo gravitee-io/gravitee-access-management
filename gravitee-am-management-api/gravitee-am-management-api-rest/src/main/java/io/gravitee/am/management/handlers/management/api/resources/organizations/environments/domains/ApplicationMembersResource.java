@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.MembershipListIte
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -133,6 +134,7 @@ public class ApplicationMembersResource extends AbstractResource {
         membership.setReferenceType(ReferenceType.APPLICATION);
 
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.CREATE)
+                .andThen(permissionService.checkCanGrantRole(authenticatedUser, organizationId, Reference.application(application), newMembership.getRole()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(domain, application))
