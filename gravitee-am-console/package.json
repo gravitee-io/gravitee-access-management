@@ -28,7 +28,7 @@
         "react-router-dom": "7.18.0"
     },
     "devDependencies": {
-        "@eslint/compat": "2.1.0",
+        "@eslint/compat": "2.1.1",
         "@fontsource/dm-sans": "5.2.8",
         "@rsbuild/core": "2.1.4",
         "@rsbuild/plugin-react": "1.4.6",
