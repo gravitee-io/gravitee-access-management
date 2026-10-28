@@ -78,14 +78,27 @@ public interface DatabaseDialectHelper {
 
     /**
      * Escapes special characters in a value that will be used in a SQL LIKE pattern.
-     * Different databases have different special characters in LIKE patterns.
-     * For example, SQL Server treats [ and ] as character class delimiters.
+     * Escapes the backslash and the % and _ wildcards; some databases have more special characters,
+     * for example SQL Server treats [ and ] as character class delimiters.
      *
      * @param value the value to escape
      * @return the escaped value safe for use in LIKE patterns
      */
     default String escapeLikePatternValue(String value) {
-        return value;
+        if (value == null) {
+            return null;
+        }
+        return value
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
+    default String toWildcardLikePattern(String query) {
+        if (query == null) {
+            return null;
+        }
+        return escapeLikePatternValue(query).replaceAll("\\*+", "%");
     }
 
     /**

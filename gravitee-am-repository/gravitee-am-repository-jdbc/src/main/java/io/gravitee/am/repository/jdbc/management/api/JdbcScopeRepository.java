@@ -136,7 +136,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("search({}, {})", domain, query);
 
         boolean wildcardSearch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
+        String wildcardQuery = databaseDialectHelper.toWildcardLikePattern(query);
 
         String search = this.databaseDialectHelper.buildSearchScopeQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountScopeQuery(wildcardSearch);

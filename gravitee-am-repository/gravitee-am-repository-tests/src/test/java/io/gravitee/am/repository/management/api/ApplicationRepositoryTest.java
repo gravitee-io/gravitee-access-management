@@ -558,6 +558,33 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldSearchWildcardTreatingLikeWildcardsLiterally() {
+        final String domain = "domain-like-wildcards";
+        for (String name : List.of("app_1a", "appX1a", "app%a")) {
+            Application app = new Application();
+            app.setDomain(domain);
+            app.setName(name);
+            applicationRepository.create(app).blockingGet();
+        }
+
+        Map<String, List<String>> expectedNamesByQuery = Map.of(
+                "app_1*", List.of("app_1a"),
+                "app%*", List.of("app%a"),
+                "%*", List.of(),
+                "app_1a", List.of("app_1a"));
+
+        expectedNamesByQuery.forEach((query, expectedNames) -> {
+            TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(apps -> apps.getTotalCount() == expectedNames.size()
+                    && apps.getData().stream().map(Application::getName).toList().equals(expectedNames));
+        });
+    }
+
+    @Test
     public void testUpdateMfaSettings() {
         // create app
         var app = buildApplication();

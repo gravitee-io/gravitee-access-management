@@ -104,24 +104,19 @@ public class MsSqlHelper extends AbstractDialectHelper {
      * Escapes SQL Server LIKE pattern special characters using backslash escape.
      * In SQL Server, [ and ] are used for character class matching in LIKE patterns.
      * When using ESCAPE '\' clause, we escape these characters with backslash.
-     * Also escapes _ which is a LIKE wildcard for a single character.
      *
-     * @param value the value to escape (may already contain % from wildcard conversion)
+     * @param value the value to escape
      * @return the escaped value safe for use in SQL Server LIKE patterns with ESCAPE '\'
      */
     @Override
     public String escapeLikePatternValue(String value) {
-        if (value == null) {
+        String escaped = super.escapeLikePatternValue(value);
+        if (escaped == null) {
             return null;
         }
-        // Escape backslash first, then special characters
-        // Note: % characters are intentional wildcards added by the repository,
-        // so we don't escape them here
-        return value
-                .replace("\\", "\\\\")
+        return escaped
                 .replace("[", "\\[")
-                .replace("]", "\\]")
-                .replace("_", "\\_");
+                .replace("]", "\\]");
     }
 
     /**
