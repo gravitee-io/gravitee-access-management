@@ -238,9 +238,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+        String escapedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(query) : query;
 
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, page, size, COL_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false);
@@ -269,9 +267,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+        String escapedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(query) : query;
 
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, page, size, COL_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true);

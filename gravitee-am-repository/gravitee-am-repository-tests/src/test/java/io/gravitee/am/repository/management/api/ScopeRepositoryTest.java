@@ -249,9 +249,9 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+    public void shouldSearchWildcardTreatingMetacharactersLiterally() {
         String domain = "metacharacter-domain";
-        for (String key : List.of("scope(1)+a", "scope1a")) {
+        for (String key : List.of("scope(1)+a", "scope1a", "scope_1a", "scopeX1a", "scope%a")) {
             Scope scope = new Scope();
             scope.setDomain(domain);
             scope.setKey(key);
@@ -263,7 +263,10 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
                 "scope(1)+*", List.of("scope(1)+a"),
                 "scope(*", List.of("scope(1)+a"),
                 ".*", List.of(),
-                "zzz|*", List.of());
+                "zzz|*", List.of(),
+                "scope_1*", List.of("scope_1a"),
+                "scope%*", List.of("scope%a"),
+                "%*", List.of());
 
         expectedKeysByQuery.forEach((query, expectedKeys) -> {
             TestObserver<Page<Scope>> testObserver = scopeRepository.search(domain, query, 0, 10).test();

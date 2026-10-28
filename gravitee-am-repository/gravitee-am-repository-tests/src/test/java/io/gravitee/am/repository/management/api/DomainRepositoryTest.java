@@ -416,9 +416,9 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void shouldSearchWildcardTreatingRegexMetacharactersLiterally() {
+    public void shouldSearchWildcardTreatingMetacharactersLiterally() {
         String environmentId = "environment#metacharacter";
-        for (String name : List.of("domain(1)+a", "domain1a")) {
+        for (String name : List.of("domain(1)+a", "domain1a", "domain_1a", "domainX1a", "domain%a")) {
             Domain domain = initDomain(name);
             domain.setReferenceType(ReferenceType.ENVIRONMENT);
             domain.setReferenceId(environmentId);
@@ -429,7 +429,10 @@ public class DomainRepositoryTest extends AbstractManagementTest {
                 "domain(1)+*", List.of("domain(1)+a"),
                 "domain(*", List.of("domain(1)+a"),
                 ".*", List.of(),
-                "zzz|*", List.of());
+                "zzz|*", List.of(),
+                "domain_1*", List.of("domain_1a"),
+                "domain%*", List.of("domain%a"),
+                "%*", List.of());
 
         expectedNamesByQuery.forEach((query, expectedNames) -> {
             TestSubscriber<Domain> testSubscriber = domainRepository.search(environmentId, query).test();
