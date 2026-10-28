@@ -56,6 +56,7 @@ models/Application.ts
 models/ApplicationAdvancedSettings.ts
 models/ApplicationCrossAppAccessResourceServer.ts
 models/ApplicationCrossAppAccessSettings.ts
+models/ApplicationCursorPage.ts
 models/ApplicationEntity.ts
 models/ApplicationFactorSettings.ts
 models/ApplicationIdentityProvider.ts

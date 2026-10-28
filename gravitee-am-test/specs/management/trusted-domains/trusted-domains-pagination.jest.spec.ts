@@ -63,7 +63,7 @@ describe('Trusted domains list - pagination', () => {
   it('should walk every page of size 2 by following the next cursor', async () => {
     const first = await fixture.listTrustedDomains({ limit: 2 });
     expect(names(first)).toEqual(['alpha', 'bravo']);
-    expect(first.nextCursor).toContain('/trusted-domains/_cursor?');
+    expect(first.nextCursor).toContain('/trusted-domains?');
 
     const second = await fixture.followNextCursor(first.nextCursor);
     expect(second.page).toBe(1);
@@ -74,6 +74,27 @@ describe('Trusted domains list - pagination', () => {
     expect(third.page).toBe(2);
     expect(names(third)).toEqual(['echo']);
     expect(third.nextCursor).toBeFalsy();
+  });
+});
+
+describe('Trusted domains list - deprecated cursor endpoint', () => {
+  it('should return the same next page from the deprecated cursor endpoint', async () => {
+    const first = await fixture.listTrustedDomains({ limit: 2 });
+    const deprecatedPath = first.nextCursor.replace('/trusted-domains?', '/trusted-domains/_cursor?');
+
+    const second = await fixture.followNextCursor(deprecatedPath);
+
+    expect(second.page).toBe(1);
+    expect(names(second)).toEqual(['charlie', 'Delta']);
+    expect(second.nextCursor).toContain('/trusted-domains/_cursor?');
+  });
+});
+
+describe('Trusted domains list - limit', () => {
+  it('should reduce a limit above 100 instead of rejecting it', async () => {
+    const result = await fixture.listTrustedDomains({ limit: 200 });
+
+    expect(names(result)).toEqual(['alpha', 'bravo', 'charlie', 'Delta', 'echo']);
   });
 });
 
@@ -124,19 +145,21 @@ describe('Trusted domains list - usage filter', () => {
 });
 
 describe('Trusted domains list - invalid query parameters', () => {
-  it.each([
-    [{ page: -1 }],
-    [{ page: 1 }],
-    [{ limit: 0 }],
-    [{ limit: 101 }],
-    [{ usage: 'UNKNOWN' }],
-    [{ sort: 'createdAt' }],
-    [{ dir: 'sideways' }],
-  ])('should reject %j with 400', async (query) => {
-    expect(await fixture.listTrustedDomainsStatus(query)).toBe(400);
-  });
+  it.each([[{ page: -1 }], [{ page: 1 }], [{ limit: 0 }], [{ usage: 'UNKNOWN' }], [{ sort: 'createdAt' }], [{ dir: 'sideways' }]])(
+    'should reject %j with 400',
+    async (query) => {
+      expect(await fixture.listTrustedDomainsStatus(query)).toBe(400);
+    },
+  );
 
   it('should reject an invalid cursor with 400', async () => {
-    expect(await fixture.cursorStatus('not base64!')).toBe(400);
+    expect(await fixture.listTrustedDomainsStatus({ cursor: 'not base64!' })).toBe(400);
+  });
+
+  it('should reject a cursor issued for another direction with 400', async () => {
+    const { nextCursor } = await fixture.listTrustedDomains({ limit: 2 });
+    const cursor = new URLSearchParams(nextCursor.split('?')[1]).get('cursor');
+
+    expect(await fixture.listTrustedDomainsStatus({ cursor, limit: 2, dir: 'desc' })).toBe(400);
   });
 });
