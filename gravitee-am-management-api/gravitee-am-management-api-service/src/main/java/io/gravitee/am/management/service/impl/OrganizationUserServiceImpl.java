@@ -383,6 +383,10 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
         }
         return getUserService().findById(referenceType, referenceId, id).flatMap(user -> {
 
+                    // the link with the identity provider cannot be changed by the caller
+                    updateUser.setExternalId(user.getExternalId());
+                    updateUser.setSource(user.getSource());
+
                     if (Boolean.FALSE.equals(user.isInternal()) && Boolean.TRUE.equals(updateUser.getForceResetPassword())) {
                         return Single.error(new InvalidUserException("forceResetPassword is forbidden on external users"));
                     }

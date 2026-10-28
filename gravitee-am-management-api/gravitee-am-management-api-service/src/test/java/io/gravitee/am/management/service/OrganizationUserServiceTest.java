@@ -64,6 +64,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -838,5 +839,31 @@ public class OrganizationUserServiceTest {
                         updatedUser.getServiceAccount() &&
                         updatedUser.getPassword() == null
         );
+    }
+
+    @Test
+    public void shouldUpdateUser_ignoreExternalIdAndSourceOfTheRequest() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setReferenceId("DEFAULT");
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setExternalId("idp-id");
+        user.setSource("gravitee-idp");
+
+        final UpdateUser updateUser = new UpdateUser();
+        updateUser.setExternalId("attacker-controlled");
+        updateUser.setSource("other-idp");
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "DEFAULT", "user-id")).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
+        when(commonUserService.update(eq(ReferenceType.ORGANIZATION), eq("DEFAULT"), eq("user-id"), any(UpdateUser.class))).thenReturn(Single.just(user));
+
+        organizationUserService.update(ReferenceType.ORGANIZATION, "DEFAULT", "user-id", updateUser, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(commonUserService).update(eq(ReferenceType.ORGANIZATION), eq("DEFAULT"), eq("user-id"),
+                argThat(sent -> "idp-id".equals(sent.getExternalId()) && "gravitee-idp".equals(sent.getSource())));
     }
 }
