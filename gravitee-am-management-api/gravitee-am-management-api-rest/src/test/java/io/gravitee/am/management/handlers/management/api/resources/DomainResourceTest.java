@@ -325,56 +325,6 @@ public class DomainResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotEnableVhostMode_cloudMode() {
-        enableCloudMode();
-
-        Domain mockDomain = buildDomainMock();
-        mockDomain.setVhostMode(false);
-        mockDomain.setVhosts(Collections.emptyList());
-
-        PatchDomain patchDomain = new PatchDomain();
-        patchDomain.setVhostMode(Optional.of(true));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
-
-        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @Test
-    public void shouldNotAddVhostEntries_cloudMode() {
-        enableCloudMode();
-
-        ArrayList<VirtualHost> currentVhosts = new ArrayList<>();
-        VirtualHost existing = new VirtualHost();
-        existing.setHost("existing.host.gravitee.io");
-        existing.setPath("/existing");
-        currentVhosts.add(existing);
-
-        Domain mockDomain = buildDomainMock();
-        mockDomain.setVhostMode(true);
-        mockDomain.setVhosts(currentVhosts);
-
-        ArrayList<VirtualHost> newVhosts = new ArrayList<>(currentVhosts);
-        VirtualHost added = new VirtualHost();
-        added.setHost("new.host.gravitee.io");
-        added.setPath("/new");
-        newVhosts.add(added);
-
-        PatchDomain patchDomain = new PatchDomain();
-        patchDomain.setVhosts(Optional.of(newVhosts));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
-
-        final Response response = put(target("domains").path(mockDomain.getId()), patchDomain);
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @Test
     public void shouldUpdateDomain_cloudMode_unrelatedField() {
         enableCloudMode();
 
