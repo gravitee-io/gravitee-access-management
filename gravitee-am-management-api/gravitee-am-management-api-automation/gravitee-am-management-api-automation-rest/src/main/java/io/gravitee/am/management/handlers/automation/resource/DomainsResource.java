@@ -226,9 +226,12 @@ public class DomainsResource extends AbstractAutomationResource {
             AutomationNewDomain newDomain, AutomationDomain definition) {
         return domainService.validateCreate(organizationId, environmentId, newDomain)
                 .flatMap(domain -> {
+                    // what creation sets up for the new domain, which a managed installation does not let the definition change
+                    Domain created = new Domain(domain);
                     // a domain not created yet has no identity provider to resolve a key reference against
                     AutomationDomainMapper.applyTo(definition, domain, List.of());
-                    return trustedIssuerProjection.validate(domain.getTokenExchangeSettings())
+                    return domainService.validateVhosts(created, domain)
+                            .andThen(trustedIssuerProjection.validate(domain.getTokenExchangeSettings()))
                             .andThen(Single.defer(() -> domainService.validateSettings(domain)));
                 });
     }
