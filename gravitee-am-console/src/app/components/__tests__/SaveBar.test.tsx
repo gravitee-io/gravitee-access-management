@@ -32,14 +32,15 @@ function Banner() {
 function setupSaveBarHarness({ dirty = true, saving = false, invalid = false }: HarnessProps = {}) {
     const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
     const onDiscard = vi.fn();
-    renderWithGraphene(
+    const ui = (discard: () => void) => (
         <LayoutSlotsProvider>
             <Banner />
             <form id="settings" onSubmit={onSubmit} />
-            <SaveBar formId="settings" dirty={dirty} saving={saving} invalid={invalid} onDiscard={onDiscard} />
-        </LayoutSlotsProvider>,
+            <SaveBar formId="settings" dirty={dirty} saving={saving} invalid={invalid} onDiscard={discard} />
+        </LayoutSlotsProvider>
     );
-    return { onSubmit, onDiscard };
+    const { rerender } = renderWithGraphene(ui(onDiscard));
+    return { onSubmit, onDiscard, rerenderWith: (discard: () => void) => rerender(ui(discard)) };
 }
 
 describe('SaveBar', () => {
@@ -66,6 +67,17 @@ describe('SaveBar', () => {
 
         expect(harness.onDiscard).toHaveBeenCalledOnce();
         expect(harness.onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('discards with the onDiscard of the last render', async () => {
+        const harness = setupSaveBarHarness();
+        const latest = vi.fn();
+        harness.rerenderWith(latest);
+
+        await buttonHarness({ name: 'Discard' }).click();
+
+        expect(latest).toHaveBeenCalledOnce();
+        expect(harness.onDiscard).not.toHaveBeenCalled();
     });
 
     it('blocks Save while the form is invalid', () => {
