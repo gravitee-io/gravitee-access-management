@@ -77,8 +77,8 @@ public class JdbcApplicationCursorRepository
         String queryValue = null;
         if (StringUtils.hasText(cursor.getQuery())) {
             boolean wildcardMatch = cursor.getQuery().contains("*");
-            String preparedQuery = wildcardMatch ? cursor.getQuery().replaceAll("\\*+", "%") : cursor.getQuery();
-            queryValue = databaseDialectHelper.escapeLikePatternValue(preparedQuery).toUpperCase();
+            String preparedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(cursor.getQuery()) : cursor.getQuery();
+            queryValue = preparedQuery.toUpperCase();
             String operator = wildcardMatch ? " LIKE :value" + databaseDialectHelper.getLikeEscapeClause() : " = :value";
             where.append(" AND (")
                     .append("UPPER(").append(applicationColumn(COL_NAME)).append(")").append(operator)
