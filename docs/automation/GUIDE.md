@@ -171,6 +171,9 @@ A domain references certificates and an identity provider by reference (`key` or
 may point to a resource that does not exist yet (any apply order works), and the reference is echoed back
 verbatim on `GET`. Use `id:<uuid>` here to reference a brownfield resource that has no key.
 A reference set through the Console or the Management API reads back as `id:<uuid>`, so a `GET` → `PUT` round trip keeps it.
+Changing a reference the Automation API set, through the Console or the Management API, also makes it read
+back as `id:<uuid>`, so a client comparing it with its manifest sees the change as drift. A Console save that
+keeps the same reference keeps the `key`.
 A resource the domain references by `key` can also be deleted first (any destroy order works): the
 reference stays and resolves again once a resource with that key is created. A certificate referenced by
 `id:` as the fallback, or used by an application, identity provider or protected resource, cannot be deleted.

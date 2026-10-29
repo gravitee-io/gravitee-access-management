@@ -19,6 +19,7 @@ import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.KeyRetrievalSettings;
+import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
@@ -38,8 +39,10 @@ import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -139,8 +142,35 @@ public class PatchDomain {
         if (this.getSaml() != null && this.getSaml().isPresent()) {
             toPatch.setSaml(this.getSaml().get().patch(toPatch.getSaml()));
         }
+        keepAutomationKeysOfUnchangedReferences(_toPatch, toPatch);
 
         return toPatch;
+    }
+
+    /**
+     * The Automation API key of a reference is kept only while the reference stays the same, so a change made
+     * here reads back as {@code id:<uuid>} in the Automation API. A key sent in the patch is ignored.
+     */
+    private static void keepAutomationKeysOfUnchangedReferences(Domain previous, Domain patched) {
+        if (patched.getSaml() != null) {
+            patched.getSaml().setCertificateKey(keyIfUnchanged(previous.getSaml(),
+                    SAMLSettings::getCertificate, SAMLSettings::getCertificateKey,
+                    patched.getSaml().getCertificate()));
+        }
+        if (patched.getCertificateSettings() != null) {
+            patched.getCertificateSettings().setFallbackCertificateKey(keyIfUnchanged(previous.getCertificateSettings(),
+                    CertificateSettings::getFallbackCertificate, CertificateSettings::getFallbackCertificateKey,
+                    patched.getCertificateSettings().getFallbackCertificate()));
+        }
+        if (patched.getAccountSettings() != null) {
+            patched.getAccountSettings().setDefaultIdentityProviderForRegistrationKey(keyIfUnchanged(previous.getAccountSettings(),
+                    AccountSettings::getDefaultIdentityProviderForRegistration, AccountSettings::getDefaultIdentityProviderForRegistrationKey,
+                    patched.getAccountSettings().getDefaultIdentityProviderForRegistration()));
+        }
+    }
+
+    private static <T> String keyIfUnchanged(T previous, Function<T, String> reference, Function<T, String> key, String patchedReference) {
+        return previous != null && Objects.equals(reference.apply(previous), patchedReference) ? key.apply(previous) : null;
     }
 
 
