@@ -110,7 +110,8 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
-import static io.gravitee.am.service.utils.ConcurrentModificationRetry.isConcurrentModification;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.isConcurrentModification;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.nextUpdatedAt;
 import static java.util.Objects.nonNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
@@ -1184,16 +1185,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                         auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(currentApplication.getDomain())).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable));
                     }
                 });
-    }
-
-    private static Date nextUpdatedAt(Date expectedUpdatedAt) {
-        Date now = new Date();
-        if (expectedUpdatedAt == null) {
-            return now;
-        }
-        // updatedAt is the concurrency token: it must change on every write. Two writes in the same millisecond
-        // (or a node whose clock is behind) would otherwise store the token the other writer still expects.
-        return new Date(Math.max(now.getTime(), expectedUpdatedAt.getTime() + 1));
     }
 
     private Single<Application> validateCreate0(Domain domain, Application application) {

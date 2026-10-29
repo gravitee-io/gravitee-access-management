@@ -15,30 +15,14 @@
  */
 package io.gravitee.am.service.exception;
 
-import io.gravitee.common.http.HttpStatusCode;
-import lombok.Getter;
-
 /**
  * The application changed between the read and the conditional write: nothing was written.
  *
  * @author GraviteeSource Team
  */
-@Getter
-public class ApplicationConcurrentModificationException extends AbstractManagementException {
-
-    private final String applicationId;
+public class ApplicationConcurrentModificationException extends ResourceConcurrentModificationException {
 
     public ApplicationConcurrentModificationException(String applicationId) {
-        this.applicationId = applicationId;
-    }
-
-    @Override
-    public int getHttpStatusCode() {
-        return HttpStatusCode.CONFLICT_409;
-    }
-
-    @Override
-    public String getMessage() {
-        return "Concurrent modification of the application [" + applicationId + "]; send the same request again";
+        super("application", applicationId);
     }
 }

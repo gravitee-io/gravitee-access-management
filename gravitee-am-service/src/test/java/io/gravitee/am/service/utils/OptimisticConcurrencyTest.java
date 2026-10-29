@@ -20,12 +20,15 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.gravitee.am.service.utils.ConcurrentModificationRetry.retryOnConcurrentModification;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.nextUpdatedAt;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.retryOnConcurrentModification;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-class ConcurrentModificationRetryTest {
+class OptimisticConcurrencyTest {
 
     private final AtomicInteger attempts = new AtomicInteger();
 
@@ -59,5 +62,19 @@ class ConcurrentModificationRetryTest {
 
         retryOnConcurrentModification(attempt).test().assertError(IllegalStateException.class);
         assertEquals(1, attempts.get());
+    }
+
+    @Test
+    void shouldMoveTheTokenPastOneSetInTheFuture() {
+        Date ahead = new Date(System.currentTimeMillis() + 60_000);
+
+        assertEquals(ahead.getTime() + 1, nextUpdatedAt(ahead).getTime());
+    }
+
+    @Test
+    void shouldUseTheCurrentTimeWithoutAToken() {
+        Date before = new Date();
+
+        assertFalse(nextUpdatedAt(null).before(before));
     }
 }
