@@ -20,6 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.KeyRetrievalSettings;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
@@ -394,5 +395,104 @@ public class PatchDomainTest {
         patchDomain.setScim(Optional.of(new SCIMSettings()));
 
         assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID, Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
+    }
+
+    // --- Automation API keys: kept only while the reference stays the same --
+
+    @Test
+    public void shouldClearSamlCertificateKeyWhenCertificateChanges() {
+        PatchSAMLSettings saml = new PatchSAMLSettings();
+        saml.setCertificate(Optional.of("cert-2"));
+        PatchDomain patch = new PatchDomain();
+        patch.setSaml(Optional.of(saml));
+
+        Domain result = patch.patch(automationDomain());
+
+        assertEquals("cert-2", result.getSaml().getCertificate());
+        assertNull(result.getSaml().getCertificateKey());
+    }
+
+    @Test
+    public void shouldKeepSamlCertificateKeyWhenCertificateIsUnchanged() {
+        PatchSAMLSettings saml = new PatchSAMLSettings();
+        saml.setCertificate(Optional.of("cert-1"));
+        PatchDomain patch = new PatchDomain();
+        patch.setSaml(Optional.of(saml));
+
+        assertEquals("signing-cert", patch.patch(automationDomain()).getSaml().getCertificateKey());
+    }
+
+    @Test
+    public void shouldClearFallbackCertificateKeyWhenFallbackCertificateChanges() {
+        PatchDomain patch = new PatchDomain();
+        patch.setCertificateSettings(Optional.of(new CertificateSettings("cert-2", null)));
+
+        Domain result = patch.patch(automationDomain());
+
+        assertEquals("cert-2", result.getCertificateSettings().getFallbackCertificate());
+        assertNull(result.getCertificateSettings().getFallbackCertificateKey());
+    }
+
+    @Test
+    public void shouldKeepFallbackCertificateKeyWhenFallbackCertificateIsUnchanged() {
+        // the Console sends the certificate settings without the key
+        PatchDomain patch = new PatchDomain();
+        patch.setCertificateSettings(Optional.of(new CertificateSettings("cert-1", null)));
+
+        assertEquals("signing-cert", patch.patch(automationDomain()).getCertificateSettings().getFallbackCertificateKey());
+    }
+
+    @Test
+    public void shouldClearRegistrationIdentityProviderKeyWhenIdentityProviderChanges() {
+        // the Console sends back the account settings it read, stale key included
+        AccountSettings account = new AccountSettings();
+        account.setDefaultIdentityProviderForRegistration("idp-2");
+        account.setDefaultIdentityProviderForRegistrationKey("customer-users");
+        PatchDomain patch = new PatchDomain();
+        patch.setAccountSettings(Optional.of(account));
+
+        Domain result = patch.patch(automationDomain());
+
+        assertEquals("idp-2", result.getAccountSettings().getDefaultIdentityProviderForRegistration());
+        assertNull(result.getAccountSettings().getDefaultIdentityProviderForRegistrationKey());
+    }
+
+    @Test
+    public void shouldKeepRegistrationIdentityProviderKeyWhenIdentityProviderIsUnchanged() {
+        AccountSettings account = new AccountSettings();
+        account.setDefaultIdentityProviderForRegistration("idp-1");
+        PatchDomain patch = new PatchDomain();
+        patch.setAccountSettings(Optional.of(account));
+
+        assertEquals("customer-users",
+                patch.patch(automationDomain()).getAccountSettings().getDefaultIdentityProviderForRegistrationKey());
+    }
+
+    @Test
+    public void shouldKeepKeysOfReferencesThatAreNotPatched() {
+        PatchDomain patch = new PatchDomain();
+        patch.setDescription(Optional.of("new description"));
+
+        Domain result = patch.patch(automationDomain());
+
+        assertEquals("signing-cert", result.getSaml().getCertificateKey());
+        assertEquals("signing-cert", result.getCertificateSettings().getFallbackCertificateKey());
+        assertEquals("customer-users", result.getAccountSettings().getDefaultIdentityProviderForRegistrationKey());
+    }
+
+    /** A domain whose references were set by the Automation API: internal ids plus their keys. */
+    private static Domain automationDomain() {
+        Domain domain = new Domain();
+        domain.setVersion(DomainVersion.V2_0);
+        SAMLSettings saml = new SAMLSettings();
+        saml.setCertificate("cert-1");
+        saml.setCertificateKey("signing-cert");
+        domain.setSaml(saml);
+        domain.setCertificateSettings(new CertificateSettings("cert-1", "signing-cert"));
+        AccountSettings account = new AccountSettings();
+        account.setDefaultIdentityProviderForRegistration("idp-1");
+        account.setDefaultIdentityProviderForRegistrationKey("customer-users");
+        domain.setAccountSettings(account);
+        return domain;
     }
 }
