@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.jwt.Claims;
@@ -55,6 +56,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
@@ -2902,6 +2904,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldUpdateIfUnchanged_withTheReadUpdatedAt() {
+        when(principal.getId()).thenReturn("api-user");
         Date readUpdatedAt = new Date(System.currentTimeMillis() - 60_000);
         Application read = automationServiceApp();
         read.setId("my-client");
@@ -2912,14 +2915,18 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application(read)));
         stubSuccessfulConditionalUpdate();
 
-        TestObserver<Application> testObserver = applicationService.updateIfUnchanged(read).test();
+        TestObserver<Application> testObserver = applicationService.updateIfUnchanged(read, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         verify(applicationRepository).updateIfUnchanged(argThat(updated -> updated.getUpdatedAt().after(readUpdatedAt)), eq(readUpdatedAt));
         verify(applicationRepository, never()).update(any());
         verify(identityProviderService, never()).findById(anyString());
-        verify(auditService).report(argThat(audit -> EventType.APPLICATION_UPDATED.equals(audit.getType())));
+        // the API user is the actor of the application update
+        verify(auditService).report(argThat(builder -> {
+            Audit audit = builder.build(new ObjectMapper());
+            return EventType.APPLICATION_UPDATED.equals(audit.getType()) && "api-user".equals(audit.getActor().getId());
+        }));
     }
 
     @Test
@@ -2931,7 +2938,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application(read)));
         stubSuccessfulConditionalUpdate();
 
-        TestObserver<Application> testObserver = applicationService.updateIfUnchanged(read).test();
+        TestObserver<Application> testObserver = applicationService.updateIfUnchanged(read, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertValue(updated -> updated.getUpdatedAt().getTime() == readUpdatedAt.getTime() + 1);
@@ -2947,12 +2954,67 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(applicationRepository.updateIfUnchanged(any(), any())).thenReturn(Maybe.empty());
 
-        TestObserver<Application> testObserver = applicationService.updateIfUnchanged(read).test();
+        TestObserver<Application> testObserver = applicationService.updateIfUnchanged(read, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ApplicationConcurrentModificationException.class);
         verify(eventService, never()).create(any());
         verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldNotUpdateIfUnchanged_unknownApplication() {
+        Application read = automationServiceApp();
+        read.setId("my-client");
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
+
+        applicationService.updateIfUnchanged(read, principal).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationRepository, never()).updateIfUnchanged(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateIfUnchanged_applicationOfAnotherDomain() {
+        Application read = automationServiceApp();
+        read.setId("my-client");
+        Application stored = new Application(read);
+        stored.setDomain("other-domain");
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(stored));
+
+        applicationService.updateIfUnchanged(read, principal).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ApplicationNotFoundException.class);
+
+        verify(applicationRepository, never()).updateIfUnchanged(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateIfUnchanged_technicalError() {
+        Application read = automationServiceApp();
+        read.setId("my-client");
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(new IllegalStateException("store down")));
+
+        applicationService.updateIfUnchanged(read, principal).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    public void shouldUpdate_unconditionally_movingTheTokenPastTheStoredOne() {
+        Date storedUpdatedAt = new Date(System.currentTimeMillis() + 3_600_000);
+        Application existing = automationServiceApp();
+        existing.setId("my-client");
+        existing.setUpdatedAt(storedUpdatedAt);
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existing));
+        stubSuccessfulUpdate();
+
+        TestObserver<Application> testObserver = applicationService.update(new Application(existing)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).update(argThat(updated -> updated.getUpdatedAt().getTime() == storedUpdatedAt.getTime() + 1));
     }
 
     @Test

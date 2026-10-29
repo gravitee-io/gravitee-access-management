@@ -35,12 +35,19 @@ public final class ConcurrentModificationRetry {
     }
 
     /**
+     * Whether {@code throwable} is a concurrent modification: nothing was written, and the write is retried.
+     */
+    public static boolean isConcurrentModification(Throwable throwable) {
+        return throwable instanceof ApplicationConcurrentModificationException;
+    }
+
+    /**
      * Runs a new {@code attempt} (which must re-read what it writes) while it fails with a concurrent modification.
      * Retries are immediate; once {@link #MAX_ATTEMPTS} attempts failed, the last conflict propagates.
      */
     public static <T> Single<T> retryOnConcurrentModification(Supplier<Single<T>> attempt) {
         return Single.defer(attempt)
-                .retry(MAX_ATTEMPTS - 1, ApplicationConcurrentModificationException.class::isInstance)
+                .retry(MAX_ATTEMPTS - 1, ConcurrentModificationRetry::isConcurrentModification)
                 .doOnError(ex -> {
                     if (ex instanceof ApplicationConcurrentModificationException conflict) {
                         log.warn("Concurrent modification retries exhausted applicationId={} attempts={}", conflict.getApplicationId(), MAX_ATTEMPTS);
