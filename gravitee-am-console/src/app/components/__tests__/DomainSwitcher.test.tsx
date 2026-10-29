@@ -28,14 +28,15 @@ const domains: Domain[] = [
 interface HarnessProps {
     readonly currentDomain?: Domain;
     readonly domains?: Domain[];
+    readonly loading?: boolean;
 }
 
-function setupDomainSwitcherHarness({ currentDomain, domains: list = domains }: HarnessProps = {}) {
+function setupDomainSwitcherHarness({ currentDomain, domains: list = domains, loading = false }: HarnessProps = {}) {
     const onSelect = vi.fn();
     const onManage = vi.fn();
     renderWithGraphene(
         <SidebarProvider>
-            <DomainSwitcher domains={list} currentDomain={currentDomain} loading={false} onSelect={onSelect} onManage={onManage} />
+            <DomainSwitcher domains={list} currentDomain={currentDomain} loading={loading} onSelect={onSelect} onManage={onManage} />
         </SidebarProvider>,
     );
     return {
@@ -97,5 +98,14 @@ describe('DomainSwitcher', () => {
         expect(screen.getByRole('button', { name: 'Switch domain, current No domain selected' })).toBeInTheDocument();
         await harness.open();
         expect(screen.getByText('No domains yet')).toBeInTheDocument();
+    });
+
+    it('says the domains are loading, not that there is none, while the list loads', async () => {
+        const harness = setupDomainSwitcherHarness({ domains: [], loading: true });
+
+        await harness.open();
+
+        expect(screen.getByText('Loading domains…', { selector: '[cmdk-empty]' })).toBeInTheDocument();
+        expect(screen.queryByText('No domains yet')).not.toBeInTheDocument();
     });
 });

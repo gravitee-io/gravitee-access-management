@@ -74,7 +74,13 @@ export function DomainSwitcher({ domains, currentDomain, loading, onSelect, onMa
                             <Command label="Find a domain">
                                 <CommandInput placeholder="Find a domain…" />
                                 <CommandList>
-                                    <CommandEmpty>{domains.length === 0 ? 'No domains yet' : 'No domains match your search'}</CommandEmpty>
+                                    <CommandEmpty>
+                                        {domains.length === 0
+                                            ? loading
+                                                ? 'Loading domains…'
+                                                : 'No domains yet'
+                                            : 'No domains match your search'}
+                                    </CommandEmpty>
                                     {domains.length > 0 && (
                                         <CommandGroup heading="Domains">
                                             {domains.map(domain => (
