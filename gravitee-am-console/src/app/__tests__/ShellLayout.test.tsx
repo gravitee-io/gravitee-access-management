@@ -95,4 +95,31 @@ describe('Shell', () => {
         expect(screen.getByText('Dashboard page')).toBeInTheDocument();
         expect(screen.queryByText('Domain not found')).not.toBeInTheDocument();
     });
+
+    it('hides the domain menu when the environment has no domain, and keeps Organization', () => {
+        vi.mocked(useEnvironmentDomains).mockReturnValue({
+            data: { data: [], currentPage: 0, totalCount: 0 },
+            isPending: false,
+        } as never);
+
+        renderShellAt('/environments/prod');
+
+        for (const item of ['Dashboard', 'Applications', 'Settings']) {
+            expect(screen.queryByRole('button', { name: item })).not.toBeInTheDocument();
+        }
+        expect(screen.getByRole('button', { name: 'Organization' })).toBeInTheDocument();
+    });
+
+    it('shows the domain menu when the environment has a domain', () => {
+        vi.mocked(useEnvironmentDomains).mockReturnValue({
+            data: { data: domains, currentPage: 0, totalCount: 1 },
+            isPending: false,
+        } as never);
+
+        renderShellAt('/environments/prod/domains/one/dashboard');
+
+        for (const item of ['Dashboard', 'Applications', 'Settings']) {
+            expect(screen.getByRole('button', { name: item })).toBeInTheDocument();
+        }
+    });
 });
