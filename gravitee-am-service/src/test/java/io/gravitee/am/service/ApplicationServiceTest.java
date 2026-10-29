@@ -2828,7 +2828,7 @@ public class ApplicationServiceTest {
         existing.setId("my-client");
         Application desired = new Application(existing);
         desired.setEnabled(false);
-        stubSuccessfulUpdate();
+        stubSuccessfulConditionalUpdate();
         when(revokeToken.apply(eq(DOMAIN), any())).thenReturn(Completable.complete());
 
         TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
@@ -2836,7 +2836,9 @@ public class ApplicationServiceTest {
 
         testObserver.assertComplete();
         verify(revokeToken, times(1)).apply(eq(DOMAIN), any());
-        verify(applicationRepository).update(argThat(updated -> !updated.isEnabled()));
+        // an application stored without updatedAt is still written conditionally
+        verify(applicationRepository).updateIfUnchanged(argThat(updated -> !updated.isEnabled()), isNull());
+        verify(applicationRepository, never()).update(any());
         verify(auditService).report(argThat(audit -> EventType.APPLICATION_UPDATED.equals(audit.getType())));
     }
 
@@ -2845,7 +2847,7 @@ public class ApplicationServiceTest {
         Application existing = automationServiceApp();
         existing.setId("my-client");
         existing.setEnabled(true);
-        stubSuccessfulUpdate();
+        stubSuccessfulConditionalUpdate();
 
         TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, new Application(existing), principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -2861,7 +2863,7 @@ public class ApplicationServiceTest {
         existing.setEnabled(true);
         Application desired = new Application(existing);
         desired.setEnabled(false);
-        stubSuccessfulUpdate();
+        stubSuccessfulConditionalUpdate();
         when(revokeToken.apply(eq(DOMAIN), any())).thenReturn(Completable.error(new IllegalStateException("revocation failed")));
 
         TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
@@ -2876,7 +2878,7 @@ public class ApplicationServiceTest {
         existing.setId("my-client");
         Application desired = new Application(existing);
         desired.setType(ApplicationType.WEB);
-        stubSuccessfulUpdate();
+        stubSuccessfulConditionalUpdate();
 
         TestObserver<Application> testObserver = applicationService.update(DOMAIN, existing, desired, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -3052,7 +3054,7 @@ public class ApplicationServiceTest {
     private void stubSuccessfulConditionalUpdate() {
         when(scopeService.validateScope(DOMAIN.getId(), List.of())).thenReturn(Single.just(true));
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.updateIfUnchanged(any(Application.class), any(Date.class))).thenAnswer(a -> Maybe.just(a.getArgument(0)));
+        when(applicationRepository.updateIfUnchanged(any(Application.class), any())).thenAnswer(a -> Maybe.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
     }
 

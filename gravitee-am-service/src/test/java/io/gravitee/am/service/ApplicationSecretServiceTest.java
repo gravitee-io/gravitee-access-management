@@ -478,6 +478,24 @@ class ApplicationSecretServiceTest {
     }
 
     @Test
+    public void shouldApply_sameValueStoredUnderOtherHashingSettings() {
+        // stored unhashed (e.g. while the application used client_secret_jwt), longer than BCrypt accepts
+        String longValue = "s".repeat(100);
+        Application client = applicationWithSecret(1);
+        ApplicationSecretSettings noneSettings = ApplicationSecretConfig.buildNoneSecretSettings();
+        ClientSecret stored = secretService.generateClientSecret("ci-secret", longValue, noneSettings, null, null);
+        stored.setId("ci-secret-id");
+        client.getSecrets().add(stored);
+        stubRead(client);
+
+        applicationSecretService.apply(DOMAIN, client, automationSecret("ci-secret"), longValue, new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(secret -> "ci-secret-id".equals(secret.getId()));
+
+        verify(applicationService, never()).updateIfUnchanged(any());
+    }
+
+    @Test
     public void shouldNotApply_differentValueForAnExistingSecret() {
         Application client = applicationWithSecret(1);
         stubRead(client);

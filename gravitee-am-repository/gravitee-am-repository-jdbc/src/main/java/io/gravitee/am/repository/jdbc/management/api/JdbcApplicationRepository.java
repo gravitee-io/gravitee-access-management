@@ -132,6 +132,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     private String insertStatement;
     private String updateStatement;
     private String updateIfUnchangedStatement;
+    private String updateIfNeverUpdatedStatement;
 
     Application toEntity(JdbcApplication entity) {
         return mapper.map(entity, Application.class);
@@ -145,7 +146,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public void afterPropertiesSet() throws Exception {
         this.insertStatement = createInsertStatement("applications", columns);
         this.updateStatement = createUpdateStatement("applications", columns, List.of(COL_ID));
-        this.updateIfUnchangedStatement = updateStatement + " AND " + databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_UPDATED_AT)) + " = :" + EXPECTED_UPDATED_AT;
+        final String updatedAt = databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_UPDATED_AT));
+        this.updateIfUnchangedStatement = updateStatement + " AND " + updatedAt + " = :" + EXPECTED_UPDATED_AT;
+        this.updateIfNeverUpdatedStatement = updateStatement + " AND " + updatedAt + " IS NULL";
     }
 
     Single<Application> completeApplication(Application entity) {
@@ -556,8 +559,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericExecuteSpec sql = bindColumns(getTemplate().getDatabaseClient().sql(updateIfUnchangedStatement), item)
-                .bind(EXPECTED_UPDATED_AT, dateConverter.convertTo(expectedUpdatedAt, null));
+        DatabaseClient.GenericExecuteSpec sql = expectedUpdatedAt == null
+                ? bindColumns(getTemplate().getDatabaseClient().sql(updateIfNeverUpdatedStatement), item)
+                : bindColumns(getTemplate().getDatabaseClient().sql(updateIfUnchangedStatement), item)
+                        .bind(EXPECTED_UPDATED_AT, dateConverter.convertTo(expectedUpdatedAt, null));
 
         // the parent row is updated first: its row lock serializes concurrent writers before child rows are touched
         Mono<Boolean> updateAction = sql.fetch().rowsUpdated()

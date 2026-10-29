@@ -802,7 +802,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return applicationRepository.findById(application.getId())
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(application.getId())))
-                .flatMap(existingApplication -> innerUpdate(existingApplication, application, null, false, false, application.getUpdatedAt()))
+                .flatMap(existingApplication -> innerUpdate(existingApplication, application, null, false, false, true, application.getUpdatedAt()))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -917,7 +917,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                       BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
         log.debug("Update application {} for domain {}", existing.getId(), domain.getId());
         return prepareUpdate(domain, existing, desired)
-                .flatMap(app -> innerUpdate(existing, app, principal, isTypeChanged(existing, app), true, existing.getUpdatedAt()))
+                .flatMap(app -> innerUpdate(existing, app, principal, isTypeChanged(existing, app), true, true, existing.getUpdatedAt()))
                 .flatMap(app -> {
                     if (existing.isEnabled() && !app.isEnabled()) {
                         return revokeTokenProcessor.apply(domain, app).onErrorComplete().toSingleDefault(app);
@@ -1149,19 +1149,21 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType) {
-        return innerUpdate(currentApplication, applicationToUpdate, principal, fromUpdateType, true, null);
+        return innerUpdate(currentApplication, applicationToUpdate, principal, fromUpdateType, true, false, null);
     }
 
     /**
-     * @param expectedUpdatedAt when set, the write only happens if the stored application still has this
-     *                          {@code updatedAt}; otherwise it fails with {@link ApplicationConcurrentModificationException}
+     * @param conditional       when true, the write only happens if the stored application still has
+     *                          {@code expectedUpdatedAt} (null for an application stored without one); otherwise it
+     *                          fails with {@link ApplicationConcurrentModificationException}
+     * @param expectedUpdatedAt the {@code updatedAt} the caller read, used when {@code conditional}
      */
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType,
-                                            boolean validateIdentityProviders, Date expectedUpdatedAt) {
+                                            boolean validateIdentityProviders, boolean conditional, Date expectedUpdatedAt) {
         applicationToUpdate.setUpdatedAt(nextUpdatedAt(expectedUpdatedAt));
 
         return validateUpdate0(currentApplication, applicationToUpdate, fromUpdateType, validateIdentityProviders)
-                .flatMap(app -> expectedUpdatedAt == null
+                .flatMap(app -> !conditional
                         ? applicationRepository.update(app)
                         : applicationRepository.updateIfUnchanged(app, expectedUpdatedAt)
                                 .switchIfEmpty(Single.error(() -> new ApplicationConcurrentModificationException(app.getId()))))

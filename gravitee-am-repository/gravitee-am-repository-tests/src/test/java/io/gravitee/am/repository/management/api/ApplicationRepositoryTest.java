@@ -427,6 +427,32 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testUpdateIfUnchanged_nullTokenMatchesAnApplicationStoredWithoutUpdatedAt() {
+        Application app = buildApplication();
+        app.setUpdatedAt(null);
+        Application read = createAndRead(app);
+
+        Application first = new Application(read);
+        first.setName("first");
+        first.setUpdatedAt(new Date());
+        applicationRepository.updateIfUnchanged(first, null).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
+
+        // the stored application now has an updatedAt: a second write from the same read is refused
+        Application second = new Application(read);
+        second.setName("second");
+        second.setUpdatedAt(new Date());
+        TestObserver<Application> testObserver = applicationRepository.updateIfUnchanged(second, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues();
+
+        TestObserver<Application> stored = applicationRepository.findById(read.getId()).test();
+        stored.awaitDone(10, TimeUnit.SECONDS);
+        stored.assertValue(a -> "first".equals(a.getName()) && a.getSecrets().size() == 1);
+    }
+
+    @Test
     public void testUpdateAndUpdateIfUnchanged_concurrentWritesNeitherFailNorDuplicateSecrets() {
         Application read = createAndRead(buildApplication());
 
