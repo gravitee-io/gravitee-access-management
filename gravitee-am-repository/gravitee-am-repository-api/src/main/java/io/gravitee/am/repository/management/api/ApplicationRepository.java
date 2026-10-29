@@ -87,7 +87,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
     Maybe<Application> findByDomainAndClientId(String domain, String clientId);
 
     /**
-     * Updates the application only if the stored one still has {@code expectedUpdatedAt}.
+     * Updates the application only if the stored one still has {@code expectedUpdatedAt}; a null
+     * {@code expectedUpdatedAt} matches an application stored without one.
      *
      * @return the updated application, or empty when the stored application changed since it was read
      */

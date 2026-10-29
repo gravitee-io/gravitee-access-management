@@ -326,12 +326,12 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     /**
      * Checks {@code desired} and {@code rawSecret} against the application.
+     * An existing secret is only compared with {@code rawSecret}: the value rules apply to new secrets, so a secret
+     * stored under other hashing settings can still be applied again with its value.
      *
      * @return the stored secret when it already exists with this value; empty when {@code desired} can be added
      */
     private Optional<ClientSecret> findUnchangedSecret(Application application, ClientSecret desired, String rawSecret, ApplicationSecretSettings secretSettings) {
-        validateSecretValue(desired, rawSecret, secretSettings);
-
         Optional<ClientSecret> existing = application.getSecrets().stream().filter(secret -> secret.getId().equals(desired.getId())).findFirst();
         if (existing.isPresent()) {
             if (!matches(application, existing.get(), rawSecret)) {
@@ -339,6 +339,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
             }
             return existing;
         }
+        validateSecretValue(desired, rawSecret, secretSettings);
         if (!desired.isManagedBy(ManagedBy.AUTOMATION_API)) {
             throw new ClientSecretNotFoundException(desired.getId());
         }
