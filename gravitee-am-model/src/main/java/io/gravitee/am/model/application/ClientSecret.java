@@ -16,6 +16,7 @@
 
 package io.gravitee.am.model.application;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Managed;
 import io.gravitee.am.model.ManagedBy;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,10 +43,14 @@ public class ClientSecret implements Managed {
     /**
      * Stable, human-chosen identifier used to address this secret in declarative APIs
      * (e.g. the Automation API). Set when the Automation API creates the secret; null otherwise.
+     * Read-only over the management API.
      */
-    @Schema(hidden = true)
+    @JsonProperty("key")
+    @Schema(name = "key", accessMode = Schema.AccessMode.READ_ONLY)
     private String automationKey;
-    @Schema(hidden = true)
+    /**
+     * Indicates the source of truth for this secret.
+     */
     private ManagedBy managedBy;
 
     public ClientSecret() {
