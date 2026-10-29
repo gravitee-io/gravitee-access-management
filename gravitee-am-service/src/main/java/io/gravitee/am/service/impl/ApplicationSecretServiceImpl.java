@@ -16,7 +16,6 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -31,7 +30,6 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -74,11 +72,6 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     private static final int MIN_SECRET_LENGTH = 43;
     private static final int BCRYPT_MAX_BYTES = 72;
-    // widths of application_client_secrets.name and .secret
-    private static final int JDBC_MAX_KEY_LENGTH = 64;
-    private static final int JDBC_MAX_PLAIN_SECRET_LENGTH = 374;
-    private static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
-    private static final String JDBC = "jdbc";
 
     @Value("${applications.secretsMax:10}")
     private int secretsMax;
@@ -97,9 +90,6 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     @Autowired
     private EventService eventService;
-
-    @Autowired
-    private RepositoriesEnvironment repositoriesEnvironment;
 
     @Override
     public Single<ClientSecret> create(Domain domain, Application application, NewClientSecret newClientSecret, User principal) {
@@ -362,13 +352,11 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
         if (algorithm == SecretHashAlgorithm.BCRYPT && rawSecret.getBytes(StandardCharsets.UTF_8).length > BCRYPT_MAX_BYTES) {
             throw new InvalidParameterException("BCrypt only uses the first " + BCRYPT_MAX_BYTES + " bytes; the secret must be at most " + BCRYPT_MAX_BYTES + " bytes");
         }
-        if (JDBC.equals(repositoriesEnvironment.getProperty(MANAGEMENT_TYPE))) {
-            if (desired.getName() != null && desired.getName().length() > JDBC_MAX_KEY_LENGTH) {
-                throw new InvalidParameterException("Client secret key must be at most " + JDBC_MAX_KEY_LENGTH + " characters");
-            }
-            if (algorithm == SecretHashAlgorithm.NONE && rawSecret.length() > JDBC_MAX_PLAIN_SECRET_LENGTH) {
-                throw new InvalidParameterException("Client secret value must be at most " + JDBC_MAX_PLAIN_SECRET_LENGTH + " characters");
-            }
+        if (desired.getName() != null && desired.getName().length() > KEY_MAX_LENGTH) {
+            throw new InvalidParameterException("Client secret key must be at most " + KEY_MAX_LENGTH + " characters");
+        }
+        if (algorithm == SecretHashAlgorithm.NONE && rawSecret.length() > PLAIN_VALUE_MAX_LENGTH) {
+            throw new InvalidParameterException("Client secret value must be at most " + PLAIN_VALUE_MAX_LENGTH + " characters");
         }
     }
 
