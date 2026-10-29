@@ -36,6 +36,8 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 
 import java.util.List;
 
+import static io.gravitee.am.management.handlers.automation.resource.AutomationRef.toReference;
+
 /**
  * Maps between the shared {@link Domain} model and the symmetric {@link AutomationDomain} projection.
  * <p>
@@ -50,7 +52,8 @@ import java.util.List;
  * management API) and a parallel {@code *Key} field (owned by the Automation API). The key is stored
  * verbatim so GET round-trips losslessly even when the referenced resource does not exist yet (eventual
  * consistency); the internal id is computed deterministically from the key so no lookup or existence
- * check is required at write time.
+ * check is required at write time. A reference set outside the Automation API has no {@code *Key} field
+ * and reads back as {@code id:<uuid>}, so a GET → PUT round trip keeps it.
  *
  * @author GraviteeSource Team
  */
@@ -90,7 +93,7 @@ public final class AutomationDomainMapper {
         out.setTokenExchangeSettings(domain.getTokenExchangeSettings());
         out.setKeyRetrievalSettings(domain.getKeyRetrievalSettings());
 
-        // Wrapped settings blocks (key-keyed references read from the parallel *Key fields)
+        // Wrapped settings blocks (references read from the parallel *Key fields, else as id:<uuid>)
         out.setOidc(toAutomationOidc(domain.getOidc()));
         out.setAccountSettings(toAutomationAccountSettings(domain.getAccountSettings()));
 
@@ -98,12 +101,14 @@ public final class AutomationDomainMapper {
             AutomationSamlSettings saml = new AutomationSamlSettings();
             saml.setEnabled(domain.getSaml().isEnabled());
             saml.setEntityId(domain.getSaml().getEntityId());
-            saml.setCertificate(domain.getSaml().getCertificateKey());
+            saml.setCertificate(toReference(domain.getSaml().getCertificateKey(), domain.getSaml().getCertificate()));
             out.setSaml(saml);
         }
         if (domain.getCertificateSettings() != null) {
             AutomationCertificateSettings cs = new AutomationCertificateSettings();
-            cs.setFallbackCertificate(domain.getCertificateSettings().getFallbackCertificateKey());
+            cs.setFallbackCertificate(toReference(
+                    domain.getCertificateSettings().getFallbackCertificateKey(),
+                    domain.getCertificateSettings().getFallbackCertificate()));
             out.setCertificateSettings(cs);
         }
         return out;
@@ -153,7 +158,8 @@ public final class AutomationDomainMapper {
         out.setAutoLoginAfterRegistration(account.isAutoLoginAfterRegistration());
         out.setRedirectUriAfterRegistration(account.getRedirectUriAfterRegistration());
         out.setDynamicUserRegistration(account.isDynamicUserRegistration());
-        out.setDefaultIdentityProviderForRegistration(account.getDefaultIdentityProviderForRegistrationKey());
+        out.setDefaultIdentityProviderForRegistration(toReference(
+                account.getDefaultIdentityProviderForRegistrationKey(), account.getDefaultIdentityProviderForRegistration()));
         out.setAutoLoginAfterResetPassword(account.isAutoLoginAfterResetPassword());
         out.setRedirectUriAfterResetPassword(account.getRedirectUriAfterResetPassword());
         out.setDeletePasswordlessDevicesAfterResetPassword(account.isDeletePasswordlessDevicesAfterResetPassword());

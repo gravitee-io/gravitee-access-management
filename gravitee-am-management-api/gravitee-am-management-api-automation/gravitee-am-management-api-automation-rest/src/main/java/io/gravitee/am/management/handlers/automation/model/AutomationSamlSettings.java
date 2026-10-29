@@ -41,9 +41,9 @@ public class AutomationSamlSettings {
             example = "https://auth.example.com/saml2/idp/entity")
     private String entityId;
 
-    @Schema(description = "Key of a certificate managed under this domain, used to sign SAML responses. " +
-            "The reference is not checked against existing certificates: it can name one created after the " +
-            "domain or since deleted, and resolves whenever a certificate with that key exists.",
+    @Schema(description = "Certificate signing SAML responses: the key of a certificate of the domain, or id:<uuid> " +
+            "when the reference was not set by the Automation API. The reference is not checked against existing certificates: " +
+            "it can name one created after the domain or since deleted, and resolves whenever that certificate exists.",
             example = "signing-cert")
     private String certificate;
 }

@@ -85,6 +85,8 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import static io.gravitee.am.management.handlers.automation.resource.AutomationRef.toReference;
+import static io.gravitee.am.management.handlers.automation.resource.AutomationRef.toIdReference;
 import static java.util.stream.Collectors.toCollection;
 
 /**
@@ -123,7 +125,7 @@ public final class AutomationApplicationMapper {
         out.setEnabled(app.isEnabled());
         out.setTemplate(app.isTemplate());
         out.setClientId(app.clientId());
-        out.setCertificate(echoReference(app.getCertificateKey(), app.getCertificate()));
+        out.setCertificate(toReference(app.getCertificateKey(), app.getCertificate()));
         out.setMetadata(app.getMetadata());
         if (app.getIdentityProviders() != null) {
             out.setIdentityProviders(app.getIdentityProviders().stream()
@@ -140,7 +142,7 @@ public final class AutomationApplicationMapper {
 
     private static AutomationApplicationIdentityProvider toAutomationIdentityProvider(ApplicationIdentityProvider in) {
         AutomationApplicationIdentityProvider out = new AutomationApplicationIdentityProvider();
-        out.setIdentity(echoReference(in.getIdentityKey(), in.getIdentity()));
+        out.setIdentity(toReference(in.getIdentityKey(), in.getIdentity()));
         // the JDBC repository stores an absent rule as an empty one
         out.setSelectionRule(in.getSelectionRule() == null || in.getSelectionRule().isEmpty() ? null : in.getSelectionRule());
         out.setPriority(in.getPriority());
@@ -644,15 +646,6 @@ public final class AutomationApplicationMapper {
     }
 
     // --- references ---------------------------------------------------------
-
-    /** The stored reference as given, or {@code id:<uuid>} when the Automation API did not set it. */
-    private static String echoReference(String reference, String id) {
-        return reference != null ? reference : toIdReference(id);
-    }
-
-    private static String toIdReference(String id) {
-        return id != null ? new AutomationRef.IdRef(id).raw() : null;
-    }
 
     /** Strips the {@code id:} prefix of a reference to a resource the Automation API does not manage. */
     private static String fromIdReference(String reference, String field) {

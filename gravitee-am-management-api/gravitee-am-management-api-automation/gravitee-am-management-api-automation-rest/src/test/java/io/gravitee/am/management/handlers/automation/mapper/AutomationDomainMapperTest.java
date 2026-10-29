@@ -22,14 +22,17 @@ import io.gravitee.am.management.handlers.automation.model.AutomationDomain;
 import io.gravitee.am.management.handlers.automation.model.AutomationOidcSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationSamlSettings;
 import io.gravitee.am.management.handlers.automation.resource.AutomationIds;
+import io.gravitee.am.model.CertificateSettings;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.SAMLSettings;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.TokenExchangeSettings;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
@@ -60,6 +63,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AutomationDomainMapperTest {
 
     private static final String DOMAIN_ID = "domain-1";
+    private static final String CERTIFICATE_ID = "11111111-2222-3333-4444-555555555555";
+    private static final String IDP_ID = "default-idp-94157683-f481-45a9-9576-83f48145a9a0";
 
     /**
      * Writable {@link Domain} fields that the Automation API intentionally does NOT
@@ -460,5 +465,59 @@ class AutomationDomainMapperTest {
                 target.getAccountSettings().getDefaultIdentityProviderForRegistration());
         assertEquals("not-created-yet",
                 AutomationDomainMapper.toAutomationDomain(target).getAccountSettings().getDefaultIdentityProviderForRegistration());
+    }
+
+    // --- references set outside the Automation API (no *Key field) ----------
+
+    /** A domain configured in the Console: internal ids only, no parallel *Key fields. */
+    private static Domain consoleConfiguredDomain() {
+        Domain domain = newDomain();
+        domain.setName("My Domain");
+        domain.setPath("/app");
+        SAMLSettings saml = new SAMLSettings();
+        saml.setEnabled(true);
+        saml.setCertificate(CERTIFICATE_ID);
+        domain.setSaml(saml);
+        CertificateSettings cs = new CertificateSettings();
+        cs.setFallbackCertificate(CERTIFICATE_ID);
+        domain.setCertificateSettings(cs);
+        AccountSettings account = new AccountSettings();
+        account.setDefaultIdentityProviderForRegistration(IDP_ID);
+        domain.setAccountSettings(account);
+        return domain;
+    }
+
+    @Test
+    void referencesSetOutsideTheAutomationApiReadBackAsIdReferences() {
+        AutomationDomain out = AutomationDomainMapper.toAutomationDomain(consoleConfiguredDomain());
+
+        assertEquals("id:" + CERTIFICATE_ID, out.getSaml().getCertificate());
+        assertEquals("id:" + CERTIFICATE_ID, out.getCertificateSettings().getFallbackCertificate());
+        assertEquals("id:" + IDP_ID, out.getAccountSettings().getDefaultIdentityProviderForRegistration());
+    }
+
+    @Test
+    void referencesSetOutsideTheAutomationApiSurviveAGetPutRoundTrip() {
+        Domain domain = consoleConfiguredDomain();
+
+        AutomationDomainMapper.applyTo(AutomationDomainMapper.toAutomationDomain(domain), domain, List.of());
+
+        assertEquals(CERTIFICATE_ID, domain.getSaml().getCertificate());
+        assertEquals(CERTIFICATE_ID, domain.getCertificateSettings().getFallbackCertificate());
+        assertEquals(IDP_ID, domain.getAccountSettings().getDefaultIdentityProviderForRegistration());
+    }
+
+    @Test
+    void storedKeyIsReadBackInsteadOfTheIdReference() {
+        Domain domain = consoleConfiguredDomain();
+        domain.getSaml().setCertificateKey("saml-signing");
+        domain.getCertificateSettings().setFallbackCertificateKey("saml-signing");
+        domain.getAccountSettings().setDefaultIdentityProviderForRegistrationKey("customer-users");
+
+        AutomationDomain out = AutomationDomainMapper.toAutomationDomain(domain);
+
+        assertEquals("saml-signing", out.getSaml().getCertificate());
+        assertEquals("saml-signing", out.getCertificateSettings().getFallbackCertificate());
+        assertEquals("customer-users", out.getAccountSettings().getDefaultIdentityProviderForRegistration());
     }
 }

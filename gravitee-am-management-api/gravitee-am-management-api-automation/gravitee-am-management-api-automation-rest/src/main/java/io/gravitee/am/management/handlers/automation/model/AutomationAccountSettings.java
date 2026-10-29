@@ -79,14 +79,15 @@ public class AutomationAccountSettings {
     private boolean dynamicUserRegistration;
 
     /**
-     * The {@code key} of an identity provider under this domain, to use as the default for user
-     * registration. Eventually consistent: stored as given, never checked against the domain's
-     * IdPs, and resolved whenever an IdP with that key exists. May be null.
+     * The {@code key} of an identity provider under this domain, or {@code id:<uuid>} when the
+     * reference was not set by the Automation API, to use as the default for user registration. Eventually
+     * consistent: stored as given, never checked against the domain's IdPs, and resolved whenever
+     * that IdP exists. May be null.
      */
-    @Schema(description = "Key of an identity provider managed under this domain, used as the default " +
-            "for user registration. The reference is not checked against existing identity providers: it can " +
-            "name one created after the domain or since deleted, and resolves whenever an identity provider " +
-            "with that key exists.",
+    @Schema(description = "Default identity provider for user registration: the key of an identity provider of " +
+            "the domain, or id:<uuid> when the reference was not set by the Automation API. The reference is not checked " +
+            "against existing identity providers: it can name one created after the domain or since deleted, and " +
+            "resolves whenever that identity provider exists.",
             example = "users-idp")
     private String defaultIdentityProviderForRegistration;
 
