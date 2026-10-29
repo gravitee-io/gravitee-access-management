@@ -15,30 +15,48 @@
  */
 package io.gravitee.am.service.utils;
 
-import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
+import io.gravitee.am.service.exception.ResourceConcurrentModificationException;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Supplier;
 import lombok.CustomLog;
 
+import java.util.Date;
+
 /**
+ * Optimistic concurrency on a resource whose {@code updatedAt} is the concurrency token: a conditional write only
+ * happens if the stored {@code updatedAt} is still the one the writer read.
+ *
  * @author GraviteeSource Team
  */
 @CustomLog
-public final class ConcurrentModificationRetry {
+public final class OptimisticConcurrency {
 
     /**
      * Every conflict means another write succeeded, so k concurrent writers need at most k attempts.
      */
     static final int MAX_ATTEMPTS = 10;
 
-    private ConcurrentModificationRetry() {
+    private OptimisticConcurrency() {
+    }
+
+    /**
+     * The {@code updatedAt} of a write that replaces a resource read with {@code expectedUpdatedAt}.
+     * The token must change on every write: two writes in the same millisecond (or a node whose clock is behind)
+     * would otherwise store the token the other writer still expects.
+     */
+    public static Date nextUpdatedAt(Date expectedUpdatedAt) {
+        Date now = new Date();
+        if (expectedUpdatedAt == null) {
+            return now;
+        }
+        return new Date(Math.max(now.getTime(), expectedUpdatedAt.getTime() + 1));
     }
 
     /**
      * Whether {@code throwable} is a concurrent modification: nothing was written, and the write is retried.
      */
     public static boolean isConcurrentModification(Throwable throwable) {
-        return throwable instanceof ApplicationConcurrentModificationException;
+        return throwable instanceof ResourceConcurrentModificationException;
     }
 
     /**
@@ -47,10 +65,10 @@ public final class ConcurrentModificationRetry {
      */
     public static <T> Single<T> retryOnConcurrentModification(Supplier<Single<T>> attempt) {
         return Single.defer(attempt)
-                .retry(MAX_ATTEMPTS - 1, ConcurrentModificationRetry::isConcurrentModification)
+                .retry(MAX_ATTEMPTS - 1, OptimisticConcurrency::isConcurrentModification)
                 .doOnError(ex -> {
-                    if (ex instanceof ApplicationConcurrentModificationException conflict) {
-                        log.warn("Concurrent modification retries exhausted applicationId={} attempts={}", conflict.getApplicationId(), MAX_ATTEMPTS);
+                    if (ex instanceof ResourceConcurrentModificationException conflict) {
+                        log.warn("Concurrent modification retries exhausted resourceType={} id={} attempts={}", conflict.getResourceType(), conflict.getId(), MAX_ATTEMPTS);
                     }
                 });
     }

@@ -64,8 +64,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
-import static io.gravitee.am.service.utils.ConcurrentModificationRetry.isConcurrentModification;
-import static io.gravitee.am.service.utils.ConcurrentModificationRetry.retryOnConcurrentModification;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.isConcurrentModification;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.retryOnConcurrentModification;
 import static java.util.Optional.ofNullable;
 
 @Component
