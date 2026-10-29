@@ -110,6 +110,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
+import static io.gravitee.am.service.utils.ConcurrentModificationRetry.isConcurrentModification;
 import static java.util.Objects.nonNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
@@ -797,12 +798,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> updateIfUnchanged(Application application) {
+    public Single<Application> updateIfUnchanged(Application application, User principal) {
         log.debug("Update an application {} if unchanged since {}", application.getId(), application.getUpdatedAt());
 
         return applicationRepository.findById(application.getId())
+                // an application is never moved to another domain
+                .filter(existingApplication -> Objects.equals(existingApplication.getDomain(), application.getDomain()))
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(application.getId())))
-                .flatMap(existingApplication -> innerUpdate(existingApplication, application, null, false, false, true, application.getUpdatedAt()))
+                .flatMap(existingApplication -> innerUpdate(existingApplication, application, principal, false, false, true, application.getUpdatedAt()))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -1149,14 +1152,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType) {
-        return innerUpdate(currentApplication, applicationToUpdate, principal, fromUpdateType, true, false, null);
+        // unconditional writes move the concurrency token forward too, so a conditional writer never matches them
+        return innerUpdate(currentApplication, applicationToUpdate, principal, fromUpdateType, true, false, currentApplication.getUpdatedAt());
     }
 
     /**
      * @param conditional       when true, the write only happens if the stored application still has
      *                          {@code expectedUpdatedAt} (null for an application stored without one); otherwise it
      *                          fails with {@link ApplicationConcurrentModificationException}
-     * @param expectedUpdatedAt the {@code updatedAt} the caller read, used when {@code conditional}
+     * @param expectedUpdatedAt the {@code updatedAt} the caller read: the condition when {@code conditional}, and the
+     *                          value the new {@code updatedAt} must move past in both cases
      */
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType,
                                             boolean validateIdentityProviders, boolean conditional, Date expectedUpdatedAt) {
@@ -1175,7 +1180,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .doOnSuccess(application -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).oldValue(currentApplication).application(application)))
                 .doOnError(throwable -> {
                     // a concurrent modification wrote nothing and is retried: it is not a failed update
-                    if (!(throwable instanceof ApplicationConcurrentModificationException)) {
+                    if (!isConcurrentModification(throwable)) {
                         auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(currentApplication.getDomain())).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable));
                     }
                 });

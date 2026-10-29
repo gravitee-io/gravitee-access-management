@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
@@ -30,6 +32,7 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -37,10 +40,12 @@ import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import io.gravitee.am.service.exception.ClientSecretInvalidException;
 import io.gravitee.am.service.exception.ClientSecretNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.TooManyClientSecretsException;
 import io.gravitee.am.service.impl.ApplicationSecretServiceImpl;
 import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.model.NewClientSecret;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -357,7 +362,7 @@ class ApplicationSecretServiceTest {
                 && secret.isManagedBy(ManagedBy.AUTOMATION_API)
                 && secret.getSecret() == null);
         verify(applicationService).updateIfUnchanged(argThat(app -> app.getSecrets().size() == 2
-                && app.getSecretSettings().stream().anyMatch(ss -> ss.getAlgorithm().equals("BCRYPT"))));
+                && app.getSecretSettings().stream().anyMatch(ss -> ss.getAlgorithm().equals("BCRYPT"))), any());
         verify(auditService).report(argThat(audit -> EventType.APPLICATION_CLIENT_SECRET_CREATED.equals(audit.getType())));
         verify(eventService).create(argThat(event -> event.getType() == Type.APPLICATION_SECRET
                 && "ci-secret-id".equals(event.getPayload().getId())
@@ -373,7 +378,7 @@ class ApplicationSecretServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(InvalidParameterException.class);
 
-        verify(applicationService, never()).updateIfUnchanged(any());
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
     }
 
     @Test
@@ -384,6 +389,8 @@ class ApplicationSecretServiceTest {
         applicationSecretService.apply(DOMAIN, client, automationSecret("ci-secret"), "é".repeat(30) + "a".repeat(13), new DefaultUser()).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(error -> error instanceof InvalidParameterException && error.getMessage().startsWith("BCrypt only uses the first 72 bytes"));
+
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
     }
 
     @Test
@@ -392,7 +399,7 @@ class ApplicationSecretServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertValue(secret -> "ci-secret-id".equals(secret.getId()) && secret.getSecret() == null);
 
-        verify(applicationService, never()).updateIfUnchanged(any());
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
     }
 
     @Test
@@ -421,6 +428,25 @@ class ApplicationSecretServiceTest {
         applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("ci-secret"), "a".repeat(375)).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    public void shouldValidateApply_jdbcKeyOf64Characters() {
+        useJdbc();
+
+        applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("k".repeat(64)), VALID_SECRET).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValueCount(1);
+    }
+
+    @Test
+    public void shouldValidateApply_jdbcPlainValueOf374Characters() {
+        useAlgorithm("None");
+        useJdbc();
+
+        applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("ci-secret"), "a".repeat(374)).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValueCount(1);
     }
 
     @Test
@@ -472,7 +498,7 @@ class ApplicationSecretServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertValue(secret -> "ci-secret-id".equals(secret.getId()) && secret.getSecret() == null);
 
-        verify(applicationService, never()).updateIfUnchanged(any());
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
         verify(auditService, never()).report(any());
         verify(eventService, never()).create(any());
     }
@@ -492,7 +518,7 @@ class ApplicationSecretServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertValue(secret -> "ci-secret-id".equals(secret.getId()));
 
-        verify(applicationService, never()).updateIfUnchanged(any());
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
     }
 
     @Test
@@ -555,19 +581,37 @@ class ApplicationSecretServiceTest {
         verify(applicationService).updateIfUnchanged(argThat(app -> app.getSecretSettings().size() == 1
                 && app.getSecrets().stream().anyMatch(secret -> "ci-secret-id".equals(secret.getId())
                 && noneSettingsId.equals(secret.getSettingsId())
-                && VALID_SECRET.equals(secret.getSecret()))));
+                && VALID_SECRET.equals(secret.getSecret()))), any());
     }
 
     @Test
     public void shouldApply_rereadingTheApplicationAfterAConflict() {
         Application client = applicationWithSecret(1);
         stubRead(client);
-        when(applicationService.updateIfUnchanged(any()))
+        when(applicationService.updateIfUnchanged(any(), any()))
                 .thenReturn(Single.error(new ApplicationConcurrentModificationException(client.getId())))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         applicationSecretService.apply(DOMAIN, client, automationSecret("ci-secret"), VALID_SECRET, new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(applicationService, times(2)).findById(DOMAIN.getId(), client.getId());
+        verify(auditService, times(1)).report(any());
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldRemove_rereadingTheApplicationAfterAConflict() {
+        Application client = applicationWithSecret(2);
+        stubRead(client);
+        when(applicationService.updateIfUnchanged(any(), any()))
+                .thenReturn(Single.error(new ApplicationConcurrentModificationException(client.getId())))
+                .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        applicationSecretService.remove(DOMAIN, client, "secret-id1", new DefaultUser()).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
@@ -596,7 +640,7 @@ class ApplicationSecretServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
-        verify(applicationService).updateIfUnchanged(argThat(app -> app.getSecrets().isEmpty()));
+        verify(applicationService).updateIfUnchanged(argThat(app -> app.getSecrets().isEmpty()), any());
         verify(auditService).report(argThat(audit -> EventType.APPLICATION_CLIENT_SECRET_DELETED.equals(audit.getType())));
         verify(eventService).create(argThat(event -> "secret-id0".equals(event.getPayload().getId())
                 && event.getPayload().getAction() == Action.DELETE));
@@ -611,8 +655,64 @@ class ApplicationSecretServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
-        verify(applicationService, never()).updateIfUnchanged(any());
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
         verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldValidateApply_applicationWithoutOAuthSettings() {
+        Application client = applicationWithSecret(1);
+        client.setSettings(null);
+
+        applicationSecretService.validateApply(DOMAIN, client, automationSecret("ci-secret"), VALID_SECRET).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(secret -> "ci-secret-id".equals(secret.getId()));
+    }
+
+    @Test
+    public void shouldAuditAFailedApply() {
+        Application client = applicationWithSecret(1);
+        stubRead(client);
+        when(applicationService.updateIfUnchanged(any(), any())).thenReturn(Single.error(new TechnicalManagementException("store down")));
+
+        applicationSecretService.apply(DOMAIN, client, automationSecret("ci-secret"), VALID_SECRET, new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+
+        verify(auditService).report(argThat(builder -> isFailure(builder, EventType.APPLICATION_CLIENT_SECRET_CREATED)));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldAuditAFailedRemove() {
+        Application client = applicationWithSecret(1);
+        stubRead(client);
+        when(applicationService.updateIfUnchanged(any(), any())).thenReturn(Single.error(new TechnicalManagementException("store down")));
+
+        applicationSecretService.remove(DOMAIN, client, "secret-id0", new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+
+        verify(auditService).report(argThat(builder -> isFailure(builder, EventType.APPLICATION_CLIENT_SECRET_DELETED)));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldRemove_fromAnApplicationDeletedMeanwhile() {
+        Application client = applicationWithSecret(1);
+        when(applicationService.findById(DOMAIN.getId(), client.getId())).thenReturn(Maybe.empty());
+
+        applicationSecretService.remove(DOMAIN, client, "secret-id0", new DefaultUser()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(applicationService, never()).updateIfUnchanged(any(), any());
+        verify(auditService, never()).report(any());
+    }
+
+    private static boolean isFailure(AuditBuilder<?> builder, String eventType) {
+        Audit audit = builder.build(new ObjectMapper());
+        return eventType.equals(audit.getType()) && audit.getOutcome().getStatus() == Status.FAILURE;
     }
 
     private void stubRead(Application application) {
@@ -620,7 +720,7 @@ class ApplicationSecretServiceTest {
     }
 
     private void stubSuccessfulWrite() {
-        when(applicationService.updateIfUnchanged(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(applicationService.updateIfUnchanged(any(), any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
     }
 

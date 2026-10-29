@@ -37,7 +37,6 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import io.gravitee.am.service.exception.ClientSecretInvalidException;
@@ -65,6 +64,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
+import static io.gravitee.am.service.utils.ConcurrentModificationRetry.isConcurrentModification;
 import static io.gravitee.am.service.utils.ConcurrentModificationRetry.retryOnConcurrentModification;
 import static java.util.Optional.ofNullable;
 
@@ -275,7 +275,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
                     ClientSecret secret = buildSecret(domain, current, desired, rawSecret, secretSettings);
                     addSecretSettingsIfMissing(current, secretSettings);
                     current.getSecrets().add(secret);
-                    return applicationService.updateIfUnchanged(current)
+                    return applicationService.updateIfUnchanged(current, principal)
                             .doOnError(throwable -> reportFailure(domain, principal, EventType.APPLICATION_CLIENT_SECRET_CREATED, throwable))
                             .map(updated -> new AppliedSecret(updated, secret, true));
                 });
@@ -296,17 +296,19 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
     @Override
     public Completable remove(Domain domain, Application application, String secretId, User principal) {
         log.debug("Remove client secret {} from application {} and domain {}", secretId, application.getId(), domain.getId());
-        Supplier<Single<Optional<Application>>> attempt = () -> readApplication(domain, application.getId())
-                .flatMap(current -> {
+        // an application deleted meanwhile has no secret left to remove
+        Supplier<Single<Optional<Application>>> attempt = () -> applicationService.findById(domain.getId(), application.getId())
+                .flatMapSingle(current -> {
                     Optional<ClientSecret> secretToRemove = current.getSecrets().stream().filter(secret -> secret.getId().equals(secretId)).findFirst();
                     if (secretToRemove.isEmpty()) {
-                        return Single.just(Optional.empty());
+                        return Single.just(Optional.<Application>empty());
                     }
                     removeSecret(current, secretToRemove.get());
-                    return applicationService.updateIfUnchanged(current)
+                    return applicationService.updateIfUnchanged(current, principal)
                             .doOnError(throwable -> reportFailure(domain, principal, EventType.APPLICATION_CLIENT_SECRET_DELETED, throwable))
                             .map(Optional::of);
-                });
+                })
+                .defaultIfEmpty(Optional.empty());
 
         return retryOnConcurrentModification(attempt)
                 .flatMapCompletable(updated -> updated
@@ -344,7 +346,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
             throw new ClientSecretNotFoundException(desired.getId());
         }
         if (application.getSecrets().stream().anyMatch(secret -> desired.getName().equals(secret.getName()))) {
-            throw new ClientSecretInvalidException(String.format("Secret with description %s already exists", desired.getName()));
+            throw new ClientSecretInvalidException(String.format("Client secret key '%s' is already the name of another secret", desired.getName()));
         }
         if (application.getSecrets().size() >= secretsMax) {
             throw new TooManyClientSecretsException(secretsMax);
@@ -392,7 +394,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     private void reportFailure(Domain domain, User principal, String eventType, Throwable throwable) {
         // a concurrent modification wrote nothing and is retried
-        if (!(throwable instanceof ApplicationConcurrentModificationException)) {
+        if (!isConcurrentModification(throwable)) {
             auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(eventType).throwable(throwable));
         }
     }
@@ -440,11 +442,16 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     private ApplicationSecretSettings generateSecretSettings(Application application) {
         var secretSettings = this.applicationSecretConfig.toSecretSettings();
-        if (!SecretHashAlgorithm.NONE.name().equals(secretSettings.getAlgorithm()) && CLIENT_SECRET_JWT.equals(application.getSettings().getOauth().getTokenEndpointAuthMethod())) {
+        if (!SecretHashAlgorithm.NONE.name().equals(secretSettings.getAlgorithm()) && usesClientSecretJwt(application)) {
             // client exist with client_secret_jwt authentication method,
             // we force the None algorithm to allow secret renewal
             secretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
         }
         return secretSettings;
+    }
+
+    private static boolean usesClientSecretJwt(Application application) {
+        return application.getSettings() != null && application.getSettings().getOauth() != null
+                && CLIENT_SECRET_JWT.equals(application.getSettings().getOauth().getTokenEndpointAuthMethod());
     }
 }
