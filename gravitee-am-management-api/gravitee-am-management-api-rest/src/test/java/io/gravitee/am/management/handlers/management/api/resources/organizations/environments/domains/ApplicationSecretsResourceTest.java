@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.service.model.NewClientSecret;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -101,6 +103,27 @@ public class ApplicationSecretsResourceTest extends JerseySpringTest {
         final Response response = secretsTarget().request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldListSecrets_withTheirAutomationKeyAndManager() {
+        ClientSecret secret = new ClientSecret();
+        secret.setId("secret-1");
+        secret.setName("ci-secret");
+        secret.setAutomationKey("ci-secret");
+        secret.setManagedBy(ManagedBy.AUTOMATION_API);
+        doReturn(Maybe.just(domain())).when(domainService).findById(DOMAIN_ID);
+        doReturn(Maybe.just(application())).when(applicationService).findById(DOMAIN_ID, APPLICATION_ID);
+        doReturn(Flowable.just(secret)).when(applicationSecretService).findAllByApplication(any(Application.class));
+
+        final Response response = secretsTarget().request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        String body = response.readEntity(String.class);
+        assertTrue(body.contains("\"key\":\"ci-secret\""), body);
+        // the Management API writes enums in lower case
+        assertTrue(body.contains("\"managedBy\":\"automation_api\""), body);
+        assertFalse(body.contains("automationKey"), body);
     }
 
     @Test
