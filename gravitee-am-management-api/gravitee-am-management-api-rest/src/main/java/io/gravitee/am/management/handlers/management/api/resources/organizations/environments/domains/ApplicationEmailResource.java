@@ -120,7 +120,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)
-                .andThen(emailTemplateService.delete(domain, email, getAuthenticatedUser()))
+                .andThen(emailTemplateService.delete(domain, application, email, getAuthenticatedUser()))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
