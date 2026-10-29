@@ -163,6 +163,34 @@ describe('DomainsPage', () => {
         expect(listDomainsByIds).toHaveBeenCalledWith('DEFAULT', 'env-1', ['d2']);
     });
 
+    it('moves back to the last pinned page when an unpin empties the current one', async () => {
+        const pinnedDomains: Domain[] = Array.from({ length: 11 }, (_, index) => ({
+            id: `p${index + 1}`,
+            hrid: `pinned-${index + 1}`,
+            name: `Pinned ${index + 1}`,
+            enabled: true,
+        }));
+        const pinnedIds = pinnedDomains.map(domain => domain.id);
+        vi.mocked(getUserPreferences).mockResolvedValue({ pinnedDomainIds: pinnedIds });
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+        vi.mocked(listDomainsByIds).mockImplementation(async (_org, _env, ids) => {
+            const data = pinnedDomains.filter(domain => ids.includes(domain.id));
+            return { data, currentPage: 0, totalCount: data.length };
+        });
+        vi.mocked(updateUserPreferences).mockImplementation(async preferences => preferences);
+
+        const harness = setupDomainsPageHarness();
+        await screen.findByRole('link', { name: 'Acme' });
+        await harness.togglePinnedOnly();
+        await screen.findByRole('link', { name: 'Pinned 1' });
+        await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+        await harness.openActions('Pinned 11');
+        await harness.choose('Unpin domain');
+
+        expect(await screen.findByRole('link', { name: 'Pinned 10' })).toBeInTheDocument();
+        expect(screen.queryByText('No domains match your search')).not.toBeInTheDocument();
+    });
+
     it('pins a domain in the user preferences', async () => {
         vi.mocked(getUserPreferences).mockResolvedValue({ defaultDomainId: 'd2', pinnedDomainIds: ['d2'] });
         vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });

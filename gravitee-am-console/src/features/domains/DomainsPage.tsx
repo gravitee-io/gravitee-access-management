@@ -75,7 +75,9 @@ export function DomainsPage() {
         const needle = query.toLowerCase();
         return pinnedIds.length === 0 ? [] : (pinned.data?.data ?? []).filter(domain => domain.name.toLowerCase().includes(needle));
     }, [pinned.data, pinnedIds.length, query]);
-    const rows = pinnedOnly ? pinnedRows.slice((page - 1) * pageSize, page * pageSize) : (paged.data?.data ?? []);
+    // An unpin can shrink the pinned list below the current page.
+    const currentPage = pinnedOnly ? Math.min(page, Math.max(1, Math.ceil(pinnedRows.length / pageSize))) : page;
+    const rows = pinnedOnly ? pinnedRows.slice((currentPage - 1) * pageSize, currentPage * pageSize) : (paged.data?.data ?? []);
     const totalCount = pinnedOnly ? pinnedRows.length : (paged.data?.totalCount ?? 0);
     const error = (pinnedOnly ? pinned.error : paged.error) ?? preferences.error;
     const isFirstUse = !pinnedOnly && paged.data?.totalCount === 0 && !query;
@@ -203,7 +205,7 @@ export function DomainsPage() {
                         />
                     }
                     pagination={{
-                        page,
+                        page: currentPage,
                         pageSize,
                         totalCount,
                         onPageChange: setPage,
