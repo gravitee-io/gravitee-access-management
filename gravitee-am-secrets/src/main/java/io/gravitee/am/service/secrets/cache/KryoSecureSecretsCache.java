@@ -77,9 +77,11 @@ public class KryoSecureSecretsCache implements SecretsCache {
     }
 
     private Secret deserialize(ByteBuffer byteBuffer) {
-        byte[] buf = new byte[byteBuffer.limit()];
-        byteBuffer.position(0);
-        byteBuffer.get(buf, 0, buf.length);
+        // read through an independent view: the cached buffer is shared and its position/limit are not thread-safe
+        final ByteBuffer view = byteBuffer.duplicate();
+        byte[] buf = new byte[view.limit()];
+        view.position(0);
+        view.get(buf, 0, buf.length);
         try (Input in = new Input(buf)) {
             return this.kryoPool.withKryo(kryo -> kryo.readObject(in, Secret.class));
         }
