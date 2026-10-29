@@ -37,14 +37,14 @@ export function EnvironmentPage() {
     const canCreate = has('domain_create');
     return (
         <Empty className="border border-border">
-            <EmptyHeader>
+            <EmptyHeader className="max-w-2xl">
                 <EmptyMedia variant="icon">
                     <GlobeIcon />
                 </EmptyMedia>
                 <EmptyTitle>No security domains</EmptyTitle>
                 <EmptyDescription>
-                    A security domain holds the applications, users and identity providers that share authentication and authorization
-                    settings.
+                    Identity and Access Management Platform will let you create applications, register users and manage identity providers
+                    to provide centralize authentication, authorization and user management features.
                 </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
