@@ -176,13 +176,13 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Override
     public Single<Email> update(Domain domain, String id, UpdateEmail updateEmail, User principal) {
         log.debug("Update an email {} for domain {}", id, domain.getId());
-        return update0(domain, id, updateEmail, principal);
+        return update0(domain, emailRepository.findById(ReferenceType.DOMAIN, domain.getId(), id), id, updateEmail, principal);
     }
 
     @Override
     public Single<Email> update(Domain domain, String client, String id, UpdateEmail updateEmail, User principal) {
         log.debug("Update an email {} for domain {} and client {}", id, domain.getId(), client);
-        return update0(domain, id, updateEmail, principal);
+        return update0(domain, findByIdAndClient(domain.getId(), client, id), id, updateEmail, principal);
     }
 
     @Override
@@ -195,6 +195,21 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     public Completable delete(String domain, String emailId, User principal) {
         log.debug("Delete email {} for domain {}", emailId, domain);
         return delete0(emailRepository.findById(ReferenceType.DOMAIN, domain, emailId), emailId, principal);
+    }
+
+    @Override
+    public Completable delete(String domain, String client, String emailId, User principal) {
+        log.debug("Delete email {} for domain {} and client {}", emailId, domain, client);
+        return delete0(findByIdAndClient(domain, client, emailId), emailId, principal);
+    }
+
+    /**
+     * Look up an email template of the given application only: a domain-level template or a template
+     * of another application is reported as not found.
+     */
+    private Maybe<Email> findByIdAndClient(String domain, String client, String id) {
+        return emailRepository.findById(ReferenceType.DOMAIN, domain, id)
+                .filter(email -> client != null && client.equals(email.getClient()));
     }
 
     private Completable delete0(Maybe<Email> emailLookup, String emailId, User principal) {
@@ -259,8 +274,8 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
     }
 
-    private Single<Email> update0(Domain domain, String id, UpdateEmail updateEmail, User principal) {
-        return emailRepository.findById(ReferenceType.DOMAIN, domain.getId(), id)
+    private Single<Email> update0(Domain domain, Maybe<Email> emailLookup, String id, UpdateEmail updateEmail, User principal) {
+        return emailLookup
                 .switchIfEmpty(Single.error(new EmailNotFoundException(id)))
                 .flatMap(oldEmail -> {
                     Email emailToUpdate = new Email(oldEmail);

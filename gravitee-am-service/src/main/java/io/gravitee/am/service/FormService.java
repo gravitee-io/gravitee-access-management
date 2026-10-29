@@ -74,6 +74,8 @@ public interface FormService {
 
     Completable delete(String domain, String pageId, User principal);
 
+    Completable delete(String domain, String client, String pageId, User principal);
+
     default Single<Form> create(String domain, NewForm form) {
         return create(domain, form, null);
     }
