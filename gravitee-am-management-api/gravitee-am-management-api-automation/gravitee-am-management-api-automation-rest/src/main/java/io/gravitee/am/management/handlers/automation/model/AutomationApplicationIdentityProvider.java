@@ -36,8 +36,8 @@ import lombok.Setter;
 public class AutomationApplicationIdentityProvider {
 
     @NotNull
-    @Schema(description = "Reference to an identity provider of the domain: its key, or id:<uuid> for one the " +
-            "Automation API does not manage. The reference is not checked against existing identity providers: " +
+    @Schema(description = "Reference to an identity provider of the domain: its key, or id:<uuid> when the " +
+            "reference was not set by the Automation API. The reference is not checked against existing identity providers: " +
             "it can name one created after the application or since deleted, and resolves whenever that identity " +
             "provider exists.",
             example = "customer-users")

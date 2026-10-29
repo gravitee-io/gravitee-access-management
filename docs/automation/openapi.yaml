@@ -2228,11 +2228,11 @@ components:
           description: Whether resetting a password also completes a pending registration.
         defaultIdentityProviderForRegistration:
           type: string
-          description: "Key of an identity provider managed under this domain, used\
-            \ as the default for user registration. The reference is not checked against\
+          description: "Default identity provider for user registration: the key of\
+            \ an identity provider of the domain, or id:<uuid> when the reference\
+            \ was not set by the Automation API. The reference is not checked against\
             \ existing identity providers: it can name one created after the domain\
-            \ or since deleted, and resolves whenever an identity provider with that\
-            \ key exists."
+            \ or since deleted, and resolves whenever that identity provider exists."
           example: users-idp
         deletePasswordlessDevicesAfterResetPassword:
           type: boolean
@@ -2478,10 +2478,10 @@ components:
         identity:
           type: string
           description: "Reference to an identity provider of the domain: its key,\
-            \ or id:<uuid> for one the Automation API does not manage. The reference\
-            \ is not checked against existing identity providers: it can name one\
-            \ created after the application or since deleted, and resolves whenever\
-            \ that identity provider exists."
+            \ or id:<uuid> when the reference was not set by the Automation API. The\
+            \ reference is not checked against existing identity providers: it can\
+            \ name one created after the application or since deleted, and resolves\
+            \ whenever that identity provider exists."
           example: customer-users
         priority:
           type: integer
@@ -3061,11 +3061,11 @@ components:
       properties:
         fallbackCertificate:
           type: string
-          description: "Key of a certificate managed under this domain, used as the\
-            \ fallback certificate when a client does not specify one. The reference\
-            \ is not checked against existing certificates: it can name one created\
-            \ after the domain or since deleted, and resolves whenever a certificate\
-            \ with that key exists."
+          description: "Fallback certificate used when a client does not specify one:\
+            \ the key of a certificate of the domain, or id:<uuid> when the reference\
+            \ was not set by the Automation API. The reference is not checked against\
+            \ existing certificates: it can name one created after the domain or since\
+            \ deleted, and resolves whenever that certificate exists."
           example: default
       title: Certificate settings
     AutomationChallengeSettings:
@@ -3797,10 +3797,11 @@ components:
       properties:
         certificate:
           type: string
-          description: "Key of a certificate managed under this domain, used to sign\
-            \ SAML responses. The reference is not checked against existing certificates:\
-            \ it can name one created after the domain or since deleted, and resolves\
-            \ whenever a certificate with that key exists."
+          description: "Certificate signing SAML responses: the key of a certificate\
+            \ of the domain, or id:<uuid> when the reference was not set by the Automation\
+            \ API. The reference is not checked against existing certificates: it\
+            \ can name one created after the domain or since deleted, and resolves\
+            \ whenever that certificate exists."
           example: signing-cert
         enabled:
           type: boolean

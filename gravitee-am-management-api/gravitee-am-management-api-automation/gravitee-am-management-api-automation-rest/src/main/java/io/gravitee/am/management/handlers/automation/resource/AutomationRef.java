@@ -68,6 +68,18 @@ public sealed interface AutomationRef permits AutomationRef.KeyRef, AutomationRe
     }
 
     /**
+     * The stored reference as given, or {@code id:<uuid>} when the Automation API did not set it (a
+     * resource configured outside the Automation API has no stored reference).
+     */
+    static String toReference(String reference, String id) {
+        return reference != null ? reference : toIdReference(id);
+    }
+
+    static String toIdReference(String id) {
+        return id != null ? new IdRef(id).raw() : null;
+    }
+
+    /**
      * Parse a reference token. A token prefixed with {@code id:} is an {@link IdRef} (the remainder is
      * used verbatim). Any other token is a {@link KeyRef} and must satisfy the automation key pattern.
      *

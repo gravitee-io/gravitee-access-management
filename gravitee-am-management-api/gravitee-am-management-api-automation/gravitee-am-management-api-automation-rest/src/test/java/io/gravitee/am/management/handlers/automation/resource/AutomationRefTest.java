@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -90,5 +91,21 @@ class AutomationRefTest {
     void rejects_a_key_exceeding_the_length_bound() {
         String tooLong = "a".repeat(AutomationRef.MAX_KEY_LENGTH + 1);
         assertThrows(InvalidParameterException.class, () -> AutomationRef.parse(tooLong));
+    }
+
+    @Test
+    void returns_a_stored_reference_as_given() {
+        assertEquals("saml-signing", AutomationRef.toReference("saml-signing", "94157683-f481-45a9-9576-83f48145a9a0"));
+    }
+
+    @Test
+    void returns_an_id_reference_when_no_reference_is_stored() {
+        assertEquals("id:94157683-f481-45a9-9576-83f48145a9a0",
+                AutomationRef.toReference(null, "94157683-f481-45a9-9576-83f48145a9a0"));
+    }
+
+    @Test
+    void returns_nothing_when_neither_a_reference_nor_an_id_is_stored() {
+        assertNull(AutomationRef.toReference(null, null));
     }
 }
