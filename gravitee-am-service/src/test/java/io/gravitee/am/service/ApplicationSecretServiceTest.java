@@ -18,7 +18,6 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
-import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
@@ -33,7 +32,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.reporter.api.audit.model.Audit;
-import io.gravitee.am.repository.Scope;
 import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
@@ -94,9 +92,6 @@ class ApplicationSecretServiceTest {
 
     @Spy
     private ApplicationSecretConfig applicationSecretConfig = new ApplicationSecretConfig("BCrypt", mock(ConfigurableEnvironment.class));
-
-    @Mock
-    private RepositoriesEnvironment repositoriesEnvironment;
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -412,8 +407,7 @@ class ApplicationSecretServiceTest {
     }
 
     @Test
-    public void shouldNotValidateApply_jdbcKeyLongerThan64Characters() {
-        useJdbc();
+    public void shouldNotValidateApply_keyLongerThan64Characters() {
 
         applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("k".repeat(65)), VALID_SECRET).test()
                 .awaitDone(10, TimeUnit.SECONDS)
@@ -421,9 +415,8 @@ class ApplicationSecretServiceTest {
     }
 
     @Test
-    public void shouldNotValidateApply_jdbcPlainValueLongerThan374Characters() {
+    public void shouldNotValidateApply_plainValueLongerThan374Characters() {
         useAlgorithm("None");
-        useJdbc();
 
         applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("ci-secret"), "a".repeat(375)).test()
                 .awaitDone(10, TimeUnit.SECONDS)
@@ -431,8 +424,7 @@ class ApplicationSecretServiceTest {
     }
 
     @Test
-    public void shouldValidateApply_jdbcKeyOf64Characters() {
-        useJdbc();
+    public void shouldValidateApply_keyOf64Characters() {
 
         applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("k".repeat(64)), VALID_SECRET).test()
                 .awaitDone(10, TimeUnit.SECONDS)
@@ -440,20 +432,10 @@ class ApplicationSecretServiceTest {
     }
 
     @Test
-    public void shouldValidateApply_jdbcPlainValueOf374Characters() {
+    public void shouldValidateApply_plainValueOf374Characters() {
         useAlgorithm("None");
-        useJdbc();
 
         applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("ci-secret"), "a".repeat(374)).test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertValueCount(1);
-    }
-
-    @Test
-    public void shouldValidateApply_mongoPlainValueLongerThan374Characters() {
-        useAlgorithm("None");
-
-        applicationSecretService.validateApply(DOMAIN, applicationWithSecret(1), automationSecret("ci-secret"), "a".repeat(375)).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertValueCount(1);
     }
@@ -726,10 +708,6 @@ class ApplicationSecretServiceTest {
 
     private void useAlgorithm(String algorithm) {
         ReflectionTestUtils.setField(applicationSecretService, "applicationSecretConfig", new ApplicationSecretConfig(algorithm, mock(ConfigurableEnvironment.class)));
-    }
-
-    private void useJdbc() {
-        when(repositoriesEnvironment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type")).thenReturn("jdbc");
     }
 
     private static SecretExpirationSettings expiration(long seconds) {

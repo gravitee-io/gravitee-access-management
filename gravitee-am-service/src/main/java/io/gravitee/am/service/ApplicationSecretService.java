@@ -27,6 +27,10 @@ import io.reactivex.rxjava3.core.Single;
 
 public interface ApplicationSecretService {
 
+    // the widths of the JDBC columns, applied on every repository so that a definition is portable
+    int KEY_MAX_LENGTH = 64;
+    int PLAIN_VALUE_MAX_LENGTH = 374;
+
     Flowable<ClientSecret> findAllByApplication(Application application);
 
     Single<Application> renew(Domain domain, Application application, String id, User principal);
