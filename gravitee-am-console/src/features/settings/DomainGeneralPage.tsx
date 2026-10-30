@@ -206,11 +206,7 @@ export function DomainGeneralPage() {
                                 aria-describedby={form.name === '' ? 'domain-name-error' : undefined}
                                 onChange={event => set({ name: event.target.value })}
                             />
-                            {form.name === '' ? (
-                                <FieldError id="domain-name-error">A name is required.</FieldError>
-                            ) : (
-                                <FieldDescription>Your domain&apos;s name.</FieldDescription>
-                            )}
+                            {form.name === '' && <FieldError id="domain-name-error">A name is required.</FieldError>}
                         </Field>
                         {(dataPlanes.data?.length ?? 0) > 1 && (
                             <Field>
@@ -228,16 +224,7 @@ export function DomainGeneralPage() {
                                 disabled={!canEdit}
                                 onChange={event => set({ description: event.target.value })}
                             />
-                            <FieldDescription>Your domain&apos;s description.</FieldDescription>
                         </Field>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Status</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-5">
                         <SettingToggle
                             id="domain-enabled"
                             label="Enable domain"
