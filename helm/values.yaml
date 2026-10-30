@@ -136,6 +136,14 @@ smtp:
 #    # Gmail: https://mail.google.com/
 #    # Microsoft 365: https://outlook.office365.com/SMTP.Send offline_access
 #    scope: https://mail.google.com/
+  # Stage the emails of bulk user provisioning (SCIM on the Gateway, bulk create on the Management API)
+  # and send them in batches
+#  bulk:
+#    enabled: false
+#    batch: 100
+#    attempts: 2
+#    period: 5
+#    leaseDuration: 600
 
 mongo:
   # uri: mongodb://mongo-mongodb-replicaset:27017/gravitee?connectTimeoutMS=30000

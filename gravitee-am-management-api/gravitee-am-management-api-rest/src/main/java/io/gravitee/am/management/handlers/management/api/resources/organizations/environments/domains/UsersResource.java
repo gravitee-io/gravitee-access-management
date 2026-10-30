@@ -29,6 +29,7 @@ import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
+import io.gravitee.am.management.service.exception.EmailStagingException;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.ManagementUserService;
@@ -235,17 +236,17 @@ public class UsersResource extends AbstractResource {
     private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
         return switch (bulkRequest.action()) {
             case CREATE ->
-                    bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.create(domain, newUser, authenticatedUser)
-                            .map(BulkOperationResult::created));
+                    bulkRequest.processOneByOne(NewUser.class, objectMapper, newUser -> userService.createDeferringRegistrationEmail(domain, newUser, authenticatedUser)
+                            .map(BulkOperationResult::created), EmailStagingException.class::isInstance);
             case DELETE ->
                     bulkRequest.processOneByOne(String.class, objectMapper, id -> userService.delete(domain, id, authenticatedUser)
                             .map(User::getId)
-                            .map(BulkOperationResult::ok)
+                            .map(BulkOperationResult::ok), BulkRequest.NEVER_ABORT
                     );
             case UPDATE ->
                     bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, objectMapper, updated -> userService.update(domain, updated.getId(), updated, authenticatedUser)
                             .map(UserEntity::new)
-                            .map(BulkOperationResult::ok)
+                            .map(BulkOperationResult::ok), BulkRequest.NEVER_ABORT
                     );
         };
     }

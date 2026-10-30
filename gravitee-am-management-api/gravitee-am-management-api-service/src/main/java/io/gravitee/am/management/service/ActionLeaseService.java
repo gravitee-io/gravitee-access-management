@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.ActionLease;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 
 import java.time.Duration;
@@ -34,4 +35,6 @@ public interface ActionLeaseService {
      * @return a Maybe containing the acquired ActionLease, or empty if the lease is held by another node
      */
     Maybe<ActionLease> acquireLease(String action, Duration duration);
+
+    Completable releaseLease(String action);
 }

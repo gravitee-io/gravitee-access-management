@@ -23,8 +23,8 @@ import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
-import io.gravitee.am.repository.gateway.api.ActionLeaseRepository;
-import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
+import io.gravitee.am.repository.common.ActionLeaseRepository;
+import io.gravitee.am.repository.common.EmailStagingRepository;
 import io.gravitee.node.api.Node;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -54,6 +54,7 @@ public class EmailStagingServiceImpl implements EmailStagingService, Initializin
     private Domain domain;
 
     @Autowired
+    @Qualifier("gatewayEmailStagingRepository")
     private EmailStagingRepository emailStagingRepository;
 
     @Autowired

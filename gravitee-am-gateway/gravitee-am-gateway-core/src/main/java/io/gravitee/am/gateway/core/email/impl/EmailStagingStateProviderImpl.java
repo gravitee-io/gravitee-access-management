@@ -17,12 +17,13 @@ package io.gravitee.am.gateway.core.email.impl;
 
 import io.gravitee.am.gateway.core.email.EmailStagingStateProvider;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
+import io.gravitee.am.repository.common.EmailStagingRepository;
 import lombok.CustomLog;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 
@@ -52,6 +53,7 @@ public class EmailStagingStateProviderImpl implements EmailStagingStateProvider,
 
     @Autowired
     @Lazy
+    @Qualifier("gatewayEmailStagingRepository")
     private EmailStagingRepository emailStagingRepository;
 
     private ScheduledExecutorService scheduler;

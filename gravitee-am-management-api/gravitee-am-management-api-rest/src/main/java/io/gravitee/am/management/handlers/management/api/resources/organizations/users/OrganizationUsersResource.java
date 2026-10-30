@@ -236,19 +236,19 @@ public class OrganizationUsersResource extends AbstractResource {
             case CREATE ->
                     bulkRequest.processOneByOne(NewOrganizationUser.class, mapper, user -> organizationUserService.createGraviteeUser(organization, user, authenticatedUser)
                             .map(UserEntity::new)
-                            .map(BulkOperationResult::created)
+                            .map(BulkOperationResult::created), BulkRequest.NEVER_ABORT
                     );
             case DELETE ->
                     bulkRequest.processOneByOne(String.class, mapper, id -> permissionService.checkCanManageUser(authenticatedUser, organization.getId(), id)
                             .andThen(organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser))
                             .map(User::getId)
-                            .map(BulkOperationResult::ok)
+                            .map(BulkOperationResult::ok), BulkRequest.NEVER_ABORT
                     );
             case UPDATE ->
                     bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, mapper, updateUser -> permissionService.checkCanManageUser(authenticatedUser, organization.getId(), updateUser.getId())
                             .andThen(organizationUserService.update(ReferenceType.ORGANIZATION, organization.getId(), updateUser.getId(), updateUser, authenticatedUser))
                             .map(UserEntity::new)
-                            .map(BulkOperationResult::ok)
+                            .map(BulkOperationResult::ok), BulkRequest.NEVER_ABORT
                     );
         };
 
