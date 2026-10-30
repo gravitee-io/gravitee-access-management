@@ -161,6 +161,14 @@
         "roles": ["rt1ri1"],
         "scopes": ["d1"]
       }
+    },
+    {
+      "id": "cp-email-staging",
+      "create": {
+        "cp_email_staging": [
+          { "name": "rt1ri1u1", "key": { "referenceType": 1, "referenceId": 1, "updatedAt": 1 } }
+        ]
+      }
     }
   ]
 }

@@ -29,6 +29,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.management.service.exception.EmailStagingException;
 import io.gravitee.am.management.service.impl.ManagementUserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Credential;
@@ -134,6 +135,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -211,6 +213,9 @@ public class ManagementUserServiceTest {
 
     @Mock
     private UserActivityManagementService userActivityManagementService;
+
+    @Mock
+    private EmailStagingService emailStagingService;
 
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
@@ -1964,5 +1969,128 @@ public class ManagementUserServiceTest {
         testObserver.assertNoErrors();
 
         verify(userRepository).deleteByReference(DOMAIN.asReference());
+    }
+
+    @Test
+    void shouldStageRegistrationEmailWhenBulkEmailEnabled() {
+        enableBulkEmail(true);
+        var client = givenPreRegistration();
+        when(emailStagingService.push(any(), any(), any())).thenReturn(Completable.complete());
+
+        userService.create(preRegistrationDomain(), preRegisteredNewUser(), null, true).test().assertComplete();
+
+        verify(emailStagingService).push(any(User.class), eq(client), eq(Template.REGISTRATION_CONFIRMATION));
+        verify(emailService, never()).send(any(), any(), any(), any());
+        verify(auditService).report(argThat(builder -> EventType.REGISTRATION_CONFIRMATION_REQUESTED.equals(builder.build(new ObjectMapper()).getType())));
+    }
+
+    @Test
+    void shouldNotStageRegistrationEmailWhenUserHasNoEmail() {
+        enableBulkEmail(true);
+        givenPreRegistration(null);
+
+        userService.create(preRegistrationDomain(), preRegisteredNewUser(), null, true).test().assertComplete();
+
+        verify(emailStagingService, never()).push(any(), any(), any());
+        verify(emailService, never()).send(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldFailWithEmailStagingExceptionWhenStagingFails() {
+        enableBulkEmail(true);
+        givenPreRegistration();
+        when(emailStagingService.push(any(), any(), any())).thenReturn(Completable.error(new IllegalStateException("db down")));
+
+        userService.create(preRegistrationDomain(), preRegisteredNewUser(), null, true).test().assertError(EmailStagingException.class);
+
+        verify(emailService, never()).send(any(), any(), any(), any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(new ObjectMapper());
+            return EventType.REGISTRATION_CONFIRMATION_REQUESTED.equals(audit.getType()) && Status.FAILURE.equals(audit.getOutcome().getStatus());
+        }));
+    }
+
+    @Test
+    void shouldSendRegistrationEmailWhenBulkEmailDisabled() throws InterruptedException {
+        enableBulkEmail(false);
+        givenPreRegistration();
+        var emailLatch = givenEmailSent();
+
+        userService.create(preRegistrationDomain(), preRegisteredNewUser(), null, true).test().assertComplete();
+
+        assertTrue(emailLatch.await(5, TimeUnit.SECONDS));
+        verify(emailStagingService, never()).push(any(), any(), any());
+    }
+
+    @Test
+    void shouldSendRegistrationEmailWhenStagingNotRequested() throws InterruptedException {
+        enableBulkEmail(true);
+        givenPreRegistration();
+        var emailLatch = givenEmailSent();
+
+        userService.create(preRegistrationDomain(), preRegisteredNewUser(), null).test().assertComplete();
+
+        assertTrue(emailLatch.await(5, TimeUnit.SECONDS));
+        verify(emailStagingService, never()).push(any(), any(), any());
+    }
+
+    private void enableBulkEmail(boolean bulkEnabled) {
+        setField(userService, "emailEnabled", true);
+        setField(userService, "bulkEmailEnabled", bulkEnabled);
+    }
+
+    private Application givenPreRegistration() {
+        return givenPreRegistration("john@unittest.com");
+    }
+
+    private Application givenPreRegistration(String email) {
+        var preRegisteredUser = new User();
+        preRegisteredUser.setId("userId");
+        preRegisteredUser.setEmail(email);
+        preRegisteredUser.setPreRegistration(true);
+        preRegisteredUser.setReferenceType(ReferenceType.DOMAIN);
+        preRegisteredUser.setReferenceId("domain");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        doReturn(Single.just(new DefaultUser(USERNAME))).when(userProvider).create(any());
+
+        var client = new Application();
+        client.setId("client");
+        client.setDomain("domain");
+        when(passwordPolicyService.retrievePasswordPolicy(any(), any())).thenReturn(Maybe.empty());
+        lenient().when(domainService.findById("domain")).thenReturn(Maybe.just(preRegistrationDomain()));
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        lenient().when(applicationService.findById("client")).thenReturn(Maybe.just(client));
+        when(userRepository.create(any())).thenReturn(Single.just(preRegisteredUser));
+        lenient().when(userRepository.findById(any(), any())).thenReturn(Maybe.just(preRegisteredUser));
+        return client;
+    }
+
+    private CountDownLatch givenEmailSent() {
+        var emailLatch = new CountDownLatch(1);
+        doAnswer(_ -> {
+            emailLatch.countDown();
+            return Maybe.empty();
+        }).when(emailService).send(any(Domain.class), any(), eq(Template.REGISTRATION_CONFIRMATION), any(User.class));
+        return emailLatch;
+    }
+
+    private static Domain preRegistrationDomain() {
+        var accountSettings = new AccountSettings();
+        accountSettings.setDynamicUserRegistration(false);
+        var domain = new Domain();
+        domain.setId("domain");
+        domain.setAccountSettings(accountSettings);
+        return domain;
+    }
+
+    private static NewUser preRegisteredNewUser() {
+        var newUser = new NewUser();
+        newUser.setUsername(USERNAME);
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPreRegistration(true);
+        return newUser;
     }
 }

@@ -30,12 +30,14 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
+import io.gravitee.am.management.service.EmailStagingService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.management.service.exception.EmailStagingException;
 import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.model.Application;
@@ -119,6 +121,15 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
+
+    @Value("${email.enabled:false}")
+    private boolean emailEnabled;
+
+    @Value("${email.bulk.enabled:false}")
+    private boolean bulkEmailEnabled;
+
+    @Autowired
+    private EmailStagingService emailStagingService;
 
     @Autowired
     private EmailService emailService;
@@ -204,6 +215,11 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @Override
     public Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+        return create(domain, newUser, principal, false);
+    }
+
+    @Override
+    public Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal, boolean stageRegistrationEmail) {
         if (StringUtils.isBlank(newUser.getUsername())) {
             return Single.error(() -> new UserInvalidException("Field [username] is required"));
         }
@@ -315,6 +331,9 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                                             // end pre-registration user if required
                                                             AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                                                             if (TRUE.equals(newUser.isPreRegistration()) && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
+                                                                if (stageRegistrationEmail && emailEnabled && bulkEmailEnabled) {
+                                                                    return stageRegistrationConfirmation(domain, client, user, principal).toSingleDefault(user);
+                                                                }
                                                                 return sendRegistrationConfirmation(domain, user.getId(), principal).toSingleDefault(user);
                                                             } else {
                                                                 createPasswordHistory(domain, client, user, rawPassword, principal, identityProvider.orElse(null));
@@ -543,6 +562,24 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                     .onErrorComplete()
                                     .ignoreElement();
                         }));
+    }
+
+    private Completable stageRegistrationConfirmation(Domain domain, Application client, User user, io.gravitee.am.identityprovider.api.User principal) {
+        if (isNullOrEmpty(user.getEmail())) {
+            log.warn("User {} has no email, registration confirmation will not be staged", user.getId());
+            return Completable.complete();
+        }
+        var template = getTemplate(domain, Optional.ofNullable(client), user);
+        if (template == Template.ERROR) {
+            log.warn("Cannot find template for provided case. Email will not be send.");
+            return Completable.complete();
+        }
+        return emailStagingService.push(user, client, template)
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).user(user)))
+                .onErrorResumeNext(ex -> {
+                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(resoleEventType(template)).reference(Reference.domain(domain.getId())).throwable(ex));
+                    return Completable.error(new EmailStagingException(user.getId(), ex));
+                });
     }
 
     @Override

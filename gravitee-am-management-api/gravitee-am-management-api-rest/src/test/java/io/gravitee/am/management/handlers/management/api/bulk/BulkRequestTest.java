@@ -25,6 +25,8 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -124,6 +126,28 @@ class BulkRequestTest {
 
         // even with out-of-order processing, results should be returned in the input order
         AssertionsForInterfaceTypes.assertThat(actualResults).containsExactlyElementsOf(expectedResults);
+    }
+
+    @Test
+    void shouldStopProcessingWhenItemFailsWithAbortingError() {
+        var processed = new ArrayList<Integer>();
+
+        var response = new BulkRequest<>(BulkRequest.Action.CREATE, null, List.of(1, 2, 3, 4))
+                .processOneByOne(i -> {
+                    processed.add(i);
+                    if (i == 1) {
+                        return Single.error(new IllegalArgumentException("regular error"));
+                    }
+                    if (i == 2) {
+                        return Single.error(new IllegalStateException("aborting error"));
+                    }
+                    return Single.just(BulkOperationResult.ok("ok " + i));
+                }, IllegalStateException.class::isInstance)
+                .blockingGet();
+
+        @SuppressWarnings("unchecked") var results = ((BulkResponse<String>) response.getEntity()).getResults();
+        AssertionsForInterfaceTypes.assertThat(processed).containsExactly(1, 2);
+        AssertionsForInterfaceTypes.assertThat(results).hasSize(2).allSatisfy(result -> assertThat(result.httpStatus()).isEqualTo(Response.Status.BAD_REQUEST));
     }
 
     private static long randomDelay() {
