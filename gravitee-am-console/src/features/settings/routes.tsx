@@ -20,9 +20,10 @@ import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
 import { entrypointRoutes } from '../entrypoints/routes';
 import { loginRoutes } from '../login/routes';
+import { webProtectionRoutes } from '../web-protection/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
-const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login']);
+const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login', 'web-protection']);
 
 export const domainSettingsRoutes = (
     <Route
@@ -44,6 +45,7 @@ export const domainSettingsRoutes = (
         />
         {entrypointRoutes}
         {loginRoutes}
+        {webProtectionRoutes}
         {DOMAIN_SETTINGS_NAV_GROUPS.flatMap(group => group.items)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (
