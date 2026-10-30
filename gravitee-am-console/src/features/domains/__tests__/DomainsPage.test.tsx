@@ -52,17 +52,19 @@ function setupDomainsPageHarness(permissions: string[] = []) {
             </PermissionScope>
         </QueryClientProvider>,
     );
-    const menuItem = (name: string) => screen.getByRole('menuitem', { name });
+    const pinButton = (domainName: string) => screen.getByRole('button', { name: `Pin ${domainName}` });
+    const defaultButton = (domainName: string) => screen.getByRole('button', { name: `Default domain ${domainName}` });
 
     return {
         unmount: view.unmount,
         search: async (text: string) => userEvent.type(await screen.findByRole('searchbox', { name: 'Search domains' }), text),
         togglePinnedOnly: () => userEvent.click(screen.getByRole('switch', { name: 'Pinned only' })),
-        openActions: async (domainName: string) =>
-            userEvent.click(await screen.findByRole('button', { name: `Actions for ${domainName}` })),
-        choose: (name: string) => userEvent.click(menuItem(name)),
+        togglePin: async (domainName: string) => userEvent.click(await screen.findByRole('button', { name: `Pin ${domainName}` })),
+        toggleDefault: async (domainName: string) =>
+            userEvent.click(await screen.findByRole('button', { name: `Default domain ${domainName}` })),
         clearFilters: () => userEvent.click(screen.getByRole('button', { name: 'Clear filters' })),
-        menuItem,
+        pinButton,
+        defaultButton,
         searchField: () => screen.getByRole('searchbox', { name: 'Search domains' }),
         pinnedOnlySwitch: () => screen.getByRole('switch', { name: 'Pinned only' }),
         createDomainLink: () => screen.queryByRole('link', { name: 'Create domain' }),
@@ -183,8 +185,7 @@ describe('DomainsPage', () => {
         await harness.togglePinnedOnly();
         await screen.findByRole('link', { name: 'Pinned 1' });
         await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
-        await harness.openActions('Pinned 11');
-        await harness.choose('Unpin domain');
+        await harness.togglePin('Pinned 11');
 
         expect(await screen.findByRole('link', { name: 'Pinned 10' })).toBeInTheDocument();
         expect(screen.queryByText('No domains match your search')).not.toBeInTheDocument();
@@ -196,11 +197,11 @@ describe('DomainsPage', () => {
         vi.mocked(updateUserPreferences).mockImplementation(async preferences => preferences);
 
         const harness = setupDomainsPageHarness();
-        await harness.openActions('Acme');
-        await harness.choose('Pin domain');
+        await harness.togglePin('Acme');
 
         await waitFor(() => expect(updateUserPreferences).toHaveBeenCalledWith({ defaultDomainId: 'd2', pinnedDomainIds: ['d2', 'd1'] }));
         expect(toast.success).toHaveBeenCalledWith('Acme pinned');
+        expect(harness.pinButton('Acme')).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('disables the preference actions until the preferences load, so a save cannot drop them', async () => {
@@ -208,11 +209,10 @@ describe('DomainsPage', () => {
         vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
 
         const harness = setupDomainsPageHarness();
-        await harness.openActions('Acme');
+        await screen.findByRole('link', { name: 'Acme' });
 
-        expect(harness.menuItem('Pin domain')).toHaveAttribute('aria-disabled', 'true');
-        expect(harness.menuItem('Set as default domain')).toHaveAttribute('aria-disabled', 'true');
-        expect(updateUserPreferences).not.toHaveBeenCalled();
+        expect(harness.pinButton('Acme')).toBeDisabled();
+        expect(harness.defaultButton('Acme')).toBeDisabled();
     });
 
     it('disables the preference actions while a save runs', async () => {
@@ -220,12 +220,10 @@ describe('DomainsPage', () => {
         vi.mocked(updateUserPreferences).mockReturnValue(new Promise(() => {}));
 
         const harness = setupDomainsPageHarness();
-        await harness.openActions('Acme');
-        await harness.choose('Pin domain');
-        await harness.openActions('Acme');
+        await harness.togglePin('Acme');
 
-        expect(harness.menuItem('Pin domain')).toHaveAttribute('aria-disabled', 'true');
-        expect(harness.menuItem('Set as default domain')).toHaveAttribute('aria-disabled', 'true');
+        await waitFor(() => expect(harness.pinButton('Acme')).toBeDisabled());
+        expect(harness.defaultButton('Acme')).toBeDisabled();
     });
 
     it('sets the default domain for the current environment, and unsets it', async () => {
@@ -233,14 +231,12 @@ describe('DomainsPage', () => {
         vi.mocked(updateUserPreferences).mockImplementation(async preferences => preferences);
 
         const harness = setupDomainsPageHarness();
-        await harness.openActions('Acme');
-        await harness.choose('Set as default domain');
+        await harness.toggleDefault('Acme');
 
         await waitFor(() => expect(updateUserPreferences).toHaveBeenCalledWith({ defaultDomainId: 'd1', defaultEnvironmentId: 'env-1' }));
-        expect(await screen.findByLabelText('Default domain')).toBeInTheDocument();
+        await waitFor(() => expect(harness.defaultButton('Acme')).toHaveAttribute('aria-pressed', 'true'));
 
-        await harness.openActions('Acme');
-        await harness.choose('Unset default domain');
+        await harness.toggleDefault('Acme');
 
         await waitFor(() => expect(updateUserPreferences).toHaveBeenLastCalledWith({ defaultDomainId: null, defaultEnvironmentId: null }));
     });

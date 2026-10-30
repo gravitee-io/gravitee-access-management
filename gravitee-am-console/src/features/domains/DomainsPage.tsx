@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { BadgeCell, Button, DataTable, DataTableEmptyState, DateCell, Label, Switch } from '@gravitee/graphene-core';
-import { GlobeIcon, PlusIcon, SearchIcon, StarIcon } from '@gravitee/graphene-core/icons';
+import { GlobeIcon, PlusIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
@@ -27,7 +27,7 @@ import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentEnvironment } from '../../lib/session/environment';
 import { Can, usePermissions } from '../../lib/session/permissions';
 import { useSession } from '../../lib/session/session';
-import { DomainActionsMenu } from './DomainActionsMenu';
+import { DomainPreferenceToggles } from './DomainPreferenceToggles';
 import { useDomainPreferences } from './useDomainPreferences';
 
 export function DomainsPage() {
@@ -87,14 +87,9 @@ export function DomainsPage() {
             header: 'Name',
             cell: ({ row }) => (
                 <div className="flex flex-col">
-                    <span className="flex items-center gap-1.5">
-                        <Link to={`${listPath}/${row.original.hrid}`} className="font-medium hover:underline">
-                            {row.original.name}
-                        </Link>
-                        {defaultDomainId === row.original.id && (
-                            <StarIcon className="size-3.5 fill-current text-primary" aria-label="Default domain" />
-                        )}
-                    </span>
+                    <Link to={`${listPath}/${row.original.hrid}`} className="self-start font-medium hover:underline">
+                        {row.original.name}
+                    </Link>
                     {row.original.description && <span className="text-sm text-muted-foreground">{row.original.description}</span>}
                 </div>
             ),
@@ -111,11 +106,11 @@ export function DomainsPage() {
             cell: ({ row }) => <DateCell value={row.original.updatedAt ? new Date(row.original.updatedAt) : null} />,
         },
         {
-            id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            id: 'preferences',
+            header: () => <span className="sr-only">Preferences</span>,
             enableHiding: false,
             cell: ({ row }) => (
-                <DomainActionsMenu
+                <DomainPreferenceToggles
                     name={row.original.name}
                     isDefault={defaultDomainId === row.original.id}
                     isPinned={pinnedIds.includes(row.original.id)}
@@ -188,7 +183,7 @@ export function DomainsPage() {
                             title={pinnedOnly && pinnedIds.length === 0 ? 'No pinned domains' : 'No domains match your search'}
                             description={
                                 pinnedOnly && pinnedIds.length === 0
-                                    ? 'Pin a domain from its actions menu to find it here.'
+                                    ? 'Pin a domain to find it here.'
                                     : 'Try another name, or clear the filters.'
                             }
                             action={
