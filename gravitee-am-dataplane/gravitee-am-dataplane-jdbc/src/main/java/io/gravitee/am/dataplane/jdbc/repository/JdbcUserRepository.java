@@ -483,7 +483,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("search({}, {}, {}, {})", reference,  query, page, size);
 
         boolean wildcardSearch = query.contains("*");
-        String wildcardValue = query.replaceAll("\\*+", "%");
+        String wildcardValue = databaseDialectHelper.toWildcardLikePattern(query);
 
         String search = this.databaseDialectHelper.buildSearchUserQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountUserQuery(wildcardSearch);

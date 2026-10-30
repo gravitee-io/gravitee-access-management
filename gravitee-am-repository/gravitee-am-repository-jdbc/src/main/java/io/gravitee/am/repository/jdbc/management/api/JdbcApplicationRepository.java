@@ -254,9 +254,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("search({}, {}, {}, {}, {})", domain, query, type, page, size);
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+        String escapedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(query) : query;
 
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, type != null, page, size, COL_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, false, type != null);
@@ -291,9 +289,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        // Escape LIKE special characters (e.g., [ and ] for SQL Server)
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+        String escapedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(query) : query;
 
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, type != null, page, size, COL_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, true, type != null);
@@ -363,8 +359,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         }
 
         boolean wildcardMatch = query.contains("*");
-        String wildcardQuery = query.replaceAll("\\*+", "%");
-        String escapedQuery = databaseDialectHelper.escapeLikePatternValue(wildcardMatch ? wildcardQuery : query);
+        String escapedQuery = wildcardMatch ? databaseDialectHelper.toWildcardLikePattern(query) : query;
 
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, criteria, page, size, COL_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch, criteria);
