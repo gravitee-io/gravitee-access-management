@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 
@@ -225,6 +226,9 @@ public class DynamicClientRegistrationResponse {
 
     @JsonProperty("backchannel_user_code_parameter")
     private boolean backchannelUserCodeParameter;
+
+    @JsonProperty("device_flow_settings")
+    private ApplicationDeviceFlowSettings deviceFlowSettings;
 
     /*******************************************************************************
      * Additional metadata
@@ -653,6 +657,14 @@ public class DynamicClientRegistrationResponse {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public ApplicationDeviceFlowSettings getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettings deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
+    }
+
     public static DynamicClientRegistrationResponse fromClient(Client client) {
         DynamicClientRegistrationResponse response = new DynamicClientRegistrationResponse();
 
@@ -708,6 +720,7 @@ public class DynamicClientRegistrationResponse {
         response.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
         response.setBackchannelAuthRequestSignAlg(client.getBackchannelAuthRequestSignAlg());
         response.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
+        response.setDeviceFlowSettings(client.getDeviceFlowSettings());
         return response;
     }
 

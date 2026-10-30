@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.oidc.model;
 
+import io.gravitee.am.common.polling.PollingRequest;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.Set;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CibaAuthRequest {
+public class CibaAuthRequest implements PollingRequest {
 
     /**
      * Technical ID
@@ -49,6 +51,8 @@ public class CibaAuthRequest {
      * The auth_req_id expiration date
      */
     private Date expireAt;
+
+    private int slowDownCount;
 
     /**
      * The client which asks for the authentication request
@@ -144,6 +148,15 @@ public class CibaAuthRequest {
 
     public void setLastAccessAt(Date lastAccessAt) {
         this.lastAccessAt = lastAccessAt;
+    }
+
+    @Override
+    public int getSlowDownCount() {
+        return slowDownCount;
+    }
+
+    public void setSlowDownCount(int slowDownCount) {
+        this.slowDownCount = slowDownCount;
     }
 
     public String getExternalTrxId() {

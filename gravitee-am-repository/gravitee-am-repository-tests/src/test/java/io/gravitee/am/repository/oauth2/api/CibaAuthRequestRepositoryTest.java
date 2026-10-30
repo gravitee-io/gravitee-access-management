@@ -143,6 +143,48 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertNoErrors();
     }
 
+    @Test
+    public void shouldTouchLastAccessOnly() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setLastAccessAt(new Date(System.currentTimeMillis() - 30_000));
+        final Date lastAccessAt = new Date((System.currentTimeMillis() / 1000) * 1000);
+
+        TestObserver<CibaAuthRequest> observer = repository.create(authRequest)
+                .ignoreElement()
+                .andThen(repository.touch(id, lastAccessAt, false))
+                .andThen(repository.findById(id))
+                .test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(req -> req.getLastAccessAt().getTime() == lastAccessAt.getTime()
+                && req.getSlowDownCount() == 0
+                && req.getStatus().equals("ONGOING")
+                && req.getDeviceNotifierId().equals("notifierid"));
+    }
+
+    @Test
+    public void shouldIncrementSlowDownCountAndTouchLastAccess() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+        authRequest.setSlowDownCount(1);
+        authRequest.setLastAccessAt(new Date(System.currentTimeMillis() - 30_000));
+        final Date lastAccessAt = new Date((System.currentTimeMillis() / 1000) * 1000);
+
+        TestObserver<CibaAuthRequest> observer = repository.create(authRequest)
+                .ignoreElement()
+                .andThen(repository.touch(id, lastAccessAt, true))
+                .andThen(repository.findById(id))
+                .test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(req -> req.getLastAccessAt().getTime() == lastAccessAt.getTime()
+                && req.getSlowDownCount() == 2
+                && req.getStatus().equals("ONGOING"));
+    }
+
     private CibaAuthRequest buildCibaAuthRequest(String id) {
         CibaAuthRequest authRequest = new CibaAuthRequest();
         authRequest.setId(id);
@@ -170,12 +212,21 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
                 .andThen(repository.findById(id))
                 .ignoreElement()
                 .andThen(repository.delete(id))
-                .andThen(repository.findById(id))
+                .flatMapMaybe(deleted -> repository.findById(id))
                 .test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertNoValues();
         observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldReportDeletionOnlyToTheFirstCaller() {
+        final String id = RandomString.generate();
+        repository.create(buildCibaAuthRequest(id)).test().awaitDone(10, TimeUnit.SECONDS);
+
+        repository.delete(id).test().awaitDone(10, TimeUnit.SECONDS).assertValue(true);
+        repository.delete(id).test().awaitDone(10, TimeUnit.SECONDS).assertValue(false);
     }
 
     @Test

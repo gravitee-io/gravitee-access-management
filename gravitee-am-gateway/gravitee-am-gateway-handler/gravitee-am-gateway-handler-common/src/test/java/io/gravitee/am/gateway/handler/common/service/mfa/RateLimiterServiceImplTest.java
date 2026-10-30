@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
 public class RateLimiterServiceImplTest {
 
     @InjectMocks
-    private RateLimiterService rateLimiterService = new RateLimiterServiceImpl();
+    private RateLimiterServiceImpl rateLimiterService = new RateLimiterServiceImpl();
 
     @Mock
     RateLimitRepository repository;

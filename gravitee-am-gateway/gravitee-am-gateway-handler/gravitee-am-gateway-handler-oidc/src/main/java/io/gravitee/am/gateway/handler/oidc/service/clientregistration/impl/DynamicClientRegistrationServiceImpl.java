@@ -40,6 +40,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -401,7 +402,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateRequestObjectSigningAlgorithm)
                 .flatMap(this::validateRequestObjectEncryptionAlgorithm)
                 .flatMap(this::enforceWithSoftwareStatement)
-                .flatMap(this::validateCibaSettings);
+                .flatMap(this::validateCibaSettings)
+                .flatMap(this::validateDeviceFlowSettings);
     }
 
     private Single<DynamicClientRegistrationRequest> enforceWithSoftwareStatement(DynamicClientRegistrationRequest request) {
@@ -927,6 +929,21 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 (request.getJwksUri() == null || request.getJwksUri().isEmpty())) {
             return Single.error(new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
         }
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateDeviceFlowSettings(DynamicClientRegistrationRequest request) {
+        final Optional<ApplicationDeviceFlowSettings> deviceFlowSettings = Optional.ofNullable(request.getDeviceFlowSettings()).flatMap(value -> value);
+        if (deviceFlowSettings.isEmpty()) {
+            return Single.just(request);
+        }
+
+        final ApplicationDeviceFlowSettings settings = deviceFlowSettings.get();
+        if (settings.getDeviceCodeExpiry() <= 0 || settings.getPollingInterval() <= 0) {
+            return Single.error(new InvalidClientMetadataException(
+                    "The deviceCodeExpiry and pollingInterval of device_flow_settings must be greater than zero"));
+        }
+
         return Single.just(request);
     }
 

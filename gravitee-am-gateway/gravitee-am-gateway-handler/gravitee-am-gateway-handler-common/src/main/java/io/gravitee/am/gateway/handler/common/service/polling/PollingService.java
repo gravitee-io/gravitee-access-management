@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.ciba.exception;
+package io.gravitee.am.gateway.handler.common.service.polling;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.polling.PollingRequest;
+import io.reactivex.rxjava3.core.Single;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class SlowDownException extends OAuth2Exception {
+public interface PollingService<R extends PollingRequest> {
 
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "slow_down";
-    }
+    PollingWindow window(long ttlInSec);
+
+    Single<R> poll(String requestId, String clientId, int intervalInSec);
+
+    boolean isExpired(R request);
 }

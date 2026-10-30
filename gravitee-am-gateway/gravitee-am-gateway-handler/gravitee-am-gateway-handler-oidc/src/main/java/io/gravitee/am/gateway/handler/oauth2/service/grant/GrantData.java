@@ -39,6 +39,7 @@ public sealed interface GrantData permits
         GrantData.RefreshTokenData,
         GrantData.PasswordData,
         GrantData.CibaData,
+        GrantData.DeviceCodeData,
         GrantData.UmaData,
         GrantData.ExtensionGrantData {
 
@@ -112,6 +113,13 @@ public sealed interface GrantData permits
             String authReqId,
             List<String> acrValues,
             List<Map<String, Object>> authorizationDetails
+    ) implements GrantData {}
+
+    /**
+     * Device Authorization Grant (RFC 8628) specific data.
+     */
+    record DeviceCodeData(
+            String deviceCode
     ) implements GrantData {}
 
     /**

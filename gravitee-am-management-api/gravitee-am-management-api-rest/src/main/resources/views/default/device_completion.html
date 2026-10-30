@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Device authorization</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{'device.completion.' + ${outcome} + '.title'}"/>
+        </div>
+        <div class="header-description">
+            <span th:text="#{'device.completion.' + ${outcome} + '.description'}"/>
+        </div>
+    </div>
+</div>
+</body>
+</html>

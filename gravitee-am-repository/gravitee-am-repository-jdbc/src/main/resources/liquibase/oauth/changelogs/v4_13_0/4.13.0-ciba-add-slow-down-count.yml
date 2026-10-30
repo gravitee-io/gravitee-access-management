@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.13.0-ciba-add-slow-down-count
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: ciba_auth_requests
+                columnName: slow_down_count
+      changes:
+        - addColumn:
+            tableName: ciba_auth_requests
+            columns:
+              - column: { name: slow_down_count, type: integer, defaultValue: 0, constraints: { nullable: false } }

@@ -17,7 +17,9 @@ package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.permissions.Permission;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -26,6 +28,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -104,6 +107,77 @@ public class PatchOIDCSettingsTest {
         assertNotNull(result);
         assertNotNull(result.getDpopSettings());
         assertEquals(java.util.List.of("ES256", "ES384"), result.getDpopSettings().getDpopSigningAlgorithms());
+    }
+
+    @Test
+    public void shouldLeaveDeviceFlowSettingsAbsentWhenNotPatched() {
+        OIDCSettings result = new PatchOIDCSettings().patch(new OIDCSettings());
+
+        assertNull("device flow settings shall be absent unless patched", result.getDeviceFlowSettings());
+    }
+
+    @Test
+    public void shouldPatchDeviceFlowSettings() {
+        PatchOIDCSettings patcher = new PatchOIDCSettings();
+        PatchDeviceFlowSettings deviceFlowPatcher = new PatchDeviceFlowSettings();
+        deviceFlowPatcher.setEnabled(Optional.of(true));
+        deviceFlowPatcher.setDeviceCodeExpiry(Optional.of(900));
+        deviceFlowPatcher.setPollingInterval(Optional.of(10));
+        patcher.setDeviceFlowSettings(Optional.of(deviceFlowPatcher));
+
+        OIDCSettings result = patcher.patch(new OIDCSettings());
+
+        assertNotNull(result.getDeviceFlowSettings());
+        assertTrue("device flow shall be enabled after update", result.getDeviceFlowSettings().isEnabled());
+        assertEquals(900, result.getDeviceFlowSettings().getDeviceCodeExpiry());
+        assertEquals(10, result.getDeviceFlowSettings().getPollingInterval());
+    }
+
+    @Test
+    public void shouldKeepUnpatchedDeviceFlowFields() {
+        DeviceFlowSettings existing = new DeviceFlowSettings();
+        existing.setEnabled(true);
+        existing.setDeviceCodeExpiry(1200);
+        existing.setPollingInterval(15);
+        OIDCSettings settings = new OIDCSettings();
+        settings.setDeviceFlowSettings(existing);
+
+        PatchOIDCSettings patcher = new PatchOIDCSettings();
+        PatchDeviceFlowSettings deviceFlowPatcher = new PatchDeviceFlowSettings();
+        deviceFlowPatcher.setEnabled(Optional.of(false));
+        patcher.setDeviceFlowSettings(Optional.of(deviceFlowPatcher));
+
+        OIDCSettings result = patcher.patch(settings);
+
+        assertFalse(result.getDeviceFlowSettings().isEnabled());
+        assertEquals(1200, result.getDeviceFlowSettings().getDeviceCodeExpiry());
+        assertEquals(15, result.getDeviceFlowSettings().getPollingInterval());
+    }
+
+    @Test
+    public void shouldResetDeviceFlowSettingsToDefaultsWhenPatchedEmpty() {
+        DeviceFlowSettings existing = new DeviceFlowSettings();
+        existing.setEnabled(true);
+        existing.setDeviceCodeExpiry(1200);
+        OIDCSettings settings = new OIDCSettings();
+        settings.setDeviceFlowSettings(existing);
+
+        PatchOIDCSettings patcher = new PatchOIDCSettings();
+        patcher.setDeviceFlowSettings(Optional.empty());
+
+        OIDCSettings result = patcher.patch(settings);
+
+        assertFalse(result.getDeviceFlowSettings().isEnabled());
+        assertEquals(DeviceFlowSettings.DEFAULT_DEVICE_CODE_EXPIRY_IN_SEC, result.getDeviceFlowSettings().getDeviceCodeExpiry());
+        assertEquals(DeviceFlowSettings.DEFAULT_POLLING_INTERVAL_IN_SEC, result.getDeviceFlowSettings().getPollingInterval());
+    }
+
+    @Test
+    public void shouldRequireOpenidPermissionToPatchDeviceFlowSettings() {
+        PatchOIDCSettings patcher = new PatchOIDCSettings();
+        patcher.setDeviceFlowSettings(Optional.of(new PatchDeviceFlowSettings()));
+
+        assertTrue(patcher.getRequiredPermissions().contains(Permission.DOMAIN_OPENID));
     }
 
     @Test

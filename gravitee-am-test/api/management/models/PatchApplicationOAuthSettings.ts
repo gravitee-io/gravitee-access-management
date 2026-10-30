@@ -53,6 +53,13 @@ import {
 } from './ApplicationScopeSettings';
 import type { UserInfoClaim } from './UserInfoClaim';
 import { UserInfoClaimFromJSON, UserInfoClaimFromJSONTyped, UserInfoClaimToJSON, UserInfoClaimToJSONTyped } from './UserInfoClaim';
+import type { ApplicationDeviceFlowSettings } from './ApplicationDeviceFlowSettings';
+import {
+  ApplicationDeviceFlowSettingsFromJSON,
+  ApplicationDeviceFlowSettingsFromJSONTyped,
+  ApplicationDeviceFlowSettingsToJSON,
+  ApplicationDeviceFlowSettingsToJSONTyped,
+} from './ApplicationDeviceFlowSettings';
 import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
 import {
   TokenExchangeOAuthSettingsFromJSON,
@@ -145,6 +152,12 @@ export interface PatchApplicationOAuthSettings {
    * @memberof PatchApplicationOAuthSettings
    */
   defaultMaxAge?: number;
+  /**
+   *
+   * @type {ApplicationDeviceFlowSettings}
+   * @memberof PatchApplicationOAuthSettings
+   */
+  deviceFlowSettings?: ApplicationDeviceFlowSettings;
   /**
    *
    * @type {boolean}
@@ -491,6 +504,7 @@ export function PatchApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDisc
       json['crossAppAccessSettings'] == null ? undefined : ApplicationCrossAppAccessSettingsFromJSON(json['crossAppAccessSettings']),
     defaultACRvalues: json['defaultACRvalues'] == null ? undefined : json['defaultACRvalues'],
     defaultMaxAge: json['defaultMaxAge'] == null ? undefined : json['defaultMaxAge'],
+    deviceFlowSettings: json['deviceFlowSettings'] == null ? undefined : ApplicationDeviceFlowSettingsFromJSON(json['deviceFlowSettings']),
     disableRefreshTokenRotation: json['disableRefreshTokenRotation'] == null ? undefined : json['disableRefreshTokenRotation'],
     dpopBoundAccessTokens: json['dpopBoundAccessTokens'] == null ? undefined : json['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions:
@@ -577,6 +591,7 @@ export function PatchApplicationOAuthSettingsToJSONTyped(
     crossAppAccessSettings: ApplicationCrossAppAccessSettingsToJSON(value['crossAppAccessSettings']),
     defaultACRvalues: value['defaultACRvalues'],
     defaultMaxAge: value['defaultMaxAge'],
+    deviceFlowSettings: ApplicationDeviceFlowSettingsToJSON(value['deviceFlowSettings']),
     disableRefreshTokenRotation: value['disableRefreshTokenRotation'],
     dpopBoundAccessTokens: value['dpopBoundAccessTokens'],
     enhanceScopesWithUserPermissions: value['enhanceScopesWithUserPermissions'],

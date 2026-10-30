@@ -84,6 +84,18 @@ export class FormTemplateFactoryService {
       template: 'OAUTH2_USER_CONSENT',
       icon: 'playlist_add_check',
     },
+    device_code_entry: {
+      name: 'Device code entry',
+      description: 'Page where users enter the code displayed on their device',
+      template: 'DEVICE_CODE_ENTRY',
+      icon: 'devices_other',
+    },
+    device_completion: {
+      name: 'Device authorization completion',
+      description: 'Page telling users to go back to their device',
+      template: 'DEVICE_COMPLETION',
+      icon: 'devices_other',
+    },
     mfa_enroll: {
       name: 'MFA Enroll',
       description: 'Multi-factor authentication settings page',
