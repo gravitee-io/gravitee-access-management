@@ -17,6 +17,10 @@ import '../polyfills';
 import 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/addon/selection/mark-selection';
+import 'codemirror/addon/fold/foldcode';
+import 'codemirror/addon/fold/foldgutter';
+import 'codemirror/addon/fold/brace-fold';
+import 'codemirror/addon/lint/lint';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule, inject, provideAppInitializer } from '@angular/core';
@@ -174,6 +178,12 @@ import { ScopesResolver } from './resolvers/scopes.resolver';
 import { ScopeResolver } from './resolvers/scope.resolver';
 import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
 import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
+import { AuthorizationDetailTypesComponent } from './domain/settings/authorization-detail-types/authorization-detail-types.component';
+import { AuthorizationDetailTypeCreationComponent } from './domain/settings/authorization-detail-types/creation/authorization-detail-type-creation.component';
+import { AuthorizationDetailTypeComponent } from './domain/settings/authorization-detail-types/authorization-detail-type/authorization-detail-type.component';
+import { AuthorizationDetailTypeSchemaInfoDialogComponent } from './domain/settings/authorization-detail-types/dialog/authorization-detail-type-schema-info.component';
+import { AuthorizationDetailTypeService } from './services/authorization-detail-type.service';
+import { AuthorizationDetailTypeResolver } from './resolvers/authorization-detail-type.resolver';
 import { SnackbarComponent } from './components/snackbar/snackbar.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { TabNavbarComponent } from './components/tab-navbar/tab-navbar.component';
@@ -647,6 +657,10 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     AddUserRolesComponent,
     ScopeCreationComponent,
     ScopeComponent,
+    AuthorizationDetailTypesComponent,
+    AuthorizationDetailTypeCreationComponent,
+    AuthorizationDetailTypeComponent,
+    AuthorizationDetailTypeSchemaInfoDialogComponent,
     MaterialFileComponent,
     MaterialMultiselectComponent,
     MultiselectListComponent,
@@ -939,6 +953,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopesResolver,
     ScopeResolver,
     ScopeService,
+    AuthorizationDetailTypeService,
+    AuthorizationDetailTypeResolver,
     FormService,
     FormResolver,
     FormTemplateFactoryService,

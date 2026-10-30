@@ -8,6 +8,8 @@
 @include meta.load-css('@swimlane/ngx-datatable/assets/icons');
 @include meta.load-css('codemirror/lib/codemirror');
 @include meta.load-css('codemirror/theme/material');
+@include meta.load-css('codemirror/addon/fold/foldgutter');
+@include meta.load-css('codemirror/addon/lint/lint');
 
 /* Configure theme */
 @include gio.import-fonts;
