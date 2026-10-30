@@ -2098,6 +2098,28 @@ jobs:
       - notify-on-failure
       - notify-on-success
 
+  release-branch-freeze:
+    parameters:
+      action:
+        type: enum
+        enum: ["freeze", "unfreeze"]
+      dry_run:
+        type: boolean
+        default: true
+    executor:
+      name: node-lts
+      class: small
+    environment:
+      DRY_RUN: << parameters.dry_run >>
+    steps:
+      - checkout
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
+      - run:
+          name: "Release branch << parameters.action >>"
+          command: bash .circleci/scripts/release-freeze.sh << parameters.action >> "${CIRCLE_BRANCH}"
+
   notify-release-complete:
     parameters:
       graviteeio_version:
@@ -2462,6 +2484,13 @@ workflows:
           name: helm tests
           requires:
             - setup
+      - release-branch-freeze:
+          name: freeze release branch
+          context: cicd-orchestrator
+          action: freeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - setup
       - release:
           name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           context: cicd-orchestrator
@@ -2472,6 +2501,7 @@ workflows:
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - helm tests
+            - freeze release branch
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
@@ -2510,6 +2540,17 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - publish docker images
+      - release-branch-freeze:
+          name: unfreeze release branch
+          context: cicd-orchestrator
+          action: unfreeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - add docker images to Aikido
+            - publish RPM packages
+            - publish helm charts
+            - release notes
+            - notify release complete
 
   release-alpha-version:
     when:
@@ -2519,6 +2560,13 @@ workflows:
       - setup:
           name: setup
           context: cicd-orchestrator
+      - release-branch-freeze:
+          name: freeze release branch
+          context: cicd-orchestrator
+          action: freeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - setup
       - release:
           name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           context: cicd-orchestrator
@@ -2527,7 +2575,7 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
-            - setup
+            - freeze release branch
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
@@ -2549,6 +2597,14 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - publish docker images
+      - release-branch-freeze:
+          name: unfreeze release branch
+          context: cicd-orchestrator
+          action: unfreeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - add docker images to Aikido
+            - notify release complete
 
   release-hotfix-version:
     when:
@@ -2558,6 +2614,13 @@ workflows:
       - setup:
           name: setup
           context: cicd-orchestrator
+      - release-branch-freeze:
+          name: freeze release branch
+          context: cicd-orchestrator
+          action: freeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - setup
       - release:
           name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           context: cicd-orchestrator
@@ -2566,7 +2629,7 @@ workflows:
           hotfix_version: true
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
-            - setup
+            - freeze release branch
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
@@ -2588,6 +2651,14 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - publish docker images
+      - release-branch-freeze:
+          name: unfreeze release branch
+          context: cicd-orchestrator
+          action: unfreeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - add docker images to Aikido
+            - notify release complete
 
             # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
   pull_requests:
@@ -2880,16 +2951,30 @@ workflows:
     jobs:
       - setup:
           context: cicd-orchestrator
+      - release-branch-freeze:
+          name: freeze release branch
+          context: cicd-orchestrator
+          action: freeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - setup
       - release:
           context: cicd-orchestrator
           name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           requires:
-            - setup
+            - freeze release branch
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           hotfix_version: << pipeline.parameters.hotfix_version >>
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
+      - release-branch-freeze:
+          name: unfreeze release branch
+          context: cicd-orchestrator
+          action: unfreeze
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
 
   publish_rpms:
     when:
