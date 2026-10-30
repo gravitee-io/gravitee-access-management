@@ -34,11 +34,13 @@ import {
 import { PlusIcon } from '@gravitee/graphene-core/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent, useState } from 'react';
+import { DurationInput } from '../../app/components/DurationInput';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SaveBar } from '../../app/components/SaveBar';
 import { SettingToggle } from '../../app/components/SettingToggle';
 import { TagInput } from '../../app/components/TagInput';
 import { patchDomainWebProtectionSettings } from '../../lib/api/domains';
+import { draftToSeconds } from '../../lib/forms/duration';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
@@ -88,8 +90,7 @@ export function DomainWebProtectionPage() {
         name: nameError(row, analysis.rows[index]?.duplicate === true),
         value: valueError(row),
     }));
-    const maxAgeError =
-        corsActive && typeof form.cors.maxAge === 'number' && form.cors.maxAge < 0 ? 'Enter a number of seconds, 0 or more.' : undefined;
+    const maxAgeError = corsActive && draftToSeconds(form.maxAge) < 0 ? 'Enter a duration of 0 or more.' : undefined;
     const invalid = !!maxAgeError || (cspActive && (analysis.hasBlockingIssue || rowErrors.some(errors => errors.name || errors.value)));
 
     const setCors = (patch: Partial<Cors>) => setForm(current => ({ ...current, cors: { ...current.cors, ...patch } }));
@@ -191,17 +192,15 @@ export function DomainWebProtectionPage() {
                         <FieldDescription>The headers allowed in cross-origin requests.</FieldDescription>
                     </Field>
                     <Field data-invalid={!!maxAgeError}>
-                        <FieldLabel htmlFor="cors-max-age">Max age (seconds)</FieldLabel>
-                        <Input
+                        <FieldLabel htmlFor="cors-max-age">Max age</FieldLabel>
+                        <DurationInput
                             id="cors-max-age"
-                            type="number"
-                            min={0}
-                            placeholder="86400 (1 day)"
-                            value={form.cors.maxAge ?? ''}
+                            label="Max age"
+                            value={form.maxAge}
                             disabled={!canEdit}
-                            aria-invalid={!!maxAgeError}
-                            aria-describedby={maxAgeError ? 'cors-max-age-error' : undefined}
-                            onChange={event => setCors({ maxAge: event.target.value === '' ? undefined : Number(event.target.value) })}
+                            invalid={!!maxAgeError}
+                            describedBy={maxAgeError ? 'cors-max-age-error' : undefined}
+                            onChange={maxAge => setForm(current => ({ ...current, maxAge }))}
                         />
                         {maxAgeError ? (
                             <FieldError id="cors-max-age-error">{maxAgeError}</FieldError>
