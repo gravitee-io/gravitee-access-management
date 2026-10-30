@@ -20,6 +20,7 @@ import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
 import type { LoginSettings as LoginSettingsModel } from '@am-models/LoginSettings';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
+import type { WebAuthnSettings as WebAuthnSettingsModel } from '@am-models/WebAuthnSettings';
 import type { WebProtectionSettings as WebProtectionSettingsModel } from '@am-models/WebProtectionSettings';
 import { http } from './http';
 import type { Page } from './management-api';
@@ -28,11 +29,22 @@ import { type DomainRef, domainPath, environmentPath, searchParam } from './path
 
 export type VirtualHost = ApiModel<VirtualHostModel, 'host' | 'path'>;
 
+// The enums are lowercase on the wire, for example `cross_platform`.
+export type WebAuthnSettings = ApiModel<
+    Omit<WebAuthnSettingsModel, 'userVerification' | 'authenticatorAttachment' | 'attestationConveyancePreference' | 'certificates'> & {
+        readonly userVerification?: string;
+        readonly authenticatorAttachment?: string;
+        readonly attestationConveyancePreference?: string;
+        readonly certificates?: Readonly<Record<string, string>>;
+    }
+>;
+
 // The spec types `tags` as a `Set`. The JSON holds an array.
 export type Domain = ApiModel<
-    Omit<DomainModel, 'tags' | 'vhosts' | 'corsSettings'> & {
+    Omit<DomainModel, 'tags' | 'vhosts' | 'webAuthnSettings' | 'corsSettings'> & {
         tags?: string[];
         vhosts?: VirtualHost[];
+        webAuthnSettings?: WebAuthnSettings;
         corsSettings?: CorsSettings;
     },
     'id' | 'hrid' | 'name' | 'enabled'
@@ -128,6 +140,17 @@ export function domainEntrypoint(entrypoints: readonly Entrypoint[]): Entrypoint
     return entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find(entrypoint => !entrypoint.defaultEntrypoint) ?? entrypoints[0]);
 }
 
+export function accessUrl(entrypointUrl: string, path: string, vhostMode: boolean, vhosts: readonly VirtualHost[]): string {
+    let base = entrypointUrl;
+    let resolvedPath = path;
+    const vhost = vhostMode ? vhosts.find(candidate => candidate.overrideEntrypoint) : undefined;
+    if (vhost) {
+        base = (/^(https?:\/\/)/.exec(entrypointUrl)?.[1] ?? '') + vhost.host;
+        resolvedPath = vhost.path;
+    }
+    return resolvedPath === '/' ? base : base + resolvedPath;
+}
+
 export type LoginSettings = ApiModel<LoginSettingsModel>;
 
 export function patchDomainLoginSettings(ref: DomainRef, loginSettings: LoginSettings): Promise<Domain> {
@@ -152,6 +175,11 @@ export interface DomainWebProtectionSettings {
 
 export function patchDomainWebProtectionSettings(ref: DomainRef, settings: DomainWebProtectionSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+/** The Management API replaces the whole object. */
+export function patchDomainWebAuthnSettings(ref: DomainRef, webAuthnSettings: WebAuthnSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ webAuthnSettings }) });
 }
 
 export type AccountSettings = ApiModel<AccountSettingsModel>;

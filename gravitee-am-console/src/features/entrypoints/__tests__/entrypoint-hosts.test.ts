@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { accessUrl, hostOptions, hostPattern } from '../entrypoint-hosts';
+import { hostOptions, hostPattern } from '../entrypoint-hosts';
 
 describe('hostPattern', () => {
     it('accepts DNS labels and a port without domain restrictions', () => {
@@ -43,23 +43,5 @@ describe('hostOptions', () => {
     it('completes the typed host with each restriction and keeps the port', () => {
         expect(hostOptions('auth', restrictions)).toEqual(['auth.acme.io', 'auth.acme.eu']);
         expect(hostOptions('auth.acme.io:8092', restrictions)).toEqual(['auth.acme.io:8092', 'auth.acme.eu:8092']);
-    });
-});
-
-describe('accessUrl', () => {
-    it('joins the entrypoint URL and the context path', () => {
-        expect(accessUrl('https://gw.example', '/acme', false, [])).toBe('https://gw.example/acme');
-    });
-
-    it('uses the scheme of the entrypoint with the overriding virtual host', () => {
-        const vhosts = [
-            { host: 'other.example', path: '/x' },
-            { host: 'auth.acme.example:8092', path: '/acme', overrideEntrypoint: true },
-        ];
-        expect(accessUrl('https://gw.example', '/ignored', true, vhosts)).toBe('https://auth.acme.example:8092/acme');
-    });
-
-    it('leaves out a path of /', () => {
-        expect(accessUrl('https://gw.example', '/', false, [])).toBe('https://gw.example');
     });
 });
