@@ -1,0 +1,35 @@
+.authorization-detail-type-schema {
+  overflow: hidden;
+  border: 1px solid rgb(0 0 0 / 38%);
+  border-radius: 4px;
+
+  ::ng-deep .CodeMirror {
+    height: 320px;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, monospace;
+    font-size: 14px;
+  }
+}
+
+.authorization-detail-type-error {
+  display: block;
+  margin-top: 4px;
+  color: #f44336;
+}
+
+.authorization-detail-type-schema-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.authorization-detail-type-save-error {
+  display: flex;
+  align-items: center;
+  margin: 0 0 16px;
+  color: #f44336;
+  gap: 8px;
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+}

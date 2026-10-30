@@ -1,0 +1,52 @@
+h1 {
+  margin-bottom: 0;
+}
+
+.authorization-detail-types-search {
+  text-align: center;
+
+  mat-form-field {
+    width: 70%;
+  }
+
+  mat-icon {
+    padding-bottom: 4px;
+    vertical-align: middle;
+  }
+}
+
+p {
+  margin: 5px 0;
+  font-size: smaller;
+}
+
+:host {
+  ::ng-deep .authorization-detail-type-name-cell {
+    padding-block: 0 !important;
+
+    .datatable-body-cell-label {
+      height: 100%;
+    }
+  }
+}
+
+.authorization-detail-type-information {
+  height: 100%;
+  justify-content: center;
+
+  h3 {
+    overflow: hidden;
+    margin: 0;
+    font-size: 14px;
+    font-weight: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    overflow: hidden;
+    color: rgb(0 0 0 / 54%);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
