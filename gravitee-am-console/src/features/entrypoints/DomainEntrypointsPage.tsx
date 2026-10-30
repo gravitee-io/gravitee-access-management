@@ -158,7 +158,7 @@ export function DomainEntrypointsPage() {
                         : "In context-path mode, the domain is reached through the gateway's entrypoint, defined in the organization settings, followed by the domain's path."
                 }
                 actions={
-                    !cloudMode && (
+                    canEdit && (
                         <Button type="button" variant="outline" size="sm" onClick={() => set({ vhostMode: !form.vhostMode })}>
                             {form.vhostMode ? 'Switch to context-path mode' : 'Switch to virtual hosts mode'}
                         </Button>

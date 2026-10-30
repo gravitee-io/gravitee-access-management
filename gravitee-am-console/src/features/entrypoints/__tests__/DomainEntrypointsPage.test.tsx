@@ -160,7 +160,7 @@ describe('DomainEntrypointsPage', () => {
         renderPage(['domain_settings_read'], { ...domain, vhostMode: true, vhosts: [{ host: 'auth.acme.example', path: '/' }] });
 
         expect(await screen.findByRole('textbox', { name: 'Host' })).toBeDisabled();
-        expect(screen.getByRole('button', { name: 'Switch to context-path mode' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Switch to context-path mode' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Add virtual host' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Remove virtual host/ })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
