@@ -381,6 +381,16 @@ email:
 #    starttls.enable: true
 #    ssl.trust: smtp.gmail.com
 
+  # Stage the registration emails of bulk user creation and send them in batches
+#  bulk:
+#    enabled: false
+#    batch: 100 # number of emails sent per SMTP connection
+#    attempts: 2 # number of attempts before an email is dropped
+#    period: 5 # seconds between two processing runs
+#    leaseDuration: 600 # seconds a node keeps processing the emails of a domain
+#    executor:
+#      threads: 2 # threads sending emails
+
 # Mail templates
 #templates:
 #  path: ${gravitee.home}/templates

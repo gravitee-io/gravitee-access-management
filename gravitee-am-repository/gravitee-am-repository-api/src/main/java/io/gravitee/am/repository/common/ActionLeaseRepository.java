@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.repository.common;
 
 import io.gravitee.am.model.ActionLease;
 import io.reactivex.rxjava3.core.Completable;

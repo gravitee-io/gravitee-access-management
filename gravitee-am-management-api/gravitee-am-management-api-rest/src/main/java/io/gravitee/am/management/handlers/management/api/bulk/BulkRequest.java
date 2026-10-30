@@ -34,8 +34,10 @@ import lombok.experimental.Accessors;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Represents a create, update or delete operation on multiple entities.
@@ -78,16 +80,26 @@ public class BulkRequest<T> {
      * of processing; the response is guaranteed to have results of processing individual items in the input order.
      */
     public final <R> Single<Response> processOneByOne(Function<T, Single<BulkOperationResult<R>>> processor) {
+        return processOneByOne(processor, error -> false);
+    }
+
+    public final <R> Single<Response> processOneByOne(Function<T, Single<BulkOperationResult<R>>> processor, Predicate<Throwable> abortOn) {
         if (CollectionUtils.isEmpty(items())) {
             return Single.just(Response.status(Response.Status.BAD_REQUEST).entity("received a bulk request without any items").build());
         }
         final AtomicInteger failuresCounter = new AtomicInteger(0);
+        final AtomicBoolean aborted = new AtomicBoolean(false);
         return Indexed.toIndexedFlowable(items())
                 .concatMapSingle(indexed -> processor.apply(indexed.value())
-                        .doOnError(error -> failuresCounter.incrementAndGet())
+                        .doOnError(error -> {
+                            failuresCounter.incrementAndGet();
+                            if (abortOn.test(error)) {
+                                aborted.set(true);
+                            }
+                        })
                         .onErrorResumeNext(ex -> Single.just(BulkOperationResult.error(Response.Status.BAD_REQUEST, ex)))
                         .map(result -> result.withIndex(indexed.index())))
-                .takeUntil(result -> failuresCounter.get() >= getFailOnErrors())
+                .takeUntil(result -> aborted.get() || failuresCounter.get() >= getFailOnErrors())
                 .toList()
                 .map(this::makeResponse);
     }
@@ -150,6 +162,10 @@ public class BulkRequest<T> {
          */
         public final <S, R> Single<Response> processOneByOne(Class<S> itemType, ObjectMapper mapper, Function<S, Single<BulkOperationResult<R>>> itemProcessor) {
             return readItemsAs(itemType, mapper).processOneByOne(itemProcessor);
+        }
+
+        public final <S, R> Single<Response> processOneByOne(Class<S> itemType, ObjectMapper mapper, Function<S, Single<BulkOperationResult<R>>> itemProcessor, Predicate<Throwable> abortOn) {
+            return readItemsAs(itemType, mapper).processOneByOne(itemProcessor, abortOn);
         }
     }
 }

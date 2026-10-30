@@ -17,9 +17,9 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ActionLease;
+import io.gravitee.am.repository.common.ActionLeaseRepository;
 import io.gravitee.am.repository.jdbc.common.AbstractActionLeaseRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcActionLease;
-import io.gravitee.am.repository.management.api.ActionLeaseRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.stereotype.Repository;
