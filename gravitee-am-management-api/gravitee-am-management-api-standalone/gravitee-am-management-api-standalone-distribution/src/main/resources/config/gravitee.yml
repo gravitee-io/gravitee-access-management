@@ -99,8 +99,8 @@
 #      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, X-Xsrf-Token)
 #    allow-headers: 'X-Requested-With'
 #      Allows the use of credentials (cookies, authorization headers, or TLS client certificates) when performing the request
-#      default is `false`
-#    allow-credentials: true
+#      default is `true`. Set it to `false` when allow-origin is `*` to prevent any origin from sending the console cookie.
+#    allow-credentials: false
 #  csrf:
     # Allows to enable or disable the CSRF protection (default is enabled).
 #    enabled: true
