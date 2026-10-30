@@ -22,15 +22,19 @@ test.describe('React console: domain dashboard', () => {
       if (request.url().includes(`/domains/${testDomain.id}/analytics?`)) analytics.push(new URL(request.url()));
     });
 
-    await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains/${testDomain.hrid}/dashboard`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
-    await expect.poll(() => analytics.length).toBe(13);
-    expect(analytics.every((url) => url.searchParams.get('interval') === '3600000')).toBe(true);
+    await test.step('open the dashboard and load every widget for the last hour', async () => {
+      await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains/${testDomain.hrid}/dashboard`);
+      await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+      await expect.poll(() => analytics.length).toBe(13);
+      expect(analytics.every((url) => url.searchParams.get('interval') === '3600000')).toBe(true);
+    });
 
-    await page.getByRole('combobox', { name: 'Time range' }).click();
-    await page.getByRole('option', { name: 'Last 90 days' }).click();
+    await test.step('reload every widget with a daily interval for the last 90 days', async () => {
+      await page.getByRole('combobox', { name: 'Time range' }).click();
+      await page.getByRole('option', { name: 'Last 90 days' }).click();
 
-    await expect.poll(() => analytics.length).toBe(26);
-    expect(analytics.slice(13).every((url) => url.searchParams.get('interval') === '86400000')).toBe(true);
+      await expect.poll(() => analytics.length).toBe(26);
+      expect(analytics.slice(13).every((url) => url.searchParams.get('interval') === '86400000')).toBe(true);
+    });
   });
 });

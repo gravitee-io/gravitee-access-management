@@ -19,38 +19,52 @@ import { uniqueTestName } from '../../utils/fixture-helpers';
 
 test.describe('React console: domains list', () => {
   test('finds a domain created via API by search', async ({ page, testDomain }) => {
-    await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
     const table = page.getByRole('table');
-    await expect(table).toBeVisible();
 
-    await page.getByRole('searchbox', { name: 'Search domains' }).fill(testDomain.name);
+    await test.step('open the domains list', async () => {
+      await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
+      await expect(table).toBeVisible();
+    });
 
-    await expect(table.getByRole('link', { name: testDomain.name })).toBeVisible();
+    await test.step('search for the domain by name', async () => {
+      await page.getByRole('searchbox', { name: 'Search domains' }).fill(testDomain.name);
+      await expect(table.getByRole('link', { name: testDomain.name })).toBeVisible();
+    });
   });
 
   test('creates a domain and opens it', async ({ page, adminToken }) => {
     const name = uniqueTestName('pw-next-domain');
-    await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
+    let dataPlane: { id: string; name: string };
 
-    const dataPlanesResponse = page.waitForResponse((response) => response.url().endsWith('/data-planes'));
-    await page.getByRole('link', { name: 'Create domain' }).click();
-    const dataPlanes: { id: string; name: string }[] = await (await dataPlanesResponse).json();
-    const dataPlane = [...dataPlanes].sort((a, b) => a.name.localeCompare(b.name))[0];
-    await page.getByRole('textbox', { name: 'Name' }).fill(name);
-    if (dataPlanes.length > 1) {
-      await page.getByRole('combobox', { name: 'Data plane' }).click();
-      await page.getByRole('option', { name: `${dataPlane.name} (${dataPlane.id})` }).click();
-    }
-    const createRequest = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/domains'));
-    const createResponse = page.waitForResponse(
-      (response) => response.request().method() === 'POST' && response.url().endsWith('/domains'),
-    );
-    await page.getByRole('button', { name: 'Create domain' }).click();
+    await test.step('open the creation page from the domains list', async () => {
+      await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
+      const dataPlanesResponse = page.waitForResponse((response) => response.url().endsWith('/data-planes'));
+      await page.getByRole('link', { name: 'Create domain' }).click();
+      const dataPlanes: { id: string; name: string }[] = await (await dataPlanesResponse).json();
+      dataPlane = [...dataPlanes].sort((a, b) => a.name.localeCompare(b.name))[0];
 
-    expect((await createRequest).postDataJSON()).toEqual({ name, dataPlaneId: dataPlane.id });
-    const created = await (await createResponse).json();
+      await page.getByRole('textbox', { name: 'Name' }).fill(name);
+      if (dataPlanes.length > 1) {
+        await page.getByRole('combobox', { name: 'Data plane' }).click();
+        await page.getByRole('option', { name: `${dataPlane.name} (${dataPlane.id})` }).click();
+      }
+    });
+
+    const created = await test.step('create the domain with its name and data plane', async () => {
+      const createRequest = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/domains'));
+      const createResponse = page.waitForResponse(
+        (response) => response.request().method() === 'POST' && response.url().endsWith('/domains'),
+      );
+      await page.getByRole('button', { name: 'Create domain' }).click();
+
+      expect((await createRequest).postDataJSON()).toEqual({ name, dataPlaneId: dataPlane.id });
+      return (await createResponse).json();
+    });
+
     try {
-      await expect(page).toHaveURL(new RegExp(`/domains/${created.hrid}/dashboard$`));
+      await test.step('open the dashboard of the new domain', async () => {
+        await expect(page).toHaveURL(new RegExp(`/domains/${created.hrid}/dashboard$`));
+      });
     } finally {
       await safeDeleteDomain(created.id, adminToken);
     }
