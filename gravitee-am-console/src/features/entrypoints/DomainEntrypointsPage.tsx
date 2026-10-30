@@ -45,13 +45,20 @@ import { type FormEvent, useState } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SaveBar } from '../../app/components/SaveBar';
-import { type Domain, type VirtualHost, domainEntrypoint, listDomainEntrypoints, patchDomainEntrypoints } from '../../lib/api/domains';
+import {
+    type Domain,
+    type VirtualHost,
+    accessUrl,
+    domainEntrypoint,
+    listDomainEntrypoints,
+    patchDomainEntrypoints,
+} from '../../lib/api/domains';
 import { getInstallationConfiguration } from '../../lib/api/management-api';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { useCurrentEnvironment } from '../../lib/session/environment';
 import { usePermissions } from '../../lib/session/permissions';
-import { accessUrl, hostOptions, hostPattern } from './entrypoint-hosts';
+import { hostOptions, hostPattern } from './entrypoint-hosts';
 
 const FORM_ID = 'domain-entrypoints-form';
 

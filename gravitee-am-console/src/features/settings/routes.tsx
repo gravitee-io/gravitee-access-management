@@ -22,9 +22,10 @@ import { accountRoutes } from '../account/routes';
 import { entrypointRoutes } from '../entrypoints/routes';
 import { loginRoutes } from '../login/routes';
 import { webProtectionRoutes } from '../web-protection/routes';
+import { webAuthnRoutes } from '../webauthn/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
-const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login', 'web-protection', 'account']);
+const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login', 'web-protection', 'account', 'webauthn']);
 
 export const domainSettingsRoutes = (
     <Route
@@ -48,6 +49,7 @@ export const domainSettingsRoutes = (
         {loginRoutes}
         {webProtectionRoutes}
         {accountRoutes}
+        {webAuthnRoutes}
         {DOMAIN_SETTINGS_NAV_GROUPS.flatMap(group => group.items)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (
