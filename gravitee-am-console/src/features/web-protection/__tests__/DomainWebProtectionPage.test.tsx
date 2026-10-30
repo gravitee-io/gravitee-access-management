@@ -123,18 +123,33 @@ describe('DomainWebProtectionPage', () => {
 
     it('blocks the save on a negative CORS max age', () => {
         renderPage(editor, { ...domain, corsSettings: corsOn });
-        const maxAge = screen.getByRole('spinbutton', { name: 'Max age (seconds)' });
+        const maxAge = screen.getByRole('spinbutton', { name: 'Max age' });
 
         fireEvent.change(maxAge, { target: { value: '-1' } });
 
-        expect(maxAge).toHaveAccessibleDescription('Enter a number of seconds, 0 or more.');
+        expect(maxAge).toHaveAccessibleDescription('Enter a duration of 0 or more.');
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
     it('shows a stored max age of 0 as empty', () => {
         renderPage(editor, { ...domain, corsSettings: { ...corsOn, maxAge: 0 } });
 
-        expect(screen.getByRole('spinbutton', { name: 'Max age (seconds)' })).toHaveValue(null);
+        expect(screen.getByRole('spinbutton', { name: 'Max age' })).toHaveValue(null);
+    });
+
+    it('shows the max age in its largest exact unit and saves it in seconds', async () => {
+        vi.mocked(patchDomainWebProtectionSettings).mockResolvedValueOnce(domain);
+        renderPage(editor, { ...domain, corsSettings: { ...corsOn, maxAge: 86_400 } });
+        const maxAge = screen.getByRole('spinbutton', { name: 'Max age' });
+        expect(maxAge).toHaveValue(1);
+        expect(screen.getByRole('combobox', { name: 'Max age unit' })).toHaveTextContent('Days');
+
+        fireEvent.change(maxAge, { target: { value: '2' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        await waitFor(() =>
+            expect(vi.mocked(patchDomainWebProtectionSettings).mock.calls[0][1].corsSettings).toMatchObject({ maxAge: 172_800 }),
+        );
     });
 
     it('serializes the CSP directives and blocks a duplicate directive', async () => {

@@ -24,10 +24,12 @@ interface DurationInputProps {
     readonly value: DurationDraft;
     readonly disabled?: boolean;
     readonly invalid?: boolean;
+    /** The id of the error text of the amount input. */
+    readonly describedBy?: string;
     readonly onChange: (value: DurationDraft) => void;
 }
 
-export function DurationInput({ id, label, value, disabled, invalid, onChange }: DurationInputProps) {
+export function DurationInput({ id, label, value, disabled, invalid, describedBy, onChange }: DurationInputProps) {
     return (
         <div className="flex gap-2">
             <Input
@@ -38,6 +40,7 @@ export function DurationInput({ id, label, value, disabled, invalid, onChange }:
                 value={value.time}
                 disabled={disabled}
                 aria-invalid={invalid}
+                aria-describedby={describedBy}
                 onChange={event => onChange({ ...value, time: event.target.value })}
             />
             <Select value={value.unit} disabled={disabled} onValueChange={unit => onChange({ ...value, unit: unit as DurationUnit })}>
