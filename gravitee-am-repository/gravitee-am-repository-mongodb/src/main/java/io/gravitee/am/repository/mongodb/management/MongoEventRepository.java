@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.event.Action;
@@ -23,6 +24,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.EventRepository;
+import io.gravitee.am.repository.mongodb.common.MongoIndexManager;
 import io.gravitee.am.repository.mongodb.management.internal.model.EventMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -71,13 +73,17 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     @Value("${services.purge.events.retention.days:90}")
     private int eventsRetentionDays;
 
+    @Value("${repositories.management.mongodb.ensureIndexOnStart:${management.mongodb.ensureIndexOnStart:true}}")
+    private boolean ensureIndexOnStart;
+
     @PostConstruct
     public void init() {
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
         super.init(eventsCollection);
-        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
-        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1).append(DATA_PLANE_ID, 1), new IndexOptions().name("u1dp1")));
-        super.createIndex(eventsCollection, Map.of(new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("e1").expireAfter((long) eventsRetentionDays, TimeUnit.DAYS)));
+        if (ensureIndexOnStart) {
+            MongoIndexManager.ensureIndexes(eventsCollection, List.of(new IndexModel(new Document(FIELD_CREATED_AT, 1),
+                    new IndexOptions().name("e1").expireAfter((long) eventsRetentionDays, TimeUnit.DAYS)))).subscribe();
+        }
     }
 
     @Override

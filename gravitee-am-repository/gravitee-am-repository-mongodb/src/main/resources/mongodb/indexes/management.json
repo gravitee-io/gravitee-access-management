@@ -1,0 +1,166 @@
+{
+  "changesets": [
+    {
+      "id": "initial-indexes",
+      "create": {
+        "account_access_tokens": [
+          { "name": "u1", "key": { "userId": 1 } }
+        ],
+        "applications": [
+          { "name": "d1", "key": { "domain": 1 } },
+          { "name": "u_1", "key": { "updatedAt": -1 } },
+          { "name": "i1", "key": { "identities": 1 } },
+          { "name": "aidp1", "key": { "identityProviders.identity": 1 } },
+          { "name": "c1", "key": { "certificate": 1 } },
+          { "name": "d1sog1", "key": { "domain": 1, "settings.oauth.grantTypes": 1 } },
+          { "name": "d1t1", "key": { "domain": 1, "type": 1 } },
+          { "name": "d1soc1_ci", "key": { "domain": 1, "settings.oauth.clientId": 1 }, "collation": { "locale": "en", "strength": 2 } },
+          { "name": "d1n1_ci", "key": { "domain": 1, "name": 1 }, "collation": { "locale": "en", "strength": 2 } },
+          { "name": "d1u1i1", "key": { "domain": 1, "updatedAt": 1, "_id": 1 } },
+          { "name": "d1u_1i_1", "key": { "domain": 1, "updatedAt": -1, "_id": -1 } },
+          { "name": "d1n1i1", "key": { "domain": 1, "name": 1, "_id": 1 } },
+          { "name": "d1n_1i_1", "key": { "domain": 1, "name": -1, "_id": -1 } }
+        ],
+        "authentication_device_notifiers": [
+          { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+        ],
+        "authorization_engines": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+        ],
+        "bot_detections": [
+          { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+        ],
+        "certificates": [
+          { "name": "d1", "key": { "domain": 1 } }
+        ],
+        "cimd_metadata_documents": [
+          { "name": "di1ci1", "key": { "domainId": 1, "clientId": 1 }, "unique": true },
+          { "name": "ea1", "key": { "expiresAt": 1 }, "expireAfterSeconds": 0 }
+        ],
+        "cp_action_lease": [
+          { "name": "action_unique", "key": { "action": 1 }, "unique": true },
+          { "name": "expiry_ttl", "key": { "expiryDate": 1 }, "expireAfterSeconds": 0 }
+        ],
+        "dataplanes": [
+          { "name": "e1", "key": { "environmentId": 1 } }
+        ],
+        "device_identifiers": [
+          { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+        ],
+        "domains": [
+          { "name": "ri1rt1h1", "key": { "referenceType": 1, "referenceId": 1, "hrid": 1 } },
+          { "name": "ri1rt1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+        ],
+        "emails": [
+          { "name": "ri1rt1", "key": { "referenceType": 1, "referenceId": 1 } },
+          { "name": "ri1rt1t1", "key": { "referenceType": 1, "referenceId": 1, "template": 1 } },
+          { "name": "ri1rc1t1", "key": { "referenceType": 1, "referenceId": 1, "client": 1, "template": 1 } }
+        ],
+        "entrypoints": [
+          { "name": "o1", "key": { "organizationId": 1 } }
+        ],
+        "environments": [
+          { "name": "o1", "key": { "organizationId": 1 } }
+        ],
+        "events": [
+          { "name": "u1", "key": { "updatedAt": 1 } },
+          { "name": "u1dp1", "key": { "updatedAt": 1, "dataPlaneId": 1 } }
+        ],
+        "extension_grants": [
+          { "name": "d1", "key": { "domain": 1 } },
+          { "name": "d1n1", "key": { "domain": 1, "name": 1 } }
+        ],
+        "factors": [
+          { "name": "d1f1", "key": { "domain": 1, "factorType": 1 } }
+        ],
+        "flows": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+          { "name": "rt1ri1a1", "key": { "referenceType": 1, "referenceId": 1, "application": 1 } },
+          { "name": "rt1ri1id1", "key": { "referenceType": 1, "referenceId": 1, "_id": 1 } }
+        ],
+        "forms": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+          { "name": "rt1ri1t1", "key": { "referenceType": 1, "referenceId": 1, "template": 1 } },
+          { "name": "rt1ri1c1t1", "key": { "referenceType": 1, "referenceId": 1, "client": 1, "template": 1 } }
+        ],
+        "groups": [
+          { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+        ],
+        "i18n_dictionaries": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+          { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 } }
+        ],
+        "identities": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+        ],
+        "memberships": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } },
+          { "name": "ri1mi1", "key": { "referenceId": 1, "memberId": 1 } },
+          { "name": "mi1mt1", "key": { "memberId": 1, "memberType": 1 } }
+        ],
+        "node_monitoring": [
+          { "name": "u1", "key": { "updatedAt": 1 } },
+          { "name": "n1t1", "key": { "nodeId": 1, "type": 1 } }
+        ],
+        "notification_acknowledgements": [
+          { "name": "ri1rt1a1", "key": { "resourceId": 1, "type": 1, "audienceId": 1 } }
+        ],
+        "organization_users": [
+          { "name": "rt1ri1e1", "key": { "referenceType": 1, "referenceId": 1, "email": 1 } },
+          { "name": "rt1ri1ae1", "key": { "referenceType": 1, "referenceId": 1, "additionalInformation.email": 1 } },
+          { "name": "rt1ri1d1", "key": { "referenceType": 1, "referenceId": 1, "displayName": 1 } },
+          { "name": "rt1ri1f1", "key": { "referenceType": 1, "referenceId": 1, "firstName": 1 } },
+          { "name": "rt1ri1l1", "key": { "referenceType": 1, "referenceId": 1, "lastName": 1 } },
+          { "name": "rt1ri1ext1s1", "key": { "referenceType": 1, "referenceId": 1, "externalId": 1, "source": 1 } },
+          { "name": "rt1ri1iu1ip1", "key": { "referenceType": 1, "referenceId": 1, "identities.username": 1, "identities.providerId": 1 } },
+          { "name": "rt1ri1u1s1_unique", "key": { "referenceType": 1, "referenceId": 1, "username": 1, "source": 1 }, "unique": true }
+        ],
+        "password_policies": [
+          { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+        ],
+        "protected_resources": [
+          { "name": "d1t1ua_1", "key": { "domainId": 1, "type": 1, "updatedAt": -1 } },
+          { "name": "d1ri1", "key": { "domainId": 1, "resourceIdentifiers": 1 } },
+          { "name": "d1ci1_ci", "key": { "domainId": 1, "clientId": 1 }, "collation": { "locale": "en", "strength": 2 } },
+          { "name": "d1n1_ci", "key": { "domainId": 1, "name": 1 }, "collation": { "locale": "en", "strength": 2 } }
+        ],
+        "reporters": [
+          { "name": "d1", "key": { "domain": 1 } }
+        ],
+        "roles": [
+          { "name": "rt1ri1n1s1", "key": { "referenceType": 1, "referenceId": 1, "name": 1, "scope": 1 } }
+        ],
+        "scopes": [
+          { "name": "d1k1", "key": { "domain": 1, "key": 1 } }
+        ],
+        "service_resources": [
+          { "name": "ri1rt1", "key": { "referenceId": 1, "referenceType": 1 } }
+        ],
+        "tags": [
+          { "name": "o1", "key": { "organizationId": 1 } }
+        ],
+        "themes": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+        ],
+        "trusted_domains": [
+          { "name": "rt1ri1n1", "key": { "referenceType": 1, "referenceId": 1, "name": 1 }, "unique": true },
+          { "name": "rt1ri1std1", "key": { "referenceType": 1, "referenceId": 1, "spiffe.spiffeTrustDomain": 1 }, "unique": true, "partialFilterExpression": { "spiffe.spiffeTrustDomain": { "$exists": true } } },
+          { "name": "rt1ri1di1", "key": { "referenceType": 1, "referenceId": 1, "domainIdentifier": 1 }, "unique": true, "partialFilterExpression": { "domainIdentifier": { "$exists": true } } },
+          { "name": "rt1ri1n1i1_ci", "key": { "referenceType": 1, "referenceId": 1, "name": 1, "_id": 1 }, "collation": { "locale": "en", "strength": 2 } }
+        ],
+        "user_notifications": [
+          { "name": "a1t1s1", "key": { "audienceId": 1, "type": 1, "status": 1 } }
+        ]
+      },
+      "drop": {
+        "domains": ["ri1rt1"],
+        "factors": ["d1"],
+        "groups": ["rt1ri1"],
+        "memberships": ["ri1rt1"],
+        "organization_users": ["referenceType_1_referenceId_1_username_1_source_1", "rt1ri1u1s1", "rt1ri1", "rt1ri1ext1", "rt1ri1u1"],
+        "roles": ["rt1ri1"],
+        "scopes": ["d1"]
+      }
+    }
+  ]
+}

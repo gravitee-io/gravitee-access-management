@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.management.internal.model.MonitoringMongo;
 import io.gravitee.node.api.Monitoring;
@@ -26,14 +25,12 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -57,8 +54,6 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
     public void init() {
         collection = mongoOperations.getCollection("node_monitoring", MonitoringMongo.class);
         super.init(collection);
-        super.createIndex(collection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
-        super.createIndex(collection, Map.of(new Document(FIELD_NODE_ID, 1).append(FIELD_TYPE, 1), new IndexOptions().name("n1t1")));
     }
 
     @Override

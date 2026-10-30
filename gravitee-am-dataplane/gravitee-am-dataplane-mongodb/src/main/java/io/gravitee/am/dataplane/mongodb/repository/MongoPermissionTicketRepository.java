@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
@@ -30,13 +29,10 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
@@ -61,9 +57,6 @@ public class MongoPermissionTicketRepository extends AbstractDataPlaneMongoRepos
     public void init() {
         permissionTicketCollection = mongoDatabase.getCollection(COLLECTION_NAME, PermissionTicketMongo.class);
         MongoUtils.init(permissionTicketCollection);
-
-        // expire after index
-        super.createIndex(permissionTicketCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

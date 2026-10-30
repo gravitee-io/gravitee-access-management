@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.dataplane.mongodb.repository.model.PasswordHistoryMongo;
@@ -29,10 +28,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -52,12 +49,6 @@ public class MongoPasswordHistoryRepository extends AbstractDataPlaneMongoReposi
     public void init() {
         mongoCollection = mongoDatabase.getCollection("password_histories", PasswordHistoryMongo.class);
         MongoUtils.init(mongoCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put( new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
-        indexes.put( new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1u1"));
-
-        super.createIndex(mongoCollection, indexes);
     }
 
     @Override

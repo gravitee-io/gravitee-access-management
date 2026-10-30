@@ -16,7 +16,6 @@
 package io.gravitee.am.dataplane.mongodb.repository;
 
 import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
@@ -33,7 +32,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -56,10 +54,6 @@ public class MongoCimdClientStateRepository extends AbstractDataPlaneMongoReposi
     @PostConstruct
     public void init() {
         collection = mongoDatabase.getCollection(COLLECTION, CimdClientStateMongo.class);
-        super.createIndex(collection, Map.of(
-                new Document(FIELD_DOMAIN_ID, 1).append(FIELD_CLIENT_ID, 1),
-                new IndexOptions().name("di1ci1").unique(true)
-        ));
     }
 
     @Override

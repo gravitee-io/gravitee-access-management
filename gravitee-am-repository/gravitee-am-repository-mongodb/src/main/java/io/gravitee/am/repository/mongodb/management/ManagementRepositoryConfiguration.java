@@ -20,12 +20,14 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.encryption.EncryptingRepositoryBeanPostProcessor;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.common.MongoUpgraderConfiguration;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 
 import java.net.URI;
@@ -36,6 +38,7 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Configuration
+@Import(MongoUpgraderConfiguration.class)
 @ComponentScan({"io.gravitee.am.repository.mongodb.management", "io.gravitee.am.repository.mongodb.provider"})
 public class ManagementRepositoryConfiguration extends AbstractRepositoryConfiguration {
 

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public final class MongoIndexReport {
      * constraint, or an index MongoDB refused to build.
      */
     public enum Status {
-        ENSURED, REBUILT, SHADOWED, FAILED
+        ENSURED, REBUILT, SHADOWED, DROPPED, FAILED
     }
 
     public record IndexOutcome(String collection, String index, Status status, String detail) {
@@ -63,12 +64,24 @@ public final class MongoIndexReport {
         record(new IndexOutcome(collection, index, Status.SHADOWED, detail));
     }
 
+    static void dropped(String collection, String index) {
+        record(new IndexOutcome(collection, index, Status.DROPPED, "retired"));
+    }
+
     static void failed(String collection, String index, String detail) {
         record(new IndexOutcome(collection, index, Status.FAILED, detail));
     }
 
+    static void forget(String collection, Collection<String> indexes) {
+        indexes.forEach(index -> OUTCOMES.remove(key(collection, index)));
+    }
+
     private static void record(IndexOutcome outcome) {
-        OUTCOMES.put(outcome.collection() + '.' + outcome.index(), outcome);
+        OUTCOMES.put(key(outcome.collection(), outcome.index()), outcome);
+    }
+
+    private static String key(String collection, String index) {
+        return collection + '.' + index;
     }
 
     /** Every outcome recorded so far, ordered by collection then index. */

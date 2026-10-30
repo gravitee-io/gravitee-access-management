@@ -491,7 +491,7 @@ repositories:
   #    sslEnabled: false
   #    threadsAllowedToBlockForConnectionMultiplier: 5
   #    cursorFinalizerEnabled: true
-  #    ensureIndexOnStart: true
+  #    ensureIndexOnStart: true    # Indexes are created, updated and dropped by the index upgrader (not run when upgrade.mode=false). Set to false to manage them yourself. Also drives the index creation of the events TTL (services.purge.events.retention), the MongoDB audit reporter and MongoDB identity providers
   #    cursorMaxTime: 60000
   #    keystore:
   #      path:                      # Path to the keystore (when sslEnabled is true, default null)

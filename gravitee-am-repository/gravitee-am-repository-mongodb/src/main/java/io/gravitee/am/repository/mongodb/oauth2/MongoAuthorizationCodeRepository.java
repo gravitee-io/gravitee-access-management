@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AuthorizationCodeMongo;
@@ -34,9 +33,7 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -51,7 +48,6 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 @CustomLog
 public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoRepository implements AuthorizationCodeRepository {
 
-    private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_CODE = "code";
     private static final String FIELD_CLIENT_ID = "client_id";
     private static final String FIELD_EXPIRE_AT = "expire_at";
@@ -61,14 +57,6 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
         super.init(authorizationCodeCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_CODE, 1), new IndexOptions().name("c1"));
-        indexes.put(new Document(FIELD_TRANSACTION_ID, 1), new IndexOptions().name("t1"));
-        // expire after index
-        indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS).name("e1"));
-
-        super.createIndex(authorizationCodeCollection, indexes);
     }
 
     @Override

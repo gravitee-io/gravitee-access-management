@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Factor;
@@ -28,16 +27,11 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.Set;
 
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-import static io.gravitee.am.repository.mongodb.common.MongoUtils.dropIndexes;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,23 +40,12 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.dropIndexes;
 @Component
 public class MongoFactorRepository extends AbstractManagementMongoRepository implements FactorRepository {
 
-    private static final String FIELD_FACTOR_TYPE = "factorType";
     private MongoCollection<FactorMongo> factorsCollection;
-
-    private final Set<String> UNUSED_INDEXES = Set.of("d1");
 
     @PostConstruct
     public void init() {
         factorsCollection = mongoOperations.getCollection("factors", FactorMongo.class);
         super.init(factorsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1), new IndexOptions().name("d1f1"));
-
-        super.createIndex(factorsCollection, indexes);
-        if (ensureIndexOnStart) {
-            dropIndexes(factorsCollection, UNUSED_INDEXES::contains).subscribe();
-        }
     }
 
     @Override
