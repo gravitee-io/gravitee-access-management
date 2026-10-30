@@ -1656,6 +1656,53 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValueCount(2);
     }
 
+    @Test
+    public void shouldSearchWildcardTreatingLikeWildcardsLiterally() {
+        for (String username : List.of("user_1a", "userX1a", "user%a")) {
+            User user = new User();
+            user.setReferenceType(ReferenceType.DOMAIN);
+            user.setReferenceId("domain");
+            user.setUsername(username);
+            userRepository.create(user).blockingGet();
+        }
+
+        Map<String, List<String>> expectedUsernamesByQuery = Map.of(
+                "user_1*", List.of("user_1a"),
+                "user%*", List.of("user%a"),
+                "%*", List.of(),
+                "_*", List.of());
+
+        expectedUsernamesByQuery.forEach((query, expectedUsernames) -> {
+            TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, "domain", query, 0, 10).test();
+            testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+            testObserver.assertComplete();
+            testObserver.assertNoErrors();
+            testObserver.assertValue(users -> users.getTotalCount() == expectedUsernames.size()
+                    && users.getData().stream().map(User::getUsername).toList().equals(expectedUsernames));
+        });
+    }
+
+    @Test
+    public void shouldFindByDomainAndEmailOnlyOnExactMatchIgnoringCase() {
+        final String domain = "domain";
+        for (String email : List.of("test.user@test.com", "testXuser@test.com", "prefix.test.user@test.com", "test.user@test.com.evil")) {
+            User user = createUserWithRandomName();
+            user.setReferenceType(ReferenceType.DOMAIN);
+            user.setReferenceId(domain);
+            user.setEmail(email);
+            userRepository.create(user).blockingGet();
+        }
+
+        TestSubscriber<User> testSubscriber = userRepository.findByDomainAndEmail(domain, "Test.User@test.com", false).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(user -> user.getEmail().equals("test.user@test.com"));
+    }
+
     private void testSearch_strict(String query) {
         final String domain = "domain";
         // create user
