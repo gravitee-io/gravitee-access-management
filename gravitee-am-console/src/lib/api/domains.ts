@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 import type { Domain as DomainModel } from '@am-models/Domain';
+import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
+import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import { http } from './http';
 import type { Page } from './management-api';
 import type { ApiModel } from './model';
 import { type DomainRef, domainPath, environmentPath, searchParam } from './paths';
 
-export type Domain = ApiModel<DomainModel, 'id' | 'hrid' | 'name' | 'enabled'>;
+export type VirtualHost = ApiModel<VirtualHostModel, 'host' | 'path'>;
+
+// The spec types `tags` as a `Set`. The JSON holds an array.
+export type Domain = ApiModel<
+    Omit<DomainModel, 'tags' | 'vhosts'> & { tags?: string[]; vhosts?: VirtualHost[] },
+    'id' | 'hrid' | 'name' | 'enabled'
+>;
 
 const SWITCHER_PAGE_SIZE = 200;
 
@@ -71,4 +79,43 @@ export function createDomain(organizationId: string, environmentId: string, doma
 
 export function enableDomain(ref: DomainRef): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ enabled: true }) });
+}
+
+export function deleteDomain(ref: DomainRef): Promise<void> {
+    return http<void>(domainPath(ref), { method: 'DELETE' });
+}
+
+export interface DomainGeneralSettings {
+    readonly name: string;
+    readonly description?: string;
+    readonly path?: string;
+    readonly enabled: boolean;
+    readonly tags: readonly string[];
+    readonly oidc: { readonly postLogoutRedirectUris: readonly string[]; readonly requestUris: readonly string[] };
+    readonly master: boolean;
+}
+
+export function patchDomainGeneralSettings(ref: DomainRef, settings: DomainGeneralSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+export interface DomainEntrypointSettings {
+    readonly path?: string;
+    readonly vhostMode: boolean;
+    readonly vhosts: readonly VirtualHost[];
+}
+
+export function patchDomainEntrypoints(ref: DomainRef, settings: DomainEntrypointSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+export type Entrypoint = ApiModel<EntrypointModel, 'id' | 'url'>;
+
+export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
+    return http<Entrypoint[]>(`${domainPath(ref)}/entrypoints`);
+}
+
+/** The only entrypoint, else the first one that is not the default, else the first. */
+export function domainEntrypoint(entrypoints: readonly Entrypoint[]): Entrypoint | undefined {
+    return entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find(entrypoint => !entrypoint.defaultEntrypoint) ?? entrypoints[0]);
 }
