@@ -47,7 +47,6 @@ export function DomainsPage() {
         setQuery(text);
         setPage(1);
     }, []);
-    const filtersActive = query !== '' || pinnedOnly;
     const clearFilters = () => {
         setQuery('');
         setPinnedOnly(false);
@@ -180,11 +179,6 @@ export function DomainsPage() {
                                     Pinned only
                                 </Label>
                             </div>
-                            {filtersActive && (
-                                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                    Reset
-                                </Button>
-                            )}
                         </>
                     }
                     emptyMessage={

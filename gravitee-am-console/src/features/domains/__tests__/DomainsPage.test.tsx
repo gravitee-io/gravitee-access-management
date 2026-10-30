@@ -146,7 +146,6 @@ describe('DomainsPage', () => {
         expect(searchDomains).toHaveBeenLastCalledWith('DEFAULT', 'env-1', 0, 10, '');
         expect(harness.searchField()).toHaveValue('');
         expect(harness.pinnedOnlySwitch()).not.toBeChecked();
-        expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     });
 
     it('lists the pinned domains only, read by id', async () => {
