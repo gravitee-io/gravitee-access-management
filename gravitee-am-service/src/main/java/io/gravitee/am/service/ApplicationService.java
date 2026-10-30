@@ -135,6 +135,14 @@ public interface ApplicationService {
 
     Single<Application> update(Application application);
 
+    /**
+     * As {@link #update(Application)}, but fails with
+     * {@link io.gravitee.am.service.exception.ApplicationConcurrentModificationException} when the stored application
+     * changed since {@code application} was read. Identity providers are not checked (AC4 of AM-7510).
+     * The {@code principal} is recorded as the actor of the update audit.
+     */
+    Single<Application> updateIfUnchanged(Application application, User principal);
+
     Single<Application> updateType(String domain, String id, ApplicationType type, User principal);
 
     /**

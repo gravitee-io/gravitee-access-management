@@ -14268,6 +14268,11 @@ components:
           description: Epoch timestamp in milliseconds.
         id:
           type: string
+        key:
+          type: string
+          readOnly: true
+        managedBy:
+          $ref: "#/components/schemas/ManagedBy"
         name:
           type: string
         secret:

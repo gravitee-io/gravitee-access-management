@@ -64,6 +64,7 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.ApplicationTemplateInUseException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -109,6 +110,8 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.isConcurrentModification;
+import static io.gravitee.am.service.utils.OptimisticConcurrency.nextUpdatedAt;
 import static java.util.Objects.nonNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
@@ -796,6 +799,24 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Single<Application> updateIfUnchanged(Application application, User principal) {
+        log.debug("Update an application {} if unchanged since {}", application.getId(), application.getUpdatedAt());
+
+        return applicationRepository.findById(application.getId())
+                // an application is never moved to another domain
+                .filter(existingApplication -> Objects.equals(existingApplication.getDomain(), application.getDomain()))
+                .switchIfEmpty(Single.error(new ApplicationNotFoundException(application.getId())))
+                .flatMap(existingApplication -> innerUpdate(existingApplication, application, principal, false, false, true, application.getUpdatedAt()))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+                        return Single.error(ex);
+                    }
+                    log.error("An error occurs while trying to update an application", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update an application", ex));
+                });
+    }
+
+    @Override
     public Single<Application> updateType(String domain, String id, ApplicationType type, User principal) {
         log.debug("Update application {} type to {} for domain {}", id, type, domain);
 
@@ -900,7 +921,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                       BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
         log.debug("Update application {} for domain {}", existing.getId(), domain.getId());
         return prepareUpdate(domain, existing, desired)
-                .flatMap(app -> innerUpdate(existing, app, principal, isTypeChanged(existing, app)))
+                .flatMap(app -> innerUpdate(existing, app, principal, isTypeChanged(existing, app), true, true, existing.getUpdatedAt()))
                 .flatMap(app -> {
                     if (existing.isEnabled() && !app.isEnabled()) {
                         return revokeTokenProcessor.apply(domain, app).onErrorComplete().toSingleDefault(app);
@@ -1132,19 +1153,38 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType) {
-        // updated date
-        applicationToUpdate.setUpdatedAt(new Date());
+        // unconditional writes move the concurrency token forward too, so a conditional writer never matches them
+        return innerUpdate(currentApplication, applicationToUpdate, principal, fromUpdateType, true, false, currentApplication.getUpdatedAt());
+    }
 
-        return validateUpdate0(currentApplication, applicationToUpdate, fromUpdateType)
-                // update application
-                .flatMap(applicationRepository::update)
+    /**
+     * @param conditional       when true, the write only happens if the stored application still has
+     *                          {@code expectedUpdatedAt} (null for an application stored without one); otherwise it
+     *                          fails with {@link ApplicationConcurrentModificationException}
+     * @param expectedUpdatedAt the {@code updatedAt} the caller read: the condition when {@code conditional}, and the
+     *                          value the new {@code updatedAt} must move past in both cases
+     */
+    private Single<Application> innerUpdate(Application currentApplication, Application applicationToUpdate, User principal, boolean fromUpdateType,
+                                            boolean validateIdentityProviders, boolean conditional, Date expectedUpdatedAt) {
+        applicationToUpdate.setUpdatedAt(nextUpdatedAt(expectedUpdatedAt));
+
+        return validateUpdate0(currentApplication, applicationToUpdate, fromUpdateType, validateIdentityProviders)
+                .flatMap(app -> !conditional
+                        ? applicationRepository.update(app)
+                        : applicationRepository.updateIfUnchanged(app, expectedUpdatedAt)
+                                .switchIfEmpty(Single.error(() -> new ApplicationConcurrentModificationException(app.getId()))))
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).oldValue(currentApplication).application(application)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(currentApplication.getDomain())).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable)));
+                .doOnError(throwable -> {
+                    // a concurrent modification wrote nothing and is retried: it is not a failed update
+                    if (!isConcurrentModification(throwable)) {
+                        auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(currentApplication.getDomain())).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable));
+                    }
+                });
     }
 
     private Single<Application> validateCreate0(Domain domain, Application application) {
@@ -1159,10 +1199,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> validateUpdate0(Application currentApplication, Application applicationToUpdate, boolean fromUpdateType) {
+        return validateUpdate0(currentApplication, applicationToUpdate, fromUpdateType, true);
+    }
+
+    private Single<Application> validateUpdate0(Application currentApplication, Application applicationToUpdate, boolean fromUpdateType,
+                                                boolean validateIdentityProviders) {
         // validate application metadata
         return validateApplicationMetadata(applicationToUpdate, fromUpdateType)
                 // validate identity providers
-                .flatMap(this::validateApplicationIdentityProviders)
+                .flatMap(app -> validateIdentityProviders ? validateApplicationIdentityProviders(app) : Single.just(app))
                 .flatMap(app -> validateCrossAppAccessEnablement(currentApplication, app))
                 .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication));
     }

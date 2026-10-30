@@ -16,6 +16,9 @@
 
 package io.gravitee.am.model.application;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.gravitee.am.model.Managed;
+import io.gravitee.am.model.ManagedBy;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +31,7 @@ import java.util.Date;
  */
 @Getter
 @Setter
-public class ClientSecret {
+public class ClientSecret implements Managed {
     private String id;
     private String settingsId;
     private String name;
@@ -37,6 +40,18 @@ public class ClientSecret {
     private Date createdAt;
     @Schema(type = "java.lang.Long")
     private Date expiresAt;
+    /**
+     * Stable, human-chosen identifier used to address this secret in declarative APIs
+     * (e.g. the Automation API). Set when the Automation API creates the secret; null otherwise.
+     * Read-only over the management API.
+     */
+    @JsonProperty("key")
+    @Schema(name = "key", accessMode = Schema.AccessMode.READ_ONLY)
+    private String automationKey;
+    /**
+     * Indicates the source of truth for this secret.
+     */
+    private ManagedBy managedBy;
 
     public ClientSecret() {
     }
@@ -48,6 +63,8 @@ public class ClientSecret {
         this.secret = other.secret;
         this.createdAt = other.createdAt;
         this.expiresAt = other.expiresAt;
+        this.automationKey = other.automationKey;
+        this.managedBy = other.managedBy;
     }
 
     public ClientSecret safeSecret() {

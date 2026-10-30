@@ -269,6 +269,10 @@ public class JdbcApplication {
         private LocalDateTime createdAt;
         @Column("expires_at")
         private LocalDateTime expiresAt;
+        @Column("automation_key")
+        private String automationKey;
+        @Column("managed_by")
+        private String managedBy;
 
         public String getApplicationId() {
             return applicationId;
@@ -324,6 +328,22 @@ public class JdbcApplication {
 
         public void setExpiresAt(LocalDateTime expiresAt) {
             this.expiresAt = expiresAt;
+        }
+
+        public String getAutomationKey() {
+            return automationKey;
+        }
+
+        public void setAutomationKey(String automationKey) {
+            this.automationKey = automationKey;
+        }
+
+        public String getManagedBy() {
+            return managedBy;
+        }
+
+        public void setManagedBy(String managedBy) {
+            this.managedBy = managedBy;
         }
     }
 
