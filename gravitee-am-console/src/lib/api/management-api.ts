@@ -15,6 +15,7 @@
  */
 import type { ConsoleUserPreferences } from '@am-models/ConsoleUserPreferences';
 import type { Environment as EnvironmentModel } from '@am-models/Environment';
+import type { InstallationConfiguration as InstallationConfigurationModel } from '@am-models/InstallationConfiguration';
 import { http } from './http';
 import type { ApiModel } from './model';
 
@@ -60,4 +61,11 @@ export function updateUserPreferences(preferences: UserPreferences): Promise<Use
 
 export function listEnvironments(organizationId: string): Promise<Environment[]> {
     return http<Environment[]>(`/organizations/${organizationId}/environments`);
+}
+
+export type InstallationConfiguration = ApiModel<InstallationConfigurationModel>;
+
+/** Any error reads as an empty configuration. */
+export function getInstallationConfiguration(): Promise<InstallationConfiguration> {
+    return http<InstallationConfiguration>('/platform/configuration/installation').catch(() => ({}));
 }
