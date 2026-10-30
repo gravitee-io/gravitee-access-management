@@ -51,4 +51,23 @@ describe('DurationInput', () => {
 
         expect(harness.onChange).toHaveBeenCalledWith({ time: '2', unit: 'days' });
     });
+
+    it('links the amount to its error text', () => {
+        renderWithGraphene(
+            <>
+                <label htmlFor="expiry">Expiry</label>
+                <DurationInput
+                    id="expiry"
+                    label="Expiry"
+                    value={{ time: '', unit: 'hours' }}
+                    invalid
+                    describedBy="expiry-error"
+                    onChange={vi.fn()}
+                />
+                <p id="expiry-error">A duration is required.</p>
+            </>,
+        );
+
+        expect(screen.getByRole('spinbutton', { name: 'Expiry' })).toHaveAccessibleDescription('A duration is required.');
+    });
 });
