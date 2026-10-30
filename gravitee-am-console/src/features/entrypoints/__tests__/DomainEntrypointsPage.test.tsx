@@ -135,6 +135,20 @@ describe('DomainEntrypointsPage', () => {
         );
     });
 
+    it('shows the missing host error only after the host field loses focus', async () => {
+        renderPage(editor);
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Switch to virtual hosts mode' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Add virtual host' }));
+        const host = screen.getByRole('textbox', { name: 'Host' });
+        expect(host).not.toHaveAccessibleDescription();
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+
+        fireEvent.blur(host);
+
+        expect(host).toHaveAccessibleDescription('A host is required.');
+    });
+
     it('rejects a host outside the environment domain restrictions', async () => {
         session.domainRestrictions = ['acme.io'];
         renderPage(editor, { ...domain, vhostMode: true, vhosts: [{ host: 'auth.acme.io', path: '/', overrideEntrypoint: true }] });

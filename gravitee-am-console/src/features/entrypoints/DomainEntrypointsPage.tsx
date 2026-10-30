@@ -80,6 +80,8 @@ export function DomainEntrypointsPage() {
     const cloudMode = installation.isPending || installation.data?.type === 'managed';
     const canEdit = has('domain_settings_update') && !cloudMode;
     const [form, setForm] = useState<FormState>(() => fromDomain(domain));
+    // The indexes of the vhosts whose host field has lost focus.
+    const [touchedHosts, setTouchedHosts] = useState<ReadonlySet<number>>(new Set());
     useBreadcrumbs([
         { label: 'Domains', to: domainsPath },
         { label: domain.name, to: `${basePath}/dashboard` },
@@ -91,6 +93,7 @@ export function DomainEntrypointsPage() {
     if (syncedDomain !== domain) {
         setSyncedDomain(domain);
         setForm(fromDomain(domain));
+        setTouchedHosts(new Set());
     }
 
     const save = useMutation({
@@ -117,9 +120,9 @@ export function DomainEntrypointsPage() {
         set({ vhosts: form.vhosts.map((vhost, i) => (i === index ? { ...vhost, ...patch } : vhost)) });
 
     const pattern = hostPattern(domainRestrictions);
-    const hostErrors = form.vhosts.map(vhost => {
+    const hostErrors = form.vhosts.map((vhost, index) => {
         if (!vhost.host) {
-            return 'A host is required.';
+            return touchedHosts.has(index) ? 'A host is required.' : undefined;
         }
         if (pattern.test(vhost.host)) {
             return undefined;
@@ -130,8 +133,19 @@ export function DomainEntrypointsPage() {
     });
     const vhostPathErrors = form.vhosts.map(vhost => (vhost.path ? undefined : 'A path is required.'));
     const pathError = entrypoint && !form.path ? 'A path is required.' : undefined;
-    const invalid = form.vhostMode ? hostErrors.some(Boolean) || vhostPathErrors.some(Boolean) : !!pathError;
+    const invalid = form.vhostMode
+        ? form.vhosts.some(vhost => !vhost.host) || hostErrors.some(Boolean) || vhostPathErrors.some(Boolean)
+        : !!pathError;
 
+    const touchHost = (index: number) => setTouchedHosts(current => new Set(current).add(index));
+    const removeVhost = (index: number) => {
+        set({ vhosts: form.vhosts.filter((_, i) => i !== index) });
+        setTouchedHosts(current => new Set([...current].filter(i => i !== index).map(i => (i > index ? i - 1 : i))));
+    };
+    const discard = () => {
+        setForm(fromDomain(domain));
+        setTouchedHosts(new Set());
+    };
     const addVhost = () =>
         set({
             vhosts:
@@ -274,6 +288,7 @@ export function DomainEntrypointsPage() {
                                                                     hostErrors[index] ? `vhost-host-${index}-error` : undefined
                                                                 }
                                                                 showTrigger={false}
+                                                                onBlur={() => touchHost(index)}
                                                             />
                                                             <ComboboxContent>
                                                                 <ComboboxList>
@@ -293,6 +308,7 @@ export function DomainEntrypointsPage() {
                                                             disabled={!canEdit}
                                                             aria-invalid={!!hostErrors[index]}
                                                             aria-describedby={hostErrors[index] ? `vhost-host-${index}-error` : undefined}
+                                                            onBlur={() => touchHost(index)}
                                                             onChange={event => setVhost(index, { host: event.target.value })}
                                                         />
                                                     )}
@@ -332,7 +348,7 @@ export function DomainEntrypointsPage() {
                                                         variant="ghost"
                                                         size="icon-sm"
                                                         aria-label={`Remove virtual host ${vhost.host || index + 1}`}
-                                                        onClick={() => set({ vhosts: form.vhosts.filter((_, i) => i !== index) })}
+                                                        onClick={() => removeVhost(index)}
                                                     >
                                                         <Trash2Icon aria-hidden />
                                                     </Button>
@@ -355,15 +371,7 @@ export function DomainEntrypointsPage() {
                 )}
             </form>
 
-            {canEdit && (
-                <SaveBar
-                    formId={FORM_ID}
-                    dirty={dirty}
-                    saving={save.isPending}
-                    invalid={invalid}
-                    onDiscard={() => setForm(fromDomain(domain))}
-                />
-            )}
+            {canEdit && <SaveBar formId={FORM_ID} dirty={dirty} saving={save.isPending} invalid={invalid} onDiscard={discard} />}
         </div>
     );
 }
