@@ -31,6 +31,7 @@ Every rule and pattern here was distilled from a real failure or review finding.
 16. [Gateway Page Tests](#16-gateway-page-tests)
 17. [WebAuthn / CDP Virtual Authenticator](#17-webauthn--cdp-virtual-authenticator)
 18. [Angular-Specific Traps](#18-angular-specific-traps)
+19. [Test Steps](#19-test-steps)
 
 ### Part 4: Reference
 - [Config Defaults](#config-defaults)
@@ -668,6 +669,26 @@ await snackbar.waitFor({ state: 'hidden' });
 ### Environment hrid vs ID
 
 Routes use **hrid** (`default`, lowercase). Management API uses **ID** (`DEFAULT`, uppercase). Using uppercase ID renders an empty page shell with no errors.
+
+## 19. Test Steps
+
+Split a test into `test.step` blocks, one for each user action and its check. Name each step for the behavior it checks. The step names show in the HTML report and the trace, so a failure points at the step that broke.
+
+```typescript
+test('loads the widgets and reloads them for a new time range', async ({ page, testDomain }) => {
+  await test.step('open the dashboard', async () => {
+    await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains/${testDomain.hrid}/dashboard`);
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+  });
+
+  await test.step('choose another time range', async () => {
+    await page.getByRole('combobox', { name: 'Time range' }).click();
+    await page.getByRole('option', { name: 'Last 90 days' }).click();
+  });
+});
+```
+
+Keep setup that every step shares, such as a request listener, above the first step. Keep a `try`/`finally` cleanup outside the steps.
 
 ---
 

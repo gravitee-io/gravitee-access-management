@@ -1,0 +1,211 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { BadgeCell, Button, DataTable, DataTableEmptyState, DateCell, Label, Switch } from '@gravitee/graphene-core';
+import { GlobeIcon, PlusIcon, SearchIcon } from '@gravitee/graphene-core/icons';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useCallback, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ErrorPanel } from '../../app/components/ErrorPanel';
+import { PageHeader } from '../../app/components/PageHeader';
+import { SearchField } from '../../app/components/SearchField';
+import { type Domain, listDomainsByIds, searchDomains } from '../../lib/api/domains';
+import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
+import { useCurrentEnvironment } from '../../lib/session/environment';
+import { Can, usePermissions } from '../../lib/session/permissions';
+import { useSession } from '../../lib/session/session';
+import { DomainPreferenceToggles } from './DomainPreferenceToggles';
+import { useDomainPreferences } from './useDomainPreferences';
+
+export function DomainsPage() {
+    const { user } = useSession();
+    const environment = useCurrentEnvironment();
+    const { has } = usePermissions();
+    const envPath = `/environments/${environment.hrids[0]}`;
+    const listPath = `${envPath}/domains`;
+    // Graphene pages start at 1, the Management API pages start at 0.
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [query, setQuery] = useState('');
+    const [pinnedOnly, setPinnedOnly] = useState(false);
+    // A new key remounts the search field, which empties it.
+    const [searchKey, setSearchKey] = useState(0);
+    const search = useCallback((text: string) => {
+        setQuery(text);
+        setPage(1);
+    }, []);
+    const clearFilters = () => {
+        setQuery('');
+        setPinnedOnly(false);
+        setPage(1);
+        setSearchKey(key => key + 1);
+    };
+    useBreadcrumbs([{ label: 'Domains' }]);
+
+    const preferences = useDomainPreferences(environment.id);
+    const { pinnedIds, defaultDomainId } = preferences;
+
+    const paged = useQuery({
+        queryKey: ['domains', user.org, environment.id, page, pageSize, query],
+        queryFn: () => searchDomains(user.org, environment.id, page - 1, pageSize, query),
+        placeholderData: keepPreviousData,
+        enabled: !pinnedOnly,
+    });
+    const pinned = useQuery({
+        queryKey: ['domains', user.org, environment.id, 'pinned', pinnedIds],
+        queryFn: () => listDomainsByIds(user.org, environment.id, pinnedIds),
+        enabled: pinnedOnly && pinnedIds.length > 0,
+    });
+
+    const pinnedRows = useMemo(() => {
+        const needle = query.toLowerCase();
+        return pinnedIds.length === 0 ? [] : (pinned.data?.data ?? []).filter(domain => domain.name.toLowerCase().includes(needle));
+    }, [pinned.data, pinnedIds.length, query]);
+    // An unpin can shrink the pinned list below the current page.
+    const currentPage = pinnedOnly ? Math.min(page, Math.max(1, Math.ceil(pinnedRows.length / pageSize))) : page;
+    const rows = pinnedOnly ? pinnedRows.slice((currentPage - 1) * pageSize, currentPage * pageSize) : (paged.data?.data ?? []);
+    const totalCount = pinnedOnly ? pinnedRows.length : (paged.data?.totalCount ?? 0);
+    const error = (pinnedOnly ? pinned.error : paged.error) ?? preferences.error;
+    const isFirstUse = !pinnedOnly && paged.data?.totalCount === 0 && !query;
+
+    const columns: ColumnDef<Domain, unknown>[] = [
+        {
+            accessorKey: 'name',
+            header: 'Name',
+            cell: ({ row }) => (
+                <div className="flex flex-col">
+                    <Link to={`${listPath}/${row.original.hrid}`} className="self-start font-medium hover:underline">
+                        {row.original.name}
+                    </Link>
+                    {row.original.description && <span className="text-sm text-muted-foreground">{row.original.description}</span>}
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'enabled',
+            header: 'Status',
+            cell: ({ row }) =>
+                row.original.enabled ? <BadgeCell value="Enabled" variant="success" /> : <BadgeCell value="Disabled" variant="secondary" />,
+        },
+        {
+            accessorKey: 'updatedAt',
+            header: 'Last updated',
+            cell: ({ row }) => <DateCell value={row.original.updatedAt ? new Date(row.original.updatedAt) : null} />,
+        },
+        {
+            id: 'preferences',
+            header: () => <span className="sr-only">Preferences</span>,
+            enableHiding: false,
+            cell: ({ row }) => (
+                <DomainPreferenceToggles
+                    name={row.original.name}
+                    isDefault={defaultDomainId === row.original.id}
+                    isPinned={pinnedIds.includes(row.original.id)}
+                    disabled={!preferences.canSave}
+                    onToggleDefault={() => preferences.toggleDefault(row.original)}
+                    onTogglePin={() => preferences.togglePin(row.original)}
+                />
+            ),
+        },
+    ];
+
+    const createButton = (
+        <Button asChild>
+            <Link to={`${envPath}/new-domain`}>
+                <PlusIcon aria-hidden />
+                Create domain
+            </Link>
+        </Button>
+    );
+
+    return (
+        <div className="flex flex-col gap-6">
+            <PageHeader
+                title="Domains"
+                description="Security domains group applications, users and identity providers behind one authorization server."
+                actions={!error && !isFirstUse && <Can all={['domain_create']}>{createButton}</Can>}
+            />
+            {error ? (
+                <ErrorPanel description="Could not load the security domains." error={error} />
+            ) : isFirstUse ? (
+                <div className="rounded-lg border border-border">
+                    <DataTableEmptyState
+                        variant="first-use"
+                        icon={<GlobeIcon />}
+                        title="No security domains yet"
+                        description="A security domain lets you register applications and users and manage identity providers, for centralized authentication, authorization and user management."
+                        primaryAction={has('domain_create') ? createButton : undefined}
+                    />
+                </div>
+            ) : (
+                <DataTable
+                    aria-label="Security domains"
+                    columns={columns}
+                    data={rows}
+                    loading={pinnedOnly ? pinned.isFetching : paged.isFetching}
+                    skeletonCount={pageSize}
+                    serverSide
+                    toolbar={
+                        <>
+                            <SearchField key={searchKey} label="domains" onSearch={search} />
+                            <div className="flex items-center gap-2">
+                                <Switch
+                                    id="domains-pinned-only"
+                                    checked={pinnedOnly}
+                                    onCheckedChange={checked => {
+                                        setPinnedOnly(checked);
+                                        setPage(1);
+                                    }}
+                                />
+                                <Label htmlFor="domains-pinned-only" className="text-sm font-normal">
+                                    Pinned only
+                                </Label>
+                            </div>
+                        </>
+                    }
+                    emptyMessage={
+                        <DataTableEmptyState
+                            variant="no-results"
+                            icon={<SearchIcon />}
+                            title={pinnedOnly && pinnedIds.length === 0 ? 'No pinned domains' : 'No domains match your search'}
+                            description={
+                                pinnedOnly && pinnedIds.length === 0
+                                    ? 'Pin a domain to find it here.'
+                                    : 'Try another name, or clear the filters.'
+                            }
+                            action={
+                                <Button variant="outline" size="sm" onClick={clearFilters}>
+                                    Clear filters
+                                </Button>
+                            }
+                        />
+                    }
+                    pagination={{
+                        page: currentPage,
+                        pageSize,
+                        totalCount,
+                        onPageChange: setPage,
+                        onPageSizeChange: size => {
+                            setPageSize(size);
+                            setPage(1);
+                        },
+                        pageSizeOptions: [10, 25, 50, 100],
+                    }}
+                />
+            )}
+        </div>
+    );
+}

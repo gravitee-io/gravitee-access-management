@@ -15,14 +15,18 @@
  */
 import { LayoutSlotsProvider, ThemeProvider, Toaster, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { authRoutes } from '../features/auth/routes';
+import { DomainIndexRedirect } from '../features/domains/DomainIndexRedirect';
+import { DomainLayout } from '../features/domains/DomainLayout';
+import { domainDashboardRoute, domainListRoutes } from '../features/domains/routes';
 import { EnvironmentPage } from '../features/environment/EnvironmentPage';
 import { HomePage } from '../features/home/HomePage';
 import { kitRoutes } from '../features/kit/routes';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
 import { redirectToLogin } from '../lib/api/auth';
 import { HttpError } from '../lib/api/http';
+import { DomainScope } from '../lib/session/domain';
 import { EnvironmentScope } from '../lib/session/environment';
 import { SessionGate } from '../lib/session/session';
 import { Shell } from './Shell';
@@ -65,17 +69,24 @@ export function App() {
                                             <Route path="/environments/:envHrid" element={<EnvironmentScope />}>
                                                 <Route element={<Shell />}>
                                                     <Route index element={<EnvironmentPage />} />
-                                                    <Route path="domains" element={<PlaceholderPage title="Security Domains" />} />
-                                                    <Route path="new-domain" element={<PlaceholderPage title="New Security Domain" />} />
-                                                    <Route path="domains/:domainHrid">
-                                                        <Route index element={<Navigate to="dashboard" replace />} />
-                                                        <Route path="dashboard" element={<PlaceholderPage title="Dashboard" />} />
-                                                        <Route path="applications/*" element={<PlaceholderPage title="Applications" />} />
-                                                        <Route path="agents/*" element={<PlaceholderPage title="Agents" />} />
-                                                        <Route path="mcp-servers/*" element={<PlaceholderPage title="MCP Servers" />} />
-                                                        <Route path="authorization/*" element={<PlaceholderPage title="Authorization" />} />
-                                                        <Route path="alerts/*" element={<PlaceholderPage title="Alerts" />} />
-                                                        <Route path="settings/*" element={<PlaceholderPage title="Settings" />} />
+                                                    {domainListRoutes}
+                                                    <Route path="domains/:domainHrid" element={<DomainScope />}>
+                                                        <Route element={<DomainLayout />}>
+                                                            <Route index element={<DomainIndexRedirect />} />
+                                                            {domainDashboardRoute}
+                                                            <Route
+                                                                path="applications/*"
+                                                                element={<PlaceholderPage title="Applications" />}
+                                                            />
+                                                            <Route path="agents/*" element={<PlaceholderPage title="Agents" />} />
+                                                            <Route path="mcp-servers/*" element={<PlaceholderPage title="MCP Servers" />} />
+                                                            <Route
+                                                                path="authorization/*"
+                                                                element={<PlaceholderPage title="Authorization" />}
+                                                            />
+                                                            <Route path="alerts/*" element={<PlaceholderPage title="Alerts" />} />
+                                                            <Route path="settings/*" element={<PlaceholderPage title="Settings" />} />
+                                                        </Route>
                                                     </Route>
                                                     <Route path="organization/*" element={<PlaceholderPage title="Organization" />} />
                                                     {kitRoutes}

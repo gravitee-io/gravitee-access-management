@@ -1,0 +1,72 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { test, expect } from '../../fixtures/base.fixture';
+import { safeDeleteDomain } from '@management-commands/domain-management-commands';
+import { uniqueTestName } from '../../utils/fixture-helpers';
+
+test.describe('React console: domains list', () => {
+  test('finds a domain created via API by search', async ({ page, testDomain }) => {
+    const table = page.getByRole('table');
+
+    await test.step('open the domains list', async () => {
+      await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
+      await expect(table).toBeVisible();
+    });
+
+    await test.step('search for the domain by name', async () => {
+      await page.getByRole('searchbox', { name: 'Search domains' }).fill(testDomain.name);
+      await expect(table.getByRole('link', { name: testDomain.name })).toBeVisible();
+    });
+  });
+
+  test('creates a domain and opens it', async ({ page, adminToken }) => {
+    const name = uniqueTestName('pw-next-domain');
+    let dataPlane: { id: string; name: string };
+
+    await test.step('open the creation page from the domains list', async () => {
+      await page.goto(`/environments/${process.env.AM_DEF_ENV_HRID}/domains`);
+      const dataPlanesResponse = page.waitForResponse((response) => response.url().endsWith('/data-planes'));
+      await page.getByRole('link', { name: 'Create domain' }).click();
+      const dataPlanes: { id: string; name: string }[] = await (await dataPlanesResponse).json();
+      dataPlane = [...dataPlanes].sort((a, b) => a.name.localeCompare(b.name))[0];
+
+      await page.getByRole('textbox', { name: 'Name' }).fill(name);
+      if (dataPlanes.length > 1) {
+        await page.getByRole('combobox', { name: 'Data plane' }).click();
+        await page.getByRole('option', { name: `${dataPlane.name} (${dataPlane.id})` }).click();
+      }
+    });
+
+    const created = await test.step('create the domain with its name and data plane', async () => {
+      const createRequest = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/domains'));
+      const createResponse = page.waitForResponse(
+        (response) => response.request().method() === 'POST' && response.url().endsWith('/domains'),
+      );
+      await page.getByRole('button', { name: 'Create domain' }).click();
+
+      expect((await createRequest).postDataJSON()).toEqual({ name, dataPlaneId: dataPlane.id });
+      return (await createResponse).json();
+    });
+
+    try {
+      await test.step('open the dashboard of the new domain', async () => {
+        await expect(page).toHaveURL(new RegExp(`/domains/${created.hrid}/dashboard$`));
+      });
+    } finally {
+      await safeDeleteDomain(created.id, adminToken);
+    }
+  });
+});

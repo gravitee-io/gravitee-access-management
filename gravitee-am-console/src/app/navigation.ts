@@ -27,19 +27,21 @@ import {
 
 export const ORGANIZATION_KEY = 'organization';
 
+export const DOMAIN_NAV_GROUP: NavGroup = {
+    label: 'Domain',
+    items: [
+        { key: 'dashboard', title: 'Dashboard', icon: LayoutDashboardIcon },
+        { key: 'applications', title: 'Applications', icon: AppWindowIcon },
+        { key: 'agents', title: 'Agents', icon: BotIcon },
+        { key: 'mcp-servers', title: 'MCP Servers', icon: BoxesIcon },
+        { key: 'authorization', title: 'Authorization', icon: ShieldCheckIcon },
+        { key: 'alerts', title: 'Alerts', icon: BellIcon },
+        { key: 'settings', title: 'Settings', icon: SettingsIcon },
+    ],
+};
+
 export const MAIN_NAV_GROUPS: NavGroup[] = [
-    {
-        label: 'Domain',
-        items: [
-            { key: 'dashboard', title: 'Dashboard', icon: LayoutDashboardIcon },
-            { key: 'applications', title: 'Applications', icon: AppWindowIcon },
-            { key: 'agents', title: 'Agents', icon: BotIcon },
-            { key: 'mcp-servers', title: 'MCP Servers', icon: BoxesIcon },
-            { key: 'authorization', title: 'Authorization', icon: ShieldCheckIcon },
-            { key: 'alerts', title: 'Alerts', icon: BellIcon },
-            { key: 'settings', title: 'Settings', icon: SettingsIcon },
-        ],
-    },
+    DOMAIN_NAV_GROUP,
     {
         label: 'Organization',
         items: [{ key: ORGANIZATION_KEY, title: 'Organization', icon: UserCogIcon }],

@@ -51,19 +51,21 @@ Pin Graphene to the version gamma-console uses.
 
 ```
 src/
-  app/              App.tsx (route tree), Shell.tsx (AM layout), navigation.ts, components/
-  config/           app-config.ts
+  app/              route tree, AM layout, main menu, shared components
+  config/           runtime config
   features/<area>/  routes.tsx, pages, area helpers, __tests__/
-  lib/api/          http.ts, auth.ts, paths.ts (DomainRef, domainPath), model.ts (ApiModel), management-api.ts, one file per area
-  lib/routing/      lazyPage.tsx
-  lib/session/      session.tsx, environment.tsx, permissions.tsx, license.tsx, preferences.ts, domains.ts
-  lib/layout/       useBreadcrumbs.ts, useSectionSidebar.tsx
-  lib/forms/        duration.ts
-  test/             setup.ts
+  lib/api/          HTTP client, login redirect, API paths, one file per area
+  lib/routing/      lazy page loading
+  lib/session/      session, environment, domain, permissions, licence and preferences scopes
+  lib/layout/       breadcrumbs and section sidebar hooks
+  lib/forms/        form helpers
+  test/             Vitest setup
 ```
 
 - One folder per feature area under `src/features/`. The area name follows the Angular folder, for example `scopes`,
   `certificates`, `users`.
+- A page with its own components and helpers, such as the domain dashboard, goes in a subfolder of the area with its
+  own `__tests__/`.
 - Shared parts used by two or more areas go in `src/app/components/` or `src/lib/`. Do not import from a sibling area.
 - Each area exports its `<Route>` elements from `routes.tsx`. A page loads through `lazyPage()`, so the area lands in
   its own chunk. `App.tsx` mounts each area in place of its `PlaceholderPage`.
@@ -80,7 +82,8 @@ src/
 - `SessionGate` loads `GET /user`, the environments and the licence once. `useSession()` gives `user` and `environments`.
 - `EnvironmentScope` resolves `:envHrid` and loads the environment permissions. `useCurrentEnvironment()` gives the
   environment with its `id`.
-- The domain scope (`:domainHrid`, `useCurrentDomain()`) comes with the domains story.
+- `DomainScope` resolves `:domainHrid` with `GET domains/_hrid/{hrid}` and loads the domain permissions.
+  `useCurrentDomain()` gives `domain`, `ref` (the `DomainRef` for API calls), `basePath` and `domainsPath`.
 - The login chain is server-side: `redirectToLogin()` in `src/lib/api/auth.ts`. A 401 from any query starts it
   through the `QueryCache` in `App.tsx`. Pages do not handle 401.
 

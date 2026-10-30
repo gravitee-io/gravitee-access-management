@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 import { http } from './http';
-import { environmentPath } from './paths';
+import { type DomainRef, domainPath, environmentPath } from './paths';
 
 export function listEnvironmentPermissions(organizationId: string, environmentId: string): Promise<string[]> {
     return http<string[]>(`${environmentPath(organizationId, environmentId)}/members/permissions`);
+}
+
+export function listDomainPermissions(ref: DomainRef): Promise<string[]> {
+    return http<string[]>(`${domainPath(ref)}/members/permissions`);
 }

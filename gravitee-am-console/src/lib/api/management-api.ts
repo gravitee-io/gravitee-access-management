@@ -32,7 +32,13 @@ export interface CurrentUser {
 
 export type Environment = ApiModel<EnvironmentModel, 'id' | 'name' | 'hrids'>;
 
-export type UserPreferences = ApiModel<ConsoleUserPreferences>;
+// The console sends null to unset the default domain.
+export type UserPreferences = ApiModel<
+    Omit<ConsoleUserPreferences, 'defaultDomainId' | 'defaultEnvironmentId'> & {
+        defaultDomainId?: string | null;
+        defaultEnvironmentId?: string | null;
+    }
+>;
 
 export interface Page<T> {
     readonly data: T[];
@@ -46,6 +52,10 @@ export function getCurrentUser(): Promise<CurrentUser> {
 
 export function getUserPreferences(): Promise<UserPreferences> {
     return http<UserPreferences>('/user/preferences');
+}
+
+export function updateUserPreferences(preferences: UserPreferences): Promise<UserPreferences> {
+    return http<UserPreferences>('/user/preferences', { method: 'PUT', body: JSON.stringify(preferences) });
 }
 
 export function listEnvironments(organizationId: string): Promise<Environment[]> {

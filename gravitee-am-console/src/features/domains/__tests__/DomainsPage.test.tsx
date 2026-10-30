@@ -1,0 +1,243 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { LayoutSlotsProvider, toast } from '@gravitee/graphene-core';
+import { renderWithGraphene } from '@gravitee/graphene-core/testing';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import { type Domain, listDomainsByIds, searchDomains } from '../../../lib/api/domains';
+import { HttpError } from '../../../lib/api/http';
+import { getUserPreferences, updateUserPreferences } from '../../../lib/api/management-api';
+import { PermissionScope } from '../../../lib/session/permissions';
+import { DomainsPage } from '../DomainsPage';
+
+vi.mock('@gravitee/graphene-core', async importOriginal => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    toast: { success: vi.fn(), error: vi.fn() },
+}));
+vi.mock('../../../lib/api/domains', () => ({ searchDomains: vi.fn(), listDomainsByIds: vi.fn() }));
+vi.mock('../../../lib/api/management-api', () => ({ getUserPreferences: vi.fn(), updateUserPreferences: vi.fn() }));
+vi.mock('../../../lib/session/session', () => ({ useSession: () => ({ user: { org: 'DEFAULT' } }) }));
+vi.mock('../../../lib/session/environment', () => ({
+    useCurrentEnvironment: () => ({ id: 'env-1', name: 'Development', hrids: ['dev'] }),
+}));
+
+const acme: Domain = { id: 'd1', hrid: 'acme', name: 'Acme', description: 'Customer realm', enabled: true, updatedAt: Date.now() };
+const beta: Domain = { id: 'd2', hrid: 'beta', name: 'Beta', enabled: false };
+
+function setupDomainsPageHarness(permissions: string[] = []) {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = renderWithGraphene(
+        <QueryClientProvider client={client}>
+            <PermissionScope permissions={permissions}>
+                <MemoryRouter initialEntries={['/environments/dev/domains']}>
+                    <LayoutSlotsProvider>
+                        <DomainsPage />
+                    </LayoutSlotsProvider>
+                </MemoryRouter>
+            </PermissionScope>
+        </QueryClientProvider>,
+    );
+    const pinButton = (domainName: string) => screen.getByRole('button', { name: `Pin ${domainName}` });
+    const defaultButton = (domainName: string) => screen.getByRole('button', { name: `Default domain ${domainName}` });
+
+    return {
+        unmount: view.unmount,
+        search: async (text: string) => userEvent.type(await screen.findByRole('searchbox', { name: 'Search domains' }), text),
+        togglePinnedOnly: () => userEvent.click(screen.getByRole('switch', { name: 'Pinned only' })),
+        togglePin: async (domainName: string) => userEvent.click(await screen.findByRole('button', { name: `Pin ${domainName}` })),
+        toggleDefault: async (domainName: string) =>
+            userEvent.click(await screen.findByRole('button', { name: `Default domain ${domainName}` })),
+        clearFilters: () => userEvent.click(screen.getByRole('button', { name: 'Clear filters' })),
+        pinButton,
+        defaultButton,
+        searchField: () => screen.getByRole('searchbox', { name: 'Search domains' }),
+        pinnedOnlySwitch: () => screen.getByRole('switch', { name: 'Pinned only' }),
+        createDomainLink: () => screen.queryByRole('link', { name: 'Create domain' }),
+    };
+}
+
+describe('DomainsPage', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.mocked(getUserPreferences).mockResolvedValue({});
+    });
+
+    it('lists the domains of the current environment', async () => {
+        vi.mocked(searchDomains).mockResolvedValueOnce({ data: [acme, beta], currentPage: 0, totalCount: 2 });
+
+        setupDomainsPageHarness();
+
+        expect(await screen.findByRole('link', { name: 'Acme' })).toHaveAttribute('href', '/environments/dev/domains/acme');
+        expect(screen.getByText('Customer realm')).toBeInTheDocument();
+        expect(screen.getByText('Enabled')).toBeInTheDocument();
+        expect(screen.getByText('Disabled')).toBeInTheDocument();
+        expect(searchDomains).toHaveBeenCalledWith('DEFAULT', 'env-1', 0, 10, '');
+    });
+
+    it('shows the error panel, not the first-use state, when the list fails', async () => {
+        vi.mocked(searchDomains).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
+
+        setupDomainsPageHarness(['domain_create']);
+
+        expect(await screen.findByText('Could not load the security domains.')).toBeInTheDocument();
+        expect(screen.queryByText('No security domains yet')).not.toBeInTheDocument();
+    });
+
+    it('shows the first-use empty state with Create domain when the environment has no domain', async () => {
+        vi.mocked(searchDomains).mockResolvedValueOnce({ data: [], currentPage: 0, totalCount: 0 });
+
+        setupDomainsPageHarness(['domain_create']);
+
+        expect(await screen.findByText('No security domains yet')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Create domain' })).toHaveAttribute('href', '/environments/dev/new-domain');
+    });
+
+    it('searches the domains and shows the no-results state when nothing matches', async () => {
+        vi.mocked(searchDomains)
+            .mockResolvedValueOnce({ data: [acme], currentPage: 0, totalCount: 1 })
+            .mockResolvedValue({ data: [], currentPage: 0, totalCount: 0 });
+
+        const harness = setupDomainsPageHarness();
+        await harness.search('zzz');
+
+        await waitFor(() => expect(searchDomains).toHaveBeenLastCalledWith('DEFAULT', 'env-1', 0, 10, 'zzz'));
+        expect(await screen.findByText('No domains match your search')).toBeInTheDocument();
+        expect(screen.queryByText('No security domains yet')).not.toBeInTheDocument();
+    });
+
+    it('offers Create domain with the domain_create permission only', async () => {
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+
+        const harness = setupDomainsPageHarness(['domain_create']);
+        expect(await screen.findByRole('link', { name: 'Create domain' })).toHaveAttribute('href', '/environments/dev/new-domain');
+        harness.unmount();
+
+        const withoutCreate = setupDomainsPageHarness();
+        await screen.findByRole('link', { name: 'Acme' });
+        expect(withoutCreate.createDomainLink()).not.toBeInTheDocument();
+    });
+
+    it('clears the search and Pinned only from the no-results state', async () => {
+        vi.mocked(getUserPreferences).mockResolvedValue({ pinnedDomainIds: [] });
+        vi.mocked(searchDomains).mockImplementation(async (_org, _env, _page, _size, query) =>
+            query ? { data: [], currentPage: 0, totalCount: 0 } : { data: [acme], currentPage: 0, totalCount: 1 },
+        );
+        const harness = setupDomainsPageHarness();
+
+        await harness.search('zzz');
+        await harness.togglePinnedOnly();
+        expect(await screen.findByText('No pinned domains')).toBeInTheDocument();
+        await harness.clearFilters();
+
+        expect(await screen.findByRole('link', { name: 'Acme' })).toBeInTheDocument();
+        expect(searchDomains).toHaveBeenLastCalledWith('DEFAULT', 'env-1', 0, 10, '');
+        expect(harness.searchField()).toHaveValue('');
+        expect(harness.pinnedOnlySwitch()).not.toBeChecked();
+    });
+
+    it('lists the pinned domains only, read by id', async () => {
+        vi.mocked(getUserPreferences).mockResolvedValue({ pinnedDomainIds: ['d2'] });
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme, beta], currentPage: 0, totalCount: 2 });
+        vi.mocked(listDomainsByIds).mockResolvedValue({ data: [beta], currentPage: 0, totalCount: 1 });
+
+        const harness = setupDomainsPageHarness();
+        await screen.findByRole('link', { name: 'Acme' });
+        await harness.togglePinnedOnly();
+
+        await waitFor(() => expect(screen.queryByRole('link', { name: 'Acme' })).not.toBeInTheDocument());
+        expect(screen.getByRole('link', { name: 'Beta' })).toBeInTheDocument();
+        expect(listDomainsByIds).toHaveBeenCalledWith('DEFAULT', 'env-1', ['d2']);
+    });
+
+    it('moves back to the last pinned page when an unpin empties the current one', async () => {
+        const pinnedDomains: Domain[] = Array.from({ length: 11 }, (_, index) => ({
+            id: `p${index + 1}`,
+            hrid: `pinned-${index + 1}`,
+            name: `Pinned ${index + 1}`,
+            enabled: true,
+        }));
+        const pinnedIds = pinnedDomains.map(domain => domain.id);
+        vi.mocked(getUserPreferences).mockResolvedValue({ pinnedDomainIds: pinnedIds });
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+        vi.mocked(listDomainsByIds).mockImplementation(async (_org, _env, ids) => {
+            const data = pinnedDomains.filter(domain => ids.includes(domain.id));
+            return { data, currentPage: 0, totalCount: data.length };
+        });
+        vi.mocked(updateUserPreferences).mockImplementation(async preferences => preferences);
+
+        const harness = setupDomainsPageHarness();
+        await screen.findByRole('link', { name: 'Acme' });
+        await harness.togglePinnedOnly();
+        await screen.findByRole('link', { name: 'Pinned 1' });
+        await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+        await harness.togglePin('Pinned 11');
+
+        expect(await screen.findByRole('link', { name: 'Pinned 10' })).toBeInTheDocument();
+        expect(screen.queryByText('No domains match your search')).not.toBeInTheDocument();
+    });
+
+    it('pins a domain in the user preferences', async () => {
+        vi.mocked(getUserPreferences).mockResolvedValue({ defaultDomainId: 'd2', pinnedDomainIds: ['d2'] });
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+        vi.mocked(updateUserPreferences).mockImplementation(async preferences => preferences);
+
+        const harness = setupDomainsPageHarness();
+        await harness.togglePin('Acme');
+
+        await waitFor(() => expect(updateUserPreferences).toHaveBeenCalledWith({ defaultDomainId: 'd2', pinnedDomainIds: ['d2', 'd1'] }));
+        expect(toast.success).toHaveBeenCalledWith('Acme pinned');
+        expect(harness.pinButton('Acme')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('disables the preference actions until the preferences load, so a save cannot drop them', async () => {
+        vi.mocked(getUserPreferences).mockReturnValue(new Promise(() => {}));
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+
+        const harness = setupDomainsPageHarness();
+        await screen.findByRole('link', { name: 'Acme' });
+
+        expect(harness.pinButton('Acme')).toBeDisabled();
+        expect(harness.defaultButton('Acme')).toBeDisabled();
+    });
+
+    it('disables the preference actions while a save runs', async () => {
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+        vi.mocked(updateUserPreferences).mockReturnValue(new Promise(() => {}));
+
+        const harness = setupDomainsPageHarness();
+        await harness.togglePin('Acme');
+
+        await waitFor(() => expect(harness.pinButton('Acme')).toBeDisabled());
+        expect(harness.defaultButton('Acme')).toBeDisabled();
+    });
+
+    it('sets the default domain for the current environment, and unsets it', async () => {
+        vi.mocked(searchDomains).mockResolvedValue({ data: [acme], currentPage: 0, totalCount: 1 });
+        vi.mocked(updateUserPreferences).mockImplementation(async preferences => preferences);
+
+        const harness = setupDomainsPageHarness();
+        await harness.toggleDefault('Acme');
+
+        await waitFor(() => expect(updateUserPreferences).toHaveBeenCalledWith({ defaultDomainId: 'd1', defaultEnvironmentId: 'env-1' }));
+        await waitFor(() => expect(harness.defaultButton('Acme')).toHaveAttribute('aria-pressed', 'true'));
+
+        await harness.toggleDefault('Acme');
+
+        await waitFor(() => expect(updateUserPreferences).toHaveBeenLastCalledWith({ defaultDomainId: null, defaultEnvironmentId: null }));
+    });
+});

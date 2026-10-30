@@ -28,22 +28,25 @@ const domains: Domain[] = [
 interface HarnessProps {
     readonly currentDomain?: Domain;
     readonly domains?: Domain[];
+    readonly loading?: boolean;
 }
 
-function setupDomainSwitcherHarness({ currentDomain, domains: list = domains }: HarnessProps = {}) {
+function setupDomainSwitcherHarness({ currentDomain, domains: list = domains, loading = false }: HarnessProps = {}) {
     const onSelect = vi.fn();
     const onManage = vi.fn();
     renderWithGraphene(
         <SidebarProvider>
-            <DomainSwitcher domains={list} currentDomain={currentDomain} loading={false} onSelect={onSelect} onManage={onManage} />
+            <DomainSwitcher domains={list} currentDomain={currentDomain} loading={loading} onSelect={onSelect} onManage={onManage} />
         </SidebarProvider>,
     );
     return {
         onSelect,
         onManage,
         open: () => buttonHarness({ name: /^Switch domain/ }).click(),
-        pick: (name: string) => userEvent.click(screen.getByRole('menuitemradio', { name: new RegExp(`^${name}`) })),
-        manage: () => userEvent.click(screen.getByRole('menuitem', { name: 'Manage domains' })),
+        search: (text: string) => userEvent.type(screen.getByRole('combobox', { name: 'Find a domain' }), text),
+        option: (name: string) => screen.queryByRole('option', { name: new RegExp(`^${name}`) }),
+        pick: (name: string) => userEvent.click(screen.getByRole('option', { name: new RegExp(`^${name}`) })),
+        manage: () => userEvent.click(screen.getByRole('option', { name: 'Manage domains' })),
     };
 }
 
@@ -54,14 +57,13 @@ describe('DomainSwitcher', () => {
         expect(screen.getByRole('button', { name: 'Switch domain, current One' })).toBeInTheDocument();
     });
 
-    it('marks the current domain as checked and flags a disabled domain', async () => {
+    it('marks the current domain and flags a disabled domain', async () => {
         const harness = setupDomainSwitcherHarness({ currentDomain: domains[0] });
 
         await harness.open();
 
-        expect(screen.getByRole('menuitemradio', { name: /^One/ })).toHaveAttribute('aria-checked', 'true');
-        expect(screen.getByRole('menuitemradio', { name: /^Two/ })).toHaveAttribute('aria-checked', 'false');
-        expect(screen.getByRole('menuitemradio', { name: /^Two/ })).toHaveTextContent('Disabled');
+        expect(harness.option('One')).toContainElement(screen.getByLabelText('Current domain'));
+        expect(harness.option('Two')).toHaveTextContent('Disabled');
     });
 
     it('selects a domain and opens the domain list', async () => {
@@ -76,11 +78,34 @@ describe('DomainSwitcher', () => {
         expect(harness.onManage).toHaveBeenCalledOnce();
     });
 
+    it('finds a domain by name and keeps Manage domains', async () => {
+        const harness = setupDomainSwitcherHarness();
+
+        await harness.open();
+        await harness.search('tw');
+
+        expect(harness.option('Two')).toBeInTheDocument();
+        expect(harness.option('One')).not.toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Manage domains' })).toBeInTheDocument();
+
+        await harness.search('zzz');
+        expect(screen.getByText('No domains match your search')).toBeInTheDocument();
+    });
+
     it('says when there is no domain yet', async () => {
         const harness = setupDomainSwitcherHarness({ domains: [] });
 
         expect(screen.getByRole('button', { name: 'Switch domain, current No domain selected' })).toBeInTheDocument();
         await harness.open();
-        expect(screen.getByRole('menuitem', { name: 'No domains yet' })).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByText('No domains yet')).toBeInTheDocument();
+    });
+
+    it('says the domains are loading, not that there is none, while the list loads', async () => {
+        const harness = setupDomainSwitcherHarness({ domains: [], loading: true });
+
+        await harness.open();
+
+        expect(screen.getByText('Loading domains…', { selector: '[cmdk-empty]' })).toBeInTheDocument();
+        expect(screen.queryByText('No domains yet')).not.toBeInTheDocument();
     });
 });
