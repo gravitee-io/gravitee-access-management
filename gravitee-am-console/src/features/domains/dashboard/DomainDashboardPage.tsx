@@ -42,7 +42,7 @@ export function DomainDashboardPage() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [range, setRange] = useState(DEFAULT_TIME_RANGE);
-    useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: `${basePath}/dashboard` }, { label: 'Dashboard' }]);
+    useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name }, { label: 'Dashboard' }]);
 
     // Each widget call takes its own window end.
     const queries = useQueries({
