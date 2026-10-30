@@ -70,6 +70,10 @@ import { ScopeResolver } from './resolvers/scope.resolver';
 import { ScopesResolver } from './resolvers/scopes.resolver';
 import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
 import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
+import { AuthorizationDetailTypesComponent } from './domain/settings/authorization-detail-types/authorization-detail-types.component';
+import { AuthorizationDetailTypeCreationComponent } from './domain/settings/authorization-detail-types/creation/authorization-detail-type-creation.component';
+import { AuthorizationDetailTypeComponent } from './domain/settings/authorization-detail-types/authorization-detail-type/authorization-detail-type.component';
+import { AuthorizationDetailTypeResolver } from './resolvers/authorization-detail-type.resolver';
 import { SettingsComponent } from './settings/settings.component';
 import { SettingsMembershipsComponent } from './settings/memberships/memberships.component';
 import { UsersComponent } from './domain/settings/users/users.component';
@@ -3066,6 +3070,53 @@ export const routes: Routes = [
                             only: ['domain_openid_read'],
                           },
                         },
+                      },
+                      {
+                        path: 'authorization-detail-types',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'RAR',
+                            section: 'OAuth 2.0',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_authorization_detail_type_list'],
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: AuthorizationDetailTypesComponent,
+                          },
+                          {
+                            path: 'new',
+                            component: AuthorizationDetailTypeCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_authorization_detail_type_create'],
+                              },
+                            },
+                          },
+                          {
+                            path: ':authorizationDetailTypeId',
+                            component: AuthorizationDetailTypeComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              authorizationDetailType: AuthorizationDetailTypeResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'authorizationDetailType.name',
+                              },
+                              perms: {
+                                only: ['domain_authorization_detail_type_read'],
+                              },
+                            },
+                          },
+                        ],
                       },
                       {
                         path: 'dcr',

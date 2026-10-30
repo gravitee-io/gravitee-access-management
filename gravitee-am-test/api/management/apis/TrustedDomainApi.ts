@@ -72,6 +72,7 @@ export interface ListTrustedDomainsRequest {
   dir?: string;
   page?: number;
   usage?: ListTrustedDomainsUsageEnum;
+  cursor?: string;
 }
 
 export interface ListTrustedDomainsCursorRequest {
@@ -331,7 +332,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * List trusted domains using cursor-based pagination. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List trusted domains using cursor-based pagination. Follow nextCursor to get the next page. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
    * List trusted domains registered against the security domain
    */
   async listTrustedDomainsRaw(
@@ -381,6 +382,10 @@ export class TrustedDomainApi extends runtime.BaseAPI {
       queryParameters['usage'] = requestParameters.usage;
     }
 
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     if (this.configuration && this.configuration.accessToken) {
@@ -408,7 +413,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * List trusted domains using cursor-based pagination. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List trusted domains using cursor-based pagination. Follow nextCursor to get the next page. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
    * List trusted domains registered against the security domain
    */
   async listTrustedDomains(
@@ -420,7 +425,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * Follows the nextCursor returned by the trusted domains list. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * Deprecated: pass the cursor to listTrustedDomains instead. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
    * List the next page of trusted domains registered against the security domain
    */
   async listTrustedDomainsCursorRaw(
@@ -501,7 +506,7 @@ export class TrustedDomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * Follows the nextCursor returned by the trusted domains list. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * Deprecated: pass the cursor to listTrustedDomains instead. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
    * List the next page of trusted domains registered against the security domain
    */
   async listTrustedDomainsCursor(
