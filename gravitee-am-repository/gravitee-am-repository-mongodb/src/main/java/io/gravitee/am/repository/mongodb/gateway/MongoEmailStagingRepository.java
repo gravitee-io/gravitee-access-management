@@ -16,51 +16,37 @@
 package io.gravitee.am.repository.mongodb.gateway;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
-import io.gravitee.am.repository.mongodb.gateway.internal.model.EmailStagingMongo;
+import io.gravitee.am.repository.common.EmailStagingRepository;
+import io.gravitee.am.repository.mongodb.common.EmailStagingCommand;
+import io.gravitee.am.repository.mongodb.common.model.EmailStagingMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import lombok.CustomLog;
-import org.bson.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
+@Component("gatewayEmailStagingRepository")
 @CustomLog
 public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository implements EmailStagingRepository {
 
     private static final Long DEFAULT_MAX_READ_PREFERENCE_STALENESS = 90000L;
     private static final String COLLECTION_NAME = "dp_email_staging";
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_USER_ID = "userId";
-    private static final String FIELD_REFERENCE_TYPE = "referenceType";
-    private static final String FIELD_REFERENCE_ID = "referenceId";
-    private static final String FIELD_EMAIL_TEMPLATE_NAME = "emailTemplateName";
-    private static final String FIELD_UPDATED_AT = "updatedAt";
 
     private MongoCollection<EmailStagingMongo> emailStagingCollection;
+
+    private EmailStagingCommand emailStagingCommand;
 
     @Value("${repositories.gateway.mongodb.readPreference:SECONDARY}")
     private String readPreference = "SECONDARY";
@@ -72,121 +58,37 @@ public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository 
     public void init() {
         emailStagingCollection = mongoOperations.getCollection(COLLECTION_NAME, EmailStagingMongo.class);
         super.init(emailStagingCollection);
+        emailStagingCommand = new EmailStagingCommand(emailStagingCollection, withReadPreferenceCollection(), getMaxTimeInMs());
     }
 
     @Override
     public Single<EmailStaging> create(EmailStaging emailStaging) {
-        EmailStagingMongo emailStagingMongo = convert(emailStaging);
-        emailStagingMongo.setId(emailStagingMongo.getId() == null ? RandomString.generate() : emailStagingMongo.getId());
-
-        Date now = new Date();
-        emailStagingMongo.setCreatedAt(now);
-        emailStagingMongo.setUpdatedAt(now);
-
-        return Single.fromPublisher(emailStagingCollection.insertOne(emailStagingMongo))
-                .flatMap(success -> Single.just(convert(emailStagingMongo)))
-                .observeOn(Schedulers.computation());
+        return emailStagingCommand.create(emailStaging);
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(emailStagingCollection.deleteOne(eq(FIELD_ID, id)))
-                .observeOn(Schedulers.computation());
+        return emailStagingCommand.delete(id);
     }
 
     @Override
     public Completable delete(List<String> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return Completable.complete();
-        }
-
-        return Completable.fromPublisher(emailStagingCollection.deleteMany(in(FIELD_ID, ids)))
-                .observeOn(Schedulers.computation());
+        return emailStagingCommand.delete(ids);
     }
 
     @Override
     public Flowable<EmailStaging> findOldestByUpdateDate(Reference reference, int limit) {
-        return Observable.fromPublisher(
-                withMaxTime(emailStagingCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))
-                        .sort(new Document(FIELD_UPDATED_AT, 1))
-                        .limit(limit))
-        )
-        .map(this::convert)
-        .toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER)
-        .observeOn(Schedulers.computation());
+        return emailStagingCommand.findOldestByUpdateDate(reference, limit);
     }
 
     @Override
     public Single<EmailStaging> updateAttempts(String id, int attempts) {
-        return Observable.fromPublisher(emailStagingCollection.find(eq(FIELD_ID, id)).first())
-                .firstElement()
-                .toSingle()
-                .flatMap(emailStagingMongo -> {
-                    emailStagingMongo.setAttempts(attempts);
-                    emailStagingMongo.setUpdatedAt(new Date());
-
-                    return Observable.fromPublisher(
-                            emailStagingCollection.replaceOne(eq(FIELD_ID, id), emailStagingMongo)
-                    )
-                    .firstElement()
-                    .toSingle()
-                    .map(result -> convert(emailStagingMongo));
-                })
-                .observeOn(Schedulers.computation());
+        return emailStagingCommand.updateAttempts(id, attempts);
     }
 
     @Override
     public Flowable<Reference> listReferences() {
-        return Observable.fromPublisher(
-                withMaxTime(withReadPreferenceCollection().aggregate(
-                        List.of(
-                                Aggregates.group(new Document(FIELD_REFERENCE_TYPE, "$" + FIELD_REFERENCE_TYPE)
-                                        .append(FIELD_REFERENCE_ID, "$" + FIELD_REFERENCE_ID))
-                        ), Document.class
-                ))
-        )
-        .map(doc -> {
-            Document id = doc.get("_id", Document.class);
-            return new Reference(ReferenceType.valueOf(id.getString(FIELD_REFERENCE_TYPE)), id.getString(FIELD_REFERENCE_ID));
-        })
-        .toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER)
-        .observeOn(Schedulers.computation());
-    }
-
-    private EmailStaging convert(EmailStagingMongo emailStagingMongo) {
-        if (emailStagingMongo == null) {
-            return null;
-        }
-
-        EmailStaging emailStaging = new EmailStaging();
-        emailStaging.setId(emailStagingMongo.getId());
-        emailStaging.setUserId(emailStagingMongo.getUserId());
-        emailStaging.setApplicationId(emailStagingMongo.getApplicationId());
-        emailStaging.setReferenceType(emailStagingMongo.getReferenceType());
-        emailStaging.setReferenceId(emailStagingMongo.getReferenceId());
-        emailStaging.setEmailTemplateName(emailStagingMongo.getEmailTemplateName());
-        emailStaging.setAttempts(emailStagingMongo.getAttempts());
-        emailStaging.setCreatedAt(emailStagingMongo.getCreatedAt());
-        emailStaging.setUpdatedAt(emailStagingMongo.getUpdatedAt());
-        return emailStaging;
-    }
-
-    private EmailStagingMongo convert(EmailStaging emailStaging) {
-        if (emailStaging == null) {
-            return null;
-        }
-
-        EmailStagingMongo emailStagingMongo = new EmailStagingMongo();
-        emailStagingMongo.setId(emailStaging.getId());
-        emailStagingMongo.setUserId(emailStaging.getUserId());
-        emailStagingMongo.setApplicationId(emailStaging.getApplicationId());
-        emailStagingMongo.setReferenceType(emailStaging.getReferenceType());
-        emailStagingMongo.setReferenceId(emailStaging.getReferenceId());
-        emailStagingMongo.setEmailTemplateName(emailStaging.getEmailTemplateName());
-        emailStagingMongo.setAttempts(emailStaging.getAttempts());
-        emailStagingMongo.setCreatedAt(emailStaging.getCreatedAt());
-        emailStagingMongo.setUpdatedAt(emailStaging.getUpdatedAt());
-        return emailStagingMongo;
+        return emailStagingCommand.listReferences();
     }
 
     private MongoCollection<EmailStagingMongo> withReadPreferenceCollection() {

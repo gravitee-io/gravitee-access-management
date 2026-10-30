@@ -48,7 +48,8 @@ public class MongoIndexUpgradersTest {
     public void shouldIdentifyEachUpgraderByItsChangeset() {
         assertThat(new MongoManagementIndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
-                .containsExactly(MongoManagementIndexUpgrader.class.getName() + "_initial-indexes");
+                .containsExactly(MongoManagementIndexUpgrader.class.getName() + "_initial-indexes",
+                        MongoManagementIndexUpgrader.class.getName() + "_cp-email-staging");
         assertThat(new MongoOAuth2IndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoOAuth2IndexUpgrader.class.getName() + "_initial-indexes");
@@ -60,7 +61,7 @@ public class MongoIndexUpgradersTest {
     @Test
     public void shouldNeverChangeAChangeset() {
         assertThat(changesets(MongoManagementIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
-                .containsExactly(tuple("initial-indexes", "52a83bdac197"));
+                .containsExactly(tuple("initial-indexes", "52a83bdac197"), tuple("cp-email-staging", "1714858737a3"));
         assertThat(changesets(MongoOAuth2IndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "008287bfa02e"));
         assertThat(changesets(MongoGatewayIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)

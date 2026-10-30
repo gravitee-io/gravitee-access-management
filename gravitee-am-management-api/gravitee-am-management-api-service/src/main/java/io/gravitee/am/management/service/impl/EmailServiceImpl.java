@@ -29,6 +29,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
+import io.gravitee.am.management.service.model.StagedEmail;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
@@ -39,6 +40,7 @@ import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.exception.BatchEmailException;
 import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.DomainBasedDictionaryProvider;
@@ -47,10 +49,15 @@ import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.MultiMap;
+import lombok.CustomLog;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
@@ -61,8 +68,13 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
@@ -72,9 +84,12 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author GraviteeSource Team
  */
 @Component("managementEmailService")
-public class EmailServiceImpl implements EmailService {
+@CustomLog
+public class EmailServiceImpl implements EmailService, DisposableBean {
 
     private static final String ADMIN_CLIENT = "admin";
+    private static final String EXECUTOR_THREADS_KEY = "email.executor.threads";
+    private static final int DEFAULT_EXECUTOR_THREADS = 2;
 
     private final boolean enabled;
     private final String registrationSubject;
@@ -99,6 +114,10 @@ public class EmailServiceImpl implements EmailService {
     private final I18nDictionaryService i18nDictionaryService;
 
     private final Environment environment;
+
+    private final ExecutorService sendExecutor;
+
+    private final Scheduler sendScheduler;
 
     @Lazy
     public EmailServiceImpl(
@@ -125,12 +144,24 @@ public class EmailServiceImpl implements EmailService {
         this.registrationVerifyExpireAfter = registrationVerifyExpireAfter();
         this.certificateExpirySubject = certificateExpirySubject();
         this.i18nDictionaryService = i18nDictionaryService;
+        this.sendExecutor = Executors.newFixedThreadPool(executorThreads(), runnable -> {
+            var thread = new Thread(runnable, "email-sender");
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.sendScheduler = Schedulers.from(sendExecutor);
+    }
+
+    @Override
+    public void destroy() {
+        sendExecutor.shutdown();
     }
 
     @Override
     public Maybe<Email> send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
             return refreshDomainDictionaries(domain)
+                    .observeOn(sendScheduler)
                     .flatMapMaybe(provider -> prepareAndSend(domain, client, template, user, provider));
         }
         return Maybe.empty();
@@ -197,6 +228,94 @@ public class EmailServiceImpl implements EmailService {
                     return refreshDomainDictionaries(domain)
                             .map(provider -> processEmailTemplate(email, locale, provider)).toMaybe();
                 });
+    }
+
+    @Override
+    public Single<List<StagedEmail>> prepare(Domain domain, List<StagedEmail> stagedEmails) {
+        if (!enabled || stagedEmails.isEmpty()) {
+            return Single.just(stagedEmails);
+        }
+        return refreshDomainDictionaries(domain)
+                .flatMap(provider -> Flowable.fromIterable(stagedEmails)
+                        .concatMapSingle(stagedEmail -> prepare(domain, stagedEmail, provider))
+                        .toList());
+    }
+
+    private Single<StagedEmail> prepare(Domain domain, StagedEmail stagedEmail, DomainBasedDictionaryProvider dictionaryProvider) {
+        return Maybe.defer(() -> {
+                    var template = stagedEmail.template();
+                    var user = stagedEmail.user();
+                    if (StringUtils.isBlank(user.getEmail())) {
+                        return Maybe.error(new IllegalStateException("User has no email"));
+                    }
+                    return getEmailTemplate(template, user)
+                            .map(emailTemplate -> prepareEmail(domain, stagedEmail.client(), template, emailTemplate, user))
+                            .map(email -> processEmailTemplate(email, preferredLanguage(user, Locale.ENGLISH), dictionaryProvider));
+                })
+                .map(stagedEmail::with)
+                .toSingle()
+                .onErrorReturn(ex -> {
+                    log.warn("Unable to prepare email for user [{}], it will be removed from the staging", stagedEmail.user().getId(), ex);
+                    stagedEmail.staging().markAsProcessed();
+                    traceFailedEmail(stagedEmail, ex);
+                    return stagedEmail;
+                });
+    }
+
+    @Override
+    public void batch(List<StagedEmail> stagedEmails, int maxAttempts) {
+        if (!enabled) {
+            return;
+        }
+        var emailsToSend = stagedEmails.stream()
+                .filter(stagedEmail -> stagedEmail.email() != null)
+                .collect(Collectors.groupingBy(stagedEmail -> stagedEmail.user().getEmail()));
+        if (emailsToSend.isEmpty()) {
+            return;
+        }
+
+        try {
+            emailService.batch(emailsToSend.values().stream().flatMap(List::stream).map(StagedEmail::email).toList());
+            emailsToSend.values().stream().flatMap(List::stream).forEach(this::markAsSent);
+        } catch (BatchEmailException ex) {
+            emailsToSend.forEach((address, sameAddressEmails) -> {
+                if (ex.getEmails().contains(address)) {
+                    sameAddressEmails.forEach(stagedEmail -> markAsFailed(stagedEmail, maxAttempts, ex));
+                } else {
+                    sameAddressEmails.forEach(this::markAsSent);
+                }
+            });
+        }
+    }
+
+    private void markAsSent(StagedEmail stagedEmail) {
+        stagedEmail.staging().markAsProcessed();
+        auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                .reference(Reference.domain(stagedEmail.user().getReferenceId()))
+                .client(ADMIN_CLIENT)
+                .template(stagedEmail.template())
+                .user(stagedEmail.user()));
+    }
+
+    private void markAsFailed(StagedEmail stagedEmail, int maxAttempts, Exception ex) {
+        var staging = stagedEmail.staging();
+        staging.incrementAttempts();
+        if (staging.getAttempts() >= maxAttempts) {
+            log.warn("Send {} email failed for user {}, max attempts have been reached", staging.getEmailTemplateName(), stagedEmail.user().getId());
+            staging.markAsProcessed();
+            traceFailedEmail(stagedEmail, ex);
+        } else {
+            log.info("Send {} email failed for user {}, it will be retried", staging.getEmailTemplateName(), stagedEmail.user().getId());
+        }
+    }
+
+    private void traceFailedEmail(StagedEmail stagedEmail, Throwable ex) {
+        auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
+                .reference(Reference.domain(stagedEmail.user().getReferenceId()))
+                .client(ADMIN_CLIENT)
+                .template(stagedEmail.template())
+                .user(stagedEmail.user())
+                .throwable(ex));
     }
 
     private Email processEmailTemplate(Email email, Locale locale, DomainBasedDictionaryProvider dictionaryProvider) throws IOException, TemplateException {
@@ -332,6 +451,10 @@ public class EmailServiceImpl implements EmailService {
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
+    }
+
+    private int executorThreads() {
+        return Objects.requireNonNullElse(environment.getProperty(EXECUTOR_THREADS_KEY, Integer.class), DEFAULT_EXECUTOR_THREADS);
     }
 
     private Boolean enabled() {

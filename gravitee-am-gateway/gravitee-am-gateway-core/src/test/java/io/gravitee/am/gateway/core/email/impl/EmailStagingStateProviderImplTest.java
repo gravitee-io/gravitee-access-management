@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.core.email.impl;
 
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.gateway.api.EmailStagingRepository;
+import io.gravitee.am.repository.common.EmailStagingRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
