@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import type { CorsSettings, Domain, DomainWebProtectionSettings, WebProtectionSettings } from '../../lib/api/domains';
+import { type DurationDraft, draftToSeconds, exactDuration } from '../../lib/forms/duration';
 import {
     CSP_DIRECTIVE_NAME_PATTERN,
     CSP_DIRECTIVE_NAMES,
@@ -26,12 +27,13 @@ import {
 } from './csp-directives';
 
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
-export type Cors = Mutable<CorsSettings>;
+export type Cors = Mutable<Omit<CorsSettings, 'maxAge'>>;
 export type Csp = Mutable<Omit<NonNullable<WebProtectionSettings['csp']>, 'directives'>>;
 export type Header = Mutable<NonNullable<WebProtectionSettings['xframe']>>;
 
 export interface FormState {
     readonly cors: Cors;
+    readonly maxAge: DurationDraft;
     readonly csp: Csp;
     readonly directives: readonly CspDirectiveRow[];
     readonly xframe: Header;
@@ -64,15 +66,15 @@ function normalize<T extends Inheritable>(settings: T): T {
 }
 
 export function fromDomain(domain: Domain): FormState {
-    const cors = domain.corsSettings ?? DEFAULT_CORS;
+    const { maxAge, ...cors }: CorsSettings = domain.corsSettings ?? DEFAULT_CORS;
     const { directives = [], ...csp } = domain.webProtectionSettings?.csp ?? DEFAULT_CSP;
     return {
         cors: normalize({
             ...cors,
             allowedOrigins: cors.allowedOrigins ?? [],
             allowedHeaders: cors.allowedHeaders ?? [],
-            maxAge: cors.maxAge === 0 ? undefined : cors.maxAge,
         }),
+        maxAge: maxAge ? exactDuration(maxAge) : { time: '', unit: 'seconds' },
         csp: normalize(csp),
         directives: parseCspDirectives([...directives]),
         xframe: normalize(domain.webProtectionSettings?.xframe ?? DEFAULT_XFRAME),
@@ -83,7 +85,7 @@ export function fromDomain(domain: Domain): FormState {
 export function toSettings(form: FormState): DomainWebProtectionSettings {
     return {
         // An empty max age is stored as 0. A missing key would keep the 86400 default.
-        corsSettings: { ...form.cors, maxAge: form.cors.maxAge ?? 0 },
+        corsSettings: { ...form.cors, maxAge: draftToSeconds(form.maxAge) },
         webProtectionSettings: {
             csp: { ...form.csp, directives: serializeCspDirectives([...form.directives]) },
             xframe: form.xframe,
