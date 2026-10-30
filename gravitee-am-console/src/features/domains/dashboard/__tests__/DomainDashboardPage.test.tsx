@@ -19,12 +19,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { type AnalyticsQuery, searchAnalytics } from '../../../lib/api/analytics';
-import { PermissionScope } from '../../../lib/session/permissions';
+import { type AnalyticsQuery, searchAnalytics } from '../../../../lib/api/analytics';
+import { PermissionScope } from '../../../../lib/session/permissions';
 import { DomainDashboardPage } from '../DomainDashboardPage';
 
-vi.mock('../../../lib/api/analytics', () => ({ searchAnalytics: vi.fn() }));
-vi.mock('../../../lib/session/domain', () => ({
+vi.mock('../../../../lib/api/analytics', () => ({ searchAnalytics: vi.fn() }));
+vi.mock('../../../../lib/session/domain', () => ({
     useCurrentDomain: () => ({
         domain: { id: 'd1', hrid: 'acme', name: 'Acme', enabled: true },
         ref,

@@ -18,12 +18,12 @@ import { AppWindowIcon, PlusIcon, RefreshCwIcon, UserCheckIcon, UsersIcon, ZapIc
 import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ErrorPanel } from '../../app/components/ErrorPanel';
-import { PageHeader } from '../../app/components/PageHeader';
-import { type AnalyticsResponse, searchAnalytics } from '../../lib/api/analytics';
-import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
-import { useCurrentDomain } from '../../lib/session/domain';
-import { Can } from '../../lib/session/permissions';
+import { ErrorPanel } from '../../../app/components/ErrorPanel';
+import { PageHeader } from '../../../app/components/PageHeader';
+import { type AnalyticsResponse, searchAnalytics } from '../../../lib/api/analytics';
+import { useBreadcrumbs } from '../../../lib/layout/useBreadcrumbs';
+import { useCurrentDomain } from '../../../lib/session/domain';
+import { Can } from '../../../lib/session/permissions';
 import { ActivityChart } from './ActivityChart';
 import { BreakdownCard } from './BreakdownCard';
 import { MetricTile } from './MetricTile';

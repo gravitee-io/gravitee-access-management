@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { AnalyticsQuery, AnalyticsResponse, AnalyticsType } from '../../lib/api/analytics';
+import type { AnalyticsQuery, AnalyticsResponse, AnalyticsType } from '../../../lib/api/analytics';
 
 /** `utils/time-range-utils.ts` in the Angular console. */
 export const TIME_RANGES = [

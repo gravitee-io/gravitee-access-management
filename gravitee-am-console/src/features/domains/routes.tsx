@@ -41,7 +41,7 @@ export const domainDashboardRoute = (
         path="dashboard"
         element={
             <RequirePermission anyOf={['domain_analytics_read']}>
-                {lazyPage(() => import('./DomainDashboardPage'), 'DomainDashboardPage')}
+                {lazyPage(() => import('./dashboard/DomainDashboardPage'), 'DomainDashboardPage')}
             </RequirePermission>
         }
     />
