@@ -11193,6 +11193,7 @@ __metadata:
     jdenticon: "npm:3.2.0"
     jest: "npm:29.7.0"
     jest-preset-angular: "npm:14.5.5"
+    jsonc-parser: "npm:3.3.1"
     license-check-and-add: "npm:4.0.5"
     lodash: "npm:4.18.1"
     moment: "npm:2.30.1"
