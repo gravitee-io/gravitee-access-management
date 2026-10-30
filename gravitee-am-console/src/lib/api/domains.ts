@@ -15,6 +15,7 @@
  */
 import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
+import type { LoginSettings as LoginSettingsModel } from '@am-models/LoginSettings';
 import type { NewDomain as NewDomainModel } from '@am-models/NewDomain';
 import type { VirtualHost as VirtualHostModel } from '@am-models/VirtualHost';
 import { http } from './http';
@@ -118,4 +119,10 @@ export function listDomainEntrypoints(ref: DomainRef): Promise<Entrypoint[]> {
 /** The only entrypoint, else the first one that is not the default, else the first. */
 export function domainEntrypoint(entrypoints: readonly Entrypoint[]): Entrypoint | undefined {
     return entrypoints.length === 1 ? entrypoints[0] : (entrypoints.find(entrypoint => !entrypoint.defaultEntrypoint) ?? entrypoints[0]);
+}
+
+export type LoginSettings = ApiModel<LoginSettingsModel>;
+
+export function patchDomainLoginSettings(ref: DomainRef, loginSettings: LoginSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ loginSettings }) });
 }
