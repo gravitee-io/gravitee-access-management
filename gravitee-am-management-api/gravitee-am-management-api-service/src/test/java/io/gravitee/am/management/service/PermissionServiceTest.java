@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.management.service;
 
+import org.mockito.Mockito;
+import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
+import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.Platform;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
@@ -26,6 +32,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.ApplicationService;
@@ -1053,4 +1060,248 @@ public class PermissionServiceTest {
         verify(applicationService, never()).findById(any());
     }
 
+    private static Role role(String id, String name, boolean system, ReferenceType assignableType, Map<Permission, Set<Acl>> permissions) {
+        Role role = new Role();
+        role.setId(id);
+        role.setName(name);
+        role.setSystem(system);
+        role.setAssignableType(assignableType);
+        role.setPermissionAcls(permissions);
+        return role;
+    }
+
+    private static Map<Permission, Set<Acl>> permissions(Object... permissionAndAcls) {
+        Map<Permission, Set<Acl>> permissions = new java.util.EnumMap<>(Permission.class);
+        for (int i = 0; i < permissionAndAcls.length; i += 2) {
+            permissions.put((Permission) permissionAndAcls[i], new HashSet<>((Set<Acl>) permissionAndAcls[i + 1]));
+        }
+        return permissions;
+    }
+
+    /**
+     * The user holds the role on the organization, and nothing on the platform.
+     */
+    private DefaultUser organizationMember(String userId, Role role) {
+        DefaultUser user = new DefaultUser(userId);
+        user.setId(userId);
+
+        Membership membership = new Membership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId(userId);
+        membership.setReferenceType(ReferenceType.ORGANIZATION);
+        membership.setReferenceId(ORGANIZATION_ID);
+        membership.setRoleId(role.getId());
+
+        Mockito.lenient().when(orgGroupService.findByMember(userId)).thenReturn(Flowable.empty());
+        Mockito.lenient().when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria != null && criteria.getUserId().isPresent() && criteria.getUserId().get().equals(userId))))
+                .thenReturn(Flowable.just(membership));
+        Mockito.lenient().when(membershipService.findByCriteria(eq(ReferenceType.PLATFORM), eq(Platform.DEFAULT), argThat(criteria -> criteria != null && criteria.getUserId().isPresent() && criteria.getUserId().get().equals(userId))))
+                .thenReturn(Flowable.empty());
+        Mockito.lenient().when(roleService.findByIdIn(Arrays.asList(role.getId()))).thenReturn(Single.just(Collections.singleton(role)));
+        Mockito.lenient().when(roleService.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.empty());
+        return user;
+    }
+
+    private Role helpdesk() {
+        return role(ROLE_ID, "helpdesk", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION_USER, Acl.of(READ, Acl.UPDATE), Permission.ORGANIZATION_ROLE, Acl.of(READ, Acl.UPDATE)));
+    }
+
+    @Test
+    public void checkCanGrant_refusedWhenCallerDoesNotHoldThePermission() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+
+        TestObserver<Void> obs = cut.checkCanGrant(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID),
+                Arrays.asList("organization_user_read", "organization_user_delete", "organization_member_create")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+        obs.assertError(ex -> ex.getMessage().contains("organization_user_delete") && ex.getMessage().contains("organization_member_create")
+                && !ex.getMessage().contains("organization_user_read"));
+    }
+
+    @Test
+    public void checkCanGrant_allowedWhenCallerHoldsThePermissions() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+
+        TestObserver<Void> obs = cut.checkCanGrant(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID),
+                Arrays.asList("organization_user_read", "organization_role_update")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void checkCanGrant_allowedForThePrimaryOwnerOfTheOrganization() {
+        Role primaryOwner = role(ROLE_ID, SystemRole.ORGANIZATION_PRIMARY_OWNER.name(), true, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION, Acl.of(READ)));
+        DefaultUser caller = organizationMember(USER_ID, primaryOwner);
+
+        TestObserver<Void> obs = cut.checkCanGrant(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID),
+                Arrays.asList("organization_read", "organization_update")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void checkCanGrant_rejectsMalformedPermissions() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+
+        TestObserver<Void> obs = cut.checkCanGrant(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), Arrays.asList("kingdom_read")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(InvalidRoleException.class);
+    }
+
+    @Test
+    public void checkCanGrant_permissionsHeldOnAParentCount() {
+        Role domainManager = role(ROLE_ID, "domain-manager", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.DOMAIN_SETTINGS, Acl.of(READ)));
+        DefaultUser caller = organizationMember(USER_ID, domainManager);
+
+        Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        Environment environment = new Environment();
+        environment.setOrganizationId(ORGANIZATION_ID);
+        when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(environment));
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+        when(membershipService.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq(ENVIRONMENT_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+
+        TestObserver<Void> allowed = cut.checkCanGrant(caller, ORGANIZATION_ID, Reference.domain(DOMAIN_ID), Arrays.asList("domain_settings_read")).test();
+        allowed.awaitDone(10, TimeUnit.SECONDS);
+        allowed.assertComplete();
+
+        TestObserver<Void> refused = cut.checkCanGrant(caller, ORGANIZATION_ID, Reference.domain(DOMAIN_ID), Arrays.asList("domain_settings_update")).test();
+        refused.awaitDone(10, TimeUnit.SECONDS);
+        refused.assertError(ResourceForbiddenAccessException.class);
+    }
+
+    @Test
+    public void checkCanGrantRole_refusedWhenTheRoleHoldsMoreThanTheCaller() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role target = role(ROLE_ID2, "target", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION_USER, Acl.of(READ, Acl.DELETE)));
+        when(roleService.findById(ROLE_ID2)).thenReturn(Maybe.just(target));
+
+        TestObserver<Void> obs = cut.checkCanGrantRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+    }
+
+    @Test
+    public void checkCanGrantRole_allowedWhenTheCallerHoldsEverythingInTheRole() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role target = role(ROLE_ID2, "target", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION_USER, Acl.of(READ)));
+        when(roleService.findById(ROLE_ID2)).thenReturn(Maybe.just(target));
+
+        TestObserver<Void> obs = cut.checkCanGrantRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void checkCanManageUser_refusedOnAPlatformAdministrator() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role admin = role(ROLE_ID2, SystemRole.PLATFORM_ADMIN.name(), true, ReferenceType.PLATFORM, permissions(Permission.ORGANIZATION, Acl.of(READ)));
+        Membership adminMembership = new Membership();
+        adminMembership.setRoleId(ROLE_ID2);
+        when(membershipService.findByCriteria(eq(ReferenceType.PLATFORM), eq(Platform.DEFAULT), argThat(criteria -> criteria != null && criteria.getUserId().isPresent() && criteria.getUserId().get().equals("admin"))))
+                .thenReturn(Flowable.just(adminMembership));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria != null && criteria.getUserId().isPresent() && criteria.getUserId().get().equals("admin"))))
+                .thenReturn(Flowable.empty());
+        when(roleService.findByIdIn(Arrays.asList(ROLE_ID2))).thenReturn(Single.just(Collections.singleton(admin)));
+
+        TestObserver<Void> obs = cut.checkCanManageUser(caller, ORGANIZATION_ID, "admin").test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+    }
+
+    @Test
+    public void checkCanManageUser_refusedOnAUserWithMorePermissions() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role manager = role(ROLE_ID2, "manager", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION_USER, Acl.of(READ, Acl.UPDATE, Acl.DELETE)));
+        organizationMember("manager-id", manager);
+
+        TestObserver<Void> obs = cut.checkCanManageUser(caller, ORGANIZATION_ID, "manager-id").test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+    }
+
+    @Test
+    public void checkCanManageUser_allowedOnAUserWithFewerPermissions() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role basic = role(ROLE_ID2, "ORGANIZATION_USER", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION_USER, Acl.of(READ)));
+        organizationMember("basic-id", basic);
+
+        TestObserver<Void> obs = cut.checkCanManageUser(caller, ORGANIZATION_ID, "basic-id").test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void checkCanManageUser_allowedOnOneself() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+
+        TestObserver<Void> obs = cut.checkCanManageUser(caller, ORGANIZATION_ID, USER_ID).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void checkCanManageUser_allowedForThePrimaryOwnerOfTheOrganization() {
+        Role primaryOwner = role(ROLE_ID, SystemRole.ORGANIZATION_PRIMARY_OWNER.name(), true, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION, Acl.of(READ)));
+        DefaultUser caller = organizationMember(USER_ID, primaryOwner);
+
+        TestObserver<Void> obs = cut.checkCanManageUser(caller, ORGANIZATION_ID, "someone").test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void checkCanCreateAccountToken_onlyForOneselfOrByAPrivilegedUser() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+
+        TestObserver<Void> forSomeoneElse = cut.checkCanCreateAccountToken(caller, ORGANIZATION_ID, "admin").test();
+        forSomeoneElse.awaitDone(10, TimeUnit.SECONDS);
+        forSomeoneElse.assertError(ResourceForbiddenAccessException.class);
+
+        TestObserver<Void> forOneself = cut.checkCanCreateAccountToken(caller, ORGANIZATION_ID, USER_ID).test();
+        forOneself.awaitDone(10, TimeUnit.SECONDS);
+        forOneself.assertComplete();
+
+        Role primaryOwner = role(ROLE_ID3, SystemRole.ORGANIZATION_PRIMARY_OWNER.name(), true, ReferenceType.ORGANIZATION, permissions(Permission.ORGANIZATION, Acl.of(READ)));
+        DefaultUser owner = organizationMember("owner-id", primaryOwner);
+        TestObserver<Void> byOwner = cut.checkCanCreateAccountToken(owner, ORGANIZATION_ID, "admin").test();
+        byOwner.awaitDone(10, TimeUnit.SECONDS);
+        byOwner.assertComplete();
+    }
+
+    @Test
+    public void checkCanManageUser_defaultRolePermissionsAreExpectedFromEveryone() {
+        // the helpdesk role replaced the default role of the caller, the target still holds the default one
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role defaultRole = role(ROLE_ID3, DefaultRole.ORGANIZATION_USER.name(), false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION, Acl.of(READ), Permission.ORGANIZATION_GROUP, Acl.of(Acl.LIST)));
+        organizationMember("basic-id", defaultRole);
+        when(roleService.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(defaultRole));
+
+        TestObserver<Void> obs = cut.checkCanManageUser(caller, ORGANIZATION_ID, "basic-id").test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
 }

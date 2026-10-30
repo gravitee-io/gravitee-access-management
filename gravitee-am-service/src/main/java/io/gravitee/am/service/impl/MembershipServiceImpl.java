@@ -49,6 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -138,6 +139,7 @@ public class MembershipServiceImpl implements MembershipService {
 
         return checkMember(organizationId, membership)
                 .andThen(checkRole(organizationId, membership))
+                .andThen(checkPrimaryOwnerUntouched(membership, principal))
                 .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
@@ -237,8 +239,9 @@ public class MembershipServiceImpl implements MembershipService {
                 .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
                 .filter(membership -> reference.matches(membership.getReferenceType(), membership.getReferenceId()))
                 .switchIfEmpty(Maybe.error(new ResourceForbiddenAccessException("referenceType and membershipId mismatch")))
-                .flatMapCompletable(membership -> membershipRepository.delete(membershipId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))
+                .flatMapCompletable(membership -> checkNotPrimaryOwner(membership, principal)
+                        .andThen(Completable.defer(() -> membershipRepository.delete(membershipId)
+                                .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class)
                                 .principal(principal)
                                 .type(EventType.MEMBERSHIP_DELETED)
@@ -349,6 +352,39 @@ public class MembershipServiceImpl implements MembershipService {
         filteredRole.setSystem(role.isSystem());
         filteredRole.setDefaultRole(role.isDefaultRole());
         return filteredRole;
+    }
+
+    /**
+     * A primary owner role is never handed out, changed or removed on behalf of a user through the membership API.
+     * Internal operations (domain or application creation, upgraders, ...) have no principal and are not concerned.
+     */
+    private Completable checkPrimaryOwnerUntouched(Membership membership, User principal) {
+        if (principal == null) {
+            return Completable.complete();
+        }
+        return Maybe.defer(() -> membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId()))
+                .map(Membership::getRoleId)
+                .toFlowable()
+                .toList()
+                .flatMapCompletable(existingRoleIds -> {
+                    final List<String> roleIds = new ArrayList<>(existingRoleIds);
+                    roleIds.add(membership.getRoleId());
+                    return failIfPrimaryOwner(roleIds);
+                });
+    }
+
+    private Completable checkNotPrimaryOwner(Membership membership, User principal) {
+        if (principal == null) {
+            return Completable.complete();
+        }
+        return failIfPrimaryOwner(List.of(membership.getRoleId()));
+    }
+
+    private Completable failIfPrimaryOwner(List<String> roleIds) {
+        return roleService.findByIdIn(roleIds)
+                .flatMapCompletable(roles -> roles.stream().anyMatch(role -> role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) ?
+                        Completable.error(new ResourceForbiddenAccessException("The primary owner membership cannot be assigned, changed or removed")) :
+                        Completable.complete());
     }
 
     /**

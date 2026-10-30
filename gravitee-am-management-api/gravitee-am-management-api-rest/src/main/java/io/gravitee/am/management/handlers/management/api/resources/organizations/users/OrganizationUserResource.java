@@ -119,6 +119,7 @@ public class OrganizationUserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(permissionService.checkCanManageUser(authenticatedUser, organizationId, user))
                 .andThen(organizationUserService.update(ReferenceType.ORGANIZATION, organizationId, user, updateUser, authenticatedUser)
                         .map(UserEntity::new))
                 .subscribe(response::resume, response::resume);
@@ -165,6 +166,7 @@ public class OrganizationUserResource extends AbstractResource {
     ) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(permissionService.checkCanCreateAccountToken(authenticatedUser, organizationId, userId))
                 .andThen(organizationUserService.createAccountAccessToken(organizationId, userId, newToken, authenticatedUser))
                 .map(accountToken -> Response
                         .created(URI.create("/organizations/" + organizationId + "/users/" + userId + "/tokens/" + accountToken.tokenId()))
@@ -215,6 +217,7 @@ public class OrganizationUserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(permissionService.checkCanManageUser(authenticatedUser, organizationId, user))
                 .andThen(organizationUserService.updateStatus(organizationId, user, status.isEnabled(), authenticatedUser)
                     .map(UserEntity::new))
                 .subscribe(response::resume, response::resume);
@@ -241,6 +244,7 @@ public class OrganizationUserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(permissionService.checkCanManageUser(authenticatedUser, organizationId, userId))
                 .andThen(organizationUserService.updateUsername(ReferenceType.ORGANIZATION, organizationId, userId, username.getUsername().trim(), authenticatedUser))
                 .map(UserEntity::new)
                 .subscribe(response::resume, response::resume);
@@ -281,6 +285,7 @@ public class OrganizationUserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(permissionService.checkCanManageUser(authenticatedUser, organizationId, user))
                 .andThen(organizationUserService.findById(ReferenceType.ORGANIZATION, organizationId, user)
                         .filter(existingUser -> IdentityProviderManagerImpl.IDP_GRAVITEE.equals(existingUser.getSource()))
                         .switchIfEmpty(Maybe.error(new UserInvalidException("Unable to reset password")))
