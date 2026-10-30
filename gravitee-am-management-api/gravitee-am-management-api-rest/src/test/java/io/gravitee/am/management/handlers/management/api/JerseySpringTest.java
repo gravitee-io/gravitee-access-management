@@ -151,6 +151,7 @@ import java.util.stream.Collectors;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 /**
@@ -382,6 +383,8 @@ public abstract class JerseySpringTest {
 
     @BeforeEach
     public void init() {
+        reset(emailResourceValidator);
+        when(emailResourceValidator.validate(any())).thenReturn(Completable.complete());
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
         Mockito.lenient().when(trustDomainService.findByReference(any(), any())).thenReturn(Flowable.empty());
     }

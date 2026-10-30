@@ -121,7 +121,7 @@ public class ApplicationFormResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.DELETE)
-                .andThen(formService.delete(domain, form, authenticatedUser))
+                .andThen(formService.delete(domain, application, form, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

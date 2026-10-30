@@ -338,4 +338,83 @@ public class EmailTemplateServiceTest {
 
         verify(emailRepository, never()).delete(anyString());
     }
+
+    private Email emailOf(String client) {
+        Email email = new Email();
+        email.setId("my-email");
+        email.setReferenceType(ReferenceType.DOMAIN);
+        email.setReferenceId(DOMAIN.getId());
+        email.setClient(client);
+        return email;
+    }
+
+    @Test
+    public void shouldUpdate_applicationEmail() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "my-email")).thenReturn(Maybe.just(emailOf("app-x")));
+        when(emailRepository.update(any(Email.class))).thenAnswer(e -> Single.just(e.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        emailTemplateService.update(DOMAIN, "app-x", "my-email", new UpdateEmail()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(emailRepository, times(1)).update(any(Email.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_domainLevelEmailThroughApplication() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "my-email")).thenReturn(Maybe.just(emailOf(null)));
+
+        emailTemplateService.update(DOMAIN, "app-x", "my-email", new UpdateEmail()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(EmailNotFoundException.class);
+
+        verify(emailRepository, never()).update(any(Email.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_emailOfAnotherApplication() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "my-email")).thenReturn(Maybe.just(emailOf("app-y")));
+
+        emailTemplateService.update(DOMAIN, "app-x", "my-email", new UpdateEmail()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(EmailNotFoundException.class);
+
+        verify(emailRepository, never()).update(any(Email.class));
+    }
+
+    @Test
+    public void shouldDelete_applicationEmail() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "my-email")).thenReturn(Maybe.just(emailOf("app-x")));
+        when(emailRepository.delete("my-email")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        emailTemplateService.delete(DOMAIN.getId(), "app-x", "my-email", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(emailRepository, times(1)).delete("my-email");
+    }
+
+    @Test
+    public void shouldNotDelete_domainLevelEmailThroughApplication() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "my-email")).thenReturn(Maybe.just(emailOf(null)));
+
+        emailTemplateService.delete(DOMAIN.getId(), "app-x", "my-email", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(EmailNotFoundException.class);
+
+        verify(emailRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldNotDelete_emailOfAnotherApplication() {
+        when(emailRepository.findById(ReferenceType.DOMAIN, DOMAIN.getId(), "my-email")).thenReturn(Maybe.just(emailOf("app-y")));
+
+        emailTemplateService.delete(DOMAIN.getId(), "app-x", "my-email", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(EmailNotFoundException.class);
+
+        verify(emailRepository, never()).delete(anyString());
+    }
 }
