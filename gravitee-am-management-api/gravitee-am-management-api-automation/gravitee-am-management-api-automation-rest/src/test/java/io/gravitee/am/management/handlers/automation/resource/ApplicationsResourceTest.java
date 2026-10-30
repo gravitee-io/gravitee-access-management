@@ -29,6 +29,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -50,6 +51,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -300,6 +302,39 @@ class ApplicationsResourceTest extends AutomationJerseySpringTest {
         revoke.getValue().apply(domain(), existing).test().assertComplete();
         verify(revokeTokenManagementService).sendProcessRequest(any(Domain.class), argThat(revokeToken -> domainId.equals(revokeToken.getDomainId())
                 && appId.equals(revokeToken.getApplication().getApplicationId())));
+    }
+
+    @Test
+    void put_update_rereads_the_application_after_a_concurrent_modification() {
+        Application reread = existing(ApplicationType.WEB);
+        reread.setDescription("changed by the concurrent write");
+        // the key lookup, the first attempt, then the second attempt reads the concurrent write
+        when(applicationService.findById(domainId, appId))
+                .thenReturn(Maybe.just(existing(ApplicationType.WEB)), Maybe.just(existing(ApplicationType.WEB)), Maybe.just(reread));
+        when(applicationService.update(any(Domain.class), any(Application.class), any(Application.class), any(), any()))
+                .thenReturn(Single.error(new ApplicationConcurrentModificationException(appId)))
+                .thenAnswer(invocation -> Single.just(invocation.getArgument(2)));
+
+        Response response = put(applicationsTarget(DOMAIN_KEY), definition(APP_KEY, ApplicationType.WEB));
+
+        assertEquals(200, response.getStatus());
+        // the key lookup, then one read per attempt
+        verify(applicationService, times(3)).findById(domainId, appId);
+        verify(applicationService, times(2)).update(any(Domain.class), any(Application.class), any(Application.class), any(), any());
+        verify(applicationService).update(any(Domain.class), argThat(existing -> "changed by the concurrent write".equals(existing.getDescription())),
+                any(Application.class), any(), any());
+    }
+
+    @Test
+    void put_update_returns_409_when_concurrent_modifications_persist() {
+        when(applicationService.findById(domainId, appId)).thenReturn(Maybe.just(existing(ApplicationType.WEB)));
+        when(applicationService.update(any(Domain.class), any(Application.class), any(Application.class), any(), any()))
+                .thenReturn(Single.error(new ApplicationConcurrentModificationException(appId)));
+
+        Response response = put(applicationsTarget(DOMAIN_KEY), definition(APP_KEY, ApplicationType.WEB));
+
+        assertEquals(409, response.getStatus());
+        verify(applicationService, times(10)).update(any(Domain.class), any(Application.class), any(Application.class), any(), any());
     }
 
     @Test

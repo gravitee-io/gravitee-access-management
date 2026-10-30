@@ -24,6 +24,7 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.service.model.DataPlaneDefinitionSummary;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificateService;
@@ -32,6 +33,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
+import io.gravitee.am.service.exception.ClientSecretNotFoundException;
 import io.gravitee.am.service.exception.DataPlaneDefinitionNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -172,5 +174,28 @@ public class AutomationResourceResolver {
             case AutomationRef.KeyRef(String key) -> applicationService.findById(domain.getId(), AutomationIds.applicationId(domain.getId(), key))
                     .filter(app -> app.isManagedBy(ManagedBy.AUTOMATION_API) && key.equals(app.getAutomationKey()));
         };
+    }
+
+    // --- client secrets -----------------------------------------------------
+
+    public Single<ClientSecret> resolveClientSecret(Application application, AutomationRef ref) {
+        return resolveClientSecretMaybe(application, ref)
+                .switchIfEmpty(Maybe.error(() -> new ClientSecretNotFoundException(ref.raw())))
+                .toSingle();
+    }
+
+    public Maybe<ClientSecret> resolveClientSecretMaybe(Application application, AutomationRef ref) {
+        String secretId = switch (ref) {
+            case AutomationRef.IdRef(String id) -> id;
+            case AutomationRef.KeyRef(String key) -> AutomationIds.clientSecretId(application.getId(), key);
+        };
+        return Maybe.fromOptional(application.getSecrets().stream()
+                .filter(secret -> secretId.equals(secret.getId()))
+                .filter(secret -> switch (ref) {
+                    case AutomationRef.IdRef idRef -> true;
+                    case AutomationRef.KeyRef(String key) -> secret.isManagedBy(ManagedBy.AUTOMATION_API)
+                            && key.equals(secret.getAutomationKey());
+                })
+                .findFirst());
     }
 }

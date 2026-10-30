@@ -39,6 +39,7 @@ import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DataPlaneDefinitionService;
@@ -160,6 +161,9 @@ public abstract class AutomationJerseySpringTest {
     @Autowired
     protected RevokeTokenManagementService revokeTokenManagementService;
 
+    @Autowired
+    protected ApplicationSecretService applicationSecretService;
+
     @BeforeEach
     public void init() {
         // The service mocks are Spring singletons shared across the cached context, so clear any
@@ -176,7 +180,7 @@ public abstract class AutomationJerseySpringTest {
         when(provisionedDataPlaneLoader.activate(anyString())).thenReturn(Completable.complete());
         reset(trustDomainService);
         // Fully reset: application tests stub the service per case.
-        reset(applicationService, revokeTokenManagementService);
+        reset(applicationService, revokeTokenManagementService, applicationSecretService);
         // The proxies pass entities through unmasked and accept every configuration unless a test stubs otherwise.
         reset(identityProviderServiceProxy, certificateServiceProxy, reporterServiceProxy);
         doAnswer(invocation -> Single.just(invocation.getArgument(0)))
@@ -304,6 +308,11 @@ public abstract class AutomationJerseySpringTest {
         }
 
         @Bean
+        public ApplicationSecretService applicationSecretService() {
+            return mock(ApplicationSecretService.class);
+        }
+
+        @Bean
         public DataPlaneDefinitionService dataPlaneDefinitionService() {
             return mock(DataPlaneDefinitionService.class);
         }
@@ -361,6 +370,11 @@ public abstract class AutomationJerseySpringTest {
     /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/applications}. */
     protected final WebTarget applicationsTarget(String domainKey) {
         return domainsTarget().path(domainKey).path("applications");
+    }
+
+    /** {@code /organizations/{orgId}/environments/{envId}/domains/{domainKey}/applications/{applicationKey}/secrets}. */
+    protected final WebTarget clientSecretsTarget(String domainKey, String applicationKey) {
+        return applicationsTarget(domainKey).path(applicationKey).path("secrets");
     }
 
     /** {@code /organizations/{orgId}/environments/{envId}/dataplanes}. */
