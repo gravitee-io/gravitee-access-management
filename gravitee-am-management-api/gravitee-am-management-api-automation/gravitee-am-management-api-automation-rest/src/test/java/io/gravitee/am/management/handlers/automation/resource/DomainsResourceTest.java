@@ -460,6 +460,38 @@ class DomainsResourceTest extends AutomationJerseySpringTest {
     }
 
     @Test
+    void put_does_not_create_a_domain_whose_vhosts_are_refused() {
+        String domainId = AutomationIds.domainId(ENV_ID, "vhost-new");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "vhost-new")));
+        doReturn(Completable.error(new InvalidParameterException("VHost mode cannot be changed: this instance is a managed installation")))
+                .when(domainService).validateVhosts(any(Domain.class), any(Domain.class));
+
+        Response response = put(domainsTarget(), definition("vhost-new"));
+
+        assertEquals(400, response.getStatus());
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    void dryRun_create_reports_refused_vhosts() {
+        String domainId = AutomationIds.domainId(ENV_ID, "vhost-new");
+        when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
+        when(domainService.validateCreate(eq(ORG_ID), eq(ENV_ID), any()))
+                .thenReturn(Single.just(domain(domainId, "vhost-new")));
+        doReturn(Completable.error(new InvalidParameterException("VHost mode cannot be changed: this instance is a managed installation")))
+                .when(domainService).validateVhosts(any(Domain.class), any(Domain.class));
+
+        Response response = put(domainsTarget().queryParam("dryRun", true), definition("vhost-new"));
+
+        assertEquals(200, response.getStatus());
+        AutomationDomain body = readEntity(response, AutomationDomain.class);
+        assertEquals(1, body.getDryRunErrors().size());
+        verify(domainService, never()).create(anyString(), anyString(), any(), any());
+    }
+
+    @Test
     void dryRun_create_reports_invalid_settings() {
         String domainId = AutomationIds.domainId(ENV_ID, "bad-new-oidc-uri");
         when(domainService.findById(eq(domainId))).thenReturn(Maybe.empty());
