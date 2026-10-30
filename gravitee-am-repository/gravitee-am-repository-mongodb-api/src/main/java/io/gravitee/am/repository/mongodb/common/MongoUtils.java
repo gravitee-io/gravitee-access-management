@@ -17,7 +17,6 @@
 package io.gravitee.am.repository.mongodb.common;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
@@ -34,7 +33,6 @@ import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -81,23 +79,6 @@ public final class MongoUtils {
                         () -> log.debug("Index {} of collection {} created", FIELD_ID, collection.getNamespace().getCollectionName()),
                         throwable -> log.error("Error occurred during creation of id index of {}", collection.getNamespace().getCollectionName(), throwable)
                 );
-    }
-
-    /**
-     * Declares the indexes {@code collection} should carry.
-     */
-    public static void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
-        if (ensure) {
-            var indexesModel = indexes.entrySet()
-                    .stream()
-                    .map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true)))
-                    .toList();
-            MongoIndexManager.ensureIndexes(collection, indexesModel)
-                    .subscribe(
-                            () -> log.debug("Indexes ensured for {}", collection.getNamespace().getCollectionName()),
-                            throwable -> log.error("Error occurred during indexes creation for {}", collection.getNamespace().getCollectionName(), throwable)
-                    );
-        }
     }
 
     public static <D, T> Maybe<T> findOne(MongoCollection<D> collection, Bson query, Function<D, T> convertFromMongo) {

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.RequestObjectMongo;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
@@ -26,12 +25,9 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -52,9 +48,6 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
     public void init() {
         requestObjectCollection = mongoOperations.getCollection("request_objects", RequestObjectMongo.class);
         super.init(requestObjectCollection);
-
-        // expire after index
-        super.createIndex(requestObjectCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

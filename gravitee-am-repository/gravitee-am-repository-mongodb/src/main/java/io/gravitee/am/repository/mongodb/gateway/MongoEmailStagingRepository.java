@@ -17,7 +17,6 @@ package io.gravitee.am.repository.mongodb.gateway;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.EmailStaging;
@@ -38,7 +37,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
@@ -74,17 +72,6 @@ public class MongoEmailStagingRepository extends AbstractGatewayMongoRepository 
     public void init() {
         emailStagingCollection = mongoOperations.getCollection(COLLECTION_NAME, EmailStagingMongo.class);
         super.init(emailStagingCollection);
-
-        // Create indexes for efficient queries
-        var indexes = Map.of(
-            // Index on updatedAt for sorting oldest entries
-            new Document(FIELD_REFERENCE_TYPE, 1)
-                    .append(FIELD_REFERENCE_ID, 1)
-                    .append(FIELD_UPDATED_AT, 1),
-            new IndexOptions().name("updated_at_idx")
-        );
-
-        super.createIndex(emailStagingCollection, indexes, getEnsureIndexOnStart());
     }
 
     @Override

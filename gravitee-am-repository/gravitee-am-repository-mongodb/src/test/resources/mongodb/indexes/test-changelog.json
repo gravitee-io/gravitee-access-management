@@ -1,0 +1,7 @@
+{
+  "changesets": [
+    { "id": "first", "create": { "c": [ { "name": "a1", "key": { "a": 1 } } ] } },
+    { "id": "second", "create": { "c": [ { "name": "b1", "key": { "b": 1 } } ] } },
+    { "id": "third", "drop": { "c": ["a1"] } }
+  ]
+}

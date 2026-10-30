@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.DeviceIdentifier;
@@ -30,10 +29,8 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.and;
@@ -58,7 +55,6 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
     public void init() {
         deviceIdentifierMongoMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, DeviceIdentifierMongo.class);
         super.init(deviceIdentifierMongoMongoCollection);
-        super.createIndex(deviceIdentifierMongoMongoCollection, Map.of(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1")));
     }
 
     @Override

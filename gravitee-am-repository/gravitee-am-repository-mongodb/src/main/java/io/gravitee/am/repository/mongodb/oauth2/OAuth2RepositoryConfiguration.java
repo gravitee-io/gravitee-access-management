@@ -19,6 +19,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
+import io.gravitee.am.repository.mongodb.common.MongoUpgraderConfiguration;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
@@ -28,7 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Import;
 
 import java.net.URI;
 
@@ -38,6 +39,7 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Configuration
+@Import(MongoUpgraderConfiguration.class)
 @ComponentScan({
         "io.gravitee.am.repository.mongodb.oauth2",
         "io.gravitee.am.repository.mongodb.oidc",

@@ -43,11 +43,6 @@ public abstract class AbstractGatewayMongoRepository extends AbstractMongoReposi
         return query.maxTime(getMaxTimeInMs(), TimeUnit.MILLISECONDS);
     }
 
-    protected boolean getEnsureIndexOnStart() {
-        var ensureIndexOnStartOld = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, true);
-        return environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, ensureIndexOnStartOld);
-    }
-
     protected Integer getMaxTimeInMs() {
         var approvalExpirySecondsOld = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.cursorMaxTime", Integer.class, 60000);
         return environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".mongodb.cursorMaxTime", Integer.class, approvalExpirySecondsOld);

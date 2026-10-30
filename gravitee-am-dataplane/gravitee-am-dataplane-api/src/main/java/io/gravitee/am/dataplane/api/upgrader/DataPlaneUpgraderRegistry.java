@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.dataplane.api.upgrader;
 
+import io.gravitee.am.dataplane.api.DataPlaneProvider;
+
 import java.util.List;
+import java.util.stream.Stream;
 
 public class DataPlaneUpgraderRegistry {
 
     public List<DataPlaneUpgrader> getDataPlaneUpgraders() {
         return List.of();
+    }
+
+    public List<DataPlaneUpgrader> getDataPlaneUpgraders(DataPlaneProvider dataPlaneProvider) {
+        return Stream.concat(dataPlaneProvider.getUpgraders().stream(), getDataPlaneUpgraders().stream()).toList();
     }
 
 }

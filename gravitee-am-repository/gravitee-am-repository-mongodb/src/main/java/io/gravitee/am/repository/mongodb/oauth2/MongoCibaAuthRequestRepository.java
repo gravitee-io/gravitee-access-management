@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -36,7 +35,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
@@ -59,9 +57,6 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     public void init() {
         cibaAuthRequestCollection = mongoOperations.getCollection("ciba_auth_requests", CibaAuthRequestMongo.class);
         super.init(cibaAuthRequestCollection);
-
-        // expire after index
-        super.createIndex(cibaAuthRequestCollection, Map.of(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1")));
     }
 
     @Override

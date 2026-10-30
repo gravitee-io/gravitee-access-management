@@ -15,26 +15,32 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
+import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.dataplane.api.repository.test.DataPlaneTestConfigurationLoader;
+import io.gravitee.am.dataplane.mongodb.upgrader.MongoDataPlaneIndexUpgrader;
+import io.gravitee.am.repository.mongodb.common.MongoIndexDeclarations;
 import io.reactivex.rxjava3.core.Flowable;
 import org.bson.Document;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.springframework.util.ReflectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
  * Index lifecycle of the Mongo data plane repositories.
@@ -68,16 +74,32 @@ public class DataPlaneIndexTest {
     }};
 
     private static final String TTL_INDEX = "e1";
-    private static final long AWAIT_TIMEOUT_MS = 20_000;
 
     @Autowired
     private MongoDatabase mongoDatabase;
 
-    @Test
-    public void everyExpiringCollectionSelfCleans() throws Exception {
-        for (String collection : TTL_FIELD_BY_COLLECTION.keySet()) {
-            awaitIndex(collection, TTL_INDEX);
+    @Autowired
+    private MongoDataPlaneIndexUpgrader.Changelog indexChangelog;
 
+    @Autowired
+    private ApplicationContext context;
+
+    @Before
+    public void applyIndexes() {
+        indexChangelog.upgraders().forEach(upgrader -> upgrader.upgrade(null));
+    }
+
+    @Test
+    public void shouldDeclareIndexesForEveryRepositoryCollection() {
+        Set<String> declared = MongoIndexDeclarations.load(getClass().getClassLoader(), MongoDataPlaneIndexUpgrader.RESOURCE)
+                .indexesByCollection().keySet();
+
+        assertEquals(repositoryCollections(), new TreeSet<>(declared));
+    }
+
+    @Test
+    public void everyExpiringCollectionSelfCleans() {
+        for (String collection : TTL_FIELD_BY_COLLECTION.keySet()) {
             Document index = indexesByName(collection).get(TTL_INDEX);
             assertNotNull(collection + " carries no TTL index named " + TTL_INDEX, index.get("expireAfterSeconds"));
             assertEquals("wrong expireAfterSeconds on " + collection,
@@ -86,10 +108,9 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void eachTtlIndexIsKeyedOnTheFieldItsQueriesFilterOn() throws Exception {
+    public void eachTtlIndexIsKeyedOnTheFieldItsQueriesFilterOn() {
         for (Map.Entry<String, String> entry : TTL_FIELD_BY_COLLECTION.entrySet()) {
             String collection = entry.getKey();
-            awaitIndex(collection, TTL_INDEX);
 
             assertKeyEquals(collection + "." + TTL_INDEX,
                     new Document(entry.getValue(), 1),
@@ -98,7 +119,7 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theDeviceStoreCarriesItsLookupIndexes() throws Exception {
+    public void theDeviceStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
         expected.put("ri1rt1", reference());
         expected.put("ri1rt1u1", reference().append("userId", 1));
@@ -110,7 +131,7 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theUserActivityStoreCarriesItsLookupIndexes() throws Exception {
+    public void theUserActivityStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
         expected.put("rt1ri1", referenceTypeFirst());
         expected.put("rt1ri1uat1uak1", referenceTypeFirst()
@@ -121,7 +142,7 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theLoginAttemptStoreCarriesItsLookupIndexes() throws Exception {
+    public void theLoginAttemptStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
         expected.put("d1c1u1", new Document("domain", 1).append("client", 1).append("username", 1));
 
@@ -129,7 +150,7 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theScopeApprovalStoreCarriesItsLookupIndexes() throws Exception {
+    public void theScopeApprovalStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
         expected.put("t1", new Document("transactionId", 1));
         expected.put("d1u1", new Document("domain", 1).append("userId", 1));
@@ -144,9 +165,7 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theUserStoreCarriesItsUniqueIndex() throws Exception {
-        awaitIndex("users", "rt1ri1u1s1_unique");
-
+    public void theUserStoreCarriesItsUniqueIndex() {
         Document index = indexesByName("users").get("rt1ri1u1s1_unique");
         assertKeyEquals("users.rt1ri1u1s1_unique",
                 referenceTypeFirst().append("username", 1).append("source", 1),
@@ -156,7 +175,7 @@ public class DataPlaneIndexTest {
     }
 
     @Test
-    public void theUserStoreCarriesItsLookupIndexes() throws Exception {
+    public void theUserStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
         expected.put("rt1ri1e1", referenceTypeFirst().append("email", 1));
         expected.put("rt1ri1ae1", referenceTypeFirst().append("additionalInformation.email", 1));
@@ -173,10 +192,7 @@ public class DataPlaneIndexTest {
     // ---------------------------------------------------------------- helpers
 
     /** Asserts that a collection carries exactly the lookup indexes expected, keys compared in order. */
-    private void assertLookupIndexes(String collection, Map<String, Document> expected) throws Exception {
-        for (String name : expected.keySet()) {
-            awaitIndex(collection, name);
-        }
+    private void assertLookupIndexes(String collection, Map<String, Document> expected) {
         Map<String, Document> actual = indexesByName(collection);
         expected.forEach((name, key) ->
                 assertKeyEquals(collection + "." + name, key, actual.get(name).get("key", Document.class)));
@@ -203,6 +219,16 @@ public class DataPlaneIndexTest {
                 new ArrayList<>(actual.entrySet()));
     }
 
+    private Set<String> repositoryCollections() {
+        Set<String> names = new TreeSet<>();
+        context.getBeansOfType(AbstractDataPlaneMongoRepository.class).values().forEach(repository ->
+                ReflectionUtils.doWithFields(repository.getClass(), field -> {
+                    ReflectionUtils.makeAccessible(field);
+                    names.add(((MongoCollection<?>) field.get(repository)).getNamespace().getCollectionName());
+                }, field -> MongoCollection.class.isAssignableFrom(field.getType())));
+        return names;
+    }
+
     private Map<String, Document> indexesByName(String collection) {
         Map<String, Document> byName = new HashMap<>();
         Flowable.fromPublisher(mongoDatabase.getCollection(collection).listIndexes())
@@ -210,21 +236,4 @@ public class DataPlaneIndexTest {
         return byName;
     }
 
-    /**
-     * Repositories create their indexes from @PostConstruct via MongoUtils.createIndex, which
-     * subscribes without blocking, so poll rather than assume they have landed.
-     */
-    private void awaitIndex(String collection, String indexName) throws Exception {
-        Predicate<Map<String, Document>> present = byName -> byName.containsKey(indexName);
-        long deadline = System.currentTimeMillis() + AWAIT_TIMEOUT_MS;
-        Map<String, Document> byName = Map.of();
-        while (System.currentTimeMillis() < deadline) {
-            byName = indexesByName(collection);
-            if (present.test(byName)) {
-                return;
-            }
-            Thread.sleep(200);
-        }
-        fail("index " + indexName + " never appeared on " + collection + " (present: " + byName.keySet() + ")");
-    }
 }

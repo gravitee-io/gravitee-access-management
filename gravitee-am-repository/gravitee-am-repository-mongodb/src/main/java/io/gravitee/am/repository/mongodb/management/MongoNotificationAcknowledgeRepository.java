@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.mongodb.management.internal.model.NotificationAcknowledgeMongo;
@@ -27,10 +26,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -53,7 +49,6 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     public void init() {
         collection = mongoOperations.getCollection("notification_acknowledgements", NotificationAcknowledgeMongo.class);
         super.init(collection);
-        super.createIndex(collection, Map.of(new Document(FIELD_RESOURCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_AUDIENCE_ID, 1), new IndexOptions().name("ri1rt1a1")));
     }
 
     @Override

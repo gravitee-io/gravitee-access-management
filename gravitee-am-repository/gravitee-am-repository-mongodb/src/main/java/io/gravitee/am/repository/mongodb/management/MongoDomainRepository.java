@@ -17,7 +17,6 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
@@ -78,8 +77,6 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -101,21 +98,10 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_NAME = "name";
     private static final String FIELD_DATA_PLANE_ID = "dataPlaneId";
 
-    private final Set<String> UNUSED_INDEXES = Set.of("ri1rt1");
-
     @PostConstruct
     public void init() {
         domainsCollection = mongoOperations.getCollection("domains", DomainMongo.class);
         super.init(domainsCollection);
-
-        final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1), new IndexOptions().name("ri1rt1h1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("ri1rt1n1"));
-
-        super.createIndex(domainsCollection, indexes);
-        if (ensureIndexOnStart) {
-            dropIndexes(domainsCollection, UNUSED_INDEXES::contains).subscribe();
-        }
     }
 
     @Override
