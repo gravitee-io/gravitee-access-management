@@ -617,6 +617,10 @@ public class DomainServiceImpl implements DomainService {
                             !existingDomain.getDataPlaneId().equals(domain.getDataPlaneId())){
                         return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
                     }
+                    var vhostCheck = validateFullStateVhosts(existingDomain, domain);
+                    if (vhostCheck != null) {
+                        return Single.error(vhostCheck);
+                    }
                     domain.setId(existingDomain.getId());
                     domain.setVersion(existingDomain.getVersion());
                     domain.setReferenceId(existingDomain.getReferenceId());
@@ -632,6 +636,44 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(referenceValidation)
                             .andThen(Single.just(domain));
                 });
+    }
+
+    @Override
+    public Completable validateVhosts(Domain current, Domain desired) {
+        return Completable.defer(() -> {
+            var vhostCheck = validateFullStateVhosts(current, desired);
+            return vhostCheck == null ? Completable.complete() : Completable.error(vhostCheck);
+        });
+    }
+
+    private InvalidParameterException validateFullStateVhosts(Domain current, Domain desired) {
+        if (CloudProperties.isManagedCloudEnabled(springEnvironment) && desired.getVhosts() == null) {
+            // a full-state caller that omits the vhosts keeps the ones the managed installation set
+            desired.setVhosts(current.getVhosts());
+        }
+        return checkVhostCloudModeChange(current, desired);
+    }
+
+    /**
+     * In a managed installation the gateway routing (vhosts) is owned by the platform: enabling the vhost mode
+     * or changing the vhosts is refused whatever the caller (Management API, Automation API).
+     */
+    private InvalidParameterException checkVhostCloudModeChange(Domain current, Domain updated) {
+        if (!CloudProperties.isManagedCloudEnabled(springEnvironment)) {
+            return null;
+        }
+        boolean vhostModeEnabled = updated.isVhostMode() && !current.isVhostMode();
+        boolean vhostsChanged = !virtualHostKeys(current.getVhosts()).equals(virtualHostKeys(updated.getVhosts()));
+        if (vhostModeEnabled || vhostsChanged) {
+            return new InvalidParameterException("VHost mode cannot be changed: this instance is a managed installation");
+        }
+        return null;
+    }
+
+    private static List<String> virtualHostKeys(List<VirtualHost> vhosts) {
+        return (vhosts == null ? List.<VirtualHost>of() : vhosts).stream()
+                .map(vhost -> Objects.toString(vhost.getHost(), "") + '|' + Objects.toString(vhost.getPath(), "") + '|' + vhost.isOverrideEntrypoint())
+                .toList();
     }
 
     @Override
@@ -667,6 +709,10 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
+                    var vhostCheck = checkVhostCloudModeChange(oldDomain, toPatch);
+                    if (vhostCheck != null) {
+                        return Single.error(vhostCheck);
+                    }
                     if(oldDomain.getDataPlaneId() != null &&
                             !oldDomain.getDataPlaneId().equals(toPatch.getDataPlaneId())){
                         return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));

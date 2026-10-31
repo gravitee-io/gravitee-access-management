@@ -64,6 +64,13 @@ public interface DomainService extends DomainReadService {
      */
     Single<Domain> validateSettings(Domain domain);
 
+    /**
+     * Checks, for a full desired state, that a managed installation keeps the vhost configuration it set up:
+     * enabling the vhost mode or changing the vhosts is refused, and vhosts the desired state omits are kept.
+     * {@code current} is the stored domain, or what creation produced for a domain not persisted yet.
+     */
+    Completable validateVhosts(Domain current, Domain desired);
+
     Single<Domain> update(String domainId, Domain domain, boolean validateReferences);
 
     Single<Domain> validateUpdate(String domainId, Domain domain, boolean validateReferences);
