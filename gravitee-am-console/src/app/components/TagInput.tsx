@@ -26,9 +26,23 @@ interface TagInputProps {
     readonly addOnBlur?: boolean;
     readonly placeholder?: string;
     readonly disabled?: boolean;
+    readonly invalid?: boolean;
+    readonly describedBy?: string;
+    readonly onBlur?: () => void;
 }
 
-export function TagInput({ id, values, onChange, onDuplicate, addOnBlur = false, placeholder, disabled }: TagInputProps) {
+export function TagInput({
+    id,
+    values,
+    onChange,
+    onDuplicate,
+    addOnBlur = false,
+    placeholder,
+    disabled,
+    invalid,
+    describedBy,
+    onBlur,
+}: TagInputProps) {
     const [text, setText] = useState('');
 
     function add() {
@@ -63,13 +77,20 @@ export function TagInput({ id, values, onChange, onDuplicate, addOnBlur = false,
                 <ComboboxChipsInput
                     id={id}
                     placeholder={values.length === 0 ? placeholder : undefined}
+                    aria-invalid={invalid}
+                    aria-describedby={describedBy}
                     onKeyDown={event => {
                         if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                             event.preventDefault();
                             add();
                         }
                     }}
-                    onBlur={addOnBlur ? add : undefined}
+                    onBlur={() => {
+                        if (addOnBlur) {
+                            add();
+                        }
+                        onBlur?.();
+                    }}
                 />
             </ComboboxChips>
         </Combobox>
