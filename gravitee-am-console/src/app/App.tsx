@@ -24,6 +24,7 @@ import { EnvironmentPage } from '../features/environment/EnvironmentPage';
 import { HomePage } from '../features/home/HomePage';
 import { kitRoutes } from '../features/kit/routes';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
+import { domainSettingsRoutes } from '../features/settings/routes';
 import { redirectToLogin } from '../lib/api/auth';
 import { HttpError } from '../lib/api/http';
 import { DomainScope } from '../lib/session/domain';
@@ -85,7 +86,7 @@ export function App() {
                                                                 element={<PlaceholderPage title="Authorization" />}
                                                             />
                                                             <Route path="alerts/*" element={<PlaceholderPage title="Alerts" />} />
-                                                            <Route path="settings/*" element={<PlaceholderPage title="Settings" />} />
+                                                            {domainSettingsRoutes}
                                                         </Route>
                                                     </Route>
                                                     <Route path="organization/*" element={<PlaceholderPage title="Organization" />} />
