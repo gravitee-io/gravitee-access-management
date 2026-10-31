@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { AccountSettings as AccountSettingsModel } from '@am-models/AccountSettings';
 import type { CorsSettings as CorsSettingsModel } from '@am-models/CorsSettings';
 import type { Domain as DomainModel } from '@am-models/Domain';
 import type { Entrypoint as EntrypointModel } from '@am-models/Entrypoint';
@@ -151,4 +152,10 @@ export interface DomainWebProtectionSettings {
 
 export function patchDomainWebProtectionSettings(ref: DomainRef, settings: DomainWebProtectionSettings): Promise<Domain> {
     return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify(settings) });
+}
+
+export type AccountSettings = ApiModel<AccountSettingsModel>;
+
+export function patchDomainAccountSettings(ref: DomainRef, accountSettings: AccountSettings): Promise<Domain> {
+    return http<Domain>(domainPath(ref), { method: 'PATCH', body: JSON.stringify({ accountSettings }) });
 }
