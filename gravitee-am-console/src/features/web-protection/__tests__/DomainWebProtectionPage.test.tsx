@@ -75,6 +75,9 @@ describe('DomainWebProtectionPage', () => {
 
         fireEvent.click(screen.getByRole('switch', { name: 'Inherit platform settings', description: /cross-origin settings/ }));
         fireEvent.click(screen.getByRole('switch', { name: 'Enable CORS' }));
+        const origin = screen.getByRole('combobox', { name: 'Allow-Origin' });
+        fireEvent.change(origin, { target: { value: '*' } });
+        fireEvent.keyDown(origin, { key: 'Enter' });
         fireEvent.click(screen.getByRole('checkbox', { name: 'POST' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'GET' }));
         fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -84,7 +87,7 @@ describe('DomainWebProtectionPage', () => {
                 corsSettings: {
                     inherited: false,
                     enabled: true,
-                    allowedOrigins: [],
+                    allowedOrigins: ['*'],
                     allowedMethods: ['GET', 'POST'],
                     allowedHeaders: [],
                     allowCredentials: false,
@@ -119,6 +122,18 @@ describe('DomainWebProtectionPage', () => {
 
         expect(toast.error).toHaveBeenCalledWith('Error : Origin "https://a.example" already exists');
         expect(toast.error).toHaveBeenCalledWith('Error : Header "Content-Type" already exists');
+    });
+
+    it('asks for an origin once the empty Allow-Origin field loses focus', () => {
+        renderPage(editor, { ...domain, corsSettings: { ...corsOn, allowedOrigins: [] } });
+        const origin = screen.getByRole('combobox', { name: 'Allow-Origin' });
+        expect(origin).not.toHaveAccessibleDescription('Add at least one origin.');
+
+        fireEvent.blur(origin);
+
+        expect(origin).toHaveAccessibleDescription('Add at least one origin.');
+        fireEvent.click(screen.getByRole('checkbox', { name: 'POST' }));
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
     it('blocks the save on a negative CORS max age', () => {
