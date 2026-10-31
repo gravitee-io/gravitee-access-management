@@ -17,7 +17,7 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.ActionLease;
-import io.gravitee.am.repository.management.api.ActionLeaseRepository;
+import io.gravitee.am.repository.common.ActionLeaseRepository;
 import io.gravitee.am.repository.mongodb.common.ActionLeaseCommand;
 import io.gravitee.am.repository.mongodb.common.model.ActionLeaseMongo;
 import io.reactivex.rxjava3.core.Completable;

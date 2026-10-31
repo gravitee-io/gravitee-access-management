@@ -144,7 +144,8 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "dp_action_lease",
                 "cp_action_lease",
 
-                "dp_email_staging"
+                "dp_email_staging",
+                "cp_email_staging"
         );
 
         // in seconds

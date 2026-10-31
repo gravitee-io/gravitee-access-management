@@ -18,6 +18,7 @@ package io.gravitee.am.repository.gateway.api;
 import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.common.EmailStagingRepository;
 import io.gravitee.am.repository.gateway.AbstractGatewayTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;

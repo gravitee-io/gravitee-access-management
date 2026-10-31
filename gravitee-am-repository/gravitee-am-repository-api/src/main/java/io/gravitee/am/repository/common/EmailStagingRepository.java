@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.gateway.api;
+package io.gravitee.am.repository.common;
 
 import io.gravitee.am.model.EmailStaging;
 import io.gravitee.am.model.Reference;
