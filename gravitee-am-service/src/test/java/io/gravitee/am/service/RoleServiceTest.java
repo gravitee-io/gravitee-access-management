@@ -515,4 +515,53 @@ public class RoleServiceTest {
         return created.getAllValues();
     }
 
+    @Test
+    public void shouldNotUpdate_permissionNotAssignableToTheRoleType() {
+        // a domain role cannot hold organization permissions
+        TestObserver<Role> testObserver = updateAssignableRoleWithPermissions(ReferenceType.DOMAIN,
+                Arrays.asList("domain_read", "organization_user_update", "organization_role_update"));
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidRoleException.class);
+        testObserver.assertError(ex -> ((InvalidRoleException) ex).getHttpStatusCode() == HttpStatusCode.BAD_REQUEST_400);
+        testObserver.assertError(ex -> ex.getMessage().contains("organization_user") && ex.getMessage().contains("organization_role"));
+
+        verify(roleRepository, never()).update(any(Role.class));
+        verify(eventService, never()).create(any());
+    }
+
+    @Test
+    public void shouldUpdate_permissionAssignableToTheRoleType() {
+        // an organization role can hold the organization permissions and the ones of the resources it contains
+        TestObserver<Role> testObserver = updateAssignableRoleWithPermissions(ReferenceType.ORGANIZATION,
+                Arrays.asList("organization_user_update", "domain_read"));
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(roleRepository).update(any(Role.class));
+    }
+
+    private TestObserver<Role> updateAssignableRoleWithPermissions(ReferenceType assignableType, List<String> permissions) {
+        UpdateRole updateRole = new UpdateRole();
+        updateRole.setName("my-role-name");
+        updateRole.setPermissions(permissions);
+
+        Role role = new Role();
+        role.setId("my-role");
+        role.setName("my-role-name");
+        role.setReferenceType(ReferenceType.ORGANIZATION);
+        role.setReferenceId(ORGANIZATION_ID);
+        role.setAssignableType(assignableType);
+
+        when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
+        when(roleRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID)).thenReturn(Flowable.empty());
+        Mockito.lenient().when(roleRepository.update(any(Role.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        Mockito.lenient().when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Role> testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        return testObserver;
+    }
 }

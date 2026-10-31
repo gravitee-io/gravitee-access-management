@@ -17,8 +17,15 @@ package io.gravitee.am.management.service;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Group;
@@ -27,6 +34,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.ApplicationService;
@@ -120,6 +128,160 @@ public class PermissionService {
                     }
                     return Single.just(false);
                 });
+    }
+
+    /**
+     * Make sure the caller does not hand out more than what it holds: the permissions must be held by the caller on the
+     * given scope (directly or through a parent). Platform administrators and primary owners of the organization may grant anything.
+     *
+     * @param flatPermissions the permissions to grant, as <code>&lt;permission&gt;_&lt;acl&gt;</code>
+     */
+    public Completable checkCanGrant(User caller, String organizationId, Reference scope, List<String> flatPermissions) {
+
+        return Completable.defer(() -> {
+            final Map<Permission, Set<Acl>> granted;
+            try {
+                granted = Permission.unflatten(flatPermissions);
+            } catch (IllegalArgumentException e) {
+                return Completable.error(new InvalidRoleException(e.getMessage()));
+            }
+            return checkCanGrant(caller, organizationId, scope, granted);
+        });
+    }
+
+    /**
+     * Same as {@link #checkCanGrant(User, String, Reference, List)} for the permissions carried by the given role.
+     */
+    public Completable checkCanGrantRole(User caller, String organizationId, Reference scope, String roleId) {
+
+        return roleService.findById(roleId)
+                .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
+                .flatMapCompletable(role -> checkCanGrant(caller, organizationId, scope, role.getPermissionAcls()));
+    }
+
+    private Completable checkCanGrant(User caller, String organizationId, Reference scope, Map<Permission, Set<Acl>> granted) {
+
+        if (granted == null || granted.isEmpty()) {
+            return Completable.complete();
+        }
+        return isPlatformAdminOrOwner(caller.getId(), organizationId)
+                .flatMapCompletable(privileged -> {
+                    if (privileged) {
+                        return Completable.complete();
+                    }
+                    return findInheritedPermissions(caller, scope)
+                            .flatMapCompletable(held -> {
+                                final String missing = missingPermissions(granted, held);
+                                return missing.isEmpty() ?
+                                        Completable.complete() :
+                                        Completable.error(new ResourceForbiddenAccessException("Unable to grant permissions you do not hold: " + missing));
+                            });
+                });
+    }
+
+    /**
+     * The caller may act on another user of the organization only if this user does not hold more than the caller:
+     * the platform administrators and the primary owners of the organization can only be handled by their peers.
+     */
+    public Completable checkCanManageUser(User caller, String organizationId, String targetUserId) {
+
+        if (caller.getId() != null && caller.getId().equals(targetUserId)) {
+            return Completable.complete();
+        }
+        return isPlatformAdminOrOwner(caller.getId(), organizationId)
+                .flatMapCompletable(callerPrivileged -> {
+                    if (callerPrivileged) {
+                        return Completable.complete();
+                    }
+                    return isPlatformAdminOrOwner(targetUserId, organizationId)
+                            .flatMapCompletable(targetPrivileged -> {
+                                if (targetPrivileged) {
+                                    return Completable.error(new ResourceForbiddenAccessException("Unable to manage a user with more privileges than yours"));
+                                }
+                                final DefaultUser target = new DefaultUser();
+                                target.setId(targetUserId);
+                                // the permissions of the default organization role are expected from every user, even when
+                                // the caller got another role in its place
+                                final Single<Map<Permission, Set<Acl>>> baseline = roleService.findDefaultRole(organizationId, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)
+                                        .map(Role::getPermissionAcls)
+                                        .defaultIfEmpty(Collections.emptyMap());
+                                return Single.zip(
+                                                findAllPermissions(caller, ReferenceType.ORGANIZATION, organizationId),
+                                                findAllPermissions(target, ReferenceType.ORGANIZATION, organizationId),
+                                                baseline,
+                                                (held, targetHeld, defaults) -> {
+                                                    final Map<Permission, Set<Acl>> callerHeld = new HashMap<>();
+                                                    held.forEach((permission, acls) -> callerHeld.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls));
+                                                    defaults.forEach((permission, acls) -> callerHeld.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls));
+                                                    return missingPermissions(targetHeld, callerHeld);
+                                                })
+                                        .flatMapCompletable(missing -> missing.isEmpty() ?
+                                                Completable.complete() :
+                                                Completable.error(new ResourceForbiddenAccessException("Unable to manage a user with more privileges than yours")));
+                            });
+                });
+    }
+
+    /**
+     * An account access token can be created for oneself, or by a platform administrator or a primary owner of the organization.
+     */
+    public Completable checkCanCreateAccountToken(User caller, String organizationId, String targetUserId) {
+
+        if (caller.getId() != null && caller.getId().equals(targetUserId)) {
+            return Completable.complete();
+        }
+        return isPlatformAdminOrOwner(caller.getId(), organizationId)
+                .flatMapCompletable(privileged -> privileged ?
+                        Completable.complete() :
+                        Completable.error(new ResourceForbiddenAccessException("Account access tokens can only be created for yourself")));
+    }
+
+    private Single<Boolean> isPlatformAdminOrOwner(String userId, String organizationId) {
+
+        if (userId == null) {
+            return Single.error(new InvalidUserException("Specified user is invalid"));
+        }
+        final MembershipCriteria criteria = new MembershipCriteria();
+        criteria.setUserId(userId);
+
+        return Flowable.merge(
+                        membershipService.findByCriteria(ReferenceType.PLATFORM, Platform.DEFAULT, criteria),
+                        membershipService.findByCriteria(ReferenceType.ORGANIZATION, organizationId, criteria))
+                .map(Membership::getRoleId)
+                .distinct()
+                .toList()
+                .flatMap(roleIds -> roleIds.isEmpty() ?
+                        Single.just(false) :
+                        roleService.findByIdIn(roleIds)
+                                .map(roles -> roles.stream().anyMatch(role -> role.isSystem()
+                                        && (SystemRole.PLATFORM_ADMIN.name().equals(role.getName()) || SystemRole.ORGANIZATION_PRIMARY_OWNER.name().equals(role.getName())))));
+    }
+
+    /**
+     * Permissions held by the user on the reference or inherited from one of its parents.
+     */
+    private Single<Map<Permission, Set<Acl>>> findInheritedPermissions(User user, Reference reference) {
+
+        return referenceWithParents(reference)
+                .flatMapSingle(ref -> findAllPermissions(user, ref.type(), ref.id()))
+                .collect(HashMap::new, (Map<Permission, Set<Acl>> all, Map<Permission, Set<Acl>> permissions) ->
+                        permissions.forEach((permission, acls) -> all.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls)));
+    }
+
+    private Flowable<Reference> referenceWithParents(Reference reference) {
+
+        return Flowable.just(reference)
+                .concatWith(parentOf(reference).flatMapPublisher(this::referenceWithParents));
+    }
+
+    private static String missingPermissions(Map<Permission, Set<Acl>> required, Map<Permission, Set<Acl>> held) {
+
+        return required.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .filter(acl -> !held.getOrDefault(entry.getKey(), Set.of()).contains(acl))
+                        .map(acl -> entry.getKey().name().toLowerCase() + "_" + acl.name().toLowerCase()))
+                .sorted()
+                .collect(Collectors.joining(", "));
     }
 
     protected Single<Boolean> haveConsistentReferenceIds(PermissionAcls permissionAcls) {

@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.MembershipService;
@@ -125,6 +126,7 @@ public class ProtectedResourceMembersResource extends AbstractResource {
         membership.setReferenceType(ReferenceType.PROTECTED_RESOURCE);
 
         checkAnyPermission(organizationId, environmentId, domain, ReferenceType.PROTECTED_RESOURCE, protectedResourceId, Permission.PROTECTED_RESOURCE_MEMBER, Acl.CREATE)
+                .andThen(permissionService.checkCanGrantRole(authenticatedUser, organizationId, Reference.protectedResource(protectedResourceId), newMembership.getRole()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> service.findById(protectedResourceId))
