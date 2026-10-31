@@ -59,6 +59,7 @@ export function DomainWebProtectionPage() {
     const queryClient = useQueryClient();
     const canEdit = usePermissions().has('domain_settings_update');
     const [form, setForm] = useState<FormState>(() => fromDomain(domain));
+    const [originsTouched, setOriginsTouched] = useState(false);
     useBreadcrumbs([
         { label: 'Domains', to: domainsPath },
         { label: domain.name, to: `${basePath}/dashboard` },
@@ -70,6 +71,7 @@ export function DomainWebProtectionPage() {
     if (syncedDomain !== domain) {
         setSyncedDomain(domain);
         setForm(fromDomain(domain));
+        setOriginsTouched(false);
     }
 
     const save = useMutation({
@@ -91,7 +93,12 @@ export function DomainWebProtectionPage() {
         value: valueError(row),
     }));
     const maxAgeError = corsActive && draftToSeconds(form.maxAge) < 0 ? 'Enter a duration of 0 or more.' : undefined;
-    const invalid = !!maxAgeError || (cspActive && (analysis.hasBlockingIssue || rowErrors.some(errors => errors.name || errors.value)));
+    const originsMissing = corsActive && (form.cors.allowedOrigins ?? []).length === 0;
+    const originsError = originsMissing && originsTouched ? 'Add at least one origin.' : undefined;
+    const invalid =
+        originsMissing ||
+        !!maxAgeError ||
+        (cspActive && (analysis.hasBlockingIssue || rowErrors.some(errors => errors.name || errors.value)));
 
     const setCors = (patch: Partial<Cors>) => setForm(current => ({ ...current, cors: { ...current.cors, ...patch } }));
     const setCsp = (patch: Partial<Csp>) => setForm(current => ({ ...current, csp: { ...current.csp, ...patch } }));
@@ -136,7 +143,7 @@ export function DomainWebProtectionPage() {
                     editable={canEdit}
                     onChange={setCors}
                 >
-                    <Field>
+                    <Field data-invalid={!!originsError}>
                         <FieldLabel htmlFor="cors-origins">Allow-Origin</FieldLabel>
                         <TagInput
                             id="cors-origins"
@@ -144,12 +151,19 @@ export function DomainWebProtectionPage() {
                             disabled={!canEdit}
                             addOnBlur
                             placeholder="*, https://mydomain.com, (http|https).*.mydomain.com"
+                            invalid={!!originsError}
+                            describedBy={originsError ? 'cors-origins-error' : undefined}
+                            onBlur={() => setOriginsTouched(true)}
                             onChange={allowedOrigins => setCors({ allowedOrigins })}
                             onDuplicate={value => toast.error(`Error : Origin "${value}" already exists`)}
                         />
-                        <FieldDescription>
-                            URIs that may access the resource. Enter * to allow all origins. Regular expressions are supported.
-                        </FieldDescription>
+                        {originsError ? (
+                            <FieldError id="cors-origins-error">{originsError}</FieldError>
+                        ) : (
+                            <FieldDescription>
+                                URIs that may access the resource. Enter * to allow all origins. Regular expressions are supported.
+                            </FieldDescription>
+                        )}
                     </Field>
                     <FieldSet>
                         <FieldLegend variant="label">Allow-Methods</FieldLegend>
@@ -342,7 +356,10 @@ export function DomainWebProtectionPage() {
                     dirty={dirty}
                     saving={save.isPending}
                     invalid={invalid}
-                    onDiscard={() => setForm(fromDomain(domain))}
+                    onDiscard={() => {
+                        setForm(fromDomain(domain));
+                        setOriginsTouched(false);
+                    }}
                 />
             )}
         </div>
