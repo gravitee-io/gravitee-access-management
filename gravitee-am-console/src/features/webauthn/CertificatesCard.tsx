@@ -125,7 +125,7 @@ export function CertificatesCard({ certificates, canEdit, onChange }: Certificat
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Attestation name</TableHead>
+                                <TableHead className="w-48">Attestation</TableHead>
                                 <TableHead>Certificate</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Actions</span>

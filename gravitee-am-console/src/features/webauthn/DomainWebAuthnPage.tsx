@@ -160,11 +160,14 @@ function WebAuthnForm({ domain, baseUrl }: WebAuthnFormProps) {
                     </CardHeader>
                     <CardContent className="grid gap-5">
                         <Field data-invalid={!!originError}>
-                            <FieldLabel htmlFor="webauthn-origin">Origin</FieldLabel>
+                            <FieldLabel htmlFor="webauthn-origin" required>
+                                Origin
+                            </FieldLabel>
                             <Input
                                 id="webauthn-origin"
                                 value={settings.origin ?? ''}
                                 disabled={!canEdit}
+                                aria-required
                                 aria-invalid={!!originError}
                                 aria-describedby={originError ? 'webauthn-origin-error' : undefined}
                                 onChange={event => set({ origin: event.target.value })}
@@ -185,7 +188,7 @@ function WebAuthnForm({ domain, baseUrl }: WebAuthnFormProps) {
                                 disabled={!canEdit}
                                 onChange={event => set({ relyingPartyId: event.target.value })}
                             />
-                            <FieldDescription>Optional. Defaults to the effective domain of the caller&apos;s origin.</FieldDescription>
+                            <FieldDescription>Defaults to the effective domain of the caller&apos;s origin.</FieldDescription>
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="webauthn-rp-name">Relying party name</FieldLabel>
@@ -195,7 +198,7 @@ function WebAuthnForm({ domain, baseUrl }: WebAuthnFormProps) {
                                 disabled={!canEdit}
                                 onChange={event => set({ relyingPartyName: event.target.value })}
                             />
-                            <FieldDescription>Optional. Name shown to users by their authenticator.</FieldDescription>
+                            <FieldDescription>Name shown to users by their authenticator.</FieldDescription>
                         </Field>
                     </CardContent>
                 </Card>
