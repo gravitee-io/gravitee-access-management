@@ -192,8 +192,11 @@ public class FormServiceImpl implements FormService {
     @Override
     public Single<Form> update(ReferenceType referenceType, String referenceId, String id, UpdateForm updateForm, User principal) {
         log.debug("Update a form {} for {}} {}", id, referenceType, referenceId);
+        return update0(referenceType, referenceId, formRepository.findById(referenceType, referenceId, id), id, updateForm, principal);
+    }
 
-        return formRepository.findById(referenceType, referenceId, id)
+    private Single<Form> update0(ReferenceType referenceType, String referenceId, Maybe<Form> formLookup, String id, UpdateForm updateForm, User principal) {
+        return formLookup
                 .switchIfEmpty(Single.error(new FormNotFoundException(id)))
                 .flatMap(oldForm -> {
                     Form formToUpdate = new Form(oldForm);
@@ -230,7 +233,7 @@ public class FormServiceImpl implements FormService {
     @Override
     public Single<Form> update(String domain, String client, String id, UpdateForm updateForm, User principal) {
         log.debug("Update a form {} for domain {} and client {}", id, domain, client);
-        return update(ReferenceType.DOMAIN, domain, id, updateForm, principal);
+        return update0(ReferenceType.DOMAIN, domain, findByIdAndClient(domain, client, id), id, updateForm, principal);
     }
 
     private Single<Form> create0(ReferenceType referenceType, String referenceId, String client, NewForm newForm, User principal) {
@@ -272,7 +275,11 @@ public class FormServiceImpl implements FormService {
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String formId, User principal) {
         log.debug("Delete form {}", formId);
-        return formRepository.findById(referenceType, referenceId, formId)
+        return delete0(referenceType, referenceId, formRepository.findById(referenceType, referenceId, formId), formId, principal);
+    }
+
+    private Completable delete0(ReferenceType referenceType, String referenceId, Maybe<Form> formLookup, String formId, User principal) {
+        return formLookup
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(formId)))
                 .flatMapCompletable(page -> {
                     // create event for sync process
@@ -292,6 +299,21 @@ public class FormServiceImpl implements FormService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete form: %s", formId), ex));
                 });
+    }
+
+    @Override
+    public Completable delete(String domain, String client, String formId, User principal) {
+        log.debug("Delete form {} for domain {} and client {}", formId, domain, client);
+        return delete0(ReferenceType.DOMAIN, domain, findByIdAndClient(domain, client, formId), formId, principal);
+    }
+
+    /**
+     * Look up a form template of the given application only: a domain-level template or a template
+     * of another application is reported as not found.
+     */
+    private Maybe<Form> findByIdAndClient(String domain, String client, String id) {
+        return formRepository.findById(ReferenceType.DOMAIN, domain, id)
+                .filter(form -> client != null && client.equals(form.getClient()));
     }
 
     @Override

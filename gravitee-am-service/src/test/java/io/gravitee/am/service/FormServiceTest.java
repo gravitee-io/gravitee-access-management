@@ -21,8 +21,11 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
+import io.gravitee.am.service.exception.FormNotFoundException;
+import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FormServiceImpl;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -38,7 +41,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -169,5 +176,84 @@ public class FormServiceTest {
         TestObserver<Form> obs = formService.getDefaultByDomainAndTemplate("test", "invalid").test();
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(TechnicalManagementException.class);
+    }
+
+    private Form formOf(String client) {
+        Form form = new Form();
+        form.setId("my-form");
+        form.setReferenceType(ReferenceType.DOMAIN);
+        form.setReferenceId(DOMAIN);
+        form.setClient(client);
+        return form;
+    }
+
+    @Test
+    public void shouldUpdate_applicationForm() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf("app-x")));
+        when(formRepository.update(any(Form.class))).thenAnswer(f -> Single.just(f.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        formService.update(DOMAIN, "app-x", "my-form", new UpdateForm()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(formRepository, times(1)).update(any(Form.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_domainLevelFormThroughApplication() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf(null)));
+
+        formService.update(DOMAIN, "app-x", "my-form", new UpdateForm()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormNotFoundException.class);
+
+        verify(formRepository, never()).update(any(Form.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_formOfAnotherApplication() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf("app-y")));
+
+        formService.update(DOMAIN, "app-x", "my-form", new UpdateForm()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormNotFoundException.class);
+
+        verify(formRepository, never()).update(any(Form.class));
+    }
+
+    @Test
+    public void shouldDelete_applicationForm() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf("app-x")));
+        when(formRepository.delete("my-form")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        formService.delete(DOMAIN, "app-x", "my-form", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(formRepository, times(1)).delete("my-form");
+    }
+
+    @Test
+    public void shouldNotDelete_domainLevelFormThroughApplication() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf(null)));
+
+        formService.delete(DOMAIN, "app-x", "my-form", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormNotFoundException.class);
+
+        verify(formRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldNotDelete_formOfAnotherApplication() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf("app-y")));
+
+        formService.delete(DOMAIN, "app-x", "my-form", null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormNotFoundException.class);
+
+        verify(formRepository, never()).delete(anyString());
     }
 }
