@@ -52,6 +52,7 @@ export function DomainLoginPage() {
     const queryClient = useQueryClient();
     const canEdit = usePermissions().has('domain_settings_update');
     const [form, setForm] = useState<LoginSettings>(() => fromDomain(domain));
+    const [maxAgeTouched, setMaxAgeTouched] = useState(false);
     useBreadcrumbs([
         { label: 'Domains', to: domainsPath },
         { label: domain.name, to: `${basePath}/dashboard` },
@@ -63,6 +64,7 @@ export function DomainLoginPage() {
     if (syncedDomain !== domain) {
         setSyncedDomain(domain);
         setForm(fromDomain(domain));
+        setMaxAgeTouched(false);
     }
 
     const save = useMutation({
@@ -79,7 +81,7 @@ export function DomainLoginPage() {
     const set = (patch: Partial<LoginSettings>) => setForm(current => ({ ...current, ...patch }));
     const passwordlessEnabled = form.passwordlessEnabled === true;
     const cbaEnabled = form.certificateBasedAuthEnabled === true;
-    const enforcePassword = form.passwordlessEnforcePasswordEnabled === true;
+    const enforcePassword = form.passwordlessEnforcePasswordEnabled === true && (passwordlessEnabled || cbaEnabled);
     const maxAge = form.passwordlessEnforcePasswordMaxAge;
 
     let cbaUrlError: string | undefined;
@@ -88,8 +90,12 @@ export function DomainLoginPage() {
     } else if (cbaEnabled && !HTTPS_URL.test(form.certificateBasedAuthUrl ?? '')) {
         cbaUrlError = 'Provide a valid HTTPS URL (for example, https://cba.example.com/).';
     }
-    const maxAgeError = enforcePassword && (typeof maxAge !== 'number' || maxAge < 0) ? 'Enter a number of seconds, 0 or more.' : undefined;
-    const invalid = !!cbaUrlError || !!maxAgeError;
+    const maxAgeMissing = enforcePassword && typeof maxAge !== 'number';
+    const maxAgeError =
+        (maxAgeMissing && maxAgeTouched) || (enforcePassword && typeof maxAge === 'number' && maxAge < 0)
+            ? 'Enter a number of seconds, 0 or more.'
+            : undefined;
+    const invalid = !!cbaUrlError || maxAgeMissing || !!maxAgeError;
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -194,7 +200,7 @@ export function DomainLoginPage() {
                             disabled={!canEdit}
                             onChange={certificateBasedAuthEnabled => set({ certificateBasedAuthEnabled })}
                         />
-                        <Alert>
+                        <Alert variant="warning">
                             <TriangleAlertIcon aria-hidden />
                             <AlertDescription>Install the CBA authenticator plugin on the gateway to use this feature.</AlertDescription>
                         </Alert>
@@ -231,7 +237,7 @@ export function DomainLoginPage() {
                         <SettingToggle
                             id="login-enforce-password"
                             label="Enforce password usage"
-                            description="Periodically make passwordless users sign in with their credentials (password or external provider)."
+                            description="Periodically make passwordless users sign in with their credentials (password or external provider). Needs passwordless or CBA turned on."
                             checked={enforcePassword}
                             disabled={!canEdit || (!passwordlessEnabled && !cbaEnabled)}
                             onChange={passwordlessEnforcePasswordEnabled => set({ passwordlessEnforcePasswordEnabled })}
@@ -246,6 +252,7 @@ export function DomainLoginPage() {
                                 disabled={!canEdit || !enforcePassword}
                                 aria-invalid={!!maxAgeError}
                                 aria-describedby={maxAgeError ? 'login-max-age-error' : undefined}
+                                onBlur={() => setMaxAgeTouched(true)}
                                 onChange={event =>
                                     set({
                                         passwordlessEnforcePasswordMaxAge:
@@ -271,7 +278,10 @@ export function DomainLoginPage() {
                     dirty={dirty}
                     saving={save.isPending}
                     invalid={invalid}
-                    onDiscard={() => setForm(fromDomain(domain))}
+                    onDiscard={() => {
+                        setForm(fromDomain(domain));
+                        setMaxAgeTouched(false);
+                    }}
                 />
             )}
         </div>

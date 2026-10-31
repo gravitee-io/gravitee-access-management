@@ -153,10 +153,27 @@ describe('DomainLoginPage', () => {
 
         fireEvent.click(screen.getByRole('switch', { name: 'Enforce password usage' }));
         const maxAge = screen.getByRole('spinbutton', { name: 'Max passwordless usage (seconds)' });
-        expect(maxAge).toHaveAccessibleDescription('Enter a number of seconds, 0 or more.');
+        expect(maxAge).not.toHaveAccessibleDescription('Enter a number of seconds, 0 or more.');
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
 
+        fireEvent.blur(maxAge);
+        expect(maxAge).toHaveAccessibleDescription('Enter a number of seconds, 0 or more.');
+
         fireEvent.change(maxAge, { target: { value: '3600' } });
+        expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    });
+
+    it('turns password usage off once neither passwordless nor CBA is on', () => {
+        renderPage(editor, { ...domain, loginSettings: { passwordlessEnabled: true } });
+
+        fireEvent.click(screen.getByRole('switch', { name: 'Enforce password usage' }));
+        fireEvent.blur(screen.getByRole('spinbutton', { name: 'Max passwordless usage (seconds)' }));
+        fireEvent.click(screen.getByRole('switch', { name: 'Enable passwordless' }));
+
+        expect(screen.getByRole('switch', { name: 'Enforce password usage' })).not.toBeChecked();
+        const maxAge = screen.getByRole('spinbutton', { name: 'Max passwordless usage (seconds)' });
+        expect(maxAge).toBeDisabled();
+        expect(maxAge).not.toHaveAccessibleDescription('Enter a number of seconds, 0 or more.');
         expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     });
 
