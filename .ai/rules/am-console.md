@@ -13,26 +13,7 @@ with the `migrate-area` skill in `../docs/agent-standards/skills/migrate-area/`.
 
 ## 1. Commands
 
-Run every command from this folder. Node 24 (`.nvmrc`), Yarn 4.1.1 from `.yarn/releases/`.
-
-```bash
-yarn install
-yarn serve        # dev server on :4201, proxies /management to AM_MAPI_URL (default :8093)
-yarn typecheck
-yarn lint         # typecheck, ESLint with the Graphene config, Prettier check
-yarn lint:eslint:fix && yarn lint:prettier:fix
-yarn test         # Vitest, jsdom, files under src/**/__tests__/*.test.{ts,tsx}
-yarn build        # typecheck, then rsbuild production build into dist/
-```
-
-Before a commit, all four must pass:
-
-```bash
-yarn typecheck && yarn lint && yarn test && yarn build
-```
-
-The console is not a Maven module. `mvn install` from the root does not build it. Build it with yarn. CircleCI runs the
-same four commands in the `console_build` job when a push changes this folder or the generated models it imports.
+The console commands are in the "Console (React)" section of `../docs/agent-standards/commands.md`.
 
 ## 2. Stack
 

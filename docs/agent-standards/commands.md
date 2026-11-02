@@ -132,7 +132,8 @@ yarn prettier             # Prettier check
 cd gravitee-am-ui
 yarn test
 
-# Or via Maven
+# Or via Maven, from the repository root
+cd ..
 mvn test -pl gravitee-am-ui -Dlicense.skip=true
 ```
 
@@ -157,12 +158,15 @@ yarn install
 yarn serve        # dev server on :4201, proxies /management to AM_MAPI_URL (default :8093)
 yarn typecheck
 yarn lint         # typecheck, ESLint with the Graphene config, Prettier check
-yarn test         # Vitest
+yarn lint:eslint:fix && yarn lint:prettier:fix
+yarn test         # Vitest, jsdom, files under src/**/__tests__/*.test.{ts,tsx}
 yarn build        # typecheck, then rsbuild production build into dist/
 
 # Before a commit, all four must pass
 yarn typecheck && yarn lint && yarn test && yarn build
 ```
+
+CircleCI runs the same four commands in the `console_build` job when a push changes this folder or the generated models it imports.
 
 ## API / Contracts
 

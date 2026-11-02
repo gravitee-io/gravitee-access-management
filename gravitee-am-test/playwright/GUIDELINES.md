@@ -464,7 +464,7 @@ The conditional in the helper handles infrastructure non-determinism, not a feat
 
 If a test runs **two** OAuth round-trips on the same `page` / context, the gateway may still hold an **end-user session** after the first callback. A second `goto(authorizeUrl)` can then skip `/login` and sometimes **skip step-up MFA**, going straight to the client **callback with `code`**. Calling `reachOAuthAuthorizationCallback` when you still expect `/mfa/challenge` or `/login` will return immediately on the short-circuited callback — leading to timeouts on the next assertion.
 
-To get a fresh login or MFA challenge on the second leg, you can also use a new context instead of clearing cookies. The Xray parity example under [§6](#6-xray-test-parity) uses the same pattern for a second login path.
+To get a fresh login or MFA challenge on the second leg, call `await page.context().clearCookies()` before that authorisation, or use a new context. The Xray parity example under [§6](#6-xray-test-parity) uses the same pattern for a second login path.
 
 ## 17. WebAuthn / CDP Virtual Authenticator
 

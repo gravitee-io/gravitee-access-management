@@ -13,7 +13,7 @@ docs/agent-standards/
 
 ## Where the rules live
 
-The rules are written once, in `.ai/rules/`. A tool called `gbuddy` turns them, together with the shared Gravitee rules, into the files the AI tools read: `AGENTS.md` at the repository root and in each module folder, a `CLAUDE.md` beside each of them, and `.github/instructions/code-review.instructions.md` for Copilot code review. Cursor, Codex, Copilot and Antigravity read `AGENTS.md`; Claude Code reads `CLAUDE.md`, which points to `AGENTS.md`.
+The rules are written once, in `.ai/rules/`. A tool called `gbuddy` turns them, together with the shared Gravitee rules, into the files the AI tools read: `AGENTS.md` at the repository root and in each module folder, a `CLAUDE.md` beside each of them, and the review files in `.github/instructions/` for Copilot code review. Cursor, Codex, Copilot and Antigravity read `AGENTS.md`; Claude Code reads `CLAUDE.md`, which points to `AGENTS.md`.
 
 Never edit a generated file by hand. Its first lines say it is generated, and the `Verify AI context` check fails a pull request that edits one by hand.
 
