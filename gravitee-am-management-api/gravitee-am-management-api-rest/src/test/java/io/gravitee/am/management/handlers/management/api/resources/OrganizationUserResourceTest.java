@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
@@ -29,9 +30,12 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -43,6 +47,12 @@ public class OrganizationUserResourceTest extends JerseySpringTest {
 
     private static final String ORGANIZATION_ID = "DEFAULT";
     private static final String ADMIN_ID = "admin-id";
+
+    private Organization organization() {
+        final Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+        return organization;
+    }
 
     private void callerCannotManage(String userId) {
         doReturn(Completable.error(new ResourceForbiddenAccessException("Unable to manage a user with more privileges than yours")))
@@ -113,5 +123,39 @@ public class OrganizationUserResourceTest extends JerseySpringTest {
                 .request().delete();
 
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotBulkDeleteUser_targetMorePrivileged() {
+        final AtomicBoolean executed = new AtomicBoolean(false);
+        callerCannotManage(ADMIN_ID);
+        doReturn(Single.fromCallable(() -> {
+            executed.set(true);
+            return new User();
+        })).when(organizationUserService).delete(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), eq(ADMIN_ID), any());
+        doReturn(Single.just(organization())).when(organizationService).findById(ORGANIZATION_ID);
+
+        final Response response = target("organizations").path(ORGANIZATION_ID).path("users").path("bulk")
+                .request().post(Entity.json(Map.of("action", "DELETE", "items", List.of(ADMIN_ID))));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertFalse(executed.get());
+    }
+
+    @Test
+    public void shouldNotBulkUpdateUser_targetMorePrivileged() {
+        final AtomicBoolean executed = new AtomicBoolean(false);
+        callerCannotManage(ADMIN_ID);
+        doReturn(Single.fromCallable(() -> {
+            executed.set(true);
+            return new User();
+        })).when(organizationUserService).update(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), eq(ADMIN_ID), any(UpdateUser.class), any());
+        doReturn(Single.just(organization())).when(organizationService).findById(ORGANIZATION_ID);
+
+        final Response response = target("organizations").path(ORGANIZATION_ID).path("users").path("bulk")
+                .request().post(Entity.json(Map.of("action", "UPDATE", "items", List.of(Map.of("id", ADMIN_ID, "firstName", "x")))));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertFalse(executed.get());
     }
 }
