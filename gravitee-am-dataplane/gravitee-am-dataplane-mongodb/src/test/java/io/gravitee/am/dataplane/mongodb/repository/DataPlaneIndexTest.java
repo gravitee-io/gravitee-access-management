@@ -150,7 +150,6 @@ public class DataPlaneIndexTest {
     @Test
     public void theScopeApprovalStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
-        expected.put("t1", new Document("transactionId", 1));
         expected.put("d1u1", new Document("domain", 1).append("userId", 1));
         expected.put("d1c1u1s1", new Document("domain", 1)
                 .append("clientId", 1).append("userId", 1).append("scope", 1));

@@ -39,7 +39,8 @@ public class MongoDataPlaneIndexUpgraderTest {
         assertThat(changelog.upgraders())
                 .extracting(upgrader -> upgrader.identifier(description))
                 .containsExactly("default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_initial-indexes",
-                        "default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_drop-redundant-indexes");
+                        "default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_drop-redundant-indexes",
+                        "default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_drop-unused-indexes");
     }
 
     @Test
@@ -48,6 +49,7 @@ public class MongoDataPlaneIndexUpgraderTest {
                 .changesets())
                 .extracting(MongoIndexDeclarations.Changeset::id, MongoIndexDeclarations.Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "c6d96eb35f27"),
-                        tuple("drop-redundant-indexes", "75e008f183bc"));
+                        tuple("drop-redundant-indexes", "75e008f183bc"),
+                        tuple("drop-unused-indexes", "68643f9e6801"));
     }
 }

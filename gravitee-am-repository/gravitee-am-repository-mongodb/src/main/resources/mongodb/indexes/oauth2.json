@@ -42,6 +42,13 @@
           { "name": "e1", "key": { "expire_at": 1 }, "expireAfterSeconds": 0 }
         ]
       }
+    },
+    {
+      "id": "drop-unused-indexes",
+      "drop": {
+        "authorization_codes": ["t1"],
+        "tokens": ["c1"]
+      }
     }
   ]
 }

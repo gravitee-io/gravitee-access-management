@@ -90,6 +90,13 @@
         "uma_resource_set": ["d1", "d1c1"],
         "user_activities": ["rt1ri1"]
       }
+    },
+    {
+      "id": "drop-unused-indexes",
+      "drop": {
+        "scope_approvals": ["t1"],
+        "webauthn_credentials": ["rt1ri1a1"]
+      }
     }
   ]
 }
