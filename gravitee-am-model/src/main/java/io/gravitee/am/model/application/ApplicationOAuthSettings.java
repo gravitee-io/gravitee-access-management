@@ -227,6 +227,10 @@ public class ApplicationOAuthSettings {
      */
     private List<ApplicationScopeSettings> scopeSettings;
     /**
+     * Authorization detail types of the domain that the client can request.
+     */
+    private List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes = new ArrayList<>();
+    /**
      * Enhance scopes with user roles' permissions
      */
     private boolean enhanceScopesWithUserPermissions;
@@ -390,6 +394,7 @@ public class ApplicationOAuthSettings {
         this.defaultScopes = other.defaultScopes != null ? new ArrayList<>(other.defaultScopes) : null;
         this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
+        this.authorizationDetailTypes = other.authorizationDetailTypes != null ? new ArrayList<>(other.authorizationDetailTypes) : null;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
@@ -809,6 +814,14 @@ public class ApplicationOAuthSettings {
         this.scopeSettings = scopeSettings;
     }
 
+    public List<ApplicationAuthorizationDetailTypeSettings> getAuthorizationDetailTypes() {
+        return authorizationDetailTypes;
+    }
+
+    public void setAuthorizationDetailTypes(List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes) {
+        this.authorizationDetailTypes = authorizationDetailTypes;
+    }
+
     public int getAccessTokenValiditySeconds() {
         return accessTokenValiditySeconds;
     }
@@ -1103,6 +1116,7 @@ public class ApplicationOAuthSettings {
         client.setIdJagValiditySeconds(this.idJagValiditySeconds);
         client.setEnhanceScopesWithUserPermissions(this.enhanceScopesWithUserPermissions);
         client.setScopeSettings(this.scopeSettings);
+        client.setAuthorizationDetailTypes(this.authorizationDetailTypes);
         client.setTokenCustomClaims(this.tokenCustomClaims);
         client.setUserinfoCustomClaims(this.userinfoCustomClaims);
         client.setTlsClientAuthSubjectDn(this.tlsClientAuthSubjectDn);

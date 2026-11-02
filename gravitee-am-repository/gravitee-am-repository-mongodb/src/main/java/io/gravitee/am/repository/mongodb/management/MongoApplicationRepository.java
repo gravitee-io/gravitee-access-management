@@ -34,6 +34,7 @@ import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.SAMLAssertionAttribute;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -58,6 +59,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationId
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSAMLSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAuthorizationDetailTypeSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationScopeSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSettingsMongo;
@@ -601,6 +603,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         if (other.getScopeSettings() != null) {
             applicationOAuthSettingsMongo.setScopeSettings(other.getScopeSettings().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
         }
+        if (other.getAuthorizationDetailTypes() != null) {
+            applicationOAuthSettingsMongo.setAuthorizationDetailTypes(other.getAuthorizationDetailTypes().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
+        }
         applicationOAuthSettingsMongo.setRequireParRequest(other.isRequireParRequest());
 
         applicationOAuthSettingsMongo.setBackchannelAuthRequestSignAlg(other.getBackchannelAuthRequestSignAlg());
@@ -697,6 +702,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setSilentReAuthentication(other.isSilentReAuthentication());
         if (other.getScopeSettings() != null) {
             applicationOAuthSettings.setScopeSettings(other.getScopeSettings().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
+        }
+        if (other.getAuthorizationDetailTypes() != null) {
+            applicationOAuthSettings.setAuthorizationDetailTypes(other.getAuthorizationDetailTypes().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
         }
 
         applicationOAuthSettings.setBackchannelAuthRequestSignAlg(other.getBackchannelAuthRequestSignAlg());
@@ -800,6 +808,17 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationScopeSettings.setDefaultScope(other.isDefaultScope());
         applicationScopeSettings.setRequiredScope(other.isRequiredScope());
         return applicationScopeSettings;
+    }
+
+    private static ApplicationAuthorizationDetailTypeSettings convert(ApplicationAuthorizationDetailTypeSettingsMongo other) {
+        return new ApplicationAuthorizationDetailTypeSettings(other.getType(), other.getExpiresIn());
+    }
+
+    private static ApplicationAuthorizationDetailTypeSettingsMongo convert(ApplicationAuthorizationDetailTypeSettings other) {
+        ApplicationAuthorizationDetailTypeSettingsMongo settingsMongo = new ApplicationAuthorizationDetailTypeSettingsMongo();
+        settingsMongo.setType(other.getType());
+        settingsMongo.setExpiresIn(other.getExpiresIn());
+        return settingsMongo;
     }
 
     private static ApplicationScopeSettingsMongo convert(ApplicationScopeSettings other) {
