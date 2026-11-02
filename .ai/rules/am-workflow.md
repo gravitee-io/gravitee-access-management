@@ -21,7 +21,7 @@ description: Plan-first and approval discipline stricter than the shared rules
 
 - **Cite key files inspected** (code + docs) that informed changes.
 - Prefer safe/dry-run/diff modes first.
-- Freely create, modify, or update code files as part of normal implementation.
+- Freely create, modify, or update code, test and configuration files as part of normal implementation.
 - **Ask before deleting any files** (code or documentation).
 - **Do not execute commands that modify state, data, or external systems without explicit approval.**
 - Safe commands: `git status`, `git diff`, `git log`, read-only searches, typecheck/lint (read-only).
@@ -36,10 +36,7 @@ description: Plan-first and approval discipline stricter than the shared rules
 
 ## Templates (guidance)
 
-- Templates under `docs/agent-standards/templates/` are guidance:
-  - use them to structure plans and self-checks
-  - do not create new documentation/guideline files (*.md, README) unless explicitly requested
-  - code files, tests, and configuration files can be created freely as needed
+- Templates under `docs/agent-standards/templates/` are guidance: use them to structure plans and self-checks.
 
 ## Cross-agent consistency
 

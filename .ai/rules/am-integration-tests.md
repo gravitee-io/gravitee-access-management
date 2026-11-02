@@ -15,3 +15,5 @@ dirs: [gravitee-am-test]
 Follow `gravitee-am-test/GUIDELINES.md` for all integration test work.
 
 Follow `gravitee-am-test/MIGRATION_TEST_GUIDELINES.md` for any change under `gravitee-am-test/migration-seeding/` or `gravitee-am-test/specs/migration/`.
+
+In Playwright specs under `gravitee-am-test/playwright/`, avoid brittle selectors; prefer stable test identifiers where needed.

@@ -210,7 +210,7 @@ OpenAPI change checklist: `docs/agent-standards/templates/openapi_change_checkli
 ## Testing approach
 
 - Cover success **and error paths** when behavior changes.
-- CREATE/UPDATE/DELETE tests **must verify audit logging**.
+- CREATE/UPDATE/DELETE tests **must verify audit logging**, even where sibling tests do not (stricter than the shared AM rule).
 
 ## Step-by-step validation
 
@@ -254,7 +254,7 @@ Before marking work complete:
 
 - **Cite key files inspected** (code + docs) that informed changes.
 - Prefer safe/dry-run/diff modes first.
-- Freely create, modify, or update code files as part of normal implementation.
+- Freely create, modify, or update code, test and configuration files as part of normal implementation.
 - **Ask before deleting any files** (code or documentation).
 - **Do not execute commands that modify state, data, or external systems without explicit approval.**
 - Safe commands: `git status`, `git diff`, `git log`, read-only searches, typecheck/lint (read-only).
@@ -269,10 +269,7 @@ Before marking work complete:
 
 ## Templates (guidance)
 
-- Templates under `docs/agent-standards/templates/` are guidance:
-  - use them to structure plans and self-checks
-  - do not create new documentation/guideline files (*.md, README) unless explicitly requested
-  - code files, tests, and configuration files can be created freely as needed
+- Templates under `docs/agent-standards/templates/` are guidance: use them to structure plans and self-checks.
 
 ## Cross-agent consistency
 

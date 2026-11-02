@@ -5,7 +5,7 @@ This file lists the canonical, **verified** commands for building, testing, lint
 ## Prerequisites
 - Java 25 or higher
 - Maven 3.6+
-- Node.js >= 20.11.1
+- Node.js >= 20.11.1 (`gravitee-am-console` needs Node 24, see its `.nvmrc`)
 - Yarn 4.1.1 (packageManager)
 - Docker & Docker Compose (for integration tests and local development)
 

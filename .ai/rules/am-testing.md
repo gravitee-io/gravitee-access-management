@@ -9,7 +9,7 @@ description: Test and validation rules
 ## Testing approach
 
 - Cover success **and error paths** when behavior changes.
-- CREATE/UPDATE/DELETE tests **must verify audit logging**.
+- CREATE/UPDATE/DELETE tests **must verify audit logging**, even where sibling tests do not (stricter than the shared AM rule).
 
 ## Step-by-step validation
 

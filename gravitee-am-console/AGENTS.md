@@ -84,7 +84,7 @@ src/
 - Each area exports its `<Route>` elements from `routes.tsx`. A page loads through `lazyPage()`, so the area lands in
   its own chunk. `App.tsx` mounts each area in place of its `PlaceholderPage`.
 - Tests sit in `__tests__/` beside the code they test.
-- The root `license:check` scans this folder.
+- Every new file starts with the Apache licence header. The root `license:check` scans this folder.
 
 ## 4. Session, routes and paths
 

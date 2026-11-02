@@ -9,15 +9,15 @@ inputs:
   - { path: ".ai/manifest.yaml", hash: "sha256:eb411a80c39346418bddde5dbd088eb796a81ca9fe23828996d555443fffd34e" }
   - { path: ".ai/rules/ai-context-authoring.md", hash: "sha256:fa28966b3e5747c5cf7189f6bb708618dfd91035583a4d4101b1bf48b3ff991a" }
   - { path: ".ai/rules/am-angular.md", hash: "sha256:e85eb857f7802dbd1bd88d7c0b1782927c136b5bb43045dddc8ccf58d7dd75bf" }
-  - { path: ".ai/rules/am-console.md", hash: "sha256:ebb27aba978655416c55a681cb746f16c046ba8bc6461e724ec6b0fbb3c2a6de" }
+  - { path: ".ai/rules/am-console.md", hash: "sha256:cde906694fa3b4c56508b8ee8d47a62e84647d6373420ac97e526d5a9259213e" }
   - { path: ".ai/rules/am-contracts.md", hash: "sha256:724b4a5959b21c989d23e940b7f13a7a080582fc441136ec7ddb6a358507f1dd" }
   - { path: ".ai/rules/am-data.md", hash: "sha256:d2268bde547e710ce6f527a0040f428fef2ebd3e32cbb192f411d81fd4db8613" }
-  - { path: ".ai/rules/am-integration-tests.md", hash: "sha256:9686f7a24699c3ce5f2400eb286ad05b9508956727755ab9609278e722984f07" }
-  - { path: ".ai/rules/am-java.md", hash: "sha256:001197b0f284bc946cdfd718b28d70995508b6f22a7d38447c412309a62de6de" }
+  - { path: ".ai/rules/am-integration-tests.md", hash: "sha256:978972ea73a0e79dee954577a3ca933ffe50edb71204d7cdfdfc2e747504ded0" }
+  - { path: ".ai/rules/am-java.md", hash: "sha256:bed46b90861a7ca3b291093965084a23ada69b2cea17deeb6eb0d2977a9188da" }
   - { path: ".ai/rules/am-overview.md", hash: "sha256:97e8fdd2e676851d585194d34fc77850a8a31114cf68fbc7e060ee3c772254b4" }
   - { path: ".ai/rules/am-safety.md", hash: "sha256:5c5f5dc1749dd3fb682680a787a74ecce330912457e694a724f7da581cfbf90e" }
-  - { path: ".ai/rules/am-testing.md", hash: "sha256:507b33123e23cbebcd0567c7afb68a5f1b67f9363ffe8b94bb3df15ea3399ad4" }
-  - { path: ".ai/rules/am-workflow.md", hash: "sha256:21addbf01b381a40b313b0f74b13b47b602a5ff2de2839deba6f848f7a9faf21" }
+  - { path: ".ai/rules/am-testing.md", hash: "sha256:2bd2a2b1193d2e31378a2a1cf92c90d68e8a212e748e28ea49dd485dbc381697" }
+  - { path: ".ai/rules/am-workflow.md", hash: "sha256:31f5265f2ad74445b2b642f86eda0ab23dc3a1ef0a4fc9cabc311c75bd87293c" }
   - { dir: "docker/local-stack", buildFiles: ["package.json"] }
   - { dir: "gravitee-am-authdevice-notifier", buildFiles: ["pom.xml"] }
   - { dir: "gravitee-am-authenticator", buildFiles: ["pom.xml"] }
@@ -69,7 +69,7 @@ entries:
     status: generated
     scope: committed
   - path: "AGENTS.md"
-    hash: sha256:f5903426e01e8fc1c558925a09766439cb72459fa0b95d95951108e372ac3256
+    hash: sha256:91dfaceaebc6faae5fad230544e9efdfbf25618f43ae693492a0c980cf40164a
     status: generated
     scope: committed
   - path: "CLAUDE.md"
@@ -141,7 +141,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-console/AGENTS.md"
-    hash: sha256:57fc2fd5f96ee679ca9e0f0e128b7fafd1eb8e64a1c55c637be8241a76618457
+    hash: sha256:fa2cb74c8d47c10af022d72f529ae66998d3d8e67d7276b9bb559bad39494ec4
     status: generated
     scope: committed
   - path: "gravitee-am-console/CLAUDE.md"
@@ -245,7 +245,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-performance/AGENTS.md"
-    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
+    hash: sha256:59aabd0e7bdb0a5d0c89f5ab9a4fb0dbe5eaf042a59013a8b3b18ddafb69ad4b
     status: generated
     scope: committed
   - path: "gravitee-am-performance/CLAUDE.md"
@@ -309,7 +309,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-test/AGENTS.md"
-    hash: sha256:698b93c97a246c3505830d7d0bbea6d9e624d694386e4422f4329944c875c0c3
+    hash: sha256:7d8b2318ed2bd70ec75c823cfbbf64f8ea8603f32812f6ccf5e8464f52d1797f
     status: generated
     scope: committed
   - path: "gravitee-am-test/CLAUDE.md"
@@ -340,4 +340,4 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-record: sha256:3f909f9a6a0ac28dcb16f2885b94851127e1b2f59c800ea6b7f524b169c6dca4
+record: sha256:f99617fa9c56f08023395a0a767eeca3ab9c3ffdeb93c0455785c679b16ecfb5
