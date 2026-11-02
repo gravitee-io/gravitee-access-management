@@ -9,7 +9,7 @@ Root conventions also apply: read `../../AGENTS.md`; where they disagree, the cl
 
 # AM Playwright tests
 
-Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follow `../GUIDELINES.md` instead. Wrong-and-right examples for every rule here, fixture and helper patterns, WebAuthn, Angular traps, config defaults and the flakiness table are in [GUIDELINES.md](GUIDELINES.md); setup and running are in [README.md](README.md). Review uses `.github/instructions/am-playwright-review.instructions.md` (a repository-root path).
+Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follow `../GUIDELINES.md` instead. Wrong-and-right examples for every rule here, fixture and helper patterns, WebAuthn, Angular traps, config defaults and the flakiness table are in [GUIDELINES.md](GUIDELINES.md). If this file and `GUIDELINES.md` disagree, this file wins; fix `GUIDELINES.md`. Setup and running are in [README.md](README.md). Review uses `.github/instructions/am-playwright-review.instructions.md` (a repository-root path).
 
 ## Assertions
 

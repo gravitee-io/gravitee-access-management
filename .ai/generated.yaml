@@ -16,7 +16,7 @@ inputs:
   - { path: ".ai/rules/am-java.md", hash: "sha256:bed46b90861a7ca3b291093965084a23ada69b2cea17deeb6eb0d2977a9188da" }
   - { path: ".ai/rules/am-overview.md", hash: "sha256:0339e9afc965603516adc77514318a1f71d1805659203a382c54c0dad03f18c8" }
   - { path: ".ai/rules/am-playwright-review.md", hash: "sha256:69fbf260d5cacd6f60a209f74879e53c3514277e9fc2cc34dfa71bb92ed48585" }
-  - { path: ".ai/rules/am-playwright.md", hash: "sha256:43beb73ca2671088b48361ff05c59e1cfb26cf76f0e2952d706ecb6501a5bb8d" }
+  - { path: ".ai/rules/am-playwright.md", hash: "sha256:8dae9f5c221c2f8419893bf380edae8f28342be98928d67b6c1815a3cabfb43b" }
   - { path: ".ai/rules/am-review.md", hash: "sha256:1b50d04e7f39277dd5c6ebe24bdf87415380d9556b83e52655d1229b08b2ee2f" }
   - { path: ".ai/rules/am-safety.md", hash: "sha256:5c5f5dc1749dd3fb682680a787a74ecce330912457e694a724f7da581cfbf90e" }
   - { path: ".ai/rules/am-testing.md", hash: "sha256:96223274703e349ff0776905eb99ea0d1dde1ee12b21a67adc84a516ba5d7443" }
@@ -328,7 +328,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-test/playwright/AGENTS.md"
-    hash: sha256:56c30887b6fe12c82cbd2c97f47013f20682a580f54b33e642638e1e1af31ff9
+    hash: sha256:0cbd27f14c9e532c84284f98b58fe1bb1755b0b891f1981acbd12f7497c8662a
     status: generated
     scope: committed
   - path: "gravitee-am-test/playwright/CLAUDE.md"
@@ -359,4 +359,4 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-record: sha256:8eed7cd473dc9017433e29d25b311923c3dc9af7ec3998b09c98aba0e65227b1
+record: sha256:037a14fd5c2ae2db2c8280a014b755779a99a254cfccf3a528250b8fede85c1e
