@@ -30,7 +30,7 @@ import type { JWK } from './JWK';
 import { JWKFromJSON, JWKFromJSONTyped, JWKToJSON, JWKToJSONTyped } from './JWK';
 
 /**
- *
+ * Inline JWK set. Required when source is JWK_SET.
  * @export
  * @interface JWKSet
  */

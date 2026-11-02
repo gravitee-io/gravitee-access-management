@@ -46,6 +46,9 @@ import {
   User,
   UserFromJSON,
   UserToJSON,
+  UserEntity,
+  UserEntityFromJSON,
+  UserEntityToJSON,
   UserPage,
   UserPageFromJSON,
   UserPageToJSON,
@@ -1070,7 +1073,7 @@ export class GroupApi extends runtime.BaseAPI {
   async listGroupMembersRaw(
     requestParameters: ListGroupMembersRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<User>> {
+  ): Promise<runtime.ApiResponse<UserEntity>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -1117,7 +1120,7 @@ export class GroupApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserEntityFromJSON(jsonValue));
   }
 
   /**
@@ -1127,7 +1130,7 @@ export class GroupApi extends runtime.BaseAPI {
   async listGroupMembers(
     requestParameters: ListGroupMembersRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<User> {
+  ): Promise<UserEntity> {
     const response = await this.listGroupMembersRaw(requestParameters, initOverrides);
     return await response.value();
   }
