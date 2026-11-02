@@ -342,7 +342,7 @@ Convention: `data-testid="{feature}{element}{type}"` in camelCase. Examples: `do
 
 ## Best Practices
 
-For the full set of coding standards, assertion rules, patterns, and review checklists see **[GUIDELINES.md](GUIDELINES.md)**. Key highlights:
+The author rules are in [AGENTS.md](AGENTS.md) in this folder, the review checks in `.github/instructions/am-playwright-review.instructions.md`, and the examples and patterns in **[GUIDELINES.md](GUIDELINES.md)**. Key highlights:
 
 - Every test must be **independent** — no shared mutable state between tests.
 - Never use `page.waitForTimeout()` or `networkidle` — use Playwright auto-wait or explicit conditions.
