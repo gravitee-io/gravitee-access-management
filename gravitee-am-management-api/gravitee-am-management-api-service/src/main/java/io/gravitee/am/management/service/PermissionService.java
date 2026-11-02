@@ -147,7 +147,7 @@ public class PermissionService {
             } catch (IllegalArgumentException e) {
                 return Completable.error(new InvalidRoleException(e.getMessage()));
             }
-            return checkCanGrant(caller, organizationId, scope, granted);
+            return checkCanGrant(caller, organizationId, scope, flattenToSet(granted));
         });
     }
 
@@ -158,12 +158,12 @@ public class PermissionService {
 
         return roleService.findById(roleId)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
-                .flatMapCompletable(role -> checkCanGrant(caller, organizationId, scope, role.getPermissionAcls()));
+                .flatMapCompletable(role -> checkCanGrant(caller, organizationId, scope, flattenToSet(role.getPermissionAcls())));
     }
 
-    private Completable checkCanGrant(User caller, String organizationId, Reference scope, Map<Permission, Set<Acl>> granted) {
+    private Completable checkCanGrant(User caller, String organizationId, Reference scope, Set<String> granted) {
 
-        if (granted == null || granted.isEmpty()) {
+        if (granted.isEmpty()) {
             return Completable.complete();
         }
         return isPlatformAdminOrOwner(caller.getId(), organizationId)
@@ -210,13 +210,12 @@ public class PermissionService {
                                         .map(Role::getPermissionAcls)
                                         .defaultIfEmpty(Collections.emptyMap());
                                 return Single.zip(
-                                                findAllPermissions(caller, ReferenceType.ORGANIZATION, organizationId),
-                                                findAllPermissions(target, ReferenceType.ORGANIZATION, organizationId),
-                                                baseline,
+                                                findAllPermissions(caller, ReferenceType.ORGANIZATION, organizationId).map(PermissionService::flattenToSet),
+                                                findAllPermissions(target, ReferenceType.ORGANIZATION, organizationId).map(PermissionService::flattenToSet),
+                                                baseline.map(PermissionService::flattenToSet),
                                                 (held, targetHeld, defaults) -> {
-                                                    final Map<Permission, Set<Acl>> callerHeld = new HashMap<>();
-                                                    held.forEach((permission, acls) -> callerHeld.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls));
-                                                    defaults.forEach((permission, acls) -> callerHeld.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls));
+                                                    final Set<String> callerHeld = new HashSet<>(held);
+                                                    callerHeld.addAll(defaults);
                                                     return missingPermissions(targetHeld, callerHeld);
                                                 })
                                         .flatMapCompletable(missing -> missing.isEmpty() ?
@@ -250,12 +249,16 @@ public class PermissionService {
     /**
      * Permissions held by the user on the reference or inherited from one of its parents.
      */
-    private Single<Map<Permission, Set<Acl>>> findInheritedPermissions(User user, Reference reference) {
+    private Single<Set<String>> findInheritedPermissions(User user, Reference reference) {
 
         return referenceWithParents(reference)
                 .flatMapSingle(ref -> findAllPermissions(user, ref.type(), ref.id()))
-                .collect(HashMap::new, (Map<Permission, Set<Acl>> all, Map<Permission, Set<Acl>> permissions) ->
-                        permissions.forEach((permission, acls) -> all.computeIfAbsent(permission, key -> new HashSet<>()).addAll(acls)));
+                .collect(HashSet::new, (Set<String> all, Map<Permission, Set<Acl>> permissions) -> all.addAll(Permission.flatten(permissions)));
+    }
+
+    private static Set<String> flattenToSet(Map<Permission, Set<Acl>> permissions) {
+
+        return new HashSet<>(Permission.flatten(permissions));
     }
 
     private Flowable<Reference> referenceWithParents(Reference reference) {
@@ -264,12 +267,10 @@ public class PermissionService {
                 .concatWith(parentOf(reference).flatMapPublisher(this::referenceWithParents));
     }
 
-    private static String missingPermissions(Map<Permission, Set<Acl>> required, Map<Permission, Set<Acl>> held) {
+    private static String missingPermissions(Set<String> required, Set<String> held) {
 
-        return required.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream()
-                        .filter(acl -> !held.getOrDefault(entry.getKey(), Set.of()).contains(acl))
-                        .map(acl -> entry.getKey().name().toLowerCase() + "_" + acl.name().toLowerCase()))
+        return required.stream()
+                .filter(permission -> !held.contains(permission))
                 .sorted()
                 .collect(Collectors.joining(", "));
     }
