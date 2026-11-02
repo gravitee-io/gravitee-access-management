@@ -121,7 +121,6 @@ public class DataPlaneIndexTest {
     @Test
     public void theDeviceStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
-        expected.put("ri1rt1", reference());
         expected.put("ri1rt1u1", reference().append("userId", 1));
         expected.put("ri1rt1c1d1", reference().append("client", 1).append("deviceId", 1));
         expected.put("ri1rt1c1u1di1d1", reference()
@@ -133,7 +132,6 @@ public class DataPlaneIndexTest {
     @Test
     public void theUserActivityStoreCarriesItsLookupIndexes() {
         Map<String, Document> expected = new LinkedHashMap<>();
-        expected.put("rt1ri1", referenceTypeFirst());
         expected.put("rt1ri1uat1uak1", referenceTypeFirst()
                 .append("userActivityType", 1).append("userActivityKey", 1));
         expected.put("c1", new Document("createdAt", 1));

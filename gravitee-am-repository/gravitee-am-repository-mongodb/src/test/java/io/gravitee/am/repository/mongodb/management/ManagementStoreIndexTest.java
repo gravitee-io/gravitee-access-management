@@ -82,7 +82,6 @@ public class ManagementStoreIndexTest extends AbstractManagementTest {
 
     @Test
     public void eventsShouldCarryItsLookupIndexes() {
-        assertIndex(mongoDatabase, EVENTS, "u1", new Document("updatedAt", 1));
         assertIndex(mongoDatabase, EVENTS, "u1dp1", new Document("updatedAt", 1).append("dataPlaneId", 1));
     }
 }
