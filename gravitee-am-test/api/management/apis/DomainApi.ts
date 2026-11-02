@@ -94,6 +94,9 @@ import {
   Credential,
   CredentialFromJSON,
   CredentialToJSON,
+  CrossAppAccessResourceServerEntity,
+  CrossAppAccessResourceServerEntityFromJSON,
+  CrossAppAccessResourceServerEntityToJSON,
   DeviceIdentifier,
   DeviceIdentifierFromJSON,
   DeviceIdentifierToJSON,
@@ -232,6 +235,9 @@ import {
   NewTrustDomain,
   NewTrustDomainFromJSON,
   NewTrustDomainToJSON,
+  NewTrustedDomain,
+  NewTrustedDomainFromJSON,
+  NewTrustedDomainToJSON,
   NewUser,
   NewUserFromJSON,
   NewUserToJSON,
@@ -319,6 +325,12 @@ import {
   TrustDomain,
   TrustDomainFromJSON,
   TrustDomainToJSON,
+  TrustedDomain,
+  TrustedDomainFromJSON,
+  TrustedDomainToJSON,
+  TrustedDomainPage,
+  TrustedDomainPageFromJSON,
+  TrustedDomainPageToJSON,
   UpdateAuthenticationDeviceNotifier,
   UpdateAuthenticationDeviceNotifierFromJSON,
   UpdateAuthenticationDeviceNotifierToJSON,
@@ -376,6 +388,9 @@ import {
   UpdateTrustDomain,
   UpdateTrustDomainFromJSON,
   UpdateTrustDomainToJSON,
+  UpdateTrustedDomain,
+  UpdateTrustedDomainFromJSON,
+  UpdateTrustedDomainToJSON,
   UpdateUser,
   UpdateUserFromJSON,
   UpdateUserToJSON,
@@ -665,6 +680,13 @@ export interface CreateTrustDomainRequest {
   newTrustDomain: NewTrustDomain;
 }
 
+export interface CreateTrustedDomainRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  newTrustedDomain: NewTrustedDomain;
+}
+
 export interface CreateUserRequest {
   organizationId: string;
   environmentId: string;
@@ -878,6 +900,13 @@ export interface DeleteTrustDomainRequest {
   environmentId: string;
   domain: string;
   trustDomainId: string;
+}
+
+export interface DeleteTrustedDomainRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  trustedDomainId: string;
 }
 
 export interface DeleteUserRequest {
@@ -1265,6 +1294,13 @@ export interface GetTrustDomainRequest {
   trustDomainId: string;
 }
 
+export interface GetTrustedDomainRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  trustedDomainId: string;
+}
+
 export interface GetUserAuditLogRequest {
   organizationId: string;
   environmentId: string;
@@ -1369,6 +1405,14 @@ export interface ListCertificatesRequest {
   environmentId: string;
   domain: string;
   use?: string;
+}
+
+export interface ListCrossAppAccessResourceServersRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  q?: string;
+  limit?: number;
 }
 
 export interface ListDeviceIdentifiersRequest {
@@ -1507,6 +1551,29 @@ export interface ListTrustDomainsRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+}
+
+export interface ListTrustedDomainsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  usage?: ListTrustedDomainsUsageEnum;
+}
+
+export interface ListTrustedDomainsCursorRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  limit?: number;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  usage?: ListTrustedDomainsCursorUsageEnum;
+  cursor?: string;
 }
 
 export interface ListUserAuditLogsRequest {
@@ -2043,6 +2110,14 @@ export interface UpdateTrustDomainRequest {
   domain: string;
   trustDomainId: string;
   updateTrustDomain: UpdateTrustDomain;
+}
+
+export interface UpdateTrustedDomainRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  trustedDomainId: string;
+  updateTrustedDomain: UpdateTrustedDomain;
 }
 
 export interface UpdateUserRequest {
@@ -4944,7 +5019,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization. Deprecated: use POST /trusted-domains instead.
    * Register a trust domain on the security domain
    */
   async createTrustDomainRaw(
@@ -5011,7 +5086,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization. Deprecated: use POST /trusted-domains instead.
    * Register a trust domain on the security domain
    */
   async createTrustDomain(
@@ -5019,6 +5094,85 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<TrustDomain> {
     const response = await this.createTrustDomainRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
+   * Register a trusted domain on the security domain
+   */
+  async createTrustedDomainRaw(
+    requestParameters: CreateTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<TrustedDomain>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.newTrustedDomain === null || requestParameters.newTrustedDomain === undefined) {
+      throw new runtime.RequiredError(
+        'newTrustedDomain',
+        'Required parameter requestParameters.newTrustedDomain was null or undefined when calling createTrustedDomain.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewTrustedDomainToJSON(requestParameters.newTrustedDomain),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[CREATE] permission on the specified organization
+   * Register a trusted domain on the security domain
+   */
+  async createTrustedDomain(
+    requestParameters: CreateTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<TrustedDomain> {
+    const response = await this.createTrustedDomainRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -7324,6 +7478,82 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified organization
+   * Delete a trusted domain
+   */
+  async deleteTrustedDomainRaw(
+    requestParameters: DeleteTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.trustedDomainId === null || requestParameters.trustedDomainId === undefined) {
+      throw new runtime.RequiredError(
+        'trustedDomainId',
+        'Required parameter requestParameters.trustedDomainId was null or undefined when calling deleteTrustedDomain.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/{trustedDomainId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'trustedDomainId'}}`, encodeURIComponent(String(requestParameters.trustedDomainId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[DELETE] permission on the specified organization
+   * Delete a trusted domain
+   */
+  async deleteTrustedDomain(
+    requestParameters: DeleteTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteTrustedDomainRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_USER[DELETE] permission on the specified domain or DOMAIN_USER[DELETE] permission on the specified environment or DOMAIN_USER[DELETE] permission on the specified organization
    * Delete a user
    */
@@ -9174,7 +9404,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
+   * User must have the APPLICATION_FLOW[READ] permission on the specified application or APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
    * Get a flow
    */
   async getAppFlowRaw(
@@ -9244,7 +9474,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
+   * User must have the APPLICATION_FLOW[READ] permission on the specified application or APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
    * Get a flow
    */
   async getAppFlow(requestParameters: GetAppFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
@@ -11360,6 +11590,83 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the DOMAIN_TRUST_DOMAIN[READ] permission on the specified domain or DOMAIN_TRUST_DOMAIN[READ] permission on the specified environment or DOMAIN_TRUST_DOMAIN[READ] permission on the specified organization
+   * Get a trusted domain
+   */
+  async getTrustedDomainRaw(
+    requestParameters: GetTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<TrustedDomain>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.trustedDomainId === null || requestParameters.trustedDomainId === undefined) {
+      throw new runtime.RequiredError(
+        'trustedDomainId',
+        'Required parameter requestParameters.trustedDomainId was null or undefined when calling getTrustedDomain.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/{trustedDomainId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'trustedDomainId'}}`, encodeURIComponent(String(requestParameters.trustedDomainId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_TRUST_DOMAIN[READ] permission on the specified domain or DOMAIN_TRUST_DOMAIN[READ] permission on the specified environment or DOMAIN_TRUST_DOMAIN[READ] permission on the specified organization
+   * Get a trusted domain
+   */
+  async getTrustedDomain(
+    requestParameters: GetTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<TrustedDomain> {
+    const response = await this.getTrustedDomainRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
    * Get a user audit log
    */
@@ -12458,6 +12765,83 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<CertificateEntity>> {
     const response = await this.listCertificatesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Flattens the resource servers of every trusted domain that has Cross App Access enabled, keeping those the search term matches, up to the requested limit. User must have the DOMAIN_SETTINGS[READ] permission on the specified domain or DOMAIN_SETTINGS[READ] permission on the specified environment or DOMAIN_SETTINGS[READ] permission on the specified organization
+   * List the resource servers an application of this security domain may be mapped to
+   */
+  async listCrossAppAccessResourceServersRaw(
+    requestParameters: ListCrossAppAccessResourceServersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<CrossAppAccessResourceServerEntity>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listCrossAppAccessResourceServers.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listCrossAppAccessResourceServers.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listCrossAppAccessResourceServers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/xaa-resource-servers`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CrossAppAccessResourceServerEntityFromJSON));
+  }
+
+  /**
+   * Flattens the resource servers of every trusted domain that has Cross App Access enabled, keeping those the search term matches, up to the requested limit. User must have the DOMAIN_SETTINGS[READ] permission on the specified domain or DOMAIN_SETTINGS[READ] permission on the specified environment or DOMAIN_SETTINGS[READ] permission on the specified organization
+   * List the resource servers an application of this security domain may be mapped to
+   */
+  async listCrossAppAccessResourceServers(
+    requestParameters: ListCrossAppAccessResourceServersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<CrossAppAccessResourceServerEntity>> {
+    const response = await this.listCrossAppAccessResourceServersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -13863,6 +14247,188 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<TrustDomain>> {
     const response = await this.listTrustDomainsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List trusted domains using cursor-based pagination. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List trusted domains registered against the security domain
+   */
+  async listTrustedDomainsRaw(
+    requestParameters: ListTrustedDomainsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<TrustedDomainPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listTrustedDomains.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listTrustedDomains.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listTrustedDomains.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.usage !== undefined) {
+      queryParameters['usage'] = requestParameters.usage;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainPageFromJSON(jsonValue));
+  }
+
+  /**
+   * List trusted domains using cursor-based pagination. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List trusted domains registered against the security domain
+   */
+  async listTrustedDomains(
+    requestParameters: ListTrustedDomainsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<TrustedDomainPage> {
+    const response = await this.listTrustedDomainsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Follows the nextCursor returned by the trusted domains list. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List the next page of trusted domains registered against the security domain
+   */
+  async listTrustedDomainsCursorRaw(
+    requestParameters: ListTrustedDomainsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<TrustedDomainPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listTrustedDomainsCursor.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listTrustedDomainsCursor.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listTrustedDomainsCursor.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.usage !== undefined) {
+      queryParameters['usage'] = requestParameters.usage;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/_cursor`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainPageFromJSON(jsonValue));
+  }
+
+  /**
+   * Follows the nextCursor returned by the trusted domains list. User must have the DOMAIN_TRUST_DOMAIN[LIST] permission on the specified domain or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified environment or DOMAIN_TRUST_DOMAIN[LIST] permission on the specified organization
+   * List the next page of trusted domains registered against the security domain
+   */
+  async listTrustedDomainsCursor(
+    requestParameters: ListTrustedDomainsCursorRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<TrustedDomainPage> {
+    const response = await this.listTrustedDomainsCursorRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -17069,7 +17635,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified application or APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
    * Update a flow
    */
   async updateAppFlowRaw(
@@ -17152,7 +17718,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified application or APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
    * Update a flow
    */
   async updateAppFlow(
@@ -19324,7 +19890,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization. Deprecated: use PUT /trusted-domains/{trustedDomainId} instead.
    * Update a trust domain
    */
   async updateTrustDomainRaw(
@@ -19399,7 +19965,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization. Deprecated: use PUT /trusted-domains/{trustedDomainId} instead.
    * Update a trust domain
    */
   async updateTrustDomain(
@@ -19407,6 +19973,93 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<TrustDomain> {
     const response = await this.updateTrustDomainRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization
+   * Update a trusted domain
+   */
+  async updateTrustedDomainRaw(
+    requestParameters: UpdateTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<TrustedDomain>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling updateTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.trustedDomainId === null || requestParameters.trustedDomainId === undefined) {
+      throw new runtime.RequiredError(
+        'trustedDomainId',
+        'Required parameter requestParameters.trustedDomainId was null or undefined when calling updateTrustedDomain.',
+      );
+    }
+
+    if (requestParameters.updateTrustedDomain === null || requestParameters.updateTrustedDomain === undefined) {
+      throw new runtime.RequiredError(
+        'updateTrustedDomain',
+        'Required parameter requestParameters.updateTrustedDomain was null or undefined when calling updateTrustedDomain.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/trusted-domains/{trustedDomainId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'trustedDomainId'}}`, encodeURIComponent(String(requestParameters.trustedDomainId))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateTrustedDomainToJSON(requestParameters.updateTrustedDomain),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TrustedDomainFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified domain or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified environment or DOMAIN_TRUST_DOMAIN[UPDATE] permission on the specified organization
+   * Update a trusted domain
+   */
+  async updateTrustedDomain(
+    requestParameters: UpdateTrustedDomainRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<TrustedDomain> {
+    const response = await this.updateTrustedDomainRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -19895,6 +20548,24 @@ export const ListProtectedResourcesTypeEnum = {
   McpServer: 'MCP_SERVER',
 } as const;
 export type ListProtectedResourcesTypeEnum = typeof ListProtectedResourcesTypeEnum[keyof typeof ListProtectedResourcesTypeEnum];
+/**
+ * @export
+ */
+export const ListTrustedDomainsUsageEnum = {
+  Spiffe: 'SPIFFE',
+  TokenExchange: 'TOKEN_EXCHANGE',
+  CrossAppAccess: 'CROSS_APP_ACCESS',
+} as const;
+export type ListTrustedDomainsUsageEnum = typeof ListTrustedDomainsUsageEnum[keyof typeof ListTrustedDomainsUsageEnum];
+/**
+ * @export
+ */
+export const ListTrustedDomainsCursorUsageEnum = {
+  Spiffe: 'SPIFFE',
+  TokenExchange: 'TOKEN_EXCHANGE',
+  CrossAppAccess: 'CROSS_APP_ACCESS',
+} as const;
+export type ListTrustedDomainsCursorUsageEnum = typeof ListTrustedDomainsCursorUsageEnum[keyof typeof ListTrustedDomainsCursorUsageEnum];
 /**
  * @export
  */

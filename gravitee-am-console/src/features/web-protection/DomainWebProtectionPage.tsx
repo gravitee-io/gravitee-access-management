@@ -47,11 +47,22 @@ import { usePermissions } from '../../lib/session/permissions';
 import { CspDirectiveFields } from './CspDirectiveFields';
 import { ProtectionSection } from './ProtectionSection';
 import { type CspDirectiveRow, allowsValue, analyzeCspDirectives } from './csp-directives';
-import { type Cors, type Csp, type FormState, type Header, fromDomain, nameError, toSettings, valueError } from './web-protection-form';
+import {
+    type Cors,
+    type Csp,
+    type FormState,
+    type XFrame,
+    type XFrameAction,
+    type Xss,
+    fromDomain,
+    nameError,
+    toSettings,
+    valueError,
+} from './web-protection-form';
 
 const FORM_ID = 'domain-web-protection-form';
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'CONNECT'];
-const XFRAME_ACTIONS = ['DENY', 'SAMEORIGIN'];
+const XFRAME_ACTIONS: readonly XFrameAction[] = ['DENY', 'SAMEORIGIN'];
 const NO_ANALYSIS = { rows: [], formErrors: [], hasBlockingIssue: false };
 
 export function DomainWebProtectionPage() {
@@ -102,8 +113,8 @@ export function DomainWebProtectionPage() {
 
     const setCors = (patch: Partial<Cors>) => setForm(current => ({ ...current, cors: { ...current.cors, ...patch } }));
     const setCsp = (patch: Partial<Csp>) => setForm(current => ({ ...current, csp: { ...current.csp, ...patch } }));
-    const setXframe = (patch: Partial<Header>) => setForm(current => ({ ...current, xframe: { ...current.xframe, ...patch } }));
-    const setXss = (patch: Partial<Header>) => setForm(current => ({ ...current, xss: { ...current.xss, ...patch } }));
+    const setXframe = (patch: Partial<XFrame>) => setForm(current => ({ ...current, xframe: { ...current.xframe, ...patch } }));
+    const setXss = (patch: Partial<Xss>) => setForm(current => ({ ...current, xss: { ...current.xss, ...patch } }));
     const setDirectives = (directives: readonly CspDirectiveRow[]) => setForm(current => ({ ...current, directives }));
     const setRow = (index: number, patch: Partial<CspDirectiveRow>) =>
         setForm(current => ({
@@ -311,7 +322,11 @@ export function DomainWebProtectionPage() {
                 >
                     <Field>
                         <FieldLabel htmlFor="xframe-action">Action</FieldLabel>
-                        <Select value={form.xframe.action} disabled={!canEdit} onValueChange={action => setXframe({ action })}>
+                        <Select
+                            value={form.xframe.action}
+                            disabled={!canEdit}
+                            onValueChange={action => setXframe({ action: action as XFrameAction })}
+                        >
                             <SelectTrigger id="xframe-action" className="w-48">
                                 <SelectValue />
                             </SelectTrigger>

@@ -42,10 +42,10 @@ import {
 export interface UpdateReporter {
   /**
    *
-   * @type {Array<string>}
+   * @type {Set<string>}
    * @memberof UpdateReporter
    */
-  attributeMappingEventTypes?: Array<string>;
+  attributeMappingEventTypes?: Set<string>;
   /**
    *
    * @type {Array<ReporterAttributeMapping>}
@@ -103,7 +103,7 @@ export function UpdateReporterFromJSONTyped(json: any, ignoreDiscriminator: bool
     return json;
   }
   return {
-    attributeMappingEventTypes: json['attributeMappingEventTypes'] == null ? undefined : json['attributeMappingEventTypes'],
+    attributeMappingEventTypes: json['attributeMappingEventTypes'] == null ? undefined : new Set(json['attributeMappingEventTypes']),
     attributeMappings:
       json['attributeMappings'] == null ? undefined : (json['attributeMappings'] as Array<any>).map(ReporterAttributeMappingFromJSON),
     configuration: json['configuration'],
@@ -124,7 +124,8 @@ export function UpdateReporterToJSONTyped(value?: UpdateReporter | null, ignoreD
   }
 
   return {
-    attributeMappingEventTypes: value['attributeMappingEventTypes'],
+    attributeMappingEventTypes:
+      value['attributeMappingEventTypes'] == null ? undefined : Array.from(value['attributeMappingEventTypes'] as Set<any>),
     attributeMappings:
       value['attributeMappings'] == null ? undefined : (value['attributeMappings'] as Array<any>).map(ReporterAttributeMappingToJSON),
     configuration: value['configuration'],

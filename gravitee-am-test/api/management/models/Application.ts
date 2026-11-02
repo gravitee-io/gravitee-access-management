@@ -33,6 +33,8 @@ import {
   ApplicationSettingsToJSON,
   ApplicationSettingsToJSONTyped,
 } from './ApplicationSettings';
+import type { ManagedBy } from './ManagedBy';
+import { ManagedByFromJSON, ManagedByFromJSONTyped, ManagedByToJSON, ManagedByToJSONTyped } from './ManagedBy';
 import type { ClientSecret } from './ClientSecret';
 import { ClientSecretFromJSON, ClientSecretFromJSONTyped, ClientSecretToJSON, ClientSecretToJSONTyped } from './ClientSecret';
 import type { ApplicationIdentityProvider } from './ApplicationIdentityProvider';
@@ -115,7 +117,19 @@ export interface Application {
    * @type {string}
    * @memberof Application
    */
+  readonly key?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Application
+   */
   kind?: ApplicationKindEnum;
+  /**
+   *
+   * @type {ManagedBy}
+   * @memberof Application
+   */
+  managedBy?: ManagedBy;
   /**
    *
    * @type {{ [key: string]: any; }}
@@ -217,7 +231,9 @@ export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean
       json['identityProviders'] == null
         ? undefined
         : new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON)),
+    key: json['key'] == null ? undefined : json['key'],
     kind: json['kind'] == null ? undefined : json['kind'],
+    managedBy: json['managedBy'] == null ? undefined : ManagedByFromJSON(json['managedBy']),
     metadata: json['metadata'] == null ? undefined : json['metadata'],
     name: json['name'] == null ? undefined : json['name'],
     secretSettings:
@@ -234,7 +250,7 @@ export function ApplicationToJSON(json: any): Application {
   return ApplicationToJSONTyped(json, false);
 }
 
-export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscriminator: boolean = false): any {
+export function ApplicationToJSONTyped(value?: Omit<Application, 'key'> | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }
@@ -253,6 +269,7 @@ export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscrim
         ? undefined
         : Array.from(value['identityProviders'] as Set<any>).map(ApplicationIdentityProviderToJSON),
     kind: value['kind'],
+    managedBy: ManagedByToJSON(value['managedBy']),
     metadata: value['metadata'],
     name: value['name'],
     secretSettings:

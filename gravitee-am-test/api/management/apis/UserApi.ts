@@ -2845,7 +2845,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. Resetting the password ends the existing sessions and revokes the account access tokens.
    * Reset password
    */
   async resetOrganizationUserPasswordRaw(
@@ -2904,7 +2904,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. Resetting the password ends the existing sessions and revokes the account access tokens.
    * Reset password
    */
   async resetOrganizationUserPassword(
@@ -3834,7 +3834,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. If the enabled field is set, the user status changes in the same way as with the status endpoint.
    * Update a user
    */
   async updateOrganizationUserRaw(
@@ -3893,7 +3893,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. If the enabled field is set, the user status changes in the same way as with the status endpoint.
    * Update a user
    */
   async updateOrganizationUser(
@@ -3905,7 +3905,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. Disabling a user ends the existing sessions and revokes the account access tokens.
    * Update a user status
    */
   async updateOrganizationUserStatusRaw(
@@ -3964,7 +3964,7 @@ export class UserApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization. Disabling a user ends the existing sessions and revokes the account access tokens.
    * Update a user status
    */
   async updateOrganizationUserStatus(
