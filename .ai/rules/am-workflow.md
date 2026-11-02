@@ -34,10 +34,6 @@ description: Plan-first and approval discipline stricter than the shared rules
 - JavaDoc and code documentation are always encouraged.
 - If recurring caveats are discovered: call them out and propose whether to update existing docs.
 
-## Templates (guidance)
-
-- Templates under `docs/agent-standards/templates/` are guidance: use them to structure plans and self-checks.
-
 ## Cross-agent consistency
 
 - When multiple agents or iterations work on the same area, converge on a **single agreed approach**.

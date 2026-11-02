@@ -1,0 +1,18 @@
+---
+name: AM review checks
+layer: local
+description: Access Management review checks that no always-on rule states, for Copilot code review and review agents
+review-instructions: true
+---
+
+# AM review checks
+
+Checks specific to Access Management, beside the shared review instructions. Cite the changed line, explain the risk, and give the smallest fix.
+
+- **MongoDB and JDBC parity.** If a repository is changed, check for the corresponding implementation in both the MongoDB and JDBC modules (`gravitee-am-repository-mongodb`/`-jdbc`, `gravitee-am-dataplane-mongodb`/`-jdbc`), and that both are tested through the shared test suite. A missing twin ships the change broken on one database family.
+- **Audit events.** Tests for CREATE/UPDATE/DELETE verify that audit events are emitted, not just that audit was called.
+- **Error messages.** No exposure of internal implementation details in error messages.
+- **Logs.** No logging of entire DTOs or entities; log IDs instead.
+- **Null checks.** No redundant null checks where `Optional` or `@NotNull` is used.
+- **Leftovers.** No commented-out code or debug statements.
+- **Breaking changes.** Breaking changes are called out in the PR description.

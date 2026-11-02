@@ -1,0 +1,47 @@
+---
+name: AM Playwright tests
+layer: local
+description: Rules for every Playwright test under gravitee-am-test/playwright
+dirs: [gravitee-am-test/playwright]
+---
+
+# AM Playwright tests
+
+Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follow `../GUIDELINES.md` instead. Wrong-and-right examples for every rule here, fixture and helper patterns, WebAuthn, Angular traps, config defaults and the flakiness table are in [GUIDELINES.md](GUIDELINES.md); setup and running are in [README.md](README.md). Review uses `.github/instructions/am-playwright-review.instructions.md` (a repository-root path).
+
+## Assertions
+
+- Every test asserts exactly one expected outcome. Never wrap `expect()` in `if/else` or accept multiple outcomes (`expect([200, 400]).toContain(res.status)`).
+- No `toBeDefined()` on required fields: it passes for empty strings and garbage. Assert the value or its format (`JWT_FORMAT`, `AUTH_CODE_FORMAT`); use `toBeDefined()` only for optional fields where absence is a valid outcome. Use specific matchers, not `toBeTruthy()`.
+- `toHaveCount(0)` and `not.toBeVisible()` pass instantly on an unloaded page: prove the page rendered first, then assert absence.
+- Use `await expect(element).toBeVisible()` before interacting, not `if (await element.isVisible())`: the conditional silently skips when the element is missing.
+
+## Imports, values and timeouts
+
+- Import `test` and `expect` from the fixture (`fixtures/base.fixture.ts` or the area's fixture), never from `@playwright/test` directly.
+- Cross-file values belong in `utils/test-constants.ts`. Never inline regex patterns, timeouts, or passwords.
+- `playwright.config.ts` defines the timeouts; omit a timeout that equals its default. Override only when intentionally different: `BRIEF_TIMEOUT` (shorter than the 15s expect default) or `MULTI_PHASE_TEST_TIMEOUT` (longer than the 60s test default).
+- Import the shared API layer through the `@management-commands/...`, `@management-models/...`, `@utils-commands/...` and `@gateway-commands/...` aliases, not `../../api/...`. ESLint does not catch a wrong relative depth; Playwright fails at load time.
+- Fixtures import from `utils/`, never the reverse.
+- Always use cross-fetch, never native Node.js fetch: the generated SDK silently drops fields with native fetch. Never remove `globalThis.fetch = crossFetch` from `fixtures/base.fixture.ts`.
+
+## Traceability
+
+- Name a traced test `'AM-XXXX: <behavior description>'` (what the test proves, from the user's perspective) and call `linkJira(testInfo, 'AM-XXXX')` as its first line. A test without a Jira ID keeps the description without the prefix.
+- The test verifies the behavior its Xray case describes: same preconditions, same actions, same expected outcome. Do not "cover" a Jira ID by testing a related but different behavior.
+- Split a test into `test.step` blocks, one for each user action and its check, named for the behavior it checks.
+
+## Waiting and domain state
+
+- No `networkidle`, fixed delays or `page.waitForTimeout()`. On Angular console pages use `BasePage.waitForReady()`; gateway pages (login, consent, MFA, WebAuthn) are server-rendered, so use `page.waitForURL()` with a regex.
+- Create all domain resources (app, user, factor, device) before `startDomain()`.
+- After `patchDomain` on a running domain, wrap it in `waitForSyncAfter`, then call `waitForOidcReady`. Avoid `waitForNextSync`: it races.
+- Finish an OAuth leg with `reachOAuthAuthorizationCallback`, not `waitForURL(/callback?code=/)`: the test redirect URI is an external site that may never load in CI.
+- A second authorization in the same browser context can skip login and step-up MFA. When the second leg must log in again, call `page.context().clearCookies()` first.
+- Conditional navigation belongs only in a named helper such as `navigateToWebAuthnLogin`; never `if/else` around assertions.
+
+## Selectors
+
+- Prefer `data-testid`, then roles, then page-level Material locators; CSS only as a commented last resort (README, "Selector Strategy"). Add a missing `data-testid` to the Angular template in the same change.
+
+Before finishing, run `npm run pw:lint` from `gravitee-am-test/` (ESLint with the Playwright plugin, Prettier, test listing); CI does not run it.

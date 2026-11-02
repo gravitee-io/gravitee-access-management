@@ -15,7 +15,6 @@ description: Tech stack and key paths beyond the shared AM rule
 | Build | Maven (backend), Yarn 4.1.1 (frontend) |
 | Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server |
 | Migrations | Liquibase (JDBC), programmatic (MongoDB) |
-| API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`) |
 | Tests | JUnit 5, Mockito, Testcontainers (backend); Jest (integration); Newman (contract); helm-unittest (charts) |
 | Containers | Docker, Docker Compose |
 

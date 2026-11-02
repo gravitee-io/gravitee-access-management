@@ -101,6 +101,7 @@ CLAUDE.md
 !/gravitee-am-secrets/CLAUDE.md
 !/gravitee-am-service/CLAUDE.md
 !/gravitee-am-test/CLAUDE.md
+!/gravitee-am-test/playwright/CLAUDE.md
 !/gravitee-am-ui/CLAUDE.md
 !/postman/CLAUDE.md
 !/scripts/migration-tool/CLAUDE.md

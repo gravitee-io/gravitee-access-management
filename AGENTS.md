@@ -178,7 +178,6 @@ OpenAPI change checklist: `docs/agent-standards/templates/openapi_change_checkli
 | Build | Maven (backend), Yarn 4.1.1 (frontend) |
 | Databases | MongoDB, PostgreSQL, MySQL, MariaDB, SQL Server |
 | Migrations | Liquibase (JDBC), programmatic (MongoDB) |
-| API spec | OpenAPI 3 (`docs/mapi/openapi.yaml`) |
 | Tests | JUnit 5, Mockito, Testcontainers (backend); Jest (integration); Newman (contract); helm-unittest (charts) |
 | Containers | Docker, Docker Compose |
 
@@ -220,7 +219,6 @@ After each logical step:
 2. **Review** — check for tidiness.
 3. **Remove** — delete temporary code.
 4. **Fix** — resolve linting issues.
-5. **Keep repo lint/test clean** at all times.
 
 ## Test quality
 
@@ -267,10 +265,6 @@ Before marking work complete:
 - JavaDoc and code documentation are always encouraged.
 - If recurring caveats are discovered: call them out and propose whether to update existing docs.
 
-## Templates (guidance)
-
-- Templates under `docs/agent-standards/templates/` are guidance: use them to structure plans and self-checks.
-
 ## Cross-agent consistency
 
 - When multiple agents or iterations work on the same area, converge on a **single agreed approach**.
@@ -278,4 +272,4 @@ Before marking work complete:
 
 # Modules
 
-Before working on files under any of these directories, read that directory's `AGENTS.md` first: `docker/local-stack/`, `gravitee-am-authdevice-notifier/`, `gravitee-am-authenticator/`, `gravitee-am-authorizationengine/`, `gravitee-am-botdetection/`, `gravitee-am-certificate/`, `gravitee-am-cockpit-mock/`, `gravitee-am-common/`, `gravitee-am-console/`, `gravitee-am-dataplane/`, `gravitee-am-deviceidentifier/`, `gravitee-am-extensiongrant/`, `gravitee-am-factor/`, `gravitee-am-gateway/`, `gravitee-am-identityprovider/`, `gravitee-am-jwt/`, `gravitee-am-management-api/`, `gravitee-am-management-api-sdk-java/`, `gravitee-am-model/`, `gravitee-am-monitoring/`, `gravitee-am-password-dictionary/`, `gravitee-am-performance/`, `gravitee-am-plugins-handlers/`, `gravitee-am-policy/`, `gravitee-am-reporter/`, `gravitee-am-repository/`, `gravitee-am-resource/`, `gravitee-am-secrets/`, `gravitee-am-service/`, `gravitee-am-test/`, `gravitee-am-ui/`, `postman/`, `scripts/migration-tool/`, `.ai/`.
+Before working on files under any of these directories, read that directory's `AGENTS.md` first: `docker/local-stack/`, `gravitee-am-authdevice-notifier/`, `gravitee-am-authenticator/`, `gravitee-am-authorizationengine/`, `gravitee-am-botdetection/`, `gravitee-am-certificate/`, `gravitee-am-cockpit-mock/`, `gravitee-am-common/`, `gravitee-am-console/`, `gravitee-am-dataplane/`, `gravitee-am-deviceidentifier/`, `gravitee-am-extensiongrant/`, `gravitee-am-factor/`, `gravitee-am-gateway/`, `gravitee-am-identityprovider/`, `gravitee-am-jwt/`, `gravitee-am-management-api/`, `gravitee-am-management-api-sdk-java/`, `gravitee-am-model/`, `gravitee-am-monitoring/`, `gravitee-am-password-dictionary/`, `gravitee-am-performance/`, `gravitee-am-plugins-handlers/`, `gravitee-am-policy/`, `gravitee-am-reporter/`, `gravitee-am-repository/`, `gravitee-am-resource/`, `gravitee-am-secrets/`, `gravitee-am-service/`, `gravitee-am-test/`, `gravitee-am-ui/`, `postman/`, `scripts/migration-tool/`, `.ai/`, `gravitee-am-test/playwright/`.

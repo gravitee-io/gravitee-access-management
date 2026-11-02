@@ -19,7 +19,6 @@ After each logical step:
 2. **Review** — check for tidiness.
 3. **Remove** — delete temporary code.
 4. **Fix** — resolve linting issues.
-5. **Keep repo lint/test clean** at all times.
 
 ## Test quality
 
