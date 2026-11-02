@@ -36,6 +36,7 @@ export * from './AlertTrigger';
 export * from './AnalyticsTypeParam';
 export * from './Application';
 export * from './ApplicationAdvancedSettings';
+export * from './ApplicationAuthorizationDetailTypeSettings';
 export * from './ApplicationCrossAppAccessResourceServer';
 export * from './ApplicationCrossAppAccessSettings';
 export * from './ApplicationCursorPage';

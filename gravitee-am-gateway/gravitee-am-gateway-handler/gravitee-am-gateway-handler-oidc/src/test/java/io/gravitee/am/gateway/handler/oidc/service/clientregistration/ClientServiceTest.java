@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.gravitee.am.model.application.TokenExchangeScopeHandling;
@@ -43,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -205,6 +207,27 @@ public class ClientServiceTest {
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationService, times(1)).update(captor.capture());
         Assert.assertEquals(lightweightJwtSettings, captor.getValue().getSettings().getOauth().getLightweightJwtSettings());
+    }
+
+    @Test
+    public void update_preservesAuthorizationDetailTypes() {
+        when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
+
+        List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes =
+                List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600));
+
+        Client toUpdate = new Client();
+        toUpdate.setDomain(DOMAIN.getId());
+        toUpdate.setRedirectUris(Collections.singletonList("https://callback"));
+        toUpdate.setAuthorizationDetailTypes(authorizationDetailTypes);
+
+        TestObserver testObserver = clientService.update(toUpdate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationService, times(1)).update(captor.capture());
+        Assert.assertEquals(authorizationDetailTypes, captor.getValue().getSettings().getOauth().getAuthorizationDetailTypes());
     }
 
     @Test

@@ -64,6 +64,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "application_factors",
                 "application_identities",
                 "application_scope_settings",
+                "application_authorization_detail_types",
                 "application_client_secrets",
                 "applications",
                 "tags",

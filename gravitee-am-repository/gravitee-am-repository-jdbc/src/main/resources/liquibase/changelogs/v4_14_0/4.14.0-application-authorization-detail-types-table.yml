@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.14.0-application-authorization-detail-types-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: application_authorization_detail_types
+      changes:
+        - createTable:
+            tableName: application_authorization_detail_types
+            columns:
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(512), constraints: { nullable: false } }
+              - column: { name: expires_in, type: integer, constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: application_id
+            indexName: idx_aadt_app_id
+            tableName: application_authorization_detail_types
+            unique: false

@@ -25,6 +25,7 @@ import io.gravitee.am.management.handlers.automation.model.AutomationApplication
 import io.gravitee.am.management.handlers.automation.model.AutomationApplicationSAMLSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationApplicationSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationAssessmentSettings;
+import io.gravitee.am.management.handlers.automation.model.AutomationAuthorizationDetailType;
 import io.gravitee.am.management.handlers.automation.model.AutomationChallengeSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCookieSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCrossAppAccessResourceServer;
@@ -384,6 +385,12 @@ class AutomationApplicationMapperTest {
         scope.setScopeApproval(86400);
         scope.setRequiredScope(true);
         oauth.setScopeSettings(List.of(scope));
+        AutomationAuthorizationDetailType paymentInitiation = new AutomationAuthorizationDetailType();
+        paymentInitiation.setType("payment_initiation");
+        paymentInitiation.setExpiresIn(600);
+        AutomationAuthorizationDetailType accountInformation = new AutomationAuthorizationDetailType();
+        accountInformation.setType("account_information");
+        oauth.setAuthorizationDetailTypes(List.of(paymentInitiation, accountInformation));
         oauth.setEnhanceScopesWithUserPermissions(true);
         oauth.setOptInScopeSelection(false);
         oauth.setAccessTokenValiditySeconds(600);

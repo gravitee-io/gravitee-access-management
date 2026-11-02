@@ -68,6 +68,11 @@ public class AutomationApplicationOAuthSettings {
             "request is rejected with 400. Resource server applications always get the uma_protection scope.")
     private List<AutomationScopeSettings> scopeSettings;
 
+    @Valid
+    @Schema(description = "Authorization detail types the application can request. Each type must exist in the " +
+            "domain and appear once, otherwise the request is rejected with 400.")
+    private List<AutomationAuthorizationDetailType> authorizationDetailTypes;
+
     @Schema(description = "Whether the permissions of the user roles are added to the scopes of the issued tokens.", defaultValue = "false")
     private boolean enhanceScopesWithUserPermissions;
 

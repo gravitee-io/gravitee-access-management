@@ -37,6 +37,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
 import io.gravitee.am.service.model.PatchAuthorizationDetailType;
@@ -52,6 +53,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author GraviteeSource Team
@@ -227,5 +231,26 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurred while trying to delete the authorization detail types of domain %s", domain), ex));
                 });
+    }
+
+    @Override
+    public Single<Boolean> validateType(String domain, List<String> types) {
+        if (types == null || types.isEmpty()) {
+            return Single.just(true);
+        }
+        return repository.findByDomain(domain)
+                .map(AuthorizationDetailType::getType)
+                .collect(HashSet<String>::new, Set::add)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurred while trying to find the authorization detail types of domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurred while trying to find the authorization detail types of domain %s", domain), ex));
+                })
+                .flatMap(domainTypes -> types.stream()
+                        .filter(type -> !domainTypes.contains(type))
+                        .findFirst()
+                        .<Single<Boolean>>map(unknown -> Single.error(new InvalidClientMetadataException(
+                                "authorizationDetailTypes: type '" + unknown + "' is not an authorization detail type of the domain")))
+                        .orElseGet(() -> Single.just(true)));
     }
 }

@@ -25,6 +25,7 @@ import io.gravitee.am.management.handlers.automation.model.AutomationApplication
 import io.gravitee.am.management.handlers.automation.model.AutomationApplicationSAMLSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationApplicationSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationAssessmentSettings;
+import io.gravitee.am.management.handlers.automation.model.AutomationAuthorizationDetailType;
 import io.gravitee.am.management.handlers.automation.model.AutomationChallengeSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCookieSettings;
 import io.gravitee.am.management.handlers.automation.model.AutomationCrossAppAccessResourceServer;
@@ -63,6 +64,7 @@ import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessResourceServer;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -173,6 +175,7 @@ public final class AutomationApplicationMapper {
         out.setRequestUris(in.getRequestUris());
         out.setInitiateLoginUri(in.getInitiateLoginUri());
         out.setScopeSettings(mapList(in.getScopeSettings(), AutomationApplicationMapper::toAutomationScope));
+        out.setAuthorizationDetailTypes(mapList(in.getAuthorizationDetailTypes(), AutomationApplicationMapper::toAutomationAuthorizationDetailType));
         out.setEnhanceScopesWithUserPermissions(in.isEnhanceScopesWithUserPermissions());
         out.setOptInScopeSelection(in.isOptInScopeSelection());
         out.setAccessTokenValiditySeconds(in.getAccessTokenValiditySeconds());
@@ -234,6 +237,13 @@ public final class AutomationApplicationMapper {
         out.setDefaultScope(in.isDefaultScope());
         out.setScopeApproval(in.getScopeApproval());
         out.setRequiredScope(in.isRequiredScope());
+        return out;
+    }
+
+    private static AutomationAuthorizationDetailType toAutomationAuthorizationDetailType(ApplicationAuthorizationDetailTypeSettings in) {
+        AutomationAuthorizationDetailType out = new AutomationAuthorizationDetailType();
+        out.setType(in.getType());
+        out.setExpiresIn(in.getExpiresIn());
         return out;
     }
 
@@ -457,6 +467,7 @@ public final class AutomationApplicationMapper {
         out.setRequestUris(in.getRequestUris());
         out.setInitiateLoginUri(in.getInitiateLoginUri());
         out.setScopeSettings(mapList(in.getScopeSettings(), AutomationApplicationMapper::toModelScope));
+        out.setAuthorizationDetailTypes(mapList(in.getAuthorizationDetailTypes(), AutomationApplicationMapper::toModelAuthorizationDetailType));
         out.setEnhanceScopesWithUserPermissions(in.isEnhanceScopesWithUserPermissions());
         out.setOptInScopeSelection(in.getOptInScopeSelection() == null || in.getOptInScopeSelection());
         out.setAccessTokenValiditySeconds(valueOrDefault(in.getAccessTokenValiditySeconds(), defaults.getAccessTokenValiditySeconds()));
@@ -514,6 +525,10 @@ public final class AutomationApplicationMapper {
         out.setScopeApproval(in.getScopeApproval());
         out.setRequiredScope(in.isRequiredScope());
         return out;
+    }
+
+    private static ApplicationAuthorizationDetailTypeSettings toModelAuthorizationDetailType(AutomationAuthorizationDetailType in) {
+        return new ApplicationAuthorizationDetailTypeSettings(in.getType(), in.getExpiresIn());
     }
 
     private static CookieSettings toModelCookieSettings(AutomationCookieSettings in) {

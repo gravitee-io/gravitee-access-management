@@ -94,6 +94,7 @@ public class ApplicationOAuthSettingsMongo {
     private boolean singleSignOut;
     private boolean silentReAuthentication;
     private List<ApplicationScopeSettingsMongo> scopeSettings;
+    private List<ApplicationAuthorizationDetailTypeSettingsMongo> authorizationDetailTypes;
     private boolean requireParRequest;
     private String backchannelTokenDeliveryMode;
     private String backchannelClientNotificationEndpoint;
@@ -634,6 +635,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setScopeSettings(List<ApplicationScopeSettingsMongo> scopeSettings) {
         this.scopeSettings = scopeSettings;
+    }
+
+    public List<ApplicationAuthorizationDetailTypeSettingsMongo> getAuthorizationDetailTypes() {
+        return authorizationDetailTypes;
+    }
+
+    public void setAuthorizationDetailTypes(List<ApplicationAuthorizationDetailTypeSettingsMongo> authorizationDetailTypes) {
+        this.authorizationDetailTypes = authorizationDetailTypes;
     }
 
     public boolean isRequireParRequest() {

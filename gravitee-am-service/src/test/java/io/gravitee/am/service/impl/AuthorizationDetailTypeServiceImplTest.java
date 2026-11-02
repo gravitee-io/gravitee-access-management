@@ -37,12 +37,14 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
 import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.validators.authorizationdetailtype.AuthorizationDetailTypeValidator;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
@@ -395,6 +397,45 @@ class AuthorizationDetailTypeServiceImplTest {
         service.deleteByDomain(DOMAIN_ID).test().assertComplete();
 
         verify(repository).deleteByDomain(DOMAIN_ID);
+    }
+
+    @Test
+    void shouldValidateType_withoutTypes() {
+        service.validateType(DOMAIN_ID, List.of()).test().assertValue(true);
+
+        verify(repository, never()).findByDomain(any());
+    }
+
+    @Test
+    void shouldValidateType_whenAllTypesExist() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(existing(), existing().toBuilder().type("file_access").build()));
+
+        service.validateType(DOMAIN_ID, List.of("file_access", "payment_initiation")).test().assertValue(true);
+    }
+
+    @Test
+    void shouldNotValidateType_whenCaseDiffers() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(existing()));
+
+        service.validateType(DOMAIN_ID, List.of("Payment_Initiation")).test()
+                .assertError(err -> err instanceof InvalidClientMetadataException
+                        && err.getMessage().equals("authorizationDetailTypes: type 'Payment_Initiation' is not an authorization detail type of the domain"));
+    }
+
+    @Test
+    void shouldNotValidateType_whenDomainHasNoTypes() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+
+        service.validateType(DOMAIN_ID, List.of("payment_initiation")).test()
+                .assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    void shouldNotValidateType_whenRepositoryFails() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.error(new RuntimeException("boom")));
+
+        service.validateType(DOMAIN_ID, List.of("payment_initiation")).test()
+                .assertError(TechnicalManagementException.class);
     }
 
     private void assertFailureAudited() {

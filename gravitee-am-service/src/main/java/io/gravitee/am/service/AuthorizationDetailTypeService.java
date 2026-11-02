@@ -26,6 +26,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.List;
+
 /**
  * @author GraviteeSource Team
  */
@@ -42,4 +44,9 @@ public interface AuthorizationDetailTypeService {
     Completable delete(Domain domain, String id, User principal);
 
     Completable deleteByDomain(String domain);
+
+    /**
+     * Emits {@code true}, or fails with an {@link io.gravitee.am.service.exception.InvalidClientMetadataException} naming the first type the domain lacks, compared case-sensitively.
+     */
+    Single<Boolean> validateType(String domain, List<String> types);
 }

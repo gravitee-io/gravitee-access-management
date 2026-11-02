@@ -15,6 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
 import { createClientSecret, listClientSecrets } from '@management-commands/client-secrets-management-commands';
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
 import { waitForDomainReady, waitForSyncAfter } from '@gateway-commands/monitoring-commands';
@@ -143,6 +144,36 @@ describe('Automation API - Applications', () => {
       buildAutomationApplicationDef({
         key: fixture.newApplicationKey(),
         settings: { oauth: { redirectUris: ['https://app.example.com/callback'], scopeSettings: [{ scope: 'unknown-scope' }] } },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('should enable the authorization detail types of the definition', async () => {
+    const key = fixture.newApplicationKey();
+    const type = uniqueName('payment_initiation', true);
+    await createAuthorizationDetailType(fixture.domainId, fixture.accessToken, { type, name: 'Payment initiation' });
+
+    const response = await fixture.client.putApplication(
+      fixture.domainKey,
+      buildAutomationApplicationDef({
+        key,
+        settings: { oauth: { redirectUris: ['https://app.example.com/callback'], authorizationDetailTypes: [{ type, expiresIn: 600 }] } },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.settings.oauth.authorizationDetailTypes).toEqual([{ type, expiresIn: 600 }]);
+    expect((await fixture.managementApplication(key)).settings.oauth.authorizationDetailTypes).toEqual([{ type, expiresIn: 600 }]);
+  });
+
+  it('should reject an unknown authorization detail type', async () => {
+    const response = await fixture.client.putApplication(
+      fixture.domainKey,
+      buildAutomationApplicationDef({
+        key: fixture.newApplicationKey(),
+        settings: { oauth: { redirectUris: ['https://app.example.com/callback'], authorizationDetailTypes: [{ type: 'unknown_type' }] } },
       }),
     );
 
