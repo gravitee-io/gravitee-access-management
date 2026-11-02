@@ -365,12 +365,9 @@ public class MembershipServiceImpl implements MembershipService {
         return Maybe.defer(() -> membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId()))
                 .map(Membership::getRoleId)
                 .toFlowable()
+                .concatWith(Flowable.just(membership.getRoleId()))
                 .toList()
-                .flatMapCompletable(existingRoleIds -> {
-                    final List<String> roleIds = new ArrayList<>(existingRoleIds);
-                    roleIds.add(membership.getRoleId());
-                    return failIfPrimaryOwner(roleIds);
-                });
+                .flatMapCompletable(this::failIfPrimaryOwner);
     }
 
     private Completable checkNotPrimaryOwner(Membership membership, User principal) {
@@ -382,7 +379,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     private Completable failIfPrimaryOwner(List<String> roleIds) {
         return roleService.findByIdIn(roleIds)
-                .flatMapCompletable(roles -> roles.stream().anyMatch(role -> role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) ?
+                .flatMapCompletable(roles -> roles.stream().anyMatch(role -> role.isSystem() && role.isPrimaryOwner()) ?
                         Completable.error(new ResourceForbiddenAccessException("The primary owner membership cannot be assigned, changed or removed")) :
                         Completable.complete());
     }
@@ -413,7 +410,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(membership.getRoleId())))
                 .flatMap(role -> {
                     // If role is a 'PRIMARY_OWNER' role, need to check if it is already assigned or not.
-                    if (role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) {
+                    if (role.isSystem() && role.isPrimaryOwner()) {
 
                         if (membership.getMemberType() == MemberType.GROUP) {
                             return Maybe.error(new InvalidRoleException("This role cannot be assigned to a group"));
