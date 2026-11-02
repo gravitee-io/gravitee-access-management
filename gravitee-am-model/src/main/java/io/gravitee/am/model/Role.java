@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -110,6 +111,11 @@ public class Role {
     public boolean isInternalOnly() {
 
         return isSystem() && SystemRole.valueOf(name).isInternalOnly();
+    }
+
+    @JsonIgnore
+    public boolean isPrimaryOwner() {
+        return this.getName().endsWith("_PRIMARY_OWNER");
     }
 
     public void setSystem(boolean system) {
