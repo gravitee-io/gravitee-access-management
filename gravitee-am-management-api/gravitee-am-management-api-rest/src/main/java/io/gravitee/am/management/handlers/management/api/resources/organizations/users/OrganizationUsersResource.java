@@ -239,12 +239,14 @@ public class OrganizationUsersResource extends AbstractResource {
                             .map(BulkOperationResult::created)
                     );
             case DELETE ->
-                    bulkRequest.processOneByOne(String.class, mapper, id -> organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser)
+                    bulkRequest.processOneByOne(String.class, mapper, id -> permissionService.checkCanManageUser(authenticatedUser, organization.getId(), id)
+                            .andThen(organizationUserService.delete(ReferenceType.ORGANIZATION, organization.getId(), id, authenticatedUser))
                             .map(User::getId)
                             .map(BulkOperationResult::ok)
                     );
             case UPDATE ->
-                    bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, mapper, updateUser -> organizationUserService.update(ReferenceType.ORGANIZATION, organization.getId(), updateUser.getId(), updateUser, authenticatedUser)
+                    bulkRequest.processOneByOne(BulkUpdateUser.UpdateUserWithId.class, mapper, updateUser -> permissionService.checkCanManageUser(authenticatedUser, organization.getId(), updateUser.getId())
+                            .andThen(organizationUserService.update(ReferenceType.ORGANIZATION, organization.getId(), updateUser.getId(), updateUser, authenticatedUser))
                             .map(UserEntity::new)
                             .map(BulkOperationResult::ok)
                     );
