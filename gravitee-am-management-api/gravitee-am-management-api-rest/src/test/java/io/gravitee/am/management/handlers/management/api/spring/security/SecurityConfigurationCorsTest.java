@@ -16,15 +16,20 @@
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.management.handlers.management.api.authentication.BearerTokenAuthenticator;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.BearerAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.am.management.handlers.management.api.spring.security.filter.ManagementSecurityConfiguration;
+import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.model.User;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.AnnotatedBeanDefinitionReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +39,6 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletContext;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -146,7 +150,7 @@ class SecurityConfigurationCorsTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/user");
         request.setServletPath("/user");
         request.addHeader("Origin", origin);
-        request.addHeader("Authorization", "Bearer token");
+        request.addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30");
         return execute(environment, request);
     }
 
@@ -208,16 +212,23 @@ class SecurityConfigurationCorsTest {
         }
 
         @Bean
-        public BearerTokenAuthenticator bearerTokenAuthenticator() {
-            BearerTokenAuthenticator authenticator = mock(BearerTokenAuthenticator.class);
-            UsernamePasswordAuthenticationToken authentication = UsernamePasswordAuthenticationToken.authenticated("admin", "n/a", java.util.List.of());
-            when(authenticator.authenticate(any(), any())).thenReturn(authentication);
+        @Qualifier("managementJwtParser")
+        public JWTParser bearerTokenAuthenticator() {
+            JWTParser authenticator = mock(JWTParser.class);
+            when(authenticator.parse(any())).thenReturn(new JWT() {{}});
             return authenticator;
         }
 
         @Bean
         public BearerAuthenticationFilter bearerAuthenticationFilter() {
             return new BearerAuthenticationFilter(request -> true);
+        }
+
+        @Bean
+        public OrganizationUserService organizationUserService() {
+            OrganizationUserService organizationUserService = mock(OrganizationUserService.class);
+            when(organizationUserService.findById(any(), any(), any())).thenReturn(Single.just(new User()));
+            return organizationUserService;
         }
     }
 }
