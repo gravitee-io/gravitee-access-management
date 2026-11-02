@@ -65,8 +65,45 @@ docs/ai-guidelines
 
 # Claude Code configuration (local per-developer)
 .claude/
-CLAUDE.md
 CLAUDE.local.md
+
+# AI context: personal CLAUDE.md files stay ignored; only the committed shims below stay tracked
+CLAUDE.md
+!/CLAUDE.md
+!/.ai/CLAUDE.md
+!/docker/local-stack/CLAUDE.md
+!/gravitee-am-authdevice-notifier/CLAUDE.md
+!/gravitee-am-authenticator/CLAUDE.md
+!/gravitee-am-authorizationengine/CLAUDE.md
+!/gravitee-am-botdetection/CLAUDE.md
+!/gravitee-am-certificate/CLAUDE.md
+!/gravitee-am-cockpit-mock/CLAUDE.md
+!/gravitee-am-common/CLAUDE.md
+!/gravitee-am-console/CLAUDE.md
+!/gravitee-am-dataplane/CLAUDE.md
+!/gravitee-am-deviceidentifier/CLAUDE.md
+!/gravitee-am-extensiongrant/CLAUDE.md
+!/gravitee-am-factor/CLAUDE.md
+!/gravitee-am-gateway/CLAUDE.md
+!/gravitee-am-identityprovider/CLAUDE.md
+!/gravitee-am-jwt/CLAUDE.md
+!/gravitee-am-management-api/CLAUDE.md
+!/gravitee-am-management-api-sdk-java/CLAUDE.md
+!/gravitee-am-model/CLAUDE.md
+!/gravitee-am-monitoring/CLAUDE.md
+!/gravitee-am-password-dictionary/CLAUDE.md
+!/gravitee-am-performance/CLAUDE.md
+!/gravitee-am-plugins-handlers/CLAUDE.md
+!/gravitee-am-policy/CLAUDE.md
+!/gravitee-am-reporter/CLAUDE.md
+!/gravitee-am-repository/CLAUDE.md
+!/gravitee-am-resource/CLAUDE.md
+!/gravitee-am-secrets/CLAUDE.md
+!/gravitee-am-service/CLAUDE.md
+!/gravitee-am-test/CLAUDE.md
+!/gravitee-am-ui/CLAUDE.md
+!/postman/CLAUDE.md
+!/scripts/migration-tool/CLAUDE.md
 
 # Playwright MCP logs
 .playwright-mcp/

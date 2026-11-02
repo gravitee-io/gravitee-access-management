@@ -4,3 +4,5 @@ node/
 node_modules/
 .yarn/
 CLAUDE.md
+AGENTS.md
+CLAUDE.local.md
