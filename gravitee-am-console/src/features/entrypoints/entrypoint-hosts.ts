@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { VirtualHost } from '../../lib/api/domains';
-
 const DOMAIN_LABEL = '(?!-)[A-Za-z0-9\\-_]{1,63}(?<![\\-_])';
 const PORT = '(?::[0-9]{1,5})';
 
@@ -45,15 +43,4 @@ export function hostOptions(host: string, domainRestrictions: readonly string[])
         return domainRestrictions;
     }
     return domainRestrictions.map(restriction => (prefix === '' ? restriction : `${prefix}.${restriction}`) + suffix);
-}
-
-export function accessUrl(entrypointUrl: string, path: string, vhostMode: boolean, vhosts: readonly VirtualHost[]): string {
-    let base = entrypointUrl;
-    let resolvedPath = path;
-    const vhost = vhostMode ? vhosts.find(candidate => candidate.overrideEntrypoint) : undefined;
-    if (vhost) {
-        base = (/^(https?:\/\/)/.exec(entrypointUrl)?.[1] ?? '') + vhost.host;
-        resolvedPath = vhost.path;
-    }
-    return resolvedPath === '/' ? base : base + resolvedPath;
 }

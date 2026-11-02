@@ -13,7 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createDomain, enableDomain, getDomain, getDomainByHrid, listDomains, listDomainsByIds, searchDomains } from '../domains';
+import {
+    accessUrl,
+    createDomain,
+    enableDomain,
+    getDomain,
+    getDomainByHrid,
+    listDomains,
+    listDomainsByIds,
+    searchDomains,
+} from '../domains';
 import { http } from '../http';
 
 vi.mock('../http', () => ({ http: vi.fn() }));
@@ -96,5 +105,23 @@ describe('domains api', () => {
             method: 'PATCH',
             body: JSON.stringify({ enabled: true }),
         });
+    });
+});
+
+describe('accessUrl', () => {
+    it('joins the entrypoint URL and the context path', () => {
+        expect(accessUrl('https://gw.example', '/acme', false, [])).toBe('https://gw.example/acme');
+    });
+
+    it('uses the scheme of the entrypoint with the overriding virtual host', () => {
+        const vhosts = [
+            { host: 'other.example', path: '/x' },
+            { host: 'auth.acme.example:8092', path: '/acme', overrideEntrypoint: true },
+        ];
+        expect(accessUrl('https://gw.example', '/ignored', true, vhosts)).toBe('https://auth.acme.example:8092/acme');
+    });
+
+    it('leaves out a path of /', () => {
+        expect(accessUrl('https://gw.example', '/', false, [])).toBe('https://gw.example');
     });
 });
