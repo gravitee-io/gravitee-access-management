@@ -106,7 +106,7 @@ Gravitee AM is an **IAM** product: OAuth 2.0, OpenID Connect, SAML, MFA, securit
 | **Domain model** | `gravitee-am-model` |
 | **Persistence** | `gravitee-am-repository`, `gravitee-am-dataplane` (MongoDB and JDBC paths) |
 | **Plugins (examples)** | e.g. `gravitee-am-identityprovider`, `gravitee-am-factor` — other plugin types live in sibling `gravitee-am-*` modules |
-| **UI** | `gravitee-am-ui` (Yarn workspace under the monorepo root) |
+| **UI** | `gravitee-am-ui` (Angular, a Maven module); `gravitee-am-console` (React, built with Yarn, not a Maven module) |
 | **Contracts / stack tests** | `docs/mapi/openapi.yaml`, `gravitee-am-test`, `postman/collections/`, `docker/local-stack` |
 
 Use the **`gravitee-am-parent`** BOM / parent POM for dependency alignment.
