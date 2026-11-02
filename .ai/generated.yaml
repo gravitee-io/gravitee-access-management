@@ -13,7 +13,7 @@ inputs:
   - { path: ".ai/rules/am-contracts.md", hash: "sha256:724b4a5959b21c989d23e940b7f13a7a080582fc441136ec7ddb6a358507f1dd" }
   - { path: ".ai/rules/am-data.md", hash: "sha256:d2268bde547e710ce6f527a0040f428fef2ebd3e32cbb192f411d81fd4db8613" }
   - { path: ".ai/rules/am-integration-tests.md", hash: "sha256:9686f7a24699c3ce5f2400eb286ad05b9508956727755ab9609278e722984f07" }
-  - { path: ".ai/rules/am-java.md", hash: "sha256:406fbe93ede02687ba5283e54df99bbf32dc49aa7d4b4333f1e8d0c52331c30b" }
+  - { path: ".ai/rules/am-java.md", hash: "sha256:001197b0f284bc946cdfd718b28d70995508b6f22a7d38447c412309a62de6de" }
   - { path: ".ai/rules/am-overview.md", hash: "sha256:97e8fdd2e676851d585194d34fc77850a8a31114cf68fbc7e060ee3c772254b4" }
   - { path: ".ai/rules/am-safety.md", hash: "sha256:5c5f5dc1749dd3fb682680a787a74ecce330912457e694a724f7da581cfbf90e" }
   - { path: ".ai/rules/am-testing.md", hash: "sha256:507b33123e23cbebcd0567c7afb68a5f1b67f9363ffe8b94bb3df15ea3399ad4" }
@@ -85,7 +85,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-authdevice-notifier/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-authdevice-notifier/CLAUDE.md"
@@ -93,7 +93,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-authenticator/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-authenticator/CLAUDE.md"
@@ -101,7 +101,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-authorizationengine/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-authorizationengine/CLAUDE.md"
@@ -109,7 +109,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-botdetection/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-botdetection/CLAUDE.md"
@@ -117,7 +117,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-certificate/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-certificate/CLAUDE.md"
@@ -133,7 +133,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-common/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-common/CLAUDE.md"
@@ -149,7 +149,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-dataplane/AGENTS.md"
-    hash: sha256:a5458b8c7f41ba9b3e15cadb836ece4ed9c32fba76834ec0e10243d15d0436e5
+    hash: sha256:565fd9397278e8f492302cd0ab07b077edcbb713d0b0ed8c8459413f86b5719f
     status: generated
     scope: committed
   - path: "gravitee-am-dataplane/CLAUDE.md"
@@ -157,7 +157,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-deviceidentifier/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-deviceidentifier/CLAUDE.md"
@@ -165,7 +165,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-extensiongrant/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-extensiongrant/CLAUDE.md"
@@ -173,7 +173,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-factor/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-factor/CLAUDE.md"
@@ -181,7 +181,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-gateway/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-gateway/CLAUDE.md"
@@ -189,7 +189,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-identityprovider/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-identityprovider/CLAUDE.md"
@@ -197,7 +197,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-jwt/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-jwt/CLAUDE.md"
@@ -205,7 +205,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-management-api-sdk-java/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-management-api-sdk-java/CLAUDE.md"
@@ -213,7 +213,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-management-api/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-management-api/CLAUDE.md"
@@ -221,7 +221,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-model/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-model/CLAUDE.md"
@@ -229,7 +229,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-monitoring/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-monitoring/CLAUDE.md"
@@ -237,7 +237,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-password-dictionary/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-password-dictionary/CLAUDE.md"
@@ -245,7 +245,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-performance/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-performance/CLAUDE.md"
@@ -253,7 +253,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-plugins-handlers/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-plugins-handlers/CLAUDE.md"
@@ -261,7 +261,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-policy/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-policy/CLAUDE.md"
@@ -269,7 +269,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-reporter/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-reporter/CLAUDE.md"
@@ -277,7 +277,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-repository/AGENTS.md"
-    hash: sha256:a5458b8c7f41ba9b3e15cadb836ece4ed9c32fba76834ec0e10243d15d0436e5
+    hash: sha256:565fd9397278e8f492302cd0ab07b077edcbb713d0b0ed8c8459413f86b5719f
     status: generated
     scope: committed
   - path: "gravitee-am-repository/CLAUDE.md"
@@ -285,7 +285,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-resource/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-resource/CLAUDE.md"
@@ -293,7 +293,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-secrets/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-secrets/CLAUDE.md"
@@ -301,7 +301,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-service/AGENTS.md"
-    hash: sha256:948de8de6c00191ef6590950a2ae2e585cdd902ba430f2b299825db6b3343c3e
+    hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
     scope: committed
   - path: "gravitee-am-service/CLAUDE.md"
@@ -340,4 +340,4 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-record: sha256:ff5de0472b87b1fe7585c48d63d818770e7024fbac2f09fa637bd30cfed92900
+record: sha256:3f909f9a6a0ac28dcb16f2885b94851127e1b2f59c800ea6b7f524b169c6dca4

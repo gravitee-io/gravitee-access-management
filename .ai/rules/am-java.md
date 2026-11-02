@@ -9,7 +9,7 @@ dirs: [gravitee-am-authdevice-notifier, gravitee-am-authenticator, gravitee-am-a
 
 ## Lombok
 
-This repository has a `lombok.config` and Lombok is conventional here, so for new models the lines below apply instead of the shared default to avoid broad annotations.
+The shared Java rule advises against broad Lombok annotations such as `@Data`. Lombok is already conventional in this repository (see `lombok.config`), so for new models this line applies:
 
 - For **new** Java models/POJOs: use Lombok for mutable types — prefer `@Data` when it covers all needs, otherwise compose `@Getter`/`@Setter`/`@ToString`/`@AllArgsConstructor` — and use `record`s for immutable/simple ones. Do not retrofit existing models.
 
