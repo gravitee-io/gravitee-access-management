@@ -41,6 +41,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -85,6 +86,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
             COL_UPDATED_AT
     );
     public static final String SCOPE_ID = "scope_id";
+    private static final int CLAIMS_QUERY_BATCH_SIZE = 500;
 
     private String insertStatement;
     private String updateStatement;
@@ -117,8 +119,8 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                                 .sort(SqlSort.unsafe(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))))
                                 .with(PageRequest.of(page, size)), JdbcScope.class))
                 .map(this::toEntity)
-                .concatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
                 .toList()
+                .flatMap(this::completeWithClaims)
                 .flatMap(content -> countByDomain(domain)
                         .map((count) -> new Page<>(content, page, count)))
                 .observeOn(Schedulers.computation());
@@ -147,8 +149,8 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                 .map((row, rowMetadata) -> rowMapper.read(JdbcScope.class, row))
                 .all())
                 .map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
                 .toList()
+                .flatMap(this::completeWithClaims)
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
@@ -170,6 +172,18 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         });
     }
 
+    private Single<List<Scope>> completeWithClaims(List<Scope> scopes) {
+        return Flowable.fromIterable(scopes)
+                .map(Scope::getId)
+                .buffer(CLAIMS_QUERY_BATCH_SIZE)
+                .concatMap(claimRepository::findByScopeIdIn)
+                .toMultimap(JdbcScope.Claims::getScopeId, JdbcScope.Claims::getClaim)
+                .map(claimsByScopeId -> {
+                    scopes.forEach(scope -> scope.setClaims(new ArrayList<>(claimsByScopeId.getOrDefault(scope.getId(), List.of()))));
+                    return scopes;
+                });
+    }
+
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String key) {
         LOGGER.debug("findByDomainAndKey({}, {})", domain, key);
@@ -186,7 +200,9 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                 Query.query(where(COL_DOMAIN).is(domain)
                         .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))).in(keys))), JdbcScope.class))
                 .map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable());
+                .toList()
+                .flatMap(this::completeWithClaims)
+                .flattenAsFlowable(scopes -> scopes);
     }
 
     @Override
