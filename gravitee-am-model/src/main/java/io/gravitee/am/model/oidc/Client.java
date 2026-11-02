@@ -224,6 +224,8 @@ public class Client implements Cloneable, Resource {
 
     private List<ApplicationScopeSettings> scopeSettings;
 
+    private List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes;
+
     private AccountSettings accountSettings;
 
     private SortedSet<ApplicationIdentityProvider> identityProviders;
@@ -384,6 +386,7 @@ public class Client implements Cloneable, Resource {
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
+        this.authorizationDetailTypes = other.authorizationDetailTypes != null ? new ArrayList<>(other.authorizationDetailTypes) : null;
         this.accountSettings = other.accountSettings;
         this.loginSettings = other.loginSettings;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
@@ -898,6 +901,14 @@ public class Client implements Cloneable, Resource {
 
     public void setScopeSettings(List<ApplicationScopeSettings> scopeSettings) {
         this.scopeSettings = scopeSettings;
+    }
+
+    public List<ApplicationAuthorizationDetailTypeSettings> getAuthorizationDetailTypes() {
+        return authorizationDetailTypes;
+    }
+
+    public void setAuthorizationDetailTypes(List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes) {
+        this.authorizationDetailTypes = authorizationDetailTypes;
     }
 
     public AccountSettings getAccountSettings() {
@@ -1436,6 +1447,7 @@ public class Client implements Cloneable, Resource {
         clone.setDefaultACRvalues(this.getDefaultACRvalues() != null ? new ArrayList<>(this.getDefaultACRvalues()) : null);
         clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
         clone.setScopeSettings(this.scopeSettings != null ? new ArrayList<>(this.getScopeSettings()) : null);
+        clone.setAuthorizationDetailTypes(this.authorizationDetailTypes != null ? new ArrayList<>(this.getAuthorizationDetailTypes()) : null);
         clone.setAssertionAttributes(this.getAssertionAttributes() != null ? new ArrayList<>(this.getAssertionAttributes()) : null);
         clone.setAudiences(this.getAudiences() != null ? new ArrayList<>(this.getAudiences()) : null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);

@@ -18,6 +18,7 @@ package io.gravitee.am.service.utils;
 
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationAdvancedSettings;
@@ -41,6 +42,7 @@ import static io.gravitee.am.model.permissions.Permission.APPLICATION_IDENTITY_P
 import static io.gravitee.am.model.permissions.Permission.APPLICATION_OPENID;
 import static io.gravitee.am.model.permissions.Permission.APPLICATION_SAML;
 import static io.gravitee.am.model.permissions.Permission.APPLICATION_SETTINGS;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -188,6 +190,18 @@ public class PermissionSettingsUtilsTest {
 
         final Set<Permission> permissions = app.getRequiredPermissions();
         assertTrue(permissions.size() == 1 && permissions.contains(APPLICATION_OPENID));
+    }
+
+    @Test
+    public void must_have_openid_permission_only_for_authorization_detail_types() {
+        var oauth = new PatchApplicationOAuthSettings();
+        oauth.setAuthorizationDetailTypes(Optional.of(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation"))));
+        var settings = new PatchApplicationSettings();
+        settings.setOauth(Optional.of(oauth));
+        var app = new PatchApplication();
+        app.setSettings(Optional.of(settings));
+
+        assertEquals(Set.of(APPLICATION_OPENID), app.getRequiredPermissions());
     }
 
     @Test

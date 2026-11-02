@@ -13517,6 +13517,24 @@ components:
           type: boolean
         skipConsent:
           type: boolean
+    ApplicationAuthorizationDetailTypeSettings:
+      type: object
+      properties:
+        expiresIn:
+          type: integer
+          format: int32
+          description: "Consent expiry in seconds for this application. When absent,\
+            \ the authorization detail type's own expiresIn applies, then the gateway\
+            \ default."
+          minimum: 1
+        type:
+          type: string
+          description: "The type of one of the domain's authorization detail types,\
+            \ matched exactly, case included. Unique within the list."
+          example: payment_initiation
+      required:
+      - type
+      title: Application authorization detail type settings
     ApplicationCrossAppAccessResourceServer:
       type: object
       description: A resource server this application may request an ID-JAG for.
@@ -13631,6 +13649,10 @@ components:
           format: int32
         applicationType:
           type: string
+        authorizationDetailTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationAuthorizationDetailTypeSettings"
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:
@@ -17350,6 +17372,10 @@ components:
           format: int32
         applicationType:
           type: string
+        authorizationDetailTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationAuthorizationDetailTypeSettings"
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:
