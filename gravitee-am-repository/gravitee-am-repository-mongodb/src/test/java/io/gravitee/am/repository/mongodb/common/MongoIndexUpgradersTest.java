@@ -49,10 +49,12 @@ public class MongoIndexUpgradersTest {
         assertThat(new MongoManagementIndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoManagementIndexUpgrader.class.getName() + "_initial-indexes",
-                        MongoManagementIndexUpgrader.class.getName() + "_drop-redundant-indexes");
+                        MongoManagementIndexUpgrader.class.getName() + "_drop-redundant-indexes",
+                        MongoManagementIndexUpgrader.class.getName() + "_drop-unused-indexes");
         assertThat(new MongoOAuth2IndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
-                .containsExactly(MongoOAuth2IndexUpgrader.class.getName() + "_initial-indexes");
+                .containsExactly(MongoOAuth2IndexUpgrader.class.getName() + "_initial-indexes",
+                        MongoOAuth2IndexUpgrader.class.getName() + "_drop-unused-indexes");
         assertThat(new MongoGatewayIndexUpgrader.Changelog(mock(MongoDatabase.class), ENVIRONMENT).upgraders())
                 .extracting(Upgrader::identifier)
                 .containsExactly(MongoGatewayIndexUpgrader.class.getName() + "_initial-indexes");
@@ -62,9 +64,11 @@ public class MongoIndexUpgradersTest {
     public void shouldNeverChangeAChangeset() {
         assertThat(changesets(MongoManagementIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "52a83bdac197"),
-                        tuple("drop-redundant-indexes", "7447f69f771e"));
+                        tuple("drop-redundant-indexes", "7447f69f771e"),
+                        tuple("drop-unused-indexes", "19720b5b4d76"));
         assertThat(changesets(MongoOAuth2IndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
-                .containsExactly(tuple("initial-indexes", "008287bfa02e"));
+                .containsExactly(tuple("initial-indexes", "008287bfa02e"),
+                        tuple("drop-unused-indexes", "616d86399633"));
         assertThat(changesets(MongoGatewayIndexUpgrader.RESOURCE)).extracting(Changeset::id, Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "973ec105e893"));
     }

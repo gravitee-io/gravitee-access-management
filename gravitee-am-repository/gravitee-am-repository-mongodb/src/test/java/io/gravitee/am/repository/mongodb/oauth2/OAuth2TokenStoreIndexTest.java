@@ -85,7 +85,6 @@ public class OAuth2TokenStoreIndexTest extends AbstractOAuthTest {
     @Test
     public void authorizationCodesShouldCarryItsLookupIndexes() {
         assertIndex(mongoDatabase, "authorization_codes", "c1", new Document("code", 1));
-        assertIndex(mongoDatabase, "authorization_codes", "t1", new Document("transactionId", 1));
     }
 
     /**
@@ -95,7 +94,6 @@ public class OAuth2TokenStoreIndexTest extends AbstractOAuthTest {
     @Test
     public void unifiedTokensShouldCarryItsLookupIndexes() {
         assertIndex(mongoDatabase, "tokens", "t1", new Document("jti", 1));
-        assertIndex(mongoDatabase, "tokens", "c1", new Document("client", 1));
         assertIndex(mongoDatabase, "tokens", "ac1", new Document("authorization_code", 1));
         assertIndex(mongoDatabase, "tokens", "s1", new Document("subject", 1));
         assertIndex(mongoDatabase, "tokens", "pj1", new Document("parent_jtis", 1));

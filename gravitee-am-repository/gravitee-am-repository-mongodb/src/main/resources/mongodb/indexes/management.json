@@ -173,6 +173,13 @@
         "forms": ["rt1ri1"],
         "i18n_dictionaries": ["rt1ri1"]
       }
+    },
+    {
+      "id": "drop-unused-indexes",
+      "drop": {
+        "applications": ["i1"],
+        "flows": ["rt1ri1id1"]
+      }
     }
   ]
 }
