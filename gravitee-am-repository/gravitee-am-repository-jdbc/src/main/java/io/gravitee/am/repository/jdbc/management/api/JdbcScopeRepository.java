@@ -179,6 +179,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                 .concatMap(claimRepository::findByScopeIdIn)
                 .toMultimap(JdbcScope.Claims::getScopeId, JdbcScope.Claims::getClaim)
                 .map(claimsByScopeId -> {
+                    LOGGER.debug("completeWithClaims fetched claims for {} of {} scopes", claimsByScopeId.size(), scopes.size());
                     scopes.forEach(scope -> scope.setClaims(new ArrayList<>(claimsByScopeId.getOrDefault(scope.getId(), List.of()))));
                     return scopes;
                 });
