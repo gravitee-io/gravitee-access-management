@@ -69,8 +69,8 @@ docs/mapi/openapi.yaml
 cd gravitee-am-test && npm install
 npx @openapitools/openapi-generator-cli validate -i ../docs/mapi/openapi.yaml
 
-# Regenerate Management API SDK (TypeScript)
-cd gravitee-am-test && npm run update:sdk:mapi -- <MANAGEMENT_API_URL>
+# Regenerate OAS, then the Management API SDK (TypeScript) from it (needs `npm ci` in gravitee-am-test)
+bash scripts/regen-oas.sh && bash scripts/regen-sdk.sh
 ```
 
 ### Build Local Stack

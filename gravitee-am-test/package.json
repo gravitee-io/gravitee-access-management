@@ -4,7 +4,7 @@
   "private": true,
   "description": "Gravitee.io AM - Tests",
   "scripts": {
-    "update:sdk:mapi": "bash scripts/update-management-api-sdk.sh $*",
+    "update:sdk:mapi": "bash ../scripts/regen-sdk.sh",
     "test": "jest --runInBand --no-cache --config=api/config/dev.config.js",
     "test:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/dev.config.js",
     "test:retry": "cross-env JEST_RETRIES=2 jest --runInBand --no-cache --bail --config=api/config/dev.config.js",

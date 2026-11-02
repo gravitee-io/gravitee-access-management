@@ -61,13 +61,17 @@ See the https://github.com/visionmedia/supertest[supertest] github page for a mo
 
 ==== Management API - OpenAPI specification
 
-All Management API are generated using the OpenAPI generator from the `swagger.json` exposed by AM.
+The Management API SDK (`api/management`) is generated using the OpenAPI generator from the committed
+specification, `docs/mapi/openapi.yaml`.
 
-In order to update them, execute:
+In order to update it, regenerate the specification and then the SDK from the repository root:
 
 ```
-$ npm run update:sdk:mapi `http://AM_MANAGEMENT_API/management`
+$ bash scripts/regen-oas.sh && bash scripts/regen-sdk.sh
 ```
+
+`npm run update:sdk:mapi` runs the same SDK generation. Pass `--spec <file|url>` to `scripts/regen-sdk.sh` to generate
+from another specification or from a running Management API.
 
 === Exterenal resources
 To run tests locally you need to have configure following resources:
