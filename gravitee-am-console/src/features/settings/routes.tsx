@@ -19,9 +19,10 @@ import { DOMAIN_SETTINGS_NAV_GROUPS } from '../../app/navigation';
 import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
 import { entrypointRoutes } from '../entrypoints/routes';
+import { loginRoutes } from '../login/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
-const BUILT_SETTINGS = new Set(['general', 'entrypoints']);
+const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login']);
 
 export const domainSettingsRoutes = (
     <Route
@@ -42,6 +43,7 @@ export const domainSettingsRoutes = (
             }
         />
         {entrypointRoutes}
+        {loginRoutes}
         {DOMAIN_SETTINGS_NAV_GROUPS.flatMap(group => group.items)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (
