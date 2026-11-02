@@ -54,6 +54,7 @@ models/AlertTrigger.ts
 models/AnalyticsTypeParam.ts
 models/Application.ts
 models/ApplicationAdvancedSettings.ts
+models/ApplicationAuthorizationDetailTypeSettings.ts
 models/ApplicationCrossAppAccessResourceServer.ts
 models/ApplicationCrossAppAccessSettings.ts
 models/ApplicationCursorPage.ts

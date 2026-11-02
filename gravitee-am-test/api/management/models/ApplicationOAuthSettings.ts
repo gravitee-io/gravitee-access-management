@@ -53,6 +53,13 @@ import {
 } from './ApplicationScopeSettings';
 import type { UserInfoClaim } from './UserInfoClaim';
 import { UserInfoClaimFromJSON, UserInfoClaimFromJSONTyped, UserInfoClaimToJSON, UserInfoClaimToJSONTyped } from './UserInfoClaim';
+import type { ApplicationAuthorizationDetailTypeSettings } from './ApplicationAuthorizationDetailTypeSettings';
+import {
+  ApplicationAuthorizationDetailTypeSettingsFromJSON,
+  ApplicationAuthorizationDetailTypeSettingsFromJSONTyped,
+  ApplicationAuthorizationDetailTypeSettingsToJSON,
+  ApplicationAuthorizationDetailTypeSettingsToJSONTyped,
+} from './ApplicationAuthorizationDetailTypeSettings';
 import type { TokenExchangeOAuthSettings } from './TokenExchangeOAuthSettings';
 import {
   TokenExchangeOAuthSettingsFromJSON,
@@ -79,6 +86,12 @@ export interface ApplicationOAuthSettings {
    * @memberof ApplicationOAuthSettings
    */
   applicationType?: string;
+  /**
+   *
+   * @type {Array<ApplicationAuthorizationDetailTypeSettings>}
+   * @memberof ApplicationOAuthSettings
+   */
+  authorizationDetailTypes?: Array<ApplicationAuthorizationDetailTypeSettings>;
   /**
    *
    * @type {string}
@@ -543,6 +556,10 @@ export function ApplicationOAuthSettingsFromJSONTyped(json: any, ignoreDiscrimin
   return {
     accessTokenValiditySeconds: json['accessTokenValiditySeconds'] == null ? undefined : json['accessTokenValiditySeconds'],
     applicationType: json['applicationType'] == null ? undefined : json['applicationType'],
+    authorizationDetailTypes:
+      json['authorizationDetailTypes'] == null
+        ? undefined
+        : (json['authorizationDetailTypes'] as Array<any>).map(ApplicationAuthorizationDetailTypeSettingsFromJSON),
     authorizationEncryptedResponseAlg:
       json['authorizationEncryptedResponseAlg'] == null ? undefined : json['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc:
@@ -641,6 +658,10 @@ export function ApplicationOAuthSettingsToJSONTyped(value?: ApplicationOAuthSett
   return {
     accessTokenValiditySeconds: value['accessTokenValiditySeconds'],
     applicationType: value['applicationType'],
+    authorizationDetailTypes:
+      value['authorizationDetailTypes'] == null
+        ? undefined
+        : (value['authorizationDetailTypes'] as Array<any>).map(ApplicationAuthorizationDetailTypeSettingsToJSON),
     authorizationEncryptedResponseAlg: value['authorizationEncryptedResponseAlg'],
     authorizationEncryptedResponseEnc: value['authorizationEncryptedResponseEnc'],
     authorizationSignedResponseAlg: value['authorizationSignedResponseAlg'],

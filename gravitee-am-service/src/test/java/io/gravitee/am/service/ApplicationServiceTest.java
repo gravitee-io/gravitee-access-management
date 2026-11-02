@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -42,6 +43,7 @@ import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.AgentType;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -168,6 +170,9 @@ public class ApplicationServiceTest {
 
     @Mock
     private ScopeService scopeService;
+
+    @Mock
+    private AuthorizationDetailTypeService authorizationDetailTypeService;
 
     @Mock
     private IdentityProviderService identityProviderService;
@@ -2948,5 +2953,151 @@ public class ApplicationServiceTest {
             app.getSettings().getOauth().setClientSecret("client_secret");
             return null;
         }).when(applicationTemplateManager).apply(any());
+    }
+
+    @Test
+    public void shouldPatch_replaceAuthorizationDetailTypes() {
+        Application existing = appWithAuthorizationDetailTypes(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60),
+                new ApplicationAuthorizationDetailTypeSettings("account_information"));
+        PatchApplication patch = authorizationDetailTypesPatch(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 120),
+                new ApplicationAuthorizationDetailTypeSettings("file_access")));
+        stubAuthorizationDetailTypesPatch(existing);
+        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("file_access"))).thenReturn(Single.just(true));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patch, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).update(argThat(updated -> updated.getSettings().getOauth().getAuthorizationDetailTypes().equals(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 120),
+                new ApplicationAuthorizationDetailTypeSettings("file_access")))));
+        verify(eventService).create(argThat(event -> event.getType() == Type.APPLICATION && event.getPayload().getAction() == Action.UPDATE));
+        verify(auditService).report(argThat(audit -> EventType.APPLICATION_UPDATED.equals(audit.getType()) && audit.isSuccess()));
+    }
+
+    @Test
+    public void shouldPatch_keepAuthorizationDetailTypesWhenOmitted() {
+        Application existing = appWithAuthorizationDetailTypes(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60));
+        PatchApplication patch = authorizationDetailTypesPatch(null);
+        stubAuthorizationDetailTypesPatch(existing);
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patch, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).update(argThat(updated -> updated.getSettings().getOauth().getAuthorizationDetailTypes().equals(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60)))));
+        verify(authorizationDetailTypeService, never()).validateType(any(), any());
+    }
+
+    @Test
+    public void shouldPatch_keepAStoredTypeWithoutCheckingTheDomain() {
+        Application existing = appWithAuthorizationDetailTypes(new ApplicationAuthorizationDetailTypeSettings("deleted_type", 60));
+        PatchApplication patch = authorizationDetailTypesPatch(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("deleted_type", 120),
+                new ApplicationAuthorizationDetailTypeSettings("file_access")));
+        stubAuthorizationDetailTypesPatch(existing);
+        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("file_access"))).thenReturn(Single.just(true));
+        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patch, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(authorizationDetailTypeService).validateType(DOMAIN.getId(), List.of("file_access"));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_unknownAuthorizationDetailType() {
+        Application existing = appWithAuthorizationDetailTypes();
+        PatchApplication patch = authorizationDetailTypesPatch(List.of(new ApplicationAuthorizationDetailTypeSettings("Payment_Initiation")));
+        stubAuthorizationDetailTypesPatch(existing);
+        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("Payment_Initiation"))).thenReturn(Single.error(
+                new InvalidClientMetadataException("authorizationDetailTypes: type 'Payment_Initiation' is not an authorization detail type of the domain")));
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patch, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("authorizationDetailTypes: type 'Payment_Initiation' is not an authorization detail type of the domain"));
+        verify(applicationRepository, never()).update(any(Application.class));
+        verify(auditService).report(argThat(audit -> EventType.APPLICATION_UPDATED.equals(audit.getType())
+                && audit.isFailure()));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_duplicateAuthorizationDetailType() {
+        assertInvalidAuthorizationDetailTypes(List.of(
+                        new ApplicationAuthorizationDetailTypeSettings("payment_initiation"),
+                        new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60)),
+                "authorizationDetailTypes: type 'payment_initiation' appears more than once");
+    }
+
+    @Test
+    public void shouldInvalidatePatch_missingAuthorizationDetailType() {
+        assertInvalidAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings(null, 60)),
+                "authorizationDetailTypes: type is required");
+    }
+
+    @Test
+    public void shouldInvalidatePatch_blankAuthorizationDetailType() {
+        assertInvalidAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings(" ")),
+                "authorizationDetailTypes: type is required");
+    }
+
+    @Test
+    public void shouldInvalidatePatch_authorizationDetailTypeExpiresInBelowOne() {
+        assertInvalidAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 0)),
+                "authorizationDetailTypes: expiresIn 0 of type 'payment_initiation' must be at least 1");
+    }
+
+    private void assertInvalidAuthorizationDetailTypes(List<ApplicationAuthorizationDetailTypeSettings> settings, String expectedMessage) {
+        Application existing = appWithAuthorizationDetailTypes();
+        stubAuthorizationDetailTypesPatch(existing);
+
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", authorizationDetailTypesPatch(settings), principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException && err.getMessage().equals(expectedMessage));
+        verify(authorizationDetailTypeService, never()).validateType(any(), any());
+        verify(applicationRepository, never()).update(any(Application.class));
+    }
+
+    private void stubAuthorizationDetailTypesPatch(Application existing) {
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(existing));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
+    }
+
+    private static Application appWithAuthorizationDetailTypes(ApplicationAuthorizationDetailTypeSettings... settings) {
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setAuthorizationDetailTypes(new ArrayList<>(List.of(settings)));
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        applicationSettings.setOauth(oAuthSettings);
+        Application application = emptyAppWithDomain();
+        application.setId("my-client");
+        application.setSettings(applicationSettings);
+        return application;
+    }
+
+    private static PatchApplication authorizationDetailTypesPatch(List<ApplicationAuthorizationDetailTypeSettings> settings) {
+        PatchApplicationOAuthSettings patchOAuthSettings = new PatchApplicationOAuthSettings();
+        patchOAuthSettings.setGrantTypes(Optional.of(List.of("authorization_code")));
+        patchOAuthSettings.setRedirectUris(Optional.of(List.of("https://callback")));
+        if (settings != null) {
+            patchOAuthSettings.setAuthorizationDetailTypes(Optional.of(settings));
+        }
+        PatchApplicationSettings patchSettings = new PatchApplicationSettings();
+        patchSettings.setOauth(Optional.of(patchOAuthSettings));
+        PatchApplication patch = new PatchApplication();
+        patch.setSettings(Optional.of(patchSettings));
+        return patch;
     }
 }
