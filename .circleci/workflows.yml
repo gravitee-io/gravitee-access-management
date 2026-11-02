@@ -960,8 +960,6 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-management-api:${TAG_LATEST}
             
-            echo $IMAGE_TAG_LATEST > /tmp/built-docker-images.txt
-            echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
             echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
 
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
@@ -977,8 +975,6 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             export IMAGE_TAG_LATEST=graviteeio.azurecr.io/am-gateway:${TAG_LATEST}
 
-            echo $IMAGE_TAG_LATEST >> /tmp/built-docker-images.txt
-            echo ${IMAGE_TAG_LATEST}-noble >> /tmp/built-docker-images.txt
             echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
 
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
@@ -1807,26 +1803,26 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://_XrkO71xa9HZBwxYoUHX0w/field/password
           var-name: AIKIDO_API_KEY
+      - run:
+          name: Retag images with the Major.Minor version
+          command: |
+            # Aikido tracks one image per minor version: pull the released tag
+            # (Major.Minor.Patch) and expose it locally as Major.Minor
+            VERSION="<< pipeline.parameters.graviteeio_version >>"
+            MINOR_VERSION=$(echo "${VERSION}" | cut -d. -f1,2)
+            docker pull graviteeio/am-management-ui:${VERSION}
+            docker tag graviteeio/am-management-ui:${VERSION} graviteeio/am-management-ui:${MINOR_VERSION}
+            echo "graviteeio/am-management-ui:${MINOR_VERSION}" >> /tmp/aikido-images.txt
+
+            docker pull graviteeio/am-gateway:${VERSION}-debian
+            docker tag graviteeio/am-gateway:${VERSION}-debian graviteeio/am-gateway:${MINOR_VERSION}-debian
+            echo "graviteeio/am-gateway:${MINOR_VERSION}-debian" >> /tmp/aikido-images.txt
+
+            docker pull graviteeio/am-management-api:${VERSION}-debian
+            docker tag graviteeio/am-management-api:${VERSION}-debian graviteeio/am-management-api:${MINOR_VERSION}-debian
+            echo "graviteeio/am-management-api:${MINOR_VERSION}-debian" >> /tmp/aikido-images.txt
       - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-          fail_on: ""
-      - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-          fail_on: ""
-      - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-          fail_on: ""
-      - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
-          fail_on: ""
-      - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
-          fail_on: ""
-      - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-debian
-          fail_on: ""
-      - aikido/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-debian
+          built_docker_image_file: /tmp/aikido-images.txt
           fail_on: ""
 
   job-test-am-charts:
@@ -1989,11 +1985,6 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aikido:
-          name: add docker images to Aikido
-          context: cicd-orchestrator
-          requires:
-            - publish docker images
       - notify-release-complete:
           name: notify release complete
           context: cicd-orchestrator
@@ -2028,11 +2019,6 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aikido:
-          name: add docker images to Aikido
-          context: cicd-orchestrator
-          requires:
-            - publish docker images
       - notify-release-complete:
           name: notify release complete
           context: cicd-orchestrator
