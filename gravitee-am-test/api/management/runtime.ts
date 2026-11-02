@@ -28,7 +28,7 @@
 
 import fetch from 'cross-fetch';
 
-export const BASE_PATH = 'http://localhost:8093/management'.replace(/\/+$/, '');
+export const BASE_PATH = '/management'.replace(/\/+$/, '');
 
 export interface ConfigurationParameters {
   basePath?: string; // override base path

@@ -1587,7 +1587,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
+   * User must have the APPLICATION_FLOW[READ] permission on the specified application or APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
    * Get a flow
    */
   async getAppFlowRaw(
@@ -1657,7 +1657,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
+   * User must have the APPLICATION_FLOW[READ] permission on the specified application or APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
    * Get a flow
    */
   async getAppFlow(requestParameters: GetAppFlowRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
@@ -2996,7 +2996,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified application or APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
    * Update a flow
    */
   async updateAppFlowRaw(
@@ -3079,7 +3079,7 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+   * User must have the APPLICATION_FLOW[UPDATE] permission on the specified application or APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
    * Update a flow
    */
   async updateAppFlow(

@@ -183,9 +183,8 @@ npx @openapitools/openapi-generator-cli validate -i ../docs/mapi/openapi.yaml
 
 ### Regenerate SDK/clients
 ```bash
-# Management API SDK (TypeScript)
-cd gravitee-am-test
-npm run update:sdk:mapi -- <MANAGEMENT_API_URL>
+# Management API SDK (TypeScript), from docs/mapi/openapi.yaml (needs `npm ci` in gravitee-am-test)
+bash scripts/regen-oas.sh && bash scripts/regen-sdk.sh
 ```
 
 ### Contract/API tests

@@ -29,15 +29,17 @@ import {
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 export type Cors = Mutable<Omit<CorsSettings, 'maxAge'>>;
 export type Csp = Mutable<Omit<NonNullable<WebProtectionSettings['csp']>, 'directives'>>;
-export type Header = Mutable<NonNullable<WebProtectionSettings['xframe']>>;
+export type XFrame = Mutable<NonNullable<WebProtectionSettings['xframe']>>;
+export type XFrameAction = NonNullable<XFrame['action']>;
+export type Xss = Mutable<NonNullable<WebProtectionSettings['xss']>>;
 
 export interface FormState {
     readonly cors: Cors;
     readonly maxAge: DurationDraft;
     readonly csp: Csp;
     readonly directives: readonly CspDirectiveRow[];
-    readonly xframe: Header;
-    readonly xss: Header;
+    readonly xframe: XFrame;
+    readonly xss: Xss;
 }
 
 export interface Inheritable {
@@ -57,8 +59,8 @@ const DEFAULT_CORS: Cors = {
     enabled: false,
 };
 const DEFAULT_CSP = { inherited: true, enabled: false, reportOnly: false, scriptInlineNonce: true, directives: [] };
-const DEFAULT_XFRAME: Header = { inherited: true, enabled: false, action: 'DENY' };
-const DEFAULT_XSS: Header = { inherited: true, enabled: false, action: '1; mode=block' };
+const DEFAULT_XFRAME: XFrame = { inherited: true, enabled: false, action: 'DENY' };
+const DEFAULT_XSS: Xss = { inherited: true, enabled: false, action: '1; mode=block' };
 
 /** A section saved before `inherited` existed inherits unless it was enabled. */
 function normalize<T extends Inheritable>(settings: T): T {
