@@ -180,6 +180,14 @@
         "applications": ["i1"],
         "flows": ["rt1ri1id1"]
       }
+    },
+    {
+      "id": "reporters-reference-index",
+      "create": {
+        "reporters": [
+          { "name": "rt1ri1", "key": { "referenceType": 1, "referenceId": 1 } }
+        ]
+      }
     }
   ]
 }

@@ -44,6 +44,7 @@ public class ManagementStoreIndexTest extends AbstractManagementTest {
     private static final String CIMD_METADATA_DOCUMENTS = "cimd_metadata_documents";
     private static final String ACTION_LEASE = "cp_action_lease";
     private static final String EVENTS = "events";
+    private static final String REPORTERS = "reporters";
 
     /** Default of {@code services.purge.events.retention.days}, applied by MongoEventRepository. */
     private static final Duration DEFAULT_EVENTS_RETENTION = Duration.ofDays(90);
@@ -83,5 +84,11 @@ public class ManagementStoreIndexTest extends AbstractManagementTest {
     @Test
     public void eventsShouldCarryItsLookupIndexes() {
         assertIndex(mongoDatabase, EVENTS, "u1dp1", new Document("updatedAt", 1).append("dataPlaneId", 1));
+    }
+
+    @Test
+    public void shouldCarryReporterLookupIndexes() {
+        assertIndex(mongoDatabase, REPORTERS, "d1", new Document("domain", 1));
+        assertIndex(mongoDatabase, REPORTERS, "rt1ri1", new Document("referenceType", 1).append("referenceId", 1));
     }
 }
