@@ -26,8 +26,12 @@ RUN apk update \
     && apk del unzip wget \
     && rm -rf /var/cache/apk/* /tmp/*
 
+<<<<<<< HEAD
 
 FROM eclipse-temurin:25.0.4.1_1-jre-noble AS build-jattach
+=======
+FROM eclipse-temurin:25.0.5_8-jre-noble AS build-jattach
+>>>>>>> 502e663 (chore(dep): upgrade base image for noble tag)
 LABEL maintainer="contact@graviteesource.com"
 
 ARG JATTACH_VERSION=2.2
@@ -48,7 +52,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz
 
-FROM eclipse-temurin:25.0.4.1_1-jre-noble
+FROM eclipse-temurin:25.0.5_8-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
