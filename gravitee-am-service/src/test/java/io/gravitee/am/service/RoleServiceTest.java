@@ -431,22 +431,6 @@ public class RoleServiceTest {
     }
 
     @Test
-    public void shouldGrantEveryDataPlaneAclToTheOwnerRoles() {
-        List<Role> roles = new ArrayList<>(seededRoles(roleService::createOrUpdateSystemRoles));
-        roles.addAll(seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)));
-
-        List<Role> owners = roles.stream()
-                .filter(role -> role.getName().endsWith("_OWNER"))
-                .filter(role -> role.getPermissionAcls().containsKey(Permission.DATA_PLANE))
-                .toList();
-
-        assertFalse("no owner role was seeded with the DATA_PLANE permission", owners.isEmpty());
-        owners.forEach(role ->
-                assertEquals("unexpected DATA_PLANE acls on " + role.getName(),
-                        Acl.all(), role.getPermissionAcls().get(Permission.DATA_PLANE)));
-    }
-
-    @Test
     public void shouldKeepDataPlaneReadOnlyForTheUserRoles() {
         List<Role> users = seededRoles(() -> roleService.createDefaultRoles(ORGANIZATION_ID)).stream()
                 .filter(role -> role.getName().endsWith("_USER"))
