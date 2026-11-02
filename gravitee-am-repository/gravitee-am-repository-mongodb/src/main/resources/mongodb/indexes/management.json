@@ -161,6 +161,18 @@
         "roles": ["rt1ri1"],
         "scopes": ["d1"]
       }
+    },
+    {
+      "id": "drop-redundant-indexes",
+      "drop": {
+        "applications": ["d1", "d1n_1i_1", "d1u_1i_1"],
+        "emails": ["ri1rt1"],
+        "events": ["u1"],
+        "extension_grants": ["d1"],
+        "flows": ["rt1ri1"],
+        "forms": ["rt1ri1"],
+        "i18n_dictionaries": ["rt1ri1"]
+      }
     }
   ]
 }

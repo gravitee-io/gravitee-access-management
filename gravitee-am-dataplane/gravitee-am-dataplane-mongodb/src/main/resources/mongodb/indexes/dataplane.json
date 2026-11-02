@@ -80,6 +80,16 @@
         "users": ["referenceType_1_referenceId_1_username_1_source_1", "rt1ri1u1s1", "rt1ri1", "rt1ri1ext1", "rt1ri1u1"],
         "webauthn_credentials": ["rt1ri1", "rt1ri1un1"]
       }
+    },
+    {
+      "id": "drop-redundant-indexes",
+      "drop": {
+        "devices": ["ri1rt1"],
+        "password_histories": ["rt1ri1"],
+        "uma_access_policies": ["d1"],
+        "uma_resource_set": ["d1", "d1c1"],
+        "user_activities": ["rt1ri1"]
+      }
     }
   ]
 }
