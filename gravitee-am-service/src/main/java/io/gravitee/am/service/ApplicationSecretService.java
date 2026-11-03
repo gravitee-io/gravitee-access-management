@@ -27,6 +27,10 @@ import io.reactivex.rxjava3.core.Single;
 
 public interface ApplicationSecretService {
 
+    // the widths of the JDBC columns, applied on every repository so that a definition is portable
+    int KEY_MAX_LENGTH = 64;
+    int PLAIN_VALUE_MAX_LENGTH = 374;
+
     Flowable<ClientSecret> findAllByApplication(Application application);
 
     Single<Application> renew(Domain domain, Application application, String id, User principal);
@@ -36,4 +40,27 @@ public interface ApplicationSecretService {
     Single<ClientSecret> create(Domain domain, Application application, NewClientSecret clientSecret, User principal);
 
     Maybe<ClientSecret> findById(String applicationId, String id);
+
+    /**
+     * Validates adding {@code desired} with {@code rawSecret} to the application without persisting.
+     *
+     * @return the secret that would be added, or the stored one when it already exists with this value
+     */
+    Single<ClientSecret> validateApply(Domain domain, Application application, ClientSecret desired, String rawSecret);
+
+    /**
+     * Adds {@code desired} with {@code rawSecret}, or keeps it when it already exists with the same value.
+     * {@code desired} carries the secret identity ({@code id}, {@code name}, {@code automationKey}, {@code managedBy});
+     * a secret that is not managed by the Automation API can only be kept, never created.
+     * The application is re-read, and the write retried, on a concurrent modification.
+     *
+     * @return the secret, without its value
+     */
+    Single<ClientSecret> apply(Domain domain, Application application, ClientSecret desired, String rawSecret, User principal);
+
+    /**
+     * Removes the secret; unlike {@link #delete}, removing the last secret is allowed. A missing secret completes.
+     * The application is re-read, and the write retried, on a concurrent modification.
+     */
+    Completable remove(Domain domain, Application application, String secretId, User principal);
 }

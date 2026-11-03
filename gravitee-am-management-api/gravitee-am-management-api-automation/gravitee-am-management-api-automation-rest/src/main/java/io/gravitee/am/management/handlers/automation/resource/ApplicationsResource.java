@@ -30,6 +30,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -62,6 +63,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+
+import static io.gravitee.am.service.utils.OptimisticConcurrency.retryOnConcurrentModification;
 
 /**
  * Applications managed individually under a domain.
@@ -132,6 +135,7 @@ public class ApplicationsResource extends AbstractAutomationResource {
             "scope, a duplicate or changed clientId, or a type change to or from agent")
     @ApiResponse(responseCode = "404", description = "Domain not found, or not managed by the Automation API; or an " +
             "id:<uuid> application that does not exist")
+    @ApiResponse(responseCode = "409", description = "Concurrent modification of the application; send the same request again")
     public void createOrUpdate(
             @PathParam("orgId") String organizationId,
             @PathParam("envId") String environmentId,
@@ -215,6 +219,17 @@ public class ApplicationsResource extends AbstractAutomationResource {
     }
 
     private Single<AutomationApplication> update(Domain domain, Application existing, AutomationApplication definition,
+            String key, User principal, boolean dryRun) {
+        if (dryRun) {
+            return updateFrom(domain, existing, definition, key, principal, true);
+        }
+        // each attempt re-reads the application it overwrites, so a concurrent write is never lost
+        return retryOnConcurrentModification(() -> applicationService.findById(domain.getId(), existing.getId())
+                .switchIfEmpty(Single.error(() -> new ApplicationNotFoundException(existing.getId())))
+                .flatMap(current -> updateFrom(domain, current, definition, key, principal, false)));
+    }
+
+    private Single<AutomationApplication> updateFrom(Domain domain, Application existing, AutomationApplication definition,
             String key, User principal, boolean dryRun) {
         if (definition.getClientId() != null && !definition.getClientId().equals(existing.clientId())) {
             return Single.error(new InvalidParameterException(

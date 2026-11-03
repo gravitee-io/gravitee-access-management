@@ -129,6 +129,37 @@ export class AutomationClient {
     return performDelete(automationUrl(), `${envPath()}/domains/${domainKey}/applications/${applicationKey}`, this.headers());
   }
 
+  // ---- Client secrets (under an application) -----------------------------
+
+  listClientSecrets(domainKey: string, applicationKey: string) {
+    return performGet(automationUrl(), `${envPath()}/domains/${domainKey}/applications/${applicationKey}/secrets`, this.headers());
+  }
+
+  putClientSecret(domainKey: string, applicationKey: string, definition: object, query = '') {
+    return performPut(
+      automationUrl(),
+      `${envPath()}/domains/${domainKey}/applications/${applicationKey}/secrets${query}`,
+      definition,
+      this.headers(),
+    );
+  }
+
+  getClientSecret(domainKey: string, applicationKey: string, secretKey: string) {
+    return performGet(
+      automationUrl(),
+      `${envPath()}/domains/${domainKey}/applications/${applicationKey}/secrets/${secretKey}`,
+      this.headers(),
+    );
+  }
+
+  deleteClientSecret(domainKey: string, applicationKey: string, secretKey: string) {
+    return performDelete(
+      automationUrl(),
+      `${envPath()}/domains/${domainKey}/applications/${applicationKey}/secrets/${secretKey}`,
+      this.headers(),
+    );
+  }
+
   // ---- Data planes (under an environment) --------------------------------
 
   listDataPlanes() {

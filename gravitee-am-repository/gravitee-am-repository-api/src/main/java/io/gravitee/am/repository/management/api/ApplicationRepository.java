@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -84,5 +85,13 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
     Single<Long> countByDomain(String domain);
 
     Maybe<Application> findByDomainAndClientId(String domain, String clientId);
+
+    /**
+     * Updates the application only if the stored one still has {@code expectedUpdatedAt}; a null
+     * {@code expectedUpdatedAt} matches an application stored without one.
+     *
+     * @return the updated application, or empty when the stored application changed since it was read
+     */
+    Maybe<Application> updateIfUnchanged(Application item, Date expectedUpdatedAt);
 
 }
