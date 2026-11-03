@@ -35,6 +35,8 @@ import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
+import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -56,6 +58,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -771,6 +774,63 @@ public class UserAuthenticationManagerTest {
     }
 
     @Test
+    public void shouldCountLoginFailure_mixedCaseUsername_loginAttempt_enabled() {
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setInherited(false);
+        accountSettings.setLoginAttemptsDetectionEnabled(true);
+        accountSettings.setMaxLoginAttempts(3);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
+        client.setAccountSettings(accountSettings);
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.error(new BadCredentialsException("JOHN.DOE"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+
+        User storedUser = new User();
+        storedUser.setUsername("John.Doe");
+        LoginAttempt loginAttempt = new LoginAttempt();
+        loginAttempt.setAttempts(1);
+        when(domain.getId()).thenReturn("domain-id");
+        when(userService.findByUsernameAndSourceIgnoreCase("JOHN.DOE", "idp-1")).thenReturn(Maybe.just(storedUser));
+        when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.empty());
+        when(loginAttemptService.loginFailed(any(), any(), any())).thenReturn(Single.just(loginAttempt));
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "JOHN.DOE";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        observer.assertError(BadCredentialsException.class);
+        verify(loginAttemptService).loginFailed(any(), argThat((LoginAttemptCriteria criteria) -> "john.doe".equals(criteria.username())), any());
+        verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
+    }
+
+    @Test
     public void shouldNotAuthenticateUser_unknownUserFromAM_loginAttempt_enabled() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(false);
@@ -798,7 +858,7 @@ public class UserAuthenticationManagerTest {
         }));
 
         when(domain.getId()).thenReturn("domain-id");
-        when(userService.findByUsernameAndSource(anyString(), anyString(), anyBoolean())).thenReturn(Maybe.empty());
+        when(userService.findByUsernameAndSourceIgnoreCase(anyString(), anyString())).thenReturn(Maybe.empty());
         when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.empty());
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
@@ -818,7 +878,7 @@ public class UserAuthenticationManagerTest {
         }).test();
 
         observer.assertError(BadCredentialsException.class);
-        verify(userService, times(1)).findByUsernameAndSource(anyString(), anyString(), anyBoolean());
+        verify(userService, times(1)).findByUsernameAndSourceIgnoreCase(anyString(), anyString());
         verify(loginAttemptService, never()).loginFailed(any(), any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());

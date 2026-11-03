@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.dataplane.api.search;
 
+import java.util.Locale;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -70,8 +72,11 @@ public class LoginAttemptCriteria {
             return this;
         }
 
+        /**
+         * Login attempts are tracked per lower-cased username, so "John.Doe" and "john.doe" share one counter.
+         */
         public Builder username(String username) {
-            this.username = username;
+            this.username = username == null ? null : username.toLowerCase(Locale.ROOT);
             return this;
         }
 

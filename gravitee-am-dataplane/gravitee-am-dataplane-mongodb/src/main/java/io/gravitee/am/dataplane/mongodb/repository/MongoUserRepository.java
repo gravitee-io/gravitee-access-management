@@ -85,6 +85,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.regex;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
@@ -501,6 +502,23 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
             logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
             return Single.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
+    }
+
+    @Override
+    public Maybe<User> findByUsernameAndSourceIgnoreCase(Reference reference, String username, String source) {
+        final Pattern usernamePattern = Pattern.compile("^" + Pattern.quote(username) + "$", Pattern.CASE_INSENSITIVE);
+        final Bson byUsername = and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), regex(FIELD_USERNAME, usernamePattern), eq(FIELD_SOURCE, source));
+        final Bson byIdentity = and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), regex(FIELD_IDENTITIES_USERNAME, usernamePattern), eq(FIELD_IDENTITIES_PROVIDER_ID, source));
+        return findFirst(byUsername)
+                .switchIfEmpty(findFirst(byIdentity))
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
+    }
+
+    private Maybe<User> findFirst(Bson query) {
+        return Observable.fromPublisher(withMaxTime(usersCollection.find(query)).limit(1).first())
+                .firstElement()
+                .map(this::convert);
     }
 
     private Maybe<User> findByIdentityUsernameAndProviderId(Reference reference, String username, String providerId) {

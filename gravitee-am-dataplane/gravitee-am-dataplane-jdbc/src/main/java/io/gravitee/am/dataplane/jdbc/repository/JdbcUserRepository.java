@@ -647,6 +647,17 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
+    public Maybe<User> findByUsernameAndSourceIgnoreCase(Reference reference, String username, String source) {
+        LOGGER.debug("findByUsernameAndSourceIgnoreCase({}, {}, {})", reference, username, source);
+        return userRepository.findAllByUsernameAndSource(reference.type().name(), reference.id(), username, source).firstElement()
+                .switchIfEmpty(Maybe.defer(() -> userRepository.findAllByUsernameAndLinkedIdentities(reference.type().name(), reference.id(), username, source).firstElement()))
+                .map(this::toEntity)
+                .flatMap(user -> completeUser(user).toMaybe())
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<User> findByExternalIdAndSource(Reference reference, String externalId, String source) {
         LOGGER.debug("findByExternalIdAndSource({}, {}, {}, {})", reference, externalId, source);
         return userRepository.findByExternalIdAndSource(reference.type().name(), reference.id(), externalId, source)

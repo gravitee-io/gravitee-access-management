@@ -278,7 +278,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         // do not execute login attempt feature for non-existing users
                         // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
                         // but we can't control custom IdP that's why we have to check user existence
-                        return userService.findByUsernameAndSource(criteria.username(), criteria.identityProvider(), true)
+                        return userService.findByUsernameAndSourceIgnoreCase(username, criteria.identityProvider())
                                 .flatMapCompletable(user -> loginAttemptService.loginFailed(domain, criteria, accountSettings)
                                         .flatMapCompletable(loginAttempt -> {
                                             if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {

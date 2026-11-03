@@ -79,6 +79,17 @@ public class UserGatewayServiceImplV2 extends UserGatewayServiceImpl {
     }
 
     @Override
+    public Maybe<User> findByUsernameAndSourceIgnoreCase(String username, String source) {
+        return getUserRepository().findByUsernameAndSourceIgnoreCase(domain.asReference(), username, source).onErrorResumeNext(error -> {
+            if (doesResilientModeEnabled(error)) {
+                log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
+                return Maybe.empty();
+            }
+            return Maybe.error(error);
+        });
+    }
+
+    @Override
     public Single<List<User>> findByCriteria(FilterCriteria criteria) {
         return getUserRepository().search(domain.asReference(), criteria).toList();
     }

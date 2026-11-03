@@ -35,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -75,6 +76,22 @@ public class LoginAttemptManagementServiceTest {
         testObserver.assertNoErrors();
 
         verify(loginAttemptRepository).delete(any(LoginAttemptCriteria.class));
+    }
+
+    @Test
+    public void should_reset_login_attempt_of_mixed_case_username_with_lower_cased_username() {
+        final LoginAttemptCriteria loginAttemptCriteria = new LoginAttemptCriteria.Builder()
+                .client("client-1")
+                .domain("domain-1")
+                .username("John.Doe")
+                .identityProvider("idp-1")
+                .build();
+
+        when(loginAttemptRepository.delete(any(LoginAttemptCriteria.class))).thenReturn(Completable.complete());
+
+        service.reset(new Domain("domain-1"), loginAttemptCriteria).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(loginAttemptRepository).delete(argThat((LoginAttemptCriteria criteria) -> "john.doe".equals(criteria.username())));
     }
 
     @Test

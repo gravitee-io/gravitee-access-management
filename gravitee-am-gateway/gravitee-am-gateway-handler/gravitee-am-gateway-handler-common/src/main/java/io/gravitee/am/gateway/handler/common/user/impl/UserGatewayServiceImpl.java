@@ -113,6 +113,11 @@ public class UserGatewayServiceImpl implements UserGatewayService, InitializingB
     }
 
     @Override
+    public Maybe<User> findByUsernameAndSourceIgnoreCase(String username, String source) {
+        return userRepository.findByUsernameAndSourceIgnoreCase(domain.asReference(), username, source);
+    }
+
+    @Override
     public Single<List<User>> findByCriteria(FilterCriteria criteria) {
         return userRepository.search(domain.asReference(), criteria).toList();
     }

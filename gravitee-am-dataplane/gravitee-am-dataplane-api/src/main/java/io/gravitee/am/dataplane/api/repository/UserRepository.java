@@ -76,6 +76,12 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Maybe<User> findByUsernameAndSource(Reference reference, String username, String source, boolean includeLinkedIdentities);
 
+    /**
+     * Find a user by username and source, or by the username and provider of a linked identity.
+     * The username match ignores the case. If more than one user matches, any one of them is returned.
+     */
+    Maybe<User> findByUsernameAndSourceIgnoreCase(Reference reference, String username, String source);
+
     Maybe<User> findByExternalIdAndSource(Reference reference, String externalId, String source);
 
     Flowable<User> findByIdIn(Reference reference, List<String> ids);

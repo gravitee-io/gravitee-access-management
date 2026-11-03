@@ -152,6 +152,75 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
     }
 
     @Test
+    public void testFindByUsernameAndSourceIgnoreCase() {
+        Reference reference = Reference.domain(UUID.randomUUID().toString());
+        User user = new User();
+        user.setUsername("John.Doe");
+        user.setSource("sourceid");
+        user.setReferenceType(reference.type());
+        user.setReferenceId(reference.id());
+        userRepository.create(user).blockingGet();
+
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "JOHN.DOE", "sourceid").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(u -> u.getUsername().equals("John.Doe"));
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "john.doe", "sourceid").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(u -> u.getUsername().equals("John.Doe"));
+
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "John.Do", "sourceid").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete().assertNoValues();
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "John_Doe", "sourceid").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete().assertNoValues();
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "JohnXDoe", "sourceid").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete().assertNoValues();
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "john.doe", "othersource").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete().assertNoValues();
+    }
+
+    @Test
+    public void testFindByUsernameAndSourceIgnoreCase_linkedIdentity() {
+        Reference reference = Reference.domain(UUID.randomUUID().toString());
+        User linkUser = new User();
+        linkUser.setId(UUID.randomUUID().toString());
+        linkUser.setUsername("testsUsernamelinked");
+        linkUser.setSource("sourceidlinked");
+        linkUser.setReferenceType(reference.type());
+        linkUser.setReferenceId(reference.id());
+        UserIdentity identity = getUserIdentity();
+        identity.setUserId(linkUser.getId());
+        identity.setUsername("Linked.User");
+        identity.setProviderId(UUID.randomUUID().toString());
+        linkUser.setIdentities(of(identity));
+        userRepository.create(linkUser).blockingGet();
+
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "LINKED.USER", identity.getProviderId()).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(u -> u.getId().equals(linkUser.getId()));
+    }
+
+    @Test
+    public void testFindByUsernameAndSourceIgnoreCase_severalCasings() {
+        Reference reference = Reference.domain(UUID.randomUUID().toString());
+        for (String username : List.of("John", "john")) {
+            User user = new User();
+            user.setUsername(username);
+            user.setSource("sourceid");
+            user.setReferenceType(reference.type());
+            user.setReferenceId(reference.id());
+            userRepository.create(user).blockingGet();
+        }
+
+        userRepository.findByUsernameAndSourceIgnoreCase(reference, "JOHN", "sourceid").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(u -> u.getUsername().equalsIgnoreCase("john"));
+    }
+
+    @Test
     public void testFindAll() {
         // create user
         User user = new User();
