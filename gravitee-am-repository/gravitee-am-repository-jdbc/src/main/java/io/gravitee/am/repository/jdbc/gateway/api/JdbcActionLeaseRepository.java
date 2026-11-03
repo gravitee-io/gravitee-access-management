@@ -17,7 +17,7 @@ package io.gravitee.am.repository.jdbc.gateway.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ActionLease;
-import io.gravitee.am.repository.gateway.api.ActionLeaseRepository;
+import io.gravitee.am.repository.common.ActionLeaseRepository;
 import io.gravitee.am.repository.jdbc.common.AbstractActionLeaseRepository;
 import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcActionLease;
 import io.reactivex.rxjava3.core.Completable;

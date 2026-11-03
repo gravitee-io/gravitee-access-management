@@ -40,6 +40,8 @@ public interface ManagementUserService extends DomainDataPlaneCleanup {
 
     Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
+    Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal, boolean stageRegistrationEmail);
+
     Single<User> update(Domain domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> updateStatus(Domain domain, String id, boolean isUserEnabled, io.gravitee.am.identityprovider.api.User principal);

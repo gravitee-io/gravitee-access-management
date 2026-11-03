@@ -17,8 +17,9 @@ package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.management.service.ActionLeaseService;
 import io.gravitee.am.model.ActionLease;
-import io.gravitee.am.repository.management.api.ActionLeaseRepository;
+import io.gravitee.am.repository.common.ActionLeaseRepository;
 import io.gravitee.node.api.Node;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -46,5 +47,10 @@ public class ActionLeaseServiceImpl implements ActionLeaseService {
     @Override
     public Maybe<ActionLease> acquireLease(String action, Duration duration) {
         return actionLeaseRepository.acquireLease(action, node.id(), duration);
+    }
+
+    @Override
+    public Completable releaseLease(String action) {
+        return actionLeaseRepository.releaseLease(action, node.id());
     }
 }

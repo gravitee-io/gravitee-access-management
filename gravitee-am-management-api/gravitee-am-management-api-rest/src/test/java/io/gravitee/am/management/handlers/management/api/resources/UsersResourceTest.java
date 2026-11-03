@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
+import io.gravitee.am.management.service.exception.EmailStagingException;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Organization;
@@ -59,9 +60,13 @@ import static io.gravitee.am.model.ReferenceType.ORGANIZATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -367,6 +372,43 @@ public class UsersResourceTest extends JerseySpringTest {
                 .request().post(Entity.json(newUser));
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
+    @Test
+    public void shouldStopBulkCreateWhenRegistrationEmailCannotBeStaged() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        var created = new User();
+        created.setId("user-1");
+        created.setUsername("user-1");
+        doReturn(Single.just(created)).when(userService).create(any(Domain.class), argThat(user -> "user-1".equals(user.getUsername())), any(), eq(true));
+        doReturn(Single.error(new EmailStagingException("user-2", new IllegalStateException("db down"))))
+                .when(userService).create(any(Domain.class), argThat(user -> "user-2".equals(user.getUsername())), any(), eq(true));
+
+        var bulkRequest = new BulkRequest<>(BulkRequest.Action.CREATE, null, List.of(newUser("user-1"), newUser("user-2"), newUser("user-3")));
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .path("bulk")
+                .request()
+                .post(Entity.entity(bulkRequest, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        List<JsonNode> results = Lists.newArrayList(readEntity(response, JsonNode.class).get("results").elements());
+        assertEquals(2, results.size());
+        assertTrue(results.get(0).get("success").asBoolean());
+        assertEquals("EmailStagingException", results.get(1).get("errorDetails").get("error").asText());
+        verify(userService, never()).create(any(Domain.class), argThat(user -> "user-3".equals(user.getUsername())), any(), anyBoolean());
+    }
+
+    private static NewUser newUser(String username) {
+        var newUser = new NewUser();
+        newUser.setUsername(username);
+        newUser.setPreRegistration(true);
+        return newUser;
+    }
+
     @Test
     public void shouldCreateOrganizationUser() {
         when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
