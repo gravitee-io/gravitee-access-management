@@ -57,6 +57,17 @@ describe('AuthorizationDetailTypeService', () => {
     http.expectOne(AppConfig.settings.baseURL + nextCursor).flush({ data: [] });
   });
 
+  it('should list every type by following nextCursor until the last page', () => {
+    const nextCursor = '/organizations/o/environments/e/domains/domain-1/authorization-detail-types?cursor=abc&page=1';
+    let result: any[];
+
+    service.listAll('domain-1').subscribe((types) => (result = types));
+
+    http.expectOne(`${baseUrl}?page=0&limit=100&sort=type&dir=ASC`).flush({ data: [{ type: 'a' }], nextCursor });
+    http.expectOne(AppConfig.settings.baseURL + nextCursor).flush({ data: [{ type: 'b' }] });
+    expect(result).toEqual([{ type: 'a' }, { type: 'b' }]);
+  });
+
   it('should send a patch as given', () => {
     service.patch('domain-1', 'id-1', { discovery: true }).subscribe();
 

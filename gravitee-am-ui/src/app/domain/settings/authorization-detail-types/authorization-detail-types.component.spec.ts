@@ -185,6 +185,14 @@ describe('AuthorizationDetailTypesComponent', () => {
     expect(service.list).toHaveBeenCalledTimes(2);
   });
 
+  it('should warn that deleting a type removes it from the applications that enable it', () => {
+    fixture.detectChanges();
+
+    component.delete('id-1', new Event('click'));
+
+    expect(dialogService.confirm.mock.calls[0][1]).toContain('removed from every application that has it enabled');
+  });
+
   it('should show the empty state after deleting the last type', () => {
     fixture.detectChanges();
     service.list.mockReturnValue(of(emptyPage));

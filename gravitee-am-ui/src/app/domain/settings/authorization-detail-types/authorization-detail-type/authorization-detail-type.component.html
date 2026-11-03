@@ -147,7 +147,8 @@
 
       <div class="gv-page-delete-zone" fxLayout="column" *ngIf="deleteMode">
         <p>This operation cannot be undone.</p>
-        The authorization detail type will be deleted, and clients will no longer be able to request it.
+        The authorization detail type will be deleted and removed from every application that has it enabled, and clients will no longer be
+        able to request it.
         <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
