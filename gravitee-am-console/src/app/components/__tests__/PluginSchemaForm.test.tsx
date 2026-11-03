@@ -130,7 +130,11 @@ describe('PluginSchemaForm', () => {
 describe('pluginSchemaResolver', () => {
     const adapted = adaptAmSchema({
         type: 'object',
-        properties: { authentication: { type: 'boolean' }, username: { type: 'string' } },
+        properties: {
+            authentication: { type: 'boolean' },
+            username: { type: 'string' },
+            truststore: { type: 'string', widget: 'file' },
+        },
         allOf: [{ if: { properties: { authentication: { const: true } } }, then: { required: ['username'] } }],
     });
     const resolve = (config: Record<string, unknown>) =>
@@ -146,7 +150,7 @@ describe('pluginSchemaResolver', () => {
         });
     });
 
-    it('passes when the if does not hold', async () => {
+    it('passes when the if does not hold and the optional file is empty', async () => {
         const config = { authentication: false };
 
         expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
@@ -166,6 +170,32 @@ describe('PluginSchemaForm in edit mode', () => {
         renderWithGraphene(<Edit />);
 
         expect(screen.getByText('File currently saved: keystore.p12')).toBeInTheDocument();
+    });
+
+    it('goes back to the saved file when the user removes the picked one', async () => {
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: { content: { type: 'string', title: 'Keystore file', widget: 'file' } },
+        });
+        const onSubmit = vi.fn();
+        function Edit() {
+            const form = useForm<Values>({ defaultValues: { config: { content: '/opt/graviteeio/certs/keystore.p12' } } });
+            return (
+                <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
+                    <PluginSchemaForm adapted={adapted} control={form.control} name="config" />
+                    <Button type="submit">Save</Button>
+                </form>
+            );
+        }
+        renderWithGraphene(<Edit />);
+
+        await userEvent.upload(screen.getByLabelText(/Keystore file/), new File(['new'], 'new.p12'));
+        await userEvent.click(await screen.findByRole('button', { name: 'Remove new.p12' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        expect(screen.getByText('File currently saved: keystore.p12')).toBeInTheDocument();
+        await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+        expect(onSubmit.mock.calls[0][0]).toEqual({ config: { content: '/opt/graviteeio/certs/keystore.p12' } });
     });
 
     it('drops the picked file when the form resets', async () => {

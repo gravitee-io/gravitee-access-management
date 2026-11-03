@@ -133,7 +133,7 @@ function SchemaFileField<T extends FieldValues>({
     readonly disabled?: boolean;
 }) {
     const { field, fieldState } = useController({ control, name: `${name}.${file.key}` as Path<T> });
-    const [pick, setPick] = useState<{ readonly item: FileUploadItemValue; readonly value: string }>();
+    const [pick, setPick] = useState<{ readonly item: FileUploadItemValue; readonly value: string; readonly previous: unknown }>();
     // A form reset changes the value, so the picked file no longer shows.
     const picked = pick && pick.value === field.value ? pick.item : undefined;
     const saved = !picked && typeof field.value === 'string' && field.value ? field.value.split('/').pop() : undefined;
@@ -159,16 +159,18 @@ function SchemaFileField<T extends FieldValues>({
                 errors={fieldState.error?.message ? [fieldState.error.message] : undefined}
                 onFilesAdd={async ([added]) => {
                     try {
+                        const previous = picked && pick ? pick.previous : field.value;
                         const value = await fileValue(added);
                         field.onChange(value);
-                        setPick({ item: { id: added.name, file: added, status: 'success' }, value });
+                        setPick({ item: { id: added.name, file: added, status: 'success' }, value, previous });
                     } catch {
                         toast.error(`Could not read the file ${added.name}.`);
                     }
                 }}
+                // Remove goes back to the saved file.
                 onFileRemove={() => {
                     setPick(undefined);
-                    field.onChange('');
+                    field.onChange(pick?.previous);
                 }}
             />
             {saved && <FieldDescription>File currently saved: {saved}</FieldDescription>}
