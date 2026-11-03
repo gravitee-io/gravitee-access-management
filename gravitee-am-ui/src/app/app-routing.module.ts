@@ -225,6 +225,7 @@ import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.r
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from './resolvers/scopes-all.resolver';
+import { AuthorizationDetailTypesAllResolver } from './resolvers/authorization-detail-types-all.resolver';
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
 import { DomainSettingsDeviceIdentifiersComponent } from './domain/settings/deviceidentifiers/device-identifiers.component';
 import { DeviceIdentifierPluginsResolver } from './resolvers/device-identifier-plugins.resolver';
@@ -571,6 +572,7 @@ const APPLICATION_DETAIL_CHILDREN: Routes = [
         resolve: {
           domainGrantTypes: ExtensionGrantsResolver,
           scopes: ScopesAllResolver,
+          authorizationDetailTypes: AuthorizationDetailTypesAllResolver,
         },
         data: {
           menu: {

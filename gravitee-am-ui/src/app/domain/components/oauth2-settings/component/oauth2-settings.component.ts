@@ -40,6 +40,8 @@ export class OAuth2SettingsComponent implements OnInit {
   // Data for shared components
   customGrantTypes: any[] = [];
   scopes: any[] = [];
+  authorizationDetailTypes: any[] | null = [];
+  domain: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -62,6 +64,8 @@ export class OAuth2SettingsComponent implements OnInit {
     // Load resolvers data
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'] || [];
     this.scopes = this.route.snapshot.data['scopes'] || [];
+    this.authorizationDetailTypes = this.route.snapshot.data['authorizationDetailTypes'];
+    this.domain = this.route.snapshot.data['domain'];
 
     const isTypelessApplication = this.oauth2Service.getContext() === 'Application' && !this.route.snapshot.data['application']?.type;
 
@@ -93,6 +97,9 @@ export class OAuth2SettingsComponent implements OnInit {
     this.oauthSettings.scopeSettings = newSettings.scopeSettings;
     this.oauthSettings.enhanceScopesWithUserPermissions = newSettings.enhanceScopesWithUserPermissions;
     this.oauthSettings.optInScopeSelection = newSettings.optInScopeSelection;
+
+    // Authorization details
+    this.oauthSettings.authorizationDetailTypes = newSettings.authorizationDetailTypes;
 
     // Tokens
     this.oauthSettings.accessTokenValiditySeconds = newSettings.accessTokenValiditySeconds;
@@ -137,6 +144,11 @@ export class OAuth2SettingsComponent implements OnInit {
       }
     }
 
+    if (this.oauthSettings.authorizationDetailTypes?.some((t) => t.expiresIn !== undefined && t.expiresIn < 1)) {
+      this.snackbarService.open('The user consent expiry of an authorization detail type must be at least 1 second.');
+      return;
+    }
+
     // Manually assign only valid properties to avoid sending read-only fields
     const oauthSettings: any = {};
 
@@ -167,6 +179,11 @@ export class OAuth2SettingsComponent implements OnInit {
     oauthSettings.scopeSettings = this.oauthSettings.scopeSettings;
     oauthSettings.enhanceScopesWithUserPermissions = this.oauthSettings.enhanceScopesWithUserPermissions;
     oauthSettings.optInScopeSelection = this.oauthSettings.optInScopeSelection;
+
+    // Authorization details
+    if (this.context === 'Application' && this.oauthSettings.authorizationDetailTypes !== undefined) {
+      oauthSettings.authorizationDetailTypes = this.oauthSettings.authorizationDetailTypes;
+    }
 
     // Token settings
     oauthSettings.accessTokenValiditySeconds = this.oauthSettings.accessTokenValiditySeconds;

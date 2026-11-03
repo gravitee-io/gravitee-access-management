@@ -95,4 +95,30 @@ describe('OAuth2SettingsComponent', () => {
 
     expect(savedOAuthSettings().crossAppAccessSettings).toBeUndefined();
   });
+
+  it('should save the authorization detail types emitted by the RAR tab', () => {
+    const authorizationDetailTypes = [{ type: 'payment_initiation', expiresIn: 3600 }, { type: 'account_information' }];
+
+    component.updateSettings({ ...component.oauthSettings, authorizationDetailTypes });
+    component.save();
+
+    expect(savedOAuthSettings().authorizationDetailTypes).toEqual(authorizationDetailTypes);
+  });
+
+  it('should leave authorization detail types out of the payload when the RAR tab was not changed', () => {
+    component.save();
+
+    expect(savedOAuthSettings()).not.toHaveProperty('authorizationDetailTypes');
+  });
+
+  it('should refuse to save an authorization detail type expiry below 1 second', () => {
+    component.updateSettings({ ...component.oauthSettings, authorizationDetailTypes: [{ type: 'payment_initiation', expiresIn: 0 }] });
+
+    component.save();
+
+    expect(update).not.toHaveBeenCalled();
+    expect(TestBed.inject(SnackbarService).open).toHaveBeenCalledWith(
+      'The user consent expiry of an authorization detail type must be at least 1 second.',
+    );
+  });
 });
