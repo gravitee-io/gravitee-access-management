@@ -73,9 +73,11 @@ public class HelloCommandAdapter implements CommandAdapter<io.gravitee.exchange.
         final var isManaged = CloudProperties.isManagedCloudEnabled(environment);
         return installationService.getOrInitialize()
                 .map(installation -> {
-                    HelloCommandPayload.HelloCommandPayloadBuilder<?, ?> payloadBuilder = HelloCommandPayload
-                            .builder()
-                            .installationType(isManaged ? CloudProperties.INSTALLATION_TYPE_MANAGED : CloudProperties.INSTALLATION_TYPE_STANDALONE)
+                    HelloCommandPayload.HelloCommandPayloadBuilder<?, ?> builder = HelloCommandPayload.builder();
+                    if (isManaged) {
+                        builder.installationType(CloudProperties.INSTALLATION_TYPE_MANAGED);
+                    }
+                    HelloCommandPayload.HelloCommandPayloadBuilder<?, ?> payloadBuilder = builder
                             .node(
                                     io.gravitee.cockpit.api.command.model.Node
                                             .builder()
