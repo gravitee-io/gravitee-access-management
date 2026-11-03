@@ -595,9 +595,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gravitee/graphene-core@npm:3.23.1":
-  version: 3.23.1
-  resolution: "@gravitee/graphene-core@npm:3.23.1"
+"@gravitee/graphene-core@npm:3.29.0":
+  version: 3.29.0
+  resolution: "@gravitee/graphene-core@npm:3.29.0"
   dependencies:
     "@base-ui/react": "npm:1.4.1"
     "@tailwindcss/cli": "npm:4.3.0"
@@ -668,7 +668,7 @@ __metadata:
   bin:
     graphene-check-classes: scripts/check-classes.mjs
     graphene-sync-ai-rules: scripts/sync-ai-rules.mjs
-  checksum: 10c0/62c6f21b63791d162399616c7f129f7ed9f68e4807f0deb98aec010fa700d0358d23bcdf8cb835ac805548272c0260c5c8916b0d91ab8053f66504c36b9de096
+  checksum: 10c0/a24b0e51958dc22321677f30b0b5190adb51dbb295312bb48c9ab94192eb723bdc87c38fafb51d2b717fdb00b4583dce2fae8a8a8260d71ce1eb416673ba4ffa
   languageName: node
   linkType: hard
 
@@ -5110,7 +5110,7 @@ __metadata:
     "@eslint/compat": "npm:2.1.0"
     "@fontsource/dm-sans": "npm:5.2.8"
     "@gravitee/graphene-charts": "npm:3.23.1"
-    "@gravitee/graphene-core": "npm:3.23.1"
+    "@gravitee/graphene-core": "npm:3.29.0"
     "@monaco-editor/react": "npm:4.7.0"
     "@rsbuild/core": "npm:2.1.4"
     "@rsbuild/plugin-react": "npm:1.4.6"
