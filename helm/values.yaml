@@ -882,6 +882,7 @@ gateway:
       path: /
   # handlers:
   #   request:
+  #     allowForwardHeaders: false
   #     transaction:
   #       header: X-Gravitee-Transaction-Id
   #   webauthn:
