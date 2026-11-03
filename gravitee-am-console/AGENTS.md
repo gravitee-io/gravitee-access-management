@@ -113,6 +113,8 @@ src/
 - A single page sets its breadcrumbs with `useBreadcrumbs([...])`. A section layout calls `useSectionSidebar()`.
 - The main menu is `MAIN_NAV_GROUPS` in `src/app/navigation.ts`. A section with its own menu adds its groups there.
 - Tailwind 4: write `border-border` and `divide-border`. Bare `border` and `divide-y` paint with `currentColor`.
+- To override a Graphene class, pass every variant of that property. Graphene's CSS loads last, so its base
+  `max-w-…` beats an app `sm:max-w-…`. Example: `DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-3xl"`.
 - `src/styles.css` imports Graphene's CSS last. Do not import `@gravitee/graphene-core/styles` from TypeScript.
 - Page titles are a plain `<h1>` inside `PageHeader`.
 - A settings form saves through `SaveBar` from `src/app/components/`. Do not put a Save button at the foot of the form.
