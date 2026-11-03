@@ -201,8 +201,8 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public RuleEngine ruleEngine() {
-        return new SpELRuleEngine();
+    public RuleEngine ruleEngine(Environment environment) {
+        return new SpELRuleEngine(environment);
     }
 
     @Bean
