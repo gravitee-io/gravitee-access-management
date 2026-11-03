@@ -15,7 +15,7 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { merge, Observable, of } from 'rxjs';
+import { concat, Observable, of } from 'rxjs';
 import { mergeMap, toArray } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
@@ -42,7 +42,7 @@ export class ScopeService {
             );
           }
 
-          return merge(...pageRequests);
+          return concat(...pageRequests);
         }),
       )
       .pipe(toArray());
