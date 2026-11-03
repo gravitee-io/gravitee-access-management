@@ -501,16 +501,15 @@ public class TokenExchangeServiceImpl implements TokenExchangeService {
 
 
     private User enrichUser(User user, Client client, Set<String> grantedScopes, boolean isDelegation, String subjectTokenId) {
-        Map<String, Object> additionalInformation = user.getAdditionalInformation();
         if (grantedScopes != null && !grantedScopes.isEmpty()) {
-            additionalInformation.put(Claims.SCOPE, String.join(" ", grantedScopes));
+            user.putAdditionalInformation(Claims.SCOPE, String.join(" ", grantedScopes));
         }
 
-        additionalInformation.put(Claims.CLIENT_ID, client.getClientId());
-        additionalInformation.put("token_exchange", true);
-        additionalInformation.put("delegation", isDelegation);
+        user.putAdditionalInformation(Claims.CLIENT_ID, client.getClientId());
+        user.putAdditionalInformation("token_exchange", true);
+        user.putAdditionalInformation("delegation", isDelegation);
         if (subjectTokenId != null) {
-            additionalInformation.put("subject_token_id", subjectTokenId);
+            user.putAdditionalInformation("subject_token_id", subjectTokenId);
         }
         return user;
     }
