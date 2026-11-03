@@ -131,6 +131,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_MANAGED_BY = "managedBy";
     private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
+    private static final String FIELD_AUTHORIZATION_DETAIL_TYPES_TYPE = "settings.oauth.authorizationDetailTypes.type";
     static final String FIELD_TYPE = "type";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
@@ -294,6 +295,13 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     @Override
     public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant))))
+                .map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type) {
+        return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_AUTHORIZATION_DETAIL_TYPES_TYPE, type))))
                 .map(MongoApplicationRepository::convert)
                 .observeOn(Schedulers.computation());
     }

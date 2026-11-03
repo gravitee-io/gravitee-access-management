@@ -19,7 +19,10 @@ import { setupDomainForTest, safeDeleteDomain } from '@management-commands/domai
 import { uniqueName } from '@utils-commands/misc';
 import { retryUntil } from '@utils-commands/retry';
 import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
-import { auditsOfType } from '@management-commands/audit-management-commands';
+import { AuditEntry, auditsOfType } from '@management-commands/audit-management-commands';
+import { createApplication, getApplication, patchApplication } from '@management-commands/application-management-commands';
+import { Application } from '@management-models/Application';
+import { ApplicationAuthorizationDetailTypeSettings } from '@management-models/ApplicationAuthorizationDetailTypeSettings';
 import { Domain } from '@management-models/Domain';
 import { NewAuthorizationDetailType } from '@management-models/NewAuthorizationDetailType';
 import { Fixture } from '../../../test-fixture';
@@ -33,6 +36,9 @@ export interface AuthorizationDetailTypeFixture extends Fixture {
   /** A new empty domain on every call. */
   newDomain: () => Promise<Domain>;
 }
+
+export const APPLICATION_UPDATED_AUDIT = 'APPLICATION_UPDATED';
+export const SYSTEM_ACTOR = 'system';
 
 export const AUTHORIZATION_DETAIL_TYPE_TEST = {
   DOMAIN_NAME_PREFIX: 'adt-mgmt',
@@ -57,6 +63,67 @@ export const newType = (type: string, overrides: Partial<NewAuthorizationDetailT
   name: 'Payment initiation',
   ...overrides,
 });
+
+/** Creates a SERVICE application. */
+export const createTestApplication = (fixture: AuthorizationDetailTypeFixture, domain: Domain = fixture.domain): Promise<Application> =>
+  createApplication(domain.id, fixture.accessToken, {
+    name: uniqueName('adt-app', true),
+    type: 'SERVICE',
+    clientId: uniqueName('adt-app', true),
+  });
+
+export const setApplicationTypes = (
+  fixture: AuthorizationDetailTypeFixture,
+  app: Application,
+  settings: ApplicationAuthorizationDetailTypeSettings[],
+): Promise<Application> =>
+  patchApplication(app.domain, fixture.accessToken, { settings: { oauth: { authorizationDetailTypes: settings } } }, app.id);
+
+export const createTestApplicationWithTypes = async (
+  fixture: AuthorizationDetailTypeFixture,
+  settings: ApplicationAuthorizationDetailTypeSettings[],
+  domain: Domain = fixture.domain,
+): Promise<Application> => {
+  const app = await createTestApplication(fixture, domain);
+  await setApplicationTypes(fixture, app, settings);
+  return app;
+};
+
+export const readApplicationTypes = async (
+  fixture: AuthorizationDetailTypeFixture,
+  app: Application,
+): Promise<ApplicationAuthorizationDetailTypeSettings[]> =>
+  (await getApplication(app.domain, fixture.accessToken, app.id)).settings.oauth.authorizationDetailTypes;
+
+export const applicationUpdatesOf = async (
+  fixture: AuthorizationDetailTypeFixture,
+  app: Application,
+  knownIds: Set<string>,
+  actor?: string,
+): Promise<AuditEntry[]> =>
+  (await auditsOfType(app.domain, fixture.accessToken, APPLICATION_UPDATED_AUDIT)).filter(
+    (a) =>
+      !knownIds.has(a.id) &&
+      a.target?.id === app.id &&
+      a.outcome?.status?.toLowerCase() === 'success' &&
+      (!actor || a.actor?.alternativeId === actor),
+  );
+
+export const waitForApplicationUpdateOf = async (
+  fixture: AuthorizationDetailTypeFixture,
+  app: Application,
+  knownIds: Set<string>,
+  actor?: string,
+): Promise<AuditEntry> =>
+  (
+    await retryUntil(
+      () => applicationUpdatesOf(fixture, app, knownIds, actor),
+      (audits) => audits.length > 0,
+      { timeoutMillis: 30000, intervalMillis: 500 },
+    ).catch(() => {
+      throw new Error(`No new ${APPLICATION_UPDATED_AUDIT} audit${actor ? ` by ${actor}` : ''} for application ${app.id} within 30000ms`);
+    })
+  )[0];
 
 /** Creates probe types in the fixture domain until one is audited. */
 export const waitForAuditReporter = async (fixture: AuthorizationDetailTypeFixture): Promise<void> => {
