@@ -19,6 +19,7 @@ import { parseJwt } from '@api-fixtures/jwt';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
 import { getDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { listTrustDomains } from '@management-commands/trust-domain-management-commands';
+import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { TrustDomain } from '@management-models/TrustDomain';
 import { setup } from '../../test-fixture';
 import { setupTrustedIssuerFixture, TrustedIssuerFixture, patchDomainRaw } from './fixtures/trusted-issuer-fixture';
@@ -398,6 +399,46 @@ describe('Trusted Issuers - User Binding', () => {
     // The minted token should use the domain user's subject, not the external JWT's sub
     const decoded = parseJwt(response.body.access_token);
     expect(decoded.payload['sub']).toBe(domainUserSub);
+  });
+
+  it('should use domain user that never logged in when user binding is enabled', async () => {
+    const { oidc, basicAuth, externalIssuer, domain, accessToken } = fixture;
+
+    const neverLoggedInUser = await buildCreateAndTestUser(domain.id, accessToken, 1);
+
+    await writeUserBinding(true, EMAIL_BINDING_CRITERIA);
+
+    const externalJwt = fixture.signExternalJwt({
+      sub: 'external-user-never-logged-in',
+      email: neverLoggedInUser.email,
+      scope: 'external:read external:profile',
+      iss: externalIssuer,
+    });
+
+    const response = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=urn:ietf:params:oauth:grant-type:token-exchange` +
+        `&subject_token=${encodeURIComponent(externalJwt)}` +
+        `&subject_token_type=urn:ietf:params:oauth:token-type:jwt`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+
+    const domainTokens = await performPost(
+      oidc.token_endpoint,
+      '',
+      `grant_type=password&username=${neverLoggedInUser.username}&password=${encodeURIComponent(neverLoggedInUser.password)}&scope=openid`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${basicAuth}`,
+      },
+    ).expect(200);
+    const neverLoggedInUserSub = parseJwt(domainTokens.body.access_token).payload['sub'] as string;
+
+    expect(parseJwt(response.body.access_token).payload['sub']).toBe(neverLoggedInUserSub);
   });
 
   it('should reject when user binding is enabled but no matching domain user found', async () => {
