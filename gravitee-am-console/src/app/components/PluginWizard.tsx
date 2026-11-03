@@ -34,9 +34,9 @@ import {
 } from '@gravitee/graphene-core';
 import { ArrowLeftIcon, ArrowRightIcon, DatabaseIcon, LockIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { useQuery } from '@tanstack/react-query';
-import { type KeyboardEvent, type ReactNode, useMemo, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { type Resolver, type ResolverResult, useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AdaptedSchema, type SchemaResource, withSchemaDefaults } from '../../lib/forms/am-schema';
 import { LicenseGuard, useLicense } from '../../lib/session/license';
 import { ErrorPanel } from './ErrorPanel';
@@ -92,21 +92,40 @@ function matches(plugin: WizardPlugin, filter: string): boolean {
     return !needle || [plugin.name, plugin.displayName ?? '', ...(plugin.labels ?? [])].some(field => field.toLowerCase().includes(needle));
 }
 
-function StepIndicator({ step }: { readonly step: number }) {
+/** The step is in the URL, so the browser back goes from the settings to the plugin list. */
+const STEP_PARAM = 'step';
+const SETTINGS_STEP = 'settings';
+
+function StepIndicator({
+    step,
+    canOpenSettings,
+    onOpen,
+}: {
+    readonly step: number;
+    readonly canOpenSettings: boolean;
+    readonly onOpen: (step: number) => void;
+}) {
     return (
         <nav aria-label="Progress" className="flex items-center justify-center gap-2">
             {STEPS.map((label, i) => (
-                <div key={label} className="flex items-center gap-2" aria-current={i === step ? 'step' : undefined}>
-                    <div className="flex items-center gap-1.5">
-                        <div
+                <div key={label} className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        aria-current={i === step ? 'step' : undefined}
+                        disabled={i === step || (i === 1 && !canOpenSettings)}
+                        onClick={() => onOpen(i)}
+                        className="flex items-center gap-1.5 rounded-md disabled:cursor-default enabled:hover:underline"
+                    >
+                        <span
+                            aria-hidden
                             className={`flex size-6 items-center justify-center rounded-full text-xs font-medium ${
                                 i <= step ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground'
                             }`}
                         >
                             {i + 1}
-                        </div>
+                        </span>
                         <span className={`text-sm ${i <= step ? 'font-medium' : 'text-muted-foreground'}`}>{label}</span>
-                    </div>
+                    </button>
                     {i < STEPS.length - 1 && <div className="h-px w-8 bg-border" />}
                 </div>
             ))}
@@ -249,8 +268,32 @@ export function PluginWizard<P extends WizardPlugin>({
     creating,
     onCreate,
 }: PluginWizardProps<P>) {
-    const [step, setStep] = useState(0);
+    const [params, setParams] = useSearchParams();
+    const navigate = useNavigate();
     const [selected, setSelected] = useState<P | null>(null);
+    const settingsInUrl = params.get(STEP_PARAM) === SETTINGS_STEP;
+    // The pick does not survive a reload, so a reload on the settings shows the plugin list.
+    const step = settingsInUrl && selected ? 1 : 0;
+    useEffect(() => {
+        if (settingsInUrl && !selected) {
+            setParams(
+                previous => {
+                    const next = new URLSearchParams(previous);
+                    next.delete(STEP_PARAM);
+                    return next;
+                },
+                { replace: true },
+            );
+        }
+    }, [settingsInUrl, selected, setParams]);
+    const openSettings = () =>
+        setParams(previous => {
+            const next = new URLSearchParams(previous);
+            next.set(STEP_PARAM, SETTINGS_STEP);
+            return next;
+        });
+    // The settings entry always follows the plugin list entry, so a step back pops it.
+    const openPlatform = () => navigate(-1);
     const [filter, setFilter] = useState('');
     const { data: schema, error: loadError } = useQuery({
         queryKey: [schemaKey, selected?.id],
@@ -276,7 +319,7 @@ export function PluginWizard<P extends WizardPlugin>({
                     <h1>{title}</h1>
                     <p className="text-sm text-muted-foreground">{step === 0 ? pickDescription : configureDescription}</p>
                 </div>
-                <StepIndicator step={step} />
+                <StepIndicator step={step} canOpenSettings={!!selected} onOpen={i => (i === 0 ? openPlatform() : openSettings())} />
                 {step === 0 ? (
                     pluginsError ? (
                         <ErrorPanel description={`Could not load the available ${noun}.`} error={pluginsError} />
@@ -315,7 +358,7 @@ export function PluginWizard<P extends WizardPlugin>({
                                 </div>
                             )}
                             <div className="flex items-center justify-end">
-                                <Button type="button" disabled={!selected} onClick={() => setStep(1)}>
+                                <Button type="button" disabled={!selected} onClick={openSettings}>
                                     Next
                                     <ArrowRightIcon aria-hidden />
                                 </Button>
@@ -325,7 +368,7 @@ export function PluginWizard<P extends WizardPlugin>({
                 ) : schemaError ? (
                     <div className="flex flex-col gap-4">
                         <ErrorPanel description="Could not load the plugin configuration form." error={schemaError} />
-                        <Button type="button" variant="outline" className="self-start" onClick={() => setStep(0)}>
+                        <Button type="button" variant="outline" className="self-start" onClick={openPlatform}>
                             <ArrowLeftIcon aria-hidden />
                             Back
                         </Button>
@@ -339,7 +382,7 @@ export function PluginWizard<P extends WizardPlugin>({
                         adapted={adapted}
                         extraFields={extraFields}
                         creating={creating}
-                        onBack={() => setStep(0)}
+                        onBack={openPlatform}
                         onCreate={onCreate}
                     />
                 )}

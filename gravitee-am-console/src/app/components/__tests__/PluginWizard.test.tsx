@@ -16,7 +16,7 @@
 import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { LicenseScope } from '../../../lib/session/license';
 import { PluginWizard, type WizardPlugin } from '../PluginWizard';
 
@@ -26,6 +26,11 @@ const getSchema = vi.fn();
 const SMTP: WizardPlugin = { id: 'smtp', name: 'SMTP', labels: ['mail'] };
 const HTTP: WizardPlugin = { id: 'http', name: 'HTTP' };
 const KAFKA: WizardPlugin = { id: 'kafka', name: 'Kafka', feature: 'am-reporter-kafka' };
+
+function BrowserBack() {
+    const navigate = useNavigate();
+    return <button onClick={() => navigate(-1)}>Browser back</button>;
+}
 
 function renderWizard(plugins: WizardPlugin[] = [SMTP]) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -48,6 +53,7 @@ function renderWizard(plugins: WizardPlugin[] = [SMTP]) {
                                 creating={false}
                                 onCreate={onCreate}
                             />
+                            <BrowserBack />
                         </TooltipProvider>
                     </LayoutSlotsProvider>
                 </MemoryRouter>
@@ -144,6 +150,34 @@ describe('PluginWizard', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
         expect(screen.getByRole('radio', { name: 'SMTP' })).toHaveAttribute('aria-checked', 'true');
+    });
+
+    it('goes back to the plugin list with the browser back, and a new pick resets the settings', async () => {
+        renderWizard([SMTP, HTTP]);
+
+        fireEvent.click(await screen.findByRole('radio', { name: 'SMTP' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Mail' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Browser back' }));
+        expect(screen.getByRole('radio', { name: 'SMTP' })).toHaveAttribute('aria-checked', 'true');
+        fireEvent.click(screen.getByRole('radio', { name: 'HTTP' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+        expect(await screen.findByRole('textbox', { name: 'Name' })).toHaveValue('');
+        expect(getSchema).toHaveBeenLastCalledWith(HTTP);
+    });
+
+    it('opens a step from its label once a plugin is picked', async () => {
+        renderWizard();
+
+        expect(await screen.findByRole('button', { name: 'Settings' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('radio', { name: 'SMTP' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+        expect(await screen.findByRole('textbox', { name: 'Name' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Platform' }));
+
+        expect(screen.getByRole('radio', { name: 'SMTP' })).toHaveAttribute('aria-checked', 'true');
+        expect(screen.queryByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
     });
 
     it('shows a field again when its unset-or-equals condition holds after a toggle', async () => {
