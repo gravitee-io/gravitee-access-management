@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { MAPI_DATA_SEED } from './seed';
+import { RAR_PERMISSIONS_SEED } from './rar-permissions-seed';
 import { TOKEN_EXCHANGE_SEED } from './token-exchange-seed';
 import { WEBAUTHN_SEED } from './webauthn-seed';
 import { MigrationSeed } from './version-range';
@@ -22,4 +23,4 @@ import { MigrationSeed } from './version-range';
  * Every migration data set, in seeding order. A version seeds each data set one of whose variants
  * covers it; register a new data set here once its seed is declared.
  */
-export const MIGRATION_SEEDS: MigrationSeed<any>[] = [MAPI_DATA_SEED, TOKEN_EXCHANGE_SEED, WEBAUTHN_SEED];
+export const MIGRATION_SEEDS: MigrationSeed<any>[] = [MAPI_DATA_SEED, TOKEN_EXCHANGE_SEED, WEBAUTHN_SEED, RAR_PERMISSIONS_SEED];
