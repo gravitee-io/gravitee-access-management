@@ -1569,6 +1569,73 @@ public class TokenExchangeServiceImplTest {
     }
 
     @Test
+    public void shouldImpersonateBoundUserWithoutAdditionalInformation() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+        String userEmail = "john@example.com";
+
+        List<UserBindingCriterion> criteria = List.of(criterion("email", "{#token['email']}"));
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", userEmail), criteria);
+        service = createService(List.of(trustedValidator));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setEmail(userEmail);
+
+        when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(domainUser)).thenReturn(Single.just(domainUser));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithTokenExchangeEnabled();
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+        assertThat(result.user().getAdditionalInformation())
+                .containsEntry(Claims.CLIENT_ID, "client-id")
+                .containsEntry("token_exchange", true)
+                .containsEntry("delegation", false);
+    }
+
+    @Test
+    public void shouldDelegateForBoundUserWithoutAdditionalInformation() throws Exception {
+        String externalIssuer = "https://external-idp.example.com";
+        String userEmail = "john@example.com";
+
+        List<UserBindingCriterion> criteria = List.of(criterion("email", "{#token['email']}"));
+        TokenValidator trustedValidator = trustedIssuerValidator(externalIssuer, Map.of("email", userEmail), criteria);
+        service = createService(List.of(trustedValidator, new FixedSubjectTokenValidator()));
+
+        User domainUser = new User();
+        domainUser.setId("domain-user-id");
+        domainUser.setEmail(userEmail);
+
+        when(userGatewayService.findByCriteria(any())).thenReturn(Single.just(List.of(domainUser)));
+        when(userGatewayService.enhance(domainUser)).thenReturn(Single.just(domainUser));
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(buildDelegationParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
+
+        Domain domain = domainWithDelegation();
+        domain.getTokenExchangeSettings().setAllowedSubjectTokenTypes(List.of(TokenType.JWT));
+        Client client = new Client();
+        client.setClientId("client-id");
+
+        var result = service.exchange(tokenRequest, client, domain).blockingGet();
+
+        assertThat(result.user().getId()).isEqualTo("domain-user-id");
+        assertThat(result.user().getAdditionalInformation())
+                .containsEntry(Claims.CLIENT_ID, "client-id")
+                .containsEntry("token_exchange", true)
+                .containsEntry("delegation", true);
+    }
+
+    @Test
     public void shouldFailWhenUserBindingEnabledAndNoUserFound() throws Exception {
         String externalIssuer = "https://external-idp.example.com";
 
