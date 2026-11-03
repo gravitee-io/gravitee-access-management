@@ -134,20 +134,14 @@ public class UriBuilderRequest {
                 .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
-    /**
-     * Resolves the scheme from X-Forwarded-Proto header or falls back to request scheme
-     */
     private static String resolveScheme(HttpServerRequest request) {
-        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
+        String scheme = firstHeaderValue(request, HttpHeaders.X_FORWARDED_PROTO);
         return (scheme != null && !scheme.isEmpty()) ? scheme : request.scheme();
     }
 
-    /**
-     * Resolves host and port with proper precedence: Host header port takes precedence over X-Forwarded headers
-     */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
         String requestHost = request.host();
-        String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
+        String xForwardedHost = firstHeaderValue(request, HttpHeaders.X_FORWARDED_HOST);
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))
                 .orElse(requestHost);
@@ -166,20 +160,12 @@ public class UriBuilderRequest {
     }
 
     /**
-     * Resolves the port to use based on HTTP header precedence.
-     * Precedence: X-Forwarded-Port (if non-default) > X-Forwarded-Host port > Host header port
-     *
-     * @param request the HTTP request
-     * @param xForwardedHost the X-Forwarded-Host header value
-     * @param requestHost the Host header value
-     * @param scheme the request scheme (http/https)
-     * @return the resolved port string, or null if no valid port found
+     * Precedence: X-Forwarded-Port (if non-default) > X-Forwarded-Host port > Host header port, or null when none applies.
      */
     private static String resolvePort(HttpServerRequest request, String xForwardedHost, String requestHost, String scheme) {
         boolean isLegacyMode = StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts();
 
-        // Precedence: X-Forwarded-Port (if non-default) > X-Forwarded-Host port > Host header port
-        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
+        String forwardedPort = firstHeaderValue(request, HttpHeaders.X_FORWARDED_PORT);
         if (forwardedPort != null && !isDefaultPort(forwardedPort, scheme)) {
             return forwardedPort;
         }
@@ -189,7 +175,6 @@ public class UriBuilderRequest {
             return xForwardedHostPort;
         }
         
-        // Only use Host header port if no X-Forwarded-Host
         if (xForwardedHost == null || xForwardedHost.isEmpty()) {
             return resolvePortFromHostString(requestHost, scheme, isLegacyMode);
         }
@@ -203,6 +188,14 @@ public class UriBuilderRequest {
             .map(h -> h.split(":")[1])
             .filter(port -> !isDefaultPort(port, scheme) || isLegacyMode)
             .orElse(null);
+    }
+
+    /**
+     * A proxy chain appends one comma-separated entry per hop.
+     */
+    private static String firstHeaderValue(HttpServerRequest request, String name) {
+        String value = request.getHeader(name);
+        return value == null ? null : value.split(",", 2)[0].trim();
     }
 
     /**
