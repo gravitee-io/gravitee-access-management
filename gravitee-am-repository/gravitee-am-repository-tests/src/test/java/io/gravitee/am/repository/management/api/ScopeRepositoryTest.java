@@ -18,11 +18,13 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.AbstractManagementTest;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +38,11 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 public class ScopeRepositoryTest extends AbstractManagementTest {
+    private static final Map<String, List<String>> EXPECTED_CLAIMS_BY_KEY = Map.of(
+            "scope-a", List.of("claim-a1", "claim-a2"),
+            "scope-b", List.of("claim-b1"),
+            "scope-c", List.of());
+
     @Autowired
     private ScopeRepository scopeRepository;
 
@@ -276,5 +283,83 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
             testObserver.assertNoErrors();
             testObserver.assertValue(scopes -> scopes.getData().stream().map(Scope::getKey).toList().equals(expectedKeys));
         });
+    }
+
+    @Test
+    public void shouldFindByDomainWithClaimsOfEachScope() {
+        String domain = createScopesWithDistinctClaims();
+
+        TestObserver<Page<Scope>> testObserver = scopeRepository.findByDomain(domain, 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> claimsByKey(page.getData()).equals(EXPECTED_CLAIMS_BY_KEY));
+    }
+
+    @Test
+    public void shouldSearchWithClaimsOfEachScope() {
+        String domain = createScopesWithDistinctClaims();
+
+        TestObserver<Page<Scope>> testObserver = scopeRepository.search(domain, "scope*", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> claimsByKey(page.getData()).equals(EXPECTED_CLAIMS_BY_KEY));
+    }
+
+    @Test
+    public void shouldFindByDomainAndKeysWithClaimsOfEachScope() {
+        String domain = createScopesWithDistinctClaims();
+
+        TestObserver<List<Scope>> testObserver = scopeRepository.findByDomainAndKeys(domain, List.copyOf(EXPECTED_CLAIMS_BY_KEY.keySet())).toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(scopes -> claimsByKey(scopes).equals(EXPECTED_CLAIMS_BY_KEY));
+    }
+
+    @Test
+    public void shouldFindByDomainWithClaimsOfEachScopeAcrossClaimBatches() {
+        String domain = UUID.randomUUID().toString();
+        int scopeCount = 501;
+        Flowable.range(0, scopeCount)
+                .concatMapSingle(i -> {
+                    Scope scope = new Scope();
+                    scope.setDomain(domain);
+                    scope.setKey("scope-" + i);
+                    scope.setName("scope-" + i);
+                    scope.setClaims(List.of("claim-" + i));
+                    return scopeRepository.create(scope);
+                })
+                .ignoreElements()
+                .blockingAwait();
+
+        TestObserver<Page<Scope>> testObserver = scopeRepository.findByDomain(domain, 0, scopeCount).test();
+        testObserver.awaitDone(30, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(page -> page.getData().size() == scopeCount && page.getData().stream()
+                .allMatch(scope -> scope.getClaims().equals(List.of(scope.getKey().replace("scope-", "claim-")))));
+    }
+
+    private String createScopesWithDistinctClaims() {
+        String domain = UUID.randomUUID().toString();
+        EXPECTED_CLAIMS_BY_KEY.forEach((key, claims) -> {
+            Scope scope = new Scope();
+            scope.setDomain(domain);
+            scope.setKey(key);
+            scope.setName(key);
+            scope.setClaims(claims);
+            scopeRepository.create(scope).blockingGet();
+        });
+        return domain;
+    }
+
+    private static Map<String, List<String>> claimsByKey(Collection<Scope> scopes) {
+        return scopes.stream().collect(Collectors.toMap(Scope::getKey, scope -> scope.getClaims().stream().sorted().toList()));
     }
 }
