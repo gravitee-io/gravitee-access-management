@@ -22,6 +22,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -31,4 +33,7 @@ public interface SpringScopeClaimRepository extends RxJava3CrudRepository<JdbcSc
 
     @Query("select * from scope_claims c where c.scope_id = :scope")
     Flowable<JdbcScope.Claims> findByScopeId(@Param("scope")String scope);
+
+    @Query("select * from scope_claims c where c.scope_id in (:scopes)")
+    Flowable<JdbcScope.Claims> findByScopeIdIn(@Param("scopes") List<String> scopes);
 }
