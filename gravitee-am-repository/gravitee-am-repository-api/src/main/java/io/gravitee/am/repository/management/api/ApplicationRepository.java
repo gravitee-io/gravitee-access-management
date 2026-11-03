@@ -76,6 +76,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
 
     Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant);
 
+    Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type);
+
     Flowable<Application> findByDomainAndManagedBy(String domain, ManagedBy managedBy);
 
     Flowable<Application> findByIdIn(List<String> ids);

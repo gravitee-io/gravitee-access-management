@@ -167,7 +167,7 @@ export class AuthorizationDetailTypeApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization
+   * The type is first removed from every application of the domain that enables it; if any application cannot be updated, the type is not deleted. User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization
    * Delete an authorization detail type
    */
   async deleteAuthorizationDetailTypeRaw(
@@ -232,7 +232,7 @@ export class AuthorizationDetailTypeApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization
+   * The type is first removed from every application of the domain that enables it; if any application cannot be updated, the type is not deleted. User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization
    * Delete an authorization detail type
    */
   async deleteAuthorizationDetailType(

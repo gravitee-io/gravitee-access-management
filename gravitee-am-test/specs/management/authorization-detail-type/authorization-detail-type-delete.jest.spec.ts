@@ -17,10 +17,16 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { setup } from '../../test-fixture';
 import { jira } from '@specs-utils/jira';
 import {
+  APPLICATION_UPDATED_AUDIT,
+  applicationUpdatesOf,
   AuthorizationDetailTypeFixture,
+  createTestApplicationWithTypes,
   newType,
+  readApplicationTypes,
   setupAuthorizationDetailTypeFixture,
+  SYSTEM_ACTOR,
   uniqueType,
+  waitForApplicationUpdateOf,
   waitForAuditReporter,
 } from './fixtures/authorization-detail-type-fixture';
 import {
@@ -35,6 +41,9 @@ import { findOrganizationRoleByName } from '@management-commands/role-management
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
 import { ListRolesTypeEnum } from '@management-apis/RoleApi';
 import type { AuthorizationDetailType } from '@management-models/AuthorizationDetailType';
+import { Application } from '@management-models/Application';
+import { ApplicationAuthorizationDetailTypeSettings } from '@management-models/ApplicationAuthorizationDetailTypeSettings';
+import { Domain } from '@management-models/Domain';
 import { createPersona } from '../permissions/fixtures/rbac-fixture';
 
 setup();
@@ -42,9 +51,11 @@ setup();
 const DELETED_AUDIT = 'AUTHORIZATION_DETAIL_TYPE_DELETED';
 
 let fixture: AuthorizationDetailTypeFixture;
+let keptType: string;
 
 beforeAll(async () => {
   fixture = await setupAuthorizationDetailTypeFixture();
+  keptType = (await createAuthorizationDetailType(fixture.domain.id, fixture.accessToken, newType(uniqueType('kept_type')))).type;
 });
 
 afterAll(async () => {
@@ -53,8 +64,16 @@ afterAll(async () => {
   }
 });
 
-const createType = (type = uniqueType()): Promise<AuthorizationDetailType> =>
-  createAuthorizationDetailType(fixture.domain.id, fixture.accessToken, newType(type));
+const createType = (type = uniqueType(), domain: Domain = fixture.domain): Promise<AuthorizationDetailType> =>
+  createAuthorizationDetailType(domain.id, fixture.accessToken, newType(type));
+
+const deleteType = async (existing: AuthorizationDetailType): Promise<number> =>
+  (await deleteAuthorizationDetailTypeRaw(fixture.domain.id, fixture.accessToken, existing.id)).raw.status;
+
+const appWithTypes = (settings: ApplicationAuthorizationDetailTypeSettings[], domain?: Domain): Promise<Application> =>
+  createTestApplicationWithTypes(fixture, settings, domain);
+
+const readTypes = (app: Application) => readApplicationTypes(fixture, app);
 
 const read = (existing: AuthorizationDetailType) => getAuthorizationDetailType(fixture.domain.id, fixture.accessToken, existing.id);
 
@@ -78,6 +97,57 @@ describe('Delete', () => {
 
     expect(recreated.type).toEqual(existing.type);
     expect(recreated.id).not.toEqual(existing.id);
+  });
+});
+
+describe('Removal from applications', () => {
+  it(jira`should remove the type and its expiry override from every application that has it ${'AM-8030'}`, async () => {
+    const deleted = await createType();
+    const withOtherType = await appWithTypes([
+      { type: deleted.type, expiresIn: 600 },
+      { type: keptType, expiresIn: 60 },
+    ]);
+    const withTypeOnly = await appWithTypes([{ type: deleted.type }]);
+
+    expect(await deleteType(deleted)).toEqual(204);
+
+    expect(await readTypes(withOtherType)).toEqual([{ type: keptType, expiresIn: 60 }]);
+    expect(await readTypes(withTypeOnly)).toEqual([]);
+  });
+
+  it(jira`should leave an application without the type unchanged ${'AM-8030'}`, async () => {
+    const deleted = await createType();
+    await appWithTypes([{ type: deleted.type }]);
+    const appWithoutType = await appWithTypes([{ type: keptType, expiresIn: 60 }]);
+
+    expect(await deleteType(deleted)).toEqual(204);
+
+    expect(await readTypes(appWithoutType)).toEqual([{ type: keptType, expiresIn: 60 }]);
+  });
+
+  it(jira`should leave an application of another domain with the same type unchanged ${'AM-8030'}`, async () => {
+    const other = await fixture.otherDomain();
+    const deleted = await createType();
+    const sameTypeElsewhere = await createType(deleted.type, other);
+    const otherApp = await appWithTypes([{ type: deleted.type, expiresIn: 600 }], other);
+
+    expect(await deleteType(deleted)).toEqual(204);
+
+    expect(await readTypes(otherApp)).toEqual([{ type: deleted.type, expiresIn: 600 }]);
+    expect(await getAuthorizationDetailType(other.id, fixture.accessToken, sameTypeElsewhere.id)).toEqual(sameTypeElsewhere);
+  });
+
+  it(jira`should not enable a re-created type on the applications it was removed from ${'AM-8030'}`, async () => {
+    const deleted = await createType();
+    const app = await appWithTypes([
+      { type: deleted.type, expiresIn: 600 },
+      { type: keptType, expiresIn: 60 },
+    ]);
+    await deleteType(deleted);
+
+    await createType(deleted.type);
+
+    expect(await readTypes(app)).toEqual([{ type: keptType, expiresIn: 60 }]);
   });
 });
 
@@ -121,6 +191,37 @@ describe('Audit', () => {
       actor: { alternativeId: process.env.AM_ADMIN_USERNAME },
       target: { id: existing.id, type: 'AUTHORIZATION_DETAIL_TYPE', alternativeId: existing.type },
     });
+  });
+
+  it(jira`should audit an update by the system for each application the type is removed from ${'AM-8024'}`, async () => {
+    const deleted = await createType();
+    const first = await appWithTypes([{ type: deleted.type, expiresIn: 600 }]);
+    const second = await appWithTypes([{ type: deleted.type }, { type: keptType }]);
+    const known = await auditIdsOfType(fixture.domain.id, fixture.accessToken, APPLICATION_UPDATED_AUDIT);
+
+    await deleteType(deleted);
+
+    for (const app of [first, second]) {
+      expect(await waitForApplicationUpdateOf(fixture, app, known, SYSTEM_ACTOR)).toMatchObject({
+        referenceType: 'domain',
+        referenceId: fixture.domain.id,
+        actor: { id: SYSTEM_ACTOR, type: SYSTEM_ACTOR, alternativeId: SYSTEM_ACTOR, displayName: SYSTEM_ACTOR },
+        target: { id: app.id, type: 'APPLICATION' },
+      });
+    }
+  });
+
+  it(jira`should not audit an update of an application without the type ${'AM-8024'}`, async () => {
+    const deleted = await createType();
+    const changed = await appWithTypes([{ type: deleted.type }]);
+    const unchanged = await appWithTypes([{ type: keptType }]);
+    const known = await auditIdsOfType(fixture.domain.id, fixture.accessToken, APPLICATION_UPDATED_AUDIT);
+
+    await deleteType(deleted);
+
+    // the changed application's audit arrived, so a cleanup audit of the other would have too
+    await waitForApplicationUpdateOf(fixture, changed, known, SYSTEM_ACTOR);
+    expect(await applicationUpdatesOf(fixture, unchanged, known, SYSTEM_ACTOR)).toEqual([]);
   });
 });
 
