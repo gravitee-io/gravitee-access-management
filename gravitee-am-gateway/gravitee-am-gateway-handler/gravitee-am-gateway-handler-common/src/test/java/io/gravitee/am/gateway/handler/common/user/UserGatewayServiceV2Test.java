@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImplV2;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -243,6 +244,28 @@ public class UserGatewayServiceV2Test {
         observer.assertError(RuntimeException.class);
 
         verify(userStore, never()).add(any());
+    }
+
+    @Test
+    public void shouldIgnoreConnectionError_whenFindByUsernameAndSourceIgnoreCase_resilientMode_true() {
+        ReflectionTestUtils.setField(cut, "resilientMode", true);
+        ReflectionTestUtils.setField(cut, "domain", new Domain("domain-id"));
+        when(userRepository.findByUsernameAndSourceIgnoreCase(any(), any(), any())).thenReturn(Maybe.error(new RepositoryConnectionException(new RuntimeException())));
+
+        cut.findByUsernameAndSourceIgnoreCase("John", "idp").test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoValues();
+    }
+
+    @Test
+    public void shouldPropagateConnectionError_whenFindByUsernameAndSourceIgnoreCase_resilientMode_false() {
+        ReflectionTestUtils.setField(cut, "domain", new Domain("domain-id"));
+        when(userRepository.findByUsernameAndSourceIgnoreCase(any(), any(), any())).thenReturn(Maybe.error(new RepositoryConnectionException(new RuntimeException())));
+
+        cut.findByUsernameAndSourceIgnoreCase("John", "idp").test()
+                .awaitDone(5, TimeUnit.SECONDS)
+                .assertError(RepositoryConnectionException.class);
     }
 
     @Test
