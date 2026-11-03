@@ -36,7 +36,7 @@ with the `migrate-area` skill in `../docs/agent-standards/skills/migrate-area/`.
 
 ## 1. Commands
 
-The console commands are in the "Console (React)" section of `../docs/agent-standards/commands.md`.
+Before you commit, run `yarn typecheck && yarn lint && yarn test && yarn build` in `gravitee-am-console/`. The full command list is in the "Console (React)" section of `../docs/agent-standards/commands.md`.
 
 ## 2. Stack
 

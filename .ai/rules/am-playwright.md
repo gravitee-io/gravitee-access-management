@@ -7,7 +7,7 @@ dirs: [gravitee-am-test/playwright]
 
 # AM Playwright tests
 
-Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follow `../GUIDELINES.md` instead. Wrong-and-right examples for every rule here, fixture and helper patterns, WebAuthn, Angular traps, config defaults and the flakiness table are in [GUIDELINES.md](GUIDELINES.md). If this file and `GUIDELINES.md` disagree, this file wins; fix `GUIDELINES.md`. Setup and running are in [README.md](README.md). Review uses `.github/instructions/am-playwright-review.instructions.md` (a repository-root path).
+Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follow `../GUIDELINES.md` instead. Wrong-and-right examples for every rule here, fixture and helper patterns, WebAuthn, Angular traps, config defaults and the flakiness table are in [GUIDELINES.md](GUIDELINES.md). If this file and `GUIDELINES.md` disagree, this file wins; fix `GUIDELINES.md`. Setup and running are in [README.md](README.md). To run the tests against a local stack, start it from `docker/local-stack/` with `./local-stack.sh up` (add `--full` for the Console UI and the services the Playwright and gateway Jest suites need); the `local-stack` skill has the other options. Review uses `.github/instructions/am-playwright-review.instructions.md` (a repository-root path).
 
 ## Assertions
 
