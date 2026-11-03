@@ -203,6 +203,31 @@ describe('adaptAmSchema', () => {
         });
     });
 
+    it('renders an array of enum items as a multiselect labelled by its title map, as the PKCS#12 certificate declares it', () => {
+        const { schema } = adaptAmSchema({
+            type: 'object',
+            properties: {
+                use: {
+                    type: 'array',
+                    title: 'Usage',
+                    items: { type: 'string', enum: ['sig', 'enc', 'mtls'] },
+                    'x-schema-form': { titleMap: { sig: 'Signature', enc: 'Encryption', mtls: 'mTLS' } },
+                },
+            },
+        });
+
+        expect(schema.properties?.use).toEqual({
+            type: 'array',
+            title: 'Usage',
+            uniqueItems: true,
+            items: {
+                type: 'string',
+                enum: ['sig', 'enc', 'mtls'],
+                gioConfig: { enumLabelMap: { sig: 'Signature', enc: 'Encryption', mtls: 'mTLS' } },
+            },
+        });
+    });
+
     it('reads the widget and its options from x-schema-form, as the Kafka reporter declares them', () => {
         const { schema, dictionaryEndpoints, unsupported } = adaptAmSchema(
             {

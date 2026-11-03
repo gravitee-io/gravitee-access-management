@@ -217,9 +217,16 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
     if (node.readonly === true) {
         adapted.readOnly = true;
     }
+    const enumItems = adapted.type === 'array' && Array.isArray((adapted.items as SchemaNode | undefined)?.enum);
+    // angular-schema-form renders an array of enum items as checkboxes. Graphene has no checkbox group, so the field is a multiselect.
+    if (enumItems) {
+        adapted.uniqueItems = true;
+    }
     const titleMap = formOption(node, 'titleMap') as Record<string, string> | undefined;
     if (titleMap) {
-        adapted.gioConfig = { ...(adapted.gioConfig as SchemaNode | undefined), enumLabelMap: titleMap };
+        // Graphene reads the labels of a multiselect from its items.
+        const target = enumItems ? (adapted.items as SchemaNode) : adapted;
+        target.gioConfig = { ...(target.gioConfig as SchemaNode | undefined), enumLabelMap: titleMap };
     }
     if (node.condition !== undefined) {
         const displayIf = displayIfOf(node.condition);
