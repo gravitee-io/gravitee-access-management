@@ -71,8 +71,8 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
-    @Value("${handlers.request.allowForwardHeaders:false}")
-    private boolean allowForwardHeaders;
+    @Value("${handlers.request.allowXForwardedHeaders:false}")
+    private boolean allowXForwardedHeaders;
 
     @Override
     public void doStart() throws Exception {
@@ -154,7 +154,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Override
     public void afterPropertiesSet() {
         router = Router.router(vertx);
-        if (allowForwardHeaders) {
+        if (allowXForwardedHeaders) {
             router.allowForward(AllowForwardHeaders.X_FORWARD);
         }
         router.route().handler(transactionHandlerFactory.create());
