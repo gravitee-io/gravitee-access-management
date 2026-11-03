@@ -28,7 +28,7 @@ vi.mock('../../../lib/api/http', () => ({ http: vi.fn() }));
 
 const SCHEMA = {
     type: 'object',
-    required: ['content', 'graviteeResource'],
+    required: ['content'],
     properties: {
         content: { type: 'string', title: 'Keystore file', widget: 'file' },
         factorType: { title: 'Factor type', default: 'EMAIL' },
@@ -108,8 +108,48 @@ describe('PluginSchemaForm', () => {
 
         await userEvent.click(await screen.findByRole('button', { name: 'Create' }));
 
-        expect(await screen.findAllByText('This field is required')).not.toHaveLength(0);
+        expect(await screen.findByText('This field is required')).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('warns the developer about the fields it shows without their Angular widget', () => {
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: { script: { type: 'string', 'x-schema-form': { type: 'codemirror' } } },
+        });
+        function Unsupported() {
+            const form = useForm<Values>({ defaultValues: { config: {} } });
+            return <PluginSchemaForm adapted={adapted} control={form.control} name="config" />;
+        }
+        renderWithGraphene(<Unsupported />);
+
+        expect(screen.getByText('script (widget "codemirror")')).toBeInTheDocument();
+    });
+});
+
+describe('pluginSchemaResolver', () => {
+    const adapted = adaptAmSchema({
+        type: 'object',
+        properties: { authentication: { type: 'boolean' }, username: { type: 'string' } },
+        allOf: [{ if: { properties: { authentication: { const: true } } }, then: { required: ['username'] } }],
+    });
+    const resolve = (config: Record<string, unknown>) =>
+        pluginSchemaResolver<Values>(adapted, 'config')({ config }, undefined, {
+            criteriaMode: 'firstError',
+            fields: {},
+            shouldUseNativeValidation: false,
+        });
+
+    it('applies the if/then blocks of allOf, which Graphene drops', async () => {
+        expect((await resolve({ authentication: true })).errors).toEqual({
+            config: { username: expect.objectContaining({ type: 'required', message: 'This field is required' }) },
+        });
+    });
+
+    it('passes when the if does not hold', async () => {
+        const config = { authentication: false };
+
+        expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
     });
 });
 
@@ -126,6 +166,30 @@ describe('PluginSchemaForm in edit mode', () => {
         renderWithGraphene(<Edit />);
 
         expect(screen.getByText('File currently saved: keystore.p12')).toBeInTheDocument();
+    });
+
+    it('drops the picked file when the form resets', async () => {
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: { content: { type: 'string', title: 'Keystore file', widget: 'file' } },
+        });
+        function Edit() {
+            const form = useForm<Values>({ defaultValues: { config: { content: '/opt/graviteeio/certs/keystore.p12' } } });
+            return (
+                <>
+                    <PluginSchemaForm adapted={adapted} control={form.control} name="config" />
+                    <Button onClick={() => form.reset()}>Discard</Button>
+                </>
+            );
+        }
+        renderWithGraphene(<Edit />);
+
+        await userEvent.upload(screen.getByLabelText(/Keystore file/), new File(['new'], 'new.p12'));
+        await waitFor(() => expect(screen.queryByText(/File currently saved/)).not.toBeInTheDocument());
+        await userEvent.click(screen.getByRole('button', { name: 'Discard' }));
+
+        expect(await screen.findByText('File currently saved: keystore.p12')).toBeInTheDocument();
+        expect(screen.queryByText('new.p12')).not.toBeInTheDocument();
     });
 });
 

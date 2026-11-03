@@ -34,7 +34,7 @@ import {
 } from '@gravitee/graphene-core';
 import { ArrowLeftIcon, ArrowRightIcon, DatabaseIcon, LockIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { useQuery } from '@tanstack/react-query';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useMemo, useState } from 'react';
 import { type Resolver, type ResolverResult, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { type AdaptedSchema, type SchemaResource, withSchemaDefaults } from '../../lib/forms/am-schema';
@@ -114,13 +114,32 @@ function StepIndicator({ step }: { readonly step: number }) {
     );
 }
 
+const ARROW_STEPS: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+
+/** The radio group keys: an arrow moves the focus and selects, except a locked plugin, which opens the upgrade dialog on a click. */
+function moveSelection(event: KeyboardEvent<HTMLButtonElement>) {
+    const step = ARROW_STEPS[event.key];
+    if (!step) {
+        return;
+    }
+    event.preventDefault();
+    const radios = [...(event.currentTarget.closest('[role="radiogroup"]')?.querySelectorAll<HTMLButtonElement>('[role="radio"]') ?? [])];
+    const next = radios[(radios.indexOf(event.currentTarget) + step + radios.length) % radios.length];
+    next.focus();
+    if (next.dataset.locked === undefined) {
+        next.click();
+    }
+}
+
 function PluginCard({
     plugin,
     selected,
+    focusable,
     onSelect,
 }: {
     readonly plugin: WizardPlugin;
     readonly selected: boolean;
+    readonly focusable: boolean;
     readonly onSelect: () => void;
 }) {
     const missing = useLicense().isMissing(plugin.feature);
@@ -130,8 +149,11 @@ function PluginCard({
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                tabIndex={focusable ? 0 : -1}
+                data-locked={missing || undefined}
                 aria-label={missing ? `${displayName(plugin)}, Enterprise` : displayName(plugin)}
                 onClick={onSelect}
+                onKeyDown={moveSelection}
                 className={`flex items-center gap-3 rounded-lg border border-border p-4 text-left transition-colors hover:border-primary ${
                     selected ? 'border-primary bg-primary/5 ring-2 ring-primary' : ''
                 }`}
@@ -239,6 +261,7 @@ export function PluginWizard<P extends WizardPlugin>({
     const { adapted, error: dictionaryError } = useAdaptedSchema(schema, resources);
     const schemaError = loadError ?? dictionaryError;
     const shown = (plugins ?? []).filter(plugin => matches(plugin, filter));
+    const focusableId = shown.find(plugin => plugin.id === selected?.id)?.id ?? shown[0]?.id;
 
     return (
         <PageFocused>
@@ -282,6 +305,7 @@ export function PluginWizard<P extends WizardPlugin>({
                                             key={plugin.id}
                                             plugin={plugin}
                                             selected={selected?.id === plugin.id}
+                                            focusable={plugin.id === focusableId}
                                             onSelect={() => {
                                                 setSelected(plugin);
                                                 onSelect?.(plugin);
@@ -299,7 +323,13 @@ export function PluginWizard<P extends WizardPlugin>({
                         </>
                     )
                 ) : schemaError ? (
-                    <ErrorPanel description="Could not load the plugin configuration form." error={schemaError} />
+                    <div className="flex flex-col gap-4">
+                        <ErrorPanel description="Could not load the plugin configuration form." error={schemaError} />
+                        <Button type="button" variant="outline" className="self-start" onClick={() => setStep(0)}>
+                            <ArrowLeftIcon aria-hidden />
+                            Back
+                        </Button>
+                    </div>
                 ) : !adapted ? (
                     <Spinner />
                 ) : (

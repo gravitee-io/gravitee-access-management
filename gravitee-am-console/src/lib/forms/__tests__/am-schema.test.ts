@@ -190,6 +190,56 @@ describe('adaptAmSchema', () => {
         });
     });
 
+    it('reads the widget and its options from x-schema-form, as the Kafka reporter declares them', () => {
+        const { schema, dictionaryEndpoints, unsupported } = adaptAmSchema(
+            {
+                type: 'object',
+                properties: {
+                    auditTypes: {
+                        type: 'array',
+                        title: 'Events to report',
+                        items: { type: 'string' },
+                        'x-schema-form': {
+                            type: 'graviteeMultiselect',
+                            itemsDictionaryEndpoint: '/platform/audits/events',
+                            onEmptySelectionMessage: 'Reporter accepts all event types',
+                        },
+                    },
+                    acks: { type: 'string', enum: ['0', '1'], 'x-schema-form': { type: 'select', titleMap: { 0: 'None', 1: 'Leader' } } },
+                    script: { type: 'string', 'x-schema-form': { type: 'codemirror' } },
+                },
+            },
+            { dictionaries: { '/platform/audits/events': ['USER_CREATED'] } },
+        );
+
+        expect(dictionaryEndpoints).toEqual(['/platform/audits/events']);
+        expect(schema.properties).toEqual({
+            auditTypes: {
+                type: 'array',
+                title: 'Events to report',
+                description: 'Reporter accepts all event types',
+                uniqueItems: true,
+                items: { type: 'string', enum: ['USER_CREATED'] },
+            },
+            acks: { type: 'string', enum: ['0', '1'], gioConfig: { enumLabelMap: { 0: 'None', 1: 'Leader' } } },
+            script: { type: 'string' },
+        });
+        expect(unsupported).toEqual(['script (widget "codemirror")']);
+    });
+
+    it('takes the if/then blocks out of allOf, as a schema each', () => {
+        const ifBasic = { properties: { authentication: { const: true } } };
+        const thenBasic = { required: ['username'] };
+        const { schema, conditions } = adaptAmSchema({
+            type: 'object',
+            properties: { authentication: { type: 'boolean' }, username: { type: 'string' } },
+            allOf: [{ if: ifBasic, then: thenBasic }, { required: ['authentication'] }],
+        });
+
+        expect(conditions).toEqual([{ type: 'object', if: ifBasic, then: thenBasic }]);
+        expect(schema.allOf).toEqual([{ required: ['authentication'] }]);
+    });
+
     it('takes a file field out of the schema, so the console renders it beside the schema form', () => {
         const { schema, files } = adaptAmSchema({
             type: 'object',

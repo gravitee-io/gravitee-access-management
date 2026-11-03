@@ -13,7 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { FieldDescription, FileUpload, type FileUploadItemValue, JsonSchemaForm, jsonSchemaResolver, toast } from '@gravitee/graphene-core';
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    FieldDescription,
+    FileUpload,
+    type FileUploadItemValue,
+    JsonSchemaForm,
+    jsonSchemaResolver,
+    toast,
+} from '@gravitee/graphene-core';
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { type Control, type FieldErrors, type FieldValues, type Path, type Resolver, useController } from 'react-hook-form';
@@ -68,22 +78,46 @@ export function useAdaptedSchema(
     return { adapted, error: dictionaries.error };
 }
 
-/** Adds the required check of the file fields, which the schema does not hold. */
+type ErrorTree = Record<string, unknown>;
+
+function isFieldError(node: unknown): boolean {
+    return typeof (node as ErrorTree).type === 'string';
+}
+
+/** The first error of a field wins. */
+function mergeErrors(target: ErrorTree, source: ErrorTree): ErrorTree {
+    const merged = { ...target };
+    for (const [key, value] of Object.entries(source)) {
+        const existing = merged[key];
+        merged[key] =
+            existing && !isFieldError(existing) && !isFieldError(value)
+                ? mergeErrors(existing as ErrorTree, value as ErrorTree)
+                : (existing ?? value);
+    }
+    return merged;
+}
+
+/** Adds the conditional checks and the required check of the file fields, which the schema does not hold. */
 export function pluginSchemaResolver<T extends Record<string, unknown>>(adapted: AdaptedSchema, basePath: string): Resolver<T> {
-    const schemaResolver = jsonSchemaResolver<T>(adapted.schema, { basePath });
+    const resolvers = [adapted.schema, ...adapted.conditions].map(schema => jsonSchemaResolver<T>(schema, { basePath }));
     return async (values, context, options) => {
-        const result = await schemaResolver(values, context, options);
+        const results = await Promise.all(resolvers.map(resolver => resolver(values, context, options)));
         const configuration = (values[basePath] ?? {}) as Record<string, unknown>;
         const fileErrors = Object.fromEntries(
             adapted.files
                 .filter(file => file.required && !configuration[file.key])
                 .map(file => [file.key, { type: 'required', message: REQUIRED_MESSAGE }]),
         );
-        if (Object.keys(fileErrors).length === 0) {
-            return result;
+        const errors = results.reduce((merged, result) => mergeErrors(merged, result.errors), { [basePath]: fileErrors } as ErrorTree);
+        const configurationErrors = errors[basePath] as ErrorTree;
+        // A failed `if`/`then` block also reports "must match then" at the root. Its field errors already say what is wrong.
+        if ((configurationErrors.root as ErrorTree | undefined)?.type === 'if') {
+            delete configurationErrors.root;
         }
-        const errors = { ...result.errors, [basePath]: { ...(result.errors[basePath] as object | undefined), ...fileErrors } };
-        return { values: {}, errors: errors as FieldErrors<T> };
+        if (Object.keys(configurationErrors).length === 0) {
+            delete errors[basePath];
+        }
+        return Object.keys(errors).length === 0 ? { values, errors: {} } : { values: {}, errors: errors as FieldErrors<T> };
     };
 }
 
@@ -99,7 +133,9 @@ function SchemaFileField<T extends FieldValues>({
     readonly disabled?: boolean;
 }) {
     const { field, fieldState } = useController({ control, name: `${name}.${file.key}` as Path<T> });
-    const [picked, setPicked] = useState<FileUploadItemValue>();
+    const [pick, setPick] = useState<{ readonly item: FileUploadItemValue; readonly value: string }>();
+    // A form reset changes the value, so the picked file no longer shows.
+    const picked = pick && pick.value === field.value ? pick.item : undefined;
     const saved = !picked && typeof field.value === 'string' && field.value ? field.value.split('/').pop() : undefined;
 
     return (
@@ -123,14 +159,15 @@ function SchemaFileField<T extends FieldValues>({
                 errors={fieldState.error?.message ? [fieldState.error.message] : undefined}
                 onFilesAdd={async ([added]) => {
                     try {
-                        field.onChange(await fileValue(added));
-                        setPicked({ id: added.name, file: added, status: 'success' });
+                        const value = await fileValue(added);
+                        field.onChange(value);
+                        setPick({ item: { id: added.name, file: added, status: 'success' }, value });
                     } catch {
                         toast.error(`Could not read the file ${added.name}.`);
                     }
                 }}
                 onFileRemove={() => {
-                    setPicked(undefined);
+                    setPick(undefined);
                     field.onChange('');
                 }}
             />
@@ -150,6 +187,12 @@ interface PluginSchemaFormProps<T extends FieldValues> {
 export function PluginSchemaForm<T extends FieldValues>({ adapted, control, name, disabled }: PluginSchemaFormProps<T>) {
     return (
         <div className="flex flex-col gap-4">
+            {import.meta.env.DEV && adapted.unsupported.length > 0 && (
+                <Alert variant="warning">
+                    <AlertTitle>Fields shown without their Angular widget or condition</AlertTitle>
+                    <AlertDescription>{adapted.unsupported.join(', ')}</AlertDescription>
+                </Alert>
+            )}
             {adapted.files.map(file => (
                 <SchemaFileField key={file.key} file={file} control={control} name={name} disabled={disabled} />
             ))}

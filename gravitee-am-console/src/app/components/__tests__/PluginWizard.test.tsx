@@ -115,6 +115,37 @@ describe('PluginWizard', () => {
         expect(screen.getByRole('button', { name: 'Next', hidden: true })).toBeDisabled();
     });
 
+    it('moves the selection with the arrow keys, and skips the selection of a locked plugin', async () => {
+        renderWizard([SMTP, HTTP, KAFKA]);
+
+        const smtp = await screen.findByRole('radio', { name: 'SMTP' });
+        expect(screen.getAllByRole('radio').map(radio => radio.tabIndex)).toEqual([0, -1, -1]);
+        smtp.focus();
+        fireEvent.keyDown(smtp, { key: 'ArrowDown' });
+
+        const http = screen.getByRole('radio', { name: 'HTTP' });
+        expect(http).toHaveFocus();
+        expect(http).toHaveAttribute('aria-checked', 'true');
+        expect(screen.getAllByRole('radio').map(radio => radio.tabIndex)).toEqual([-1, 0, -1]);
+        fireEvent.keyDown(http, { key: 'ArrowRight' });
+
+        expect(screen.getByRole('radio', { name: 'Kafka, Enterprise' })).toHaveFocus();
+        expect(http).toHaveAttribute('aria-checked', 'true');
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('goes back to the plugin list when the schema does not load', async () => {
+        getSchema.mockRejectedValue(new Error('Plugin not found'));
+        renderWizard();
+
+        fireEvent.click(await screen.findByRole('radio', { name: 'SMTP' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByText('Plugin not found')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+        expect(screen.getByRole('radio', { name: 'SMTP' })).toHaveAttribute('aria-checked', 'true');
+    });
+
     it('shows a field again when its unset-or-equals condition holds after a toggle', async () => {
         getSchema.mockResolvedValue({
             type: 'object',

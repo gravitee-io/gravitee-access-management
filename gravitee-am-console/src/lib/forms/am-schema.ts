@@ -39,6 +39,8 @@ export interface AmSchemaOptions {
 
 export interface AdaptedSchema {
     readonly schema: JsonSchema;
+    /** The `if`/`then` blocks of the top-level `allOf`, each as a schema. Graphene's resolver ignores them inside `allOf`. */
+    readonly conditions: readonly JsonSchema[];
     readonly files: readonly SchemaFile[];
     readonly dictionaryEndpoints: readonly string[];
     /** Dotted paths of the widgets and conditions that Graphene cannot express. */
@@ -67,9 +69,13 @@ const DROPPED_KEYWORDS = [
 
 const FORMAT_BY_WIDGET: Record<string, string> = { password: 'password', textarea: 'text' };
 
-function titleMapOf(node: SchemaNode): Record<string, string> | undefined {
-    const formOptions = node['x-schema-form'] as SchemaNode | undefined;
-    return (formOptions?.titleMap ?? node.titleMap) as Record<string, string> | undefined;
+/** angular-schema-form reads a form option from the property or from its `x-schema-form`. */
+function formOption(node: SchemaNode, key: string): unknown {
+    return node[key] ?? (node['x-schema-form'] as SchemaNode | undefined)?.[key];
+}
+
+function widgetOf(node: SchemaNode): string | undefined {
+    return (node.widget ?? (node['x-schema-form'] as SchemaNode | undefined)?.type) as string | undefined;
 }
 
 /** The Angular json-schema-form does not render a property without a type, so its value is not in the configuration. */
@@ -164,11 +170,11 @@ function applyResources(adapted: SchemaNode, resources: readonly SchemaResource[
 }
 
 function applyMultiselect(node: SchemaNode, adapted: SchemaNode, context: AdaptContext): void {
-    const emptySelectionMessage = node.onEmptySelectionMessage as string | undefined;
+    const emptySelectionMessage = formOption(node, 'onEmptySelectionMessage') as string | undefined;
     if (emptySelectionMessage) {
         adapted.description = [node.description, emptySelectionMessage].filter(Boolean).join(' ');
     }
-    const endpoint = node.itemsDictionaryEndpoint as string | undefined;
+    const endpoint = formOption(node, 'itemsDictionaryEndpoint') as string | undefined;
     if (endpoint) {
         context.dictionaryEndpoints.push(endpoint);
     }
@@ -191,7 +197,7 @@ function adaptProperties(node: SchemaNode, adapted: SchemaNode, path: string, co
 function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
 
-    const widget = node.widget as string | undefined;
+    const widget = widgetOf(node);
     if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
         adapted.items = adaptNode(node.items as SchemaNode, '', `${path}[]`, context);
     }
@@ -202,7 +208,7 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
         applyMultiselect(node, adapted, context);
     } else if (widget && FORMAT_BY_WIDGET[widget]) {
         adapted.format = FORMAT_BY_WIDGET[widget];
-    } else if (widget) {
+    } else if (widget && widget !== 'select') {
         context.unsupported.push(`${path} (widget "${widget}")`);
     }
     if (node.sensitive === true && adapted.format === undefined) {
@@ -211,7 +217,7 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
     if (node.readonly === true) {
         adapted.readOnly = true;
     }
-    const titleMap = titleMapOf(node);
+    const titleMap = formOption(node, 'titleMap') as Record<string, string> | undefined;
     if (titleMap) {
         adapted.gioConfig = { ...(adapted.gioConfig as SchemaNode | undefined), enumLabelMap: titleMap };
     }
@@ -235,7 +241,7 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
     const properties = (schema.properties ?? {}) as Record<string, SchemaNode>;
     const required = Array.isArray(schema.required) ? (schema.required as string[]) : [];
     const files: SchemaFile[] = Object.entries(properties)
-        .filter(([, property]) => property.widget === 'file')
+        .filter(([, property]) => widgetOf(property) === 'file')
         .map(([key, property]) => ({
             key,
             title: property.title as string | undefined,
@@ -247,7 +253,23 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
     if (schema.properties) {
         adaptProperties(schema, adapted, '', context, key => files.some(file => file.key === key));
     }
-    return { schema: adapted as JsonSchema, files, dictionaryEndpoints: context.dictionaryEndpoints, unsupported: context.unsupported };
+    const allOf = Array.isArray(schema.allOf) ? (schema.allOf as SchemaNode[]) : [];
+    const conditions = allOf.filter(entry => entry.if !== undefined).map(entry => ({ type: 'object', ...entry }) as JsonSchema);
+    if (conditions.length > 0) {
+        const rest = allOf.filter(entry => entry.if === undefined);
+        if (rest.length > 0) {
+            adapted.allOf = rest;
+        } else {
+            delete adapted.allOf;
+        }
+    }
+    return {
+        schema: adapted as JsonSchema,
+        conditions,
+        files,
+        dictionaryEndpoints: context.dictionaryEndpoints,
+        unsupported: context.unsupported,
+    };
 }
 
 /** An undefined value keeps its default. */

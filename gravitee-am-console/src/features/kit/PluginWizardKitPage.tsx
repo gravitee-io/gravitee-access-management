@@ -52,7 +52,6 @@ function isKind(value: string | null): value is Kind {
 
 type KitPlugin = WizardPlugin & { readonly category?: string; readonly categories?: string[] };
 
-// No installed plugin uses `graviteeMultiselect`.
 const SAMPLE_PLUGIN: KitPlugin = { id: 'kit-sample', name: 'Sample plugin' };
 const SAMPLE_RESOURCES = [
     { id: 'smtp-1', name: 'Mail server' },
