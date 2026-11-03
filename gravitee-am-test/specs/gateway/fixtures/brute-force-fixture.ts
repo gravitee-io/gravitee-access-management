@@ -50,9 +50,8 @@ export interface BruteForceFixture {
   domain: any;
   inlineApp: any;
   defaultIdpApp: any;
-  /** Posts the login form and follows the redirect. True when the flow ends on the code redirect. */
+  /** True when the flow ends on the redirect with a code. */
   loginSucceeds: (app: any, username: string, password: string) => Promise<boolean>;
-  /** Retries a login until it succeeds, for changes that the gateway gets through sync. */
   eventuallyLoginSucceeds: (app: any, username: string, password: string) => Promise<boolean>;
   failLogins: (app: any, usernames: string[]) => Promise<void>;
   createDefaultIdpUser: (username: string) => Promise<any>;

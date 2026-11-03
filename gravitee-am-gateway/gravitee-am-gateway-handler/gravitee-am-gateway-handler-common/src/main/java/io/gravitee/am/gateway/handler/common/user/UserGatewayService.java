@@ -56,9 +56,6 @@ public interface UserGatewayService {
 
     Maybe<User> findByUsernameAndSource(String username, String source, boolean includeLinkedIdentities);
 
-    /**
-     * Find a user by username and source, or through a linked identity. The username match ignores the case.
-     */
     Maybe<User> findByUsernameAndSourceIgnoreCase(String username, String source);
 
     /**

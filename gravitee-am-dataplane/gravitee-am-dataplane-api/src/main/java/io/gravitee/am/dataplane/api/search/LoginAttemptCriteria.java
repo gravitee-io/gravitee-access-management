@@ -73,7 +73,7 @@ public class LoginAttemptCriteria {
         }
 
         /**
-         * Login attempts are tracked per lower-cased username, so "John.Doe" and "john.doe" share one counter.
+         * Lower-cased, so every casing of a username shares one login attempt counter.
          */
         public Builder username(String username) {
             this.username = username == null ? null : username.toLowerCase(Locale.ROOT);
