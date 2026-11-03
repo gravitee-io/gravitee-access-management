@@ -15,7 +15,8 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
+import { expand, reduce } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 import { CursorResponse } from '../utils/cursor';
@@ -36,6 +37,13 @@ export class AuthorizationDetailTypeService {
         domainId +
         `/authorization-detail-types?page=${page}&limit=${size}&sort=${sort.prop}&dir=${sort.dir.toUpperCase()}` +
         queryParam,
+    );
+  }
+
+  listAll(domainId: string): Observable<any[]> {
+    return this.list(domainId, 100, 0, { prop: 'type', dir: 'asc' }).pipe(
+      expand((page) => (page.nextCursor ? this.next(page.nextCursor) : EMPTY)),
+      reduce((all, page) => all.concat(page.data), []),
     );
   }
 

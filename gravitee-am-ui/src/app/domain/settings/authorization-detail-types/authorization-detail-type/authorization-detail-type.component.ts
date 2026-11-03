@@ -24,6 +24,7 @@ import { AuthorizationDetailTypeService } from '../../../../services/authorizati
 import { DialogService } from '../../../../services/dialog.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import {
+  DELETE_CONFIRMATION,
   DESCRIPTION_MAX_LENGTH,
   expiresInSeconds,
   expiryError,
@@ -134,7 +135,7 @@ export class AuthorizationDetailTypeComponent implements OnInit {
   delete(event: Event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Authorization Detail Type', 'Are you sure you want to delete this authorization detail type?')
+      .confirm('Delete Authorization Detail Type', DELETE_CONFIRMATION)
       .pipe(
         filter((confirmed) => confirmed),
         switchMap(() => this.authorizationDetailTypeService.delete(this.domainId, this.original.id)),

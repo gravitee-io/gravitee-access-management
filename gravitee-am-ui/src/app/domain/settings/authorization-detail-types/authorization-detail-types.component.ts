@@ -24,7 +24,7 @@ import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CursorResponse, NgxTablePageInfo } from '../../../utils/cursor';
 
-import { saveErrorMessage } from './authorization-detail-type.validation';
+import { DELETE_CONFIRMATION, saveErrorMessage } from './authorization-detail-type.validation';
 
 @Component({
   selector: 'app-authorization-detail-types',
@@ -133,7 +133,7 @@ export class AuthorizationDetailTypesComponent implements OnInit, OnDestroy {
   delete(id: string, event: Event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Authorization Detail Type', 'Are you sure you want to delete this authorization detail type?')
+      .confirm('Delete Authorization Detail Type', DELETE_CONFIRMATION)
       .pipe(
         filter((confirmed) => confirmed),
         switchMap(() => this.authorizationDetailTypeService.delete(this.domainId, id)),
