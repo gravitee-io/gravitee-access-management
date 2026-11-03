@@ -683,6 +683,7 @@ public class UriBuilderRequestTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void shouldAllowOrigin_whenMatchesForwardedPublicUrl() {
         setupMockEnvironment(false, true);
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
@@ -695,6 +696,26 @@ public class UriBuilderRequestTest {
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "https://evil.example"));
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, null));
         assertFalse(UriBuilderRequest.isRequestOriginAllowed(request, "null"));
+=======
+    public void shouldUseFirstValue_XForwardedHeaders_ProxyChain() {
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https, http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost, edge-host");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8888, 8080");
+
+        assertEquals("https://myhost:8888/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+    @Test
+    public void shouldUseFirstValue_XForwardedHost_ProxyChainWithPorts() {
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:9999, edge-host:8443");
+
+        assertEquals("https://myhost:9999/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:443, edge-host");
+
+        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+>>>>>>> c08fde7 (fix(gateway): use the first X-Forwarded value from a proxy chain to build URLs)
     }
 
 }
