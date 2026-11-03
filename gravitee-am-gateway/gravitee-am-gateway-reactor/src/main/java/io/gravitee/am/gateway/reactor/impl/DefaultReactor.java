@@ -31,12 +31,14 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpHeadersValues;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.service.AbstractService;
+import io.vertx.ext.web.AllowForwardHeaders;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.Router;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import java.util.Comparator;
@@ -68,6 +70,9 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
+
+    @Value("${handlers.request.allowForwardHeaders:false}")
+    private boolean allowForwardHeaders;
 
     @Override
     public void doStart() throws Exception {
@@ -149,6 +154,9 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Override
     public void afterPropertiesSet() {
         router = Router.router(vertx);
+        if (allowForwardHeaders) {
+            router.allowForward(AllowForwardHeaders.X_FORWARD);
+        }
         router.route().handler(transactionHandlerFactory.create());
         router.route().last().handler(context -> sendNotFound(context.response()));
     }
