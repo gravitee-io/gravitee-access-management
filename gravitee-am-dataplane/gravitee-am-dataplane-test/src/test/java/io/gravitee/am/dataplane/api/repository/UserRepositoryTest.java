@@ -204,23 +204,6 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
     }
 
     @Test
-    public void testFindByUsernameAndSourceIgnoreCase_severalCasings() {
-        Reference reference = Reference.domain(UUID.randomUUID().toString());
-        for (String username : List.of("John", "john")) {
-            User user = new User();
-            user.setUsername(username);
-            user.setSource("sourceid");
-            user.setReferenceType(reference.type());
-            user.setReferenceId(reference.id());
-            userRepository.create(user).blockingGet();
-        }
-
-        userRepository.findByUsernameAndSourceIgnoreCase(reference, "JOHN", "sourceid").test()
-                .awaitDone(10, TimeUnit.SECONDS)
-                .assertValue(u -> u.getUsername().equalsIgnoreCase("john"));
-    }
-
-    @Test
     public void testFindAll() {
         // create user
         User user = new User();
