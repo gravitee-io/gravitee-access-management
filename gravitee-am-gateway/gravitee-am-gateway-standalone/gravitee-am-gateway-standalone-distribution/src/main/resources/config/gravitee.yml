@@ -342,6 +342,10 @@ user:
 handlers:
   request:
     removeXForwardedHeaders: false
+    # Read the client host, scheme and address from the X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto and X-Forwarded-For headers.
+    # Virtual hosts then match on X-Forwarded-Host.
+    # Enable it only behind a trusted proxy that sets or replaces these headers, otherwise a client can pick the domain and spoof its IP.
+    allowForwardHeaders: false
     transaction:
       header: X-Gravitee-Transaction-Id
   oauth2:
