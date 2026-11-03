@@ -27,6 +27,7 @@ import {
 } from '@gravitee/graphene-core';
 import { KeyIcon } from '@gravitee/graphene-core/icons';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
 import { DurationInput } from '../../app/components/DurationInput';
 import { PageHeader } from '../../app/components/PageHeader';
@@ -236,6 +237,21 @@ export function KitPage() {
                     </>
                 }
             />
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        <h2>Plugin wizard</h2>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-start gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        PluginWizard and PluginSchemaForm over the real plugin catalogs, plus a sample schema with every AM widget.
+                    </p>
+                    <Button asChild variant="outline">
+                        <Link to="plugin-wizard">Open the plugin wizard</Link>
+                    </Button>
+                </CardContent>
+            </Card>
             <SaveBarDemo />
             <ConfirmDialogDemo />
             <SettingToggleDemo />

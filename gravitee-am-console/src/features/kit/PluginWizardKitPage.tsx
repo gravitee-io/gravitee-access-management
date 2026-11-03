@@ -13,15 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {
+    Button,
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    PageFocused,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from '@gravitee/graphene-core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { PluginWizard, type WizardPlugin } from '../../app/components/PluginWizard';
 import { http } from '../../lib/api/http';
 import { compatibleResources } from '../../lib/forms/am-schema';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 
-const KINDS = ['identities', 'certificates', 'factors', 'reporters', 'resources', 'sample'] as const;
+const KINDS = {
+    identities: { tab: 'Identity providers', title: 'Create an identity provider', noun: 'identity providers' },
+    certificates: { tab: 'Certificates', title: 'Create a certificate', noun: 'certificates' },
+    factors: { tab: 'Factors', title: 'Create a factor', noun: 'factors' },
+    reporters: { tab: 'Reporters', title: 'Create a reporter', noun: 'reporters' },
+    resources: { tab: 'Resources', title: 'Create a resource', noun: 'resources' },
+    sample: { tab: 'Sample', title: 'Create a sample plugin', noun: 'plugins' },
+} as const;
+
+type Kind = keyof typeof KINDS;
+
+function isKind(value: string | null): value is Kind {
+    return !!value && value in KINDS;
+}
 
 type KitPlugin = WizardPlugin & { readonly category?: string; readonly categories?: string[] };
 
@@ -62,8 +89,10 @@ const SAMPLE_SCHEMA = {
 
 export function PluginWizardKitPage() {
     useBreadcrumbs([{ label: 'Component kit' }, { label: 'Plugin wizard' }]);
-    const [params] = useSearchParams();
-    const kind = params.get('kind') ?? 'certificates';
+    const [params, setParams] = useSearchParams();
+    const kitPath = useLocation().pathname.replace(/\/plugin-wizard$/, '');
+    const requested = params.get('kind');
+    const kind: Kind = isKind(requested) ? requested : 'certificates';
     const [category, setCategory] = useState<string>();
     const [created, setCreated] = useState<unknown>();
     const plugins = useQuery({
@@ -90,20 +119,30 @@ export function PluginWizardKitPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <nav aria-label="Plugin kinds" className="flex gap-4 text-sm">
-                {KINDS.map(k => (
-                    <Link key={k} to={`?kind=${k}`} aria-current={k === kind ? 'page' : undefined}>
-                        {k}
-                    </Link>
-                ))}
-            </nav>
+            <PageFocused>
+                <Tabs
+                    value={kind}
+                    onValueChange={value => {
+                        setCreated(undefined);
+                        setParams({ kind: value });
+                    }}
+                >
+                    <TabsList aria-label="Plugin kind">
+                        {Object.entries(KINDS).map(([value, { tab }]) => (
+                            <TabsTrigger key={value} value={value}>
+                                {tab}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                </Tabs>
+            </PageFocused>
             <PluginWizard<KitPlugin>
                 key={kind}
-                title={`Create a ${kind} plugin`}
-                back={{ to: '..', label: 'Component kit' }}
+                title={KINDS[kind].title}
+                back={{ to: kitPath, label: 'Component kit' }}
                 pickDescription="Pick a plugin."
                 configureDescription="Fill its configuration."
-                noun={kind}
+                noun={KINDS[kind].noun}
                 plugins={kind === 'sample' ? [SAMPLE_PLUGIN] : plugins.data}
                 pluginsError={plugins.error}
                 schemaKey={`kit-schema-${kind}`}
@@ -117,11 +156,25 @@ export function PluginWizardKitPage() {
                 creating={false}
                 onCreate={(plugin, values) => setCreated({ type: plugin.id, ...values })}
             />
-            {created !== undefined && (
-                <pre aria-label="Created values" className="rounded-md bg-muted p-2 text-xs">
-                    {JSON.stringify(created, null, 2)}
-                </pre>
-            )}
+            <Dialog open={created !== undefined} onOpenChange={open => !open && setCreated(undefined)}>
+                <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Created values</DialogTitle>
+                        <DialogDescription>
+                            The plugin type, the name and the configuration that the wizard gives to its host page. A plugin page sends them
+                            in its create request. This page sends nothing.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <pre aria-label="Created values" className="max-h-96 min-w-0 overflow-auto rounded-md bg-muted p-2 text-xs">
+                        {JSON.stringify(created, null, 2)}
+                    </pre>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button">Close</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
