@@ -360,11 +360,13 @@ user:
 
 handlers:
   request:
+    # Remove the X-Forwarded-* headers from the request before the security domain handlers read them.
+    # Do not combine it with allowXForwardedHeaders.
     removeXForwardedHeaders: false
     # Read the client host, scheme and address from the X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto and X-Forwarded-For headers.
     # Virtual hosts then match on X-Forwarded-Host.
     # Enable it only behind a trusted proxy that sets or replaces these headers, otherwise a client can pick the domain and spoof its IP.
-    allowForwardHeaders: false
+    allowXForwardedHeaders: false
     transaction:
       header: X-Gravitee-Transaction-Id
   oauth2:
