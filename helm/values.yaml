@@ -879,7 +879,7 @@ gateway:
       path: /
   # handlers:
   #   request:
-  #     allowForwardHeaders: false
+  #     allowXForwardedHeaders: false
   #     transaction:
   #       header: X-Gravitee-Transaction-Id
   # sharding_tags:
