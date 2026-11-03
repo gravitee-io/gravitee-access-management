@@ -544,6 +544,26 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldFindByDomainAndAuthorizationDetailType() {
+        Application app = emptyAppWithDomain();
+        when(applicationRepository.findByDomainAndAuthorizationDetailType(DOMAIN.getId(), "payment_initiation")).thenReturn(Flowable.just(app));
+
+        applicationService.findByDomainAndAuthorizationDetailType(DOMAIN.getId(), "payment_initiation").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(app);
+    }
+
+    @Test
+    public void shouldFindByDomainAndAuthorizationDetailType_technicalException() {
+        when(applicationRepository.findByDomainAndAuthorizationDetailType(DOMAIN.getId(), "payment_initiation")).thenReturn(Flowable.error(TechnicalException::new));
+
+        applicationService.findByDomainAndAuthorizationDetailType(DOMAIN.getId(), "payment_initiation").test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+    }
+
+    @Test
     public void shouldFetchAll() {
         when(applicationRepository.findAll(0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page(Collections.singleton(new Application()), 0, 1)));
         TestObserver<Set<Application>> testObserver = applicationService.fetchAll().test();
@@ -2964,7 +2984,7 @@ public class ApplicationServiceTest {
                 new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 120),
                 new ApplicationAuthorizationDetailTypeSettings("file_access")));
         stubAuthorizationDetailTypesPatch(existing);
-        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("file_access"))).thenReturn(Single.just(true));
+        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("payment_initiation", "file_access"))).thenReturn(Single.just(true));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -2984,6 +3004,7 @@ public class ApplicationServiceTest {
         Application existing = appWithAuthorizationDetailTypes(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60));
         PatchApplication patch = authorizationDetailTypesPatch(null);
         stubAuthorizationDetailTypesPatch(existing);
+        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("payment_initiation"))).thenReturn(Single.just(true));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -2993,25 +3014,25 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         verify(applicationRepository).update(argThat(updated -> updated.getSettings().getOauth().getAuthorizationDetailTypes().equals(List.of(
                 new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60)))));
-        verify(authorizationDetailTypeService, never()).validateType(any(), any());
+        verify(authorizationDetailTypeService).validateType(DOMAIN.getId(), List.of("payment_initiation"));
     }
 
     @Test
-    public void shouldPatch_keepAStoredTypeWithoutCheckingTheDomain() {
+    public void shouldInvalidatePatch_storedTypeDeletedFromTheDomain() {
         Application existing = appWithAuthorizationDetailTypes(new ApplicationAuthorizationDetailTypeSettings("deleted_type", 60));
         PatchApplication patch = authorizationDetailTypesPatch(List.of(
                 new ApplicationAuthorizationDetailTypeSettings("deleted_type", 120),
                 new ApplicationAuthorizationDetailTypeSettings("file_access")));
         stubAuthorizationDetailTypesPatch(existing);
-        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("file_access"))).thenReturn(Single.just(true));
-        when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(authorizationDetailTypeService.validateType(DOMAIN.getId(), List.of("deleted_type", "file_access"))).thenReturn(Single.error(
+                new InvalidClientMetadataException("authorizationDetailTypes: type 'deleted_type' is not an authorization detail type of the domain")));
 
         TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patch, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        testObserver.assertComplete();
-        verify(authorizationDetailTypeService).validateType(DOMAIN.getId(), List.of("file_access"));
+        testObserver.assertError(err -> err instanceof InvalidClientMetadataException
+                && err.getMessage().equals("authorizationDetailTypes: type 'deleted_type' is not an authorization detail type of the domain"));
+        verify(applicationRepository, never()).update(any(Application.class));
     }
 
     @Test
