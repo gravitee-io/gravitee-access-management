@@ -92,6 +92,19 @@ describe('adaptAmSchema', () => {
         expect(unsupported).toEqual([]);
     });
 
+    it('reports a condition with two values for one field', () => {
+        const { schema, unsupported } = adaptAmSchema({
+            type: 'object',
+            properties: {
+                mode: { type: 'string' },
+                port: { type: 'integer', condition: "model.mode === 'a' && model.mode === 'b'" },
+            },
+        });
+
+        expect(schema.properties?.port).toEqual({ type: 'integer' });
+        expect(unsupported).toEqual(['port (condition)']);
+    });
+
     it('reports a condition displayIf cannot express and keeps the field visible', () => {
         const { schema, unsupported } = adaptAmSchema({
             type: 'object',
