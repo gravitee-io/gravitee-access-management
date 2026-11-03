@@ -18,11 +18,13 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -30,6 +32,7 @@ import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.EventService;
@@ -76,6 +79,10 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
 
     @Autowired
     private AuditService auditService;
+
+    @Lazy
+    @Autowired
+    private ApplicationService applicationService;
 
     @Override
     public Maybe<AuthorizationDetailType> findById(String domain, String id) {
@@ -198,13 +205,14 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
         log.debug("Delete authorization detail type {} for domain {}", id, domain.getId());
         return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new AuthorizationDetailTypeNotFoundException(id)))
-                .flatMapCompletable(existing -> repository.delete(existing.getId())
+                .flatMapCompletable(existing -> removeFromApplications(domain.getId(), existing.getType())
+                        .andThen(Completable.defer(() -> repository.delete(existing.getId())))
                         .andThen(Completable.defer(() -> {
                             Event event = new Event(Type.AUTHORIZATION_DETAIL_TYPE, new Payload(existing.getId(), ReferenceType.DOMAIN, existing.getDomain(), Action.DELETE));
                             return eventService.create(event, domain).ignoreElement();
                         }))
                         .onErrorResumeNext(ex -> {
-                            if (ex instanceof AbstractManagementException) {
+                            if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                                 return Completable.error(ex);
                             }
                             log.error("An error occurred while trying to delete the authorization detail type {}", id, ex);
@@ -220,6 +228,18 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                                 .type(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED)
                                 .reference(Reference.domain(domain.getId()))
                                 .throwable(throwable))));
+    }
+
+    private Completable removeFromApplications(String domain, String type) {
+        return applicationService.findByDomainAndAuthorizationDetailType(domain, type)
+                .concatMapSingle(application -> {
+                    ApplicationOAuthSettings oauth = application.getSettings().getOauth();
+                    oauth.setAuthorizationDetailTypes(oauth.getAuthorizationDetailTypes().stream()
+                            .filter(settings -> !type.equals(settings.getType()))
+                            .toList());
+                    return applicationService.update(application);
+                })
+                .ignoreElements();
     }
 
     @Override

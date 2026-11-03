@@ -86,6 +86,8 @@ public interface ApplicationService {
 
     Flowable<Application> findByDomainAndManagedBy(String domain, ManagedBy managedBy);
 
+    Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type);
+
     Maybe<Application> findById(String id);
 
     /**

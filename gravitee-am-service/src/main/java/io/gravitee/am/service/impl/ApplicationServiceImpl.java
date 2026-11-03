@@ -407,6 +407,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type) {
+        log.debug("Find applications of domain {} with authorization detail type {}", domain, type);
+        return applicationRepository.findByDomainAndAuthorizationDetailType(domain, type)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find applications of domain {} with authorization detail type {}", domain, type, ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by domain and authorization detail type", ex));
+                });
+    }
+
+    @Override
     public Maybe<Application> findById(String id) {
         log.debug("Find application by ID: {}", id);
         return applicationRepository.findById(id)
@@ -1196,7 +1206,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), application.clientId())
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
-                .flatMap(app -> validateAddedAuthorizationDetailTypes(null, app))
+                .flatMap(this::validateAuthorizationDetailTypesExist)
                 .flatMap(app -> validateCrossAppAccessEnablement(domain, null, app))
                 .flatMap(this::validateApplicationAuthMethod)
                 // set default certificate
@@ -1213,7 +1223,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return validateApplicationMetadata(applicationToUpdate, fromUpdateType)
                 // validate identity providers
                 .flatMap(app -> validateIdentityProviders ? validateApplicationIdentityProviders(app) : Single.just(app))
-                .flatMap(app -> validateAddedAuthorizationDetailTypes(currentApplication, app))
+                .flatMap(this::validateAuthorizationDetailTypesExist)
                 .flatMap(app -> validateCrossAppAccessEnablement(currentApplication, app))
                 .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication));
     }
@@ -1561,28 +1571,17 @@ public class ApplicationServiceImpl implements ApplicationService {
         return Single.just(application);
     }
 
-    /**
-     * Checks against the domain only the types the application does not already have.
-     */
-    private Single<Application> validateAddedAuthorizationDetailTypes(Application currentApplication, Application application) {
-        List<String> stored = authorizationDetailTypes(currentApplication);
-        List<String> added = authorizationDetailTypes(application).stream()
-                .filter(type -> !stored.contains(type))
-                .toList();
-        if (added.isEmpty()) {
-            return Single.just(application);
-        }
-        return authorizationDetailTypeService.validateType(application.getDomain(), added)
-                .map(valid -> application);
-    }
-
-    private static List<String> authorizationDetailTypes(Application application) {
-        return Optional.ofNullable(application)
-                .map(Application::getSettings)
+    private Single<Application> validateAuthorizationDetailTypesExist(Application application) {
+        List<String> types = Optional.ofNullable(application.getSettings())
                 .map(ApplicationSettings::getOauth)
                 .map(ApplicationOAuthSettings::getAuthorizationDetailTypes)
                 .map(settings -> settings.stream().map(ApplicationAuthorizationDetailTypeSettings::getType).toList())
                 .orElse(List.of());
+        if (types.isEmpty()) {
+            return Single.just(application);
+        }
+        return authorizationDetailTypeService.validateType(application.getDomain(), types)
+                .map(valid -> application);
     }
 
     private Single<Application> validateScopes(Application application) {

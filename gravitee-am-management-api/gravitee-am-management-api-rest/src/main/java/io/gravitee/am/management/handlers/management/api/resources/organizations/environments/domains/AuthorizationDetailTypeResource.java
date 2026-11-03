@@ -124,7 +124,9 @@ public class AuthorizationDetailTypeResource extends AbstractResource {
     @Operation(
             operationId = "deleteAuthorizationDetailType",
             summary = "Delete an authorization detail type",
-            description = "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain " +
+            description = "The type is first removed from every application of the domain that enables it; " +
+                    "if any application cannot be updated, the type is not deleted. " +
+                    "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified domain " +
                     "or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified environment " +
                     "or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on the specified organization")
     @ApiResponses({

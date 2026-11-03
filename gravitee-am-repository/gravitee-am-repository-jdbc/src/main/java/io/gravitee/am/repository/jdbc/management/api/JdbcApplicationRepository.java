@@ -480,6 +480,15 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
+    public Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type) {
+        LOGGER.debug("findByDomainAndAuthorizationDetailType({}, {})", domain, type);
+        return applicationRepository.findAllByDomainAndAuthorizationDetailType(domain, type)
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<Application> findByIdIn(List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
