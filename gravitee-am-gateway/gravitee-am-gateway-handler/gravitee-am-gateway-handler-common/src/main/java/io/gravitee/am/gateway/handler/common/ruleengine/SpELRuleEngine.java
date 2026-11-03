@@ -16,14 +16,16 @@
 
 package io.gravitee.am.gateway.handler.common.ruleengine;
 
+import io.gravitee.el.spel.context.SecuredEvaluationContext;
+import io.gravitee.el.spel.context.SecuredResolver;
+import lombok.CustomLog;
+import org.springframework.core.env.Environment;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import java.util.Map;
 import java.util.Optional;
-import lombok.CustomLog;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -34,12 +36,20 @@ public class SpELRuleEngine implements RuleEngine {
 
     private static final SpelExpressionParser SPEL_EXPRESSION_PARSER = new SpelExpressionParser();
 
+    public SpELRuleEngine() {
+        this(null);
+    }
+
+    public SpELRuleEngine(Environment environment) {
+        SecuredResolver.initialize(environment);
+    }
+
     @Override
     public <E> E evaluate(String rule, Map<String, Object> parameters, Class<E> clazz, E defaultValue) {
         try {
             var expression = SPEL_EXPRESSION_PARSER.parseExpression(rule);
-            var evaluationContext = new StandardEvaluationContext();
-            evaluationContext.setVariables(parameters);
+            var evaluationContext = new SecuredEvaluationContext();
+            parameters.forEach(evaluationContext::setVariable);
             return Optional.ofNullable(expression.getValue(evaluationContext, clazz)).orElse(defaultValue);
         } catch (ParseException | EvaluationException ex) {
             log.debug("Unable to evaluate the following ruleExpression : {}", rule, ex);
