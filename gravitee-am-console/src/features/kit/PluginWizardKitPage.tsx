@@ -47,7 +47,7 @@ const KINDS = {
 type Kind = keyof typeof KINDS;
 
 function isKind(value: string | null): value is Kind {
-    return !!value && value in KINDS;
+    return !!value && Object.prototype.hasOwnProperty.call(KINDS, value);
 }
 
 type KitPlugin = WizardPlugin & { readonly category?: string; readonly categories?: string[] };
