@@ -51,14 +51,22 @@ describeWhen(requires.seeded, channelLabel).each(getDataPlaneIds())('migration R
     const type = `migration_${Date.now()}`;
 
     const created = await createAuthorizationDetailType(fixture.domainId, fixture.ownerToken, { type, name: type });
-    expect(created.type).toEqual(type);
-    expect((await getAuthorizationDetailType(fixture.domainId, fixture.ownerToken, created.id)).name).toEqual(type);
-    const page = await listAuthorizationDetailTypes(fixture.domainId, fixture.ownerToken, { q: type });
-    expect(page.data.map((listed) => listed.type)).toEqual([type]);
-    expect((await patchAuthorizationDetailType(fixture.domainId, fixture.ownerToken, created.id, { name: 'Renamed' })).name).toEqual(
-      'Renamed',
-    );
-    expect((await deleteAuthorizationDetailTypeRaw(fixture.domainId, fixture.ownerToken, created.id)).raw.status).toEqual(204);
+    let deleted = false;
+    try {
+      expect(created.type).toEqual(type);
+      expect((await getAuthorizationDetailType(fixture.domainId, fixture.ownerToken, created.id)).name).toEqual(type);
+      const page = await listAuthorizationDetailTypes(fixture.domainId, fixture.ownerToken, { q: type });
+      expect(page.data.map((listed) => listed.type)).toEqual([type]);
+      expect((await patchAuthorizationDetailType(fixture.domainId, fixture.ownerToken, created.id, { name: 'Renamed' })).name).toEqual(
+        'Renamed',
+      );
+      expect((await deleteAuthorizationDetailTypeRaw(fixture.domainId, fixture.ownerToken, created.id)).raw.status).toEqual(204);
+      deleted = true;
+    } finally {
+      if (!deleted) {
+        await deleteAuthorizationDetailTypeRaw(fixture.domainId, fixture.ownerToken, created.id);
+      }
+    }
   });
 
   itWhen(requires.managementApiServesTypes)(jira`lets a domain user from before the upgrade list types only ${'AM-8028'}`, async () => {
@@ -68,10 +76,19 @@ describeWhen(requires.seeded, channelLabel).each(getDataPlaneIds())('migration R
       const page = await listAuthorizationDetailTypes(fixture.domainId, fixture.userToken, { q: type });
       expect(page.data.map((listed) => listed.type)).toEqual([type]);
 
-      // Guards the listing above against passing because the upgrade granted every ACL to everyone.
+      // Guards the listing above against passing because the upgrade granted the user more than LIST.
       await expect(
         createAuthorizationDetailType(fixture.domainId, fixture.userToken, { type: `${type}_refused`, name: 'refused' }),
       ).rejects.toMatchObject({ response: { status: 403 } });
+      await expect(getAuthorizationDetailType(fixture.domainId, fixture.userToken, created.id)).rejects.toMatchObject({
+        response: { status: 403 },
+      });
+      await expect(
+        patchAuthorizationDetailType(fixture.domainId, fixture.userToken, created.id, { name: 'refused' }),
+      ).rejects.toMatchObject({ response: { status: 403 } });
+      await expect(deleteAuthorizationDetailTypeRaw(fixture.domainId, fixture.userToken, created.id)).rejects.toMatchObject({
+        response: { status: 403 },
+      });
     } finally {
       await deleteAuthorizationDetailTypeRaw(fixture.domainId, fixture.ownerToken, created.id);
     }

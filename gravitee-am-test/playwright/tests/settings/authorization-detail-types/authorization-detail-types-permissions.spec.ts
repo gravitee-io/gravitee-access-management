@@ -74,6 +74,7 @@ test.describe('Authorization Detail Types - Console permissions', () => {
       await expect(rar.nameInput).toHaveValue(type.name);
       await expect(rar.nameInput).not.toBeEditable();
       await expect(rar.descriptionInput).not.toBeEditable();
+      await expect(page.getByRole('switch', { name: 'Advertise through discovery' })).toBeDisabled();
       await expect(rar.schemaEditor).toBeVisible();
       await rar.schemaEditor.click();
       await page.keyboard.type('{}');
@@ -83,6 +84,8 @@ test.describe('Authorization Detail Types - Console permissions', () => {
     await test.step('no clear expiry, Format, SAVE or DELETE is offered', async () => {
       await expect(rar.currentPeriod).toContainText('an hour');
       await expect(rar.clearExpiryButton).toHaveCount(0);
+      await expect(rar.durationInput).toHaveCount(0);
+      await expect(rar.unitSelect).toHaveCount(0);
       await expect(rar.formatButton).toHaveCount(0);
       await expect(rar.saveButton).toHaveCount(0);
       await expect(rar.deleteButton).toHaveCount(0);
