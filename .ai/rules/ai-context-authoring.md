@@ -16,5 +16,5 @@ This directory is the source of the repository's AI context:
 ## What earns a rule
 
 - Only add rules that earn their token cost — not things easily inferred from context (scripts in `package.json`, standard framework behaviour, language syntax) and not things a check already enforces.
-- Place content at the right level: if a line applies only to some directories, scope it with `dirs:` beside the shared rule it adjusts; if it is a procedure or a command block, put it in `docs/agent-standards/commands.md` and point to it with one line.
+- Place content at the right level: if a line applies only to some directories, scope it with `dirs:` beside the shared rule it adjusts; if it is a procedure or a command block, put it in `docs/agent-standards/commands.md` and point to it with one line. A short command an agent must run for a task also stays in the rule, and the pointer says when to read the file.
 - `am-review.md` repeats the AM checks of the `code-review` skill under `docs/agent-standards/skills/`, so that review tools that never load skills see them; change both together.

@@ -7,7 +7,7 @@ buildFileProbes: ["angular.json","build.gradle","build.gradle.kts","ng-package.j
 inputs:
   - { dir: ".", buildFiles: ["pom.xml"] }
   - { path: ".ai/manifest.yaml", hash: "sha256:681a5939637b2cbe4d941eb998a6714c902685bfa8be72d1af0321e1f8ac58f7" }
-  - { path: ".ai/rules/ai-context-authoring.md", hash: "sha256:a59dac6cd55230d6c838966e5c1d5a91ac6aa882aae4a250e2a3c803b3ccc1ed" }
+  - { path: ".ai/rules/ai-context-authoring.md", hash: "sha256:7b1fdd3e1f2930841ef34838b113ed964136c84273d45d5423e1603ee4dab46f" }
   - { path: ".ai/rules/am-angular.md", hash: "sha256:e85eb857f7802dbd1bd88d7c0b1782927c136b5bb43045dddc8ccf58d7dd75bf" }
   - { path: ".ai/rules/am-console.md", hash: "sha256:05988bc65dce8703ceca941e9097931620992409cdb1b92ee2f492c845af973c" }
   - { path: ".ai/rules/am-contracts.md", hash: "sha256:724b4a5959b21c989d23e940b7f13a7a080582fc441136ec7ddb6a358507f1dd" }
@@ -56,7 +56,7 @@ inputs:
   - { dir: "scripts/migration-tool", buildFiles: ["package.json"] }
 entries:
   - path: ".ai/AGENTS.md"
-    hash: sha256:720ea82585a67c2e30d04c6cc0f93b85a2488d5f1376a2196ffa15e254ef37fe
+    hash: sha256:310ecb939ea4e1b6a957772e863f698776a5abb506b3b6e57540013ec27ed5a5
     status: generated
     scope: committed
   - path: ".ai/CLAUDE.md"
@@ -359,4 +359,4 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-record: sha256:214745da0af7cc552a27fb0ad7c876bdc23b2e93ddc2fd26a043590fee4b7de7
+record: sha256:f747ed07a08b282bdccfa0a8d9e03618b9d615e01790bfb5ba3d19f5b91b36c1
