@@ -184,6 +184,7 @@ import { AuthorizationDetailTypeComponent } from './domain/settings/authorizatio
 import { AuthorizationDetailTypeSchemaInfoDialogComponent } from './domain/settings/authorization-detail-types/dialog/authorization-detail-type-schema-info.component';
 import { AuthorizationDetailTypeService } from './services/authorization-detail-type.service';
 import { AuthorizationDetailTypeResolver } from './resolvers/authorization-detail-type.resolver';
+import { AuthorizationDetailTypesAllResolver } from './resolvers/authorization-detail-types-all.resolver';
 import { SnackbarComponent } from './components/snackbar/snackbar.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { TabNavbarComponent } from './components/tab-navbar/tab-navbar.component';
@@ -522,6 +523,8 @@ import { GrantFlowsComponent } from './domain/components/oauth2-settings/grant-f
 import { CrossAppAccessComponent } from './domain/components/oauth2-settings/cross-app-access/cross-app-access.component';
 import { ScopesComponent } from './domain/components/oauth2-settings/scopes/scopes.component';
 import { AddScopeComponent } from './domain/components/oauth2-settings/add/add-scope.component';
+import { AuthorizationDetailsComponent } from './domain/components/oauth2-settings/authorization-details/authorization-details.component';
+import { AddAuthorizationDetailTypeComponent } from './domain/components/oauth2-settings/authorization-details/add-authorization-detail-type.component';
 import { TokensComponent } from './domain/components/oauth2-settings/tokens/tokens.component';
 import { CreateClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
 import { CreateUserinfoClaimComponent } from './domain/components/oauth2-settings/claims/add-claim.component';
@@ -834,6 +837,8 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     CrossAppAccessComponent,
     ScopesComponent,
     AddScopeComponent,
+    AuthorizationDetailsComponent,
+    AddAuthorizationDetailTypeComponent,
     TokensComponent,
     TokenExchangeSettingsComponent,
   ],
@@ -955,6 +960,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     ScopeService,
     AuthorizationDetailTypeService,
     AuthorizationDetailTypeResolver,
+    AuthorizationDetailTypesAllResolver,
     FormService,
     FormResolver,
     FormTemplateFactoryService,

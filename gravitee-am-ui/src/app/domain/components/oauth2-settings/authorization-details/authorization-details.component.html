@@ -1,0 +1,137 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="row">
+  <div fxFlex="70">
+    <form (keydown.enter)="(false)">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <div>
+            <div fxFlex>
+              <h5>Authorization details</h5>
+              <small>Authorization detail types the client can use in the <code>authorization_details</code> parameter.</small>
+            </div>
+            <div *ngIf="!readonly">
+              <button mat-stroked-button (click)="add($event)"><mat-icon svgIcon="gio:plus"></mat-icon>ADD TYPES</button>
+            </div>
+          </div>
+          <mat-divider></mat-divider>
+        </div>
+        <div fxLayout="column">
+          <ngx-datatable
+            class="material"
+            [columnMode]="'flex'"
+            [headerHeight]="40"
+            [rowHeight]="68"
+            [messages]="{ emptyMessage: 'No authorization detail types are enabled on this application' }"
+            [rows]="rows"
+          >
+            <ngx-datatable-column name="Type" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="type-cell">
+                  <span class="type-cell__label" [matTooltip]="row.name ? row.type + ' | ' + row.name : row.type" matTooltipShowDelay="300">
+                    {{ row.type
+                    }}<ng-container *ngIf="row.name">
+                      | <small>{{ row.name }}</small></ng-container
+                    >
+                  </span>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="User consent" [flexGrow]="4" [sortable]="false" [resizeable]="false" [draggable]="false">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div class="expiry">
+                  <div fxLayout="row" class="expiry__fields">
+                    <mat-form-field appearance="outline" floatLabel="always" [class.expiry__invalid]="isExpiryInvalid(row)">
+                      <input
+                        matInput
+                        type="number"
+                        name="expiresIn"
+                        min="1"
+                        step="1"
+                        [placeholder]="durationPlaceholder(row)"
+                        [value]="row.expiresIn ?? null"
+                        [disabled]="readonly"
+                        [attr.aria-invalid]="isExpiryInvalid(row)"
+                        (input)="onExpiresIn(row, $event)"
+                      />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" floatLabel="always">
+                      <mat-select
+                        name="unitTime"
+                        [placeholder]="unitPlaceholder(row)"
+                        [value]="row.unitTime ?? null"
+                        [disabled]="readonly"
+                        (selectionChange)="onUnitTime(row, $event.value)"
+                      >
+                        <mat-option *ngFor="let unit of units" [value]="unit">{{ unit | uppercase }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    <div class="expiry__clear">
+                      <button
+                        *ngIf="hasExpiry(row) && !readonly"
+                        mat-icon-button
+                        aria-label="Clear expiry"
+                        (click)="clearExpiry(row, $event)"
+                      >
+                        <mat-icon>clear</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column
+              name="Actions"
+              headerClass="actions-col"
+              cellClass="actions-col"
+              [flexGrow]="0"
+              [minWidth]="72"
+              [maxWidth]="72"
+              [sortable]="false"
+              [resizeable]="false"
+              [draggable]="false"
+            >
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="gv-table-cell-actions" *ngIf="!readonly">
+                  <button mat-icon-button aria-label="Remove" (click)="remove(row, $event)"><mat-icon>highlight_off</mat-icon></button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>OAuth 2.0 / OpenID Connect</h3>
+    <div class="gv-page-description-content">
+      <h4>Rich Authorization Requests</h4>
+      <p>
+        Enable the domain's authorization detail types this client may request through the <code>authorization_details</code> parameter (RFC
+        9396). Requests carrying any other type are rejected.
+      </p>
+      <p>Types are created and described at domain level, under <strong>OAuth 2.0 &gt; RAR</strong>.</p>
+      <ul>
+        <li>
+          <strong>User consent</strong> — how long the user's approval of the type is remembered for this client. When empty, the type's own
+          expiry applies, then the gateway default (<code>oauth2.approval.expiry</code>, one month unless configured).
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

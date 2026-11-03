@@ -57,6 +57,19 @@
           </app-scopes-settings>
         </div>
       </mat-tab>
+      <mat-tab *ngIf="context === 'Application'" label="Authorization Details">
+        <div class="tab-content">
+          <app-authorization-details-settings
+            [oauthSettings]="oauthSettings"
+            [authorizationDetailTypes]="authorizationDetailTypes"
+            [domain]="domain"
+            [readonly]="readonly"
+            (settingsChange)="updateSettings($event)"
+            (formChanged)="onFormChanged($event)"
+          >
+          </app-authorization-details-settings>
+        </div>
+      </mat-tab>
       <mat-tab label="{{ oauth2Service.getContext() === 'Application' ? 'Tokens & User Profile' : 'Tokens' }}">
         <div class="tab-content">
           <app-tokens-settings

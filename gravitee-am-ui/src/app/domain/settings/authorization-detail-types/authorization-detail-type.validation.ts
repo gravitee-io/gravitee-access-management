@@ -24,6 +24,8 @@ export const DESCRIPTION_MAX_LENGTH = 1024;
 export const SCHEMA_MAX_LENGTH = 65536;
 export const TYPE_PATTERN = '[\\x21-\\x7E]*';
 export const NAME_PATTERN = '.*\\S.*';
+export const DELETE_CONFIRMATION =
+  'Are you sure you want to delete this authorization detail type? It will also be removed from every application that has it enabled.';
 
 const EXPIRES_IN_MAX_SECONDS = 2147483647;
 

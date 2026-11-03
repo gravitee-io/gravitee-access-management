@@ -217,6 +217,14 @@ describe('AuthorizationDetailTypeComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['..'], { relativeTo: route });
   });
 
+  it('should warn that deleting the type removes it from the applications that enable it', () => {
+    component.ngOnInit();
+
+    component.delete(new Event('click'));
+
+    expect(dialogService.confirm.mock.calls[0][1]).toContain('removed from every application that has it enabled');
+  });
+
   it('should not delete when the confirmation is cancelled', () => {
     component.ngOnInit();
     dialogService.confirm.mockReturnValue(of(false));
