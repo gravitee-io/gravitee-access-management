@@ -35,7 +35,7 @@ afterAll(async () => {
 describe('Brute force detection with a mixed-case username', () => {
   it('should lock the account when the failures use different casings', async () => {
     // an inline user exists in AM only after a first good login
-    expect(await fixture.loginSucceeds(fixture.inlineApp, INLINE_USERNAME, PASSWORD)).toBe(true);
+    expect(await fixture.eventuallyLoginSucceeds(fixture.inlineApp, INLINE_USERNAME, PASSWORD)).toBe(true);
 
     await fixture.failLogins(fixture.inlineApp, ['lock.user', 'LOCK.USER', 'Lock.User']);
 
