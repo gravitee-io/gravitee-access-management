@@ -197,12 +197,14 @@ OpenAPI change checklist: `docs/agent-standards/templates/openapi_change_checkli
 
 - Log secrets, tokens, PII, or full request/response bodies; prefer structured logs (`key=value`).
 - Run destructive commands (`docker system prune -a`, `git reset --hard`) unless explicitly requested and confirmed.
+- Invent behaviors or workflows that are not present in the codebase, as with endpoints and configuration keys.
 
 ## Compatibility and correctness
 
 - Keep public contracts backward compatible unless a breaking change is explicitly authorized.
 - Do not change exception types or HTTP status/exception semantics for the same condition without approval.
 - Do not widen method/class visibility without a documented reason.
+- Prefer established implementations over custom logic, as with RFC-aligned behaviour.
 
 # AM testing
 
@@ -251,6 +253,7 @@ Before marking work complete:
 ## Execution discipline
 
 - **Cite key files inspected** (code + docs) that informed changes.
+- Search for similar implementations first before writing new code.
 - Prefer safe/dry-run/diff modes first.
 - Freely create, modify, or update code, test and configuration files as part of normal implementation.
 - **Ask before deleting any files** (code or documentation).

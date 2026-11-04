@@ -20,6 +20,7 @@ description: Plan-first and approval discipline stricter than the shared rules
 ## Execution discipline
 
 - **Cite key files inspected** (code + docs) that informed changes.
+- Search for similar implementations first before writing new code.
 - Prefer safe/dry-run/diff modes first.
 - Freely create, modify, or update code, test and configuration files as part of normal implementation.
 - **Ask before deleting any files** (code or documentation).

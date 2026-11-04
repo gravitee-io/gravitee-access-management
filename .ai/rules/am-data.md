@@ -15,6 +15,10 @@ dirs: [gravitee-am-repository, gravitee-am-dataplane]
 - Changesets hold literal values only: no `${...}` placeholders or environment-dependent values. Config-driven indexes (e.g. the events TTL) stay in their repository.
 - When adding a changeset, pin its id and checksum in `MongoIndexUpgradersTest` / `MongoDataPlaneIndexUpgraderTest`. Never change the pinned checksum of an existing changeset.
 
+## Migrations
+
+- Check existing migrations for patterns before creating new ones.
+
 ## Reference
 
 - Migration checklist: `docs/agent-standards/templates/migration_checklist.template.md`
