@@ -29,6 +29,7 @@ import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -59,12 +60,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -558,6 +562,89 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
                 && a.getSettings().getSaml().getAssertionAttributes().size() == 1);
         reloaded.assertValue(a -> "uid".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).name())
                 && "{#context.attributes['user'].username}".equals(a.getSettings().getSaml().getAssertionAttributes().get(0).value()));
+    }
+
+    @Test
+    public void testAuthorizationDetailTypesRoundTrip() {
+        Application app = buildApplication();
+        app.getSettings().getOauth().setAuthorizationDetailTypes(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information")));
+        Application created = applicationRepository.create(app).blockingGet();
+
+        TestObserver<Application> afterCreate = applicationRepository.findById(created.getId()).test();
+        afterCreate.awaitDone(10, TimeUnit.SECONDS);
+        afterCreate.assertComplete();
+        afterCreate.assertValue(a -> Set.copyOf(a.getSettings().getOauth().getAuthorizationDetailTypes()).equals(Set.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information"))));
+
+        Application loaded = applicationRepository.findById(created.getId()).blockingGet();
+        loaded.getSettings().getOauth().setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60)));
+        applicationRepository.update(loaded).blockingGet();
+
+        TestObserver<Application> afterUpdate = applicationRepository.findById(created.getId()).test();
+        afterUpdate.awaitDone(10, TimeUnit.SECONDS);
+        afterUpdate.assertComplete();
+        afterUpdate.assertValue(a -> a.getSettings().getOauth().getAuthorizationDetailTypes()
+                .equals(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60))));
+
+        applicationRepository.delete(created.getId()).blockingAwait();
+        TestObserver<Application> afterDelete = applicationRepository.findById(created.getId()).test();
+        afterDelete.awaitDone(10, TimeUnit.SECONDS);
+        afterDelete.assertNoValues();
+    }
+
+    @Test
+    public void testAuthorizationDetailTypesEmptyWhenNoneEnabled() {
+        Application created = applicationRepository.create(buildApplication()).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findById(created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertValue(a -> a.getSettings().getOauth().getAuthorizationDetailTypes().isEmpty());
+    }
+
+    @Test
+    public void testFindByDomainAndAuthorizationDetailType() {
+        String domain = "domainAdt" + UUID.randomUUID();
+        Application matching = createWithAuthorizationDetailTypes(domain,
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information"));
+        createWithAuthorizationDetailTypes(domain, new ApplicationAuthorizationDetailTypeSettings("account_information"));
+        createWithAuthorizationDetailTypes("otherDomainAdt" + UUID.randomUUID(), new ApplicationAuthorizationDetailTypeSettings("payment_initiation"));
+        createWithAuthorizationDetailTypes(domain);
+
+        TestSubscriber<Application> testSubscriber = applicationRepository.findByDomainAndAuthorizationDetailType(domain, "payment_initiation").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValue(app -> matching.getId().equals(app.getId())
+                && Set.copyOf(app.getSettings().getOauth().getAuthorizationDetailTypes()).equals(Set.of(
+                        new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                        new ApplicationAuthorizationDetailTypeSettings("account_information"))));
+    }
+
+    @Test
+    public void testFindByDomainAndAuthorizationDetailType_returnsEveryMatchingApp() {
+        String domain = "domainAdt" + UUID.randomUUID();
+        Application first = createWithAuthorizationDetailTypes(domain, new ApplicationAuthorizationDetailTypeSettings("payment_initiation"));
+        Application second = createWithAuthorizationDetailTypes(domain, new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60));
+
+        TestSubscriber<Application> testSubscriber = applicationRepository.findByDomainAndAuthorizationDetailType(domain, "payment_initiation").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        assertEquals(Set.of(first.getId(), second.getId()), testSubscriber.values().stream().map(Application::getId).collect(toSet()));
+    }
+
+    private Application createWithAuthorizationDetailTypes(String domain, ApplicationAuthorizationDetailTypeSettings... types) {
+        Application app = buildApplication();
+        app.setDomain(domain);
+        app.getSettings().getOauth().setAuthorizationDetailTypes(List.of(types));
+        return applicationRepository.create(app).blockingGet();
     }
 
     @Test

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ManagedBy;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -29,6 +30,7 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.management.api.search.ApplicationCriteria;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;
+import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationAuthorizationDetailTypeRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationClientSecretRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationFactorRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationIdentityRepository;
@@ -125,6 +127,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     private SpringApplicationScopeRepository scopeRepository;
 
     @Autowired
+    private SpringApplicationAuthorizationDetailTypeRepository authorizationDetailTypeRepository;
+
+    @Autowired
     private SpringApplicationIdentityRepository identityRepository;
 
     private String insertStatement;
@@ -169,6 +174,16 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                     }
                     return app;
                 })
+        ).flatMap(app ->
+                authorizationDetailTypeRepository.findAllByApplicationId(app.getId())
+                        .map(jdbcSettings -> new ApplicationAuthorizationDetailTypeSettings(jdbcSettings.getType(), jdbcSettings.getExpiresIn()))
+                        .toList()
+                        .map(authorizationDetailTypes -> {
+                            if (app.getSettings() != null && app.getSettings().getOauth() != null) {
+                                app.getSettings().getOauth().setAuthorizationDetailTypes(authorizationDetailTypes);
+                            }
+                            return app;
+                        })
         );// do not read grant tables, information already present into the settings object
     }
 
@@ -458,6 +473,15 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
+    public Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type) {
+        LOGGER.debug("findByDomainAndAuthorizationDetailType({}, {})", domain, type);
+        return applicationRepository.findAllByDomainAndAuthorizationDetailType(domain, type)
+                .map(this::toEntity)
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Flowable<Application> findByIdIn(List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
@@ -589,7 +613,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         Mono<Long> factors = getTemplate().delete(criteria, JdbcApplication.Factor.class);
         Mono<Long> grants = getTemplate().delete(criteria, JdbcApplication.Grant.class);
         Mono<Long> scopeSettings = getTemplate().delete(criteria, JdbcApplication.ScopeSettings.class);
-        return factors.then(secrets).then(identities).then(grants).then(scopeSettings);
+        Mono<Long> authorizationDetailTypes = getTemplate().delete(criteria, JdbcApplication.AuthorizationDetailType.class);
+        return factors.then(secrets).then(identities).then(grants).then(scopeSettings).then(authorizationDetailTypes);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Application app) {
@@ -668,6 +693,19 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind("required", value.isRequiredScope());
                 sql = value.getScope() == null ? sql.bindNull("scope", String.class) : sql.bind("scope", value.getScope());
                 sql = value.getScopeApproval() == null ? sql.bindNull("approval", Integer.class) : sql.bind("approval", value.getScopeApproval());
+                return sql.fetch().rowsUpdated();
+            }).reduce(Long::sum));
+        }
+
+        final List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getAuthorizationDetailTypes).orElse(Collections.emptyList());
+        if (!authorizationDetailTypes.isEmpty()) {
+            actionFlow = actionFlow.then(Flux.fromIterable(authorizationDetailTypes).concatMap(value -> {
+                String INSERT_STMT = "INSERT INTO application_authorization_detail_types(application_id, type, expires_in) VALUES (:app, :type, :expires_in)";
+                DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
+                        .sql(INSERT_STMT)
+                        .bind("app", app.getId())
+                        .bind("type", value.getType());
+                sql = value.getExpiresIn() == null ? sql.bindNull("expires_in", Integer.class) : sql.bind("expires_in", value.getExpiresIn());
                 return sql.fetch().rowsUpdated();
             }).reduce(Long::sum));
         }

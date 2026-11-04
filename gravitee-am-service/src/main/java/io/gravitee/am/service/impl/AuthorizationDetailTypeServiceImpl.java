@@ -18,11 +18,13 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -30,6 +32,7 @@ import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.EventService;
@@ -37,6 +40,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
 import io.gravitee.am.service.model.PatchAuthorizationDetailType;
@@ -52,6 +56,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author GraviteeSource Team
@@ -72,6 +79,10 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
 
     @Autowired
     private AuditService auditService;
+
+    @Lazy
+    @Autowired
+    private ApplicationService applicationService;
 
     @Override
     public Maybe<AuthorizationDetailType> findById(String domain, String id) {
@@ -194,13 +205,14 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
         log.debug("Delete authorization detail type {} for domain {}", id, domain.getId());
         return findById(domain.getId(), id)
                 .switchIfEmpty(Single.error(new AuthorizationDetailTypeNotFoundException(id)))
-                .flatMapCompletable(existing -> repository.delete(existing.getId())
+                .flatMapCompletable(existing -> removeFromApplications(domain.getId(), existing.getType())
+                        .andThen(Completable.defer(() -> repository.delete(existing.getId())))
                         .andThen(Completable.defer(() -> {
                             Event event = new Event(Type.AUTHORIZATION_DETAIL_TYPE, new Payload(existing.getId(), ReferenceType.DOMAIN, existing.getDomain(), Action.DELETE));
                             return eventService.create(event, domain).ignoreElement();
                         }))
                         .onErrorResumeNext(ex -> {
-                            if (ex instanceof AbstractManagementException) {
+                            if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                                 return Completable.error(ex);
                             }
                             log.error("An error occurred while trying to delete the authorization detail type {}", id, ex);
@@ -218,6 +230,18 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                                 .throwable(throwable))));
     }
 
+    private Completable removeFromApplications(String domain, String type) {
+        return applicationService.findByDomainAndAuthorizationDetailType(domain, type)
+                .concatMapSingle(application -> {
+                    ApplicationOAuthSettings oauth = application.getSettings().getOauth();
+                    oauth.setAuthorizationDetailTypes(oauth.getAuthorizationDetailTypes().stream()
+                            .filter(settings -> !type.equals(settings.getType()))
+                            .toList());
+                    return applicationService.update(application);
+                })
+                .ignoreElements();
+    }
+
     @Override
     public Completable deleteByDomain(String domain) {
         log.debug("Delete every authorization detail type of domain {}", domain);
@@ -227,5 +251,26 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurred while trying to delete the authorization detail types of domain %s", domain), ex));
                 });
+    }
+
+    @Override
+    public Single<Boolean> validateType(String domain, List<String> types) {
+        if (types == null || types.isEmpty()) {
+            return Single.just(true);
+        }
+        return repository.findByDomain(domain)
+                .map(AuthorizationDetailType::getType)
+                .collect(HashSet<String>::new, Set::add)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurred while trying to find the authorization detail types of domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurred while trying to find the authorization detail types of domain %s", domain), ex));
+                })
+                .flatMap(domainTypes -> types.stream()
+                        .filter(type -> !domainTypes.contains(type))
+                        .findFirst()
+                        .<Single<Boolean>>map(unknown -> Single.error(new InvalidClientMetadataException(
+                                "authorizationDetailTypes: type '" + unknown + "' is not an authorization detail type of the domain")))
+                        .orElseGet(() -> Single.just(true)));
     }
 }

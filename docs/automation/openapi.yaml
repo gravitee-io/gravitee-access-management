@@ -2515,6 +2515,13 @@ components:
             \ native for native applications, web for web, browser and service applications.\
             \ Read-only."
           readOnly: true
+        authorizationDetailTypes:
+          type: array
+          description: "Authorization detail types the application can request. Each\
+            \ type must exist in the domain and appear once, otherwise the request\
+            \ is rejected with 400."
+          items:
+            $ref: "#/components/schemas/AutomationAuthorizationDetailType"
         authorizationEncryptedResponseAlg:
           type: string
           description: JWE alg algorithm encrypting the authorization responses (JARM).
@@ -2954,6 +2961,27 @@ components:
           example:
             HIGH: 1.0
       title: Assessment settings
+    AutomationAuthorizationDetailType:
+      type: object
+      description: An authorization detail type of the domain that the application
+        can request.
+      properties:
+        expiresIn:
+          type: integer
+          format: int32
+          description: "Duration, in seconds, of the user consent to this type. When\
+            \ absent, the type's own expiresIn applies, then the gateway default."
+          example: 86400
+          minimum: 1
+        type:
+          type: string
+          description: "Type of an authorization detail type of the domain, matched\
+            \ exactly, case included. The type must exist, otherwise the request is\
+            \ rejected with 400."
+          example: payment_initiation
+      required:
+      - type
+      title: Authorization detail type
     AutomationCIBASettings:
       type: object
       description: "Client-Initiated Backchannel Authentication (CIBA) settings for\

@@ -23,8 +23,12 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
@@ -32,23 +36,27 @@ import io.gravitee.am.model.oauth2.AuthorizationDetailTypeCursorRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.UniqueConstraintViolationException;
 import io.gravitee.am.repository.management.api.AuthorizationDetailTypeRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
 import io.gravitee.am.service.model.PatchAuthorizationDetailType;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.validators.authorizationdetailtype.AuthorizationDetailTypeValidator;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -61,7 +69,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,6 +96,9 @@ class AuthorizationDetailTypeServiceImplTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private ApplicationService applicationService;
 
     private Domain domain;
 
@@ -338,12 +351,14 @@ class AuthorizationDetailTypeServiceImplTest {
     @Test
     void shouldDelete() {
         when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation")).thenReturn(Flowable.empty());
         when(repository.delete("id-1")).thenReturn(Completable.complete());
         when(eventService.create(any(), eq(domain))).thenReturn(Single.just(new Event()));
 
         service.delete(domain, "id-1", principal()).test().assertComplete();
 
         verify(repository).delete("id-1");
+        verify(applicationService, never()).update(any());
 
         ArgumentCaptor<Event> event = ArgumentCaptor.forClass(Event.class);
         verify(eventService).create(event.capture(), eq(domain));
@@ -379,11 +394,96 @@ class AuthorizationDetailTypeServiceImplTest {
     @Test
     void shouldWrapDeleteRepositoryFailure() {
         when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation")).thenReturn(Flowable.empty());
         when(repository.delete("id-1")).thenReturn(Completable.error(new RuntimeException("boom")));
 
         service.delete(domain, "id-1", principal()).test()
                 .assertError(TechnicalManagementException.class);
 
+        verify(eventService, never()).create(any(), any());
+        assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED);
+    }
+
+    @Test
+    void shouldRemoveDeletedTypeFromApplicationsAndKeepTheirOtherTypes() {
+        Application app = application("app-1",
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information", 120));
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation")).thenReturn(Flowable.just(app));
+        when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(repository.delete("id-1")).thenReturn(Completable.complete());
+        when(eventService.create(any(), eq(domain))).thenReturn(Single.just(new Event()));
+
+        service.delete(domain, "id-1", principal()).test().assertComplete();
+
+        verify(applicationService).update(argThat(updated -> "app-1".equals(updated.getId())
+                && updated.getSettings().getOauth().getAuthorizationDetailTypes()
+                .equals(List.of(new ApplicationAuthorizationDetailTypeSettings("account_information", 120)))));
+    }
+
+    @Test
+    void shouldCleanUpEveryMatchingApplicationBeforeDeleting() {
+        Application first = application("app-1", new ApplicationAuthorizationDetailTypeSettings("payment_initiation"));
+        Application second = application("app-2", new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 60));
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation")).thenReturn(Flowable.just(first, second));
+        when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(repository.delete("id-1")).thenReturn(Completable.complete());
+        when(eventService.create(any(), eq(domain))).thenReturn(Single.just(new Event()));
+
+        service.delete(domain, "id-1", principal()).test().assertComplete();
+
+        InOrder inOrder = inOrder(applicationService, repository);
+        inOrder.verify(applicationService).update(argThat(updated -> "app-1".equals(updated.getId())
+                && updated.getSettings().getOauth().getAuthorizationDetailTypes().isEmpty()));
+        inOrder.verify(applicationService).update(argThat(updated -> "app-2".equals(updated.getId())
+                && updated.getSettings().getOauth().getAuthorizationDetailTypes().isEmpty()));
+        inOrder.verify(repository).delete("id-1");
+    }
+
+    @Test
+    void shouldNotDeleteWhenApplicationCleanupFails() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation"))
+                .thenReturn(Flowable.just(application("app-1", new ApplicationAuthorizationDetailTypeSettings("payment_initiation"))));
+        when(applicationService.update(any())).thenReturn(Single.error(new RuntimeException("boom")));
+
+        service.delete(domain, "id-1", principal()).test()
+                .assertError(TechnicalManagementException.class);
+
+        verify(repository, never()).delete(any());
+        verify(eventService, never()).create(any(), any());
+        assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED);
+    }
+
+    @Test
+    void shouldPropagateApplicationValidationErrorWhenCleanupFails() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation"))
+                .thenReturn(Flowable.just(application("app-1", new ApplicationAuthorizationDetailTypeSettings("payment_initiation"))));
+        InvalidClientMetadataException invalid = new InvalidClientMetadataException("non valid scopes");
+        when(applicationService.update(any())).thenReturn(Single.error(invalid));
+
+        service.delete(domain, "id-1", principal()).test()
+                .assertError(invalid);
+
+        verify(repository, never()).delete(any());
+        verify(eventService, never()).create(any(), any());
+        assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED);
+    }
+
+    @Test
+    void shouldNotDeleteWhenApplicationLookupFails() {
+        when(repository.findByDomainAndId(DOMAIN_ID, "id-1")).thenReturn(Maybe.just(existing()));
+        when(applicationService.findByDomainAndAuthorizationDetailType(DOMAIN_ID, "payment_initiation"))
+                .thenReturn(Flowable.error(new TechnicalManagementException("boom")));
+
+        service.delete(domain, "id-1", principal()).test()
+                .assertError(TechnicalManagementException.class);
+
+        verify(applicationService, never()).update(any());
+        verify(repository, never()).delete(any());
         verify(eventService, never()).create(any(), any());
         assertFailureAudited(EventType.AUTHORIZATION_DETAIL_TYPE_DELETED);
     }
@@ -395,6 +495,45 @@ class AuthorizationDetailTypeServiceImplTest {
         service.deleteByDomain(DOMAIN_ID).test().assertComplete();
 
         verify(repository).deleteByDomain(DOMAIN_ID);
+    }
+
+    @Test
+    void shouldValidateType_withoutTypes() {
+        service.validateType(DOMAIN_ID, List.of()).test().assertValue(true);
+
+        verify(repository, never()).findByDomain(any());
+    }
+
+    @Test
+    void shouldValidateType_whenAllTypesExist() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(existing(), existing().toBuilder().type("file_access").build()));
+
+        service.validateType(DOMAIN_ID, List.of("file_access", "payment_initiation")).test().assertValue(true);
+    }
+
+    @Test
+    void shouldNotValidateType_whenCaseDiffers() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(existing()));
+
+        service.validateType(DOMAIN_ID, List.of("Payment_Initiation")).test()
+                .assertError(err -> err instanceof InvalidClientMetadataException
+                        && err.getMessage().equals("authorizationDetailTypes: type 'Payment_Initiation' is not an authorization detail type of the domain"));
+    }
+
+    @Test
+    void shouldNotValidateType_whenDomainHasNoTypes() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+
+        service.validateType(DOMAIN_ID, List.of("payment_initiation")).test()
+                .assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    void shouldNotValidateType_whenRepositoryFails() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.error(new RuntimeException("boom")));
+
+        service.validateType(DOMAIN_ID, List.of("payment_initiation")).test()
+                .assertError(TechnicalManagementException.class);
     }
 
     private void assertFailureAudited() {
@@ -434,6 +573,18 @@ class AuthorizationDetailTypeServiceImplTest {
                 .createdAt(createdAt)
                 .updatedAt(createdAt)
                 .build();
+    }
+
+    private static Application application(String id, ApplicationAuthorizationDetailTypeSettings... types) {
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setAuthorizationDetailTypes(List.of(types));
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oauth);
+        Application app = new Application();
+        app.setId(id);
+        app.setDomain(DOMAIN_ID);
+        app.setSettings(settings);
+        return app;
     }
 
     private static NewAuthorizationDetailType input(String type, String schema) {

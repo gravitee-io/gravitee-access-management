@@ -54,6 +54,7 @@ import io.gravitee.am.service.model.CimdClientMetadata;
 import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.am.service.ApplicationTemplateManager;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -178,6 +179,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ScopeService scopeService;
+
+    @Autowired
+    private AuthorizationDetailTypeService authorizationDetailTypeService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -396,6 +400,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to find applications of domain {} managed by {}", domain, managedBy, ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by domain and manager", ex));
+                });
+    }
+
+    @Override
+    public Flowable<Application> findByDomainAndAuthorizationDetailType(String domain, String type) {
+        log.debug("Find applications of domain {} with authorization detail type {}", domain, type);
+        return applicationRepository.findByDomainAndAuthorizationDetailType(domain, type)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find applications of domain {} with authorization detail type {}", domain, type, ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by domain and authorization detail type", ex));
                 });
     }
 
@@ -1152,6 +1166,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), application.clientId())
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
+                .flatMap(this::validateAuthorizationDetailTypesExist)
                 .flatMap(app -> validateCrossAppAccessEnablement(domain, null, app))
                 .flatMap(this::validateApplicationAuthMethod)
                 // set default certificate
@@ -1163,6 +1178,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return validateApplicationMetadata(applicationToUpdate, fromUpdateType)
                 // validate identity providers
                 .flatMap(this::validateApplicationIdentityProviders)
+                .flatMap(this::validateAuthorizationDetailTypesExist)
                 .flatMap(app -> validateCrossAppAccessEnablement(currentApplication, app))
                 .flatMap(appToValidate -> validateApplicationAuthMethodUpdate(appToValidate, currentApplication));
     }
@@ -1313,6 +1329,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .flatMap(GrantTypeUtils::validateGrantTypes)
                             .flatMap(a -> this.validateRedirectUris(a, updateTypeOnly))
                             .flatMap(this::validateScopes)
+                            .flatMap(this::validateAuthorizationDetailTypes)
                             .flatMap(this::validateTokenEndpointAuthMethod)
                             .flatMap(this::validateTlsClientAuth)
                             .flatMap(this::validatePostLogoutRedirectUris)
@@ -1486,6 +1503,40 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    private Single<Application> validateAuthorizationDetailTypes(Application application) {
+        List<ApplicationAuthorizationDetailTypeSettings> settings = application.getSettings().getOauth().getAuthorizationDetailTypes();
+        if (settings == null || settings.isEmpty()) {
+            return Single.just(application);
+        }
+        Set<String> types = new HashSet<>();
+        for (ApplicationAuthorizationDetailTypeSettings item : settings) {
+            if (item == null || item.getType() == null || item.getType().isBlank()) {
+                return Single.error(new InvalidClientMetadataException("authorizationDetailTypes: type is required"));
+            }
+            if (!types.add(item.getType())) {
+                return Single.error(new InvalidClientMetadataException("authorizationDetailTypes: type '" + item.getType() + "' appears more than once"));
+            }
+            if (item.getExpiresIn() != null && item.getExpiresIn() < 1) {
+                return Single.error(new InvalidClientMetadataException("authorizationDetailTypes: expiresIn " + item.getExpiresIn()
+                        + " of type '" + item.getType() + "' must be at least 1"));
+            }
+        }
+        return Single.just(application);
+    }
+
+    private Single<Application> validateAuthorizationDetailTypesExist(Application application) {
+        List<String> types = Optional.ofNullable(application.getSettings())
+                .map(ApplicationSettings::getOauth)
+                .map(ApplicationOAuthSettings::getAuthorizationDetailTypes)
+                .map(settings -> settings.stream().map(ApplicationAuthorizationDetailTypeSettings::getType).toList())
+                .orElse(List.of());
+        if (types.isEmpty()) {
+            return Single.just(application);
+        }
+        return authorizationDetailTypeService.validateType(application.getDomain(), types)
+                .map(valid -> application);
     }
 
     private Single<Application> validateScopes(Application application) {

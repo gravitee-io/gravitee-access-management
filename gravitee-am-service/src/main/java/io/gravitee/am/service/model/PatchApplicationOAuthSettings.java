@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -98,6 +99,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<Boolean> singleSignOut;
     private Optional<Boolean> silentReAuthentication;
     private Optional<List<ApplicationScopeSettings>> scopeSettings;
+    private Optional<List<ApplicationAuthorizationDetailTypeSettings>> authorizationDetailTypes;
 
     private Optional<Boolean> disableRefreshTokenRotation;
 
@@ -413,6 +415,14 @@ public class PatchApplicationOAuthSettings {
         this.scopeSettings = scopeSettings;
     }
 
+    public Optional<List<ApplicationAuthorizationDetailTypeSettings>> getAuthorizationDetailTypes() {
+        return authorizationDetailTypes;
+    }
+
+    public void setAuthorizationDetailTypes(Optional<List<ApplicationAuthorizationDetailTypeSettings>> authorizationDetailTypes) {
+        this.authorizationDetailTypes = authorizationDetailTypes;
+    }
+
     public Optional<Boolean> getEnhanceScopesWithUserPermissions() {
         return enhanceScopesWithUserPermissions;
     }
@@ -701,6 +711,9 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setLightweightJwtSettings, this.getLightweightJwtSettings());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
+        }
+        if (this.getAuthorizationDetailTypes() != null && this.getAuthorizationDetailTypes().isPresent()) {
+            toPatch.setAuthorizationDetailTypes(this.getAuthorizationDetailTypes().get());
         }
         return toPatch;
     }

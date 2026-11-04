@@ -3191,8 +3191,10 @@ paths:
       - domain
   ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-detail-types/{authorizationDetailTypeId}
   : delete:
-      description: "User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission\
-        \ on the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission\
+      description: "The type is first removed from every application of the domain\
+        \ that enables it; if any application cannot be updated, the type is not deleted.\
+        \ User must have the DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission on\
+        \ the specified domain or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE] permission\
         \ on the specified environment or DOMAIN_AUTHORIZATION_DETAIL_TYPE[DELETE]\
         \ permission on the specified organization"
       operationId: deleteAuthorizationDetailType
@@ -13517,6 +13519,24 @@ components:
           type: boolean
         skipConsent:
           type: boolean
+    ApplicationAuthorizationDetailTypeSettings:
+      type: object
+      properties:
+        expiresIn:
+          type: integer
+          format: int32
+          description: "Consent expiry in seconds for this application. When absent,\
+            \ the authorization detail type's own expiresIn applies, then the gateway\
+            \ default."
+          minimum: 1
+        type:
+          type: string
+          description: "The type of one of the domain's authorization detail types,\
+            \ matched exactly, case included. Unique within the list."
+          example: payment_initiation
+      required:
+      - type
+      title: Application authorization detail type settings
     ApplicationCrossAppAccessResourceServer:
       type: object
       description: A resource server this application may request an ID-JAG for.
@@ -13631,6 +13651,10 @@ components:
           format: int32
         applicationType:
           type: string
+        authorizationDetailTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationAuthorizationDetailTypeSettings"
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:
@@ -17341,6 +17365,10 @@ components:
           format: int32
         applicationType:
           type: string
+        authorizationDetailTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationAuthorizationDetailTypeSettings"
         authorizationEncryptedResponseAlg:
           type: string
         authorizationEncryptedResponseEnc:

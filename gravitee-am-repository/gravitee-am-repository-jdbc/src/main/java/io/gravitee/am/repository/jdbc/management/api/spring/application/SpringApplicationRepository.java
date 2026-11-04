@@ -55,6 +55,9 @@ public interface SpringApplicationRepository extends RxJava3CrudRepository<JdbcA
     @Query("SELECT a.* FROM applications a INNER JOIN application_grants g ON a.id = g.application_id where g.grant_type = :grant and a.domain = :domain")
     Flowable<JdbcApplication> findAllByDomainAndGrant(@Param("domain")String domain, @Param("grant")String grant);
 
+    @Query("select * from applications a where a.domain = :domain and a.id in (select t.application_id from application_authorization_detail_types t where t.type = :type)")
+    Flowable<JdbcApplication> findAllByDomainAndAuthorizationDetailType(@Param("domain") String domain, @Param("type") String type);
+
     @Query("select * from applications a where a.id in ( :ids )")
     Flowable<JdbcApplication> findByIdIn(@Param("ids") List<String> ids);
 
