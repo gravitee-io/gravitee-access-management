@@ -16,7 +16,7 @@
 
 import { test as base } from '@playwright/test';
 import crossFetch from 'cross-fetch';
-// Native Node fetch makes the generated SDK drop fields silently — see GUIDELINES §10.
+// Native Node fetch makes the generated SDK drop fields silently — see the cross-fetch rule in .ai/rules/am-playwright.md.
 globalThis.fetch = crossFetch;
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';

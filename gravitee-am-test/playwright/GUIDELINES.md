@@ -1,14 +1,13 @@
 # Playwright Test Guidelines
 
-Standards and patterns for writing reliable, maintainable Playwright tests in Gravitee AM. For project setup, running tests, and architecture decisions see [README.md](../README.md).
-
-Every rule and pattern here was distilled from a real failure or review finding. Follow them to avoid re-learning the same lessons.
+The rules for writing and reviewing Playwright tests are in [AGENTS.md](AGENTS.md) in this folder (source: `.ai/rules/am-playwright.md`) and in `.github/instructions/am-playwright-review.instructions.md`; change a rule there, not here.
+This file keeps the wrong-and-right examples, fixture and helper patterns, WebAuthn, Angular traps and reference tables the rules point to. For project setup, running tests and architecture see [README.md](README.md).
 
 ---
 
 ## Table of Contents
 
-### Part 1: Rules (violation = review rejection)
+### Part 1: Examples for the rules
 1. [Assertion Quality](#1-assertion-quality)
 2. [Timeout Discipline](#2-timeout-discipline)
 3. [No Magic Values](#3-no-magic-values)
@@ -18,13 +17,12 @@ Every rule and pattern here was distilled from a real failure or review finding.
 7. [No networkidle](#7-no-networkidle)
 8. [Positive Anchor Before Negative Assertion](#8-positive-anchor-before-negative-assertion)
 9. [Assertion-First for UI State](#9-assertion-first-for-ui-state)
-10. [cross-fetch Required](#10-cross-fetch-required-silent-failure)
 
-### Part 2: Process (how to write and review tests)
+### Part 2: Process
 11. [Test Naming Convention](#11-test-naming-convention)
 12. [Implementation Protocol](#12-implementation-protocol)
 
-### Part 3: Patterns (how to structure code)
+### Part 3: Patterns
 13. [Fixture Design](#13-fixture-design)
 14. [Helper and File Organization](#14-helper-and-file-organization)
 15. [Domain Sync](#15-domain-sync)
@@ -36,23 +34,15 @@ Every rule and pattern here was distilled from a real failure or review finding.
 ### Part 4: Reference
 - [Config Defaults](#config-defaults)
 - [Flakiness Causes](#flakiness-causes)
-- [Gateway OOM Under Parallel Load](#gateway-oom-under-parallel-load)
 - [Background Test Execution](#background-test-execution)
-- [Pre-Submit Checklist](#pre-submit-checklist)
 
 ---
 
-# Part 1: Rules
-
-These are non-negotiable. Violations will be caught in code review.
+# Part 1: Examples for the rules
 
 ## 1. Assertion Quality
 
-Every test asserts exactly one expected outcome.
-
 ### No conditional assertions
-
-Never wrap `expect()` in `if/else` or accept multiple outcomes.
 
 ```typescript
 // WRONG — hides real failures
@@ -68,8 +58,6 @@ expect(res.status).toBe(400);
 
 ### No `toBeDefined()` on required fields
 
-`toBeDefined()` proves existence, not correctness — it passes for empty strings, wrong values, garbage data.
-
 ```typescript
 // WRONG — passes even if accessToken is garbage
 expect(tokens.accessToken).toBeDefined();
@@ -84,8 +72,6 @@ expect(decoded).toBeDefined();
 expect(decoded.iss).toBe(expectedIssuer);
 ```
 
-Use `toBeDefined()` **only** for optional fields where absence is a valid test outcome.
-
 ### Use specific matchers
 
 ```typescript
@@ -98,8 +84,6 @@ expect(code).toMatch(AUTH_CODE_FORMAT);
 
 ## 2. Timeout Discipline
 
-`playwright.config.ts` defines defaults (see [Config Defaults](#config-defaults)). **Only override when intentionally different.**
-
 ```typescript
 // WRONG — duplicates config navigationTimeout
 await page.waitForURL(/.*login.*/i, { timeout: 30000 });
@@ -107,8 +91,6 @@ await page.waitForURL(/.*login.*/i, { timeout: 30000 });
 // RIGHT — omit timeout, use config default
 await page.waitForURL(/.*login.*/i);
 ```
-
-Only two timeout constants are needed (defined in `utils/test-constants.ts`):
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -125,8 +107,6 @@ test.setTimeout(MULTI_PHASE_TEST_TIMEOUT);
 
 ## 3. No Magic Values
 
-All cross-file values belong in `utils/test-constants.ts`. Never inline regex patterns, timeouts, or passwords.
-
 ```typescript
 // WRONG — magic regex repeated across files
 expect(url.searchParams.get('code')).toMatch(/^[A-Za-z0-9_-]+$/);
@@ -136,19 +116,7 @@ import { AUTH_CODE_FORMAT } from '../../../utils/test-constants';
 expect(url.searchParams.get('code')).toMatch(AUTH_CODE_FORMAT);
 ```
 
-Available constants:
-
-| Constant | Value | Use for |
-|---|---|---|
-| `API_USER_PASSWORD` | `SomeP@ssw0rd` | Default test user password |
-| `AUTH_CODE_FORMAT` | `/^[A-Za-z0-9_-]+$/` | OAuth authorization code validation |
-| `JWT_FORMAT` | Three Base64url segments with dots | JWT token validation |
-| `BRIEF_TIMEOUT` | 5000 | Short expect timeout |
-| `MULTI_PHASE_TEST_TIMEOUT` | 120000 | Extended test timeout |
-
 ## 4. Import from Fixture
-
-Always import `test` and `expect` from the fixture, never from `@playwright/test` directly. The fixture provides typed fixtures (e.g., `adminToken`, `testDomain`, `waUser`).
 
 ```typescript
 // RIGHT — gives you custom fixtures
@@ -169,8 +137,6 @@ import { test, expect, MOCK_MFA_CODE } from '../../../fixtures/webauthn-mfa.fixt
 ```
 
 ## 5. Jira Traceability
-
-Every test that maps to a Jira test case must call `linkJira()` as the first line. This enables Xray traceability.
 
 ```typescript
 import { linkJira } from '../../../utils/jira';
@@ -195,15 +161,6 @@ Every Playwright test suite must be traceable to Jira/Xray test cases. Before wr
 ### What parity means
 
 - **Mapping**: every Xray test case has at least one Playwright test, and every Playwright test links back to a Jira ID. Multiple tests may share one Jira ID when a single Xray case covers multiple scenarios (e.g., positive + negative cases).
-- **Semantic match**: the Playwright test verifies the same behavior described in the Xray spec — same preconditions, same actions, same expected outcome. A test that passes but tests something different is not parity.
-- **No fabricated coverage**: do not write a test that "covers" a Jira ID by testing a related but different behavior. If the spec says "login fails when password expired", test exactly that — not "login fails when password is wrong".
-
-### Parity review during code review
-
-When reviewing a PR that adds tests (see also the [Pre-Submit Checklist](#pre-submit-checklist)):
-- Verify each `linkJira()` call maps to the correct Xray test case
-- Verify the test body matches the Xray spec's preconditions and expected outcome
-- Flag any Xray test cases in the feature area that are missing from the PR
 
 ```typescript
 // WRONG — linkJira present but test doesn't match the Xray spec
@@ -230,8 +187,6 @@ test('AM-2376: passwordless login succeeds within enforce password max age', asy
 
 ## 7. No networkidle
 
-Neither Angular SPAs (continuous polling) nor gateway pages should use `networkidle`. Use explicit URL or element waits.
-
 ```typescript
 // WRONG — hangs on Angular SPAs, unreliable on gateway pages
 await page.waitForLoadState('networkidle');
@@ -245,8 +200,6 @@ await page.waitForURL(/.*webauthn\/login.*/i);
 
 ## 8. Positive Anchor Before Negative Assertion
 
-`toHaveCount(0)` and `not.toBeVisible()` pass instantly on an unloaded page — the element is absent because *everything* is absent.
-
 ```typescript
 // WRONG — vacuously true on blank page
 await expect(page.locator('.thing')).toHaveCount(0);
@@ -258,8 +211,6 @@ await expect(page.locator('#password')).not.toBeVisible();
 
 ## 9. Assertion-First for UI State
 
-Use `await expect(element).toBeVisible()` before interacting, not `if (await element.isVisible())`. Conditionals silently skip when the element is missing.
-
 ```typescript
 // WRONG — silently skips if checkbox is missing
 if (await checkbox.isVisible()) { await checkbox.check(); }
@@ -269,24 +220,11 @@ await expect(checkbox).toBeVisible({ timeout: BRIEF_TIMEOUT });
 await checkbox.check();
 ```
 
-## 10. cross-fetch Required (Silent Failure)
-
-ALWAYS use cross-fetch, never native Node.js fetch. Native fetch in Node 18+ causes the generated SDK to silently drop fields (e.g., `redirectUris` disappears from request body — no error, just a 400).
-
-This is set in `base.fixture.ts` via `globalThis.fetch = crossFetch` and affects **all** tests — Angular UI, gateway pages, and API tests alike. Never remove it.
-
 ---
 
 # Part 2: Process
 
-How to write tests, name them, and review them. Following these ensures consistent quality across contributors.
-
 ## 11. Test Naming Convention
-
-Test names follow the pattern: `'AM-XXXX: <behavior description>'`
-
-- **Jira ID prefix** — the Xray test case ID, matching the `linkJira()` call
-- **Behavior description** — what the test proves, not what it does. Use the user's perspective.
 
 ```typescript
 // RIGHT — Jira ID + behavior from user's perspective
@@ -302,7 +240,7 @@ test('test enforce password', async (...) => {
 test('AM-2376: configure enforce password, register credential, clear cookies, login', async (...) => {
 ```
 
-For tests without a Jira ID (utility tests, smoke tests), omit the prefix but keep the behavior description:
+For a test without a Jira ID (utility or smoke test) the prefix is omitted:
 
 ```typescript
 test('back to sign in link returns to login page', async (...) => {
@@ -339,22 +277,15 @@ Write the test body, then verify it matches the spec:
 
 ### Step 4: Cross-check
 
-After writing, re-read the spec one more time and ask:
-- If the feature were broken, would this test fail? (If not, the assertion is too weak.)
-- If a different feature were broken, could this test fail? (If so, the test has a false dependency.)
-- Does the `linkJira()` ID match the spec this test actually verifies?
+The questions to ask after writing the test are in the Xray parity section of `.github/instructions/am-playwright-review.instructions.md`.
 
 ---
 
 # Part 3: Patterns
 
-Follow these unless you have a documented reason not to.
-
 ## 13. Fixture Design
 
 ### Create-before-start
-
-Create all domain resources (app, user, factor, device) before `startDomain()`. The initial sync picks up everything in one pass, eliminating race conditions.
 
 ```typescript
 // Fixture dependency order: domain → factor → device → app → user → gatewayUrl
@@ -376,8 +307,6 @@ await startDomain(domain.id, token);  // too early — app/user don't exist yet
 
 ### Fixture extraction threshold
 
-Inline fixtures > 50 lines → extract to a dedicated fixture file.
-
 ```typescript
 // WRONG — 200-line fixture inline in spec
 test.describe('...', () => {
@@ -390,13 +319,9 @@ export const test = base.extend<MfaWebAuthnFixtures>({ ... });
 export { expect } from '@playwright/test';
 ```
 
-### Scoping and dependency declaration
-
-Playwright fixtures are test-scoped by default. Use `void fixture;` to declare ordering dependencies without consuming the value.
-
 ### Cleanup
 
-Fixture teardown runs in reverse dependency order. Always handle cleanup errors gracefully:
+Fixture teardown runs in reverse dependency order.
 
 ```typescript
 waUser: async ({ waAdminToken, waDomain }, use) => {
@@ -412,8 +337,6 @@ waUser: async ({ waAdminToken, waDomain }, use) => {
 
 ### Fresh session for auth flow tests
 
-Gateway auth flow tests need clean browser state:
-
 ```typescript
 test.describe('WebAuthn Login', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -425,8 +348,6 @@ test.describe('WebAuthn Login', () => {
 
 ### Extraction threshold
 
-Helpers used by 2+ files or > 20 lines → `utils/` module. Spec files contain only test logic.
-
 ```typescript
 // WRONG — 47-line helper buried in spec file
 function configureTrustedIssuer(...) { /* complex setup */ }
@@ -435,13 +356,11 @@ function configureTrustedIssuer(...) { /* complex setup */ }
 import { configureTrustedIssuer } from '../../utils/token-exchange-helpers';
 ```
 
-### Dependency direction
-
-Fixtures import from utils. **Never the reverse** (avoids circular imports).
-
 ### Path aliases for Management API (preferred over `../../api/...`)
 
-Use the same `@management-commands/...`, `@management-models/...`, `@utils-commands/...`, and `@gateway-commands/...` aliases as Jest specs under `specs/`. They are defined in `gravitee-am-test/tsconfig.json` and resolved at Playwright runtime by `playwright/utils/register-paths.ts` (loaded first from `playwright.config.ts`). All Playwright fixtures, utils, and specs under `playwright/` should import the shared API layer via these aliases (not `../../api/...`). Example: `import { createDomain } from '@management-commands/domain-management-commands';`
+The aliases are defined in `gravitee-am-test/tsconfig.json` and resolved at Playwright runtime by `playwright/utils/register-paths.ts` (loaded first from `playwright.config.ts`). Example: `import { createDomain } from '@management-commands/domain-management-commands';`
+
+If an alias is missing, use the correct relative depth: `../../api/...` from `playwright/fixtures/`, `../../../api/...` from `playwright/tests/<one-level>/`, `../../../../api/...` from `playwright/tests/<area>/<subarea>/`.
 
 ```
 utils/webauthn-helpers.ts       ← CDP helpers, flow helpers, navigation helpers
@@ -460,8 +379,6 @@ export { VirtualAuthenticator, loginAndRegisterWebAuthn, ... } from '../utils/we
 ```
 
 ### URL construction via helpers
-
-Never construct OAuth authorize URLs inline:
 
 ```typescript
 // WRONG — URL template repeated in every test
@@ -484,8 +401,6 @@ await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
 | `waitForNextSync(domainId)` | Fallback — **has a race condition**, avoid when possible |
 
 ### After `patchDomain` on a running domain
-
-`patchDomain` triggers a gateway redeploy. Always use `waitForSyncAfter` + `waitForOidcReady`:
 
 ```typescript
 await waitForSyncAfter(waDomain.id, () =>
@@ -515,16 +430,12 @@ Gateway-rendered pages (login, WebAuthn register/login, consent, MFA) are static
 
 ### Use `waitForURL`, not `waitForReady`
 
-Gateway pages are server-rendered. Use `page.waitForURL()` with regex patterns:
-
 ```typescript
 await page.goto(buildAuthorizeUrl(gatewayUrl, clientId));
 await page.waitForURL(/.*login.*/i);
 ```
 
 ### OAuth callback and consent handling
-
-Not all OAuth flows trigger a consent page. To finish an OAuth leg and assert an authorisation code in the redirect URI, use `reachOAuthAuthorizationCallback` — it polls `page.url()` for `callback` + `code=` and clicks through consent when needed. **Do not** pair `handleConsentIfPresent` with `waitForURL(/callback?code=/)`: the test redirect URI (`https://gravitee.io/callback`) is an external marketing site that may never reach the `load` event in CI while the URL already contains a valid `code`.
 
 ```typescript
 import { reachOAuthAuthorizationCallback } from '../../../utils/oauth-callback-helpers';
@@ -537,8 +448,6 @@ Use `handleConsentIfPresent` only when you need to click consent mid-flow withou
 
 ### Navigation helpers for non-deterministic routing
 
-Gateway routing (e.g., device recognition) may produce different redirect paths. Encapsulate infrastructure conditionals in named helpers — keep spec bodies deterministic.
-
 ```typescript
 // WRONG — conditional logic in spec body
 await page.goto(authorizeUrl);
@@ -549,13 +458,13 @@ else { await page.locator(PASSWORDLESS_LINK_SELECTOR).click(); }
 await navigateToWebAuthnLogin(page, gatewayUrl, clientId);
 ```
 
-The conditional in the helper handles infrastructure non-determinism, not a feature under test. This is the **only** acceptable use of conditional navigation — never use `if/else` around assertions.
+The conditional in the helper handles infrastructure non-determinism, not a feature under test.
 
 ### Second authorisation in the same browser context
 
 If a test runs **two** OAuth round-trips on the same `page` / context, the gateway may still hold an **end-user session** after the first callback. A second `goto(authorizeUrl)` can then skip `/login` and sometimes **skip step-up MFA**, going straight to the client **callback with `code`**. Calling `reachOAuthAuthorizationCallback` when you still expect `/mfa/challenge` or `/login` will return immediately on the short-circuited callback — leading to timeouts on the next assertion.
 
-When the scenario requires a **fresh login** or **MFA challenge** on the second leg, call `await page.context().clearCookies()` before that authorisation (or use a new context). The Xray parity example under [§6](#6-xray-test-parity) uses the same pattern for a second login path.
+To get a fresh login or MFA challenge on the second leg, call `await page.context().clearCookies()` before that authorisation, or use a new context. The Xray parity example under [§6](#6-xray-test-parity) uses the same pattern for a second login path.
 
 ## 17. WebAuthn / CDP Virtual Authenticator
 
@@ -617,7 +526,7 @@ Use the shared helpers for common multi-step flows:
 
 ## 18. Angular-Specific Traps
 
-These apply to Angular Console UI tests (not gateway page tests). For the cross-fetch requirement (which affects all tests), see [§10](#10-cross-fetch-required-silent-failure).
+These apply to Angular Console UI tests (not gateway page tests).
 
 ### ARIA attributes over CSS classes
 
@@ -672,8 +581,6 @@ Routes use **hrid** (`default`, lowercase). Management API uses **ID** (`DEFAULT
 
 ## 19. Test Steps
 
-Split a test into `test.step` blocks, one for each user action and its check. Name each step for the behavior it checks. The step names show in the HTML report and the trace, so a failure points at the step that broke.
-
 ```typescript
 test('loads the widgets and reloads them for a new time range', async ({ page, testDomain }) => {
   await test.step('open the dashboard', async () => {
@@ -720,21 +627,13 @@ From `playwright.config.ts`:
 | `cdpSession.send: Target closed` | Stale authenticator ref | Reset `auth = undefined` after cleanup |
 | Login page instead of expected redirect | Domain config not propagated | Use `waitForSyncAfter` + `waitForOidcReady` |
 | Test timeout (no specific line) | Cumulative slow steps > 60s | `test.setTimeout(MULTI_PHASE_TEST_TIMEOUT)` |
-| All tests timeout after one passes | Gateway OOM | See [Gateway OOM](#gateway-oom-under-parallel-load) |
+| All tests timeout after one passes | Gateway OOM | See [Gateway OOM](README.md#gateway-oom-under-parallel-load) |
 | 400 errors, fields silently missing | Native fetch instead of cross-fetch | Ensure `base.fixture.ts` sets `globalThis.fetch = crossFetch` |
 | "Element detached from DOM" | `*ngIf` + `.clear()` removes element | Use triple-click + `pressSequentially()` |
 | `waitForURL(/mfa\/challenge/)` timeout on second OAuth | Prior leg left an AM session; second `/authorize` hits callback without step-up | `await page.context().clearCookies()` before the second authorisation (see [Gateway Page Tests §16](#16-gateway-page-tests)) |
 | `waitForURL(/callback?code=/)` timeout; page shows gravitee.io 404 | Redirect URI is external; `waitForURL` waits for `load` on marketing site | Use `reachOAuthAuthorizationCallback` (polls URL for `code=`) |
 | `Cannot find module '.../api/commands/...'` when loading spec | Wrong relative depth: `../../api` from `playwright/tests/<area>/` resolves under `playwright/`, not `gravitee-am-test/api` | **Prefer aliases** (`@management-commands/...`, `@utils-commands/...`, `@management-models/...`) — same as Jest; resolved at runtime via `playwright/utils/register-paths.ts`. If using relatives: from `playwright/tests/<one-level>/` use `../../../api/...`; from `playwright/fixtures/` use `../../api/...` |
 | Themed `img.logo` still shows `gravitee-logo.svg` | Theme updated only after the gateway loaded the domain context | Set logo and colour fields **before** `startDomain`, or wait for theme propagation and reload the login page |
-
-## Gateway OOM Under Parallel Load
-
-The gateway runs with `GIO_MAX_MEM=512m` by default. Each domain creates a Spring `ApplicationContext`, so multiple workers creating domains simultaneously can trigger OOM. After OOM, the gateway never recovers — all tests timeout.
-
-**How to identify:** A few tests pass, then everything times out. `docker ps` shows gateway `(unhealthy)`.
-
-**Fix:** Use `--workers=1` for local dev, or set `GIO_MAX_MEM=1024m` in `docker/local-stack/dev/docker-compose.yml`.
 
 ## Background Test Execution
 
@@ -751,59 +650,3 @@ npx playwright test --reporter=list > /tmp/pw.log 2>&1; echo "EXIT=$?" >> /tmp/p
 - Never pipe background Playwright commands — write to file instead
 - Always use `--reporter=list` for background runs (HTML reporter blocks exit)
 - Poll the log file instead of blocking on output
-
-## Pre-Submit Checklist
-
-### Rules
-- [ ] No conditional assertions (`if/else` around `expect`)
-- [ ] No `toBeDefined()` on required fields — use type/value matchers
-- [ ] No magic values — all constants in `test-constants.ts`
-- [ ] No explicit timeouts that match config defaults
-- [ ] `BRIEF_TIMEOUT` only where intentionally shorter than 15s
-- [ ] `MULTI_PHASE_TEST_TIMEOUT` for multi-phase tests
-- [ ] Imports from fixture, not `@playwright/test`
-- [ ] `linkJira(testInfo, 'AM-XXXX')` on every Jira-traced test
-- [ ] Xray parity: every test links to a Jira ID, and test body matches the spec
-- [ ] No `networkidle`
-- [ ] Positive anchor before every negative assertion
-- [ ] Assertion-first (`expect().toBeVisible()`) before element interaction
-- [ ] cross-fetch set in base fixture (never native Node.js fetch)
-
-### Process
-- [ ] Test name follows `'AM-XXXX: <behavior description>'` pattern
-- [ ] Xray spec re-read at implementation time (not just during planning)
-- [ ] Test preconditions match spec preconditions
-- [ ] Test assertion matches spec expected outcome — and only that outcome
-- [ ] Cross-check: would this test fail if the feature were broken?
-
-### Patterns
-- [ ] Resources created **before** `startDomain`
-- [ ] `gatewayUrl` fixture starts domain and waits for sync + OIDC ready
-- [ ] Management API / SDK imports use **`@management-commands/...`, `@management-models/...`, `@utils-commands/...`, `@gateway-commands/...`, `@api-fixtures/...`** path aliases (see `gravitee-am-test/tsconfig.json` and `playwright/utils/register-paths.ts`) — same pattern as Jest specs under `specs/`. **Fallback** if an alias is missing: correct relative depth `../../api/...` from `playwright/fixtures/`, `../../../api/...` from `playwright/tests/<one-level>/`, `../../../../api/...` from `playwright/tests/<area>/<subarea>/` — ESLint will not catch wrong depth; Playwright fails at load time
-- [ ] `void fixture;` for ordering dependencies
-- [ ] Cleanup handles errors gracefully (try/catch)
-- [ ] `uniqueTestName()` for all resource names
-- [ ] `waitForSyncAfter` + `waitForOidcReady` after runtime domain mutations
-- [ ] Helpers > 20 lines in `utils/`, not inline in spec files
-- [ ] Inline fixtures > 50 lines extracted to fixture files
-- [ ] URL construction via `buildAuthorizeUrl()`, not inline
-- [ ] No `if/else` for navigation — use `navigateToWebAuthnLogin()` or similar helpers
-
-### WebAuthn
-- [ ] `auth = undefined` in `afterEach` after cleanup
-- [ ] `removeVirtualAuthenticator` wrapped in try/catch
-- [ ] `test.use({ storageState: { cookies: [], origins: [] } })` for fresh sessions
-
-### General
-- [ ] No `test.only()` in committed code
-- [ ] Tests are independent (no shared mutable state)
-- [ ] ESLint passes (`npx eslint playwright/`)
-- [ ] Spec files under 300 lines (split if needed); utils files can be longer if cohesive
-
-### Severity guide (for reviewers)
-
-| Severity | Criteria | Action |
-|---|---|---|
-| **Blocker** | Test passes but doesn't verify the spec (parity violation) | Must fix before merge |
-| **Major** | Conditional assertion, weak assertion, missing positive anchor | Must fix before merge |
-| **Minor** | Helper not extracted, redundant timeout, naming inconsistency | Fix in same PR or follow-up |

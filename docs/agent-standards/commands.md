@@ -5,7 +5,7 @@ This file lists the canonical, **verified** commands for building, testing, lint
 ## Prerequisites
 - Java 25 or higher
 - Maven 3.6+
-- Node.js >= 20.11.1
+- Node.js >= 20.11.1 (`gravitee-am-console` needs Node 24, see its `.nvmrc`)
 - Yarn 4.1.1 (packageManager)
 - Docker & Docker Compose (for integration tests and local development)
 
@@ -41,15 +41,45 @@ mvn test
 mvn test -pl gravitee-am-service
 
 # Run specific test class
-mvn test -Dtest="TestClassName"
+mvn test -Dtest="TestClassName" -pl module-name
+
+# Run specific test method
+mvn test -Dtest="TestClass#method" -pl module
 ```
 
 ### Repository tests (Testcontainers)
+
+Require Docker running. These test the data layer against real database instances.
+
+The `cicd*` profiles are defined in individual module POMs (e.g., `gravitee-am-repository-mongodb`, `gravitee-am-repository-jdbc`) and toggle `skipTests` from `true` to `false`. You must build the **whole project** (not a specific `-pl` module) so Maven activates the profiles in the correct child modules.
+
 ```bash
-# The cicd* profiles turn the repository tests on; build the whole project, not one -pl module
-mvn install -pl '!gravitee-am-ui' -Pcicd -DskipTests                  # MongoDB
-mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Ppostgres -DskipTests   # PostgreSQL
+# MongoDB
+mvn install -pl '!gravitee-am-ui' -Pcicd -DskipTests
+
+# PostgreSQL
+mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Ppostgres -DskipTests
+
+# MySQL / MariaDB / MSSQL
+mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Pmysql -DskipTests
+mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Pmariadb -DskipTests
+mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Pmssql -DskipTests
+
+# Older DB versions (append -min)
+mvn install -pl '!gravitee-am-ui' -Pcicd-jdbc -Ppostgres-min -DskipTests
+
+# Redis
+mvn install -pl '!gravitee-am-ui' -Pcicd-redis -DskipTests
 ```
+
+**Note:** `-DskipTests` is passed globally but the `cicd*` profiles override it to `false` in the relevant modules, so only those repository tests run.
+
+**Maven profiles:** `cicd` (Mongo), `cicd-jdbc` + DB profile (JDBC), `cicd-redis` (Redis). Profiles are defined in:
+- `gravitee-am-repository/gravitee-am-repository-mongodb/pom.xml`
+- `gravitee-am-repository/gravitee-am-repository-jdbc/pom.xml`
+- `gravitee-am-repository/gravitee-am-repository-redis/pom.xml`
+- `gravitee-am-dataplane/gravitee-am-dataplane-mongodb/pom.xml`
+- `gravitee-am-dataplane/gravitee-am-dataplane-jdbc/pom.xml`
 
 ### Clean
 ```bash
@@ -101,6 +131,10 @@ yarn prettier             # Prettier check
 ```bash
 cd gravitee-am-ui
 yarn test
+
+# Or via Maven, from the repository root
+cd ..
+mvn test -pl gravitee-am-ui -Dlicense.skip=true
 ```
 
 ### Build
@@ -113,6 +147,26 @@ yarn build
 # Production build
 yarn prod
 ```
+
+## Console (React)
+
+Location: `gravitee-am-console/`. Not a Maven module: `mvn install` from the root does not build it. Run every command from that folder; Node 24 (`.nvmrc`), Yarn 4.1.1 from `.yarn/releases/`. The rules for working in it are in `gravitee-am-console/AGENTS.md`.
+
+```bash
+cd gravitee-am-console
+yarn install
+yarn serve        # dev server on :4201, proxies /management to AM_MAPI_URL (default :8093)
+yarn typecheck
+yarn lint         # typecheck, ESLint with the Graphene config, Prettier check
+yarn lint:eslint:fix && yarn lint:prettier:fix
+yarn test         # Vitest, jsdom, files under src/**/__tests__/*.test.{ts,tsx}
+yarn build        # typecheck, then rsbuild production build into dist/
+
+# Before a commit, all four must pass
+yarn typecheck && yarn lint && yarn test && yarn build
+```
+
+CircleCI runs the same four commands in the `console_build` job when a push changes this folder or the generated models it imports.
 
 ## API / Contracts
 
@@ -141,7 +195,79 @@ bash scripts/regen-oas.sh && bash scripts/regen-sdk.sh
 ```bash
 # Run all Postman collections via Makefile
 make postman
+
+# Or directly
+npm --prefix postman run test:collections
 ```
+
+## Integration, migration and chart tests
+
+### Integration tests (Jest)
+
+Require a running local stack: start it with `docker/local-stack/local-stack.sh up` (use `--full` for the gateway protocol specs, `--db psql` for the JDBC backend). See "Local development with Docker" below and the `local-stack` skill. Follow `gravitee-am-test/GUIDELINES.md` for all integration test work.
+
+```bash
+# All tests
+npm --prefix gravitee-am-test run ci
+
+# Management tests (2 parallel workers)
+npm --prefix gravitee-am-test run ci:management:parallel
+
+# Gateway tests (sequential, order-sensitive)
+npm --prefix gravitee-am-test run ci:gateway
+
+# Single test file
+npm --prefix gravitee-am-test run test -- specs/gateway/path/to/test.spec.ts
+
+# Single test by name
+npm --prefix gravitee-am-test run test -- specs/gateway/path/to/test.spec.ts -t "test name"
+
+# With PostgreSQL backend
+REPOSITORY_TYPE=jdbc npm --prefix gravitee-am-test run ci:management:parallel
+```
+
+### Migration tests
+
+Seed data with one AM version, upgrade/downgrade the Management API and gateways, and verify it survived. Driven by `scripts/migration-test.mjs` (see `scripts/migration-tool/README.md`). Follow `gravitee-am-test/MIGRATION_TEST_GUIDELINES.md` for any change under `gravitee-am-test/migration-seeding/` or `gravitee-am-test/specs/migration/`.
+
+### Helm tests
+
+Refer to [helm/README.md](../../helm/README.md) for more details on testing Helm charts.
+
+```bash
+helm lint helm/
+helm unittest -f 'tests/**/*.yaml' helm/
+```
+
+## Test types
+
+| Test Type | Framework | Location | Scope | CI Job |
+|-----------|-----------|----------|-------|--------|
+| **Unit** | JUnit 5 / Mockito | `*/src/test/java/` | Per-module logic | `junit_tests` |
+| **Repository** | JUnit + Testcontainers | `gravitee-am-repository/gravitee-am-repository-tests/src/test/java/` | Data layer against real DBs | `run_testcontainer_tests_*` |
+| **Jest Management** | Jest / TypeScript | `gravitee-am-test/specs/management/` | Management API endpoints | `run_jest_tests_*` |
+| **Jest Gateway** | Jest / TypeScript | `gravitee-am-test/specs/gateway/` | OAuth2/OIDC protocol flows | `run_jest_tests_*` |
+| **Migration** | Jest / TypeScript | `gravitee-am-test/migration-seeding/`, `gravitee-am-test/specs/migration/` | Data and behaviour across AM upgrades/downgrades | migration workflow (`workflows-migration.yml`) |
+| **Playwright** | Playwright | `gravitee-am-test/playwright/` | Console UI E2E flows | `run_playwright_tests_*` |
+| **Postman** | Newman | `postman/collections/` | API contract testing | `run_postman_tests_*` |
+| **UI** | Jest / Angular | `gravitee-am-ui/src/**/*.spec.ts` | Angular component/service tests | `ui_tests` |
+| **Helm** | helm-unittest | `helm/tests/` | Kubernetes chart rendering | `job-test-am-charts` |
+
+## CI pipeline (CircleCI)
+
+The PR workflow (`pull_requests`) runs the following test jobs:
+
+1. **`junit_tests`**: backend unit tests (`mvn verify -pl '!gravitee-am-ui'`)
+2. **`ui_tests`**: Angular tests (`mvn test -pl gravitee-am-ui`)
+3. **`run_jest_tests_mongo`**: Jest management (parallel) + gateway tests against MongoDB 9.0
+4. **`run_jest_tests_psql`**: Jest management (parallel) + gateway tests against PostgreSQL 18.4
+5. **`run_postman_tests_mongo`**: Newman collections against MongoDB 9.0
+6. **`run_postman_tests_psql`**: Newman collections against PostgreSQL 18.4
+7. **`run_playwright_tests_mongo`**: Playwright E2E tests against MongoDB 9.0
+8. **`run_playwright_tests_psql`**: Playwright E2E tests against PostgreSQL 18.4
+9. **`job-test-am-charts`**: Helm lint + unittest
+
+**Repository testcontainer tests** run in a separate `testcontainer_tests` workflow, triggered when files under `gravitee-am-repository/`, `gravitee-am-reporter/`, `gravitee-am-dataplane/`, or `pom.xml` are modified. This tests against a matrix of MongoDB, Redis, PostgreSQL, MySQL, MariaDB, and MSSQL (current + minimum supported versions).
 
 ## Local development with Docker
 
@@ -256,6 +382,7 @@ All commands in this file have been verified against:
 - `pom.xml` (Maven projects)
 - `Makefile` (Docker/local development)
 - `gravitee-am-ui/package.json` (Frontend scripts)
+- `gravitee-am-console/package.json` (Console scripts)
 - `gravitee-am-test/package.json` (Test scripts)
 - `postman/package.json` (Newman/Postman tests)
 - `gravitee-am-test/openapitools.json` (OpenAPI generator)

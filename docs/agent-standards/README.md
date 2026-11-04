@@ -1,66 +1,42 @@
 # Agent Standards
 
-Single source of truth for AI agent rules and skills used by both Cursor IDE and Google Antigravity.
+Skills, templates and the command reference that AI coding agents use in this repository. The rules agents follow are no longer kept here; they live in `.ai/rules/`.
 
 ## Structure
 
 ```
 docs/agent-standards/
-├── cursor-rules/    # Full rule content (Cursor syntax)
 ├── skills/          # Reusable agent skills
 ├── templates/       # Task templates
 └── commands.md      # Verified project commands
 ```
 
-## How It Works
+## Where the rules live
 
-### Rules
+The rules are written once, in `.ai/rules/`. A tool called `gbuddy` turns them, together with the shared Gravitee rules, into the files the AI tools read: `AGENTS.md` at the repository root and in each module folder, a `CLAUDE.md` beside each of them, and the review files in `.github/instructions/` for Copilot code review. Cursor, Codex, Copilot and Antigravity read `AGENTS.md`; Claude Code reads `CLAUDE.md`, which points to `AGENTS.md`.
 
-**Cursor** uses rules directly via symlink:
+Never edit a generated file by hand. Its first lines say it is generated, and the `Verify AI context` check fails a pull request that edits one by hand.
+
+## Changing a rule
+
+1. Edit or add the rule in `.ai/rules/` (read `.ai/rules/ai-context-authoring.md` first).
+2. Run `gbuddy setup` at the repository root.
+3. Commit everything it changed, including `.ai/generated.yaml`.
+
+If you cannot run `gbuddy`, change only the rule in `.ai/rules/`, say so in the pull request, and ask a maintainer to regenerate the files on your branch.
+
+## Skills
+
+Claude Code, Cursor and Antigravity share the skills through symlinks:
+
 ```
-.cursor/rules → docs/agent-standards/cursor-rules/
-```
-
-**Antigravity** references Cursor rules via @ mentions:
-```markdown
----
-trigger: always_on
----
-@/docs/agent-standards/cursor-rules/00-context.mdc
-```
-**Result:** Edit once in `cursor-rules/`, both tools benefit.
-
-### Skills
-
-Both tools share skills via symlinks:
-```
+.claude/skills → docs/agent-standards/skills/
 .cursor/skills → docs/agent-standards/skills/
-.agent/skills → docs/agent-standards/skills/
+.agent/skills  → docs/agent-standards/skills/
 ```
 
-## Adding a New Rule
+To add a skill, create `skills/skill-name/SKILL.md`; every tool picks it up.
 
-1. Create Cursor rule in `cursor-rules/your-rule.mdc`
-2. Create Antigravity wrapper in `.agent/rules/your-rule.md` with @ mention
-3. Reload Antigravity workspace
+## Templates and commands
 
-## Updating Rules
-
-1. Edit the Cursor rule in `cursor-rules/`
-2. Antigravity: Reload workspace
-
-## Adding a New Skill
-
-1. Create `skills/skill-name/SKILL.md`
-2. Available automatically to both tools
-
-## Rule Naming
-
-```
-00-context.mdc          # Global (always on)
-10-workflow.mdc         # Global (always on)
-20-safety-security.mdc  # Global (always on)
-30-*.mdc                # Domain-specific (see each file's alwaysApply / globs)
-```
-
-Numbers indicate loading order.
+`templates/` holds the plan and checklist templates that the rules point to. `commands.md` is the reference for build, test and validation commands. Update it when a tool, script or required check changes.
