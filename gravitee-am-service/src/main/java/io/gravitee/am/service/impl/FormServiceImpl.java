@@ -33,7 +33,9 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.exception.FormNotFoundException;
+import io.gravitee.am.service.exception.FormTemplateInvalidException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.i18n.RestrictedExpressionEvaluator;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -47,6 +49,7 @@ import lombok.CustomLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import java.io.InputStream;
 import java.util.Date;
@@ -72,6 +75,22 @@ public class FormServiceImpl implements FormService {
 
     @Autowired
     private AuditService auditService;
+
+    private final RestrictedExpressionEvaluator formContentValidator = new RestrictedExpressionEvaluator();
+
+    /**
+     * Rejects form content that contains an expression forbidden by {@link RestrictedExpressionEvaluator}, so a
+     * malicious form is caught at save time rather than at render time.
+     */
+    private Completable validateContent(String content) {
+        return Completable.fromAction(() -> {
+            try {
+                formContentValidator.validateContent(content);
+            } catch (TemplateProcessingException e) {
+                throw new FormTemplateInvalidException(e);
+            }
+        });
+    }
 
     @Override
     public Maybe<Form> findById(String id) {
@@ -196,8 +215,8 @@ public class FormServiceImpl implements FormService {
     }
 
     private Single<Form> update0(ReferenceType referenceType, String referenceId, Maybe<Form> formLookup, String id, UpdateForm updateForm, User principal) {
-        return formLookup
-                .switchIfEmpty(Single.error(new FormNotFoundException(id)))
+        return validateContent(updateForm.getContent())
+                .andThen(formLookup.switchIfEmpty(Single.error(new FormNotFoundException(id))))
                 .flatMap(oldForm -> {
                     Form formToUpdate = new Form(oldForm);
                     formToUpdate.setEnabled(updateForm.isEnabled());
@@ -211,8 +230,7 @@ public class FormServiceImpl implements FormService {
                                 Event event = new Event(Type.FORM, new Payload(page.getId(), page.getReferenceType(), page.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(page));
                             })
-                            .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).oldValue(oldForm).form(form)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                            .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).oldValue(oldForm).form(form)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -221,7 +239,8 @@ public class FormServiceImpl implements FormService {
 
                     log.error("An error occurs while trying to update a form", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a form", ex));
-                });
+                })
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
     }
 
     @Override
@@ -240,7 +259,8 @@ public class FormServiceImpl implements FormService {
         String formId = RandomString.generate();
 
         // check if form is unique
-        return checkFormUniqueness(referenceType, referenceId, client, newForm.getTemplate().template())
+        return validateContent(newForm.getContent())
+                .andThen(checkFormUniqueness(referenceType, referenceId, client, newForm.getTemplate().template()))
                 .flatMap(irrelevant -> {
                     Form form = new Form();
                     form.setId(formId);
