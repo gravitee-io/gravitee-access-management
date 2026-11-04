@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.adapter;
 
 
+import io.gravitee.am.common.env.CloudProperties;
 import io.gravitee.am.management.service.CockpitAccessService;
 import io.gravitee.am.management.service.model.AccessPointTemplate;
 import io.gravitee.am.model.Environment;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -197,6 +199,50 @@ class HelloCommandAdapterTest {
             // Verify that trailing slashes are removed
             assertEquals("http://localhost:8093/management", helloCommand.getPayload().getAdditionalInformation().get("API_URL"));
             assertEquals("http://localhost:4200", helloCommand.getPayload().getAdditionalInformation().get("UI_URL"));
+
+            return true;
+        });
+    }
+
+    @Test
+    void installationMode_Managed_propagatedToHelloCommand() {
+        lenient().when(environment.getProperty(CloudProperties.SETTINGS_INSTALLATION_TYPE, CloudProperties.INSTALLATION_TYPE_STANDALONE)).thenReturn(CloudProperties.INSTALLATION_TYPE_MANAGED);
+        lenient().when(environment.getProperty(CloudProperties.SETTINGS_CLOUD_ENABLED, Boolean.class)).thenReturn(true);
+
+        final Installation installation = new Installation();
+        installation.setId(INSTALLATION_ID);
+
+        when(node.hostname()).thenReturn(HOSTNAME);
+        when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
+        final TestObserver<HelloCommand> obs = cut
+                .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
+                .test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(helloCommand -> {
+            assertEquals(CloudProperties.INSTALLATION_TYPE_MANAGED, helloCommand.getPayload().getInstallationType());
+
+            return true;
+        });
+    }
+
+    @Test
+    void installationMode_Standalone_notPropagatedToHelloCommand() {
+        lenient().when(environment.getProperty(CloudProperties.SETTINGS_INSTALLATION_TYPE, CloudProperties.INSTALLATION_TYPE_STANDALONE)).thenReturn(CloudProperties.INSTALLATION_TYPE_STANDALONE);
+        lenient().when(environment.getProperty(CloudProperties.SETTINGS_CLOUD_ENABLED, Boolean.class)).thenReturn(true);
+
+        final Installation installation = new Installation();
+        installation.setId(INSTALLATION_ID);
+
+        when(node.hostname()).thenReturn(HOSTNAME);
+        when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
+        final TestObserver<HelloCommand> obs = cut
+                .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
+                .test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(helloCommand -> {
+            assertNull(helloCommand.getPayload().getInstallationType());
 
             return true;
         });

@@ -16,4 +16,9 @@
 import { Route } from 'react-router-dom';
 import { lazyPage } from '../../lib/routing/lazyPage';
 
-export const kitRoutes = import.meta.env.DEV ? <Route path="dev/kit" element={lazyPage(() => import('./KitPage'), 'KitPage')} /> : null;
+export const kitRoutes = import.meta.env.DEV ? (
+    <>
+        <Route path="dev/kit" element={lazyPage(() => import('./KitPage'), 'KitPage')} />
+        <Route path="dev/kit/plugin-wizard" element={lazyPage(() => import('./PluginWizardKitPage'), 'PluginWizardKitPage')} />
+    </>
+) : null;

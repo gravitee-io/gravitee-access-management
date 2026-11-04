@@ -42,7 +42,7 @@ Before you commit, run `yarn typecheck && yarn lint && yarn test && yarn build` 
 
 | Part           | Choice                                                                                          | Where                                               |
 | -------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| UI             | React 19, `@gravitee/graphene-core` 3.23.1, Tailwind 4                                          | `package.json`, `src/styles.css`                    |
+| UI             | React 19, `@gravitee/graphene-core` 3.29.0, Tailwind 4                                          | `package.json`, `src/styles.css`                    |
 | Routing        | react-router 7, one `BrowserRouter`, nested routes, one `routes.tsx` per area                   | `src/app/App.tsx`, `src/features/<area>/routes.tsx` |
 | Data           | TanStack Query 5                                                                                | `src/app/App.tsx` for the client, pages for queries |
 | Forms          | react-hook-form 7 with Graphene `Field` parts                                                   | Graphene peer dependency                            |
@@ -52,7 +52,7 @@ Before you commit, run `yarn typecheck && yarn lint && yarn test && yarn build` 
 | Runtime config | `constants.json` with `baseURL`, plus `build.json` with `version`, read before the first render | `src/config/app-config.ts`                          |
 | Format         | Prettier: 4 spaces, single quotes, width 140, trailing commas                                   | `.prettierrc`                                       |
 
-Pin Graphene to the version gamma-console uses.
+Pin Graphene to an exact version. It can differ from the version gamma-console uses.
 
 ## 3. Structure
 
@@ -120,6 +120,8 @@ src/
 - A single page sets its breadcrumbs with `useBreadcrumbs([...])`. A section layout calls `useSectionSidebar()`.
 - The main menu is `MAIN_NAV_GROUPS` in `src/app/navigation.ts`. A section with its own menu adds its groups there.
 - Tailwind 4: write `border-border` and `divide-border`. Bare `border` and `divide-y` paint with `currentColor`.
+- To override a Graphene class, pass every variant of that property. Graphene's CSS loads last, so its base
+  `max-w-…` beats an app `sm:max-w-…`. Example: `DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-3xl"`.
 - `src/styles.css` imports Graphene's CSS last. Do not import `@gravitee/graphene-core/styles` from TypeScript.
 - Page titles are a plain `<h1>` inside `PageHeader`.
 - A settings form saves through `SaveBar` from `src/app/components/`. Do not put a Save button at the foot of the form.

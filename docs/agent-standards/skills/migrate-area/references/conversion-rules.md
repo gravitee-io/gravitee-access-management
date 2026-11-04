@@ -142,7 +142,7 @@ Drop the `Am` prefix. The console's types live in the console's namespace.
 
 ### 1.8 Graphene version
 
-The prototype pins Graphene 3.3.0. The console pins the version gamma-console uses. After the copy, run `yarn typecheck`. A removed or renamed
+The prototype pins Graphene 3.3.0. The console pins its own version in `package.json`. After the copy, run `yarn typecheck`. A removed or renamed
 prop fails there. A changed behaviour does not. Check in the browser: `DataTable` pagination, `Select` with
 `Controller`, `Dialog` open state, `Tabs` value.
 
@@ -231,8 +231,9 @@ uncovered list is `uncoveredComponents` in `units.json`.
 | A time input with a `units` select, `TimeConverterService`               | `DurationInput`, with `exactDuration` and `draftToSeconds`                                   | Semi-automatic |
 | `mat-datepicker`                                                         | `DatePicker`                                                                                 | Automatic      |
 | `formDirective.resetForm(entity)` after save                             | `form.reset(response)`                                                                       | Automatic      |
-| `@ajsf` `json-schema-form` with `[schema]` and `(onChanges)`             | `JsonSchemaForm` with `adaptAmSchema(schema)` and `jsonSchemaResolver`                       | Automatic      |
-| `app-form` custom schema widgets `material-file`, `material-multiselect` | A Graphene custom field, once GR-A ships it. Until then a plain input and an `Alert`         | Manual         |
+| `@ajsf` `json-schema-form` with `[schema]` and `(onChanges)`             | `PluginSchemaForm` with `useAdaptedSchema(schema)` and `pluginSchemaResolver`                | Automatic      |
+| `app-form` custom schema widgets `material-file`, `material-multiselect` | `PluginSchemaForm`: a `FileUpload` field, and a multiselect of the dictionary items          | Automatic      |
+| `app-form` custom schema widget `graviteeResource`                       | `PluginSchemaForm` with `resources`, from `compatibleResources`                              | Automatic      |
 
 Every settings form uses `SaveBar` for its Save button. This covers the Angular `type="submit"` Save button at the
 foot of a settings form, and `gio-save-bar`. `SaveBar` shows in the sticky layout banner when `isDirty`, submits the
