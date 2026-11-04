@@ -148,9 +148,10 @@ For each page, in the order list, create, detail:
 6. Use the console's `PageHeader`, `ConfirmDialog`, `ErrorPanel` and `NotFoundPanel`.
 7. Put a copy control outside every `<form>`. Graphene `CopyableText` renders a `<button>` with no `type`, so a click
    submits the form that holds it.
-8. Read the plugin schema of a plugin page. Angular `json-schema-form` does not render a property without a `type`, so
-   its value is not in the configuration. Graphene `extractDefaults` adds that property's default. Remove such a
-   property from the schema before `adaptAmSchema`.
+8. Render a plugin configuration with `PluginSchemaForm`, `useAdaptedSchema` and `pluginSchemaResolver` from
+   `src/app/components/PluginSchemaForm.tsx`. `adaptAmSchema` drops a property without a `type`, as Angular
+   `json-schema-form` does not render it. Pass the `graviteeResource` choices as `resources`, from
+   `compatibleResources` when the plugin has a category.
 
 Check with a search over `src/features/<unit>/`: no `gamma-baby`, `useJson`, `send(`, `amUrls`, `/am/`,
 `useHasPermission`, `buildEnvPath`, `useScenario`, `@mirrors`, no permission string with `-` or `:`, no `interface` as

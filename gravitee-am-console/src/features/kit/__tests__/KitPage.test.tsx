@@ -30,6 +30,7 @@ describe('KitPage', () => {
         );
 
         expect(screen.getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual([
+            'Plugin wizard',
             'SaveBar',
             'ConfirmDialog',
             'SettingToggle',
@@ -40,5 +41,6 @@ describe('KitPage', () => {
             'UserAvatar',
             'Empty state (Graphene DataTableEmptyState)',
         ]);
+        expect(screen.getByRole('link', { name: 'Open the plugin wizard' })).toHaveAttribute('href', '/plugin-wizard');
     });
 });
