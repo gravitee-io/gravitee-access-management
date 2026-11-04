@@ -15,16 +15,24 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.exception.FormNotFoundException;
+import io.gravitee.am.service.exception.FormTemplateInvalidException;
+import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FormServiceImpl;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -33,6 +41,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -41,6 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
@@ -220,6 +230,70 @@ public class FormServiceTest {
                 .assertError(FormNotFoundException.class);
 
         verify(formRepository, never()).update(any(Form.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_contentWithForbiddenExpression() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf("app-x")));
+        UpdateForm updateForm = new UpdateForm();
+        updateForm.setContent("<p th:text=\"${name.getClass()}\"></p>");
+
+        formService.update(DOMAIN, "app-x", "my-form", updateForm).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormTemplateInvalidException.class);
+
+        verify(formRepository, never()).update(any(Form.class));
+    }
+
+    @Test
+    public void shouldNotCreate_contentWithForbiddenExpression() {
+        when(formRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, "app-x", "login")).thenReturn(Maybe.empty());
+        NewForm newForm = new NewForm();
+        newForm.setTemplate(Template.LOGIN);
+        newForm.setContent("<p th:text=\"${new java.util.Date()}\"></p>");
+
+        formService.create(DOMAIN, "app-x", newForm, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormTemplateInvalidException.class);
+
+        verify(formRepository, never()).create(any(Form.class));
+    }
+
+    @Test
+    public void shouldReportFailureAudit_whenCreateRejectsForbiddenExpression() {
+        when(formRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, "app-x", "login")).thenReturn(Maybe.empty());
+        NewForm newForm = new NewForm();
+        newForm.setTemplate(Template.LOGIN);
+        newForm.setContent("<p th:text=\"${new java.util.Date()}\"></p>");
+
+        formService.create(DOMAIN, "app-x", newForm, null).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormTemplateInvalidException.class);
+
+        Audit audit = capturedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.FORM_TEMPLATE_CREATED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+    }
+
+    @Test
+    public void shouldReportFailureAudit_whenUpdateRejectsForbiddenExpression() {
+        when(formRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-form")).thenReturn(Maybe.just(formOf("app-x")));
+        UpdateForm updateForm = new UpdateForm();
+        updateForm.setContent("<p th:text=\"${name.getClass()}\"></p>");
+
+        formService.update(DOMAIN, "app-x", "my-form", updateForm).test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(FormTemplateInvalidException.class);
+
+        Audit audit = capturedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.FORM_TEMPLATE_UPDATED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+    }
+
+    private Audit capturedAudit() {
+        ArgumentCaptor<AuditBuilder<?>> captor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService).report(captor.capture());
+        return captor.getValue().build(new ObjectMapper());
     }
 
     @Test
