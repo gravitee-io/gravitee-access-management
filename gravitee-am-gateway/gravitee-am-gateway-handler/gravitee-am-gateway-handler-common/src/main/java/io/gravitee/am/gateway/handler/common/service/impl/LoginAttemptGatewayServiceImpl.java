@@ -34,7 +34,6 @@ import lombok.AllArgsConstructor;
 import lombok.CustomLog;
 
 import java.util.Date;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -48,8 +47,7 @@ public class LoginAttemptGatewayServiceImpl implements LoginAttemptGatewayServic
     private final DataPlaneRegistry dataPlaneRegistry;
 
     @Override
-    public Single<LoginAttempt> loginFailed(Domain domain, LoginAttemptCriteria originalCriteria, AccountSettings accountSettings) {
-        final LoginAttemptCriteria criteria = normalize(originalCriteria);
+    public Single<LoginAttempt> loginFailed(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings) {
         log.debug("Add login attempt for {}", criteria);
         final var loginAttemptRepository = dataPlaneRegistry.getLoginAttemptRepository(domain);
         return loginAttemptRepository.findByCriteria(criteria)
@@ -89,8 +87,7 @@ public class LoginAttemptGatewayServiceImpl implements LoginAttemptGatewayServic
     }
 
     @Override
-    public Completable loginSucceeded(Domain domain, LoginAttemptCriteria originalCriteria) {
-        final LoginAttemptCriteria criteria = normalize(originalCriteria);
+    public Completable loginSucceeded(Domain domain, LoginAttemptCriteria criteria) {
         log.debug("Delete login attempt for {}", criteria);
         return dataPlaneRegistry.getLoginAttemptRepository(domain).delete(criteria)
                 .onErrorResumeNext(ex -> {
@@ -101,8 +98,7 @@ public class LoginAttemptGatewayServiceImpl implements LoginAttemptGatewayServic
     }
 
     @Override
-    public Maybe<LoginAttempt> checkAccount(Domain domain, LoginAttemptCriteria originalCriteria, AccountSettings accountSettings) {
-        final LoginAttemptCriteria criteria = normalize(originalCriteria);
+    public Maybe<LoginAttempt> checkAccount(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings) {
         log.debug("Check account status for {}", criteria);
         return dataPlaneRegistry.getLoginAttemptRepository(domain).findByCriteria(criteria);
     }
@@ -120,26 +116,5 @@ public class LoginAttemptGatewayServiceImpl implements LoginAttemptGatewayServic
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to fin login attempt by id: %s", id), ex));
                 });
-    }
-
-    /**
-     * Login attempts are tracked per lower-cased username so that "John.Doe" and "john.doe" share the same counter,
-     * whatever the casing used by the caller to authenticate or to look up the account status.
-     */
-    private static LoginAttemptCriteria normalize(LoginAttemptCriteria criteria) {
-        final String username = criteria.username();
-        if (username == null) {
-            return criteria;
-        }
-        final String lowerCased = username.toLowerCase(Locale.ROOT);
-        if (lowerCased.equals(username)) {
-            return criteria;
-        }
-        return new LoginAttemptCriteria.Builder()
-                .domain(criteria.domain())
-                .client(criteria.client())
-                .identityProvider(criteria.identityProvider())
-                .username(lowerCased)
-                .build();
     }
 }
