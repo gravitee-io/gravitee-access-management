@@ -282,10 +282,31 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
     };
 }
 
+/** An empty array whose items have defaults starts with one item of those defaults. */
+function withFirstArrayItems(schema: SchemaNode, value: Record<string, unknown>): Record<string, unknown> {
+    const filled = { ...value };
+    for (const [key, property] of Object.entries((schema.properties ?? {}) as Record<string, SchemaNode>)) {
+        const current = filled[key];
+        const items = property.items as SchemaNode | undefined;
+        if (property.type === 'array' && items?.properties && (current === undefined || (Array.isArray(current) && current.length === 0))) {
+            const item = extractDefaults(items as JsonSchema) as Record<string, unknown> | undefined;
+            if (item && Object.keys(item).length > 0) {
+                filled[key] = [item];
+            }
+        } else if (property.properties && (current === undefined || (typeof current === 'object' && !Array.isArray(current)))) {
+            const nested = withFirstArrayItems(property, (current ?? {}) as Record<string, unknown>);
+            if (current !== undefined || Object.keys(nested).length > 0) {
+                filled[key] = nested;
+            }
+        }
+    }
+    return filled;
+}
+
 /** An undefined value keeps its default. */
 export function withSchemaDefaults(schema: JsonSchema, configuration: Record<string, unknown>): Record<string, unknown> {
     return {
-        ...(extractDefaults(schema) as Record<string, unknown>),
+        ...withFirstArrayItems(schema as SchemaNode, extractDefaults(schema) as Record<string, unknown>),
         ...Object.fromEntries(Object.entries(configuration).filter(([, value]) => value !== undefined)),
     };
 }
