@@ -20,12 +20,13 @@ import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
 import { accountRoutes } from '../account/routes';
 import { entrypointRoutes } from '../entrypoints/routes';
+import { identityProviderRoutes } from '../identity-providers/routes';
 import { loginRoutes } from '../login/routes';
 import { webProtectionRoutes } from '../web-protection/routes';
 import { webAuthnRoutes } from '../webauthn/routes';
 import { DomainSettingsLayout } from './DomainSettingsLayout';
 
-const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login', 'web-protection', 'account', 'webauthn']);
+const BUILT_SETTINGS = new Set(['general', 'entrypoints', 'login', 'web-protection', 'account', 'webauthn', 'providers']);
 
 export const domainSettingsRoutes = (
     <Route
@@ -50,6 +51,7 @@ export const domainSettingsRoutes = (
         {webProtectionRoutes}
         {accountRoutes}
         {webAuthnRoutes}
+        {identityProviderRoutes}
         {DOMAIN_SETTINGS_NAV_GROUPS.flatMap(group => group.items)
             .filter(item => !BUILT_SETTINGS.has(item.key))
             .map(item => (
