@@ -314,6 +314,36 @@ describe('withSchemaDefaults', () => {
             label: 'x',
         });
     });
+
+    it('starts an array with one item of the item defaults, as Angular json-schema-form does, in nested objects too', () => {
+        const condition: JsonSchema = {
+            type: 'object',
+            properties: {
+                value: { type: 'string', default: '{#response.status == 401}' },
+                exception: { type: 'string', default: 'BadCredentialsException' },
+            },
+        };
+        const http: JsonSchema = {
+            type: 'object',
+            properties: {
+                resource: {
+                    type: 'object',
+                    properties: {
+                        method: { type: 'string', default: 'POST' },
+                        errors: { type: 'array', items: condition },
+                    },
+                },
+                headers: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' } } } },
+            },
+        };
+
+        const filled = withSchemaDefaults(http, {});
+
+        expect((filled.resource as Record<string, unknown>).errors).toEqual([
+            { value: '{#response.status == 401}', exception: 'BadCredentialsException' },
+        ]);
+        expect(filled.headers ?? []).toEqual([]);
+    });
 });
 
 describe('compatibleResources', () => {
