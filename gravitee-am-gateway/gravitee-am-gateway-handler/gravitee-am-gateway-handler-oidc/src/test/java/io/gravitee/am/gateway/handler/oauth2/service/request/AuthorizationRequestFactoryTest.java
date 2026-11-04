@@ -84,6 +84,26 @@ public class AuthorizationRequestFactoryTest {
 
 
     @Test
+    public void shouldAttachValidatedAuthorizationDetails() {
+        RoutingContext routingContext = newRoutingContext();
+        List<Map<String, Object>> authorizationDetails = List.of(Map.of("type", "account_information"));
+        when(routingContext.get(ConstantKeys.AUTHORIZATION_DETAILS_CONTEXT_KEY)).thenReturn(authorizationDetails);
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
+
+        Assert.assertEquals(authorizationDetails, authorizationRequest.getAuthorizationDetails());
+    }
+
+    @Test
+    public void shouldNotAttachAuthorizationDetailsWhenNoneWereValidated() {
+        RoutingContext routingContext = newRoutingContext();
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
+
+        Assert.assertNull(authorizationRequest.getAuthorizationDetails());
+    }
+
+    @Test
     public void shouldCaptureDpopJkt_fromQueryParameter() {
         RoutingContext routingContext = newRoutingContext();
         when(routingContext.request().getParam(Parameters.DPOP_JKT)).thenReturn("thumb-query");

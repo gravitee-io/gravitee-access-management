@@ -21,6 +21,7 @@ import io.gravitee.am.common.oidc.BrazilAcrValues;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailTypeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
@@ -65,6 +66,9 @@ public class OpenIDDiscoveryServiceTest {
 
     @Mock
     private ScopeService scopeService;
+
+    @Mock
+    private AuthorizationDetailTypeManager authorizationDetailTypeManager;
 
     @Mock
     private Environment environment;
@@ -297,4 +301,21 @@ public class OpenIDDiscoveryServiceTest {
         assertTrue(Boolean.TRUE.equals(metadata.getClientIdMetadataDocumentSupported()));
     }
 
+    @Test
+    public void shouldAdvertiseTheDiscoveryAuthorizationDetailTypes() {
+        when(authorizationDetailTypeManager.findDiscoveryTypes()).thenReturn(List.of("account_information", "payment_initiation"));
+
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertEquals(List.of("account_information", "payment_initiation"), openIDProviderMetadata.getAuthorizationDetailsTypesSupported());
+    }
+
+    @Test
+    public void shouldOmitAuthorizationDetailTypesWhenNoneIsAdvertised() {
+        when(authorizationDetailTypeManager.findDiscoveryTypes()).thenReturn(List.of());
+
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+
+        assertNull(openIDProviderMetadata.getAuthorizationDetailsTypesSupported());
+    }
 }

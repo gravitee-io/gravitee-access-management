@@ -39,6 +39,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.introspection.Introspection
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.impl.IntrospectionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.OAuthRevocationTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailTypeManager;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.impl.AuthorizationDetailTypeManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeManagerImpl;
@@ -223,6 +226,16 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     @Bean
     public ScopeManager scopeManager() {
         return new ScopeManagerImpl();
+    }
+
+    @Bean
+    public AuthorizationDetailTypeManager authorizationDetailTypeManager() {
+        return new AuthorizationDetailTypeManagerImpl();
+    }
+
+    @Bean
+    public AuthorizationDetailsValidator authorizationDetailsValidator(AuthorizationDetailTypeManager authorizationDetailTypeManager) {
+        return new AuthorizationDetailsValidator(authorizationDetailTypeManager);
     }
 
     @Bean

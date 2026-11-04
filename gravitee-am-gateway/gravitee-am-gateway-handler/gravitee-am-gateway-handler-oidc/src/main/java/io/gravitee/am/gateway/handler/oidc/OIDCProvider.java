@@ -34,6 +34,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.service.trustdomain.TrustDomainManager;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailTypeManager;
 import io.gravitee.am.gateway.handler.oidc.resources.endpoint.DynamicClientAccessEndpoint;
 import io.gravitee.am.gateway.handler.oidc.resources.endpoint.DynamicClientRegistrationEndpoint;
 import io.gravitee.am.gateway.handler.oidc.resources.endpoint.DynamicClientRegistrationTemplateEndpoint;
@@ -140,6 +141,9 @@ public class OIDCProvider extends AbstractProtocolProvider {
     private TrustDomainManager trustDomainManager;
 
     @Autowired
+    private AuthorizationDetailTypeManager authorizationDetailTypeManager;
+
+    @Autowired
     private RequestObjectService requestObjectService;
 
     @Autowired
@@ -181,6 +185,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
         extensionGrantManager.stop();
         scopeManager.stop();
         trustDomainManager.stop();
+        authorizationDetailTypeManager.stop();
     }
 
     @Override
