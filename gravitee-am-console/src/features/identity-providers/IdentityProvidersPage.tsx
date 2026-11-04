@@ -39,7 +39,7 @@ export function IdentityProvidersPage() {
     const listPath = `${basePath}/settings/providers`;
     // The Management API returns every identity provider in one list, so the table filters and pages it client-side.
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useState(10);
     const [query, setQuery] = useState('');
     const [pendingDelete, setPendingDelete] = useState<IdentityProviderSummary | null>(null);
     const search = useCallback((text: string) => {
@@ -153,7 +153,7 @@ export function IdentityProvidersPage() {
                     columns={columns}
                     data={rows.slice((page - 1) * pageSize, page * pageSize)}
                     loading={isFetching || plugins.isPending}
-                    skeletonCount={5}
+                    skeletonCount={pageSize}
                     toolbar={<SearchField label="identity providers" onSearch={search} />}
                     emptyMessage={
                         <DataTableEmptyState

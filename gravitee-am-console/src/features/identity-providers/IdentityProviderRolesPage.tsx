@@ -21,7 +21,8 @@ import { updateIdentityProvider } from '../../lib/api/identity-providers';
 import { listAllRoles } from '../../lib/api/roles';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
-import { ExpressionMapperPanel, type Mapper, type MapperTarget } from './ExpressionMapperPanel';
+import type { MapperTarget } from './AddMappingDialog';
+import { ExpressionMapperPanel, type Mapper } from './ExpressionMapperPanel';
 import { useIdentityProvider } from './IdentityProviderLayout';
 
 /** Maps user expressions onto every role of the domain, as the Angular `RolesResolver` loads them. */
@@ -68,7 +69,7 @@ export function IdentityProviderRolesPage() {
             }
             targets={targets}
             mapper={provider.roleMapper ?? {}}
-            duplicateMessage={(user, role) => `'${user}' has already the '${role}' role`}
+            duplicateMessage={(user, role) => `"${user}" already has the role ${role}.`}
             canUpdate={canUpdate}
             saving={save.isPending}
             onSave={roleMapper => save.mutate(roleMapper)}

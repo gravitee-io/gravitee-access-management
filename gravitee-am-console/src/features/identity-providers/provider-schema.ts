@@ -15,6 +15,7 @@
  */
 import type { Certificate } from '../../lib/api/certificates';
 import type { DataSource } from '../../lib/api/data-sources';
+import { isRecord } from '../../lib/guards';
 
 /** An AM plugin schema, written for angular-schema-form, before `adaptAmSchema`. */
 type SchemaNode = Record<string, unknown>;
@@ -41,7 +42,9 @@ export interface SchemaContext {
 }
 
 function propertiesOf(schema: SchemaNode): Properties {
-    return (schema.properties ?? {}) as Properties;
+    return isRecord(schema.properties)
+        ? Object.fromEntries(Object.entries(schema.properties).filter((entry): entry is [string, SchemaNode] => isRecord(entry[1])))
+        : {};
 }
 
 function withProperties(schema: SchemaNode, properties: Properties): SchemaNode {
@@ -76,7 +79,7 @@ function withDataSources(node: SchemaNode, name: string, dataSources: readonly D
             Object.fromEntries(Object.entries(propertiesOf(node)).map(([key, child]) => [key, withDataSources(child, key, dataSources)])),
         );
     }
-    const items = node.items as SchemaNode | undefined;
+    const items = isRecord(node.items) ? node.items : undefined;
     if (node.type === 'array' && items?.properties) {
         adapted = { ...adapted, items: withDataSources(items, '', dataSources) };
     }

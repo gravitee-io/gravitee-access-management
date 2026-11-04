@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { toast } from '@gravitee/graphene-core';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { buttonHarness, inputHarness } from '@gravitee/graphene-core/testing';
+import { screen, waitFor } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import { listCertificates } from '../../../lib/api/certificates';
 import { listDataSources } from '../../../lib/api/data-sources';
@@ -76,9 +77,9 @@ const google: IdentityProvider = {
     mappers: { email: 'mail' },
 };
 
-function renderPage(provider: IdentityProvider = google, permissions = ALL, features: string[] = []) {
+function setupSettingsPageHarness(provider: IdentityProvider = google, permissions = ALL, features: string[] = []) {
     vi.mocked(getIdentityProvider).mockResolvedValue(provider);
-    return renderRoutes(
+    renderRoutes(
         `${providersPath}/${provider.id}/settings`,
         <>
             <Route path={providersPath} element={<p>Providers list</p>} />
@@ -90,6 +91,33 @@ function renderPage(provider: IdentityProvider = google, permissions = ALL, feat
         permissions,
         features,
     );
+    const replace = async (name: string | RegExp, text: string) => {
+        await inputHarness({ name }).clear();
+        if (text) {
+            await inputHarness({ name }).type(text);
+        }
+    };
+
+    return {
+        findName: () => screen.findByRole('textbox', { name: 'Name' }),
+        rename: async (text: string) => {
+            await screen.findByRole('textbox', { name: 'Name' });
+            await replace('Name', text);
+        },
+        setClientId: (text: string) => replace(/Client ID/, text),
+        save: () => buttonHarness({ name: 'Save' }).click(),
+        clickButton: (name: string | RegExp) => buttonHarness({ name }).click(),
+        confirm: async (dialogName: string, button: string) => {
+            const dialog = await screen.findByRole('dialog', { name: dialogName });
+            await buttonHarness({ name: button, within: dialog }).click();
+        },
+        delete: async () => {
+            await screen.findByRole('button', { name: 'Delete' });
+            await buttonHarness({ name: 'Delete' }).click();
+            const dialog = await screen.findByRole('dialog', { name: 'Delete provider' });
+            await buttonHarness({ name: 'Delete', within: dialog }).click();
+        },
+    };
 }
 
 beforeEach(() => {
@@ -109,12 +137,11 @@ beforeEach(() => {
 
 describe('IdentityProviderSettingsPage', () => {
     it('saves the name, the whitelist and the configuration as the Angular update does', async () => {
-        renderPage();
+        const harness = setupSettingsPageHarness();
 
-        const name = await screen.findByRole('textbox', { name: 'Name' });
-        fireEvent.change(name, { target: { value: 'Google login' } });
-        fireEvent.change(screen.getByRole('textbox', { name: /Client ID/ }), { target: { value: 'xyz' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await harness.rename('Google login');
+        await harness.setClientId('xyz');
+        await harness.save();
 
         await waitFor(() => expect(updateIdentityProvider).toHaveBeenCalledTimes(1));
         const [calledRef, sent] = vi.mocked(updateIdentityProvider).mock.calls[0];
@@ -131,22 +158,40 @@ describe('IdentityProviderSettingsPage', () => {
 
     it('shows the name with no configuration fields when the plugin has no schema', async () => {
         vi.mocked(getIdentityProviderSchema).mockResolvedValue({});
-        renderPage();
+        const harness = setupSettingsPageHarness();
 
-        expect(await screen.findByRole('textbox', { name: 'Name' })).toHaveValue('Google');
+        expect(await harness.findName()).toHaveValue('Google');
         expect(screen.queryByRole('textbox', { name: /Client ID/ })).not.toBeInTheDocument();
     });
 
     it('shows the plugin description, as the Angular side panel does', async () => {
-        renderPage();
+        setupSettingsPageHarness();
 
         expect(await screen.findByText(/Google identity provider, let you register/)).toBeInTheDocument();
     });
 
     it('shows the redirect URI from the domain entrypoint and path', async () => {
-        renderPage();
+        setupSettingsPageHarness();
 
         expect(await screen.findByText('https://auth.example.com/acme/login/callback')).toBeInTheDocument();
+    });
+
+    it('shows an error in place of the redirect URI when the entrypoints fail to load', async () => {
+        vi.mocked(listDomainEntrypoints).mockRejectedValue(new HttpError(500, 'Service unavailable'));
+        setupSettingsPageHarness();
+
+        expect(await screen.findByText('Could not load the domain entrypoints.')).toBeInTheDocument();
+    });
+
+    it('describes the name input with its error when the name is cleared', async () => {
+        const harness = setupSettingsPageHarness();
+
+        await harness.rename('');
+        await harness.setClientId('xyz');
+
+        const name = await harness.findName();
+        await waitFor(() => expect(name).toHaveAttribute('aria-invalid', 'true'));
+        expect(name).toHaveAccessibleDescription('Name is required');
     });
 
     it('asks before a save that drops a user of an inline provider', async () => {
@@ -164,15 +209,15 @@ describe('IdentityProviderSettingsPage', () => {
                 users: { type: 'array', title: 'Users', items: { type: 'object', properties: { username: { type: 'string' } } } },
             },
         });
-        renderPage(inline);
+        const harness = setupSettingsPageHarness(inline);
 
-        await screen.findByRole('textbox', { name: 'Name' });
-        fireEvent.click(screen.getByRole('button', { name: /Remove/ }));
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await harness.findName();
+        await harness.clickButton(/Remove/);
+        await harness.save();
 
-        const dialog = await screen.findByRole('dialog', { name: 'Update provider: a user has been modified or deleted' });
+        await screen.findByRole('dialog', { name: 'Update provider: a user has been modified or deleted' });
         expect(updateIdentityProvider).not.toHaveBeenCalled();
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+        await harness.confirm('Update provider: a user has been modified or deleted', 'Save');
 
         await waitFor(() =>
             expect(updateIdentityProvider).toHaveBeenCalledWith(ref, expect.objectContaining({ configuration: '{"users":[]}' })),
@@ -181,36 +226,35 @@ describe('IdentityProviderSettingsPage', () => {
 
     it('deletes the provider after the confirm dialog, then opens the list', async () => {
         vi.mocked(deleteIdentityProvider).mockResolvedValueOnce();
-        renderPage();
+        const harness = setupSettingsPageHarness();
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
-        fireEvent.click(within(await screen.findByRole('dialog', { name: 'Delete provider' })).getByRole('button', { name: 'Delete' }));
+        await harness.delete();
 
         await waitFor(() => expect(deleteIdentityProvider).toHaveBeenCalledWith(ref, 'idp-1'));
         expect(await screen.findByText('Providers list')).toBeInTheDocument();
     });
 
     it('hides Save and Delete without the permissions', async () => {
-        renderPage(google, []);
+        const harness = setupSettingsPageHarness(google, []);
 
-        expect(await screen.findByRole('textbox', { name: 'Name' })).toBeDisabled();
-        expect(screen.getByRole('textbox', { name: /Client ID/ })).toBeDisabled();
+        expect(await harness.findName()).toBeDisabled();
+        expect(inputHarness({ name: /Client ID/ }).isDisabled()).toBe(true);
         expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
     it('opens the upgrade dialog, not the save, when the licence lacks the plugin feature', async () => {
-        renderPage({ ...google, type: 'oidc-am-idp' });
+        const harness = setupSettingsPageHarness({ ...google, type: 'oidc-am-idp' });
 
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'OIDC' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await harness.rename('OIDC');
+        await harness.save();
 
         expect(await screen.findByRole('dialog', { name: 'Enterprise feature' })).toBeInTheDocument();
         expect(updateIdentityProvider).not.toHaveBeenCalled();
     });
 
     it('opens the user mappers of a system provider, and shows no Settings tab', async () => {
-        renderPage({ ...google, system: true, external: false });
+        setupSettingsPageHarness({ ...google, system: true, external: false });
 
         expect(await screen.findByText('Mappers page')).toBeInTheDocument();
         expect(screen.queryByRole('tab', { name: 'Settings' })).not.toBeInTheDocument();

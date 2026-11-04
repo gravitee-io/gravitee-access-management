@@ -21,6 +21,7 @@ import {
     CardHeader,
     CardTitle,
     DataTableEmptyState,
+    FieldError,
     Input,
     Table,
     TableBody,
@@ -42,9 +43,13 @@ import { useIdentityProvider } from './IdentityProviderLayout';
 const FORM_ID = 'identity-provider-mappers';
 
 interface Mapping {
+    /** Identifies the row while its key is edited. */
+    readonly id: number;
     readonly key: string;
     readonly value: string;
 }
+
+type Column = 'key' | 'value';
 
 /** The Angular `defaultMappers`, shown until the provider has mappers of its own. */
 const DEFAULT_MAPPERS: Record<string, string> = {
@@ -55,7 +60,11 @@ const DEFAULT_MAPPERS: Record<string, string> = {
     family_name: 'sn',
 };
 
-const toRows = (mappers: Record<string, string>): Mapping[] => Object.entries(mappers).map(([key, value]) => ({ key, value }));
+let nextId = 0;
+const newRow = (key = '', value = ''): Mapping => ({ id: nextId++, key, value });
+const toRows = (mappers: Record<string, string>): Mapping[] => Object.entries(mappers).map(([key, value]) => newRow(key, value));
+const toMappers = (rows: readonly Mapping[]) => Object.fromEntries(rows.map(row => [row.key.trim(), row.value.trim()]));
+const contentOf = (rows: readonly Mapping[]) => JSON.stringify(rows.map(row => [row.key, row.value]));
 
 /** Binds user profile attributes to the raw attributes or expressions of the provider. */
 export function IdentityProviderMappersPage() {
@@ -65,6 +74,7 @@ export function IdentityProviderMappersPage() {
     const canUpdate = usePermissions().has('domain_identity_provider_update');
     const initial = useMemo(() => toRows(provider.mappers ?? DEFAULT_MAPPERS), [provider.mappers]);
     const [rows, setRows] = useState<Mapping[]>(initial);
+    const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
     const save = useMutation({
         mutationFn: (mappers: Record<string, string>) => updateIdentityProvider(ref, { ...provider, mappers }),
         onSuccess: updated => {
@@ -74,31 +84,37 @@ export function IdentityProviderMappersPage() {
         onError: error => toast.error(`Could not save the mappers. ${error.message}`),
     });
 
-    const dirty = JSON.stringify(rows) !== JSON.stringify(initial);
+    const dirty = contentOf(rows) !== contentOf(initial);
     const keys = rows.map(row => row.key.trim());
-    const duplicate = keys.find((key, index) => key && keys.indexOf(key) !== index);
-    const incomplete = rows.some(row => !row.key.trim() || !row.value.trim());
+    const errorOf = (row: Mapping, index: number, column: Column): string | undefined => {
+        if (column === 'key' && row.key.trim() && keys.indexOf(row.key.trim()) !== index) {
+            return 'This attribute is already mapped.';
+        }
+        return touched.has(`${row.id}:${column}`) && !row[column].trim() ? 'Required.' : undefined;
+    };
+    const invalid = rows.some((row, index) => !row.key.trim() || !row.value.trim() || errorOf(row, index, 'key') !== undefined);
 
-    const update = (index: number, patch: Partial<Mapping>) =>
-        setRows(current => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    const update = (id: number, patch: Partial<Mapping>) =>
+        setRows(current => current.map(row => (row.id === id ? { ...row, ...patch } : row)));
+    const touch = (id: number, column: Column) => setTouched(current => new Set(current).add(`${id}:${column}`));
+    const discard = () => {
+        setRows(initial);
+        setTouched(new Set());
+    };
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        if (duplicate) {
-            toast.error(`Error : attribute ${duplicate} already exists`);
-            return;
-        }
-        if (!incomplete) {
-            save.mutate(Object.fromEntries(rows.map(row => [row.key.trim(), row.value.trim()])));
+        if (!invalid) {
+            save.mutate(toMappers(rows));
         }
     };
-    const addRow = () => setRows(current => [...current, { key: '', value: '' }]);
+    const addRow = () => setRows(current => [...current, newRow()]);
 
     return (
         <form id={FORM_ID} noValidate onSubmit={submit} className="flex flex-col gap-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">User mappers</CardTitle>
+                    <CardTitle>User mappers</CardTitle>
                     <CardDescription>
                         Attribute mapping binds user profile attributes to your identity provider’s attributes, during authentication.
                         Mapped attributes can be read from the UserInfo endpoint or used in ID token claims. Use a provider attribute name,
@@ -135,35 +151,35 @@ export function IdentityProviderMappersPage() {
                             </TableHeader>
                             <TableBody>
                                 {rows.map((row, index) => (
-                                    // A row has no identity of its own while it is edited, so the index is its key.
-                                    <TableRow key={index}>
-                                        <TableCell>
-                                            <Input
-                                                aria-label="User profile attribute"
-                                                placeholder="User attribute"
-                                                value={row.key}
-                                                disabled={!canUpdate}
-                                                onChange={event => update(index, { key: event.target.value })}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Input
-                                                aria-label="Raw attribute"
-                                                placeholder="Raw attribute. Supports EL."
-                                                className="font-mono"
-                                                value={row.value}
-                                                disabled={!canUpdate}
-                                                onChange={event => update(index, { value: event.target.value })}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="w-12">
+                                    <TableRow key={row.id}>
+                                        {(['key', 'value'] as const).map(column => {
+                                            const error = errorOf(row, index, column);
+                                            const errorId = `mapper-${row.id}-${column}-error`;
+                                            return (
+                                                <TableCell key={column} className="align-top">
+                                                    <Input
+                                                        aria-label={column === 'key' ? 'User profile attribute' : 'Raw attribute'}
+                                                        placeholder={column === 'key' ? 'User attribute' : 'Raw attribute. Supports EL.'}
+                                                        className={column === 'value' ? 'font-mono' : undefined}
+                                                        value={row[column]}
+                                                        disabled={!canUpdate}
+                                                        aria-invalid={error !== undefined}
+                                                        aria-describedby={error ? errorId : undefined}
+                                                        onChange={event => update(row.id, { [column]: event.target.value })}
+                                                        onBlur={() => touch(row.id, column)}
+                                                    />
+                                                    {error && <FieldError id={errorId} className="mt-1" errors={[{ message: error }]} />}
+                                                </TableCell>
+                                            );
+                                        })}
+                                        <TableCell className="w-12 align-top">
                                             {canUpdate && (
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
                                                     aria-label={`Remove ${row.key || 'mapper'}`}
-                                                    onClick={() => setRows(current => current.filter((_, i) => i !== index))}
+                                                    onClick={() => setRows(current => current.filter(other => other.id !== row.id))}
                                                 >
                                                     <Trash2Icon />
                                                 </Button>
@@ -183,9 +199,7 @@ export function IdentityProviderMappersPage() {
                     Add mapper
                 </Button>
             )}
-            {canUpdate && (
-                <SaveBar formId={FORM_ID} dirty={dirty} saving={save.isPending} invalid={incomplete} onDiscard={() => setRows(initial)} />
-            )}
+            {canUpdate && <SaveBar formId={FORM_ID} dirty={dirty} saving={save.isPending} invalid={invalid} onDiscard={discard} />}
         </form>
     );
 }

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { buttonHarness, checkboxHarness, inputHarness } from '@gravitee/graphene-core/testing';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Route } from 'react-router-dom';
 import { listGroups } from '../../../lib/api/groups';
 import { getIdentityProvider, type IdentityProvider, updateIdentityProvider } from '../../../lib/api/identity-providers';
@@ -46,9 +48,9 @@ const provider: IdentityProvider = {
     groupMapper: { 'group-1': ['ou=sales', 'ou=ops'] },
 };
 
-function renderTab(tab: string, permissions = UPDATE, entity: IdentityProvider = provider) {
+function setupMapperTabHarness(tab: string, permissions = UPDATE, entity: IdentityProvider = provider) {
     vi.mocked(getIdentityProvider).mockResolvedValue(entity);
-    return renderRoutes(
+    renderRoutes(
         `${providersPath}/${entity.id}/${tab}`,
         <Route path={`${providersPath}/:providerId`} element={<IdentityProviderLayout />}>
             <Route path="mappers" element={<IdentityProviderMappersPage />} />
@@ -57,6 +59,45 @@ function renderTab(tab: string, permissions = UPDATE, entity: IdentityProvider =
         </Route>,
         permissions,
     );
+    const cell = (label: string, row: number) => screen.getAllByRole('textbox', { name: label })[row];
+
+    return {
+        findKeys: () => screen.findAllByRole('textbox', { name: 'User profile attribute' }),
+        key: (row: number) => cell('User profile attribute', row),
+        value: (row: number) => cell('Raw attribute', row),
+        addMapper: async () => {
+            await screen.findByRole('button', { name: 'Add mapper' });
+            await buttonHarness({ name: 'Add mapper' }).click();
+        },
+        typeKey: (row: number, text: string) => userEvent.type(cell('User profile attribute', row), text),
+        /** `userEvent.type` syntax: `{{` and `[[` type a literal brace or bracket. */
+        typeValue: (row: number, text: string) => userEvent.type(cell('Raw attribute', row), text),
+        leaveValue: async (row: number) => {
+            await userEvent.click(cell('Raw attribute', row));
+            await userEvent.tab();
+        },
+        save: () => buttonHarness({ name: 'Save' }).click(),
+        isSaveDisabled: () => buttonHarness({ name: 'Save' }).isDisabled(),
+        addMapping: async (noun: string, user: string, targets: string[]) => {
+            await screen.findByRole('button', { name: `Add ${noun} mapping` });
+            await buttonHarness({ name: `Add ${noun} mapping` }).click();
+            const dialog = await screen.findByRole('dialog', { name: `${noun[0].toUpperCase()}${noun.slice(1)} mappings` });
+            await inputHarness({ name: 'Users', within: dialog }).type(user);
+            for (const target of targets) {
+                await checkboxHarness({ name: target, within: dialog }).check();
+            }
+            return {
+                isTargetDisabled: (target: string) => checkboxHarness({ name: target, within: dialog }).isDisabled(),
+                save: () => buttonHarness({ name: 'Save', within: dialog }).click(),
+            };
+        },
+        removeEntry: async (noun: string, label: string) => {
+            await screen.findByRole('button', { name: label });
+            await buttonHarness({ name: label }).click();
+            const dialog = await screen.findByRole('dialog', { name: `Delete entry from ${noun}` });
+            await buttonHarness({ name: 'Remove', within: dialog }).click();
+        },
+    };
 }
 
 beforeEach(() => {
@@ -79,21 +120,19 @@ beforeEach(() => {
 
 describe('IdentityProviderMappersPage', () => {
     it('shows the default mappers until the provider has its own', async () => {
-        renderTab('mappers');
+        const harness = setupMapperTabHarness('mappers');
 
-        const keys = await screen.findAllByRole('textbox', { name: 'User profile attribute' });
+        const keys = await harness.findKeys();
         expect(keys.map(input => (input as HTMLInputElement).value)).toEqual(['sub', 'email', 'name', 'given_name', 'family_name']);
     });
 
     it('saves the mappers in the provider update', async () => {
-        renderTab('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
+        const harness = setupMapperTabHarness('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Add mapper' }));
-        const keys = screen.getAllByRole('textbox', { name: 'User profile attribute' });
-        const values = screen.getAllByRole('textbox', { name: 'Raw attribute' });
-        fireEvent.change(keys[1], { target: { value: 'nickname' } });
-        fireEvent.change(values[1], { target: { value: "{#profile['nick']}" } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await harness.addMapper();
+        await harness.typeKey(1, 'nickname');
+        await harness.typeValue(1, "{{#profile[['nick']}");
+        await harness.save();
 
         await waitFor(() =>
             expect(updateIdentityProvider).toHaveBeenCalledWith(ref, {
@@ -103,21 +142,36 @@ describe('IdentityProviderMappersPage', () => {
         );
     });
 
-    it('refuses a duplicate attribute', async () => {
-        renderTab('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
+    it('marks a duplicate attribute on its row and blocks the save', async () => {
+        const harness = setupMapperTabHarness('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Add mapper' }));
-        fireEvent.change(screen.getAllByRole('textbox', { name: 'User profile attribute' })[1], { target: { value: 'email' } });
-        fireEvent.change(screen.getAllByRole('textbox', { name: 'Raw attribute' })[1], { target: { value: 'mail2' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await harness.addMapper();
+        await harness.typeKey(1, 'email');
+        await harness.typeValue(1, 'mail2');
 
+        expect(harness.key(1)).toHaveAttribute('aria-invalid', 'true');
+        expect(harness.key(1)).toHaveAccessibleDescription('This attribute is already mapped.');
+        expect(harness.isSaveDisabled()).toBe(true);
         expect(updateIdentityProvider).not.toHaveBeenCalled();
     });
 
-    it('hides the edit actions without the update permission', async () => {
-        renderTab('mappers', []);
+    it('marks an empty cell as required once the user leaves it', async () => {
+        const harness = setupMapperTabHarness('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
 
-        expect((await screen.findAllByRole('textbox', { name: 'User profile attribute' }))[0]).toBeDisabled();
+        await harness.addMapper();
+        await harness.typeKey(1, 'nickname');
+        await harness.leaveValue(1);
+
+        expect(harness.value(1)).toHaveAttribute('aria-invalid', 'true');
+        expect(harness.value(1)).toHaveAccessibleDescription('Required.');
+        expect(harness.key(1)).toHaveAttribute('aria-invalid', 'false');
+        expect(harness.isSaveDisabled()).toBe(true);
+    });
+
+    it('hides the edit actions without the update permission', async () => {
+        const harness = setupMapperTabHarness('mappers', []);
+
+        expect((await harness.findKeys())[0]).toBeDisabled();
         expect(screen.queryByRole('button', { name: 'Add mapper' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
     });
@@ -125,7 +179,7 @@ describe('IdentityProviderMappersPage', () => {
 
 describe('IdentityProviderRolesPage', () => {
     it('lists the mapped users under the role names', async () => {
-        renderTab('roles');
+        setupMapperTabHarness('roles');
 
         expect(await screen.findByRole('heading', { name: 'ADMIN' })).toBeInTheDocument();
         expect(screen.getByText('memberOf=admins')).toBeInTheDocument();
@@ -133,15 +187,11 @@ describe('IdentityProviderRolesPage', () => {
     });
 
     it('adds a user expression to roles and saves the role mapper', async () => {
-        renderTab('roles');
+        const harness = setupMapperTabHarness('roles');
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Add role mapping' }));
-        const dialog = await screen.findByRole('dialog', { name: 'Role mappings' });
-        fireEvent.change(within(dialog).getByRole('textbox', { name: 'Users' }), { target: { value: 'uid=john' } });
-        fireEvent.click(within(dialog).getByRole('checkbox', { name: 'ADMIN' }));
-        fireEvent.click(within(dialog).getByRole('checkbox', { name: 'USER' }));
-        expect(within(dialog).getByRole('checkbox', { name: 'DOMAIN_PRIMARY_OWNER' })).toBeDisabled();
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+        const dialog = await harness.addMapping('role', 'uid=john', ['ADMIN', 'USER']);
+        expect(dialog.isTargetDisabled('DOMAIN_PRIMARY_OWNER')).toBe(true);
+        await dialog.save();
 
         await waitFor(() =>
             expect(updateIdentityProvider).toHaveBeenCalledWith(ref, {
@@ -152,18 +202,15 @@ describe('IdentityProviderRolesPage', () => {
     });
 
     it('removes an entry after the confirm dialog, and drops the empty role', async () => {
-        renderTab('roles');
+        const harness = setupMapperTabHarness('roles');
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Remove memberOf=admins from ADMIN' }));
-        fireEvent.click(
-            within(await screen.findByRole('dialog', { name: 'Delete entry from role' })).getByRole('button', { name: 'Remove' }),
-        );
+        await harness.removeEntry('role', 'Remove memberOf=admins from ADMIN');
 
         await waitFor(() => expect(updateIdentityProvider).toHaveBeenCalledWith(ref, { ...provider, roleMapper: {} }));
     });
 
     it('hides add and remove without the update permission', async () => {
-        renderTab('roles', []);
+        setupMapperTabHarness('roles', []);
 
         expect(await screen.findByText('memberOf=admins')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Add role mapping' })).not.toBeInTheDocument();
@@ -173,15 +220,12 @@ describe('IdentityProviderRolesPage', () => {
 
 describe('IdentityProviderGroupsPage', () => {
     it('loads the first 100 groups and removes one entry of a group', async () => {
-        renderTab('groups');
+        const harness = setupMapperTabHarness('groups');
 
         expect(await screen.findByRole('heading', { name: 'Sales' })).toBeInTheDocument();
         expect(listGroups).toHaveBeenCalledWith(ref, 0, 100);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Remove ou=ops from Sales' }));
-        fireEvent.click(
-            within(await screen.findByRole('dialog', { name: 'Delete entry from group' })).getByRole('button', { name: 'Remove' }),
-        );
+        await harness.removeEntry('group', 'Remove ou=ops from Sales');
 
         await waitFor(() =>
             expect(updateIdentityProvider).toHaveBeenCalledWith(ref, { ...provider, groupMapper: { 'group-1': ['ou=sales'] } }),
