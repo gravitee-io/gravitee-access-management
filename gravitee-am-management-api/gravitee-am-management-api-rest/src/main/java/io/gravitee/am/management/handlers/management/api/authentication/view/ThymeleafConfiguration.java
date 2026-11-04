@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.view;
 
+import io.gravitee.am.service.i18n.RestrictedExpressionEvaluator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.ViewResolver;
@@ -34,7 +35,9 @@ public class ThymeleafConfiguration {
     public SpringTemplateEngine getTemplateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setEnableSpringELCompiler(true);
-        templateEngine.setDialect(new StandardDialect());
+        StandardDialect dialect = new StandardDialect();
+        dialect.setVariableExpressionEvaluator(new RestrictedExpressionEvaluator());
+        templateEngine.setDialect(dialect);
 
         // set template resolvers
         TemplateResolver overrideTemplateResolver = (TemplateResolver) overrideTemplateResolver();
