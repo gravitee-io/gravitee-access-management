@@ -53,7 +53,7 @@ Treat changes to any of these as compatibility-sensitive — call them out expli
 
 # AM Management API Java SDK
 
-The module has no committed `src/main`. The build generates the main sources with openapi-generator from `docs/mapi/openapi.yaml`, after the antrun steps in `pom.xml` patch a copy of the spec and the generated files.
+The module commits no main sources. The build generates them with openapi-generator from `docs/mapi/openapi.yaml`, after the antrun steps in `pom.xml` patch a copy of the spec and the generated files.
 
 - To change the client, change the spec or the antrun steps in `pom.xml`. Never hand-edit generated code.
 - The generated client uses Vert.x `Future`, not RxJava.
