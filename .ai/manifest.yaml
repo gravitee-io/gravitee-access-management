@@ -33,4 +33,19 @@ modules:
   - gravitee-am-ui
   - postman
   - scripts/migration-tool
-hub: 0.5.0
+hub: 0.6.0
+exclude:
+  - rule: context/rules/tech/ui-test-ids.md
+    dirs:
+      - gravitee-am-console
+    reason: The console sets no data-testid; its tests query by role and accessible name
+  - rule: context/rules/tech/java.md
+    dirs:
+      - gravitee-am-performance
+    reason: A Scala Gatling project with its own pom.xml, outside the root Maven build
+  - rule: context/rules/tech/typescript.md
+    dirs:
+      - docker/local-stack
+      - postman
+      - scripts/migration-tool
+    reason: These folders hold no TypeScript files; their package.json only runs scripts and JavaScript tools

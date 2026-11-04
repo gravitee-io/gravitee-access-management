@@ -2,11 +2,11 @@
 # Every generated file with its content fingerprint; setup and check use
 # this for ownership, incremental runs, and tamper evidence.
 version: 1
-generatedBy: "0.5.0"
+generatedBy: "0.6.0"
 buildFileProbes: ["angular.json","build.gradle","build.gradle.kts","ng-package.json","package.json","pom.xml","project.json","rsbuild.config.cjs","rsbuild.config.cts","rsbuild.config.js","rsbuild.config.mjs","rsbuild.config.mts","rsbuild.config.ts","rspack.config.cjs","rspack.config.cts","rspack.config.js","rspack.config.mjs","rspack.config.mts","rspack.config.ts","vite.config.cjs","vite.config.cts","vite.config.js","vite.config.mjs","vite.config.mts","vite.config.ts"]
 inputs:
   - { dir: ".", buildFiles: ["pom.xml"] }
-  - { path: ".ai/manifest.yaml", hash: "sha256:681a5939637b2cbe4d941eb998a6714c902685bfa8be72d1af0321e1f8ac58f7" }
+  - { path: ".ai/manifest.yaml", hash: "sha256:9f3a0e991a9a32076a1907a8a8f0f4f68c3caae614c27a7d162acd3530eb678f" }
   - { path: ".ai/rules/ai-context-authoring.md", hash: "sha256:7b1fdd3e1f2930841ef34838b113ed964136c84273d45d5423e1603ee4dab46f" }
   - { path: ".ai/rules/am-angular.md", hash: "sha256:e85eb857f7802dbd1bd88d7c0b1782927c136b5bb43045dddc8ccf58d7dd75bf" }
   - { path: ".ai/rules/am-console.md", hash: "sha256:d71e9ceb0d80d862fa377cedbe05bcc8c62ce2a80631538d50513cd80a10b800" }
@@ -76,23 +76,19 @@ entries:
     hash: sha256:d3cafa9551f1f1be59bb035ae0cd043667434dcea4380c2ddd4d491e6ac2693c
     status: generated
     scope: committed
+  - path: ".github/scripts/report-ai-context-update.mjs"
+    hash: sha256:ff3d68addb7881e0929ab343ef861818f0d2cb6adefffbc1bacc3dedaba135fd
+    status: generated
+    scope: committed
   - path: ".github/scripts/verify-ai-context.mjs"
-    hash: sha256:f7e5affa26ff0750024e251e8af2168c0ddbc51301ca5f21a9c353c9922e8a82
+    hash: sha256:57fc0104772f2e7c46b6e8c4d2ac5a6078bd2dffed182969b7eb7e45e35c1e77
     status: generated
     scope: committed
   - path: "AGENTS.md"
-    hash: sha256:5f4600fbdd40d36762612b8f30ffe8eef0ddd91b3aa48e7bbc03340a1b3ac87c
+    hash: sha256:75a94472ec481bb45b3284e2812f5e3b539d41e039e5c9553f62677b4b5200a3
     status: generated
     scope: committed
   - path: "CLAUDE.md"
-    hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
-    status: generated
-    scope: committed
-  - path: "docker/local-stack/AGENTS.md"
-    hash: sha256:53335edeed91cb8b07dfb3bde065000b96de7e3d0ca3c66a1433517461080038
-    status: generated
-    scope: committed
-  - path: "docker/local-stack/CLAUDE.md"
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
@@ -153,7 +149,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-console/AGENTS.md"
-    hash: sha256:6645ce463f3ed7e3373983a6f5bb0587b231c6d7307dd4fd88d96dd66c42a467
+    hash: sha256:9cf28ffb1d4784c445266c23ef8badb1a9dc647964f83ec9a45437100252806e
     status: generated
     scope: committed
   - path: "gravitee-am-console/CLAUDE.md"
@@ -256,14 +252,6 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-  - path: "gravitee-am-performance/AGENTS.md"
-    hash: sha256:59aabd0e7bdb0a5d0c89f5ab9a4fb0dbe5eaf042a59013a8b3b18ddafb69ad4b
-    status: generated
-    scope: committed
-  - path: "gravitee-am-performance/CLAUDE.md"
-    hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
-    status: generated
-    scope: committed
   - path: "gravitee-am-plugins-handlers/AGENTS.md"
     hash: sha256:5d32b1de4698b8093b69cc86bb8df521e3f28a6c170f9daa395e884df461add1
     status: generated
@@ -344,20 +332,4 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-  - path: "postman/AGENTS.md"
-    hash: sha256:b52f3ce4cf9679d982c4e092a9f1bff9e12ece041e2735b9bff962915c27b135
-    status: generated
-    scope: committed
-  - path: "postman/CLAUDE.md"
-    hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
-    status: generated
-    scope: committed
-  - path: "scripts/migration-tool/AGENTS.md"
-    hash: sha256:53335edeed91cb8b07dfb3bde065000b96de7e3d0ca3c66a1433517461080038
-    status: generated
-    scope: committed
-  - path: "scripts/migration-tool/CLAUDE.md"
-    hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
-    status: generated
-    scope: committed
-record: sha256:42383c606fd57550af3e30f3aa889dec2157b4ae4c5723eba7f652ab3c9204f9
+record: sha256:24012bbca270571a8551dfa3cccd8c08e06f40112c825d16a62cc0565295fc1f
