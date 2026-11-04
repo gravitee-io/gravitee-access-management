@@ -171,13 +171,18 @@ Check: every page `path` of the story resolves to a route, and the placeholder i
 
 - Wrap each route whose `guards` has `AuthGuard` in `<RequirePermission anyOf={perms}>` from
   `src/lib/session/permissions.tsx`, with that route's own `perms` list.
+- A user without the permission must not see the page. Guard each child route with the permission of the endpoint it
+  loads, also when Angular guards only the parent: `new` with `_create`, `:id` with `_read`. Without the guard, a deep
+  link shows the page shell and an API error. Record each guard that Angular does not have in the brief.
+- Give the menu item in `src/app/navigation.ts` the `perms` of its route, so the menu hides it.
 - Gate each create, update and delete action with `<Can all={[...]}>` or `usePermissions().has()` and the AM name from
   the brief.
 - Wrap each route with a `licenseFeature` in `<RequireLicense feature>`, and each control that needs a plugin feature
   in `<LicenseGuard feature>`, both from `src/lib/session/license.tsx`.
 - Hide a `hideInCloudMode` page when the installation is managed.
 
-Check: a test renders the page without the permission and asserts the action is absent.
+Check: a test renders each guarded route without the permission and asserts the `Not allowed` panel and no API call.
+A test renders the page without the action permission and asserts the action is absent.
 
 ## Step 7: tests
 
@@ -224,6 +229,40 @@ Then in the browser against the local stack:
 
 A 504 on `/gamma/organizations/DEFAULT/modules` means that `:8083` is down. It does not come from the page.
 
+### Permission parity
+
+Run this check on both consoles. A story is not verified until each row matches Angular, or the brief gives the reason.
+
+1. Create one organization role per permission level, with `assignableType` `domain` (for an organization unit,
+   `organization`). Use at least these levels: no permission of the unit, `_list` only, `_list` and `_read`.
+   `POST /organizations/DEFAULT/roles` with `{"name","assignableType"}`, then `PUT .../roles/:id` with `{"name","permissions"}`.
+2. Create one organization user per role with `POST /organizations/DEFAULT/users`, and add the user as a domain member
+   with `POST .../domains/:domain/members` and `{"memberId","memberType":"user","role"}`.
+3. Sign in as each user in a new browser context. The session cookie is on `localhost`, so one sign-in on `:4201`
+   also signs in the Angular console on `:4200`.
+4. For each user, record on both consoles: the menu entry, each deep link of the story (list, `new`, detail and each
+   tab), and the create, update and delete controls.
+5. A user without the permission must not see the page content on either console. Angular redirects to `/`. The React
+   console shows `Not allowed`. An API error panel in place of `Not allowed` is a missing route guard.
+
+### Round trip
+
+For each create form, run this on one plugin or entity per kind of form:
+
+1. Create the item in the Angular console. Open it in the React console. The form shows the stored values and opens
+   without the save banner.
+2. Create the same item, with the same input, in the React console. Open it in the Angular console. The form shows the
+   stored values.
+3. Compare the two stored rows in the database, for example
+   `docker exec dev-postgres-1 psql -U postgres -c "select name, configuration from identities where reference_id='<domain>'"`
+   on JDBC, or `mongosh` on MongoDB. Flatten `configuration` and list each key that differs. A hash salt differs.
+   An empty `[]` or `{}` where Angular leaves out the key is equivalent. Any other difference is a defect.
+
+Angular json-schema-form starts an array with one item of the item defaults. React must store the same items.
+
+For a plugin form, open the settings of one item per plugin, created with only the required fields, and check that the
+form opens without the save banner. jsdom does not run the Graphene field writes, so only the browser shows this defect.
+
 Class B and above: add `gravitee-am-test/playwright/tests/console-next/<unit>.spec.ts` in the shape of the spike's
 `console-next/resources.spec.ts`, with the helpers in `gravitee-am-test/api/commands/management/`. After a Save, wait for
 the PUT response. A disabled Save is not proof, because `SaveBar` disables Save while the save runs. Run it with
@@ -231,7 +270,8 @@ the PUT response. A disabled Save is not proof, because `SaveBar` disables Save 
 
 Class D: review the pages against the Graphene `USAGE_GUIDE.md` and its design rules, and list each gap.
 
-Append the verification to the story record: the pages checked, the calls compared, each difference and its reason.
+Append the verification to the story record: the pages checked, the calls compared, the permission parity table, the
+round trip result, each difference and its reason.
 
 ## Step 9: review and commit
 
