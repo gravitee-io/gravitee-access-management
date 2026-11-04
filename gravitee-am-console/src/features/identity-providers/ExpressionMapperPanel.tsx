@@ -108,7 +108,7 @@ function AddMappingDialog({
                         {targets.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No {noun}s exist yet.</p>
                         ) : (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex max-h-64 flex-col gap-2 overflow-y-auto p-1">
                                 {targets.map(target => (
                                     <div key={target.id} className="flex items-center gap-2">
                                         <Checkbox
