@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -47,7 +47,7 @@ jobs:
             echo "bot=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.1.0
         if: steps.pin.outputs.moved == 'true' && steps.author.outputs.bot != 'true'
         with:
           node-version: 22.12.0
@@ -70,7 +70,7 @@ jobs:
       - name: Get a push token
         id: app-token
         if: steps.setup.outcome == 'success' && steps.pin.outputs.moved == 'true' && steps.author.outputs.bot != 'true'
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.3.0
         with:
           client-id: ${{ vars.GBUDDY_APP_CLIENT_ID }}
           private-key: ${{ secrets.GBUDDY_APP_PRIVATE_KEY }}
