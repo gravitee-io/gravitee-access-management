@@ -71,7 +71,6 @@ CLAUDE.local.md
 CLAUDE.md
 !/CLAUDE.md
 !/.ai/CLAUDE.md
-!/docker/local-stack/CLAUDE.md
 !/gravitee-am-authdevice-notifier/CLAUDE.md
 !/gravitee-am-authenticator/CLAUDE.md
 !/gravitee-am-authorizationengine/CLAUDE.md
@@ -92,7 +91,6 @@ CLAUDE.md
 !/gravitee-am-model/CLAUDE.md
 !/gravitee-am-monitoring/CLAUDE.md
 !/gravitee-am-password-dictionary/CLAUDE.md
-!/gravitee-am-performance/CLAUDE.md
 !/gravitee-am-plugins-handlers/CLAUDE.md
 !/gravitee-am-policy/CLAUDE.md
 !/gravitee-am-reporter/CLAUDE.md
@@ -103,8 +101,6 @@ CLAUDE.md
 !/gravitee-am-test/CLAUDE.md
 !/gravitee-am-test/playwright/CLAUDE.md
 !/gravitee-am-ui/CLAUDE.md
-!/postman/CLAUDE.md
-!/scripts/migration-tool/CLAUDE.md
 
 # Playwright MCP logs
 .playwright-mcp/
