@@ -48,8 +48,7 @@ vi.mock('../../../lib/session/domain', () => ({
 const ref = { organizationId: 'DEFAULT', environmentId: 'env-1', domainId: 'd1' };
 const providersPath = '/environments/dev/domains/acme/settings/providers';
 
-function renderPage() {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderPage(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
     return render(
         <QueryClientProvider client={client}>
             <LicenseScope license={{ tier: 'oss', features: [] }}>
@@ -158,6 +157,26 @@ describe('NewIdentityProviderPage', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
         expect(await screen.findByRole('combobox', { name: /Data source/ })).toBeInTheDocument();
+    });
+
+    it('offers a data source created after an earlier visit to the wizard', async () => {
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        vi.mocked(getIdentityProviderSchema).mockResolvedValue({
+            type: 'object',
+            properties: { datasource: { type: 'string', title: 'Data source', widget: 'datasource' } },
+        });
+        const first = renderPage(client);
+        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByRole('textbox', { name: /Data source/ })).toBeDisabled();
+        first.unmount();
+
+        vi.mocked(listDataSources).mockResolvedValue([{ id: 'ds-1', name: 'Users cluster' }]);
+        renderPage(client);
+        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+        expect(await screen.findByRole('combobox', { name: /Data source/ })).toBeEnabled();
     });
 
     it('requires a name', async () => {

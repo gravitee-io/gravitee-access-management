@@ -59,6 +59,11 @@ export function NewIdentityProviderPage() {
     });
     const installation = useQuery({ queryKey: ['installation'], queryFn: getInstallationConfiguration, staleTime: Infinity });
     const ready = certificates.data && dataSources.data && installation.data;
+    // The wizard caches the enriched schema, so the key changes with the certificates and data sources it holds.
+    const schemaInputs = JSON.stringify([
+        certificates.data?.map(certificate => [certificate.id, certificate.name, certificate.usage]),
+        dataSources.data?.map(dataSource => [dataSource.id, dataSource.name]),
+    ]);
     const create = useMutation({
         mutationFn: async ({ plugin, name, config }: { plugin: IdentityProviderPlugin; name: string; config: Record<string, unknown> }) =>
             createIdentityProvider(ref, {
@@ -92,8 +97,7 @@ export function NewIdentityProviderPage() {
             noun="providers"
             plugins={ready ? plugins : undefined}
             pluginsError={error ?? certificates.error ?? dataSources.error ?? installation.error}
-            // The enriched schema holds the certificates of the domain and the data sources of the environment.
-            schemaKey={`identity-provider-creation-schema:${ref.environmentId}:${ref.domainId}`}
+            schemaKey={`identity-provider-creation-schema:${ref.environmentId}:${ref.domainId}:${schemaInputs}`}
             getSchema={async plugin =>
                 enrichCreationSchema(await getIdentityProviderSchema(plugin.id), {
                     type: plugin.id,
