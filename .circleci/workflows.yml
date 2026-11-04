@@ -2091,6 +2091,26 @@ jobs:
               echo "# --->>> THIS IS A DRY RUN"
             fi;
 
+      # Customers read the feed through the `public` view only: it holds what used to go to Maven Central.
+      # After the Git release, so that a failed promotion never leaves a deployed version untagged; on the
+      # release tag, because the Git release moved the poms on to the next snapshot.
+      - run:
+          name: "Checkout the release tag"
+          command: git checkout "$(cat /tmp/gio.maven.project.release.version)"
+      - azure-artifacts-token
+      - keeper/env-export:
+          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+          var-name: GITHUB_TOKEN
+      - run:
+          name: "Promote the release to the @public view of the Azure feed"
+          environment:
+            MAVEN_SETTINGS: /tmp/.gravitee.settings.xml
+            PROMOTE_DRY_RUN: << parameters.dry_run >>
+          command: bash .circleci/scripts/promote-to-view.sh
+      - store_artifacts:
+          path: /tmp/promote-to-view
+          destination: promote-to-view
+
       - notify-on-failure
       - notify-on-success
 
