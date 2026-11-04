@@ -114,7 +114,7 @@ function StepIndicator({
                         aria-current={i === step ? 'step' : undefined}
                         disabled={i === step || (i === 1 && !canOpenSettings)}
                         onClick={() => onOpen(i)}
-                        className="flex items-center gap-1.5 rounded-md disabled:cursor-default enabled:hover:underline"
+                        className="group flex items-center gap-1.5 rounded-md disabled:cursor-default"
                     >
                         <span
                             aria-hidden
@@ -124,7 +124,11 @@ function StepIndicator({
                         >
                             {i + 1}
                         </span>
-                        <span className={`text-sm ${i <= step ? 'font-medium' : 'text-muted-foreground'}`}>{label}</span>
+                        <span
+                            className={`text-sm group-enabled:group-hover:underline ${i <= step ? 'font-medium' : 'text-muted-foreground'}`}
+                        >
+                            {label}
+                        </span>
                     </button>
                     {i < STEPS.length - 1 && <div className="h-px w-8 bg-border" />}
                 </div>
