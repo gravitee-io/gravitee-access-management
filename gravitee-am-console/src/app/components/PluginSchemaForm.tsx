@@ -96,7 +96,7 @@ function mergeErrors(target: ErrorTree, source: ErrorTree): ErrorTree {
     return merged;
 }
 
-/** Adds the conditional checks and the required check of the file fields, which the schema does not hold. */
+/** Adds the conditional checks and the required check of the file fields, which the schema does not hold. `basePath` must be a top-level key. */
 export function pluginSchemaResolver<T extends Record<string, unknown>>(adapted: AdaptedSchema, basePath: string): Resolver<T> {
     const resolvers = [adapted.schema, ...adapted.conditions].map(schema => jsonSchemaResolver<T>(schema, { basePath }));
     return async (values, context, options) => {
