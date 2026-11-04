@@ -21,7 +21,7 @@ Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follo
 - Import `test` and `expect` from the fixture (`fixtures/base.fixture.ts` or the area's fixture), never from `@playwright/test` directly.
 - Cross-file values belong in `utils/test-constants.ts`. Never inline regex patterns, timeouts, or passwords.
 - `playwright.config.ts` defines the timeouts; omit a timeout that equals its default. Override only when intentionally different: `BRIEF_TIMEOUT` (shorter than the 15s expect default) or `MULTI_PHASE_TEST_TIMEOUT` (longer than the 60s test default).
-- Import the shared API layer through the `@management-commands/...`, `@management-models/...`, `@utils-commands/...` and `@gateway-commands/...` aliases, not `../../api/...`. ESLint does not catch a wrong relative depth; Playwright fails at load time.
+- Import the shared API layer through the `@management-commands/...`, `@management-models/...`, `@utils-commands/...`, `@gateway-commands/...` and `@api-fixtures/...` aliases, not `../../api/...`. ESLint does not catch a wrong relative depth; Playwright fails at load time.
 - Fixtures import from `utils/`, never the reverse.
 - Always use cross-fetch, never native Node.js fetch: the generated SDK silently drops fields with native fetch. Never remove `globalThis.fetch = crossFetch` from `fixtures/base.fixture.ts`.
 
@@ -39,6 +39,13 @@ Applies below `gravitee-am-test/playwright/`. Jest specs under `../specs/` follo
 - Finish an OAuth leg with `reachOAuthAuthorizationCallback`, not `waitForURL(/callback?code=/)`: the test redirect URI is an external site that may never load in CI.
 - A second authorization in the same browser context can skip login and step-up MFA. When the second leg must log in again, call `page.context().clearCookies()` first.
 - Conditional navigation belongs only in a named helper such as `navigateToWebAuthnLogin`; never `if/else` around assertions.
+
+## Structure and fixtures
+
+- Name every resource with `uniqueTestName()`: CI runs 3 workers, and a fixed name collides across them.
+- Fixture cleanup handles errors (try/catch). Declare an ordering dependency between fixtures with `void fixture;`.
+- Put a helper used by 2 or more files, or longer than 20 lines, in `utils/`; a spec file holds only test logic. Extract an inline fixture longer than 50 lines to a fixture file.
+- Build OAuth authorize URLs with `buildAuthorizeUrl()`, not an inline template.
 
 ## Selectors
 

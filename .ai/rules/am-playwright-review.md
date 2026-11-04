@@ -17,11 +17,6 @@ Review changed Playwright code under `gravitee-am-test/playwright/` against the 
 
 ## Structure
 
-- Helpers used by 2+ files or longer than 20 lines are in `utils/`; spec files contain only test logic.
-- Inline fixtures longer than 50 lines are extracted to a fixture file.
-- OAuth authorize URLs come from `buildAuthorizeUrl()`, not inline templates.
-- Fixture cleanup handles errors (try/catch); `void fixture;` declares ordering dependencies.
-- Resource names use `uniqueTestName()`.
 - Tests are independent (no shared mutable state).
 - Spec files under 300 lines (split if needed); utils files can be longer if cohesive.
 

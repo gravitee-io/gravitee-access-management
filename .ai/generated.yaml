@@ -15,8 +15,8 @@ inputs:
   - { path: ".ai/rules/am-integration-tests.md", hash: "sha256:030764c653d4016c8264fa1370403b06af883056fc609f842c90cc49da09d44b" }
   - { path: ".ai/rules/am-java.md", hash: "sha256:bed46b90861a7ca3b291093965084a23ada69b2cea17deeb6eb0d2977a9188da" }
   - { path: ".ai/rules/am-overview.md", hash: "sha256:0339e9afc965603516adc77514318a1f71d1805659203a382c54c0dad03f18c8" }
-  - { path: ".ai/rules/am-playwright-review.md", hash: "sha256:69fbf260d5cacd6f60a209f74879e53c3514277e9fc2cc34dfa71bb92ed48585" }
-  - { path: ".ai/rules/am-playwright.md", hash: "sha256:f23339dac3f9331318a0257213b3d14a68a3f0d94043c5bd4c2d0f6bf904e75d" }
+  - { path: ".ai/rules/am-playwright-review.md", hash: "sha256:56f4e42940da488edd81064b52fa372e1c09ccff958c057a2e05ec541d42113c" }
+  - { path: ".ai/rules/am-playwright.md", hash: "sha256:61702def190bc85468a6dcac6059e4e02f9769b0c28dbf3deb634d91696e338a" }
   - { path: ".ai/rules/am-review.md", hash: "sha256:1b50d04e7f39277dd5c6ebe24bdf87415380d9556b83e52655d1229b08b2ee2f" }
   - { path: ".ai/rules/am-safety.md", hash: "sha256:5c5f5dc1749dd3fb682680a787a74ecce330912457e694a724f7da581cfbf90e" }
   - { path: ".ai/rules/am-testing.md", hash: "sha256:96223274703e349ff0776905eb99ea0d1dde1ee12b21a67adc84a516ba5d7443" }
@@ -64,7 +64,7 @@ entries:
     status: generated
     scope: committed
   - path: ".github/instructions/am-playwright-review.instructions.md"
-    hash: sha256:8c1b78b6eb7d625bd57e38df596dd80032f00885eaf6d7641cbc01b675584ecb
+    hash: sha256:eb46385bd8e44588c500006b5d5b77fb059c1d42d1fdf148e41d111f830745e5
     status: generated
     scope: committed
   - path: ".github/instructions/am-review.instructions.md"
@@ -328,7 +328,7 @@ entries:
     status: generated
     scope: committed
   - path: "gravitee-am-test/playwright/AGENTS.md"
-    hash: sha256:ac06b4fd58a5f919b5fe15cab730719ee8f1423ced6c8e299224f0bc97cb7f53
+    hash: sha256:aaaf11874122d8aa6f360b88b55b8ec46edcbcf55c22e8dd895c23c5bcc979b9
     status: generated
     scope: committed
   - path: "gravitee-am-test/playwright/CLAUDE.md"
@@ -359,4 +359,4 @@ entries:
     hash: sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49
     status: generated
     scope: committed
-record: sha256:1ada4445bef272a4b7fc35f54cf266387d08deaf3bf78b0beac3414b7248802d
+record: sha256:d29bb32e2fea468b1cd7283d5f14044cadd7da0489765ca27c4600e5d7ad4f7d
