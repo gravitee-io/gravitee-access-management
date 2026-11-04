@@ -27,7 +27,11 @@ describe('migration seed bootstrap', () => {
   });
 
   it('seeds the Management API data and a WebAuthn credential before the trusted-issuer data set', () => {
-    const expected = ['Management API data null', 'WebAuthn passwordless credential null'];
+    const expected = [
+      'Management API data null',
+      'WebAuthn passwordless credential null',
+      'RAR authorization detail type permissions null',
+    ];
     expect(seedNamesFor('4.10')).toEqual(expected);
     expect(seedNamesFor('4.11')).toEqual(expected);
   });
@@ -37,6 +41,7 @@ describe('migration seed bootstrap', () => {
       'Management API data null',
       'token exchange trusted issuer {"trustedIssuerApi":"inline","keyRetrievalApi":"legacy-spiffe"}',
       'WebAuthn passwordless credential null',
+      'RAR authorization detail type permissions null',
     ]);
   });
 
@@ -45,6 +50,7 @@ describe('migration seed bootstrap', () => {
       'Management API data null',
       'token exchange trusted issuer {"trustedIssuerApi":"trusted-domain","keyRetrievalApi":"key-retrieval-settings"}',
       'WebAuthn passwordless credential null',
+      'RAR authorization detail type permissions null',
     ];
     expect(seedNamesFor('4.13')).toEqual(expected);
     expect(seedNamesFor('4.20')).toEqual(expected);
