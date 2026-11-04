@@ -151,7 +151,7 @@ export function IdentityProvidersPage() {
                 <DataTable
                     aria-label="Identity providers"
                     columns={columns}
-                    data={rows}
+                    data={rows.slice((page - 1) * pageSize, page * pageSize)}
                     loading={isFetching || plugins.isPending}
                     skeletonCount={5}
                     toolbar={<SearchField label="identity providers" onSearch={search} />}

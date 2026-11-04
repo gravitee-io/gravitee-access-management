@@ -66,6 +66,23 @@ describe('IdentityProvidersPage', () => {
         expect(await screen.findByText('No identity providers match your search')).toBeInTheDocument();
     });
 
+    it('shows one page of 25 providers at a time', async () => {
+        vi.mocked(listIdentityProviders).mockResolvedValueOnce(
+            Array.from({ length: 30 }, (_, index) => ({
+                id: `idp-${index + 1}`,
+                name: `Provider ${index + 1}`,
+                type: 'ldap-am-idp',
+                system: false,
+                external: false,
+            })),
+        );
+
+        renderPage();
+
+        expect(await screen.findByRole('link', { name: 'Provider 25' })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Provider 26' })).not.toBeInTheDocument();
+    });
+
     it('shows the first-use state when the domain has no provider', async () => {
         vi.mocked(listIdentityProviders).mockResolvedValueOnce([]);
 
