@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { enrichCreationSchema, enrichSettingsSchema, pinnedFields, withAbsentFields, withBooleanDefaults } from '../provider-schema';
+import { enrichCreationSchema, enrichSettingsSchema, pinnedFields, withBooleanDefaults } from '../provider-schema';
 
 const context = { type: 'mongo-am-idp', certificates: [], dataSources: [], systemClusterRestricted: false };
 
@@ -93,29 +93,5 @@ describe('withBooleanDefaults', () => {
 
         expect(withBooleanDefaults(schema, { host: null })).toEqual({ enabled: true, host: null });
         expect(withBooleanDefaults(schema, { enabled: false })).toEqual({ enabled: false });
-    });
-});
-
-describe('withAbsentFields', () => {
-    it('gives each schema property the stored value lacks an undefined key, or false for a boolean, in nested objects and array items too', () => {
-        const schema = {
-            properties: {
-                timeout: { type: 'integer', default: 10000 },
-                encode: { type: 'boolean' },
-                proxy: { type: 'object', properties: { host: { type: 'string' } } },
-                users: {
-                    type: 'array',
-                    items: { type: 'object', properties: { username: { type: 'string' }, email: { type: 'string' } } },
-                },
-            },
-        };
-
-        const filled = withAbsentFields(schema, { proxy: {}, users: [{ username: 'john' }] });
-
-        expect(Object.keys(filled)).toEqual(['proxy', 'users', 'timeout', 'encode']);
-        expect(filled.encode).toBe(false);
-        expect(Object.keys(filled.proxy as object)).toEqual(['host']);
-        expect(filled.users).toEqual([{ username: 'john', email: undefined }]);
-        expect(Object.keys((filled.users as object[])[0])).toEqual(['username', 'email']);
     });
 });

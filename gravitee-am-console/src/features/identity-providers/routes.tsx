@@ -20,13 +20,17 @@ import { RequirePermission } from '../../lib/session/permissions';
 export const identityProviderRoutes = (
     <Route path="providers" element={<RequirePermission anyOf={['domain_identity_provider_list']} />}>
         <Route index element={lazyPage(() => import('./IdentityProvidersPage'), 'IdentityProvidersPage')} />
-        <Route path="new" element={lazyPage(() => import('./NewIdentityProviderPage'), 'NewIdentityProviderPage')} />
-        <Route path=":providerId" element={lazyPage(() => import('./IdentityProviderLayout'), 'IdentityProviderLayout')}>
-            <Route index element={<Navigate to="settings" replace />} />
-            <Route path="settings" element={lazyPage(() => import('./IdentityProviderSettingsPage'), 'IdentityProviderSettingsPage')} />
-            <Route path="mappers" element={lazyPage(() => import('./IdentityProviderMappersPage'), 'IdentityProviderMappersPage')} />
-            <Route path="roles" element={lazyPage(() => import('./IdentityProviderRolesPage'), 'IdentityProviderRolesPage')} />
-            <Route path="groups" element={lazyPage(() => import('./IdentityProviderGroupsPage'), 'IdentityProviderGroupsPage')} />
+        <Route element={<RequirePermission anyOf={['domain_identity_provider_create']} />}>
+            <Route path="new" element={lazyPage(() => import('./NewIdentityProviderPage'), 'NewIdentityProviderPage')} />
+        </Route>
+        <Route element={<RequirePermission anyOf={['domain_identity_provider_read']} />}>
+            <Route path=":providerId" element={lazyPage(() => import('./IdentityProviderLayout'), 'IdentityProviderLayout')}>
+                <Route index element={<Navigate to="settings" replace />} />
+                <Route path="settings" element={lazyPage(() => import('./IdentityProviderSettingsPage'), 'IdentityProviderSettingsPage')} />
+                <Route path="mappers" element={lazyPage(() => import('./IdentityProviderMappersPage'), 'IdentityProviderMappersPage')} />
+                <Route path="roles" element={lazyPage(() => import('./IdentityProviderRolesPage'), 'IdentityProviderRolesPage')} />
+                <Route path="groups" element={lazyPage(() => import('./IdentityProviderGroupsPage'), 'IdentityProviderGroupsPage')} />
+            </Route>
         </Route>
     </Route>
 );
