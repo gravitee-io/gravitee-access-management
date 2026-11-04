@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
+import io.gravitee.am.service.i18n.RestrictedExpressionEvaluator;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.standard.StandardDialect;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
@@ -47,6 +49,7 @@ public class ThymeleafConfiguration {
         GraviteeThymeleafTemplateEngine thymeleafTemplateEngine = new GraviteeThymeleafTemplateEngine(vertx);
         thymeleafTemplateEngine.setThemeResolver(themeResolver);
         TemplateEngine templateEngine = thymeleafTemplateEngine.unwrap();
+        templateEngine.setDialect(restrictedDialect());
 
         // set template resolvers
         DomainBasedTemplateResolver overrideTemplateResolver = (DomainBasedTemplateResolver) overrideTemplateResolver();
@@ -55,6 +58,12 @@ public class ThymeleafConfiguration {
         templateEngine.addTemplateResolver(defaultTemplateResolver());
         templateEngine.addMessageResolver(messageResolver);
         return thymeleafTemplateEngine;
+    }
+
+    private static StandardDialect restrictedDialect() {
+        StandardDialect dialect = new StandardDialect();
+        dialect.setVariableExpressionEvaluator(new RestrictedExpressionEvaluator());
+        return dialect;
     }
 
     @Bean
