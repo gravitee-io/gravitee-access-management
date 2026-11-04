@@ -61,7 +61,7 @@ export function IdentityProviderGroupsPage() {
             }
             targets={targets}
             mapper={provider.groupMapper ?? {}}
-            duplicateMessage={user => `"${user}" already has the group.`}
+            duplicateMessage={(user, group) => `"${user}" already has the group ${group}.`}
             canUpdate={canUpdate}
             saving={save.isPending}
             onSave={groupMapper => save.mutate(groupMapper)}
