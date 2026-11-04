@@ -17,6 +17,7 @@ import type { FilteredIdentityProviderInfo } from '@am-models/FilteredIdentityPr
 import type { IdentityProvider as IdentityProviderModel } from '@am-models/IdentityProvider';
 import type { NewIdentityProvider as NewIdentityProviderModel } from '@am-models/NewIdentityProvider';
 import { hash } from 'bcryptjs';
+import { isRecord } from '../guards';
 import { http } from './http';
 import type { ApiModel } from './model';
 import { type DomainRef, domainPath } from './paths';
@@ -92,6 +93,12 @@ export async function getIdentityProviderSchema(type: string): Promise<Record<st
 
 const INLINE_TYPE = 'inline-am-idp';
 const MASKED_PASSWORD = '********';
+/** The stored configuration as an object. */
+export function parseConfiguration(provider: IdentityProvider): Record<string, unknown> {
+    const parsed: unknown = JSON.parse(provider.configuration ?? '{}');
+    return isRecord(parsed) ? parsed : {};
+}
+
 // bcryptjs 3 writes $2b$. Older tools write $2a$ or $2y$.
 const BCRYPT_HASH = /^\$2[aby]\$/;
 
@@ -104,8 +111,8 @@ export async function serializeConfiguration(type: string, configuration: Record
         return JSON.stringify(configuration);
     }
     const users = await Promise.all(
-        (configuration.users as { readonly password: string }[]).map(async user =>
-            BCRYPT_HASH.test(user.password) || user.password === MASKED_PASSWORD
+        configuration.users.map(async (user: unknown) =>
+            !isRecord(user) || typeof user.password !== 'string' || BCRYPT_HASH.test(user.password) || user.password === MASKED_PASSWORD
                 ? user
                 : { ...user, password: await hash(user.password, 10) },
         ),

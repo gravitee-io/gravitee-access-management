@@ -21,7 +21,8 @@ import { listGroups } from '../../lib/api/groups';
 import { updateIdentityProvider } from '../../lib/api/identity-providers';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
-import { ExpressionMapperPanel, type Mapper, type MapperTarget } from './ExpressionMapperPanel';
+import type { MapperTarget } from './AddMappingDialog';
+import { ExpressionMapperPanel, type Mapper } from './ExpressionMapperPanel';
 import { useIdentityProvider } from './IdentityProviderLayout';
 
 /** Maps user expressions onto the first 100 groups of the domain, as the Angular `GroupsResolver` loads them. */
@@ -60,7 +61,7 @@ export function IdentityProviderGroupsPage() {
             }
             targets={targets}
             mapper={provider.groupMapper ?? {}}
-            duplicateMessage={user => `'${user}' has already the group`}
+            duplicateMessage={user => `"${user}" already has the group.`}
             canUpdate={canUpdate}
             saving={save.isPending}
             onSave={groupMapper => save.mutate(groupMapper)}

@@ -13,38 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-    Button,
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-    Checkbox,
-    DataTableEmptyState,
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    Field,
-    FieldDescription,
-    FieldLabel,
-    Input,
-    Label,
-    toast,
-} from '@gravitee/graphene-core';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableEmptyState, toast } from '@gravitee/graphene-core';
 import { PlusIcon, Trash2Icon, UserIcon, UsersIcon } from '@gravitee/graphene-core/icons';
 import { type ReactNode, useState } from 'react';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
-
-export interface MapperTarget {
-    readonly id: string;
-    readonly name: string;
-    /** AM refuses a mapping onto a system primary-owner role. */
-    readonly disabled?: boolean;
-}
+import { AddMappingDialog, type MapperTarget } from './AddMappingDialog';
 
 /** Target id to the user expressions mapped onto it. */
 export type Mapper = Record<string, string[]>;
@@ -61,80 +34,6 @@ interface ExpressionMapperPanelProps {
     readonly canUpdate: boolean;
     readonly saving: boolean;
     readonly onSave: (mapper: Mapper) => void;
-}
-
-function capitalize(text: string): string {
-    return `${text[0].toUpperCase()}${text.slice(1)}`;
-}
-
-function AddMappingDialog({
-    noun,
-    targets,
-    onCancel,
-    onSave,
-}: {
-    readonly noun: string;
-    readonly targets: readonly MapperTarget[];
-    readonly onCancel: () => void;
-    readonly onSave: (user: string, selected: string[]) => void;
-}) {
-    const [user, setUser] = useState('');
-    const [selected, setSelected] = useState<string[]>([]);
-    const toggle = (id: string, on: boolean) => setSelected(current => (on ? [...current, id] : current.filter(other => other !== id)));
-
-    return (
-        <Dialog open onOpenChange={open => !open && onCancel()}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{`${capitalize(noun)} mappings`}</DialogTitle>
-                    <DialogDescription>Map the users matching an expression onto {noun}s.</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-5">
-                    <Field>
-                        <FieldLabel htmlFor="mapper-user">Users</FieldLabel>
-                        <Input
-                            id="mapper-user"
-                            className="font-mono"
-                            placeholder="Use attributeName=attributeValue or EL syntax."
-                            value={user}
-                            onChange={event => setUser(event.target.value)}
-                        />
-                        <FieldDescription>
-                            For example memberOf=administrators, or {"{#profile['my-claim'] == 'default'}"}.
-                        </FieldDescription>
-                    </Field>
-                    <Field>
-                        <FieldLabel>{`${capitalize(noun)}s`}</FieldLabel>
-                        {targets.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No {noun}s exist yet.</p>
-                        ) : (
-                            <div className="flex max-h-64 flex-col gap-2 overflow-y-auto p-1">
-                                {targets.map(target => (
-                                    <div key={target.id} className="flex items-center gap-2">
-                                        <Checkbox
-                                            id={`mapper-${target.id}`}
-                                            checked={selected.includes(target.id)}
-                                            disabled={target.disabled}
-                                            onCheckedChange={checked => toggle(target.id, checked === true)}
-                                        />
-                                        <Label htmlFor={`mapper-${target.id}`}>{target.name}</Label>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </Field>
-                </div>
-                <DialogFooter>
-                    <Button variant="ghost" onClick={onCancel}>
-                        Cancel
-                    </Button>
-                    <Button disabled={!user.trim() || selected.length === 0} onClick={() => onSave(user.trim(), selected)}>
-                        Save
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
 }
 
 /**
@@ -206,7 +105,7 @@ export function ExpressionMapperPanel({
             <Card>
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <CardTitle className="text-base">{title}</CardTitle>
+                        <CardTitle>{title}</CardTitle>
                         <CardDescription>{description}</CardDescription>
                     </div>
                     {canUpdate && keys.length > 0 && addButton}
@@ -224,7 +123,7 @@ export function ExpressionMapperPanel({
                         <div className="flex flex-col">
                             {keys.map(target => (
                                 <section key={target} className="border-b border-border py-3 last:border-b-0">
-                                    <h3 className="text-sm font-semibold">{nameOf(target)}</h3>
+                                    <h2 className="text-sm font-semibold">{nameOf(target)}</h2>
                                     <ul className="mt-2 flex flex-col gap-1">
                                         {mapper[target].map(user => (
                                             <li key={user} className="flex items-center justify-between gap-2">

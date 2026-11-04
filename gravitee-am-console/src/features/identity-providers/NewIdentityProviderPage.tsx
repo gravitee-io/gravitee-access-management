@@ -116,7 +116,7 @@ export function NewIdentityProviderPage() {
                                 id="domain-whitelist"
                                 values={whitelist}
                                 onChange={setWhitelist}
-                                onDuplicate={value => toast.error(`Error : domain whitelist pattern "${value}" already exists`)}
+                                onDuplicate={value => toast.error(`Domain pattern "${value}" is already in the list.`)}
                                 placeholder="Enter a domain whitelist pattern"
                             />
                             <FieldDescription>

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { LayoutSlotsProvider, toast, TooltipProvider } from '@gravitee/graphene-core';
+import { buttonHarness, inputHarness, passwordInputHarness, radioHarness, renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { listDataSources } from '../../../lib/api/data-sources';
 import { createIdentityProvider, getIdentityProviderSchema, listIdentityProviderPlugins } from '../../../lib/api/identity-providers';
@@ -48,8 +50,8 @@ vi.mock('../../../lib/session/domain', () => ({
 const ref = { organizationId: 'DEFAULT', environmentId: 'env-1', domainId: 'd1' };
 const providersPath = '/environments/dev/domains/acme/settings/providers';
 
-function renderPage(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
-    return render(
+function setupNewProviderHarness(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
+    const view = renderWithGraphene(
         <QueryClientProvider client={client}>
             <LicenseScope license={{ tier: 'oss', features: [] }}>
                 <MemoryRouter initialEntries={[`${providersPath}/new`]}>
@@ -65,6 +67,29 @@ function renderPage(client = new QueryClient({ defaultOptions: { queries: { retr
             </LicenseScope>
         </QueryClientProvider>,
     );
+
+    return {
+        unmount: view.unmount,
+        findPlugin: (name: string) => screen.findByRole('radio', { name }),
+        filter: (text: string) => inputHarness({ name: 'Filter providers' }).type(text),
+        /** Picks the plugin, then opens the configuration step. */
+        configure: async (plugin: string) => {
+            await screen.findByRole('radio', { name: plugin });
+            await radioHarness({ name: plugin }).select();
+            await buttonHarness({ name: 'Next' }).click();
+        },
+        clickLockedPlugin: async (name: string) => userEvent.click(await screen.findByRole('radio', { name })),
+        typeName: async (text: string) => {
+            await screen.findByRole('textbox', { name: 'Name' });
+            await inputHarness({ name: 'Name' }).type(text);
+        },
+        typeClientId: (text: string) => inputHarness({ name: /Client ID/ }).type(text),
+        typeClientSecret: (text: string) => passwordInputHarness({ name: /Client Secret/ }).type(text),
+        create: async () => {
+            await screen.findByRole('button', { name: 'Create' });
+            await buttonHarness({ name: 'Create' }).click();
+        },
+    };
 }
 
 beforeEach(() => {
@@ -87,21 +112,21 @@ beforeEach(() => {
 
 describe('NewIdentityProviderPage', () => {
     it('lists the plugins, filters them on the labels, and locks the ones the licence lacks', async () => {
-        renderPage();
+        const harness = setupNewProviderHarness();
 
-        expect(await screen.findByRole('radio', { name: 'MongoDB' })).toBeInTheDocument();
+        expect(await harness.findPlugin('MongoDB')).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'LDAP / AD, Enterprise' })).toBeInTheDocument();
 
-        fireEvent.change(screen.getByRole('searchbox', { name: 'Filter providers' }), { target: { value: 'social' } });
+        await harness.filter('social');
 
         expect(screen.getByRole('radio', { name: 'Google' })).toBeInTheDocument();
         expect(screen.queryByRole('radio', { name: 'MongoDB' })).not.toBeInTheDocument();
     });
 
     it('opens the upgrade dialog, and does not select, on a click on a locked plugin', async () => {
-        renderPage();
+        const harness = setupNewProviderHarness();
 
-        fireEvent.click(await screen.findByRole('radio', { name: 'LDAP / AD, Enterprise' }));
+        await harness.clickLockedPlugin('LDAP / AD, Enterprise');
 
         expect(await screen.findByRole('dialog', { name: 'Enterprise feature' })).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'LDAP / AD, Enterprise', hidden: true })).toHaveAttribute('aria-checked', 'false');
@@ -109,17 +134,16 @@ describe('NewIdentityProviderPage', () => {
     });
 
     it('creates an external provider with the default whitelist, then opens it', async () => {
-        renderPage();
+        const harness = setupNewProviderHarness();
 
-        fireEvent.click(await screen.findByRole('radio', { name: 'Google' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'My Google' } });
-        fireEvent.change(screen.getByRole('textbox', { name: /Client ID/ }), { target: { value: 'abc' } });
-        fireEvent.change(screen.getByLabelText(/Client Secret/), { target: { value: 's3cr3t' } });
+        await harness.configure('Google');
+        await harness.typeName('My Google');
+        await harness.typeClientId('abc');
+        await harness.typeClientSecret('s3cr3t');
 
         expect(screen.getByText('gmail.com')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+        await harness.create();
 
         await waitFor(() => expect(createIdentityProvider).toHaveBeenCalledTimes(1));
         const [calledRef, sent] = vi.mocked(createIdentityProvider).mock.calls[0];
@@ -151,10 +175,9 @@ describe('NewIdentityProviderPage', () => {
             type: 'object',
             properties: { datasource: { type: 'string', title: 'Data source', widget: 'datasource' } },
         });
-        renderPage();
+        const harness = setupNewProviderHarness();
 
-        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        await harness.configure('MongoDB');
 
         expect(await screen.findByRole('combobox', { name: /Data source/ })).toBeInTheDocument();
     });
@@ -165,26 +188,22 @@ describe('NewIdentityProviderPage', () => {
             type: 'object',
             properties: { datasource: { type: 'string', title: 'Data source', widget: 'datasource' } },
         });
-        const first = renderPage(client);
-        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        const first = setupNewProviderHarness(client);
+        await first.configure('MongoDB');
         expect(await screen.findByRole('textbox', { name: /Data source/ })).toBeDisabled();
         first.unmount();
 
         vi.mocked(listDataSources).mockResolvedValue([{ id: 'ds-1', name: 'Users cluster' }]);
-        renderPage(client);
-        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        await setupNewProviderHarness(client).configure('MongoDB');
 
         expect(await screen.findByRole('combobox', { name: /Data source/ })).toBeEnabled();
     });
 
     it('requires a name', async () => {
-        renderPage();
+        const harness = setupNewProviderHarness();
 
-        fireEvent.click(await screen.findByRole('radio', { name: 'MongoDB' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        fireEvent.click(await screen.findByRole('button', { name: 'Create' }));
+        await harness.configure('MongoDB');
+        await harness.create();
 
         expect(await screen.findByText('Name is required')).toBeInTheDocument();
         expect(createIdentityProvider).not.toHaveBeenCalled();

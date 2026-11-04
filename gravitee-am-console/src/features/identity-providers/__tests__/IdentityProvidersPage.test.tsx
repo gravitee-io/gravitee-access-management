@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { buttonHarness, inputHarness } from '@gravitee/graphene-core/testing';
+import { screen, waitFor, within } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import { HttpError } from '../../../lib/api/http';
 import { deleteIdentityProvider, listIdentityProviderPlugins, listIdentityProviders } from '../../../lib/api/identity-providers';
@@ -29,8 +30,23 @@ vi.mock('../../../lib/session/domain', () => ({ useCurrentDomain: () => currentD
 
 const ALL = ['domain_identity_provider_create', 'domain_identity_provider_read', 'domain_identity_provider_delete'];
 
-function renderPage(permissions = ALL) {
-    return renderRoutes(providersPath, <Route path={providersPath} element={<IdentityProvidersPage />} />, permissions);
+function setupIdentityProvidersPageHarness(permissions = ALL) {
+    renderRoutes(providersPath, <Route path={providersPath} element={<IdentityProvidersPage />} />, permissions);
+
+    return {
+        findProviderLink: (name: string) => screen.findByRole('link', { name }),
+        rowOf: (name: string) => screen.getByRole('link', { name }).closest('tr')!,
+        search: async (text: string) => {
+            await screen.findByRole('searchbox', { name: 'Search identity providers' });
+            await inputHarness({ name: 'Search identity providers' }).type(text);
+        },
+        delete: async (name: string) => {
+            await screen.findByRole('button', { name: `Delete ${name}` });
+            await buttonHarness({ name: `Delete ${name}` }).click();
+            const dialog = await screen.findByRole('dialog', { name: 'Delete provider' });
+            await buttonHarness({ name: 'Delete', within: dialog }).click();
+        },
+    };
 }
 
 beforeEach(() => {
@@ -48,25 +64,24 @@ beforeEach(() => {
 
 describe('IdentityProvidersPage', () => {
     it('lists the providers of the domain with the plugin name, or Custom for an unknown plugin', async () => {
-        renderPage();
+        const harness = setupIdentityProvidersPageHarness();
 
-        const ldap = (await screen.findByRole('link', { name: 'Corporate LDAP' })).closest('tr')!;
-        expect(screen.getByRole('link', { name: 'Corporate LDAP' })).toHaveAttribute('href', `${providersPath}/idp-2`);
-        expect(within(ldap).getByText('LDAP / AD')).toBeInTheDocument();
-        expect(within(screen.getByRole('link', { name: 'Legacy' }).closest('tr')!).getAllByText('Custom')).toHaveLength(2);
+        expect(await harness.findProviderLink('Corporate LDAP')).toHaveAttribute('href', `${providersPath}/idp-2`);
+        expect(within(harness.rowOf('Corporate LDAP')).getByText('LDAP / AD')).toBeInTheDocument();
+        expect(within(harness.rowOf('Legacy')).getAllByText('Custom')).toHaveLength(2);
         expect(listIdentityProviders).toHaveBeenCalledWith(ref);
     });
 
     it('searches the providers on the name and shows the no-results state', async () => {
-        renderPage();
-        await screen.findByRole('link', { name: 'Corporate LDAP' });
+        const harness = setupIdentityProvidersPageHarness();
+        await harness.findProviderLink('Corporate LDAP');
 
-        fireEvent.change(screen.getByRole('searchbox', { name: 'Search identity providers' }), { target: { value: 'nothing' } });
+        await harness.search('nothing');
 
         expect(await screen.findByText('No identity providers match your search')).toBeInTheDocument();
     });
 
-    it('shows one page of 25 providers at a time', async () => {
+    it('shows one page of 10 providers at a time', async () => {
         vi.mocked(listIdentityProviders).mockResolvedValueOnce(
             Array.from({ length: 30 }, (_, index) => ({
                 id: `idp-${index + 1}`,
@@ -77,16 +92,16 @@ describe('IdentityProvidersPage', () => {
             })),
         );
 
-        renderPage();
+        const harness = setupIdentityProvidersPageHarness();
 
-        expect(await screen.findByRole('link', { name: 'Provider 25' })).toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: 'Provider 26' })).not.toBeInTheDocument();
+        expect(await harness.findProviderLink('Provider 10')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Provider 11' })).not.toBeInTheDocument();
     });
 
     it('shows the first-use state when the domain has no provider', async () => {
         vi.mocked(listIdentityProviders).mockResolvedValueOnce([]);
 
-        renderPage();
+        setupIdentityProvidersPageHarness();
 
         expect(await screen.findByText('No identity providers yet')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Add identity provider' })).toHaveAttribute('href', `${providersPath}/new`);
@@ -95,7 +110,7 @@ describe('IdentityProvidersPage', () => {
     it('shows the error panel, not the first-use state, when the list fails', async () => {
         vi.mocked(listIdentityProviders).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
 
-        renderPage();
+        setupIdentityProvidersPageHarness();
 
         expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the identity providers.');
         expect(screen.queryByText('No identity providers yet')).not.toBeInTheDocument();
@@ -103,18 +118,16 @@ describe('IdentityProvidersPage', () => {
 
     it('deletes a provider after the confirm dialog, then reloads the list', async () => {
         vi.mocked(deleteIdentityProvider).mockResolvedValueOnce();
-        renderPage();
+        const harness = setupIdentityProvidersPageHarness();
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Delete Corporate LDAP' }));
-        const dialog = await screen.findByRole('dialog', { name: 'Delete provider' });
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+        await harness.delete('Corporate LDAP');
 
         await waitFor(() => expect(deleteIdentityProvider).toHaveBeenCalledWith(ref, 'idp-2'));
         await waitFor(() => expect(listIdentityProviders).toHaveBeenCalledTimes(2));
     });
 
     it('hides create, delete and the link without the permissions', async () => {
-        renderPage([]);
+        setupIdentityProvidersPageHarness([]);
 
         expect(await screen.findByText('Corporate LDAP')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Corporate LDAP' })).not.toBeInTheDocument();
