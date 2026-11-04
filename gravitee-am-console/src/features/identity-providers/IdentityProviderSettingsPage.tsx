@@ -31,7 +31,7 @@ import {
     toast,
 } from '@gravitee/graphene-core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { Controller, type Resolver, type ResolverResult, useForm } from 'react-hook-form';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
@@ -58,7 +58,7 @@ import { featureDescription, useLicense } from '../../lib/session/license';
 import { Can, usePermissions } from '../../lib/session/permissions';
 import { useIdentityProvider } from './IdentityProviderLayout';
 import { MongoStorageGuidance } from './MongoStorageGuidance';
-import { enrichSettingsSchema, MONGO_IDP_TYPE, pinnedFields, withAbsentFields, withBooleanDefaults } from './provider-schema';
+import { enrichSettingsSchema, MONGO_IDP_TYPE, pinnedFields, withBooleanDefaults } from './provider-schema';
 
 const FORM_ID = 'identity-provider-settings';
 const INLINE_TYPE = 'inline-am-idp';
@@ -150,6 +150,10 @@ function SettingsForm({ provider, adapted, configuration, pinned, feature }: Set
         criteriaMode: 'all',
         defaultValues: { name: provider.name, domainWhitelist: provider.domainWhitelist ?? [], config: configuration },
     });
+    // The schema fields write empty values and select defaults as they register, so their writes become the baseline.
+    useEffect(() => {
+        form.reset(form.getValues());
+    }, [form]);
     const save = useMutation({
         mutationFn: async (values: ProviderValues) => {
             // A read-only field goes back as stored, as the Angular `withPinnedStorage` does.
@@ -168,7 +172,7 @@ function SettingsForm({ provider, adapted, configuration, pinned, feature }: Set
             form.reset({
                 name: updated.name,
                 domainWhitelist: updated.domainWhitelist ?? [],
-                config: withAbsentFields(adapted.schema, parseConfiguration(updated)),
+                config: parseConfiguration(updated),
             });
             toast.success('Provider updated');
         },
@@ -380,7 +384,7 @@ export function IdentityProviderSettingsPage() {
         <SettingsForm
             provider={provider}
             adapted={adapted}
-            configuration={withAbsentFields(schema.data, withBooleanDefaults(schema.data, parseConfiguration(provider)))}
+            configuration={withBooleanDefaults(schema.data, parseConfiguration(provider))}
             pinned={pinned}
             feature={plugins.data.find(plugin => plugin.id === provider.type)?.feature}
         />

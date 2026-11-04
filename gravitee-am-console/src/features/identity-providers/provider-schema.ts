@@ -160,29 +160,3 @@ export function withBooleanDefaults(schema: SchemaNode, configuration: Record<st
         .map(([key, property]) => [key, property.default]);
     return { ...configuration, ...Object.fromEntries(defaults) };
 }
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/**
- * A field the stored configuration lacks registers as an `undefined` key, and react-hook-form counts that key as a
- * change. The Graphene switch of an unset boolean writes `false`. The defaults hold the same values, so the form opens
- * without changes.
- */
-export function withAbsentFields(schema: object, value: Record<string, unknown>): Record<string, unknown> {
-    const filled: Record<string, unknown> = { ...value };
-    // An AM schema or its Graphene adaptation: both keep the properties and the array items.
-    for (const [key, property] of Object.entries(propertiesOf(schema as SchemaNode))) {
-        const current = filled[key];
-        const items = property.items as SchemaNode | undefined;
-        if (!(key in filled)) {
-            filled[key] = property.type === 'boolean' ? false : undefined;
-        } else if (property.properties && isRecord(current)) {
-            filled[key] = withAbsentFields(property, current);
-        } else if (items?.properties && Array.isArray(current)) {
-            filled[key] = current.map(item => (isRecord(item) ? withAbsentFields(items, item) : item));
-        }
-    }
-    return filled;
-}
