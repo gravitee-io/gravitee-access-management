@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { toast } from '@gravitee/graphene-core';
 import { buttonHarness, checkboxHarness, inputHarness } from '@gravitee/graphene-core/testing';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -30,6 +31,10 @@ vi.mock('../../../lib/api/identity-providers', () => ({
     getIdentityProvider: vi.fn(),
     listIdentityProviderPlugins: vi.fn().mockResolvedValue([]),
     updateIdentityProvider: vi.fn(),
+}));
+vi.mock('@gravitee/graphene-core', async importOriginal => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    toast: { success: vi.fn(), error: vi.fn() },
 }));
 vi.mock('../../../lib/api/roles', () => ({ listAllRoles: vi.fn() }));
 vi.mock('../../../lib/api/groups', () => ({ listGroups: vi.fn() }));
@@ -219,6 +224,16 @@ describe('IdentityProviderRolesPage', () => {
 });
 
 describe('IdentityProviderGroupsPage', () => {
+    it('names the group in the toast when the user is already mapped onto it', async () => {
+        const harness = setupMapperTabHarness('groups');
+
+        const dialog = await harness.addMapping('group', 'ou=sales', ['Sales']);
+        await dialog.save();
+
+        expect(toast.error).toHaveBeenCalledWith('"ou=sales" already has the group Sales.');
+        expect(updateIdentityProvider).not.toHaveBeenCalled();
+    });
+
     it('loads the first 100 groups and removes one entry of a group', async () => {
         const harness = setupMapperTabHarness('groups');
 
