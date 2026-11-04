@@ -179,6 +179,9 @@ function applyMultiselect(node: SchemaNode, adapted: SchemaNode, context: AdaptC
         context.dictionaryEndpoints.push(endpoint);
     }
     const items = endpoint ? (context.options.dictionaries?.[endpoint] ?? []) : ((node.enum as string[] | undefined) ?? []);
+    if (items.length === 0) {
+        adapted.readOnly = true;
+    }
     delete adapted.enum;
     adapted.uniqueItems = true;
     adapted.items = { ...(adapted.items as SchemaNode | undefined), enum: [...items] };

@@ -47,15 +47,14 @@ function combineDictionaries(results: UseQueryResult<string[]>[]) {
     return {
         data: results.map(result => result.data),
         pending: results.some(result => result.isPending),
-        error: results.find(result => result.error)?.error ?? null,
     };
 }
 
-/** `adapted` stays undefined until the dictionaries load. `resources` must be stable across renders. */
+/** `adapted` stays undefined until the dictionaries load. A dictionary that fails to load gives an empty list. `resources` must be stable across renders. */
 export function useAdaptedSchema(
     schema: Record<string, unknown> | undefined,
     resources?: readonly SchemaResource[],
-): { readonly adapted?: AdaptedSchema; readonly error: Error | null } {
+): { readonly adapted?: AdaptedSchema } {
     const endpoints = useMemo(() => (schema ? adaptAmSchema(schema).dictionaryEndpoints : []), [schema]);
     const dictionaries = useQueries({
         queries: endpoints.map(endpoint => ({
@@ -75,7 +74,7 @@ export function useAdaptedSchema(
                 : undefined,
         [schema, resources, endpoints, dictionaries],
     );
-    return { adapted, error: dictionaries.error };
+    return { adapted };
 }
 
 type ErrorTree = Record<string, unknown>;

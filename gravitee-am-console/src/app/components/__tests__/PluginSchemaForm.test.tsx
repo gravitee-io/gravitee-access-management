@@ -16,7 +16,7 @@
 import { Button } from '@gravitee/graphene-core';
 import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -110,6 +110,14 @@ describe('PluginSchemaForm', () => {
 
         expect(await screen.findByText('This field is required')).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('shows the form with a read-only multiselect when its dictionary fails to load', async () => {
+        vi.mocked(http).mockRejectedValue(new Error('403'));
+        renderForm();
+
+        expect(await screen.findByLabelText(/Keystore file/)).toBeInTheDocument();
+        expect(within(screen.getByRole('group', { name: 'Events' })).getByRole('button', { name: 'Add' })).toBeDisabled();
     });
 
     it('warns the developer about the fields it shows without their Angular widget', () => {

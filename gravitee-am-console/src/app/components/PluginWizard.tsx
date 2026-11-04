@@ -301,8 +301,7 @@ export function PluginWizard<P extends WizardPlugin>({
         enabled: step === 1 && !!selected,
         staleTime: Infinity,
     });
-    const { adapted, error: dictionaryError } = useAdaptedSchema(schema, resources);
-    const schemaError = loadError ?? dictionaryError;
+    const { adapted } = useAdaptedSchema(schema, resources);
     const shown = (plugins ?? []).filter(plugin => matches(plugin, filter));
     const focusableId = shown.find(plugin => plugin.id === selected?.id)?.id ?? shown[0]?.id;
 
@@ -365,9 +364,9 @@ export function PluginWizard<P extends WizardPlugin>({
                             </div>
                         </>
                     )
-                ) : schemaError ? (
+                ) : loadError ? (
                     <div className="flex flex-col gap-4">
-                        <ErrorPanel description="Could not load the plugin configuration form." error={schemaError} />
+                        <ErrorPanel description="Could not load the plugin configuration form." error={loadError} />
                         <Button type="button" variant="outline" className="self-start" onClick={openPlatform}>
                             <ArrowLeftIcon aria-hidden />
                             Back
