@@ -38,6 +38,24 @@ test.describe('React console: identity providers', () => {
     await expect(page.getByRole('tab', { name: 'Settings' })).toHaveCount(0);
   });
 
+  test('creates an inline provider through the wizard, then opens its settings', async ({ page, adminToken, testDomain }) => {
+    await page.goto(`${providersUrl(testDomain.hrid)}/new`);
+
+    await page.getByRole('radio', { name: 'Inline', exact: true }).click();
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('textbox', { name: 'Name' }).fill('Inline create test');
+    const created$ = page.waitForResponse(
+      (response) => response.request().method() === 'POST' && response.url().endsWith(`/domains/${testDomain.id}/identities`),
+    );
+    await page.getByRole('button', { name: 'Create' }).click();
+    const created = await (await created$).json();
+
+    await expect(page).toHaveURL(new RegExp(`/providers/${created.id}/settings$`));
+    await expect(page.getByText('Provider Inline create test created')).toBeVisible();
+    const providers = await getAllIdps(testDomain.id, adminToken);
+    expect(providers.find((provider) => provider.id === created.id)).toMatchObject({ name: 'Inline create test', type: 'inline-am-idp' });
+  });
+
   test('saves a new user mapper on the provider', async ({ page, adminToken, testDomain }) => {
     const idp = await createIdp(testDomain.id, adminToken, inlineIdpBody('Inline mapper test'));
     await page.goto(`${providersUrl(testDomain.hrid)}/${idp.id}/mappers`);
