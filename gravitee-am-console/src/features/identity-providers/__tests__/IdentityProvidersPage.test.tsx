@@ -40,6 +40,7 @@ function setupIdentityProvidersPageHarness(permissions = ALL) {
             await screen.findByRole('searchbox', { name: 'Search identity providers' });
             await inputHarness({ name: 'Search identity providers' }).type(text);
         },
+        nextPage: () => buttonHarness({ name: 'Next page' }).click(),
         delete: async (name: string) => {
             await screen.findByRole('button', { name: `Delete ${name}` });
             await buttonHarness({ name: `Delete ${name}` }).click();
@@ -96,6 +97,26 @@ describe('IdentityProvidersPage', () => {
 
         expect(await harness.findProviderLink('Provider 10')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Provider 11' })).not.toBeInTheDocument();
+    });
+
+    it('goes back a page when a delete empties the last page', async () => {
+        const providers = Array.from({ length: 11 }, (_, index) => ({
+            id: `idp-${index + 1}`,
+            name: `Provider ${index + 1}`,
+            type: 'ldap-am-idp',
+            system: false,
+            external: false,
+        }));
+        vi.mocked(listIdentityProviders).mockResolvedValueOnce(providers).mockResolvedValueOnce(providers.slice(0, 10));
+        vi.mocked(deleteIdentityProvider).mockResolvedValueOnce();
+        const harness = setupIdentityProvidersPageHarness();
+        await harness.findProviderLink('Provider 1');
+
+        await harness.nextPage();
+        await harness.delete('Provider 11');
+
+        expect(await harness.findProviderLink('Provider 10')).toBeInTheDocument();
+        expect(screen.queryByText('No identity providers match your search')).not.toBeInTheDocument();
     });
 
     it('shows the first-use state when the domain has no provider', async () => {

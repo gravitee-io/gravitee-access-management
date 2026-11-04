@@ -116,6 +116,8 @@ export function IdentityProvidersPage() {
         [has, listPath, typeName],
     );
     const rows = (data ?? []).filter(idp => idp.name.toLowerCase().includes(query) || typeName(idp.type).toLowerCase().includes(query));
+    // A delete can shrink the list below the current page.
+    const currentPage = Math.min(page, Math.max(1, Math.ceil(rows.length / pageSize)));
     const isFirstUse = data?.length === 0;
     const createButton = (
         <Can all={['domain_identity_provider_create']}>
@@ -151,7 +153,7 @@ export function IdentityProvidersPage() {
                 <DataTable
                     aria-label="Identity providers"
                     columns={columns}
-                    data={rows.slice((page - 1) * pageSize, page * pageSize)}
+                    data={rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)}
                     loading={isFetching || plugins.isPending}
                     skeletonCount={pageSize}
                     toolbar={<SearchField label="identity providers" onSearch={search} />}
@@ -164,7 +166,7 @@ export function IdentityProvidersPage() {
                         />
                     }
                     pagination={{
-                        page,
+                        page: currentPage,
                         pageSize,
                         totalCount: rows.length,
                         onPageChange: setPage,
