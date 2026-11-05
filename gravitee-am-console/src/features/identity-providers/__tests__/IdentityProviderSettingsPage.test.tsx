@@ -224,6 +224,38 @@ describe('IdentityProviderSettingsPage', () => {
         );
     });
 
+    it('sends the pinned storage fields of a restricted MongoDB provider back as stored', async () => {
+        const stored = { uri: 'mongodb://old:27017', useSystemCluster: true, database: 'tenant-db', usersCollection: 'tenant_users' };
+        const mongo: IdentityProvider = {
+            id: 'idp-3',
+            name: 'MongoDB',
+            type: 'mongo-am-idp',
+            system: false,
+            external: false,
+            systemClusterRestricted: true,
+            configuration: JSON.stringify(stored),
+        };
+        vi.mocked(getIdentityProviderSchema).mockResolvedValue({
+            type: 'object',
+            properties: {
+                uri: { type: 'string', title: 'MongoDB URI' },
+                useSystemCluster: { type: 'boolean', title: 'Use system cluster' },
+                database: { type: 'string', title: 'Database' },
+                usersCollection: { type: 'string', title: 'Users collection' },
+            },
+        });
+        vi.mocked(getInstallationConfiguration).mockResolvedValue({ systemClusterRestricted: true });
+        const harness = setupSettingsPageHarness(mongo);
+
+        await harness.findName();
+        await harness.rename('MongoDB users');
+        await harness.save();
+
+        await waitFor(() => expect(updateIdentityProvider).toHaveBeenCalledTimes(1));
+        const [, sent] = vi.mocked(updateIdentityProvider).mock.calls[0];
+        expect(JSON.parse(sent.configuration!)).toEqual(stored);
+    });
+
     it('deletes the provider after the confirm dialog, then opens the list', async () => {
         vi.mocked(deleteIdentityProvider).mockResolvedValueOnce();
         const harness = setupSettingsPageHarness();
