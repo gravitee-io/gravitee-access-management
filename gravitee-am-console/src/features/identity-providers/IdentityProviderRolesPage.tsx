@@ -63,8 +63,18 @@ export function IdentityProviderRolesPage() {
             description={
                 <>
                     Role mappers set roles and permissions for this provider’s users, during authentication. Match users with{' '}
-                    <code className="font-mono text-xs">attributeName=attributeValue</code> (e.g.{' '}
-                    <code className="font-mono text-xs">memberOf=administrators</code>) or expression language.
+                    <code className="font-mono text-xs">attributeName=attributeValue</code> or expression language, for example:
+                    <ul className="mt-2 flex flex-col gap-1">
+                        <li>
+                            <code className="font-mono text-xs">{'uid=sampleuser => ROLE_USER'}</code>
+                        </li>
+                        <li>
+                            <code className="font-mono text-xs">{'memberOf=administrators => ROLE_ADMIN'}</code>
+                        </li>
+                        <li>
+                            <code className="font-mono text-xs">{"{#profile['my-claim'] == 'default'} => ROLE_USER"}</code>
+                        </li>
+                    </ul>
                 </>
             }
             targets={targets}
