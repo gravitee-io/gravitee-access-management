@@ -25,13 +25,13 @@ import type { MapperTarget } from './AddMappingDialog';
 import { ExpressionMapperPanel, type Mapper } from './ExpressionMapperPanel';
 import { useIdentityProvider } from './IdentityProviderLayout';
 
-/** Maps user expressions onto the first 100 groups of the domain, as the Angular `GroupsResolver` loads them. */
 const EXAMPLES = [
-    { user: 'uid=sampleuser', target: 'Developers' },
-    { user: 'memberOf=administrators', target: 'Administrators' },
-    { user: "{#profile['my-claim'] == 'default'}", target: 'Developers' },
-];
+    ['uid=sampleuser', 'Developers'],
+    ['memberOf=administrators', 'Administrators'],
+    ["{#profile['my-claim'] == 'default'}", 'Developers'],
+] as const;
 
+/** Maps user expressions onto the first 100 groups of the domain, as the Angular `GroupsResolver` loads them. */
 export function IdentityProviderGroupsPage() {
     const { provider } = useIdentityProvider();
     const { ref } = useCurrentDomain();
@@ -58,12 +58,7 @@ export function IdentityProviderGroupsPage() {
         <ExpressionMapperPanel
             noun="group"
             title="Group mappers"
-            description={
-                <>
-                    Group mappers put this provider’s users into groups, during authentication. Match users with{' '}
-                    <code className="font-mono text-xs">attributeName=attributeValue</code> or expression language.
-                </>
-            }
+            description="Put this provider’s users into groups when they sign in. Match users with an attribute or expression language."
             examples={EXAMPLES}
             targets={targets}
             mapper={provider.groupMapper ?? {}}

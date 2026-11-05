@@ -196,6 +196,16 @@ describe('IdentityProviderMappersPage', () => {
 });
 
 describe('IdentityProviderRolesPage', () => {
+    it('shows the role examples only after the toggle', async () => {
+        setupMapperTabHarness('roles');
+
+        await screen.findByRole('button', { name: 'Show examples' });
+        await buttonHarness({ name: 'Show examples' }).click();
+
+        expect(await screen.findByText(/memberOf=administrators\s+→\s+ROLE_ADMIN/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Hide examples' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
     it('disables the add button, and says why, when the domain has only system primary-owner roles', async () => {
         vi.mocked(listAllRoles).mockResolvedValue([{ id: 'role-3', name: 'DOMAIN_PRIMARY_OWNER', system: true }]);
         setupMapperTabHarness('roles', UPDATE, { ...provider, roleMapper: {} });

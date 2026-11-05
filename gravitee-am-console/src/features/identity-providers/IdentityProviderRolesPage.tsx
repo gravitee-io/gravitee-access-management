@@ -25,13 +25,13 @@ import type { MapperTarget } from './AddMappingDialog';
 import { ExpressionMapperPanel, type Mapper } from './ExpressionMapperPanel';
 import { useIdentityProvider } from './IdentityProviderLayout';
 
-/** Maps user expressions onto every role of the domain, as the Angular `RolesResolver` loads them. */
 const EXAMPLES = [
-    { user: 'uid=sampleuser', target: 'ROLE_USER' },
-    { user: 'memberOf=administrators', target: 'ROLE_ADMIN' },
-    { user: "{#profile['my-claim'] == 'default'}", target: 'ROLE_USER' },
-];
+    ['uid=sampleuser', 'ROLE_USER'],
+    ['memberOf=administrators', 'ROLE_ADMIN'],
+    ["{#profile['my-claim'] == 'default'}", 'ROLE_USER'],
+] as const;
 
+/** Maps user expressions onto every role of the domain, as the Angular `RolesResolver` loads them. */
 export function IdentityProviderRolesPage() {
     const { provider } = useIdentityProvider();
     const { ref } = useCurrentDomain();
@@ -66,12 +66,7 @@ export function IdentityProviderRolesPage() {
         <ExpressionMapperPanel
             noun="role"
             title="Role mappers"
-            description={
-                <>
-                    Role mappers set roles and permissions for this provider’s users, during authentication. Match users with{' '}
-                    <code className="font-mono text-xs">attributeName=attributeValue</code> or expression language.
-                </>
-            }
+            description="Give this provider’s users roles when they sign in. Match users with an attribute or expression language."
             examples={EXAMPLES}
             targets={targets}
             mapper={provider.roleMapper ?? {}}
