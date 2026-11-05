@@ -35,6 +35,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.management.service.MaskingMode;
+import io.gravitee.am.service.model.ListedCertificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -93,7 +94,7 @@ class CertificateServiceProxyImplTest {
 
     @Test
     void shouldFindCertsWithUsages() {
-        when(certService.findByDomain(TEST_DOMAIN)).thenReturn(Flowable.fromIterable(List.of(systemCert(), validCert(), expiredCert())));
+        when(certService.findByDomainForListing(TEST_DOMAIN)).thenReturn(readable(systemCert(), validCert(), expiredCert()));
         when(certPluginService.getSchema(any())).thenReturn(Maybe.just("{\"content\":{}}"));
         when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
         when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenAnswer(i -> someRandomIdps());
@@ -119,7 +120,7 @@ class CertificateServiceProxyImplTest {
     @Test
     void shouldReturnStubIfSchemaIsMissing() {
         String missingSchema = "missing-schema";
-        when(certService.findByDomain(TEST_DOMAIN)).thenReturn(Flowable.fromIterable(List.of(missingSchemaCert(missingSchema))));
+        when(certService.findByDomainForListing(TEST_DOMAIN)).thenReturn(readable(missingSchemaCert(missingSchema)));
         when(certPluginService.getSchema(missingSchema)).thenReturn(Maybe.empty());
         when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
         when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenAnswer(i -> someRandomIdps());
@@ -140,6 +141,37 @@ class CertificateServiceProxyImplTest {
                 .allSatisfy(cert -> assertThat(cert.identityProviders()).isNotEmpty())
         ;
 
+    }
+
+    @Test
+    void shouldListTheCertificateWhoseConfigurationCannotBeRead_flaggedAndWithoutUsage() {
+        var unreadable = minimalCert();
+        unreadable.setConfiguration("{}");
+        var unreadableId = "unreadable-cert";
+        unreadable.setId(unreadableId);
+        when(certService.findByDomainForListing(TEST_DOMAIN)).thenReturn(Flowable.just(
+                new ListedCertificate(validCert(), true),
+                new ListedCertificate(unreadable, false)));
+        when(certPluginService.getSchema(any())).thenReturn(Maybe.just("{\"content\":{}}"));
+        when(appService.findByCertificate(any())).thenReturn(Flowable.empty());
+        when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenReturn(Flowable.empty());
+
+        var found = certificateServiceProxy().findByDomainAndUse(TEST_DOMAIN, null).blockingGet();
+
+        assertThat(found).hasSize(2);
+        assertThat(found.stream().filter(CertificateEntity::configurationReadable).toList()).hasSize(1);
+        assertThat(found.stream().filter(cert -> !cert.configurationReadable()).map(CertificateEntity::id).toList())
+                .containsExactly(unreadableId);
+    }
+
+    @Test
+    void shouldNotOfferForAGivenUseTheCertificateWhoseConfigurationCannotBeRead() {
+        var unreadable = minimalCert();
+        when(certService.findByDomainForListing(TEST_DOMAIN)).thenReturn(Flowable.just(new ListedCertificate(unreadable, false)));
+
+        var found = certificateServiceProxy().findByDomainAndUse(TEST_DOMAIN, "sig").blockingGet();
+
+        assertThat(found).isEmpty();
     }
 
     @Test
@@ -342,6 +374,10 @@ class CertificateServiceProxyImplTest {
         cert.setName("cert-" + randomIdGen.generate(10));
         cert.setConfiguration("{\"name\": \"value\"}");
         return cert;
+    }
+
+    private static Flowable<ListedCertificate> readable(Certificate... certificates) {
+        return Flowable.fromArray(certificates).map(certificate -> new ListedCertificate(certificate, true));
     }
 
     private Certificate systemCert() {

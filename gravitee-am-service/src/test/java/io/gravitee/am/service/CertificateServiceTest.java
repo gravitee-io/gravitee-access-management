@@ -295,6 +295,56 @@ public class CertificateServiceTest {
     }
 
     @Test
+    public void shouldListWithoutConfiguration_flaggingTheOneThatCannotBeDecrypted() {
+        Certificate readable = new Certificate();
+        readable.setId("readable");
+        readable.setConfiguration("{\"storepass\":\"s3cr3t\"}");
+        Certificate unreadable = new Certificate();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(certificateRepository.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = certificateService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertTrue(listed.get(0).configurationReadable());
+        org.junit.Assert.assertFalse(listed.get(1).configurationReadable());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).certificate().getId());
+        org.junit.Assert.assertEquals("{}", listed.get(0).certificate().getConfiguration());
+        org.junit.Assert.assertEquals("{}", listed.get(1).certificate().getConfiguration());
+        org.junit.Assert.assertEquals("{\"storepass\":\"s3cr3t\"}", readable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        Certificate undecryptable = new Certificate();
+        undecryptable.setId("my-certificate");
+        undecryptable.setName("my certificate");
+        undecryptable.setDomain(DOMAIN.getId());
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(certificateRepository.findById("my-certificate"))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        Certificate found = certificateService.findByIdForDisplay(DOMAIN.getId(), "my-certificate").blockingGet();
+
+        org.junit.Assert.assertEquals("my certificate", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+    }
+
+    @Test
+    public void shouldNotFindByIdForDisplay_otherDomain() {
+        Certificate undecryptable = new Certificate();
+        undecryptable.setId("my-certificate");
+        undecryptable.setDomain("other-domain");
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(certificateRepository.findById("my-certificate"))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        certificateService.findByIdForDisplay(DOMAIN.getId(), "my-certificate").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors().assertNoValues().assertComplete();
+    }
+
+    @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN.getId());

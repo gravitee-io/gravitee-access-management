@@ -55,7 +55,7 @@ public class CertificateResourceTest extends JerseySpringTest {
         mockCertificate.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockCertificate)).when(certificateService).findById(domainId, certificateId);
+        doReturn(Maybe.just(mockCertificate)).when(certificateService).findByIdForDisplay(domainId, certificateId);
 
         final Response response = target("domains").path(domainId).path("certificates").path(certificateId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -74,7 +74,7 @@ public class CertificateResourceTest extends JerseySpringTest {
         final String certificateId = "certificate-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(certificateService).findById(domainId, certificateId);
+        doReturn(Maybe.empty()).when(certificateService).findByIdForDisplay(domainId, certificateId);
 
         final Response response = target("domains").path(domainId).path("certificates").path(certificateId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
@@ -105,7 +105,7 @@ public class CertificateResourceTest extends JerseySpringTest {
         mockCertificate.setDomain("wrong-domain");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(certificateService).findById(domainId, certificateId);
+        doReturn(Maybe.empty()).when(certificateService).findByIdForDisplay(domainId, certificateId);
 
         final Response response = target("domains").path(domainId).path("certificates").path(certificateId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

@@ -14048,6 +14048,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Application"
+        configurationReadable:
+          type: boolean
         createdAt:
           type: integer
           format: int64

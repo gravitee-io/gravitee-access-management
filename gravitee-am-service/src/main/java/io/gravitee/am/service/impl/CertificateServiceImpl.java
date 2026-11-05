@@ -37,6 +37,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
 import io.gravitee.am.plugins.certificate.core.schema.CertificateSchema;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
 import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -62,6 +63,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.AutomationNewCertificate;
+import io.gravitee.am.service.model.ListedCertificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -207,6 +209,39 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Flowable<Certificate> findByDomain(String domain) {
         return innerFindByDomain(domain);
+    }
+
+    @Override
+    public Maybe<Certificate> findByIdForDisplay(String domain, String id) {
+        log.debug("Find certificate by ID for display: {}", id);
+        return certificateRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Certificate.class))
+                .map(certificate -> FieldEncryptor.isEncrypted(certificate.getConfiguration()) ? withEmptyConfiguration(certificate) : certificate)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find a certificate using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a certificate using its ID: %s", id), ex));
+                })
+                .filter(certificate -> domain.equals(certificate.getDomain()));
+    }
+
+    @Override
+    public Flowable<ListedCertificate> findByDomainForListing(String domain) {
+        log.debug("Find certificates for listing by domain: {}", domain);
+        return certificateRepository.findByDomainForListing(domain)
+                .map(certificate -> new ListedCertificate(
+                        withEmptyConfiguration(certificate),
+                        !FieldEncryptor.isEncrypted(certificate.getConfiguration())))
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find certificates by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex));
+                });
+    }
+
+    private static Certificate withEmptyConfiguration(Certificate certificate) {
+        var copy = new Certificate(certificate);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     private Flowable<Certificate> innerFindByDomain(String domain) {
