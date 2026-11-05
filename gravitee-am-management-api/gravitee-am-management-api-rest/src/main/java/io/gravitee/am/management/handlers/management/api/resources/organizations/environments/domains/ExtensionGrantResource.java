@@ -85,7 +85,7 @@ public class ExtensionGrantResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> extensionGrantService.findById(domain, extensionGrant))
+                        .flatMap(irrelevant -> extensionGrantService.findByIdForDisplay(domain, extensionGrant))
                         .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrant)))
                         .map(extensionGrant1 -> Response.ok(extensionGrant1).build()))
                 .subscribe(response::resume, response::resume);

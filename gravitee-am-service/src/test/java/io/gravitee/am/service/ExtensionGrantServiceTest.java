@@ -409,6 +409,41 @@ public class ExtensionGrantServiceTest {
     }
 
     @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        ExtensionGrant readable = new ExtensionGrant();
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        ExtensionGrant unreadable = new ExtensionGrant();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(extensionGrantRepository.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = extensionGrantService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        ExtensionGrant extensionGrant = new ExtensionGrant();
+        extensionGrant.setId("my-extension-grant");
+        extensionGrant.setName("my grant");
+        extensionGrant.setDomain(DOMAIN.getId());
+        extensionGrant.setConfiguration("enc:2025:AAAA:BBBB");
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(extensionGrant, new IllegalStateException("key not configured"))));
+
+        ExtensionGrant found = extensionGrantService.findByIdForDisplay(DOMAIN.getId(), "my-extension-grant").blockingGet();
+
+        org.junit.Assert.assertEquals("my grant", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        extensionGrantService.findByIdForDisplay("other-domain", "my-extension-grant").test().awaitDone(10, TimeUnit.SECONDS).assertNoValues().assertComplete();
+    }
+
+    @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
         ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
         when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
