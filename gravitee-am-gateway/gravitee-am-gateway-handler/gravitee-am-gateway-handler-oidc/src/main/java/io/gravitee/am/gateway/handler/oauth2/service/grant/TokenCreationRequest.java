@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.MultiValueMap;
 
@@ -257,7 +258,7 @@ public record TokenCreationRequest(
             User user,
             String authReqId,
             List<String> acrValues,
-            List<Map<String, Object>> authorizationDetails,
+            AuthorizationDetails authorizationDetails,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(

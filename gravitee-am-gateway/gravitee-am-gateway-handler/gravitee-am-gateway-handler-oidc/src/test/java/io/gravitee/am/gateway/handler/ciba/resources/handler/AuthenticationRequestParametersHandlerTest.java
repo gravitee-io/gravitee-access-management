@@ -777,8 +777,8 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         CibaAuthenticationRequest parsed = capturedRef.get();
         assertNotNull("authorizationDetails should be populated when flag is on", parsed.getAuthorizationDetails());
-        assertEquals(1, parsed.getAuthorizationDetails().size());
-        assertEquals("fdx_v1.0", parsed.getAuthorizationDetails().get(0).get("type"));
+        assertEquals(1, parsed.getAuthorizationDetails().getAll().size());
+        assertEquals("fdx_v1.0", parsed.getAuthorizationDetails().getAll().get(0).getType());
     }
 
     @Test
@@ -844,8 +844,8 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         CibaAuthenticationRequest parsed = capturedRef.get();
         assertNotNull("authorizationDetails should be populated from the request object", parsed.getAuthorizationDetails());
-        assertEquals(1, parsed.getAuthorizationDetails().size());
-        assertEquals("payment_initiation", parsed.getAuthorizationDetails().get(0).get("type"));
+        assertEquals(1, parsed.getAuthorizationDetails().getAll().size());
+        assertEquals("payment_initiation", parsed.getAuthorizationDetails().getAll().get(0).getType());
     }
 
     @Test

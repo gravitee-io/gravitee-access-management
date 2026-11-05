@@ -292,8 +292,8 @@ class CibaStrategyTest {
         assertInstanceOf(GrantData.CibaData.class, result.grantData());
         GrantData.CibaData data = (GrantData.CibaData) result.grantData();
         assertNotNull(data.authorizationDetails(), "authorizationDetails should be carried through to CibaData");
-        assertEquals(1, data.authorizationDetails().size());
-        assertEquals("fdx_v1.0", data.authorizationDetails().get(0).get("type"),
+        assertEquals(1, data.authorizationDetails().getAll().size());
+        assertEquals("fdx_v1.0", data.authorizationDetails().getAll().get(0).getType(),
                 "authorization_details type should be threaded from CibaAuthRequest to CibaData");
     }
 }

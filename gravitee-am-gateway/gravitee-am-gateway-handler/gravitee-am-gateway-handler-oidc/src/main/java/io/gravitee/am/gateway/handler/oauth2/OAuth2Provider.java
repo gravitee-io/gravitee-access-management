@@ -47,6 +47,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestEndUserConsentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestMFAPromptHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseAuthorizationDetailsHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseIdTokenHintHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
@@ -68,6 +69,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
@@ -224,6 +226,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private ScopeManager scopeManager;
 
     @Autowired
+    private AuthorizationDetailsValidator authorizationDetailsValidator;
+
+    @Autowired
     private ProtectedResourceManager protectedResourceManager;
 
     @Autowired
@@ -304,6 +309,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestParseAuthorizationDetailsHandler(authorizationDetailsValidator))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))

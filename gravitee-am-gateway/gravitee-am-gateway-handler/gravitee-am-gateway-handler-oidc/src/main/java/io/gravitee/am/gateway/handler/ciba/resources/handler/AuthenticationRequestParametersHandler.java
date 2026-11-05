@@ -36,6 +36,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetad
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -171,7 +172,7 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
             return;
         }
         validateAuthorizationDetailTypes(details);
-        request.setAuthorizationDetails(details);
+        request.setAuthorizationDetails(AuthorizationDetails.of(details));
     }
 
     /**

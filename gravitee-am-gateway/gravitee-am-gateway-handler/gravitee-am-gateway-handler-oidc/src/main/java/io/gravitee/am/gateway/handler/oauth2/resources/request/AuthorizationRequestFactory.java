@@ -93,6 +93,7 @@ public final class AuthorizationRequestFactory {
 
         // set RFC 8707 resource indicators
         authorizationRequest.setResources(ResourceParameterUtils.parseResourceParameters(context));
+        authorizationRequest.setAuthorizationDetails(context.get(ConstantKeys.AUTHORIZATION_DETAILS_CONTEXT_KEY));
 
         // set OIDC information
         String prompt = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.PROMPT);

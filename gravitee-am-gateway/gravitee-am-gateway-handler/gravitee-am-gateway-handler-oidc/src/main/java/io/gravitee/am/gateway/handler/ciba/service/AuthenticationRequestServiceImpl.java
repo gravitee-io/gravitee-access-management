@@ -120,7 +120,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         entity.setExpireAt(new Date(now.plusSeconds(ttl + requestRetentionInSec).toEpochMilli()));
         // Copy RFC 9396 authorization_details onto the persisted entity (presence-gated; no flag read)
         if (request.getAuthorizationDetails() != null && !request.getAuthorizationDetails().isEmpty()) {
-            entity.setAuthorizationDetails(request.getAuthorizationDetails());
+            entity.setAuthorizationDetails(request.getAuthorizationDetails().getRaw());
         }
         // Store acrValues in externalInformation for later retrieval when generating ID token
         if (request.getAcrValues() != null && !request.getAcrValues().isEmpty()) {

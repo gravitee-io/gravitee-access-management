@@ -38,6 +38,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
@@ -264,9 +265,9 @@ public final class AccessTokenMinter extends BaseTokenMinter {
         }
 
         // set authorization_details (RFC 9396 RAR)
-        List<Map<String, Object>> authorizationDetails = oAuth2Request.getAuthorizationDetails();
+        AuthorizationDetails authorizationDetails = oAuth2Request.getAuthorizationDetails();
         if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
-            jwt.put(AUTHORIZATION_DETAILS, authorizationDetails);
+            jwt.put(AUTHORIZATION_DETAILS, authorizationDetails.getRaw());
         }
 
         return jwt;
@@ -407,9 +408,9 @@ public final class AccessTokenMinter extends BaseTokenMinter {
                     .forEach(e -> token.getAdditionalInformation().put(e.getKey(), e.getValue()));
         }
         // set authorization_details as top-level token-response member (RFC 9396 RAR)
-        List<Map<String, Object>> authorizationDetails = oAuth2Request.getAuthorizationDetails();
+        AuthorizationDetails authorizationDetails = oAuth2Request.getAuthorizationDetails();
         if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
-            token.getAdditionalInformation().put(AUTHORIZATION_DETAILS, authorizationDetails);
+            token.getAdditionalInformation().put(AUTHORIZATION_DETAILS, authorizationDetails.getRaw());
         }
         Set<String> resources = oAuth2Request.getResources();
         if (oAuth2Request.isResourceGranted() && resources != null && resources.size() == 1) {

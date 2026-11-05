@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
 
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -30,7 +31,11 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailTypeManager;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
+import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.gateway.handler.oauth2.service.response.*;
 import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -45,6 +50,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriV
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -67,12 +73,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -123,6 +132,9 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     @Mock
     private Environment environment;
 
+    @Mock
+    private AuthorizationDetailTypeManager authorizationDetailTypeManager;
+
     private RoutingContext finalRoutingContext;
 
     @Override
@@ -167,6 +179,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseClientHandler(clientLookupService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestParseAuthorizationDetailsHandler(new AuthorizationDetailsValidator(authorizationDetailTypeManager, mock(EventManager.class), domain)))
                 .handler(new RedirectUriValidationHandler(domain))
                 .handler(new ReturnUrlValidationHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
@@ -1663,5 +1676,104 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     assertNull(finalRoutingContext.session().get(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_authorizationDetailsTypeNotAllowed() throws Exception {
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(clientWithAuthorizationDetailTypes()));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&state=xyz"
+                        + "&authorization_details=" + urlEncode("[{\"type\":\"unknown\"}]"),
+                null,
+                resp -> assertEquals("http://localhost:9999/callback?error=invalid_authorization_details"
+                        + "&error_description=authorization_details%5B0%5D+of+type+%27unknown%27+is+not+allowed+for+this+client&state=xyz",
+                        resp.headers().get("location")),
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_authorizationDetailsMalformed() throws Exception {
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(clientWithAuthorizationDetailTypes()));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&state=xyz"
+                        + "&authorization_details=" + urlEncode("[]"),
+                null,
+                resp -> assertEquals("http://localhost:9999/callback?error=invalid_request"
+                        + "&error_description=authorization_details+must+be+a+non-empty+JSON+array&state=xyz",
+                        resp.headers().get("location")),
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_authorizationDetailsErrorInFragment() throws Exception {
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(clientWithAuthorizationDetailTypes()));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://localhost:9999/callback&state=xyz"
+                        + "&authorization_details=" + urlEncode("[{\"type\":\"unknown\"}]"),
+                null,
+                resp -> assertTrue(resp.headers().get("location").startsWith("http://localhost:9999/callback#error=invalid_authorization_details&")),
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_authorizationDetailsErrorOnErrorPageForUnregisteredRedirectUri() throws Exception {
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(clientWithAuthorizationDetailTypes()));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/other&state=xyz"
+                        + "&authorization_details=" + urlEncode("[{\"type\":\"unknown\"}]"),
+                null,
+                resp -> assertTrue(resp.headers().get("location").contains("/test/oauth/error?client_id=client-id&error=invalid_authorization_details&")),
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_withAuthorizationDetails() throws Exception {
+        final Client client = clientWithAuthorizationDetailTypes();
+        AuthorizationCodeResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri("http://localhost:9999/callback");
+        authorizationResponse.setCode("test-code");
+
+        router.route().order(-1).handler(routingContext -> {
+            setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User()));
+            routingContext.next();
+        });
+        when(clientLookupService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(authorizationDetailTypeManager.findByType("account_information")).thenReturn(Optional.of(
+                AuthorizationDetailType.builder().id("adt-1").type("account_information").build()));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback"
+                        + "&authorization_details=" + urlEncode("[{\"type\":\"account_information\",\"actions\":[\"read\"]}]"),
+                null,
+                resp -> assertEquals("http://localhost:9999/callback?code=test-code", resp.headers().get("location")),
+                HttpStatusCode.FOUND_302, "Found", null);
+
+        AuthorizationRequest authorizationRequest = finalRoutingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
+        assertEquals(List.of(Map.of("type", "account_information", "actions", List.of("read"))), authorizationRequest.getAuthorizationDetails().getRaw());
+    }
+
+    private static Client clientWithAuthorizationDetailTypes() {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+        client.setAuthorizedGrantTypes(List.of(AUTHORIZATION_CODE, IMPLICIT));
+        client.setResponseTypes(List.of(ResponseType.CODE, ResponseType.TOKEN));
+        client.setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("account_information")));
+        return client;
+    }
+
+    private static String urlEncode(String value) {
+        return java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8);
     }
 }

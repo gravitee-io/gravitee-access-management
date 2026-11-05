@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.gravitee.common.util.MultiValueMap;
@@ -33,7 +34,6 @@ import io.reactivex.rxjava3.core.Single;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static io.gravitee.am.common.oidc.Parameters.ACR_VALUES;
 import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_ACR_KEY;
@@ -114,7 +114,9 @@ public class CibaStrategy implements GrantStrategy {
         }
 
         // Extract authorization_details from CIBA request (typed field, RFC 9396)
-        List<Map<String, Object>> authorizationDetails = cibaRequest.getAuthorizationDetails();
+        AuthorizationDetails authorizationDetails = cibaRequest.getAuthorizationDetails() == null
+                ? null
+                : AuthorizationDetails.of(cibaRequest.getAuthorizationDetails());
 
         // Store context attributes for EL templating
         request.getContext().put(AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, Collections.emptyMap());
@@ -126,7 +128,7 @@ public class CibaStrategy implements GrantStrategy {
         request.setScopes(cibaRequest.getScopes());
 
         List<String> finalAcrValues = acrValues;
-        List<Map<String, Object>> finalAuthorizationDetails = authorizationDetails;
+        AuthorizationDetails finalAuthorizationDetails = authorizationDetails;
 
         // Load the user
         return userAuthenticationManager.loadPreAuthenticatedUser(cibaRequest.getSubject(), request)
