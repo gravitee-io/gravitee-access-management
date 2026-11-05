@@ -19,6 +19,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -110,10 +111,11 @@ public class VHostRouterTest {
         domainRouter.route().failureHandler(ctx -> ctx.response().setStatusCode(418).end());
 
         Router root = Router.router(vertx).allowForward(allowForward);
-        root.mountSubRouter("/test/", router(domainRouter, "auth.example.com", "/test"));
+        root.route("/test/*").subRouter(router(domainRouter, "auth.example.com", "/test"));
 
         HttpServer server = vertx.createHttpServer().requestHandler(root).listen(0)
                 .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+        HttpClient client = vertx.createHttpClient();
         try {
             RequestOptions options = new RequestOptions()
                     .setMethod(HttpMethod.GET)
@@ -121,12 +123,13 @@ public class VHostRouterTest {
                     .setPort(server.actualPort())
                     .setURI(path)
                     .setHeaders(headers);
-            return vertx.createHttpClient()
+            return client
                     .request(options)
                     .compose(request -> request.send())
                     .map(HttpClientResponse::statusCode)
                     .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
         } finally {
+            client.close();
             server.close();
         }
     }
