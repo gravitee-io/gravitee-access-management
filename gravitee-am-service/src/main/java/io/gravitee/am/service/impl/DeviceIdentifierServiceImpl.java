@@ -39,6 +39,8 @@ import io.gravitee.am.service.model.UpdateDeviceIdentifier;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DeviceIdentifierAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -84,6 +86,43 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     @Override
     public Maybe<DeviceIdentifier> findById(String domain, String id) {
         return findById(id).filter(deviceIdentifier -> ReferenceType.DOMAIN == deviceIdentifier.getReferenceType() && domain.equals(deviceIdentifier.getReferenceId()));
+    }
+
+    @Override
+    public Maybe<DeviceIdentifier> findByIdForDisplay(String domain, String id) {
+        log.debug("Find device identifier by ID for display: {}", id);
+        return deviceIdentifierRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(DeviceIdentifier.class))
+                .map(deviceIdentifier -> FieldEncryptor.isEncrypted(deviceIdentifier.getConfiguration()) ? withEmptyConfiguration(deviceIdentifier) : deviceIdentifier)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find a device identifier using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a device identifier using its ID: %s", id), ex));
+                })
+                .filter(deviceIdentifier -> ReferenceType.DOMAIN == deviceIdentifier.getReferenceType() && domain.equals(deviceIdentifier.getReferenceId()));
+    }
+
+    @Override
+    public Flowable<DeviceIdentifier> findByDomainForListing(String domain) {
+        log.debug("Find device identifiers for listing by domain: {}", domain);
+        return deviceIdentifierRepository.findByReferenceForListing(ReferenceType.DOMAIN, domain)
+                .map(deviceIdentifier -> FieldEncryptor.isEncrypted(deviceIdentifier.getConfiguration()) ? withEmptyConfiguration(deviceIdentifier) : deviceIdentifier)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find device identifiers by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find device identifiers by domain", ex));
+                });
+    }
+
+    private static DeviceIdentifier withEmptyConfiguration(DeviceIdentifier deviceIdentifier) {
+        var copy = new DeviceIdentifier(deviceIdentifier);
+        copy.setConfiguration("{}");
+        return copy;
+    }
+
+    private Maybe<DeviceIdentifier> findByIdForDeletion(String domain, String id) {
+        return deviceIdentifierRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(DeviceIdentifier.class))
+                .filter(deviceIdentifier -> ReferenceType.DOMAIN == deviceIdentifier.getReferenceType() && domain.equals(deviceIdentifier.getReferenceId()));
     }
 
     @Override
@@ -165,7 +204,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     public Completable delete(String domainId, String deviceIdentifier, User principal) {
         log.debug("Delete device identifier {}", deviceIdentifier);
 
-        return findById(domainId, deviceIdentifier)
+        return findByIdForDeletion(domainId, deviceIdentifier)
                 .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifier)))
                 .flatMapCompletable(toDelete -> {
                     // create event for sync process

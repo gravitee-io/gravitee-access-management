@@ -225,6 +225,59 @@ public class DeviceIdentifierServiceTest {
         testObserver.assertNotComplete();
     }
 
+    private DeviceIdentifier deviceIdentifier(String id, String configuration) {
+        DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
+        deviceIdentifier.setId(id);
+        deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
+        deviceIdentifier.setReferenceId(DOMAIN.getId());
+        deviceIdentifier.setConfiguration(configuration);
+        return deviceIdentifier;
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        DeviceIdentifier undecryptable = deviceIdentifier("device-id", "enc:2025:AAAA:BBBB");
+        when(deviceIdentifierRepository.findById("device-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(deviceIdentifierRepository.delete("device-id")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN.getId(), "device-id").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(deviceIdentifierRepository).delete("device-id");
+    }
+
+    @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        DeviceIdentifier readable = deviceIdentifier("readable", "{\"secret\":\"s3cr3t\"}");
+        DeviceIdentifier unreadable = deviceIdentifier("unreadable", "enc:2025:AAAA:BBBB");
+        when(deviceIdentifierRepository.findByReferenceForListing(ReferenceType.DOMAIN, DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = deviceIdentifierService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        DeviceIdentifier undecryptable = deviceIdentifier("device-id", "enc:2025:AAAA:BBBB");
+        undecryptable.setName("my device identifier");
+        when(deviceIdentifierRepository.findById("device-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        DeviceIdentifier found = deviceIdentifierService.findByIdForDisplay(DOMAIN.getId(), "device-id").blockingGet();
+
+        org.junit.Assert.assertEquals("my device identifier", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        deviceIdentifierService.findByIdForDisplay("other-domain", "device-id").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertNoValues().assertComplete();
+    }
+
     @Test
     public void shouldDelete() {
         DeviceIdentifier detection = new DeviceIdentifier();
