@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.reactor.impl;
 
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -65,6 +66,7 @@ public class DefaultReactorTest {
 
         HttpServer server = vertx.getDelegate().createHttpServer().requestHandler(reactor.route().getDelegate()).listen(0)
                 .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+        HttpClient client = vertx.getDelegate().createHttpClient();
         try {
             RequestOptions options = new RequestOptions()
                     .setMethod(HttpMethod.GET)
@@ -72,13 +74,14 @@ public class DefaultReactorTest {
                     .setPort(server.actualPort())
                     .setURI("/host")
                     .setHeaders(MultiMap.caseInsensitiveMultiMap().add("X-Forwarded-Host", "auth.example.com"));
-            return vertx.getDelegate().createHttpClient()
+            return client
                     .request(options)
                     .compose(request -> request.send())
                     .compose(HttpClientResponse::body)
                     .map(Object::toString)
                     .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
         } finally {
+            client.close();
             server.close();
         }
     }
