@@ -298,6 +298,11 @@ class EncryptingRepositoryProxyTest {
         }
 
         @Override
+        public Flowable<String> findIdsByReference(Reference reference) {
+            return Flowable.fromIterable(reporters.keySet());
+        }
+
+        @Override
         public Flowable<Reporter> findInheritedFrom(Reference parentReference) {
             throw new UnsupportedOperationException();
         }

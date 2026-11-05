@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import io.gravitee.am.model.Reference;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
@@ -125,5 +126,11 @@ public class MongoAuthenticationDeviceNotifierRepository extends AbstractManagem
         entity.setUpdatedAt(bean.getUpdatedAt());
 
         return entity;
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        return Completable.fromPublisher(authDeviceNotifierCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_REFERENCE_TYPE, reference.type().name()))))
+                .observeOn(Schedulers.computation());
     }
 }

@@ -148,4 +148,18 @@ public class AuthenticationDeviceNotifierRepositoryTest extends AbstractManageme
         testObserver.assertNoErrors();
     }
 
+    @Test
+    public void testDeleteByReference() {
+        AuthenticationDeviceNotifier toDelete = buildNotifierPlugin();
+        toDelete.setReferenceId("domainToDelete");
+        AuthenticationDeviceNotifier toKeep = buildNotifierPlugin();
+        toKeep.setReferenceId("domainToKeep");
+        String deletedId = repository.create(toDelete).blockingGet().getId();
+        String keptId = repository.create(toKeep).blockingGet().getId();
+
+        repository.deleteByReference(io.gravitee.am.model.Reference.domain("domainToDelete")).blockingAwait();
+
+        org.junit.Assert.assertNull(repository.findById(deletedId).blockingGet());
+        org.junit.Assert.assertNotNull(repository.findById(keptId).blockingGet());
+    }
 }

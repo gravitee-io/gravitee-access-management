@@ -173,4 +173,19 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
 
         assertTrue(ids.containsAll(List.of(firstId, secondId)));
     }
+
+    @Test
+    public void testDeleteByDomain() {
+        ExtensionGrant toDelete = buildExtensionGrant();
+        toDelete.setDomain("domainToDelete");
+        ExtensionGrant toKeep = buildExtensionGrant();
+        toKeep.setDomain("domainToKeep");
+        String deletedId = extensionGrantRepository.create(toDelete).blockingGet().getId();
+        String keptId = extensionGrantRepository.create(toKeep).blockingGet().getId();
+
+        extensionGrantRepository.deleteByDomain("domainToDelete").blockingAwait();
+
+        org.junit.Assert.assertNull(extensionGrantRepository.findById(deletedId).blockingGet());
+        org.junit.Assert.assertNotNull(extensionGrantRepository.findById(keptId).blockingGet());
+    }
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
@@ -37,4 +38,8 @@ public interface IdentityProviderRepository extends CrudRepository<IdentityProvi
 
     Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
 
+    /**
+     * @return the ids of the identity providers of a reference, whose configuration is not decrypted
+     */
+    Flowable<String> findIdsByReference(Reference reference);
 }

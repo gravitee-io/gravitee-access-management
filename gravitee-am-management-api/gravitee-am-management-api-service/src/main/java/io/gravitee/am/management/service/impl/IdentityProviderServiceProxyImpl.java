@@ -182,6 +182,11 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     @Override
+    public Completable deleteByDomain(String domainId) {
+        return identityProviderService.deleteByDomain(domainId);
+    }
+
+    @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal) {
         return identityProviderService.delete(referenceType, referenceId, identityProviderId, principal);
     }

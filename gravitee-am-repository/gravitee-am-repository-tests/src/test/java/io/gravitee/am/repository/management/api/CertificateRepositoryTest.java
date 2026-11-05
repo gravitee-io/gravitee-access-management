@@ -189,4 +189,21 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
         testObserver.assertNoErrors();
     }
+
+    @Test
+    public void testFindIds() {
+        Certificate first = buildCertificate();
+        first.setDomain("idsDomain");
+        Certificate second = buildCertificate();
+        second.setDomain("idsDomain");
+        Certificate other = buildCertificate();
+        other.setDomain("otherIdsDomain");
+        String firstId = certificateRepository.create(first).blockingGet().getId();
+        String secondId = certificateRepository.create(second).blockingGet().getId();
+        certificateRepository.create(other).blockingGet();
+
+        java.util.List<String> ids = certificateRepository.findIdsByDomain("idsDomain").toList().blockingGet();
+
+        org.junit.Assert.assertEquals(java.util.Set.of(firstId, secondId), new java.util.HashSet<>(ids));
+    }
 }

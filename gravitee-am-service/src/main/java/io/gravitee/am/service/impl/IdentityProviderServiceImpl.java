@@ -516,4 +516,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         return false;
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete identity providers of domain {}", domainId);
+        return identityProviderRepository.findIdsByReference(Reference.domain(domainId))
+                .concatMapCompletable(id -> delete(domainId, id));
+    }
 }

@@ -134,4 +134,10 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
         extensionGrantMongo.setUpdatedAt(extensionGrant.getUpdatedAt());
         return extensionGrantMongo;
     }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(extensionGrantsCollection.deleteMany(eq(FIELD_DOMAIN, domain)))
+                .observeOn(Schedulers.computation());
+    }
 }

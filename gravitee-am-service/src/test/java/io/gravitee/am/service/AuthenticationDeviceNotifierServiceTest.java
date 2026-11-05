@@ -312,4 +312,16 @@ public class AuthenticationDeviceNotifierServiceTest {
         authenticationDeviceNotifier.setReferenceId("other-domain");
         return authenticationDeviceNotifier;
     }
+
+    @Test
+    public void shouldDeleteByDomain() {
+        when(authDeviceNotifierRepository.deleteByReference(io.gravitee.am.model.Reference.domain(DOMAIN.getId()))).thenReturn(Completable.complete());
+
+        TestObserver testObserver = authDeviceNotifierService.deleteByDomain(DOMAIN.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(authDeviceNotifierRepository, never()).findByReference(any(), any());
+    }
 }

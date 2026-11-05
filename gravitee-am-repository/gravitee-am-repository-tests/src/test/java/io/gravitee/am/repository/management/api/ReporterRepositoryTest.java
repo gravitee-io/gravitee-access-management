@@ -242,4 +242,21 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
         reporter.setUpdatedAt(new Date());
         return reporter;
     }
+
+    @Test
+    public void testFindIds() {
+        Reporter first = buildReporter();
+        first.setReference(io.gravitee.am.model.Reference.domain("idsDomain"));
+        Reporter second = buildReporter();
+        second.setReference(io.gravitee.am.model.Reference.domain("idsDomain"));
+        Reporter other = buildReporter();
+        other.setReference(io.gravitee.am.model.Reference.domain("otherIdsDomain"));
+        String firstId = repository.create(first).blockingGet().getId();
+        String secondId = repository.create(second).blockingGet().getId();
+        repository.create(other).blockingGet();
+
+        java.util.List<String> ids = repository.findIdsByReference(io.gravitee.am.model.Reference.domain("idsDomain")).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(java.util.Set.of(firstId, secondId), new java.util.HashSet<>(ids));
+    }
 }

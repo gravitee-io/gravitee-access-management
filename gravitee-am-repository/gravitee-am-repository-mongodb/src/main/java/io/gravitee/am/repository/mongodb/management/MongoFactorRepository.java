@@ -120,4 +120,10 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
         factorMongo.setUpdatedAt(factor.getUpdatedAt());
         return factorMongo;
     }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(factorsCollection.deleteMany(eq(FIELD_DOMAIN, domain)))
+                .observeOn(Schedulers.computation());
+    }
 }

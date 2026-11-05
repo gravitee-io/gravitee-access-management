@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
@@ -31,4 +32,9 @@ public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant,
     Flowable<ExtensionGrant> findByDomain(String domain);
 
     Maybe<ExtensionGrant> findByDomainAndName(String domain, String name);
+
+    /**
+     * Deletes the extension grants of a domain without reading them, so that a configuration which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domain);
 }

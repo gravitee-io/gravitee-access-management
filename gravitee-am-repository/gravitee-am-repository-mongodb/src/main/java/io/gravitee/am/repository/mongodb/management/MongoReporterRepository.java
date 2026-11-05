@@ -197,4 +197,10 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
                 .map(mapping -> new ReporterAttributeMapping(mapping.getExpression(), mapping.getExportedName()))
                 .toList();
     }
+
+    @Override
+    public Flowable<String> findIdsByReference(Reference reference) {
+        return Flowable.fromPublisher(reportersCollection.find(referenceMatches(reference))).map(ReporterMongo::getId)
+                .observeOn(Schedulers.computation());
+    }
 }
