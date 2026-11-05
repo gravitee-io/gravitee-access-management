@@ -42,7 +42,7 @@ public class ReporterResourceTest extends JerseySpringTest {
         final String reporterId = "reporter-of-another-domain";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(reporterService).findById(Reference.domain(domainId), reporterId);
+        doReturn(Maybe.empty()).when(reporterService).findByIdForDisplay(Reference.domain(domainId), reporterId);
 
         final Response response = target("domains").path(domainId).path("reporters").path(reporterId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
@@ -54,7 +54,7 @@ public class ReporterResourceTest extends JerseySpringTest {
         final String reporterId = "reporter-of-another-organization";
 
         doReturn(Single.just(new Organization())).when(organizationService).findById(organizationId);
-        doReturn(Maybe.empty()).when(reporterService).findById(Reference.organization(organizationId), reporterId);
+        doReturn(Maybe.empty()).when(reporterService).findByIdForDisplay(Reference.organization(organizationId), reporterId);
 
         final Response response = target("organizations").path(organizationId).path("reporters").path(reporterId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
@@ -68,7 +68,7 @@ public class ReporterResourceTest extends JerseySpringTest {
         final String reporterId = "reporter-of-another-domain";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(reporterService).findById(Reference.domain(domainId), reporterId);
+        doReturn(Maybe.empty()).when(reporterService).findByIdForDisplay(Reference.domain(domainId), reporterId);
 
         final Response response = target("domains").path(domainId).path("reporters").path(reporterId).request().delete();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
@@ -81,7 +81,7 @@ public class ReporterResourceTest extends JerseySpringTest {
         final String reporterId = "reporter-of-another-organization";
 
         doReturn(Single.just(new Organization())).when(organizationService).findById(organizationId);
-        doReturn(Maybe.empty()).when(reporterService).findById(Reference.organization(organizationId), reporterId);
+        doReturn(Maybe.empty()).when(reporterService).findByIdForDisplay(Reference.organization(organizationId), reporterId);
 
         final Response response = target("organizations").path(organizationId).path("reporters").path(reporterId).request().delete();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
