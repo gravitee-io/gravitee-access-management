@@ -213,7 +213,28 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     private Maybe<UserProvider> loadUserProvider(IdentityProvider identityProvider) {
+<<<<<<< HEAD
         return identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+=======
+        if (identityProvider.getReferenceType() != ReferenceType.ORGANIZATION) {
+            return doLoadUserProvider(identityProvider);
+        }
+        return pluginLicenseGate.checkPersisted(Reference.organization(identityProvider.getReferenceId()), PluginLicenseGate.TYPE_IDENTITY_PROVIDER, identityProvider.getType())
+                .andThen(Maybe.defer(() -> doLoadUserProvider(identityProvider)))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof LicenseFeatureRequiredException) {
+                        log.warn("Skipping user provider {} for organization {} [{}]: the plugin's feature is not included in the organization's license",
+                                identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
+                    } else {
+                        log.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
+                    }
+                    return Maybe.empty();
+                });
+    }
+
+    private Maybe<UserProvider> doLoadUserProvider(IdentityProvider identityProvider) {
+        return Single.defer(() -> identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider))
+>>>>>>> 96f1e07 (fix: keep loading the remaining identity providers when one fails at startup)
                 .flatMapMaybe(userProviderOpt -> {
                     if (userProviderOpt.isPresent()) {
                         userProviders.put(identityProvider.getId(), userProviderOpt.get());
