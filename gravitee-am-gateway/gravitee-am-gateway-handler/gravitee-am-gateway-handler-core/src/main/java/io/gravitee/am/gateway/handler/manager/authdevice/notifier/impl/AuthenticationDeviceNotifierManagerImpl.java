@@ -102,23 +102,32 @@ public class AuthenticationDeviceNotifierManagerImpl extends AbstractService imp
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         notifier -> {
-                            domainReadinessService.initPluginSync(domain.getId(), notifier.getId(), Type.AUTH_DEVICE_NOTIFIER.name());
-                            if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHDEVICE_NOTIFIER, notifier.getType(), notifier.getId())) {
-                                return;
+                            try {
+                                loadDeviceNotifier(notifier);
+                            } catch (Exception e) {
+                                log.error("Unable to load Authentication Device Notifier {} for domain {}, continue with the next ones", notifier.getId(), domain.getName(), e);
+                                domainReadinessService.pluginFailed(domain.getId(), notifier.getId(), e.getMessage());
                             }
-                            var providerConfiguration = new ProviderConfiguration(notifier.getType(), notifier.getConfiguration());
-                            var provider = deviceNotifierPluginManager.create(providerConfiguration);
-                            provider.start();
-                            deviceNotifiers.put(notifier.getId(), notifier);
-                            deviceNotifierProviders.put(notifier.getId(), provider);
-                            log.info("Authentication Device Notifier {} loaded for domain {}", notifier.getName(), domain.getName());
-                            domainReadinessService.pluginLoaded(domain.getId(), notifier.getId());
                         },
                         error -> {
                             log.error("Unable to initialize Authentication Device Notifiers for domain {}", domain.getName(), error);
                             domainReadinessService.pluginInitFailed(domain.getId(), Type.AUTH_DEVICE_NOTIFIER.name(), error.getMessage());
                         }
                 );
+    }
+
+    private void loadDeviceNotifier(AuthenticationDeviceNotifier notifier) throws Exception {
+        domainReadinessService.initPluginSync(domain.getId(), notifier.getId(), Type.AUTH_DEVICE_NOTIFIER.name());
+        if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_AUTHDEVICE_NOTIFIER, notifier.getType(), notifier.getId())) {
+            return;
+        }
+        var providerConfiguration = new ProviderConfiguration(notifier.getType(), notifier.getConfiguration());
+        var provider = deviceNotifierPluginManager.create(providerConfiguration);
+        provider.start();
+        deviceNotifiers.put(notifier.getId(), notifier);
+        deviceNotifierProviders.put(notifier.getId(), provider);
+        log.info("Authentication Device Notifier {} loaded for domain {}", notifier.getName(), domain.getName());
+        domainReadinessService.pluginLoaded(domain.getId(), notifier.getId());
     }
 
     @Override
