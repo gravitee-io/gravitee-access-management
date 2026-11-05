@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 
@@ -30,6 +31,16 @@ public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant,
     Flowable<ExtensionGrant> findAll();
 
     Flowable<ExtensionGrant> findByDomain(String domain);
+
+    /**
+     * Same extension grants as {@link #findByDomain(String)}, in a single query, but one whose configuration cannot be
+     * decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted}) instead of failing the whole list.
+     * The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<ExtensionGrant> findByDomainForListing(String domain) {
+        return findByDomain(domain);
+    }
 
     Maybe<ExtensionGrant> findByDomainAndName(String domain, String name);
 
