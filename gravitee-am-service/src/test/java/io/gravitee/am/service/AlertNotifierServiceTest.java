@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -252,6 +253,43 @@ public class AlertNotifierServiceTest {
 
         verify(eventService, times(0)).create(any());
         verify(auditService, times(0)).report(any());    }
+
+    @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        final AlertNotifier readable = new AlertNotifier();
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        final AlertNotifier unreadable = new AlertNotifier();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(alertNotifierRepository.findByCriteriaForListing(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any())).thenReturn(Flowable.just(readable, unreadable));
+
+        final var listed = cut.findByDomainForListing(DOMAIN_ID).toList().blockingGet();
+
+        assertEquals(2, listed.size());
+        assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        assertEquals("unreadable", listed.get(1).getId());
+        assertEquals("{}", listed.get(1).getConfiguration());
+        assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldGetByIdForDisplay_configurationCannotBeDecrypted() {
+        final AlertNotifier undecryptable = new AlertNotifier();
+        undecryptable.setId(ALERT_NOTIFIER_ID);
+        undecryptable.setName(NAME);
+        undecryptable.setReferenceType(ReferenceType.DOMAIN);
+        undecryptable.setReferenceId(DOMAIN_ID);
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        final AlertNotifier found = cut.getByIdForDisplay(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID).blockingGet();
+
+        assertEquals(NAME, found.getName());
+        assertEquals("{}", found.getConfiguration());
+        cut.getByIdForDisplay(ReferenceType.DOMAIN, "other-domain", ALERT_NOTIFIER_ID).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(AlertNotifierNotFoundException.class);
+    }
 
     @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
