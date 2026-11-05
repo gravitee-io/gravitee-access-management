@@ -84,7 +84,7 @@ public class BearerAuthenticationFilter extends AbstractAuthenticationProcessing
             return getAuthentication(token, request);
         } catch (Exception ex) {
             clearAuthenticationCookie(response);
-            throw new BadCredentialsException("Error occured while attempting authentication", ex);
+            throw new BadCredentialsException("Error occurred while attempting authentication", ex);
         }
     }
 
