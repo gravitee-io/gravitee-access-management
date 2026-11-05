@@ -35,7 +35,7 @@ public class BotDetectionResourceTest extends JerseySpringTest {
         final String botDetectionId = "botDetection-of-another-domain";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(botDetectionService).findById(domainId, botDetectionId);
+        doReturn(Maybe.empty()).when(botDetectionService).findByIdForDisplay(domainId, botDetectionId);
 
         final Response response = target("domains").path(domainId).path("bot-detections").path(botDetectionId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

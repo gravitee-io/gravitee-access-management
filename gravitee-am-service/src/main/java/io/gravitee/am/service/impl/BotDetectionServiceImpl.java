@@ -42,6 +42,8 @@ import io.gravitee.am.service.model.UpdateBotDetection;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.BotDetectionAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -95,6 +97,43 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     @Override
     public Maybe<BotDetection> findById(String domain, String id) {
         return findById(id).filter(botDetection -> ReferenceType.DOMAIN == botDetection.getReferenceType() && domain.equals(botDetection.getReferenceId()));
+    }
+
+    @Override
+    public Maybe<BotDetection> findByIdForDisplay(String domain, String id) {
+        log.debug("Find bot detection by ID for display: {}", id);
+        return botDetectionRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(BotDetection.class))
+                .map(botDetection -> FieldEncryptor.isEncrypted(botDetection.getConfiguration()) ? withEmptyConfiguration(botDetection) : botDetection)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find a bot detection using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a bot detection using its ID: %s", id), ex));
+                })
+                .filter(botDetection -> ReferenceType.DOMAIN == botDetection.getReferenceType() && domain.equals(botDetection.getReferenceId()));
+    }
+
+    @Override
+    public Flowable<BotDetection> findByDomainForListing(String domain) {
+        log.debug("Find bot detections for listing by domain: {}", domain);
+        return botDetectionRepository.findByReferenceForListing(ReferenceType.DOMAIN, domain)
+                .map(botDetection -> FieldEncryptor.isEncrypted(botDetection.getConfiguration()) ? withEmptyConfiguration(botDetection) : botDetection)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find bot detections by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find bot detections by domain", ex));
+                });
+    }
+
+    private static BotDetection withEmptyConfiguration(BotDetection botDetection) {
+        var copy = new BotDetection(botDetection);
+        copy.setConfiguration("{}");
+        return copy;
+    }
+
+    private Maybe<BotDetection> findByIdForDeletion(String domain, String id) {
+        return botDetectionRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(BotDetection.class))
+                .filter(botDetection -> ReferenceType.DOMAIN == botDetection.getReferenceType() && domain.equals(botDetection.getReferenceId()));
     }
 
     @Override
@@ -173,7 +212,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     public Completable delete(String domainId, String botDetectionId, User principal) {
         log.debug("Delete bot detection {}", botDetectionId);
 
-        return findById(domainId, botDetectionId)
+        return findByIdForDeletion(domainId, botDetectionId)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(botDetectionId)))
                 .flatMap(checkBotDetectionReleasedByDomain(domainId, botDetectionId))
                 .flatMap(checkBotDetectionReleasedByApp(domainId, botDetectionId))

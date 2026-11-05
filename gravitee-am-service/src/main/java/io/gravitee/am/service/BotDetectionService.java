@@ -36,6 +36,21 @@ public interface BotDetectionService {
 
     Flowable<BotDetection> findByDomain(String domain);
 
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the bot detection.
+     * <p>
+     * A bot detection whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<BotDetection> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Same as {@link #findByDomain(String)} in a single query, for the endpoints that only display the bot detections.
+     * <p>
+     * A bot detection whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<BotDetection> findByDomainForListing(String domain);
+
     Single<BotDetection> create(String domain, NewBotDetection botDetection, User principal);
 
     Single<BotDetection> update(String domain, String id, UpdateBotDetection updateBotDetection, User principal);
