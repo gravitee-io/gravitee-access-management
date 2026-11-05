@@ -26,6 +26,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
 import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepository;
 import io.gravitee.am.service.AuditService;
@@ -85,6 +86,37 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
     @Override
     public Maybe<AuthenticationDeviceNotifier> findById(String domain, String id) {
         return findById(id).filter(notifier -> ReferenceType.DOMAIN == notifier.getReferenceType() && domain.equals(notifier.getReferenceId()));
+    }
+
+    @Override
+    public Maybe<AuthenticationDeviceNotifier> findByIdForDisplay(String domain, String id) {
+        log.debug("Find authentication device notifier by ID for display: {}", id);
+        return adNotifierRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(AuthenticationDeviceNotifier.class))
+                .map(notifier -> FieldEncryptor.isEncrypted(notifier.getConfiguration()) ? withEmptyConfiguration(notifier) : notifier)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find an authentication device notifier using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an authentication device notifier using its ID: %s", id), ex));
+                })
+                .filter(notifier -> ReferenceType.DOMAIN == notifier.getReferenceType() && domain.equals(notifier.getReferenceId()));
+    }
+
+    @Override
+    public Flowable<AuthenticationDeviceNotifier> findByDomainForListing(String domain) {
+        log.debug("Find authentication device notifiers for listing by domain: {}", domain);
+        return adNotifierRepository.findByReferenceForListing(ReferenceType.DOMAIN, domain)
+                .map(notifier -> FieldEncryptor.isEncrypted(notifier.getConfiguration()) ? withEmptyConfiguration(notifier) : notifier)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find authentication device notifiers by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find authentication device notifiers by domain", ex));
+                });
+    }
+
+    private static AuthenticationDeviceNotifier withEmptyConfiguration(AuthenticationDeviceNotifier notifier) {
+        var copy = new AuthenticationDeviceNotifier(notifier);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     @Override

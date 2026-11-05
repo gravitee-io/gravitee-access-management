@@ -35,7 +35,7 @@ public class AuthenticationDeviceNotifierResourceTest extends JerseySpringTest {
         final String authenticationDeviceNotifierId = "authenticationDeviceNotifier-of-another-domain";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(authDeviceNotifierService).findById(domainId, authenticationDeviceNotifierId);
+        doReturn(Maybe.empty()).when(authDeviceNotifierService).findByIdForDisplay(domainId, authenticationDeviceNotifierId);
 
         final Response response = target("domains").path(domainId).path("auth-device-notifiers").path(authenticationDeviceNotifierId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

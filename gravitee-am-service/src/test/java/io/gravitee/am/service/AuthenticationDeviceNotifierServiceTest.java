@@ -221,6 +221,41 @@ public class AuthenticationDeviceNotifierServiceTest {
     }
 
     @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        AuthenticationDeviceNotifier readable = inDomain(new AuthenticationDeviceNotifier());
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        AuthenticationDeviceNotifier unreadable = inDomain(new AuthenticationDeviceNotifier());
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(authDeviceNotifierRepository.findByReferenceForListing(ReferenceType.DOMAIN, DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = authDeviceNotifierService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        AuthenticationDeviceNotifier deviceNotifier = inDomain(new AuthenticationDeviceNotifier());
+        deviceNotifier.setId("deviceNotifier-id");
+        deviceNotifier.setName("my notifier");
+        deviceNotifier.setConfiguration("enc:2025:AAAA:BBBB");
+        when(authDeviceNotifierRepository.findById("deviceNotifier-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(deviceNotifier, new IllegalStateException("key not configured"))));
+
+        AuthenticationDeviceNotifier found = authDeviceNotifierService.findByIdForDisplay(DOMAIN.getId(), "deviceNotifier-id").blockingGet();
+
+        org.junit.Assert.assertEquals("my notifier", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        authDeviceNotifierService.findByIdForDisplay("other-domain", "deviceNotifier-id").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertNoValues().assertComplete();
+    }
+
+    @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
         AuthenticationDeviceNotifier deviceNotifier = inDomain(new AuthenticationDeviceNotifier());
         deviceNotifier.setId("deviceNotifier-id");
