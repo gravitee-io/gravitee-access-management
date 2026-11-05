@@ -216,6 +216,7 @@ function SchemaStringListField<T extends FieldValues>({
                 values={values}
                 disabled={disabled || list.readOnly}
                 addOnBlur
+                addOnSpace={list.key === 'scopes'}
                 invalid={fieldState.invalid}
                 describedBy={fieldState.error ? `${id}-error` : undefined}
                 onBlur={field.onBlur}
