@@ -23,12 +23,9 @@ import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
-<<<<<<< HEAD
-import io.vertx.core.net.HostAndPort;
-=======
 import io.vertx.core.http.RequestOptions;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.AllowForwardHeaders;
->>>>>>> f2835d5 (feat(gateway): read X-Forwarded headers behind a proxy to match virtual hosts)
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.junit.After;
