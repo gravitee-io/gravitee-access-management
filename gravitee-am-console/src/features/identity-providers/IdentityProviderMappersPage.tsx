@@ -39,6 +39,7 @@ import { updateIdentityProvider } from '../../lib/api/identity-providers';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 import { useIdentityProvider } from './IdentityProviderLayout';
+import { MapperExamples } from './MapperExamples';
 
 const FORM_ID = 'identity-provider-mappers';
 
@@ -59,6 +60,12 @@ const DEFAULT_MAPPERS: Record<string, string> = {
     given_name: 'givenname',
     family_name: 'sn',
 };
+
+const EXAMPLES = [
+    ['email', 'mail'],
+    ['nickname', "{#profile['my-attr']}"],
+    ['attr', "{#jsonPath(#profile, '$.additional-info.attr')}"],
+] as const;
 
 let nextId = 0;
 const newRow = (key = '', value = ''): Mapping => ({ id: nextId++, key, value });
@@ -116,11 +123,10 @@ export function IdentityProviderMappersPage() {
                 <CardHeader>
                     <CardTitle>User mappers</CardTitle>
                     <CardDescription>
-                        Attribute mapping binds user profile attributes to your identity provider’s attributes, during authentication.
-                        Mapped attributes can be read from the UserInfo endpoint or used in ID token claims. Use a provider attribute name,
-                        or expression language such as <code className="font-mono text-xs">{"{#profile['my-attr']}"}</code> or{' '}
-                        <code className="font-mono text-xs">{"{#jsonPath(#profile, '$.additional-info.attr')}"}</code>.
+                        Copy this provider’s attributes into the user profile when users sign in. Use an attribute name or expression
+                        language.
                     </CardDescription>
+                    <MapperExamples examples={EXAMPLES} />
                 </CardHeader>
                 <CardContent>
                     {rows.length === 0 ? (
