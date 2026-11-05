@@ -2091,12 +2091,37 @@ jobs:
               echo "# --->>> THIS IS A DRY RUN"
             fi;
 
-      # Customers read the feed through the `public` view only: it holds what used to go to Maven Central.
-      # After the Git release, so that a failed promotion never leaves a deployed version untagged; on the
-      # release tag, because the Git release moved the poms on to the next snapshot.
+      - notify-on-failure
+      - notify-on-success
+
+  # promote public artifacts (io.gravitee) on specific Azure Artifact view
+  promote-to-view:
+    parameters:
+      graviteeio_version:
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: true
+    executor:
+      name: openjdk
+      class: large
+      version: "25.0.1"
+    steps:
+      - checkout
       - run:
           name: "Checkout the release tag"
-          command: git checkout "$(cat /tmp/gio.maven.project.release.version)"
+          # The release pushes its tag only for real: a dry run stays on the branch, whose snapshot
+          # versions the promotion skips.
+          command: |
+            if [ "<< parameters.dry_run >>" = "false" ]; then
+              git checkout "<< parameters.graviteeio_version >>"
+            fi
+      # Listing the reactor resolves its dependencies: the release job has just cached them.
+      - restore-maven-job-cache:
+          jobName: releaseV2
+      - attach_workspace:
+          at: /tmp
       - azure-artifacts-token
       - keeper/env-export:
           secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
@@ -2110,9 +2135,7 @@ jobs:
       - store_artifacts:
           path: /tmp/promote-to-view
           destination: promote-to-view
-
       - notify-on-failure
-      - notify-on-success
 
   notify-release-complete:
     parameters:
@@ -2488,6 +2511,13 @@ workflows:
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - helm tests
+      - promote-to-view:
+          name: promote to the public view
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
@@ -2544,6 +2574,13 @@ workflows:
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - setup
+      - promote-to-view:
+          name: promote to the public view
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
@@ -2578,6 +2615,13 @@ workflows:
           create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - setup
+      - promote-to-view:
+          name: promote to the public view
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          requires:
+            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
