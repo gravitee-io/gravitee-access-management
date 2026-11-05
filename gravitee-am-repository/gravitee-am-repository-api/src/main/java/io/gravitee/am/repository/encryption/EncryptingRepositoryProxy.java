@@ -20,6 +20,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Function;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -36,6 +37,9 @@ import java.util.Set;
  * Arguments are encrypted on a copy, because some repositories return the instance they received:
  * encrypting it in place would hand ciphertext back to the caller. Results are decrypted in place,
  * since the repository builds a fresh instance for each read.
+ * <p>
+ * A value that cannot be decrypted fails the read with {@link PluginDecryptConfigException}, unless the
+ * method is annotated with {@link KeepEncryptedOnFailure}.
  *
  * @author GraviteeSource Team
  */
@@ -70,7 +74,7 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }
-        return decryptResult(result);
+        return decryptResult(result, method.isAnnotationPresent(KeepEncryptedOnFailure.class));
     }
 
     private Object invokeObjectMethod(Object proxy, Method method, Object[] args) throws Throwable {
@@ -101,29 +105,36 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Object decryptResult(Object result) {
+    private Object decryptResult(Object result, boolean keepEncryptedOnFailure) {
+        Function<Object, Object> decrypt = value -> decrypt(value, keepEncryptedOnFailure);
         if (result instanceof Single<?> single) {
-            return ((Single<Object>) single).map(this::decrypt);
+            return ((Single<Object>) single).map(decrypt);
         }
         if (result instanceof Maybe<?> maybe) {
-            return ((Maybe<Object>) maybe).map(this::decrypt);
+            return ((Maybe<Object>) maybe).map(decrypt);
         }
         if (result instanceof Flowable<?> flowable) {
-            return ((Flowable<Object>) flowable).map(this::decrypt);
+            return ((Flowable<Object>) flowable).map(decrypt);
         }
         if (result instanceof Observable<?> observable) {
-            return ((Observable<Object>) observable).map(this::decrypt);
+            return ((Observable<Object>) observable).map(decrypt);
         }
-        return decrypt(result);
+        return decrypt(result, keepEncryptedOnFailure);
     }
 
-    private Object decrypt(Object value) {
+    private Object decrypt(Object value, boolean keepEncryptedOnFailure) {
         if (value instanceof Page<?> page) {
-            page.getData().forEach(this::decrypt);
+            page.getData().forEach(item -> decrypt(item, keepEncryptedOnFailure));
         } else if (value instanceof Collection<?> collection) {
-            collection.forEach(this::decrypt);
+            collection.forEach(item -> decrypt(item, keepEncryptedOnFailure));
         } else {
-            field.decryptInPlace(value, encryptor);
+            try {
+                field.decryptInPlace(value, encryptor);
+            } catch (PluginDecryptConfigException e) {
+                if (!keepEncryptedOnFailure) {
+                    throw e;
+                }
+            }
         }
         return value;
     }

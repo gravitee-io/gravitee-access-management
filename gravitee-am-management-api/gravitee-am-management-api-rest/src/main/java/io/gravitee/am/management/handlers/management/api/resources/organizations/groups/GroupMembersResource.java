@@ -92,7 +92,7 @@ public class GroupMembersResource extends AbstractResource {
                                     .map(UserEntity::new)
                                     .flatMapSingle(member -> {
                                         if (member.getSource() != null) {
-                                            return identityProviderService.findById(member.getSource())
+                                            return identityProviderService.findByIdForDisplay(member.getSource())
                                                     .map(idP -> {
                                                         member.setSource(idP.getName());
                                                         return member;

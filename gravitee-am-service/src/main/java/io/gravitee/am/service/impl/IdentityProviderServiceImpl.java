@@ -43,6 +43,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
 import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
@@ -59,6 +60,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.idp.SystemClusterIdpPolicy;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.AutomationNewIdentityProvider;
+import io.gravitee.am.service.model.ListedIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -149,6 +151,38 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex));
                 });
+    }
+
+    @Override
+    public Maybe<IdentityProvider> findByIdForDisplay(String id) {
+        log.debug("Find identity provider by ID for display: {}", id);
+        return identityProviderRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(IdentityProvider.class))
+                .map(identityProvider -> FieldEncryptor.isEncrypted(identityProvider.getConfiguration()) ? withEmptyConfiguration(identityProvider) : identityProvider)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find an identity provider using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an identity provider using its ID: %s", id), ex));
+                });
+    }
+
+    @Override
+    public Flowable<ListedIdentityProvider> findAllForListing(ReferenceType referenceType, String referenceId) {
+        log.debug("Find identity providers for listing by {}: {}", referenceType, referenceId);
+        return identityProviderRepository.findAllForListing(referenceType, referenceId)
+                .map(identityProvider -> new ListedIdentityProvider(
+                        withEmptyConfiguration(identityProvider),
+                        !FieldEncryptor.isEncrypted(identityProvider.getConfiguration())))
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find identity providers by {}", referenceType, ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find identity providers by " + referenceType.name(), ex));
+                });
+    }
+
+    private static IdentityProvider withEmptyConfiguration(IdentityProvider identityProvider) {
+        var copy = new IdentityProvider(identityProvider);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     @Override

@@ -100,7 +100,7 @@ public class GroupMembersResource extends AbstractResource {
                             return Observable.fromIterable(pagedMembers.getData())
                                     .flatMapSingle(member -> {
                                         if (member.getSource() != null) {
-                                            return identityProviderService.findById(member.getSource())
+                                            return identityProviderService.findByIdForDisplay(member.getSource())
                                                     .map(idP -> {
                                                         member.setSource(idP.getName());
                                                         return member;

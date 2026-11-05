@@ -33,6 +33,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
+import io.gravitee.am.service.model.ListedIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -96,6 +97,17 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     public Maybe<IdentityProvider> findById(String id) {
         // As the IDP maybe missing, using the flatMapSingle will rise an Exception
         return identityProviderService.findById(id).flatMap(idp -> this.filterSensitiveData(idp).toMaybe());
+    }
+
+    @Override
+    public Maybe<IdentityProvider> findByIdForDisplay(String id) {
+        return identityProviderService.findByIdForDisplay(id).flatMap(idp -> this.filterSensitiveData(idp).toMaybe());
+    }
+
+    @Override
+    public Flowable<ListedIdentityProvider> findAllForListing(ReferenceType referenceType, String referenceId) {
+        // the configuration is emptied by the service, there is nothing left to mask
+        return identityProviderService.findAllForListing(referenceType, referenceId);
     }
 
     @Override

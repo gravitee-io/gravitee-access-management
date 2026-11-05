@@ -99,7 +99,7 @@ public class IdentityProviderResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> identityProviderService.findById(identityProvider))
+                        .flatMap(irrelevant -> identityProviderService.findByIdForDisplay(identityProvider))
                         .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProvider)))
                         .map(this::hideConfiguration)
                         .map(safeIdp -> {

@@ -233,6 +233,34 @@ class EncryptingRepositoryProxyTest {
     }
 
     @Test
+    void should_keep_the_stored_value_and_the_other_entities_when_the_method_tolerates_a_failure() {
+        IdentityProvider healthy = provider("healthy", ENCRYPTOR.encrypt(CONFIGURATION));
+        IdentityProvider broken = provider("broken", "enc:2025:AAAA:BBBB");
+        IdentityProvider afterBroken = provider("afterBroken", ENCRYPTOR.encrypt(CONFIGURATION));
+        EncryptedField<?> field = EncryptedFieldRegistry.forRepository(IdentityProviderRepository.class).orElseThrow();
+        TolerantRepository repository = (TolerantRepository) EncryptingRepositoryProxy.wrap(
+                new TolerantRepository() {
+                    @Override
+                    public Flowable<IdentityProvider> tolerant() {
+                        return Flowable.just(healthy, broken, afterBroken);
+                    }
+
+                    @Override
+                    public Flowable<IdentityProvider> strict() {
+                        return Flowable.just(healthy, broken, afterBroken);
+                    }
+                }, field, ENCRYPTOR);
+
+        List<IdentityProvider> listed = repository.tolerant().toList().blockingGet();
+
+        assertThat(listed).extracting(IdentityProvider::getId).containsExactly("healthy", "broken", "afterBroken");
+        assertThat(listed).extracting(IdentityProvider::getConfiguration)
+                .containsExactly(CONFIGURATION, "enc:2025:AAAA:BBBB", CONFIGURATION);
+        assertThatThrownBy(() -> repository.strict().toList().blockingGet())
+                .isInstanceOf(PluginDecryptConfigException.class);
+    }
+
+    @Test
     void should_delegate_equals_to_the_target() {
         assertThat(repository).isEqualTo(repository);
         assertThat(repository.equals(store)).isTrue();
@@ -267,6 +295,20 @@ class EncryptingRepositoryProxyTest {
         reporter.setId(id);
         reporter.setConfiguration(configuration);
         return reporter;
+    }
+
+    private static IdentityProvider provider(String id, String configuration) {
+        IdentityProvider provider = new IdentityProvider();
+        provider.setId(id);
+        provider.setConfiguration(configuration);
+        return provider;
+    }
+
+    public interface TolerantRepository {
+        @KeepEncryptedOnFailure
+        Flowable<IdentityProvider> tolerant();
+
+        Flowable<IdentityProvider> strict();
     }
 
     public interface PagedRepository {

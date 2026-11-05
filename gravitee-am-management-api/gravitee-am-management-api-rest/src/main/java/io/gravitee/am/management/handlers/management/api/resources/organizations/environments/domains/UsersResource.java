@@ -261,7 +261,7 @@ public class UsersResource extends AbstractResource {
             // Current user has read permission, copy all information.
             filteredUser = new User(user);
             if (user.getSource() != null) {
-                return identityProviderService.findById(user.getSource())
+                return identityProviderService.findByIdForDisplay(user.getSource())
                         .map(idP -> {
                             filteredUser.setSource(idP.getName());
                             return filteredUser;
