@@ -67,4 +67,163 @@ public class IdentityProviderManagerImplTest {
 
         verify(domainReadinessService).pluginInitFailed("domain-id", "IDENTITY_PROVIDER", "Database error");
     }
+<<<<<<< HEAD
+=======
+
+    @Test
+    public void shouldLoadRemainingIdentityProvidersWhenOneFailsToInitialize() throws Exception {
+        IdentityProvider broken = identityProvider("broken-idp");
+        IdentityProvider healthy = identityProvider("healthy-idp");
+        load(broken, healthy);
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class)))
+                .thenThrow(new IllegalArgumentException("invalid well-known URI"))
+                .thenReturn(mock(AuthenticationProvider.class));
+
+        identityProviderManager.afterPropertiesSet();
+
+        assertNull(identityProviderManager.getIdentityProvider("broken-idp"));
+        assertSame(healthy, identityProviderManager.getIdentityProvider("healthy-idp"));
+        verify(domainReadinessService).pluginFailed("domain-id", "broken-idp", "invalid well-known URI");
+        verify(domainReadinessService).pluginLoaded("domain-id", "healthy-idp");
+        verify(domainReadinessService, never()).pluginInitFailed(any(), any(), any());
+        verify(gatewayMetricProvider, times(1)).incrementIdp();
+    }
+
+    @Test
+    public void shouldKeepReadinessRecordWhenLoadedIdpBecomesUnlicensedOnUpdate() throws Exception {
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("domain-name");
+
+        IdentityProvider initialIdp = new IdentityProvider();
+        initialIdp.setId("idp-id");
+        initialIdp.setType("kerberos-am-idp");
+        initialIdp.setConfiguration("{}");
+        initialIdp.setUpdatedAt(new Date(1000));
+
+        // a newer version so needDeployment() forces a redeployment on the update event
+        IdentityProvider updatedIdp = new IdentityProvider();
+        updatedIdp.setId("idp-id");
+        updatedIdp.setType("kerberos-am-idp");
+        updatedIdp.setConfiguration("{}");
+        updatedIdp.setUpdatedAt(new Date(2000));
+
+        AuthenticationProvider authenticationProvider = mock(AuthenticationProvider.class);
+        when(identityProviderRepository.findAll(ReferenceType.DOMAIN, "domain-id")).thenReturn(Flowable.just(initialIdp));
+        when(identityProviderRepository.findById("idp-id")).thenReturn(Maybe.just(updatedIdp));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(authenticationProvider);
+        when(identityProviderPluginManager.create(eq("kerberos-am-idp"), any(), any(IdentityProvider.class)))
+                .thenReturn(Single.just(Optional.empty()));
+        // licensed on the initial load, then unlicensed on the following update event
+        when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_IDENTITY_PROVIDER, "kerberos-am-idp", "idp-id"))
+                .thenReturn(true, false);
+
+        // load the licensed provider
+        identityProviderManager.afterPropertiesSet();
+
+        // when - an update event arrives and the provider is now unlicensed
+        Payload payload = new Payload("idp-id", ReferenceType.DOMAIN, "domain-id", io.gravitee.am.common.event.Action.UPDATE);
+        Event<IdentityProviderEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(IdentityProviderEvent.UPDATE);
+        when(event.content()).thenReturn(payload);
+        identityProviderManager.onEvent(event);
+
+        // then - the running provider is stopped and no longer served, but the readiness record is left
+        // untouched so the unlicensed entry recorded by the gate survives (rather than being wiped by an unload)
+        verify(authenticationProvider, times(1)).stop();
+        verify(domainReadinessService, never()).pluginUnloaded("domain-id", "idp-id");
+        assertNull(identityProviderManager.getIdentityProvider("idp-id"));
+    }
+
+    @Test
+    public void shouldFindByIssuerTrustedIssuerToItsIdentityProvider() throws Exception {
+        AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(trusted);
+
+        identityProviderManager.afterPropertiesSet();
+
+        ResolvedTrustedIssuer resolved = identityProviderManager.findByIssuer("https://issuer.example.com").blockingGet();
+        assertEquals("oidc-idp", resolved.identityProvider());
+        assertSame(((TrustedIssuerIdp) trusted).trustedIssuer().orElseThrow(), resolved.trustedIssuer());
+    }
+
+    @Test
+    public void shouldRefuseIssuerClaimedByTwoProviders() throws Exception {
+        AuthenticationProvider first = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        AuthenticationProvider second = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("first-idp"), identityProvider("second-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(first, second);
+
+        identityProviderManager.afterPropertiesSet();
+
+        identityProviderManager.findByIssuer("https://issuer.example.com").test()
+                .assertNoValues()
+                .assertError(AmbiguousTrustedIssuerException.class)
+                .assertError(error -> "invalid_grant".equals(((OAuth2Exception) error).getOAuth2ErrorCode()))
+                .assertError(error -> "Assertion issuer is claimed by several identity providers".equals(error.getMessage()));
+    }
+
+    @Test
+    public void shouldReturnEmptyWhenNoProviderClaimsIssuer() throws Exception {
+        AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(trusted);
+
+        identityProviderManager.afterPropertiesSet();
+
+        identityProviderManager.findByIssuer("https://other.example.com").test()
+                .assertNoValues()
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldNotMatchProviderWhoseDiscoveryHasNotCompleted() throws Exception {
+        AuthenticationProvider discovering = trustedIssuerProvider(Optional.empty());
+        load(identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class))).thenReturn(discovering);
+
+        identityProviderManager.afterPropertiesSet();
+
+        identityProviderManager.findByIssuer("https://issuer.example.com").test()
+                .assertNoValues()
+                .assertComplete();
+    }
+
+    @Test
+    public void shouldSkipProvidersThatAreNotTrustedIssuers() throws Exception {
+        AuthenticationProvider trusted = trustedIssuerProvider(Optional.of("https://issuer.example.com"));
+        load(identityProvider("inline-idp"), identityProvider("oidc-idp"));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class)))
+                .thenReturn(mock(AuthenticationProvider.class), trusted);
+
+        identityProviderManager.afterPropertiesSet();
+
+        assertEquals("oidc-idp", identityProviderManager.findByIssuer("https://issuer.example.com").blockingGet().identityProvider());
+    }
+
+    private void load(IdentityProvider... identityProviders) throws Exception {
+        when(domain.getId()).thenReturn("domain-id");
+        when(identityProviderRepository.findAll(ReferenceType.DOMAIN, "domain-id")).thenReturn(Flowable.fromArray(identityProviders));
+        when(identityProviderPluginManager.create(eq("oauth2-generic-am-idp"), any(), any(IdentityProvider.class)))
+                .thenReturn(Single.just(Optional.empty()));
+        for (IdentityProvider identityProvider : identityProviders) {
+            when(domainPluginLicenseGate.check(PluginLicenseGate.TYPE_IDENTITY_PROVIDER, "oauth2-generic-am-idp", identityProvider.getId())).thenReturn(true);
+        }
+    }
+
+    private static IdentityProvider identityProvider(String id) {
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId(id);
+        identityProvider.setType("oauth2-generic-am-idp");
+        identityProvider.setConfiguration("{}");
+        return identityProvider;
+    }
+
+    private static AuthenticationProvider trustedIssuerProvider(Optional<String> issuer) {
+        AuthenticationProvider provider = mock(AuthenticationProvider.class, withSettings().extraInterfaces(TrustedIssuerIdp.class));
+        when(((TrustedIssuerIdp) provider).trustedIssuer())
+                .thenReturn(issuer.map(value -> new OAuthTrustedIssuer(value, mock(AssertionVerifier.class))));
+        return provider;
+    }
+>>>>>>> 96f1e07 (fix: keep loading the remaining identity providers when one fails at startup)
 }
