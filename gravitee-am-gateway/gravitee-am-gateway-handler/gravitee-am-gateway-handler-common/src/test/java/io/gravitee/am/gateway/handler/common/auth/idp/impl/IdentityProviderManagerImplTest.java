@@ -118,6 +118,25 @@ public class IdentityProviderManagerImplTest {
     }
 
     @Test
+    public void shouldLoadRemainingIdentityProvidersWhenOneFailsToInitialize() throws Exception {
+        IdentityProvider broken = identityProvider("broken-idp");
+        IdentityProvider healthy = identityProvider("healthy-idp");
+        load(broken, healthy);
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class)))
+                .thenThrow(new IllegalArgumentException("invalid well-known URI"))
+                .thenReturn(mock(AuthenticationProvider.class));
+
+        identityProviderManager.afterPropertiesSet();
+
+        assertNull(identityProviderManager.getIdentityProvider("broken-idp"));
+        assertSame(healthy, identityProviderManager.getIdentityProvider("healthy-idp"));
+        verify(domainReadinessService).pluginFailed("domain-id", "broken-idp", "invalid well-known URI");
+        verify(domainReadinessService).pluginLoaded("domain-id", "healthy-idp");
+        verify(domainReadinessService, never()).pluginInitFailed(any(), any(), any());
+        verify(gatewayMetricProvider, times(1)).incrementIdp();
+    }
+
+    @Test
     public void shouldKeepReadinessRecordWhenLoadedIdpBecomesUnlicensedOnUpdate() throws Exception {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getName()).thenReturn("domain-name");
