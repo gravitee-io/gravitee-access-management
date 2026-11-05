@@ -278,6 +278,22 @@ describe('adaptAmSchema', () => {
         expect(schema.allOf).toEqual([{ required: ['authentication'] }]);
     });
 
+    it('takes a plain string list out of the schema, and keeps an enum list and a multiselect in it', () => {
+        const { schema, stringLists } = adaptAmSchema({
+            type: 'object',
+            required: ['scopes'],
+            properties: {
+                scopes: { type: 'array', title: 'Scopes', description: 'The scopes', items: { type: 'string' } },
+                methods: { type: 'array', items: { type: 'string', enum: ['GET', 'POST'] } },
+                events: { type: 'array', widget: 'graviteeMultiselect', enum: ['A'], items: { type: 'string' } },
+            },
+        });
+
+        expect(stringLists).toEqual([{ key: 'scopes', title: 'Scopes', description: 'The scopes', required: true, readOnly: false }]);
+        expect(Object.keys(schema.properties ?? {})).toEqual(['methods', 'events']);
+        expect(schema.required).toEqual([]);
+    });
+
     it('takes a file field out of the schema, so the console renders it beside the schema form', () => {
         const { schema, files } = adaptAmSchema({
             type: 'object',

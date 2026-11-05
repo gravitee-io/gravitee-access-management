@@ -17,7 +17,10 @@ import {
     Alert,
     AlertDescription,
     AlertTitle,
+    Field,
     FieldDescription,
+    FieldError,
+    FieldLabel,
     FileUpload,
     type FileUploadItemValue,
     JsonSchemaForm,
@@ -26,9 +29,10 @@ import {
 } from '@gravitee/graphene-core';
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { type Control, type FieldErrors, type FieldValues, type Path, type Resolver, useController } from 'react-hook-form';
+import { type Control, type FieldErrors, type FieldValues, type Path, type PathValue, type Resolver, useController } from 'react-hook-form';
 import { http } from '../../lib/api/http';
-import { type AdaptedSchema, adaptAmSchema, type SchemaFile, type SchemaResource } from '../../lib/forms/am-schema';
+import { type AdaptedSchema, adaptAmSchema, type SchemaFile, type SchemaResource, type SchemaStringList } from '../../lib/forms/am-schema';
+import { TagInput } from './TagInput';
 
 const REQUIRED_MESSAGE = 'This field is required';
 
@@ -103,9 +107,13 @@ export function pluginSchemaResolver<T extends Record<string, unknown>>(adapted:
         const results = await Promise.all(resolvers.map(resolver => resolver(values, context, options)));
         const configuration = (values[basePath] ?? {}) as Record<string, unknown>;
         const fileErrors = Object.fromEntries(
-            adapted.files
-                .filter(file => file.required && !configuration[file.key])
-                .map(file => [file.key, { type: 'required', message: REQUIRED_MESSAGE }]),
+            [
+                ...adapted.files.filter(file => file.required && !configuration[file.key]),
+                ...adapted.stringLists.filter(list => {
+                    const value = configuration[list.key];
+                    return list.required && (!Array.isArray(value) || value.length === 0);
+                }),
+            ].map(field => [field.key, { type: 'required', message: REQUIRED_MESSAGE }]),
         );
         const errors = results.reduce((merged, result) => mergeErrors(merged, result.errors), { [basePath]: fileErrors } as ErrorTree);
         const configurationErrors = errors[basePath] as ErrorTree;
@@ -177,6 +185,49 @@ function SchemaFileField<T extends FieldValues>({
     );
 }
 
+function SchemaStringListField<T extends FieldValues>({
+    list,
+    control,
+    name,
+    disabled,
+}: {
+    readonly list: SchemaStringList;
+    readonly control: Control<T>;
+    readonly name: string;
+    readonly disabled?: boolean;
+}) {
+    // An unset list registers as [], as the Graphene array field does.
+    const { field, fieldState } = useController({
+        control,
+        name: `${name}.${list.key}` as Path<T>,
+        defaultValue: [] as PathValue<T, Path<T>>,
+    });
+    const id = `plugin-${list.key}`;
+    const values = Array.isArray(field.value) ? (field.value as string[]) : [];
+
+    return (
+        <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={id}>
+                {list.title ?? list.key}
+                {list.required && <span aria-hidden="true">*</span>}
+            </FieldLabel>
+            <TagInput
+                id={id}
+                values={values}
+                disabled={disabled || list.readOnly}
+                addOnBlur
+                invalid={fieldState.invalid}
+                describedBy={fieldState.error ? `${id}-error` : undefined}
+                onBlur={field.onBlur}
+                onChange={field.onChange}
+                onDuplicate={value => toast.error(`"${value}" is already in the list.`)}
+            />
+            {list.description && <FieldDescription>{list.description}</FieldDescription>}
+            {fieldState.error && <FieldError id={`${id}-error`} errors={[fieldState.error]} />}
+        </Field>
+    );
+}
+
 interface PluginSchemaFormProps<T extends FieldValues> {
     readonly adapted: AdaptedSchema;
     readonly control: Control<T>;
@@ -198,6 +249,9 @@ export function PluginSchemaForm<T extends FieldValues>({ adapted, control, name
                 <SchemaFileField key={file.key} file={file} control={control} name={name} disabled={disabled} />
             ))}
             <JsonSchemaForm schema={adapted.schema} control={control as unknown as Control} name={name} disabled={disabled} />
+            {adapted.stringLists.map(list => (
+                <SchemaStringListField key={list.key} list={list} control={control} name={name} disabled={disabled} />
+            ))}
         </div>
     );
 }
