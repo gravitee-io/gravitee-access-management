@@ -76,12 +76,13 @@ export function AddMappingDialog({ noun, targets, onCancel, onSave }: AddMapping
                         <Input
                             id="mapper-user"
                             className="font-mono"
-                            placeholder="Use attributeName=attributeValue or EL syntax."
+                            placeholder="memberOf=administrators"
                             value={user}
                             onChange={event => setUser(event.target.value)}
                         />
                         <FieldDescription>
-                            For example memberOf=administrators, or {"{#profile['my-claim'] == 'default'}"}.
+                            An attribute match, or an expression such as{' '}
+                            <code className="font-mono text-xs">{"{#profile['my-claim'] == 'default'}"}</code>.
                         </FieldDescription>
                     </Field>
                     <FieldSet>
