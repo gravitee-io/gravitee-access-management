@@ -103,7 +103,7 @@ describe('PluginSchemaForm', () => {
         });
     });
 
-    it('edits a plain string list as tags and submits it as a list', async () => {
+    it('edits the scopes as tags, adding each one on a space, and submits them as a list', async () => {
         const onSubmit = vi.fn();
         const adapted = adaptAmSchema({
             type: 'object',
@@ -111,7 +111,7 @@ describe('PluginSchemaForm', () => {
         });
         renderWithGraphene(<ConfigurationForm adapted={adapted} onSubmit={onSubmit} />);
 
-        await userEvent.type(screen.getByRole('combobox', { name: 'Scopes' }), 'openid{Enter}profile{Enter}');
+        await userEvent.type(screen.getByRole('combobox', { name: 'Scopes' }), 'openid profile ');
         await userEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         await waitFor(() => expect(onSubmit).toHaveBeenCalled());
