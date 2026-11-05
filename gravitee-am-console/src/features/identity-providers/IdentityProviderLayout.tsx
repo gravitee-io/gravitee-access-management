@@ -100,7 +100,7 @@ export function IdentityProviderLayout() {
                 </Button>
                 <div className="flex flex-wrap items-center gap-2">
                     <h1>{provider.name}</h1>
-                    {!plugins.isPending && <Badge variant="outline">{plugin ? (plugin.displayName ?? plugin.name) : 'Custom'}</Badge>}
+                    {plugins.isSuccess && <Badge variant="outline">{plugin ? (plugin.displayName ?? plugin.name) : 'Custom'}</Badge>}
                     {provider.system && <Badge variant="secondary">System</Badge>}
                 </div>
             </div>

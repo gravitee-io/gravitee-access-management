@@ -135,10 +135,10 @@ export function IdentityProvidersPage() {
             <PageHeader
                 title="Identity providers"
                 description="Identity providers authenticate the users of this domain’s applications."
-                actions={!error && !isFirstUse ? createButton : undefined}
+                actions={!error && !plugins.error && !isFirstUse ? createButton : undefined}
             />
-            {error ? (
-                <ErrorPanel description="Could not load the identity providers." error={error} />
+            {error || plugins.error ? (
+                <ErrorPanel description="Could not load the identity providers." error={error ?? plugins.error} />
             ) : isFirstUse ? (
                 <div className="rounded-lg border border-border">
                     <DataTableEmptyState
