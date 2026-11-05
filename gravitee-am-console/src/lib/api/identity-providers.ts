@@ -16,7 +16,6 @@
 import type { FilteredIdentityProviderInfo } from '@am-models/FilteredIdentityProviderInfo';
 import type { IdentityProvider as IdentityProviderModel } from '@am-models/IdentityProvider';
 import type { NewIdentityProvider as NewIdentityProviderModel } from '@am-models/NewIdentityProvider';
-import { hash } from 'bcryptjs';
 import { isRecord } from '../guards';
 import { http } from './http';
 import type { ApiModel } from './model';
@@ -110,6 +109,7 @@ export async function serializeConfiguration(type: string, configuration: Record
     if (type !== INLINE_TYPE || configuration.passwordEncoder !== 'BCrypt' || !Array.isArray(configuration.users)) {
         return JSON.stringify(configuration);
     }
+    const { hash } = await import('bcryptjs');
     const users = await Promise.all(
         configuration.users.map(async (user: unknown) =>
             !isRecord(user) || typeof user.password !== 'string' || BCRYPT_HASH.test(user.password) || user.password === MASKED_PASSWORD
