@@ -141,17 +141,12 @@ public class UriBuilderRequest {
     }
 
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
-<<<<<<< HEAD
         String requestHost = request.getHeader(HttpHeaders.HOST);
         if (requestHost == null && request.authority() != null) {
             requestHost = request.authority().toString();
         }
 
-        String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-=======
-        String requestHost = request.host();
         String xForwardedHost = firstHeaderValue(request, HttpHeaders.X_FORWARDED_HOST);
->>>>>>> c08fde7 (fix(gateway): use the first X-Forwarded value from a proxy chain to build URLs)
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))
                 .orElse(requestHost);
