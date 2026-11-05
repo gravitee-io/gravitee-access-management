@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Copy of src/scripts/promote-to-view.sh from gravitee-io/gravitee-circleci-orb 6.13.0: AM does not run the
-# orb's publish job. Keep both in step.
+# Copy of src/scripts/promote-to-view.sh from gravitee-io/gravitee-circleci-orb 6.13.0
 #
 # Promotes the release just deployed to a view of the Azure Artifacts feed. Customers are given read access to that
 # view only, so it must hold what used to go to Maven Central and nothing more:
