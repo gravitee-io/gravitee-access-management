@@ -278,26 +278,14 @@ describe('adaptAmSchema', () => {
         expect(schema.allOf).toEqual([{ required: ['authentication'] }]);
     });
 
-    it('shows the HTML of a plugin title or description as plain text', () => {
+    it('shows the HTML of a plugin title as plain text, and keeps the HTML of a description', () => {
+        const description = 'Set the signature key <i><b>(GIVEN_KEY)</b></i>.';
         const { schema } = adaptAmSchema({
             type: 'object',
-            description: 'LinkedIn provider, see <a>the docs</a>.',
-            properties: {
-                resolverParameter: {
-                    type: 'string',
-                    title: 'Resolver <b>parameter</b>',
-                    description: 'Set the signature key <i><b>(GIVEN_KEY)</b></i> or a JWKS URL <i><b>(JWKS_URL)</b></i>.',
-                },
-                logoutUri: { type: 'string', description: 'Signs the user out.<br/>The OIDC must implement it.</br>Leave empty.' },
-            },
+            properties: { resolverParameter: { type: 'string', title: 'Resolver <b>parameter</b>', description } },
         });
 
-        expect(schema.description).toBe('LinkedIn provider, see the docs.');
-        expect(schema.properties?.resolverParameter).toMatchObject({
-            title: 'Resolver parameter',
-            description: 'Set the signature key (GIVEN_KEY) or a JWKS URL (JWKS_URL).',
-        });
-        expect(schema.properties?.logoutUri.description).toBe('Signs the user out. The OIDC must implement it. Leave empty.');
+        expect(schema.properties?.resolverParameter).toMatchObject({ title: 'Resolver parameter', description });
     });
 
     it('takes a plain string list out of the schema, and keeps an enum list and a multiselect in it', () => {

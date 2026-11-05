@@ -207,7 +207,7 @@ function adaptProperties(node: SchemaNode, adapted: SchemaNode, path: string, co
     }
 }
 
-/** Some plugin titles and descriptions hold HTML, which the console shows as plain text. A line break becomes a space. */
+/** Some plugin titles hold HTML. Graphene reads a title as a string, so the console shows it as plain text. */
 function plainText(text: unknown): string | undefined {
     if (typeof text !== 'string') {
         return undefined;
@@ -221,10 +221,8 @@ function plainText(text: unknown): string | undefined {
 
 function copyNode(node: SchemaNode): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
-    for (const keyword of ['title', 'description']) {
-        if (typeof adapted[keyword] === 'string') {
-            adapted[keyword] = plainText(adapted[keyword]);
-        }
+    if (typeof adapted.title === 'string') {
+        adapted.title = plainText(adapted.title);
     }
     return adapted;
 }
@@ -298,7 +296,7 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         .map(([key, property]) => ({
             key,
             title: plainText(property.title),
-            description: plainText(property.description),
+            description: property.description as string | undefined,
             required: required.includes(key),
         }));
     const stringLists: SchemaStringList[] = Object.entries(properties)
@@ -306,7 +304,7 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         .map(([key, property]) => ({
             key,
             title: plainText(property.title),
-            description: plainText(property.description),
+            description: property.description as string | undefined,
             required: required.includes(key),
             readOnly: property.readonly === true,
         }));

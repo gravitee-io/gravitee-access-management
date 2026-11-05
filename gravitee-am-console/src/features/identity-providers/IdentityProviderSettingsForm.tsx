@@ -28,6 +28,7 @@ import {
     updateIdentityProvider,
 } from '../../lib/api/identity-providers';
 import type { AdaptedSchema } from '../../lib/forms/am-schema';
+import { richText } from '../../lib/forms/rich-text';
 import { isRecord } from '../../lib/guards';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { featureDescription, useLicense } from '../../lib/session/license';
@@ -137,7 +138,7 @@ export function IdentityProviderSettingsForm({ provider, adapted, configuration,
                     <CardHeader>
                         <CardTitle>Configuration</CardTitle>
                         {adapted.schema.description && (
-                            <CardDescription className="whitespace-pre-line">{adapted.schema.description}</CardDescription>
+                            <CardDescription className="whitespace-pre-line">{richText(adapted.schema.description)}</CardDescription>
                         )}
                     </CardHeader>
                     <CardContent className="grid gap-5">

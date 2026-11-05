@@ -38,6 +38,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useState } from
 import { type Resolver, type ResolverResult, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AdaptedSchema, type SchemaResource, withSchemaDefaults } from '../../lib/forms/am-schema';
+import { richText } from '../../lib/forms/rich-text';
 import { LicenseGuard, useLicense } from '../../lib/session/license';
 import { ErrorPanel } from './ErrorPanel';
 import { PluginSchemaForm, pluginSchemaResolver, useAdaptedSchema } from './PluginSchemaForm';
@@ -231,7 +232,7 @@ function ConfigureForm<P extends WizardPlugin>({
             <Card>
                 <CardHeader>
                     <CardTitle>{displayName(plugin)}</CardTitle>
-                    {adapted.schema.description && <CardDescription>{adapted.schema.description}</CardDescription>}
+                    {adapted.schema.description && <CardDescription>{richText(adapted.schema.description)}</CardDescription>}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                     <Field data-invalid={!!nameError}>
