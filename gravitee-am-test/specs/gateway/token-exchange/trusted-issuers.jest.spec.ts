@@ -17,14 +17,8 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { parseJwt } from '@api-fixtures/jwt';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-<<<<<<< HEAD
 import { waitForOidcReady } from '@management-commands/domain-management-commands';
-=======
-import { getDomain, waitForOidcReady } from '@management-commands/domain-management-commands';
-import { listTrustDomains } from '@management-commands/trust-domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
-import { TrustDomain } from '@management-models/TrustDomain';
->>>>>>> fc42004 (test(gateway): cover token exchange user binding to a user who has never logged in)
 import { setup } from '../../test-fixture';
 import {
   setupTrustedIssuerFixture,
