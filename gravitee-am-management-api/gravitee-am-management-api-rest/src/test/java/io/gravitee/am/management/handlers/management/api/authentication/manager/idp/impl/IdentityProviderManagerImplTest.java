@@ -105,6 +105,20 @@ class IdentityProviderManagerImplTest {
                 .create(argThat((AuthenticationProviderConfiguration config) -> "ee-am-idp".equals(config.getType())));
     }
 
+    @Test
+    void shouldLoadRemainingAuthenticationProvidersWhenOneFailsToInitialize() throws Exception {
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION))
+                .thenReturn(Flowable.just(orgIdp("broken-idp", "oauth2-generic-am-idp"), orgIdp("healthy-idp", "http-am-idp")));
+        when(identityProviderPluginManager.create(any(AuthenticationProviderConfiguration.class)))
+                .thenThrow(new IllegalArgumentException("invalid well-known URI"))
+                .thenReturn(mock(AuthenticationProvider.class));
+
+        cut.afterPropertiesSet();
+
+        assertNull(cut.get("broken-idp"));
+        assertNotNull(cut.get("healthy-idp"));
+    }
+
     private static IdentityProvider orgIdp(String id, String type) {
         final IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId(id);
