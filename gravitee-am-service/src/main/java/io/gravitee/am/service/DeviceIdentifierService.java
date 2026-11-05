@@ -37,6 +37,21 @@ public interface DeviceIdentifierService {
 
     Flowable<DeviceIdentifier> findByDomain(String domain);
 
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the device identifier.
+     * <p>
+     * A device identifier whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<DeviceIdentifier> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Same as {@link #findByDomain(String)} in a single query, for the endpoints that only display the device identifiers.
+     * <p>
+     * A device identifier whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<DeviceIdentifier> findByDomainForListing(String domain);
+
     Single<DeviceIdentifier> create(Domain domain, NewDeviceIdentifier newDeviceIdentifier, User principal);
 
     Single<DeviceIdentifier> update(Domain domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal);

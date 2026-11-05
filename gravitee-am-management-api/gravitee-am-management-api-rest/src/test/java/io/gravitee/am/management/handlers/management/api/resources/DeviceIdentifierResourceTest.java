@@ -47,7 +47,7 @@ public class DeviceIdentifierResourceTest extends JerseySpringTest {
         mockDeviceIdentifier.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockDeviceIdentifier)).when(deviceIdentifierService).findById(domainId, deviceIdentifierId);
+        doReturn(Maybe.just(mockDeviceIdentifier)).when(deviceIdentifierService).findByIdForDisplay(domainId, deviceIdentifierId);
 
         final Response response = target("domains").path(domainId).path("device-identifiers").path(deviceIdentifierId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -66,7 +66,7 @@ public class DeviceIdentifierResourceTest extends JerseySpringTest {
         final String deviceIdentifierId = "deviceIdentifier-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(deviceIdentifierService).findById(domainId, deviceIdentifierId);
+        doReturn(Maybe.empty()).when(deviceIdentifierService).findByIdForDisplay(domainId, deviceIdentifierId);
 
         final Response response = target("domains").path(domainId).path("device-identifiers").path(deviceIdentifierId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
