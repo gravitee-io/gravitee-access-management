@@ -199,13 +199,11 @@ describe('NewIdentityProviderPage', () => {
         expect(await screen.findByRole('combobox', { name: /Data source/ })).toBeEnabled();
     });
 
-    it('requires a name', async () => {
+    it('disables Create while the name is blank', async () => {
         const harness = setupNewProviderHarness();
 
         await harness.configure('MongoDB');
-        await harness.create();
 
-        expect(await screen.findByText('Name is required')).toBeInTheDocument();
-        expect(createIdentityProvider).not.toHaveBeenCalled();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled());
     });
 });

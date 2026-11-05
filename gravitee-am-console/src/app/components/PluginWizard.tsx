@@ -248,7 +248,7 @@ function ConfigureForm<P extends WizardPlugin>({
                     <ArrowLeftIcon aria-hidden />
                     Back
                 </Button>
-                <Button type="submit" disabled={creating}>
+                <Button type="submit" disabled={creating || !form.formState.isValid}>
                     {creating ? 'Creating…' : 'Create'}
                 </Button>
             </div>
