@@ -64,7 +64,7 @@ let nextId = 0;
 const newRow = (key = '', value = ''): Mapping => ({ id: nextId++, key, value });
 const toRows = (mappers: Record<string, string>): Mapping[] => Object.entries(mappers).map(([key, value]) => newRow(key, value));
 const toMappers = (rows: readonly Mapping[]) => Object.fromEntries(rows.map(row => [row.key.trim(), row.value.trim()]));
-const contentOf = (rows: readonly Mapping[]) => JSON.stringify(rows.map(row => [row.key, row.value]));
+const contentOf = (rows: readonly Mapping[]) => JSON.stringify(rows.map(row => [row.key.trim(), row.value.trim()]));
 
 /** Binds user profile attributes to the raw attributes or expressions of the provider. */
 export function IdentityProviderMappersPage() {
