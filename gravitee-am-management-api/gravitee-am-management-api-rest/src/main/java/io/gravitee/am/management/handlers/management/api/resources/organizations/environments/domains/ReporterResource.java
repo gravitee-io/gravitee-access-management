@@ -83,7 +83,7 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(Reference.domain(domain), reporterId))
+                        .flatMap(irrelevant -> reporterService.findByIdForDisplay(Reference.domain(domain), reporterId))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                         .map(reporter -> Response.ok(reporter.apiRepresentation(false)).build()))
                 .subscribe(response::resume, response::resume);
@@ -142,7 +142,7 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(Reference.domain(domain), reporter))
+                        .flatMap(irrelevant -> reporterService.findByIdForDisplay(Reference.domain(domain), reporter))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporter)))
                         .flatMapCompletable(irrelevant -> reporterService.delete(reporter, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);

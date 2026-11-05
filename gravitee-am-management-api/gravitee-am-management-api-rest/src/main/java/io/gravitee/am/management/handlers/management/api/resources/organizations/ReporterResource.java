@@ -83,7 +83,7 @@ public class ReporterResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
-                        .flatMapMaybe(irrelevant -> reporterService.findById(Reference.organization(organizationId), reporterId))
+                        .flatMapMaybe(irrelevant -> reporterService.findByIdForDisplay(Reference.organization(organizationId), reporterId))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                         .map(reporter -> Response.ok(reporter.apiRepresentation(false)).build()))
                 .subscribe(response::resume, response::resume);
@@ -129,7 +129,7 @@ public class ReporterResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.READ)
                 .andThen(organizationService.findById(organizationId)
                         .onErrorResumeWith(Single.error(new OrganizationNotFoundException(organizationId)))
-                        .flatMapMaybe(irrelevant -> reporterService.findById(Reference.organization(organizationId), reporterId))
+                        .flatMapMaybe(irrelevant -> reporterService.findByIdForDisplay(Reference.organization(organizationId), reporterId))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                         .flatMapCompletable(irrelevant -> reporterService.delete(reporterId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);

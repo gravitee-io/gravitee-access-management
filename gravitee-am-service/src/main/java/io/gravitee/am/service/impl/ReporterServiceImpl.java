@@ -28,6 +28,7 @@ import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
 import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
@@ -144,6 +145,36 @@ public class ReporterServiceImpl implements ReporterService {
     @Override
     public Maybe<Reporter> findById(Reference reference, String id) {
         return findById(id).filter(reporter -> reporter.getReference().matches(reference.type(), reference.id()));
+    }
+
+    @Override
+    public Maybe<Reporter> findByIdForDisplay(Reference reference, String id) {
+        log.debug("Find reporter by id for display: {}", id);
+        return reporterRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Reporter.class))
+                .map(reporter -> FieldEncryptor.isEncrypted(reporter.getConfiguration()) ? withEmptyConfiguration(reporter) : reporter)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find reporters by id: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by id: %s", id), ex));
+                })
+                .filter(reporter -> reporter.getReference().matches(reference.type(), reference.id()));
+    }
+
+    @Override
+    public Flowable<Reporter> findByReferenceForListing(Reference reference) {
+        log.debug("Find reporters for listing for: {}", reference);
+        return reporterRepository.findByReferenceForListing(reference)
+                .map(reporter -> FieldEncryptor.isEncrypted(reporter.getConfiguration()) ? withEmptyConfiguration(reporter) : reporter)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find reporters by domain: {}", reference, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", reference), ex));
+                });
+    }
+
+    private static Reporter withEmptyConfiguration(Reporter reporter) {
+        var copy = new Reporter(reporter);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     @Override

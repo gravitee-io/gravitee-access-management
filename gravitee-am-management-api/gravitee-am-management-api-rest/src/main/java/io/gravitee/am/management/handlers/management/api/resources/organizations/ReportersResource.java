@@ -86,7 +86,7 @@ public class ReportersResource extends AbstractResource {
         User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_REPORTER, Acl.LIST)
-                .andThen(reporterService.findByReference(Reference.organization(organizationId))
+                .andThen(reporterService.findByReferenceForListing(Reference.organization(organizationId))
                         .toList()
                 )
                 .flatMap(reporters ->
