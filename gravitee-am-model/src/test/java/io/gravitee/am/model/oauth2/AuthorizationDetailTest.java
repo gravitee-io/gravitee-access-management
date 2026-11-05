@@ -17,12 +17,16 @@ package io.gravitee.am.model.oauth2;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AuthorizationDetailTest {
@@ -54,6 +58,56 @@ class AuthorizationDetailTest {
         assertTrue(detail.getActions().isEmpty());
         assertTrue(detail.getDatatypes().isEmpty());
         assertTrue(detail.getPrivileges().isEmpty());
+    }
+
+    @Test
+    void shouldRejectChanges() {
+        AuthorizationDetail detail = new AuthorizationDetail(Map.of(
+                "type", "payment_initiation",
+                "instructedAmount", Map.of("currency", "EUR"),
+                "actions", List.of("initiate")));
+        Map<?, ?> instructedAmount = (Map<?, ?>) detail.get("instructedAmount");
+        List<?> actions = (List<?>) detail.get("actions");
+
+        assertThrows(UnsupportedOperationException.class, () -> detail.put("type", "account_information"));
+        assertThrows(UnsupportedOperationException.class, () -> detail.remove("type"));
+        assertThrows(UnsupportedOperationException.class, () -> detail.entrySet().iterator().next().setValue("account_information"));
+        assertThrows(UnsupportedOperationException.class, () -> instructedAmount.clear());
+        assertThrows(UnsupportedOperationException.class, () -> actions.clear());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldIgnoreLaterChangesToItsSource() {
+        Map<String, Object> instructedAmount = new HashMap<>(Map.of("currency", "EUR"));
+        List<Object> actions = new ArrayList<>(List.of(new HashMap<>(Map.of("name", "initiate"))));
+        Map<String, Object> source = new HashMap<>(Map.of("type", "payment_initiation", "instructedAmount", instructedAmount, "actions", actions));
+
+        AuthorizationDetail detail = new AuthorizationDetail(source);
+        source.put("type", "account_information");
+        instructedAmount.put("currency", "USD");
+        actions.add("refund");
+        ((Map<String, Object>) actions.get(0)).put("name", "cancel");
+
+        assertEquals(Map.of(
+                "type", "payment_initiation",
+                "instructedAmount", Map.of("currency", "EUR"),
+                "actions", List.of(Map.of("name", "initiate"))), detail);
+    }
+
+    @Test
+    void shouldKeepMemberOrderAndNullValues() {
+        Map<String, Object> source = new LinkedHashMap<>();
+        source.put("type", "payment_initiation");
+        source.put("zeta", null);
+        source.put("alpha", Arrays.asList(null, Map.of("b", 1)));
+
+        AuthorizationDetail detail = new AuthorizationDetail(source);
+
+        assertEquals(List.of("type", "zeta", "alpha"), List.copyOf(detail.keySet()));
+        assertTrue(detail.containsKey("zeta"));
+        assertNull(detail.get("zeta"));
+        assertEquals(Arrays.asList(null, Map.of("b", 1)), detail.get("alpha"));
     }
 
     @Test

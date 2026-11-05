@@ -15,17 +15,24 @@
  */
 package io.gravitee.am.model.oauth2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * An element of an authorization_details array. Members without a getter are read as map entries.
+ * An element of an authorization_details array, immutable down to its nested values. Members without a getter are read
+ * as map entries.
  * Expression Language reads every member as a map entry, so an absent common member is {@code null} there.
  * <p>
  * See <a href="https://datatracker.ietf.org/doc/html/rfc9396#section-2">RFC 9396 Section 2</a>
  */
-public class AuthorizationDetail extends LinkedHashMap<String, Object> {
+public final class AuthorizationDetail extends AbstractMap<String, Object> {
 
     public static final String TYPE = "type";
     public static final String LOCATIONS = "locations";
@@ -34,11 +41,31 @@ public class AuthorizationDetail extends LinkedHashMap<String, Object> {
     public static final String IDENTIFIER = "identifier";
     public static final String PRIVILEGES = "privileges";
 
-    public AuthorizationDetail() {
+    private final Map<String, Object> members;
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public AuthorizationDetail(Map<String, ?> members) {
+        this.members = copyOf(members);
     }
 
-    public AuthorizationDetail(Map<String, ?> members) {
-        super(members);
+    @Override
+    public Set<Entry<String, Object>> entrySet() {
+        return members.entrySet();
+    }
+
+    @Override
+    public Object get(Object key) {
+        return members.get(key);
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return members.containsKey(key);
+    }
+
+    @Override
+    public int size() {
+        return members.size();
     }
 
     public String getType() {
@@ -76,5 +103,23 @@ public class AuthorizationDetail extends LinkedHashMap<String, Object> {
         return get(member) instanceof List<?> values
                 ? values.stream().filter(String.class::isInstance).map(String.class::cast).toList()
                 : List.of();
+    }
+
+    private static Map<String, Object> copyOf(Map<?, ?> map) {
+        Map<String, Object> copy = new LinkedHashMap<>();
+        map.forEach((key, value) -> copy.put((String) key, copyOfValue(value)));
+        return Collections.unmodifiableMap(copy);
+    }
+
+    private static Object copyOfValue(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            return copyOf(map);
+        }
+        if (value instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            list.forEach(element -> copy.add(copyOfValue(element)));
+            return Collections.unmodifiableList(copy);
+        }
+        return value;
     }
 }

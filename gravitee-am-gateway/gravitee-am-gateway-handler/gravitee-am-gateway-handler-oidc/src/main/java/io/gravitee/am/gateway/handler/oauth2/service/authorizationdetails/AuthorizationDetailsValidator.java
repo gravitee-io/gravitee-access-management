@@ -33,7 +33,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.oauth2.AuthorizationDetail;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
@@ -44,6 +43,7 @@ import lombok.CustomLog;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,7 +65,7 @@ public class AuthorizationDetailsValidator extends AbstractService implements In
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
 
-    private static final TypeReference<List<AuthorizationDetail>> DETAILS = new TypeReference<>() {};
+    private static final TypeReference<List<Map<String, Object>>> DETAILS = new TypeReference<>() {};
 
     private static final SchemaRegistry SCHEMA_REGISTRY = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12,
             builder -> builder.schemaLoader(SchemaLoader.getDefault()));

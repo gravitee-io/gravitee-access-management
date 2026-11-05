@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,10 +78,22 @@ class AuthorizationDetailsTest {
     void shouldBeReadOnly() {
         AuthorizationDetails details = AuthorizationDetails.of(List.of(ACCOUNT));
 
-        assertThrows(UnsupportedOperationException.class, () -> details.getAll().add(new AuthorizationDetail()));
+        assertThrows(UnsupportedOperationException.class, () -> details.getAll().add(new AuthorizationDetail(ACCOUNT)));
+        assertThrows(UnsupportedOperationException.class, () -> details.getAll().get(0).put("type", "payment_initiation"));
         assertThrows(UnsupportedOperationException.class, () -> details.getRaw().clear());
         assertThrows(UnsupportedOperationException.class, () -> details.getByType().clear());
         assertThrows(UnsupportedOperationException.class, () -> details.getByType().get("account_information").clear());
+    }
+
+    @Test
+    void shouldIgnoreLaterChangesToTheSourceElements() {
+        Map<String, Object> source = new HashMap<>(ACCOUNT);
+        AuthorizationDetails details = AuthorizationDetails.of(List.of(source));
+
+        source.put("type", "payment_initiation");
+
+        assertEquals(Set.of("account_information"), details.getTypes());
+        assertEquals("account_information", details.getAll().get(0).getType());
     }
 
     @Test

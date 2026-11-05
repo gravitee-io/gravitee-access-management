@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 /**
- * The authorization_details of a request, read-only. Serializes as the JSON array it was built from.
+ * The authorization_details of a request, immutable. Serializes as the JSON array it was built from.
  * <p>
  * See <a href="https://datatracker.ietf.org/doc/html/rfc9396#section-2">RFC 9396 Section 2</a>
  */
