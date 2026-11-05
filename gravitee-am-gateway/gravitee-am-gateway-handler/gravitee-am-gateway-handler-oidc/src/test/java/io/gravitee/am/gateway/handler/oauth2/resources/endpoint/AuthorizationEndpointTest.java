@@ -49,6 +49,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriV
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -1756,7 +1757,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
 
         AuthorizationRequest authorizationRequest = finalRoutingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
-        assertEquals(List.of(Map.of("type", "account_information", "actions", List.of("read"))), authorizationRequest.getAuthorizationDetails());
+        assertEquals(List.of(Map.of("type", "account_information", "actions", List.of("read"))), authorizationRequest.getAuthorizationDetails().getRaw());
     }
 
     private static Client clientWithAuthorizationDetailTypes() {

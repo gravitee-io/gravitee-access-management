@@ -143,7 +143,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
                                         final ADNotificationRequest adRequest = new ADNotificationRequest();
                                         adRequest.setExpiresIn(expiresIn);
                                         adRequest.setAcrValues(authRequest.getAcrValues());
-                                        adRequest.setAuthorizationDetails(authRequest.getAuthorizationDetails());
+                                        adRequest.setAuthorizationDetails(authRequest.getAuthorizationDetails() == null ? null : authRequest.getAuthorizationDetails().getRaw());
                                         adRequest.setLoginHint(authRequest.getLoginHint());
                                         adRequest.setLoginHintToken(authRequest.getLoginHintToken());
                                         adRequest.setMessage(authRequest.getBindingMessage());

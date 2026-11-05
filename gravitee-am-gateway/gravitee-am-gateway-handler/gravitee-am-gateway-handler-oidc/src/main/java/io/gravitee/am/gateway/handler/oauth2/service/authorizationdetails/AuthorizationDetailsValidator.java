@@ -28,12 +28,13 @@ import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.SpecificationVersion;
 import com.networknt.schema.resource.SchemaLoader;
 import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
+import io.gravitee.am.model.oauth2.AuthorizationDetail;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import lombok.CustomLog;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +55,7 @@ public class AuthorizationDetailsValidator {
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
 
-    private static final TypeReference<List<Map<String, Object>>> DETAILS = new TypeReference<>() {};
+    private static final TypeReference<List<AuthorizationDetail>> DETAILS = new TypeReference<>() {};
 
     private static final SchemaRegistry SCHEMA_REGISTRY = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12,
             builder -> builder.schemaLoader(SchemaLoader.getDefault()));
@@ -76,7 +77,7 @@ public class AuthorizationDetailsValidator {
      *
      * @return the elements, in order and unchanged
      */
-    public List<Map<String, Object>> validate(String authorizationDetails, Client client) {
+    public AuthorizationDetails validate(String authorizationDetails, Client client) {
         JsonNode elements = parse(authorizationDetails);
         for (int index = 0; index < elements.size(); index++) {
             checkSyntax(elements.get(index), index);
@@ -84,7 +85,7 @@ public class AuthorizationDetailsValidator {
         for (int index = 0; index < elements.size(); index++) {
             checkSemantics(elements.get(index), index, client);
         }
-        return MAPPER.convertValue(elements, DETAILS);
+        return AuthorizationDetails.of(MAPPER.convertValue(elements, DETAILS));
     }
 
     private static JsonNode parse(String authorizationDetails) {

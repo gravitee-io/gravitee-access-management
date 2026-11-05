@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.model.AuthenticationFlowContext;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -78,7 +79,7 @@ class AuthorizationRequestParseAuthorizationDetailsHandlerTest {
     @Test
     void shouldKeepTheValidatedAuthorizationDetails() {
         Client client = new Client();
-        List<Map<String, Object>> validated = List.of(Map.of("type", "account_information"));
+        AuthorizationDetails validated = AuthorizationDetails.of(List.of(Map.of("type", "account_information")));
         when(request.getParam(AUTHORIZATION_DETAILS)).thenReturn(AUTHORIZATION_DETAILS_VALUE);
         when(context.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(authorizationDetailsValidator.validate(AUTHORIZATION_DETAILS_VALUE, client)).thenReturn(validated);

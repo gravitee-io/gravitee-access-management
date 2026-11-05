@@ -21,6 +21,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.model.AuthenticationFlowContext;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.MultiMap;
@@ -86,7 +87,7 @@ public class AuthorizationRequestFactoryTest {
     @Test
     public void shouldAttachValidatedAuthorizationDetails() {
         RoutingContext routingContext = newRoutingContext();
-        List<Map<String, Object>> authorizationDetails = List.of(Map.of("type", "account_information"));
+        AuthorizationDetails authorizationDetails = AuthorizationDetails.of(List.of(Map.of("type", "account_information")));
         when(routingContext.get(ConstantKeys.AUTHORIZATION_DETAILS_CONTEXT_KEY)).thenReturn(authorizationDetails);
 
         AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);

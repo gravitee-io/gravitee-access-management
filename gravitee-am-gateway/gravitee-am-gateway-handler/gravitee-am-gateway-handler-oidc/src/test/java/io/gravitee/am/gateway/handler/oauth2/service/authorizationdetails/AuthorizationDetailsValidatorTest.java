@@ -19,7 +19,9 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
 import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
+import io.gravitee.am.model.oauth2.AuthorizationDetail;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -175,7 +177,7 @@ class AuthorizationDetailsValidatorTest {
 
     @Test
     void shouldAcceptAnyObjectOfATypeWithoutSchema() {
-        List<Map<String, Object>> details = validator.validate("[{\"type\":\"account_information\",\"anything\":[1,{\"nested\":true}]}]", client);
+        List<Map<String, Object>> details = validator.validate("[{\"type\":\"account_information\",\"anything\":[1,{\"nested\":true}]}]", client).getRaw();
 
         assertThat(details).containsExactly(Map.of("type", ACCOUNT, "anything", List.of(1, Map.of("nested", true))));
     }
@@ -186,7 +188,7 @@ class AuthorizationDetailsValidatorTest {
                 + "{\"type\":\"account_information\",\"actions\":[\"list_accounts\",\"read_balances\"]},"
                 + "{\"type\":\"payment_initiation\",\"instructedAmount\":{\"currency\":\"USD\",\"amount\":\"9\"}}]";
 
-        List<Map<String, Object>> details = validator.validate(authorizationDetails, client);
+        List<Map<String, Object>> details = validator.validate(authorizationDetails, client).getRaw();
 
         assertThat(details).hasSize(3);
         assertThat(details.get(0)).containsExactly(
@@ -195,6 +197,18 @@ class AuthorizationDetailsValidatorTest {
                 Map.entry("rate", new BigDecimal("0.10000000000000000001")));
         assertThat(details.get(1)).isEqualTo(Map.of("type", ACCOUNT, "actions", List.of("list_accounts", "read_balances")));
         assertThat(details.get(2)).isEqualTo(Map.of("type", PAYMENT, "instructedAmount", Map.of("currency", "USD", "amount", "9")));
+    }
+
+    @Test
+    void shouldReturnTypedElementsGroupedByType() {
+        AuthorizationDetails details = validator.validate("[{\"type\":\"account_information\",\"actions\":[\"list_accounts\"]},"
+                + "{\"type\":\"payment_initiation\",\"instructedAmount\":{\"currency\":\"EUR\",\"amount\":\"1\"}}]", client);
+
+        assertThat(details.getAll()).extracting(AuthorizationDetail::getType).containsExactly(ACCOUNT, PAYMENT);
+        assertThat(details.getByType().get(ACCOUNT)).singleElement()
+                .extracting(AuthorizationDetail::getActions).isEqualTo(List.of("list_accounts"));
+        assertThat(details.getByType().get(PAYMENT)).singleElement()
+                .extracting(detail -> detail.get("instructedAmount")).isEqualTo(Map.of("currency", "EUR", "amount", "1"));
     }
 
     private void assertRejected(String authorizationDetails, Class<? extends OAuth2Exception> error, String description) {
