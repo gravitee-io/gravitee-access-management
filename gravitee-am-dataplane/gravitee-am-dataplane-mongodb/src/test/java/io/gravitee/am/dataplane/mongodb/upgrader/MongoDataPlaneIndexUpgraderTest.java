@@ -38,7 +38,8 @@ public class MongoDataPlaneIndexUpgraderTest {
 
         assertThat(changelog.upgraders())
                 .extracting(upgrader -> upgrader.identifier(description))
-                .containsExactly("default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_initial-indexes");
+                .containsExactly("default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_initial-indexes",
+                        "default_" + MongoDataPlaneIndexUpgrader.class.getName() + "_authorization-detail-approvals");
     }
 
     @Test
@@ -46,6 +47,7 @@ public class MongoDataPlaneIndexUpgraderTest {
         assertThat(MongoIndexDeclarations.load(getClass().getClassLoader(), MongoDataPlaneIndexUpgrader.RESOURCE)
                 .changesets())
                 .extracting(MongoIndexDeclarations.Changeset::id, MongoIndexDeclarations.Changeset::checksum)
-                .containsExactly(tuple("initial-indexes", "c6d96eb35f27"));
+                .containsExactly(tuple("initial-indexes", "c6d96eb35f27"),
+                        tuple("authorization-detail-approvals", "9384a3db7125"));
     }
 }

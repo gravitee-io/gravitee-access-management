@@ -87,6 +87,7 @@ export const NewEmailTemplateEnum = {
   ForgotPassword: 'FORGOT_PASSWORD',
   ResetPassword: 'RESET_PASSWORD',
   Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
+  Oauth2AuthorizationDetailsConsent: 'OAUTH2_AUTHORIZATION_DETAILS_CONSENT',
   MfaEnroll: 'MFA_ENROLL',
   MfaChallenge: 'MFA_CHALLENGE',
   MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',

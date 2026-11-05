@@ -80,6 +80,16 @@
         "users": ["referenceType_1_referenceId_1_username_1_source_1", "rt1ri1u1s1", "rt1ri1", "rt1ri1ext1", "rt1ri1u1"],
         "webauthn_credentials": ["rt1ri1", "rt1ri1un1"]
       }
+    },
+    {
+      "id": "authorization-detail-approvals",
+      "create": {
+        "authorization_detail_approvals": [
+          { "name": "d1c1u1dg1", "key": { "domain": 1, "clientId": 1, "userId": 1, "digest": 1 } },
+          { "name": "d1c1ue1us1dg1", "key": { "domain": 1, "clientId": 1, "userExternalId": 1, "userSource": 1, "digest": 1 } },
+          { "name": "e1", "key": { "expiresAt": 1 }, "expireAfterSeconds": 0 }
+        ]
+      }
     }
   ]
 }

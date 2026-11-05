@@ -28,6 +28,7 @@ import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
 import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
 import io.gravitee.am.dataplane.api.repository.ResourceRepository;
+import io.gravitee.am.dataplane.api.repository.AuthorizationDetailApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -77,6 +78,9 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
 
     @Autowired
     private ScopeApprovalRepository scopeApprovalRepository;
+
+    @Autowired
+    private AuthorizationDetailApprovalRepository authorizationDetailApprovalRepository;
 
     @Autowired
     private UserActivityRepository userActivityRepository;
@@ -178,6 +182,11 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Override
     public ScopeApprovalRepository getScopeApprovalRepository() {
         return scopeApprovalRepository;
+    }
+
+    @Override
+    public AuthorizationDetailApprovalRepository getAuthorizationDetailApprovalRepository() {
+        return authorizationDetailApprovalRepository;
     }
 
     @Override

@@ -15,19 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
-import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.RequiredScopeUtils;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
-import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -37,17 +34,13 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants.SCOPE_PREFIX;
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants.USER_OAUTH_APPROVAL;
-import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
-import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -135,7 +128,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         }
 
         // save consent
-        saveConsent(routingContext, request, user, client, approvals, h -> {
+        saveConsent(routingContext, user, client, approvals, h -> {
             if (h.failed()) {
                 metricProvider.incrementConsentFailure();
                 routingContext.fail(h.cause());
@@ -159,11 +152,10 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
     }
 
     private void saveConsent(RoutingContext context,
-                             HttpServerRequest request,
                              io.gravitee.am.model.User endUser,
                              Client client,
                              List<ScopeApproval> approvals, Handler<AsyncResult<List<ScopeApproval>>> handler) {
-        userConsentService.saveConsent(client, approvals, getAuthenticatedUser(context, request, endUser))
+        userConsentService.saveConsent(client, approvals, ConsentPrincipal.of(context, endUser, domain))
                 .subscribe(
                         approvals1 -> handler.handle(Future.succeededFuture(approvals1)),
                         error -> handler.handle(Future.failedFuture(error))
@@ -176,23 +168,5 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         }
         final String normalized = submittedValue.toLowerCase();
         return "true".equals(normalized) || normalized.startsWith("approve");
-    }
-
-    private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(RoutingContext context,
-                                                                          HttpServerRequest request,
-                                                                          io.gravitee.am.model.User user) {
-        DefaultUser authenticatedUser = new DefaultUser(user.getUsername());
-        authenticatedUser.setId(user.getId());
-        Map<String, Object> additionalInformation = new HashMap<>(user.getAdditionalInformation());
-        // add ip address and user agent
-        if (canSaveIp(context)) {
-            additionalInformation.put(Claims.IP_ADDRESS, RequestUtils.remoteAddress(request));
-        }
-        if (canSaveUserAgent(context)) {
-            additionalInformation.put(Claims.USER_AGENT, RequestUtils.userAgent(request));
-        }
-        additionalInformation.put(Claims.DOMAIN, domain.getId());
-        authenticatedUser.setAdditionalInformation(additionalInformation);
-        return authenticatedUser;
     }
 }
