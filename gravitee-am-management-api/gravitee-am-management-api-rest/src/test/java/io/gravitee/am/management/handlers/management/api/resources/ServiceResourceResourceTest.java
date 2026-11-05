@@ -35,7 +35,7 @@ public class ServiceResourceResourceTest extends JerseySpringTest {
         final String serviceResourceId = "serviceResource-of-another-domain";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(serviceResourceServiceProxy).findById(domainId, serviceResourceId);
+        doReturn(Maybe.empty()).when(serviceResourceServiceProxy).findByIdForDisplay(domainId, serviceResourceId);
 
         final Response response = target("domains").path(domainId).path("resources").path(serviceResourceId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
