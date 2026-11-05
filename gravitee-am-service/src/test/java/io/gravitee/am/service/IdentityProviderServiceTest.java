@@ -45,6 +45,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -734,6 +735,27 @@ public class IdentityProviderServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        IdentityProvider undecryptable = new IdentityProvider();
+        undecryptable.setId("my-identity-provider");
+        undecryptable.setReferenceType(ReferenceType.DOMAIN);
+        undecryptable.setReferenceId(DOMAIN);
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
+        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Flowable.empty());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(identityProviderRepository, times(1)).delete("my-identity-provider");
     }
 
     @Test

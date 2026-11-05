@@ -20,6 +20,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.gravitee.am.service.exception.FactorConfigurationException;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -302,6 +303,24 @@ public class FactorServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        Factor factor = new Factor();
+        factor.setId("factor-id");
+        factor.setDomain(DOMAIN);
+        when(factorRepository.findById(factor.getId())).thenReturn(Maybe.error(new PluginDecryptConfigException(factor, new IllegalStateException("key not configured"))));
+        when(applicationService.findByFactor(factor.getId())).thenReturn(Flowable.empty());
+        when(factorRepository.delete(factor.getId())).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = factorService.delete(DOMAIN, factor.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(factorRepository, times(1)).delete(factor.getId());
     }
 
     @Test

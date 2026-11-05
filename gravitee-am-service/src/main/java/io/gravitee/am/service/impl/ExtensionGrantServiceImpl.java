@@ -26,6 +26,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -199,10 +200,16 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 });
     }
 
+    private Maybe<ExtensionGrant> findByIdForDeletion(String domain, String id) {
+        return extensionGrantRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(ExtensionGrant.class))
+                .filter(extensionGrant -> domain.equals(extensionGrant.getDomain()));
+    }
+
     @Override
     public Completable delete(String domain, String extensionGrantId, User principal) {
         log.debug("Delete extension grant {}", extensionGrantId);
-        return findById(domain, extensionGrantId)
+        return findByIdForDeletion(domain, extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
                 // check for clients using this extension grant
                 .flatMapSingle(extensionGrant -> applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
