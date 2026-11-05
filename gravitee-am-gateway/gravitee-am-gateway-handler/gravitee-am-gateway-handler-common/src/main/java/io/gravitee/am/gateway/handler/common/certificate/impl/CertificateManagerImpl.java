@@ -108,9 +108,25 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 .observeOn(Schedulers.io())
                 .subscribe(
                         certificate -> {
+<<<<<<< HEAD
                             certificateProviderManager.create(certificate);
                             certificates.put(certificate.getId(), certificate);
                             logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
+=======
+                            domainReadinessService.initPluginSync(domain.getId(), certificate.getId(), Type.CERTIFICATE.name());
+                            try {
+                                if (!domainPluginLicenseGate.check(PluginLicenseGate.TYPE_CERTIFICATE, certificate.getType(), certificate.getId())) {
+                                    return;
+                                }
+                                certificateProviderManager.create(certificate);
+                                certificates.put(certificate.getId(), certificate);
+                                log.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
+                                domainReadinessService.pluginLoaded(domain.getId(), certificate.getId());
+                            } catch (Exception ex) {
+                                log.error("Unable to load certificate {} for domain {}, continue with the next ones", certificate.getName(), domain.getName(), ex);
+                                domainReadinessService.pluginFailed(domain.getId(), certificate.getId(), ex.getMessage());
+                            }
+>>>>>>> d1c799a (fix: keep loading the remaining certificates when one fails at startup)
                         },
                         error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
                 );
