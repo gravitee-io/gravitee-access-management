@@ -93,7 +93,7 @@ public class FactorsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapPublisher(___ -> factorService.findByDomain(domain))
+                        .flatMapPublisher(___ -> factorService.findByDomainForListing(domain))
                         .map(this::filterFactorInfos)
                         .toList())
                 .subscribe(response::resume, response::resume);
