@@ -207,8 +207,30 @@ function adaptProperties(node: SchemaNode, adapted: SchemaNode, path: string, co
     }
 }
 
-function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
+/** Some plugin titles and descriptions hold HTML, which the console shows as plain text. A line break becomes a space. */
+function plainText(text: unknown): string | undefined {
+    if (typeof text !== 'string') {
+        return undefined;
+    }
+    return text
+        .replace(/<br\s*\/?>|<\/br>/gi, ' ')
+        .replace(/<[^>]*>/g, '')
+        .replace(/ {2,}/g, ' ')
+        .trim();
+}
+
+function copyNode(node: SchemaNode): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
+    for (const keyword of ['title', 'description']) {
+        if (typeof adapted[keyword] === 'string') {
+            adapted[keyword] = plainText(adapted[keyword]);
+        }
+    }
+    return adapted;
+}
+
+function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
+    const adapted = copyNode(node);
 
     const widget = widgetOf(node);
     if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
@@ -275,22 +297,22 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         .filter(([, property]) => widgetOf(property) === 'file')
         .map(([key, property]) => ({
             key,
-            title: property.title as string | undefined,
-            description: property.description as string | undefined,
+            title: plainText(property.title),
+            description: plainText(property.description),
             required: required.includes(key),
         }));
     const stringLists: SchemaStringList[] = Object.entries(properties)
         .filter(([, property]) => isStringList(property))
         .map(([key, property]) => ({
             key,
-            title: property.title as string | undefined,
-            description: property.description as string | undefined,
+            title: plainText(property.title),
+            description: plainText(property.description),
             required: required.includes(key),
             readOnly: property.readonly === true,
         }));
     const extracted = (key: string) => files.some(file => file.key === key) || stringLists.some(list => list.key === key);
 
-    const adapted: SchemaNode = Object.fromEntries(Object.entries(schema).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
+    const adapted = copyNode(schema);
     if (schema.properties) {
         adaptProperties(schema, adapted, '', context, extracted);
     }
