@@ -99,12 +99,14 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
         try {
             identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
-                    .flatMapSingle(this::updateAuthenticationProvider)
-                    .map(provider -> {
-                        gatewayMetricProvider.incrementIdp();
-                        return provider;
-                    })
-                    .blockingLast();
+                    .flatMapMaybe(idp -> updateAuthenticationProvider(idp).toMaybe()
+                            .onErrorResumeNext(err -> {
+                                logger.error("Unable to initialize identity provider {} for domain {}", idp.getName(), domain.getName(), err);
+                                return Maybe.empty();
+                            }))
+                    .doOnNext(provider -> gatewayMetricProvider.incrementIdp())
+                    .ignoreElements()
+                    .blockingAwait();
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
