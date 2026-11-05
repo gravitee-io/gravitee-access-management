@@ -74,7 +74,7 @@ public class AlertNotifierResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN_ALERT_NOTIFIER, Acl.LIST)
-                .andThen(alertNotifierService.getById(ReferenceType.DOMAIN, domainId, notifierId))
+                .andThen(alertNotifierService.getByIdForDisplay(ReferenceType.DOMAIN, domainId, notifierId))
                 .subscribe(response::resume, response::resume);
     }
 
