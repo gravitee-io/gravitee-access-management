@@ -86,7 +86,7 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUTHDEVICE_NOTIFIER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> authDeviceNotifierService.findById(domain, deviceNotifierId))
+                        .flatMap(__ -> authDeviceNotifierService.findByIdForDisplay(domain, deviceNotifierId))
                         .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierNotFoundException(deviceNotifierId)))
                         .map(deviceNotifier -> Response.ok(deviceNotifier).build()))
                 .subscribe(response::resume, response::resume);

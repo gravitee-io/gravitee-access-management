@@ -37,6 +37,21 @@ public interface AuthenticationDeviceNotifierService {
 
     Flowable<AuthenticationDeviceNotifier> findByDomain(String domain);
 
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the authentication device notifier.
+     * <p>
+     * An authentication device notifier whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<AuthenticationDeviceNotifier> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Same as {@link #findByDomain(String)} in a single query, for the endpoints that only display the authentication device notifiers.
+     * <p>
+     * An authentication device notifier whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<AuthenticationDeviceNotifier> findByDomainForListing(String domain);
+
     Single<AuthenticationDeviceNotifier> create(Domain domain, NewAuthenticationDeviceNotifier notifier, User principal);
 
     Single<AuthenticationDeviceNotifier> update(Domain domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal);
