@@ -13,7 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DataTableEmptyState, toast } from '@gravitee/graphene-core';
+import {
+    Badge,
+    Button,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    DataTableEmptyState,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    toast,
+} from '@gravitee/graphene-core';
 import { PlusIcon, Trash2Icon, UserIcon, UsersIcon } from '@gravitee/graphene-core/icons';
 import { type ReactNode, useState } from 'react';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
@@ -27,6 +43,8 @@ interface ExpressionMapperPanelProps {
     readonly noun: string;
     readonly title: string;
     readonly description: ReactNode;
+    /** User expressions and the target each one maps onto, shown under the description. */
+    readonly examples: readonly { readonly user: string; readonly target: string }[];
     readonly targets: readonly MapperTarget[];
     readonly mapper: Mapper;
     /** The toast when the user expression is already mapped onto the target. */
@@ -44,6 +62,7 @@ export function ExpressionMapperPanel({
     noun,
     title,
     description,
+    examples,
     targets,
     mapper,
     duplicateMessage,
@@ -108,6 +127,28 @@ export function ExpressionMapperPanel({
                     <div className="flex flex-col gap-1.5">
                         <CardTitle>{title}</CardTitle>
                         <CardDescription>{description}</CardDescription>
+                        <div className="mt-2 overflow-hidden rounded-md border border-border">
+                            <Table aria-label={`${noun} mapping examples`}>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Users matching</TableHead>
+                                        <TableHead>{`${noun[0].toUpperCase()}${noun.slice(1)}`}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {examples.map(example => (
+                                        <TableRow key={example.user}>
+                                            <TableCell>
+                                                <code className="font-mono text-xs">{example.user}</code>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{example.target}</Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
                     {canUpdate && keys.length > 0 && addButton}
                 </CardHeader>
