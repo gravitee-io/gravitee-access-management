@@ -44,6 +44,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.AgentType;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -1334,7 +1335,7 @@ public class TokenServiceImplTest {
         request.setSupportRefreshToken(false);
         request.setScopes(Set.of("openid"));
         request.setOrigin("https://auth.example.com");
-        request.setAuthorizationDetails(List.of(Map.of("type", "fdx_v1.0")));
+        request.setAuthorizationDetails(AuthorizationDetails.of(List.of(Map.of("type", "fdx_v1.0"))));
 
         Client client = createClient("rar-client");
         User user = createUser("user-rar");
@@ -1716,7 +1717,7 @@ public class TokenServiceImplTest {
         OAuth2Request request = authorizationCodeRequest();
         request.setSubject("user");
         request.setPermissions(List.of(new PermissionRequest().setResourceId("rs-1")));
-        request.setAuthorizationDetails(List.of(Map.of("type", "fdx_v1.0")));
+        request.setAuthorizationDetails(AuthorizationDetails.of(List.of(Map.of("type", "fdx_v1.0"))));
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add(io.gravitee.am.common.oidc.Parameters.CLAIMS, "{\"userinfo\":{\"email\":null}}");
         request.setParameters(parameters);

@@ -52,6 +52,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 
 import java.time.Instant;
 import java.util.*;
@@ -612,7 +613,7 @@ public class AuthenticationRequestServiceTest {
         request.setId("req-1");
         request.setScopes(java.util.Set.of("openid"));
         request.setSubject("alice");
-        request.setAuthorizationDetails(java.util.List.of(d));
+        request.setAuthorizationDetails(AuthorizationDetails.of(java.util.List.of(d)));
 
         ArgumentCaptor<CibaAuthRequest> captor = ArgumentCaptor.forClass(CibaAuthRequest.class);
         when(requestRepository.create(captor.capture())).thenAnswer(inv -> Single.just(inv.getArgument(0)));

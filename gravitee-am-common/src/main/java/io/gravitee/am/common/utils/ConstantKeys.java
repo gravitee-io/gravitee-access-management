@@ -181,6 +181,9 @@ public interface ConstantKeys {
     String REQUEST_URI_ID_KEY = "requestUriId";
     String REQUEST_OBJECT_FROM_URI = "request-object-from-uri";
 
+    // validated authorization_details (RFC 9396) of the authorization request
+    String AUTHORIZATION_DETAILS_CONTEXT_KEY = "authorizationDetails";
+
     //geoip
     String GEOIP_KEY = "geoip";
 

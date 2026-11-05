@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailTypeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.MtlsEndpointAliases;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -65,6 +66,9 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
 
     @Autowired
     private ScopeService scopeService;
+
+    @Autowired
+    private AuthorizationDetailTypeManager authorizationDetailTypeManager;
 
     @Autowired
     private Environment env;
@@ -123,6 +127,11 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
 
         // supported parameters
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
+        // RFC 8414 Section 3.2: a claim with no elements is omitted
+        List<String> authorizationDetailsTypes = authorizationDetailTypeManager.findDiscoveryTypes();
+        if (!authorizationDetailsTypes.isEmpty()) {
+            openIDProviderMetadata.setAuthorizationDetailsTypesSupported(authorizationDetailsTypes);
+        }
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
         openIDProviderMetadata.setResponseModesSupported(ResponseMode.supportedValues());
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());

@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -152,7 +153,7 @@ public class OAuth2Request extends BaseRequest {
     /**
      * RFC 9396 Rich Authorization Requests — authorization_details array
      */
-    private List<Map<String, Object>> authorizationDetails;
+    private AuthorizationDetails authorizationDetails;
 
     private MultiValueMap<String, String> pathParameters = null;
 
