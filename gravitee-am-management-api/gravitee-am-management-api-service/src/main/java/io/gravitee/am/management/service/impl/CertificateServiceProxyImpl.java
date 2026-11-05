@@ -35,6 +35,7 @@ import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
+import io.gravitee.am.service.model.ListedCertificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -51,8 +52,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Component
@@ -95,14 +99,26 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
+    public Maybe<Certificate> findByIdForDisplay(String domain, String id) {
+        return certificateService.findByIdForDisplay(domain, id).flatMap(certificate -> filterSensitiveData(certificate).toMaybe());
+    }
+
+    @Override
     public Single<List<CertificateEntity>> findByDomainAndUse(String domainId, String use) {
-        return certificateService.findByDomain(domainId)
-                .filter(cert -> {
+        final Set<String> unreadable = Collections.synchronizedSet(new HashSet<>());
+        return certificateService.findByDomainForListing(domainId)
+                .filter(listed -> {
+                    if (!listed.configurationReadable()) {
+                        unreadable.add(listed.certificate().getId());
+                        // its usage is unknown, so it cannot be offered for a given use
+                        return StringUtils.isBlank(use);
+                    }
                     if (StringUtils.isBlank(use)) {
                         return true;
                     }
-                    return cert.hasUse(use, objectMapper::readTree);
+                    return listed.certificate().hasUse(use, objectMapper::readTree);
                 })
+                .map(ListedCertificate::certificate)
                 .flatMapSingle(this::filterSensitiveData)
                 .toList()
                 .map(allCerts -> {
@@ -126,7 +142,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                     return Single.zip(
                             getAppsUsing(cert).toList(),
                             getIdpsUsing(cert).toList(),
-                            (appUsage, idpUsage) -> CertificateEntity.forList(cert, certExpirationWarningThreshold, isRenewedSystemCert, appUsage, idpUsage)
+                            (appUsage, idpUsage) -> CertificateEntity.forList(cert, certExpirationWarningThreshold, isRenewedSystemCert, appUsage, idpUsage, !unreadable.contains(cert.getId()))
                     );
                 })
                 .sorted(Comparator.comparing(CertificateEntity::name, String.CASE_INSENSITIVE_ORDER))
