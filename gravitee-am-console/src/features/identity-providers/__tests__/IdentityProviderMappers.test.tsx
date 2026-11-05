@@ -204,6 +204,21 @@ describe('IdentityProviderRolesPage', () => {
         expect(screen.getByText('This domain has no roles to map users onto yet.')).toBeInTheDocument();
     });
 
+    it('searches the roles in the add dialog when the domain has more than 10', async () => {
+        vi.mocked(listAllRoles).mockResolvedValue(Array.from({ length: 11 }, (_, i) => ({ id: `role-${i}`, name: `ROLE_${i}` })));
+        setupMapperTabHarness('roles');
+
+        await screen.findByRole('button', { name: 'Add role mapping' });
+        await buttonHarness({ name: 'Add role mapping' }).click();
+        const dialog = await screen.findByRole('dialog', { name: 'Role mappings' });
+        await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'role_1');
+
+        expect(screen.getAllByRole('checkbox').map(box => box.getAttribute('id'))).toEqual(['mapper-role-1', 'mapper-role-10']);
+        await userEvent.clear(screen.getByRole('searchbox', { name: 'Search roles' }));
+        await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'missing');
+        expect(dialog).toHaveTextContent('No roles match your search.');
+    });
+
     it('lists the mapped users under the role names', async () => {
         setupMapperTabHarness('roles');
 

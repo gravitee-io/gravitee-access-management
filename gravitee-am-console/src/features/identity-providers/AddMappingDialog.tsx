@@ -33,6 +33,9 @@ import {
 } from '@gravitee/graphene-core';
 import { useState } from 'react';
 
+/** Above this many roles or groups, the dialog shows a search field. */
+const SEARCH_THRESHOLD = 10;
+
 export interface MapperTarget {
     readonly id: string;
     readonly name: string;
@@ -56,6 +59,8 @@ interface AddMappingDialogProps {
 export function AddMappingDialog({ noun, targets, onCancel, onSave }: AddMappingDialogProps) {
     const [user, setUser] = useState('');
     const [selected, setSelected] = useState<string[]>([]);
+    const [query, setQuery] = useState('');
+    const shown = targets.filter(target => target.name.toLowerCase().includes(query.trim().toLowerCase()));
     const toggle = (id: string, on: boolean) => setSelected(current => (on ? [...current, id] : current.filter(other => other !== id)));
 
     return (
@@ -81,12 +86,23 @@ export function AddMappingDialog({ noun, targets, onCancel, onSave }: AddMapping
                     </Field>
                     <FieldSet>
                         <FieldLegend variant="label">{`${capitalize(noun)}s`}</FieldLegend>
+                        {targets.length > SEARCH_THRESHOLD && (
+                            <Input
+                                type="search"
+                                aria-label={`Search ${noun}s`}
+                                placeholder={`Search ${noun}s`}
+                                value={query}
+                                onChange={event => setQuery(event.target.value)}
+                            />
+                        )}
                         {targets.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No {noun}s exist yet.</p>
+                        ) : shown.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No {noun}s match your search.</p>
                         ) : (
                             <ScrollArea viewportProps={{ className: 'max-h-64' }}>
                                 <div className="flex flex-col gap-2 p-1">
-                                    {targets.map(target => (
+                                    {shown.map(target => (
                                         <div key={target.id} className="flex items-center gap-2">
                                             <Checkbox
                                                 id={`mapper-${target.id}`}
