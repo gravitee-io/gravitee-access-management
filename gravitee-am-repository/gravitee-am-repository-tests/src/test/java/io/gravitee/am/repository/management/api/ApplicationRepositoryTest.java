@@ -122,6 +122,28 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
 
     @Test
+    public void testFindByDomainAndClientId_longestClientId() {
+        final String clientId = "c".repeat(255);
+        Application application = new Application();
+        application.setName("testApp");
+        application.setDomain("testDomain");
+        ApplicationSettings settings = new ApplicationSettings();
+        application.setSettings(settings);
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        settings.setOauth(oauth);
+        oauth.setClientId(clientId);
+        Application createdApplication = applicationRepository.create(application).blockingGet();
+
+        TestObserver<Application> testObserver = applicationRepository.findByDomainAndClientId("testDomain", clientId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(app -> app.getId().equals(createdApplication.getId())
+                && clientId.equals(app.getSettings().getOauth().getClientId()));
+    }
+
+    @Test
     public void testFindByDomainAndClientId() {
         // create application
         Application application = new Application();
