@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
 import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
@@ -89,6 +90,31 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
         return this.alertNotifierRepository.findById(notifierId)
                 .filter(alertNotifier -> alertNotifier.getReferenceType() == referenceType && alertNotifier.getReferenceId().equals(referenceId))
                 .switchIfEmpty(Single.error(new AlertNotifierNotFoundException(notifierId)));
+    }
+
+    @Override
+    public Single<AlertNotifier> getByIdForDisplay(ReferenceType referenceType, String referenceId, String notifierId) {
+        log.debug("Find alert notifier by id for display {}", notifierId);
+
+        return this.alertNotifierRepository.findById(notifierId)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(AlertNotifier.class))
+                .map(alertNotifier -> FieldEncryptor.isEncrypted(alertNotifier.getConfiguration()) ? withEmptyConfiguration(alertNotifier) : alertNotifier)
+                .filter(alertNotifier -> alertNotifier.getReferenceType() == referenceType && alertNotifier.getReferenceId().equals(referenceId))
+                .switchIfEmpty(Single.error(new AlertNotifierNotFoundException(notifierId)));
+    }
+
+    @Override
+    public Flowable<AlertNotifier> findByDomainForListing(String domainId) {
+        log.debug("Find alert notifiers for listing by domain {}", domainId);
+
+        return alertNotifierRepository.findByCriteriaForListing(ReferenceType.DOMAIN, domainId, new AlertNotifierCriteria())
+                .map(alertNotifier -> FieldEncryptor.isEncrypted(alertNotifier.getConfiguration()) ? withEmptyConfiguration(alertNotifier) : alertNotifier);
+    }
+
+    private static AlertNotifier withEmptyConfiguration(AlertNotifier alertNotifier) {
+        var copy = new AlertNotifier(alertNotifier);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     /**

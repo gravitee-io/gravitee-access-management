@@ -65,6 +65,16 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
     }
 
     @Override
+    public Single<AlertNotifier> getByIdForDisplay(ReferenceType referenceType, String referenceId, String notifierId) {
+        return alertNotifierService.getByIdForDisplay(referenceType, referenceId, notifierId).flatMap(this::filterSensitiveData);
+    }
+
+    @Override
+    public Flowable<AlertNotifier> findByDomainForListing(String domainId) {
+        return alertNotifierService.findByDomainForListing(domainId).flatMapSingle(this::filterSensitiveData);
+    }
+
+    @Override
     public Flowable<AlertNotifier> findByDomainAndCriteria(String domainId, AlertNotifierCriteria criteria) {
         return alertNotifierService.findByDomainAndCriteria(domainId, criteria).flatMapSingle(this::filterSensitiveData);
     }
