@@ -147,6 +147,19 @@ describe('IdentityProviderMappersPage', () => {
         );
     });
 
+    it('hides the save banner after a save of a mapper with spaces around it', async () => {
+        const harness = setupMapperTabHarness('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
+
+        await harness.addMapper();
+        await harness.typeKey(1, 'nickname ');
+        await harness.typeValue(1, ' nick');
+        await harness.save();
+
+        await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Mappers saved'));
+        expect(updateIdentityProvider).toHaveBeenCalledWith(ref, { ...provider, mappers: { email: 'mail', nickname: 'nick' } });
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument());
+    });
+
     it('marks a duplicate attribute on its row and blocks the save', async () => {
         const harness = setupMapperTabHarness('mappers', UPDATE, { ...provider, mappers: { email: 'mail' } });
 
