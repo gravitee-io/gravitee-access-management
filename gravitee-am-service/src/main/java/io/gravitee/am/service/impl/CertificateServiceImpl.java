@@ -833,4 +833,11 @@ public class CertificateServiceImpl implements CertificateService {
 
     private record EmbeddedFile(byte[] content, String name) {
     }
+
+    @Override
+    public Completable deleteByDomain(String domainId, User principal) {
+        log.debug("Delete certificates of domain {}", domainId);
+        return certificateRepository.findIdsByDomain(domainId)
+                .concatMapCompletable(id -> delete(domainId, id, principal, true));
+    }
 }

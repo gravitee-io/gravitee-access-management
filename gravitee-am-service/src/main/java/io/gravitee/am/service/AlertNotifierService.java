@@ -41,4 +41,9 @@ public interface AlertNotifierService {
     Single<AlertNotifier> update(ReferenceType referenceType, String referenceId, String alertNotifierId, PatchAlertNotifier patchAlertNotifier, User byUser);
 
     Completable delete(ReferenceType referenceType, String referenceId, String notifierId, User byUser);
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

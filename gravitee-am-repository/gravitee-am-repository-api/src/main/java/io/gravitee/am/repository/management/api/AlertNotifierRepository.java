@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.repository.common.CrudRepository;
@@ -61,4 +63,9 @@ public interface AlertNotifierRepository extends CrudRepository<AlertNotifier, S
      * @return the alert notifiers found.
      */
     Flowable<AlertNotifier> findByCriteria(ReferenceType referenceType, String referenceId, AlertNotifierCriteria criteria);
+
+    /**
+     * Deletes the alert notifiers of a reference without reading them, so that a configuration which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByReference(Reference reference);
 }

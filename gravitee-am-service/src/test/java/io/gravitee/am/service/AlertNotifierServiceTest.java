@@ -310,4 +310,15 @@ public class AlertNotifierServiceTest {
         verify(alertNotifierRepository, never()).update(any(AlertNotifier.class));
     }
 
+    @Test
+    public void shouldDeleteByDomain() {
+        when(alertNotifierRepository.deleteByReference(io.gravitee.am.model.Reference.domain(DOMAIN_ID))).thenReturn(Completable.complete());
+
+        final TestObserver<Void> obs = cut.deleteByDomain(DOMAIN_ID).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+        obs.assertNoErrors();
+        verify(alertNotifierRepository, never()).findById(any());
+    }
 }

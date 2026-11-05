@@ -960,4 +960,28 @@ public class IdentityProviderServiceTest {
         idp.setConfiguration("{}");
         return idp;
     }
+
+    @Test
+    public void shouldDeleteByDomain_configurationsCannotBeDecrypted() {
+        when(identityProviderRepository.findIdsByReference(io.gravitee.am.model.Reference.domain(DOMAIN))).thenReturn(Flowable.just("idp-1", "idp-2"));
+        for (String id : new String[]{"idp-1", "idp-2"}) {
+            IdentityProvider undecryptable = new IdentityProvider();
+            undecryptable.setId(id);
+            undecryptable.setReferenceType(ReferenceType.DOMAIN);
+            undecryptable.setReferenceId(DOMAIN);
+            when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(id)))
+                    .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+            when(identityProviderRepository.delete(id)).thenReturn(Completable.complete());
+            when(applicationService.findByIdentityProvider(id)).thenReturn(Flowable.empty());
+        }
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = identityProviderService.deleteByDomain(DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(identityProviderRepository).delete("idp-1");
+        verify(identityProviderRepository).delete("idp-2");
+    }
 }

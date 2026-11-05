@@ -53,4 +53,9 @@ public interface FactorService {
     default Completable delete(String domain, String factorId) {
         return delete(domain, factorId, null);
     }
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

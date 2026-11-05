@@ -55,4 +55,8 @@ public interface ExtensionGrantService {
         return delete(domain, certificateId, null);
     }
 
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

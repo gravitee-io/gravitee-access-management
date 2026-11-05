@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import io.gravitee.am.model.Reference;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
@@ -230,5 +231,11 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         Document document = new Document();
         map.forEach((k, v) -> document.append(k, Arrays.asList(v)));
         return document;
+    }
+
+    @Override
+    public Flowable<String> findIdsByReference(Reference reference) {
+        return Flowable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))).map(IdentityProviderMongo::getId)
+                .observeOn(Schedulers.computation());
     }
 }

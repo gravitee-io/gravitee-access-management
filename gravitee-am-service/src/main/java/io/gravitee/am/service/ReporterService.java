@@ -112,4 +112,9 @@ public interface ReporterService {
     }
 
     Completable notifyInheritedReporters(Reference parentReference, Reference affectedReference, Action action);
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

@@ -418,4 +418,10 @@ public class ReporterServiceImpl implements ReporterService {
                 .ignoreElements();
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete reporters of domain {}", domainId);
+        return reporterRepository.findIdsByReference(Reference.domain(domainId))
+                .concatMapCompletable(this::delete);
+    }
 }

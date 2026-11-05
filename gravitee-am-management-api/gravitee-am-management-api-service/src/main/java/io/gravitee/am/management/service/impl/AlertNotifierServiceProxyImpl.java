@@ -99,6 +99,11 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
     }
 
     @Override
+    public Completable deleteByDomain(String domainId) {
+        return alertNotifierService.deleteByDomain(domainId);
+    }
+
+    @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String notifierId, User byUser) {
         return alertNotifierService.delete(referenceType, referenceId, notifierId, byUser);
     }

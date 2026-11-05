@@ -160,4 +160,10 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setManagedBy(certificate.getManagedBy() != null ? certificate.getManagedBy().name() : null);
         return certificateMongo;
     }
+
+    @Override
+    public Flowable<String> findIdsByDomain(String domain) {
+        return Flowable.fromPublisher(certificatesCollection.find(eq(FIELD_DOMAIN, domain))).map(CertificateMongo::getId)
+                .observeOn(Schedulers.computation());
+    }
 }

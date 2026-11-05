@@ -398,4 +398,16 @@ public class FactorServiceTest {
         factor.setDomain("other-domain");
         return factor;
     }
+
+    @Test
+    public void shouldDeleteByDomain() {
+        when(factorRepository.deleteByDomain(DOMAIN)).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = factorService.deleteByDomain(DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(factorRepository, never()).findByDomain(any());
+    }
 }

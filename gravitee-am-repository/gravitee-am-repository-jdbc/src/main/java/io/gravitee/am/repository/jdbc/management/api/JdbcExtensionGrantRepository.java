@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import org.springframework.data.relational.core.query.Query;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -30,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -102,6 +105,15 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return extensionGrantRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(getTemplate().delete(JdbcExtensionGrant.class)
+                .matching(Query.query(where("domain").is(domain)))
+                .all().then())
                 .observeOn(Schedulers.computation());
     }
 }

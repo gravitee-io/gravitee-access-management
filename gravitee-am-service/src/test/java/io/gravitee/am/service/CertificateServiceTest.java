@@ -1087,4 +1087,24 @@ public class CertificateServiceTest {
         verify(certificateRepository, never()).update(any(Certificate.class));
     }
 
+    @Test
+    public void shouldDeleteByDomain_configurationsCannotBeDecrypted() {
+        when(certificateRepository.findIdsByDomain(DOMAIN.getId())).thenReturn(Flowable.just("certificate-1", "certificate-2"));
+        for (String id : new String[]{"certificate-1", "certificate-2"}) {
+            Certificate certificate = Mockito.mock(Certificate.class);
+            when(certificate.getDomain()).thenReturn(DOMAIN.getId());
+            when(certificate.getId()).thenReturn(id);
+            when(certificateRepository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, new IllegalStateException("key not configured"))));
+            when(certificateRepository.delete(id)).thenReturn(Completable.complete());
+        }
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> testObserver = certificateService.deleteByDomain(DOMAIN.getId(), null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(certificateRepository).delete("certificate-1");
+        verify(certificateRepository).delete("certificate-2");
+    }
 }

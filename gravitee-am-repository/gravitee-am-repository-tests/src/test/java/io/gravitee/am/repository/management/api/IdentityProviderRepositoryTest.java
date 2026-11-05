@@ -289,4 +289,21 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertValue(idp -> !idp.isSystemClusterRestricted());
     }
+
+    @Test
+    public void testFindIds() {
+        IdentityProvider first = buildIdentityProvider();
+        first.setReferenceId("idsDomain");
+        IdentityProvider second = buildIdentityProvider();
+        second.setReferenceId("idsDomain");
+        IdentityProvider other = buildIdentityProvider();
+        other.setReferenceId("otherIdsDomain");
+        String firstId = identityProviderRepository.create(first).blockingGet().getId();
+        String secondId = identityProviderRepository.create(second).blockingGet().getId();
+        identityProviderRepository.create(other).blockingGet();
+
+        java.util.List<String> ids = identityProviderRepository.findIdsByReference(io.gravitee.am.model.Reference.domain("idsDomain")).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(java.util.Set.of(firstId, secondId), new java.util.HashSet<>(ids));
+    }
 }

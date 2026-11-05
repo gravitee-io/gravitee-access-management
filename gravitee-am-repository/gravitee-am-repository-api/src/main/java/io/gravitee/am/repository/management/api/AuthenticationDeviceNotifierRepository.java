@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
@@ -30,4 +32,8 @@ public interface AuthenticationDeviceNotifierRepository extends CrudRepository<A
 
     Flowable<AuthenticationDeviceNotifier> findByReference(ReferenceType referenceType, String referenceId);
 
+    /**
+     * Deletes the authentication device notifiers of a reference without reading them, so that a configuration which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByReference(Reference reference);
 }

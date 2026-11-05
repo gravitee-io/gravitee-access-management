@@ -257,4 +257,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         return type != null && GRANTS_REQUIRE_EXISTING_USER.contains(type);
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete by domain {}", domainId);
+        return extensionGrantRepository.deleteByDomain(domainId);
+    }
 }

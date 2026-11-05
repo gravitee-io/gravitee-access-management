@@ -215,4 +215,9 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete by domain {}", domainId);
+        return adNotifierRepository.deleteByReference(Reference.domain(domainId));
+    }
 }

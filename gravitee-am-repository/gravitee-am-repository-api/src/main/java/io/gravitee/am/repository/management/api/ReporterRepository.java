@@ -30,4 +30,9 @@ public interface ReporterRepository extends CrudRepository<Reporter, String> {
 
     Flowable<Reporter> findByReference(Reference reference);
     Flowable<Reporter> findInheritedFrom(Reference parentReference);
+
+    /**
+     * @return the ids of the reporters of a reference, whose configuration is not decrypted
+     */
+    Flowable<String> findIdsByReference(Reference reference);
 }

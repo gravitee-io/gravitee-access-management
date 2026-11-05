@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Flowable;
@@ -29,4 +30,8 @@ public interface FactorRepository extends CrudRepository<Factor, String> {
 
     Flowable<Factor> findByDomain(String domain);
 
+    /**
+     * Deletes the factors of a domain without reading them, so that a configuration which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domain);
 }

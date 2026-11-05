@@ -33,4 +33,9 @@ public interface CertificateRepository extends CrudRepository<Certificate, Strin
     Flowable<Certificate> findByDomain(String domain);
 
     Completable updateExpirationDate(String  certificateId, Date expiresAt);
+
+    /**
+     * @return the ids of the certificates of a domain, whose configuration is not decrypted
+     */
+    Flowable<String> findIdsByDomain(String domain);
 }

@@ -54,4 +54,9 @@ public interface AuthenticationDeviceNotifierService {
     default Completable delete(String domain, String notifierId) {
         return delete(domain, notifierId, null);
     }
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

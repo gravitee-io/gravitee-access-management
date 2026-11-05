@@ -208,4 +208,19 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
 
         assertTrue(ids.containsAll(List.of(firstId, secondId)));
     }
+
+    @Test
+    public void testDeleteByReference() {
+        AlertNotifier toDelete = buildAlertNotifier();
+        toDelete.setReferenceId("domainToDelete");
+        AlertNotifier toKeep = buildAlertNotifier();
+        toKeep.setReferenceId("domainToKeep");
+        String deletedId = alertNotifierRepository.create(toDelete).blockingGet().getId();
+        String keptId = alertNotifierRepository.create(toKeep).blockingGet().getId();
+
+        alertNotifierRepository.deleteByReference(io.gravitee.am.model.Reference.domain("domainToDelete")).blockingAwait();
+
+        org.junit.Assert.assertNull(alertNotifierRepository.findById(deletedId).blockingGet());
+        org.junit.Assert.assertNotNull(alertNotifierRepository.findById(keptId).blockingGet());
+    }
 }

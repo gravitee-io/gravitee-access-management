@@ -508,4 +508,16 @@ public class ExtensionGrantServiceTest {
         extensionGrant.setDomain("other-domain");
         return extensionGrant;
     }
+
+    @Test
+    public void shouldDeleteByDomain() {
+        when(extensionGrantRepository.deleteByDomain(DOMAIN.getId())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = extensionGrantService.deleteByDomain(DOMAIN.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(extensionGrantRepository, never()).findByDomain(any());
+    }
 }
