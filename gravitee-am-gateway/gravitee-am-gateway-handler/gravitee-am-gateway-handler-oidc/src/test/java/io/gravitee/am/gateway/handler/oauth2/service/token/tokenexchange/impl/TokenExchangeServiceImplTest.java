@@ -1510,7 +1510,7 @@ public class TokenExchangeServiceImplTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(buildParameters(TokenType.JWT, TokenType.ACCESS_TOKEN));
 
-        Domain domain = domainWithTokenExchangeEnabled();
+        Domain domain = domainWithTokenExchange(List.of(TokenType.JWT));
         Client client = new Client();
         client.setClientId("client-id");
 
