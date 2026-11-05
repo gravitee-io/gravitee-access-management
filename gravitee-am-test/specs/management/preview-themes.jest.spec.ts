@@ -73,6 +73,7 @@ describe('Testing preview form api...', () => {
   templateTest('With ERROR template', 'error');
   templateTest('With RESET_PASSWORD template', 'reset_password');
   templateTest('With OAUTH2_USER_CONSENT template', 'oauth2_user_consent');
+  templateTest('With OAUTH2_AUTHORIZATION_DETAILS_CONSENT template', 'oauth2_authorization_details_consent');
   templateTest('With MFA_CHALLENGE_ALTERNATIVES template', 'mfa_challenge_alternatives');
   templateTest('With MFA_RECOVERY_CODE template', 'mfa_recovery_code');
   templateTest('With WEBAUTHN_REGISTER template', 'webauthn_register');

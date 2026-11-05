@@ -370,6 +370,34 @@
       ]]>
     </pre
   >
+  <pre *ngIf="data.rawTemplate === 'OAUTH2_AUTHORIZATION_DETAILS_CONSENT'">
+    <![CDATA[
+      <!DOCTYPE html>
+      <html lang="en" xmlns:th="http://www.thymeleaf.org">
+      <head>
+        <title>Authorization details consent</title>
+      </head>
+      <body>
+      <div>
+        <h3><span th:text="${client.clientName}"></span> is requesting access to your account</h3>
+        <form role="form" th:action="${action}" method="post">
+          <div th:each="detail : ${authorizationDetails.all}">
+            <h4 th:text="${authorizationDetailTypes[detail.type].name}"></h4>
+            <p th:text="${authorizationDetailTypes[detail.type].description}"></p>
+            <div th:each="field : ${detail}" th:unless="${field.key == 'type'}">
+              <span th:text="${field.key}"></span>: <span th:text="${field.value}"></span>
+            </div>
+          </div>
+
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" name="user_oauth_approval" value="true">Authorize</button>
+          <button type="submit" name="user_oauth_approval" value="false">Deny</button>
+        </form>
+      </div>
+      </body>
+      </html>
+    ]]>
+  </pre>
   <pre *ngIf="data.rawTemplate === 'ERROR'">
       <![CDATA[
         <!DOCTYPE html>

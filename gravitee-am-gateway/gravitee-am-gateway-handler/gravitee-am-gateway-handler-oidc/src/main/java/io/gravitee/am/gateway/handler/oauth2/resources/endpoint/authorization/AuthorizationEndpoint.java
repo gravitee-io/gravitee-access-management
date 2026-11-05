@@ -143,7 +143,12 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private void cleanSession(RoutingContext context) {
         context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
         context.session().remove(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY);
+        context.session().remove(ConstantKeys.CONSENT_REQUEST_DIGEST_KEY);
         context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
+        context.session().remove(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_PENDING_KEY);
+        context.session().remove(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_PRESENTED_KEY);
+        context.session().remove(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_COMPLETED_KEY);
+        context.session().remove(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_APPROVED_KEY);
         context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
         context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY);
         context.session().remove(ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY);

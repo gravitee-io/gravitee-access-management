@@ -1,0 +1,150 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.dataplane.jdbc.repository;
+
+import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.dataplane.api.repository.AuthorizationDetailApprovalRepository;
+import io.gravitee.am.dataplane.jdbc.repository.model.JdbcAuthorizationDetailApproval;
+import io.gravitee.am.dataplane.jdbc.repository.spring.SpringAuthorizationDetailApprovalRepository;
+import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.Optional;
+
+import static java.time.ZoneOffset.UTC;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+
+@Repository
+public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepository implements AuthorizationDetailApprovalRepository {
+
+    @Autowired
+    private SpringAuthorizationDetailApprovalRepository springRepository;
+
+    @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
+        LOGGER.debug("findByDomainAndUserAndClient({}, {}, {})", domain, userId, clientId);
+        return fluxToFlowable(getTemplate().select(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(userId)
+                        .and(client(clientId))
+                        .and(domain(domain))
+                        .and(notExpiredAt(LocalDateTime.now(UTC)))))
+                .all())
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<AuthorizationDetailApproval> upsert(AuthorizationDetailApproval approval) {
+        return monoToMaybe(getTemplate().select(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(approval.getUserId())
+                        .and(client(approval.getClientId()))
+                        .and(domain(approval.getDomain()))
+                        .and(where("digest").is(approval.getDigest()))))
+                .first())
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMap(existing -> {
+                    if (existing.isEmpty()) {
+                        approval.setCreatedAt(new Date());
+                        approval.setUpdatedAt(approval.getCreatedAt());
+                        return create(approval);
+                    }
+                    approval.setId(existing.get().getId());
+                    approval.setCreatedAt(existing.get().getCreatedAt());
+                    approval.setUpdatedAt(new Date());
+                    return update(approval);
+                })
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(domain(domain))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Maybe<AuthorizationDetailApproval> findById(String id) {
+        LOGGER.debug("findById({})", id);
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return springRepository.findById(id)
+                .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<AuthorizationDetailApproval> create(AuthorizationDetailApproval item) {
+        item.setId(item.getId() == null ? RandomString.generate() : item.getId());
+        LOGGER.debug("Create AuthorizationDetailApproval with id {}", item.getId());
+        return monoToSingle(getTemplate().insert(JdbcAuthorizationDetailApproval.of(item)))
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<AuthorizationDetailApproval> update(AuthorizationDetailApproval item) {
+        LOGGER.debug("Update AuthorizationDetailApproval with id {}", item.getId());
+        return springRepository.save(JdbcAuthorizationDetailApproval.of(item))
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable delete(String id) {
+        LOGGER.debug("Delete AuthorizationDetailApproval with id {}", id);
+        return springRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(where("expires_at").lessThan(LocalDateTime.now(UTC)))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    private static Criteria client(String clientId) {
+        return where("client_id").is(clientId);
+    }
+
+    private static Criteria domain(String domain) {
+        return where("domain").is(domain);
+    }
+
+    private static Criteria notExpiredAt(LocalDateTime now) {
+        return where("expires_at").isNull().or(where("expires_at").greaterThan(now));
+    }
+}

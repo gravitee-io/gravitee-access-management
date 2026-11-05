@@ -49,6 +49,7 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         io.gravitee.am.model.User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
         prepareContext(routingContext, client.asSafeClient(), user);
+        routingContext.put(ConstantKeys.CONSENT_STAGE_CONTEXT_KEY, ConsentStage.resolve(routingContext));
 
         routingContext.next();
     }

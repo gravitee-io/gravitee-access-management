@@ -18,10 +18,14 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.reporter.builder.management.ManagementAuditBuilder;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,6 +39,14 @@ public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentA
 
     public UserConsentAuditBuilder approvals(Collection<ScopeApproval> approvals) {
         setNewValue(approvals);
+        return this;
+    }
+
+    public UserConsentAuditBuilder authorizationDetails(AuthorizationDetails authorizationDetails, boolean approved) {
+        Map<String, Object> consent = new LinkedHashMap<>();
+        consent.put("authorization_details", authorizationDetails.getRaw());
+        consent.put("status", approved ? ScopeApproval.ApprovalStatus.APPROVED : ScopeApproval.ApprovalStatus.DENIED);
+        setNewValue(List.of(consent));
         return this;
     }
 

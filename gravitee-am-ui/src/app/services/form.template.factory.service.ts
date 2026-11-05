@@ -84,6 +84,12 @@ export class FormTemplateFactoryService {
       template: 'OAUTH2_USER_CONSENT',
       icon: 'playlist_add_check',
     },
+    oauth2_authorization_details_consent: {
+      name: 'Authorization details consent',
+      description: 'User consent to the authorization details an application requests',
+      template: 'OAUTH2_AUTHORIZATION_DETAILS_CONSENT',
+      icon: 'playlist_add_check',
+    },
     mfa_enroll: {
       name: 'MFA Enroll',
       description: 'Multi-factor authentication settings page',

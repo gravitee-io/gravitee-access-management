@@ -105,7 +105,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         // application has forced to prompt consent screen to the user
         // go to the user consent page
         if (prompt != null && prompt.contains("consent")) {
-            redirectToConsentPage(routingContext);
+            redirectToScopeConsentPage(routingContext);
             return;
         }
         // check if application has enabled skip consent option
@@ -134,7 +134,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
                 return;
             }
             // else go to the user consent page
-            redirectToConsentPage(routingContext);
+            redirectToScopeConsentPage(routingContext);
         });
     }
 
@@ -163,7 +163,13 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         return false;
     }
 
-    public void redirectToConsentPage(RoutingContext context) {
+    private static void redirectToScopeConsentPage(RoutingContext context) {
+        // clears a detail consent step left over from an abandoned request
+        context.session().remove(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_PENDING_KEY);
+        redirectToConsentPage(context);
+    }
+
+    public static void redirectToConsentPage(RoutingContext context) {
 
         HttpServerRequest request = context.request();
         String consentPageURL = context.get(CONTEXT_PATH) + CONSENT_PAGE_PATH;
