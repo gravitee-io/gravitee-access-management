@@ -66,7 +66,7 @@ public class DeviceIdentifiersResourceTest extends JerseySpringTest {
         mockdeviceIdentifier2.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockDeviceIdentifier, mockdeviceIdentifier2)).when(deviceIdentifierService).findByDomain(domainId);
+        doReturn(Flowable.just(mockDeviceIdentifier, mockdeviceIdentifier2)).when(deviceIdentifierService).findByDomainForListing(domainId);
 
         final Response response = target("domains").path(domainId).path("device-identifiers").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -78,7 +78,7 @@ public class DeviceIdentifiersResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetdeviceIdentifiers_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(deviceIdentifierService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(deviceIdentifierService).findByDomainForListing(domainId);
 
         final Response response = target("domains").path(domainId).path("device-identifiers").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

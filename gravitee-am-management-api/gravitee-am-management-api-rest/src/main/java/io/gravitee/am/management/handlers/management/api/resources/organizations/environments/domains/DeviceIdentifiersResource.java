@@ -91,7 +91,7 @@ public class DeviceIdentifiersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_DEVICE_IDENTIFIER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(___ -> deviceIdentifierService.findByDomain(domain).map(this::filterDeviceIdentifierInfo).toList()))
+                        .flatMapSingle(___ -> deviceIdentifierService.findByDomainForListing(domain).map(this::filterDeviceIdentifierInfo).toList()))
                 .subscribe(response::resume, response::resume);
     }
 
