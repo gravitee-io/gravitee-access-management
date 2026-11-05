@@ -42,6 +42,8 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ServiceResourceAuditBuilder;
 import io.gravitee.am.service.validators.resource.ResourceValidator;
 import io.gravitee.am.service.validators.resource.ResourceValidator.ResourceHolder;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -96,6 +98,43 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     @Override
     public Maybe<ServiceResource> findById(String domain, String id) {
         return findById(id).filter(resource -> ReferenceType.DOMAIN == resource.getReferenceType() && domain.equals(resource.getReferenceId()));
+    }
+
+    @Override
+    public Maybe<ServiceResource> findByIdForDisplay(String domain, String id) {
+        log.debug("Find resource by ID for display: {}", id);
+        return serviceResourceRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(ServiceResource.class))
+                .map(resource -> FieldEncryptor.isEncrypted(resource.getConfiguration()) ? withEmptyConfiguration(resource) : resource)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find a resource using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a resource using its ID: %s", id), ex));
+                })
+                .filter(resource -> ReferenceType.DOMAIN == resource.getReferenceType() && domain.equals(resource.getReferenceId()));
+    }
+
+    @Override
+    public Flowable<ServiceResource> findByDomainForListing(String domain) {
+        log.debug("Find resources for listing by domain: {}", domain);
+        return serviceResourceRepository.findByReferenceForListing(ReferenceType.DOMAIN, domain)
+                .map(resource -> FieldEncryptor.isEncrypted(resource.getConfiguration()) ? withEmptyConfiguration(resource) : resource)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find resources by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find resources by domain", ex));
+                });
+    }
+
+    private static ServiceResource withEmptyConfiguration(ServiceResource resource) {
+        var copy = new ServiceResource(resource);
+        copy.setConfiguration("{}");
+        return copy;
+    }
+
+    private Maybe<ServiceResource> findByIdForDeletion(String domain, String id) {
+        return serviceResourceRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(ServiceResource.class))
+                .filter(resource -> ReferenceType.DOMAIN == resource.getReferenceType() && domain.equals(resource.getReferenceId()));
     }
 
     @Override
@@ -172,10 +211,11 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     @Override
     public Completable delete(String domain, String resourceId, User principal) {
         log.debug("Delete resource {}", resourceId);
-        return findById(domain, resourceId)
+        return findByIdForDeletion(domain, resourceId)
                 .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resourceId)))
                 .flatMapSingle(resource ->
-                        factorService.findByDomain(domain)
+                        // a factor whose configuration cannot be decrypted is listed with an empty one, so it cannot be told to use the resource
+                        factorService.findByDomainForListing(domain)
                                 .filter(factor -> factor.getConfiguration() != null && factor.getConfiguration().contains("\"" + resourceId + "\""))
                                 .toList()
                                 .flatMap(factors -> {

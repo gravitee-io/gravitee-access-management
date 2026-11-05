@@ -37,6 +37,21 @@ public interface ServiceResourceService {
 
     Flowable<ServiceResource> findByDomain(String domain);
 
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the resource.
+     * <p>
+     * A resource whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<ServiceResource> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Same as {@link #findByDomain(String)} in a single query, for the endpoints that only display the resources.
+     * <p>
+     * A resource whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<ServiceResource> findByDomainForListing(String domain);
+
     Single<ServiceResource> create(Domain domain, NewServiceResource res, User principal);
 
     Single<ServiceResource> update(Domain domain, String id, UpdateServiceResource updateServiceResource, User principal);
