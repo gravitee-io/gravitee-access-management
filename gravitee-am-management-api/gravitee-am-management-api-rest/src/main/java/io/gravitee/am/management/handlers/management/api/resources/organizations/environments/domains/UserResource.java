@@ -420,7 +420,7 @@ public class UserResource extends AbstractResource {
             return Maybe.just(userEntity);
         }
 
-        return identityProviderService.findById(userEntity.getLastIdentityUsed())
+        return identityProviderService.findByIdForDisplay(userEntity.getLastIdentityUsed())
                 .map(idP -> {
                     userEntity.setLastIdentityUsed(idP.getName());
                     return userEntity;

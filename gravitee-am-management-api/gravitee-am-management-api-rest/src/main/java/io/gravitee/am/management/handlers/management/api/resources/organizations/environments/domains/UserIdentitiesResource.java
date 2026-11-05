@@ -96,7 +96,7 @@ public class UserIdentitiesResource extends AbstractResource {
                             }
                             return Observable.fromIterable(user1.getIdentities())
                                     .flatMapMaybe(userIdentity ->
-                                            identityProviderService.findById(userIdentity.getProviderId())
+                                            identityProviderService.findByIdForDisplay(userIdentity.getProviderId())
                                                     .map(identityProvider -> {
                                                         UserIdentityEntity userIdentityEntity = new UserIdentityEntity(userIdentity);
                                                         userIdentityEntity.setProviderName(identityProvider.getName());

@@ -77,6 +77,7 @@ public class UserResourceTest extends JerseySpringTest {
         mockUser.setSource("source");
         mockUser.putAdditionalInformation(someSensitiveProperty, "example of sensitive property value");
         doReturn(Maybe.empty()).when(identityProviderService).findById(any());
+        doReturn(Maybe.empty()).when(identityProviderService).findByIdForDisplay(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, userId);
 
@@ -508,6 +509,7 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "user-id";
         doReturn(Maybe.empty()).when(identityProviderService).findById(any());
+        doReturn(Maybe.empty()).when(identityProviderService).findByIdForDisplay(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
         var accessToken1 = AccountAccessToken.builder().tokenId("1").build();

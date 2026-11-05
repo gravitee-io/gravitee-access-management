@@ -24,6 +24,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.model.ListedIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -87,12 +88,16 @@ public class IdentityProvidersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.LIST)
-                .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
+                .andThen(identityProviderService.findAllForListing(ReferenceType.ORGANIZATION, organizationId)
                         .flatMapMaybe(identityProvider -> {
                             if (userProvider) {
                                 // if userProvider, we only want to manage IDP with a UserProvider
                                 // as UserProvider may be disabled by configuration we have to check the existence of the instance
-                                return identityProviderManager.getUserProvider(identityProvider.getId())
+                                // an identity provider whose configuration cannot be read has no UserProvider
+                                if (!identityProvider.configurationReadable()) {
+                                    return Maybe.<ListedIdentityProvider>empty();
+                                }
+                                return identityProviderManager.getUserProvider(identityProvider.identityProvider().getId())
                                         .map(ignorable -> identityProvider);
                             } else {
                                 return Maybe.just(identityProvider);
@@ -136,8 +141,10 @@ public class IdentityProvidersResource extends AbstractResource {
         return resourceContext.getResource(IdentityProviderResource.class);
     }
 
-    private FilteredIdentityProviderInfo filterIdentityProviderInfos(IdentityProvider identityProvider) {
+    private FilteredIdentityProviderInfo filterIdentityProviderInfos(ListedIdentityProvider listed) {
+        IdentityProvider identityProvider = listed.identityProvider();
         return new FilteredIdentityProviderInfo(identityProvider.getId(),
-                identityProvider.getName(), identityProvider.getType(), identityProvider.isSystem(), identityProvider.isExternal(), identityProvider.getPasswordPolicy());
+                identityProvider.getName(), identityProvider.getType(), identityProvider.isSystem(), identityProvider.isExternal(), identityProvider.getPasswordPolicy(),
+                listed.configurationReadable());
     }
 }

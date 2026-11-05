@@ -738,6 +738,63 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldListWithoutConfiguration_flaggingTheOneThatCannotBeDecrypted() {
+        IdentityProvider readable = new IdentityProvider();
+        readable.setId("readable");
+        readable.setConfiguration("{\"password\":\"s3cr3t\"}");
+        IdentityProvider unreadable = new IdentityProvider();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(identityProviderRepository.findAllForListing(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = identityProviderService.findAllForListing(ReferenceType.DOMAIN, DOMAIN).toList().blockingGet();
+
+        Assert.assertEquals(2, listed.size());
+        Assert.assertEquals("readable", listed.get(0).identityProvider().getId());
+        Assert.assertTrue(listed.get(0).configurationReadable());
+        Assert.assertEquals("unreadable", listed.get(1).identityProvider().getId());
+        Assert.assertFalse(listed.get(1).configurationReadable());
+        // no configuration, readable or not, leaves the service
+        Assert.assertEquals("{}", listed.get(0).identityProvider().getConfiguration());
+        Assert.assertEquals("{}", listed.get(1).identityProvider().getConfiguration());
+        // the entities of the repository are left untouched
+        Assert.assertEquals("{\"password\":\"s3cr3t\"}", readable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        IdentityProvider undecryptable = new IdentityProvider();
+        undecryptable.setId("my-identity-provider");
+        undecryptable.setName("my idp");
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(identityProviderRepository.findById("my-identity-provider"))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        IdentityProvider found = identityProviderService.findByIdForDisplay("my-identity-provider").blockingGet();
+
+        Assert.assertEquals("my idp", found.getName());
+        Assert.assertEquals("{}", found.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_keepTheConfigurationOfAReadableOne() {
+        IdentityProvider readable = new IdentityProvider();
+        readable.setId("my-identity-provider");
+        readable.setConfiguration("{\"a\":1}");
+        when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(readable));
+
+        Assert.assertEquals("{\"a\":1}", identityProviderService.findByIdForDisplay("my-identity-provider").blockingGet().getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_otherErrorsStayTechnicalErrors() {
+        when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.error(new IllegalStateException("database down")));
+
+        identityProviderService.findByIdForDisplay("my-identity-provider").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+    }
+
+    @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
         IdentityProvider undecryptable = new IdentityProvider();
         undecryptable.setId("my-identity-provider");

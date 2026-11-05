@@ -15083,6 +15083,8 @@ components:
     FilteredIdentityProviderInfo:
       type: object
       properties:
+        configurationReadable:
+          type: boolean
         external:
           type: boolean
         id:

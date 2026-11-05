@@ -22,8 +22,10 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -74,7 +76,9 @@ public class IdentityProviderResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.READ)
-                .andThen(identityProviderService.findById(ReferenceType.ORGANIZATION, organizationId, identityProvider))
+                .andThen(identityProviderService.findByIdForDisplay(identityProvider)
+                        .filter(idp -> idp.getReferenceType() == ReferenceType.ORGANIZATION && organizationId.equals(idp.getReferenceId()))
+                        .switchIfEmpty(Single.error(() -> new IdentityProviderNotFoundException(identityProvider))))
                 .subscribe(response::resume, response::resume);
     }
 

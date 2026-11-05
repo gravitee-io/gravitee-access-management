@@ -16,10 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.model;
 
 /**
+ * @param configurationReadable false when the stored configuration could not be decrypted, the identity provider cannot be used until it is configured again
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
 
 public record FilteredIdentityProviderInfo(String id, String name, String type, boolean system, boolean external,
-                                           String passwordPolicy) {
+                                           String passwordPolicy, boolean configurationReadable) {
 }
