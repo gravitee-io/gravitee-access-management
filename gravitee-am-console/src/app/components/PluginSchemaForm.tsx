@@ -23,6 +23,7 @@ import {
     FieldLabel,
     FileUpload,
     type FileUploadItemValue,
+    type JsonSchema,
     JsonSchemaForm,
     jsonSchemaResolver,
     toast,
@@ -32,6 +33,7 @@ import { useMemo, useState } from 'react';
 import { type Control, type FieldErrors, type FieldValues, type Path, type PathValue, type Resolver, useController } from 'react-hook-form';
 import { http } from '../../lib/api/http';
 import { type AdaptedSchema, adaptAmSchema, type SchemaFile, type SchemaResource, type SchemaStringList } from '../../lib/forms/am-schema';
+import { richText } from '../../lib/forms/rich-text';
 import { TagInput } from './TagInput';
 
 const REQUIRED_MESSAGE = 'This field is required';
@@ -158,7 +160,7 @@ function SchemaFileField<T extends FieldValues>({
                         (file.title ?? file.key)
                     )
                 }
-                hint={file.description}
+                hint={file.description && richText(file.description)}
                 disabled={disabled}
                 maxFiles={1}
                 items={picked ? [picked] : []}
@@ -223,10 +225,25 @@ function SchemaStringListField<T extends FieldValues>({
                 onChange={field.onChange}
                 onDuplicate={value => toast.error(`"${value}" is already in the list.`)}
             />
-            {list.description && <FieldDescription>{list.description}</FieldDescription>}
+            {list.description && <FieldDescription>{richText(list.description)}</FieldDescription>}
             {fieldState.error && <FieldError id={`${id}-error`} errors={[fieldState.error]} />}
         </Field>
     );
+}
+
+/** A copy of the schema whose descriptions keep their HTML styles. Only the form gets it: the resolver keeps the strings. */
+function withRichDescriptions(node: JsonSchema): JsonSchema {
+    const copy: Record<string, unknown> = { ...node };
+    if (typeof node.description === 'string') {
+        copy.description = richText(node.description);
+    }
+    if (node.properties) {
+        copy.properties = Object.fromEntries(Object.entries(node.properties).map(([key, child]) => [key, withRichDescriptions(child)]));
+    }
+    if (node.items && !Array.isArray(node.items)) {
+        copy.items = withRichDescriptions(node.items);
+    }
+    return copy as JsonSchema;
 }
 
 interface PluginSchemaFormProps<T extends FieldValues> {
@@ -238,6 +255,7 @@ interface PluginSchemaFormProps<T extends FieldValues> {
 }
 
 export function PluginSchemaForm<T extends FieldValues>({ adapted, control, name, disabled }: PluginSchemaFormProps<T>) {
+    const display = useMemo(() => withRichDescriptions(adapted.schema), [adapted.schema]);
     return (
         <div className="flex flex-col gap-4">
             {import.meta.env.DEV && adapted.unsupported.length > 0 && (
@@ -249,7 +267,7 @@ export function PluginSchemaForm<T extends FieldValues>({ adapted, control, name
             {adapted.files.map(file => (
                 <SchemaFileField key={file.key} file={file} control={control} name={name} disabled={disabled} />
             ))}
-            <JsonSchemaForm schema={adapted.schema} control={control as unknown as Control} name={name} disabled={disabled} />
+            <JsonSchemaForm schema={display} control={control as unknown as Control} name={name} disabled={disabled} />
             {adapted.stringLists.map(list => (
                 <SchemaStringListField key={list.key} list={list} control={control} name={name} disabled={disabled} />
             ))}
