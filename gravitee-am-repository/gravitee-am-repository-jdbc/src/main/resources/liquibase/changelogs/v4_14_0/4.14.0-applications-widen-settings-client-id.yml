@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.14.0-applications-widen-settings-client-id
+      author: GraviteeSource Team
+      changes:
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE applications MODIFY settings_client_id VARCHAR(255) AS (JSON_UNQUOTE(settings->"$.oauth.clientId"));
+
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE applications MODIFY settings_client_id VARCHAR(255) AS (JSON_VALUE(settings, "$.oauth.clientId"));
