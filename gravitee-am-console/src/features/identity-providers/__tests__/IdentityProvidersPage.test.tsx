@@ -137,6 +137,15 @@ describe('IdentityProvidersPage', () => {
         expect(screen.queryByText('No identity providers yet')).not.toBeInTheDocument();
     });
 
+    it('shows the error panel when the plugin list fails, not Custom on every row', async () => {
+        vi.mocked(listIdentityProviderPlugins).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
+
+        setupIdentityProvidersPageHarness();
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the identity providers.');
+        expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
     it('deletes a provider after the confirm dialog, then reloads the list', async () => {
         vi.mocked(deleteIdentityProvider).mockResolvedValueOnce();
         const harness = setupIdentityProvidersPageHarness();
