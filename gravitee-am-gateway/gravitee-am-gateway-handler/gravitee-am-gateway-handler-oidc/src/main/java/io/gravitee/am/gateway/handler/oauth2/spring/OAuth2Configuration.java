@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.spring;
 
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
@@ -234,8 +235,10 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public AuthorizationDetailsValidator authorizationDetailsValidator(AuthorizationDetailTypeManager authorizationDetailTypeManager) {
-        return new AuthorizationDetailsValidator(authorizationDetailTypeManager);
+    public AuthorizationDetailsValidator authorizationDetailsValidator(AuthorizationDetailTypeManager authorizationDetailTypeManager,
+                                                                       EventManager eventManager,
+                                                                       Domain domain) {
+        return new AuthorizationDetailsValidator(authorizationDetailTypeManager, eventManager, domain);
     }
 
     @Bean

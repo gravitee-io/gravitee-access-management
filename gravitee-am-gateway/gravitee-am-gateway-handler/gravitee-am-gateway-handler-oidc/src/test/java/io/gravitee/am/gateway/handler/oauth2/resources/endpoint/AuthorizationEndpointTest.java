@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
 
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -80,6 +81,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.gateway.handler.dummies.TestCertificateInfoFactory.createTestCertificateInfo;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -177,7 +179,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseClientHandler(clientLookupService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
-                .handler(new AuthorizationRequestParseAuthorizationDetailsHandler(new AuthorizationDetailsValidator(authorizationDetailTypeManager)))
+                .handler(new AuthorizationRequestParseAuthorizationDetailsHandler(new AuthorizationDetailsValidator(authorizationDetailTypeManager, mock(EventManager.class), domain)))
                 .handler(new RedirectUriValidationHandler(domain))
                 .handler(new ReturnUrlValidationHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))

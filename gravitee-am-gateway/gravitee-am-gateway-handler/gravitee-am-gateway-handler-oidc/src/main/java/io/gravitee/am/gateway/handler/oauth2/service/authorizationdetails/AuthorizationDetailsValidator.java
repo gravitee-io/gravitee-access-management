@@ -21,18 +21,27 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.event.AuthorizationDetailTypeEvent;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.SpecificationVersion;
 import com.networknt.schema.resource.SchemaLoader;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.AuthorizationDetail;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.service.AbstractService;
 import lombok.CustomLog;
+import org.springframework.beans.factory.InitializingBean;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +57,8 @@ import static io.gravitee.am.model.oauth2.AuthorizationDetailType.TYPE_MAX_LENGT
  * See <a href="https://datatracker.ietf.org/doc/html/rfc9396#section-2">RFC 9396 Section 2</a>
  */
 @CustomLog
-public class AuthorizationDetailsValidator {
+public class AuthorizationDetailsValidator extends AbstractService implements InitializingBean,
+        EventListener<AuthorizationDetailTypeEvent, Payload> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
@@ -65,10 +75,36 @@ public class AuthorizationDetailsValidator {
 
     private final AuthorizationDetailTypeManager authorizationDetailTypeManager;
 
-    private final ConcurrentMap<String, CompiledSchema> schemas = new ConcurrentHashMap<>();
+    private final EventManager eventManager;
 
-    public AuthorizationDetailsValidator(AuthorizationDetailTypeManager authorizationDetailTypeManager) {
+    private final Domain domain;
+
+    final ConcurrentMap<String, CompiledSchema> schemas = new ConcurrentHashMap<>();
+
+    public AuthorizationDetailsValidator(AuthorizationDetailTypeManager authorizationDetailTypeManager, EventManager eventManager, Domain domain) {
         this.authorizationDetailTypeManager = authorizationDetailTypeManager;
+        this.eventManager = eventManager;
+        this.domain = domain;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        eventManager.subscribeForEvents(this, AuthorizationDetailTypeEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+        eventManager.unsubscribeForEvents(this, AuthorizationDetailTypeEvent.class, domain.getId());
+    }
+
+    @Override
+    public void onEvent(Event<AuthorizationDetailTypeEvent, Payload> event) {
+        if (event.type() == AuthorizationDetailTypeEvent.UNDEPLOY
+                && event.content().getReferenceType() == ReferenceType.DOMAIN
+                && domain.getId().equals(event.content().getReferenceId())) {
+            schemas.remove(event.content().getId());
+        }
     }
 
     /**
@@ -172,6 +208,6 @@ public class AuthorizationDetailsValidator {
         return position(index);
     }
 
-    private record CompiledSchema(String source, Schema schema) {
+    record CompiledSchema(String source, Schema schema) {
     }
 }

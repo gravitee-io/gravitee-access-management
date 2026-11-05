@@ -15,14 +15,21 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails;
 
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.AuthorizationDetailTypeEvent;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.AuthorizationDetail;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.event.Event;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AuthorizationDetailsValidatorTest {
@@ -46,6 +54,8 @@ class AuthorizationDetailsValidatorTest {
     private static final String PAYMENT = "payment_initiation";
     private static final String ACCOUNT = "account_information";
     private static final String NOT_ENABLED = "internal_transfer";
+    private static final String DOMAIN_ID = "domain-id";
+    private static final String VALID_PAYMENT = "[{\"type\":\"payment_initiation\",\"instructedAmount\":{\"currency\":\"EUR\",\"amount\":\"1\"}}]";
     private static final String PAYMENT_SCHEMA = """
             {
               "type": "object",
@@ -65,7 +75,9 @@ class AuthorizationDetailsValidatorTest {
 
     private final Map<String, AuthorizationDetailType> domainTypes = new HashMap<>();
     private final AuthorizationDetailTypeManager manager = mock(AuthorizationDetailTypeManager.class);
-    private final AuthorizationDetailsValidator validator = new AuthorizationDetailsValidator(manager);
+    private final EventManager eventManager = mock(EventManager.class);
+    private final Domain domain = new Domain(DOMAIN_ID);
+    private final AuthorizationDetailsValidator validator = new AuthorizationDetailsValidator(manager, eventManager, domain);
     private final Client client = new Client();
 
     @BeforeEach
@@ -176,6 +188,35 @@ class AuthorizationDetailsValidatorTest {
     }
 
     @Test
+    void shouldListenForTypeEventsUntilStopped() throws Exception {
+        validator.afterPropertiesSet();
+        validator.stop();
+
+        verify(eventManager).subscribeForEvents(validator, AuthorizationDetailTypeEvent.class, DOMAIN_ID);
+        verify(eventManager).unsubscribeForEvents(validator, AuthorizationDetailTypeEvent.class, DOMAIN_ID);
+    }
+
+    @Test
+    void shouldDropTheCompiledSchemaOfADeletedType() {
+        validator.validate(VALID_PAYMENT, client);
+
+        validator.onEvent(event(AuthorizationDetailTypeEvent.UNDEPLOY, PAYMENT + "-id", DOMAIN_ID));
+
+        assertThat(validator.schemas).isEmpty();
+    }
+
+    @Test
+    void shouldKeepTheCompiledSchemaOnOtherEvents() {
+        validator.validate(VALID_PAYMENT, client);
+
+        validator.onEvent(event(AuthorizationDetailTypeEvent.UPDATE, PAYMENT + "-id", DOMAIN_ID));
+        validator.onEvent(event(AuthorizationDetailTypeEvent.UNDEPLOY, PAYMENT + "-id", "other-domain"));
+        validator.onEvent(event(AuthorizationDetailTypeEvent.UNDEPLOY, ACCOUNT + "-id", DOMAIN_ID));
+
+        assertThat(validator.schemas).containsOnlyKeys(PAYMENT + "-id");
+    }
+
+    @Test
     void shouldAcceptAnyObjectOfATypeWithoutSchema() {
         List<Map<String, Object>> details = validator.validate("[{\"type\":\"account_information\",\"anything\":[1,{\"nested\":true}]}]", client).getRaw();
 
@@ -215,6 +256,14 @@ class AuthorizationDetailsValidatorTest {
         assertThatThrownBy(() -> validator.validate(authorizationDetails, client))
                 .isInstanceOf(error)
                 .hasMessage(description);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Event<AuthorizationDetailTypeEvent, Payload> event(AuthorizationDetailTypeEvent type, String id, String domainId) {
+        Event<AuthorizationDetailTypeEvent, Payload> event = mock(Event.class);
+        when(event.type()).thenReturn(type);
+        when(event.content()).thenReturn(new Payload(id, ReferenceType.DOMAIN, domainId, Action.DELETE));
+        return event;
     }
 
     private void domainType(String type, String schema) {
