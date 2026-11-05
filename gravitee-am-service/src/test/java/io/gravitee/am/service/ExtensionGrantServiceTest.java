@@ -20,6 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
 import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
@@ -405,6 +406,27 @@ public class ExtensionGrantServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
+        when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
+        when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
+        when(existingExtensionGrant.getDomain()).thenReturn(DOMAIN.getId());
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(existingExtensionGrant, new IllegalStateException("key not configured"))));
+        when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingExtensionGrant));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), "my-extension-grant").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(extensionGrantRepository, times(1)).delete("my-extension-grant");
     }
 
     @Test

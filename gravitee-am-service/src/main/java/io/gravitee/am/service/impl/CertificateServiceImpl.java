@@ -37,6 +37,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
 import io.gravitee.am.plugins.certificate.core.schema.CertificateSchema;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.ApplicationService;
@@ -549,7 +550,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     private Completable delete(String domain, String certificateId, User principal, boolean force, boolean allowFallbackReferenceByKey) {
         log.debug("Delete certificate {}", certificateId);
-        return findById(domain, certificateId)
+        return findByIdForDeletion(domain, certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
                 .flatMapSingle(certificate -> force ? Single.just(certificate) : checkApplicationsUsage(certificate)
                                 .flatMap(this::checkIdentityProviderUsage)
@@ -572,6 +573,12 @@ public class CertificateServiceImpl implements CertificateService {
                                 String.format("An error occurs while trying to delete certificate: %s", certificateId), ex));
                     }
                 });
+    }
+
+    private Maybe<Certificate> findByIdForDeletion(String domain, String id) {
+        return certificateRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Certificate.class))
+                .filter(certificate -> domain.equals(certificate.getDomain()));
     }
 
     private Single<Certificate> checkApplicationsUsage(Certificate certificate) {

@@ -26,6 +26,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
@@ -176,11 +177,17 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                 });
     }
 
+    private Maybe<AuthenticationDeviceNotifier> findByIdForDeletion(String domain, String id) {
+        return adNotifierRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(AuthenticationDeviceNotifier.class))
+                .filter(notifier -> ReferenceType.DOMAIN == notifier.getReferenceType() && domain.equals(notifier.getReferenceId()));
+    }
+
     @Override
     public Completable delete(String domainId, String notifierId, User principal) {
         log.debug("Delete authentication device notifier {}", notifierId);
 
-        return findById(domainId, notifierId)
+        return findByIdForDeletion(domainId, notifierId)
                 .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierNotFoundException(notifierId)))
                 .flatMapCompletable(notifier -> {
                     // create event for sync process

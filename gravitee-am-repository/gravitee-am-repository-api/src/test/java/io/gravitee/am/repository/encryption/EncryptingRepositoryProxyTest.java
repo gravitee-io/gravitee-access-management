@@ -211,6 +211,28 @@ class EncryptingRepositoryProxyTest {
     }
 
     @Test
+    void should_carry_the_entity_when_the_key_is_removed() {
+        repository.create(reporter("r1", CONFIGURATION)).blockingGet();
+        ReporterRepository withoutOldKey = wrap(store, NEXT_KEY.id(), NEXT_KEY);
+
+        assertThatThrownBy(() -> withoutOldKey.findById("r1").blockingGet())
+                .isInstanceOfSatisfying(PluginDecryptConfigException.class, e -> {
+                    Reporter entity = e.getEntity(Reporter.class);
+                    assertThat(entity.getId()).isEqualTo("r1");
+                    assertThat(entity.getConfiguration()).startsWith("enc:2025:");
+                });
+    }
+
+    @Test
+    void should_carry_the_entity_when_the_stored_value_is_corrupted() {
+        store.create(reporter("r1", "enc:2025:AAAA:BBBB")).blockingGet();
+
+        assertThatThrownBy(() -> repository.findById("r1").blockingGet())
+                .isInstanceOfSatisfying(PluginDecryptConfigException.class,
+                        e -> assertThat(e.getEntity(Reporter.class).getId()).isEqualTo("r1"));
+    }
+
+    @Test
     void should_delegate_equals_to_the_target() {
         assertThat(repository).isEqualTo(repository);
         assertThat(repository.equals(store)).isTrue();

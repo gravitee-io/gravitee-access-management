@@ -25,6 +25,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -205,11 +206,17 @@ public class FactorServiceImpl implements FactorService {
                 });
     }
 
+    private Maybe<Factor> findByIdForDeletion(String domain, String id) {
+        return factorRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Factor.class))
+                .filter(factor -> domain.equals(factor.getDomain()));
+    }
+
     @Override
     public Completable delete(String domain, String factorId, User principal) {
         log.debug("Delete factor {}", factorId);
 
-        return findById(domain, factorId)
+        return findByIdForDeletion(domain, factorId)
                 .switchIfEmpty(Maybe.error(new FactorNotFoundException(factorId)))
                 .flatMapSingle(factor -> applicationService.findByFactor(factorId).count()
                         .flatMap(applications -> {

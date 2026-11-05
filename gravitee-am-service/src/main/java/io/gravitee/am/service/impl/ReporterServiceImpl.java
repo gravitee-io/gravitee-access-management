@@ -28,6 +28,7 @@ import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.ReporterAttributeMapping;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -342,6 +343,7 @@ public class ReporterServiceImpl implements ReporterService {
     public Completable delete(String reporterId, User principal, boolean removeSystemReporter) {
         log.debug("Delete reporter {}", reporterId);
         return reporterRepository.findById(reporterId)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Reporter.class))
                 .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
                 .flatMapCompletable(reporter -> {
                     // cannot remove system reporter

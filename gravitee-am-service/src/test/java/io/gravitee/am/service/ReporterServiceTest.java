@@ -25,6 +25,9 @@ import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
+import io.gravitee.am.service.AuditService;
+import io.reactivex.rxjava3.core.Maybe;
 import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
@@ -344,6 +347,28 @@ class ReporterServiceTest {
 
         reporterRepository.findById(createdReporter.getId()).test()
                 .assertValue(stored -> stored.getName().equals(newReporter.getName()) && stored.isEnabled());
+    }
+
+    @Test
+    void shouldDelete_configurationCannotBeDecrypted() {
+        ReporterRepository repository = mock(ReporterRepository.class);
+        AuditService auditService = mock(AuditService.class);
+        ReporterService service = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), repository, eventService, auditService, validationService, pluginLicenseGate, new ReporterAttributeMappingsValidator());
+        Reporter undecryptable = new Reporter();
+        undecryptable.setId("reporter-id");
+        undecryptable.setReference(Reference.domain("domain-id"));
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(repository.delete("reporter-id")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        service.delete("reporter-id", null)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(repository).delete("reporter-id");
     }
 
     @Test

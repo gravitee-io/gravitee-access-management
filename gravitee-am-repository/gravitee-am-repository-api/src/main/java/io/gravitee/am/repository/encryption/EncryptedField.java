@@ -53,7 +53,11 @@ public record EncryptedField<T>(Class<T> type,
             T entity = type.cast(value);
             String stored = getter.apply(entity);
             if (FieldEncryptor.isEncrypted(stored)) {
-                setter.accept(entity, encryptor.decrypt(stored));
+                try {
+                    setter.accept(entity, encryptor.decrypt(stored));
+                } catch (IllegalStateException e) {
+                    throw new PluginDecryptConfigException(entity, e);
+                }
             }
         }
         return value;

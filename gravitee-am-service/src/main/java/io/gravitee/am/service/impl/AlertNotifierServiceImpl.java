@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.AuditService;
@@ -171,7 +172,10 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
      */
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String notifierId, User byUser) {
-        return this.getById(referenceType, referenceId, notifierId)
+        return this.alertNotifierRepository.findById(notifierId)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(AlertNotifier.class))
+                .filter(alertNotifier -> alertNotifier.getReferenceType() == referenceType && alertNotifier.getReferenceId().equals(referenceId))
+                .switchIfEmpty(Single.error(new AlertNotifierNotFoundException(notifierId)))
                 .flatMapCompletable(alertNotifier -> deleteInternal(alertNotifier, byUser));
     }
 

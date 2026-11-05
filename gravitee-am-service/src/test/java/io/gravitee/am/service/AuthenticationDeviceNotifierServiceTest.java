@@ -20,6 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.AuthenticationDeviceNotifierRepository;
 import io.gravitee.am.service.exception.AuthenticationDeviceNotifierNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -217,6 +218,22 @@ public class AuthenticationDeviceNotifierServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        AuthenticationDeviceNotifier deviceNotifier = inDomain(new AuthenticationDeviceNotifier());
+        deviceNotifier.setId("deviceNotifier-id");
+        when(authDeviceNotifierRepository.findById(deviceNotifier.getId())).thenReturn(Maybe.error(new PluginDecryptConfigException(deviceNotifier, new IllegalStateException("key not configured"))));
+        when(authDeviceNotifierRepository.delete(deviceNotifier.getId())).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = authDeviceNotifierService.delete(DOMAIN.getId(), deviceNotifier.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(authDeviceNotifierRepository).delete(deviceNotifier.getId());
     }
 
     @Test

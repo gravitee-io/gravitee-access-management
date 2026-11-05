@@ -43,6 +43,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -414,6 +415,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         log.debug("Delete identity provider {}", identityProviderId);
 
         return identityProviderRepository.findById(referenceType, referenceId, identityProviderId)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(IdentityProvider.class))
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProviderId)))
                 .flatMapSingle(identityProvider -> applicationService.findByIdentityProvider(identityProviderId).count()
                         .flatMap(applications -> {

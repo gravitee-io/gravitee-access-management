@@ -28,6 +28,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.CertificateAliasAlreadyExistsException;
@@ -291,6 +292,28 @@ public class CertificateServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        Certificate certificate = Mockito.mock(Certificate.class);
+        when(certificate.getDomain()).thenReturn(DOMAIN.getId());
+        when(certificate.getId()).thenReturn("my-certificate");
+
+        when(domainRepository.findById(DOMAIN.getId())).thenReturn(Maybe.just(DOMAIN));
+        when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
+        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, new IllegalStateException("key not configured"))));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
+        when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(certificateRepository, times(1)).delete("my-certificate");
     }
 
     @Test
