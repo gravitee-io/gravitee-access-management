@@ -55,8 +55,18 @@ export function IdentityProviderGroupsPage() {
             description={
                 <>
                     Group mappers put this provider’s users into groups, during authentication. Match users with{' '}
-                    <code className="font-mono text-xs">attributeName=attributeValue</code> (e.g.{' '}
-                    <code className="font-mono text-xs">memberOf=administrators</code>) or expression language.
+                    <code className="font-mono text-xs">attributeName=attributeValue</code> or expression language, for example:
+                    <ul className="mt-2 flex flex-col gap-1">
+                        <li>
+                            <code className="font-mono text-xs">{'uid=sampleuser => Developers'}</code>
+                        </li>
+                        <li>
+                            <code className="font-mono text-xs">{'memberOf=administrators => Administrators'}</code>
+                        </li>
+                        <li>
+                            <code className="font-mono text-xs">{"{#profile['my-claim'] == 'default'} => Developers"}</code>
+                        </li>
+                    </ul>
                 </>
             }
             targets={targets}
