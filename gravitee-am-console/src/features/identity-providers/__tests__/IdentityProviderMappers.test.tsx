@@ -196,6 +196,14 @@ describe('IdentityProviderMappersPage', () => {
 });
 
 describe('IdentityProviderRolesPage', () => {
+    it('disables the add button, and says why, when the domain has only system primary-owner roles', async () => {
+        vi.mocked(listAllRoles).mockResolvedValue([{ id: 'role-3', name: 'DOMAIN_PRIMARY_OWNER', system: true }]);
+        setupMapperTabHarness('roles', UPDATE, { ...provider, roleMapper: {} });
+
+        expect(await screen.findByRole('button', { name: 'Add role mapping' })).toBeDisabled();
+        expect(screen.getByText('This domain has no roles to map users onto yet.')).toBeInTheDocument();
+    });
+
     it('lists the mapped users under the role names', async () => {
         setupMapperTabHarness('roles');
 

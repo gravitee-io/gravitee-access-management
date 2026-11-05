@@ -93,8 +93,9 @@ export function ExpressionMapperPanel({
         onSave(next);
     };
 
+    const selectable = targets.some(target => !target.disabled);
     const addButton = (
-        <Button size="sm" disabled={saving} onClick={() => setAdding(true)}>
+        <Button size="sm" disabled={saving || !selectable} onClick={() => setAdding(true)}>
             <PlusIcon />
             Add {noun} mapping
         </Button>
@@ -116,7 +117,9 @@ export function ExpressionMapperPanel({
                             variant="first-use"
                             icon={<UsersIcon />}
                             title={`No ${noun} mappers yet`}
-                            description={`Start adding users to ${noun}s.`}
+                            description={
+                                selectable ? `Start adding users to ${noun}s.` : `This domain has no ${noun}s to map users onto yet.`
+                            }
                             primaryAction={canUpdate ? addButton : undefined}
                         />
                     ) : (
