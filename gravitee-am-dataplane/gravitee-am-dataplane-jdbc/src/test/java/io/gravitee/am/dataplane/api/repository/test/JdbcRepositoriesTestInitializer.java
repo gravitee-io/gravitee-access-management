@@ -55,6 +55,7 @@ public class JdbcRepositoriesTestInitializer implements DataPlaneTestInitializer
                 "group_roles",
                 "password_histories",
                 "scope_approvals",
+                "authorization_detail_approvals",
                 "user_activities",
                 "users",
                 "user_entitlements",

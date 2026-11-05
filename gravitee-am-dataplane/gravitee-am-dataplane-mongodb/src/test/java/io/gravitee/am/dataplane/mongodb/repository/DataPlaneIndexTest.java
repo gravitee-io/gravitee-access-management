@@ -68,6 +68,7 @@ public class DataPlaneIndexTest {
     private static final Map<String, String> TTL_FIELD_BY_COLLECTION = new LinkedHashMap<>() {{
         put("devices", "expires_at");
         put("scope_approvals", "expiresAt");
+        put("authorization_detail_approvals", "expiresAt");
         put("user_activities", "expireAt");
         put("login_attempts", "expireAt");
         put("uma_permission_ticket", "expireAt");
@@ -159,6 +160,17 @@ public class DataPlaneIndexTest {
                 .append("clientId", 1).append("userExternalId", 1).append("userSource", 1).append("scope", 1));
 
         assertLookupIndexes("scope_approvals", expected);
+    }
+
+    @Test
+    public void theAuthorizationDetailApprovalStoreCarriesItsLookupIndexes() {
+        Map<String, Document> expected = new LinkedHashMap<>();
+        expected.put("d1c1u1dg1", new Document("domain", 1)
+                .append("clientId", 1).append("userId", 1).append("digest", 1));
+        expected.put("d1c1ue1us1dg1", new Document("domain", 1)
+                .append("clientId", 1).append("userExternalId", 1).append("userSource", 1).append("digest", 1));
+
+        assertLookupIndexes("authorization_detail_approvals", expected);
     }
 
     @Test

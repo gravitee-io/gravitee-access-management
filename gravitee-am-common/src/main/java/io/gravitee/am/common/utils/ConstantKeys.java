@@ -156,8 +156,18 @@ public interface ConstantKeys {
     String PASSWORDLESS_DEVICE_NAME = "deviceName";
 
     // Consent keys.
+    // digest of the authorization request the consent keys below belong to
+    String CONSENT_REQUEST_DIGEST_KEY = "consentRequestDigest";
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";
     String USER_CONSENT_APPROVED_KEY = "userConsentApproved";
+    // the authorization detail consent screen is the next consent step
+    String AUTHORIZATION_DETAILS_CONSENT_PENDING_KEY = "authorizationDetailsConsentPending";
+    // digest of the authorization details shown on the consent screen
+    String AUTHORIZATION_DETAILS_CONSENT_PRESENTED_KEY = "authorizationDetailsConsentPresented";
+    // digest of the authorization details the user decided on
+    String AUTHORIZATION_DETAILS_CONSENT_COMPLETED_KEY = "authorizationDetailsConsentCompleted";
+    String AUTHORIZATION_DETAILS_CONSENT_APPROVED_KEY = "authorizationDetailsConsentApproved";
+    String CONSENT_STAGE_CONTEXT_KEY = "consentStage";
 
     // Register keys.
     String REGISTRATION_RESPONSE_KEY = "registrationResponse";
@@ -183,6 +193,8 @@ public interface ConstantKeys {
 
     // validated authorization_details (RFC 9396) of the authorization request
     String AUTHORIZATION_DETAILS_CONTEXT_KEY = "authorizationDetails";
+    // display properties of the presented authorization detail types, by type
+    String AUTHORIZATION_DETAIL_TYPES_CONTEXT_KEY = "authorizationDetailTypes";
 
     //geoip
     String GEOIP_KEY = "geoip";
