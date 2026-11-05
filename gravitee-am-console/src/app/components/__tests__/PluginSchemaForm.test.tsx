@@ -103,6 +103,37 @@ describe('PluginSchemaForm', () => {
         });
     });
 
+    it('edits a plain string list as tags and submits it as a list', async () => {
+        const onSubmit = vi.fn();
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: { scopes: { type: 'array', title: 'Scopes', items: { type: 'string' } } },
+        });
+        renderWithGraphene(<ConfigurationForm adapted={adapted} onSubmit={onSubmit} />);
+
+        await userEvent.type(screen.getByRole('combobox', { name: 'Scopes' }), 'openid{Enter}profile{Enter}');
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+        await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+        expect(onSubmit.mock.calls[0][0]).toEqual({ config: { scopes: ['openid', 'profile'] } });
+        expect(screen.queryByText(/Item 1/)).not.toBeInTheDocument();
+    });
+
+    it('blocks the submit while a required string list is empty', async () => {
+        const onSubmit = vi.fn();
+        const adapted = adaptAmSchema({
+            type: 'object',
+            required: ['scopes'],
+            properties: { scopes: { type: 'array', title: 'Scopes', items: { type: 'string' } } },
+        });
+        renderWithGraphene(<ConfigurationForm adapted={adapted} onSubmit={onSubmit} />);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+        expect(await screen.findByText('This field is required')).toBeInTheDocument();
+        expect(onSubmit).not.toHaveBeenCalled();
+    });
+
     it('blocks the submit while a required file is missing', async () => {
         const onSubmit = renderForm();
 

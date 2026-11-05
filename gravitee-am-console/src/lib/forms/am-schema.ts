@@ -30,6 +30,15 @@ export interface SchemaFile {
     readonly required: boolean;
 }
 
+/** A top-level array of plain strings. Graphene renders each item as a collapsible section, so the console uses a tag input. */
+export interface SchemaStringList {
+    readonly key: string;
+    readonly title?: string;
+    readonly description?: string;
+    readonly required: boolean;
+    readonly readOnly: boolean;
+}
+
 export interface AmSchemaOptions {
     /** The choices of a `graviteeResource` field. With none, the field is read-only. */
     readonly resources?: readonly SchemaResource[];
@@ -42,6 +51,7 @@ export interface AdaptedSchema {
     /** The `if`/`then` blocks of the top-level `allOf`, each as a schema. Graphene's resolver ignores them inside `allOf`. */
     readonly conditions: readonly JsonSchema[];
     readonly files: readonly SchemaFile[];
+    readonly stringLists: readonly SchemaStringList[];
     readonly dictionaryEndpoints: readonly string[];
     /** Dotted paths of the widgets and conditions that Graphene cannot express. */
     readonly unsupported: readonly string[];
@@ -245,6 +255,17 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
     return adapted;
 }
 
+function isStringList(property: SchemaNode): boolean {
+    const items = property.items as SchemaNode | undefined;
+    return (
+        property.type === 'array' &&
+        items?.type === 'string' &&
+        items.enum === undefined &&
+        widgetOf(property) === undefined &&
+        property.condition === undefined
+    );
+}
+
 /** Translates an angular-schema-form plugin schema into the Graphene `JsonSchemaForm` dialect. */
 export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {}): AdaptedSchema {
     const context: AdaptContext = { options, dictionaryEndpoints: [], unsupported: [] };
@@ -258,10 +279,20 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
             description: property.description as string | undefined,
             required: required.includes(key),
         }));
+    const stringLists: SchemaStringList[] = Object.entries(properties)
+        .filter(([, property]) => isStringList(property))
+        .map(([key, property]) => ({
+            key,
+            title: property.title as string | undefined,
+            description: property.description as string | undefined,
+            required: required.includes(key),
+            readOnly: property.readonly === true,
+        }));
+    const extracted = (key: string) => files.some(file => file.key === key) || stringLists.some(list => list.key === key);
 
     const adapted: SchemaNode = Object.fromEntries(Object.entries(schema).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
     if (schema.properties) {
-        adaptProperties(schema, adapted, '', context, key => files.some(file => file.key === key));
+        adaptProperties(schema, adapted, '', context, extracted);
     }
     const allOf = Array.isArray(schema.allOf) ? (schema.allOf as SchemaNode[]) : [];
     const conditions = allOf.filter(entry => entry.if !== undefined).map(entry => ({ type: 'object', ...entry }) as JsonSchema);
@@ -277,6 +308,7 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         schema: adapted as JsonSchema,
         conditions,
         files,
+        stringLists,
         dictionaryEndpoints: context.dictionaryEndpoints,
         unsupported: context.unsupported,
     };
