@@ -35,7 +35,7 @@ public class FactorResourceTest extends JerseySpringTest {
         final String factorId = "factor-of-another-domain";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(factorService).findById(domainId, factorId);
+        doReturn(Maybe.empty()).when(factorService).findByIdForDisplay(domainId, factorId);
 
         final Response response = target("domains").path(domainId).path("factors").path(factorId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

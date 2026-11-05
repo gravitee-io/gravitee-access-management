@@ -306,6 +306,41 @@ public class FactorServiceTest {
     }
 
     @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        Factor readable = new Factor();
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        Factor unreadable = new Factor();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(factorRepository.findByDomainForListing(DOMAIN)).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = factorService.findByDomainForListing(DOMAIN).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        Factor factor = new Factor();
+        factor.setId("factor-id");
+        factor.setName("my factor");
+        factor.setDomain(DOMAIN);
+        factor.setConfiguration("enc:2025:AAAA:BBBB");
+        when(factorRepository.findById("factor-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(factor, new IllegalStateException("key not configured"))));
+
+        Factor found = factorService.findByIdForDisplay(DOMAIN, "factor-id").blockingGet();
+
+        org.junit.Assert.assertEquals("my factor", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        factorService.findByIdForDisplay("other-domain", "factor-id").test().awaitDone(10, TimeUnit.SECONDS).assertNoValues().assertComplete();
+    }
+
+    @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
         Factor factor = new Factor();
         factor.setId("factor-id");

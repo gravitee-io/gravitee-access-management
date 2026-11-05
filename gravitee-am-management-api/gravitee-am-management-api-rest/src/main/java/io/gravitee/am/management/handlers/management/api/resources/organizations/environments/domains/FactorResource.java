@@ -85,7 +85,7 @@ public class FactorResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> factorService.findById(domain, factor))
+                        .flatMap(__ -> factorService.findByIdForDisplay(domain, factor))
                         .switchIfEmpty(Maybe.error(new FactorNotFoundException(factor)))
                         .map(factor1 -> Response.ok(factor1).build()))
                 .subscribe(response::resume, response::resume);
