@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -29,6 +30,17 @@ public interface ReporterRepository extends CrudRepository<Reporter, String> {
     Flowable<Reporter> findAll();
 
     Flowable<Reporter> findByReference(Reference reference);
+
+    /**
+     * Same reporters as {@link #findByReference(Reference)}, in a single query, but one whose configuration cannot be
+     * decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted}) instead of failing the whole list.
+     * The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<Reporter> findByReferenceForListing(Reference reference) {
+        return findByReference(reference);
+    }
+
     Flowable<Reporter> findInheritedFrom(Reference parentReference);
 
     /**
