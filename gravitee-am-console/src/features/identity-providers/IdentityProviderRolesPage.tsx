@@ -26,6 +26,12 @@ import { ExpressionMapperPanel, type Mapper } from './ExpressionMapperPanel';
 import { useIdentityProvider } from './IdentityProviderLayout';
 
 /** Maps user expressions onto every role of the domain, as the Angular `RolesResolver` loads them. */
+const EXAMPLES = [
+    { user: 'uid=sampleuser', target: 'ROLE_USER' },
+    { user: 'memberOf=administrators', target: 'ROLE_ADMIN' },
+    { user: "{#profile['my-claim'] == 'default'}", target: 'ROLE_USER' },
+];
+
 export function IdentityProviderRolesPage() {
     const { provider } = useIdentityProvider();
     const { ref } = useCurrentDomain();
@@ -63,20 +69,10 @@ export function IdentityProviderRolesPage() {
             description={
                 <>
                     Role mappers set roles and permissions for this provider’s users, during authentication. Match users with{' '}
-                    <code className="font-mono text-xs">attributeName=attributeValue</code> or expression language, for example:
-                    <ul className="mt-2 flex flex-col gap-1">
-                        <li>
-                            <code className="font-mono text-xs">{'uid=sampleuser => ROLE_USER'}</code>
-                        </li>
-                        <li>
-                            <code className="font-mono text-xs">{'memberOf=administrators => ROLE_ADMIN'}</code>
-                        </li>
-                        <li>
-                            <code className="font-mono text-xs">{"{#profile['my-claim'] == 'default'} => ROLE_USER"}</code>
-                        </li>
-                    </ul>
+                    <code className="font-mono text-xs">attributeName=attributeValue</code> or expression language.
                 </>
             }
+            examples={EXAMPLES}
             targets={targets}
             mapper={provider.roleMapper ?? {}}
             duplicateMessage={(user, role) => `"${user}" already has the role ${role}.`}
