@@ -235,6 +235,60 @@ public class BotDetectionServiceTest {
     }
 
     @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        BotDetection detection = inDomain(new BotDetection());
+        detection.setId("detection-id");
+        detection.setConfiguration("enc:2025:AAAA:BBBB");
+        when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(detection, new IllegalStateException("key not configured"))));
+        when(botDetectionRepository.delete(detection.getId())).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(applicationService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+
+        TestObserver testObserver = botDetectionService.delete(DOMAIN, detection.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(botDetectionRepository).delete(detection.getId());
+    }
+
+    @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        BotDetection readable = inDomain(new BotDetection());
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        BotDetection unreadable = inDomain(new BotDetection());
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(botDetectionRepository.findByReferenceForListing(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = botDetectionService.findByDomainForListing(DOMAIN).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        BotDetection detection = inDomain(new BotDetection());
+        detection.setId("detection-id");
+        detection.setName("my detection");
+        detection.setConfiguration("enc:2025:AAAA:BBBB");
+        when(botDetectionRepository.findById("detection-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(detection, new IllegalStateException("key not configured"))));
+
+        BotDetection found = botDetectionService.findByIdForDisplay(DOMAIN, "detection-id").blockingGet();
+
+        org.junit.Assert.assertEquals("my detection", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        botDetectionService.findByIdForDisplay("other-domain", "detection-id").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertNoValues().assertComplete();
+    }
+
+    @Test
     public void shouldDelete() {
         BotDetection detection = inDomain(new BotDetection());
         detection.setId("detection-id");

@@ -91,7 +91,7 @@ public class BotDetectionsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_BOT_DETECTION, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(___ -> botDetectionService.findByDomain(domain).map(this::filterBotDetectionInfos).toList()))
+                        .flatMapSingle(___ -> botDetectionService.findByDomainForListing(domain).map(this::filterBotDetectionInfos).toList()))
                 .subscribe(response::resume, response::resume);
     }
 
