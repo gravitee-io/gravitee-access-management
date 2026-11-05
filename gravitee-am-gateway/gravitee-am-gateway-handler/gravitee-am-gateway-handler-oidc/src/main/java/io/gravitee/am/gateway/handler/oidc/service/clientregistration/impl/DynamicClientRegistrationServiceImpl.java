@@ -142,6 +142,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private DcrClientIdGenerator clientIdGenerator;
+
     @Override
     public Single<Client> create(DynamicClientRegistrationRequest request, String basePath) {
         //If Dynamic client registration from template is enabled and request contains a software_id
@@ -218,7 +221,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {
         Client client = new Client();
-        client.setClientId(SecureRandomString.generate());
+        client.setClientId(clientIdGenerator.generate());
         client.setClientName(ClientServiceImpl.DEFAULT_CLIENT_NAME);
         client.setDomain(domain.getId());
         client.setFlowsInherited(true);
@@ -267,7 +270,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             return Single.error(new InvalidClientMetadataException("Client behind software_id is not a template"));
         }
         //Erase potential confidential values.
-        template.setClientId(SecureRandomString.generate());
+        template.setClientId(clientIdGenerator.generate());
         template.setDomain(domain.getId());
         template.setId(null);
         template.setClientSecret(null);

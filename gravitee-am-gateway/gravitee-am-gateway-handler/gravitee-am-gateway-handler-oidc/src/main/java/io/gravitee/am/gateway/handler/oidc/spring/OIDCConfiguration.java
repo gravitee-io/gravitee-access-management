@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientServ
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientSecretServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DcrClientIdGenerator;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
@@ -59,6 +60,7 @@ import io.gravitee.am.gateway.handler.uma.spring.UMAConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,6 +78,11 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public OpenIDDiscoveryService openIDConfigurationService() {
         return new OpenIDDiscoveryServiceImpl();
+    }
+
+    @Bean
+    public DcrClientIdGenerator dcrClientIdGenerator(Environment environment) {
+        return new DcrClientIdGenerator(environment);
     }
 
     @Bean

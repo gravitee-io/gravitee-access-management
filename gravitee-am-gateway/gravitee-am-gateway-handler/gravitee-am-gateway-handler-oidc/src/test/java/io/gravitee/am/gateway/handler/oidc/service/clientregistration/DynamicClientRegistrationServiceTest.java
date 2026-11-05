@@ -31,6 +31,7 @@ import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DcrClientIdGenerator;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
@@ -76,8 +77,10 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -163,6 +166,10 @@ public class DynamicClientRegistrationServiceTest {
 
     @Mock
     private Environment environment;
+
+    @Spy
+    private DcrClientIdGenerator clientIdGenerator = new DcrClientIdGenerator(
+            new MockEnvironment().withProperty("handlers.oidc.dcr.clientIdLength", "30"));
 
     @Mock
     private SecretService secretService;
@@ -1030,6 +1037,38 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(throwable -> "Client behind software_id is not a template".equals(
                 throwable.getMessage()));
         verify(clientService, times(0)).create(any(), any());
+    }
+
+    @Test
+    public void create_clientIdHasConfiguredLength() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getClientId().matches("[A-Za-z0-9]{30}"));
+    }
+
+    @Test
+    public void createFromTemplate_clientIdHasConfiguredLength() {
+        Client template = new Client();
+        template.setId(ID_SOURCE);
+        template.setClientId("shouldBeReplaced");
+        template.setTemplate(true);
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setSoftwareId(Optional.of(ID_SOURCE));
+        request.setApplicationType(Optional.of("app"));
+
+        when(flowService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
+        when(formService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.copyFromClient(any(Domain.class), eq(ID_SOURCE), eq(ID_TARGET))).thenReturn(Flowable.empty());
+        when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
+        when(clientService.findById(ID_SOURCE)).thenReturn(Maybe.just(template));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getClientId().matches("[A-Za-z0-9]{30}"));
     }
 
     @Test
