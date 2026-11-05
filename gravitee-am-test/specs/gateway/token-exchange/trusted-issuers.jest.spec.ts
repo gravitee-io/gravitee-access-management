@@ -395,7 +395,10 @@ describe('Trusted Issuers - User Binding', () => {
 
     const neverLoggedInUser = await buildCreateAndTestUser(domain.id, accessToken, 1);
 
-    await writeUserBinding(true, EMAIL_BINDING_CRITERIA);
+    await waitForSyncAfter(domain.id, () =>
+      patchDomainRaw(domain.id, accessToken, buildTrustedIssuerConfig(true, [{ attribute: 'emails.value', expression: "{#token['email']}" }])).expect(200),
+    );
+    await waitForOidcReady(domain.hrid);
 
     const externalJwt = fixture.signExternalJwt({
       sub: 'external-user-never-logged-in',
