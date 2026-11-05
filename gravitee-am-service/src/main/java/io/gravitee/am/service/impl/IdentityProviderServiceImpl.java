@@ -519,7 +519,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Flowable<IdentityProvider> findByCertificate(Reference reference, String id) {
-        return identityProviderRepository.findAll(reference.type(), reference.id())
+        // an identity provider whose configuration cannot be decrypted is skipped, what it refers to is unknown
+        return identityProviderRepository.findAllForListing(reference.type(), reference.id())
+                .filter(idp -> !FieldEncryptor.isEncrypted(idp.getConfiguration()))
                 .filter(idp -> {
                     var config = objectMapper.readTree(idp.getConfiguration());
                     return hasEntryReferringToCert(config, id);

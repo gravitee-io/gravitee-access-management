@@ -931,7 +931,7 @@ public class IdentityProviderServiceTest {
     public void shouldFindByCertificate() {
         var domainRef = Reference.domain("test-domain");
         var certId = "some-cert-id";
-        when(identityProviderRepository.findAll(domainRef.type(), domainRef.id()))
+        when(identityProviderRepository.findAllForListing(domainRef.type(), domainRef.id()))
                 .thenReturn(Flowable.fromIterable(List.of(
                         mtlsOauth2Idp(domainRef, certId),
                         minimalIdentityProvider(domainRef),
@@ -942,6 +942,23 @@ public class IdentityProviderServiceTest {
                 .assertNoErrors()
                 .assertComplete()
                 .assertValueCount(2);
+    }
+
+    @Test
+    public void shouldFindByCertificate_skipTheOneWhoseConfigurationCannotBeDecrypted() {
+        var domainRef = Reference.domain("test-domain");
+        var certId = "some-cert-id";
+        var unreadable = minimalIdentityProvider(domainRef);
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(identityProviderRepository.findAllForListing(domainRef.type(), domainRef.id()))
+                .thenReturn(Flowable.fromIterable(List.of(mtlsOauth2Idp(domainRef, certId), unreadable)));
+
+        identityProviderService.findByCertificate(domainRef, certId)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors()
+                .assertComplete()
+                .assertValueCount(1);
     }
 
     private IdentityProvider idpWithDeeplyNestedCertConfig_array(Reference domainRef, String certId) {
