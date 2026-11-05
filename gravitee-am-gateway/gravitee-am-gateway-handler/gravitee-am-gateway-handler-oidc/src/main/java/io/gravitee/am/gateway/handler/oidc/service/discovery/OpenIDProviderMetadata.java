@@ -123,6 +123,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("identity_chaining_requested_token_types_supported")
     private List<String> identityChainingRequestedTokenTypesSupported;
 
+    @JsonProperty("authorization_details_types_supported")
+    private List<String> authorizationDetailsTypesSupported;
+
     @JsonProperty("display_values_supported")
     private List<String> displayValuesSupported;
 
@@ -443,6 +446,14 @@ public class OpenIDProviderMetadata {
 
     public void setIdentityChainingRequestedTokenTypesSupported(List<String> identityChainingRequestedTokenTypesSupported) {
         this.identityChainingRequestedTokenTypesSupported = identityChainingRequestedTokenTypesSupported;
+    }
+
+    public List<String> getAuthorizationDetailsTypesSupported() {
+        return authorizationDetailsTypesSupported;
+    }
+
+    public void setAuthorizationDetailsTypesSupported(List<String> authorizationDetailsTypesSupported) {
+        this.authorizationDetailsTypesSupported = authorizationDetailsTypesSupported;
     }
 
     public List<String> getDisplayValuesSupported() {

@@ -52,6 +52,7 @@ import java.util.Set;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import org.mockito.ArgumentCaptor;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
@@ -588,7 +589,7 @@ class StrategyGranterAdapterTest {
 
         Map<String, Object> d = new HashMap<>();
         d.put("type", "fdx_v1.0");
-        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null, List.of(d));
+        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null, AuthorizationDetails.of(List.of(d)));
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",
@@ -626,8 +627,8 @@ class StrategyGranterAdapterTest {
 
         OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
         assertNotNull(capturedRequest.getAuthorizationDetails(), "Should have authorizationDetails");
-        assertEquals(1, capturedRequest.getAuthorizationDetails().size());
-        assertEquals("fdx_v1.0", capturedRequest.getAuthorizationDetails().get(0).get("type"),
+        assertEquals(1, capturedRequest.getAuthorizationDetails().getAll().size());
+        assertEquals("fdx_v1.0", capturedRequest.getAuthorizationDetails().getAll().get(0).getType(),
                 "authorizationDetails type should be threaded through from CibaData");
     }
 

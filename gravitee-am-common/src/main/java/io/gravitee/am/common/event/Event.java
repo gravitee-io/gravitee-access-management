@@ -63,6 +63,7 @@ public abstract class Event {
             case ENTRYPOINT -> EntrypointEvent.actionOf(action);
             case DATA_PLANE -> DataPlaneEvent.actionOf(action);
             case TRUST_DOMAIN -> TrustDomainEvent.actionOf(action);
+            case AUTHORIZATION_DETAIL_TYPE -> AuthorizationDetailTypeEvent.actionOf(action);
             default -> null;
         };
     }
