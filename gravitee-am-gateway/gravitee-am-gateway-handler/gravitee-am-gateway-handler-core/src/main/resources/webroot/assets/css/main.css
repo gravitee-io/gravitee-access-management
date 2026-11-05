@@ -564,6 +564,36 @@ div.section > form {
     gap: 12px;
 }
 
+.authorization-detail-consent-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.authorization-detail-consent-table th {
+    padding: 12px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    border-bottom: 2px solid var(--scope-consent-border-color, #ededed);
+}
+
+.authorization-detail-consent-type-description {
+    display: block;
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+.authorization-detail-consent-table .scope-consent-cell-name {
+    padding-left: 12px;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.authorization-detail-consent-table .scope-consent-cell-description {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
 .scope-consent-buttons .button {
     flex: 1;
 }

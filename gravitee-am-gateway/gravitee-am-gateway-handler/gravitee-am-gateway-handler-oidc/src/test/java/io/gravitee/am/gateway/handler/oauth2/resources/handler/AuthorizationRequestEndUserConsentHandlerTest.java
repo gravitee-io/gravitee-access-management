@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestEndUserConsentHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
@@ -39,6 +40,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
 import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -131,6 +133,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
                     assertTrue(location.contains("/test/oauth/consent"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+        verify(session).remove(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_PENDING_KEY);
     }
 
     @Test

@@ -312,6 +312,8 @@ public class Client implements Cloneable, Resource {
     // ----------- Consent Settings -----------
     private boolean optInScopeSelection;
 
+    private boolean skipConsent;
+
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
 
     private ApplicationCrossAppAccessSettings crossAppAccessSettings;
@@ -430,6 +432,7 @@ public class Client implements Cloneable, Resource {
         this.notOnOrAfterTimeSkewSeconds = other.notOnOrAfterTimeSkewSeconds;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.optInScopeSelection = other.optInScopeSelection;
+        this.skipConsent = other.skipConsent;
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
         this.lightweightJwtSettings = other.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(other.lightweightJwtSettings) : null;
@@ -1321,6 +1324,14 @@ public class Client implements Cloneable, Resource {
 
     public void setOptInScopeSelection(boolean optInScopeSelection) {
         this.optInScopeSelection = optInScopeSelection;
+    }
+
+    public boolean isSkipConsent() {
+        return skipConsent;
+    }
+
+    public void setSkipConsent(boolean skipConsent) {
+        this.skipConsent = skipConsent;
     }
 
     public TokenExchangeOAuthSettings getTokenExchangeOAuthSettings() {

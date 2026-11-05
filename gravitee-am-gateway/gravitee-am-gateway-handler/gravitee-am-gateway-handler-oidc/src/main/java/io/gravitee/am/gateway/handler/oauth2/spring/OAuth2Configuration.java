@@ -30,7 +30,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionVa
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCodeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.consent.AuthorizationDetailsConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
+import io.gravitee.am.gateway.handler.oauth2.service.consent.impl.AuthorizationDetailsConsentServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.impl.UserConsentServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -199,6 +201,13 @@ public class OAuth2Configuration implements ProtocolConfiguration {
             @Value("${oauth2.approval.expiry:-1}") int approvalExpirySeconds
     ) {
         return new UserConsentServiceImpl(approvalExpirySeconds);
+    }
+
+    @Bean
+    public AuthorizationDetailsConsentService authorizationDetailsConsentService(
+            @Value("${oauth2.approval.expiry:-1}") int approvalExpirySeconds
+    ) {
+        return new AuthorizationDetailsConsentServiceImpl(approvalExpirySeconds);
     }
 
     @Bean

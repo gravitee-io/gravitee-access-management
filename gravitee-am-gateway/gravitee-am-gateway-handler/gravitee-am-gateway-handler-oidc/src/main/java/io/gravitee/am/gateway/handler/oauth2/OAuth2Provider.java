@@ -44,6 +44,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthor
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestConsentSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestEndUserConsentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestMFAPromptHandler;
@@ -64,6 +65,14 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.Author
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.TokenRequestResourceValidationHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.AuthorizationDetailsConsentEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestAuthorizationDetailsConsentHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.AuthorizationDetailsConsentPendingHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.AuthorizationDetailsConsentProcessHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.ConsentFlowHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.ConsentStageHandler;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailTypeManager;
+import io.gravitee.am.gateway.handler.oauth2.service.consent.AuthorizationDetailsConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
@@ -155,6 +164,12 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private UserConsentService userConsentService;
+
+    @Autowired
+    private AuthorizationDetailsConsentService authorizationDetailsConsentService;
+
+    @Autowired
+    private AuthorizationDetailTypeManager authorizationDetailTypeManager;
 
     @Autowired
     private TokenGranter tokenGranter;
@@ -316,35 +331,44 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService))
+                .handler(new AuthorizationRequestConsentSessionHandler())
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
+                .handler(new AuthorizationRequestAuthorizationDetailsConsentHandler(authorizationDetailsConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
-        // Authorization consent endpoint
+        // Authorization consent endpoint: the scope screen, then the authorization detail screen
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
         oauth2Router.route(HttpMethod.GET, PATH_CONSENT)
                 .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
+                .handler(new AuthorizationRequestParseAuthorizationDetailsHandler(authorizationDetailsValidator))
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
-                .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
+                .handler(ConsentFlowHandler.preConsent(policyChainHandler.create(ExtensionPoint.PRE_CONSENT)))
                 .handler(localeHandler)
-                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
+                .handler(new ConsentStageHandler(
+                        new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain),
+                        new AuthorizationDetailsConsentEndpoint(authorizationDetailsConsentService, authorizationDetailTypeManager, thymeleafTemplateEngine, domain)));
 
         oauth2Router.route(HttpMethod.POST, PATH_CONSENT)
                 .handler(new AuthorizationRequestParseClientHandler(regularClientLookupService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
+                .handler(new AuthorizationRequestParseAuthorizationDetailsHandler(authorizationDetailsValidator))
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
-                .handler(new UserConsentProcessHandler(userConsentService, domain, gatewayMetricProvider))
-                .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
+                .handler(new ConsentStageHandler(
+                        new UserConsentProcessHandler(userConsentService, domain, gatewayMetricProvider),
+                        new AuthorizationDetailsConsentProcessHandler(authorizationDetailsConsentService, domain)))
+                .handler(new AuthorizationDetailsConsentPendingHandler(authorizationDetailsConsentService))
+                .handler(ConsentFlowHandler.postConsent(policyChainHandler.create(ExtensionPoint.POST_CONSENT)))
                 .handler(new UserConsentPostEndpoint());
         oauth2Router.route(PATH_CONSENT)
                 .failureHandler(new UserConsentFailureHandler());

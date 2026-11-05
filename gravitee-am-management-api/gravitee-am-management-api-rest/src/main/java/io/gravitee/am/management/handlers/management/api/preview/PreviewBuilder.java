@@ -29,8 +29,11 @@ import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.account.FormField;
+import io.gravitee.am.model.oauth2.AuthorizationDetailType;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.AuthorizationDetailTypeProperties;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
@@ -46,6 +49,7 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -304,6 +308,20 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.ALLOW_EMPTY_SCOPE_SELECTION, Boolean.FALSE);
                 break;
 
+            case OAUTH2_AUTHORIZATION_DETAILS_CONSENT:
+                final Map<String, Object> payment = new LinkedHashMap<>();
+                payment.put("type", "payment_initiation");
+                payment.put("instructedAmount", Map.of("currency", "EUR", "amount", "123.50"));
+                payment.put("creditorName", "Merchant A");
+                final Map<String, Object> accounts = new LinkedHashMap<>();
+                accounts.put("type", "account_information");
+                accounts.put("actions", List.of("list_accounts", "read_balances"));
+                variables.put(ConstantKeys.AUTHORIZATION_DETAILS_CONTEXT_KEY, AuthorizationDetails.of(List.of(payment, accounts)));
+                variables.put(ConstantKeys.AUTHORIZATION_DETAIL_TYPES_CONTEXT_KEY, Map.of(
+                        "payment_initiation", previewType("Payment initiation", "Initiate a payment from your account"),
+                        "account_information", previewType("Account information", null)));
+                break;
+
             // template without specific variables
             case RESET_PASSWORD:
             case BLOCKED_ACCOUNT:
@@ -315,6 +333,13 @@ public class PreviewBuilder {
                 break;
         }
         return variables;
+    }
+
+    private static AuthorizationDetailTypeProperties previewType(String name, String description) {
+        final AuthorizationDetailType type = new AuthorizationDetailType();
+        type.setName(name);
+        type.setDescription(description);
+        return new AuthorizationDetailTypeProperties(type);
     }
 
     private static Scope previewScope(String key, String description) {

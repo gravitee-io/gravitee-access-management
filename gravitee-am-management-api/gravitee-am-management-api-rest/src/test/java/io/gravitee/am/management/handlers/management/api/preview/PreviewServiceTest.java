@@ -199,6 +199,27 @@ public class PreviewServiceTest {
     }
 
     @Test
+    public void shouldRenderAuthorizationDetailsConsentForm_withSampleDetails() {
+        when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
+        when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.empty());
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
+        final PreviewRequest previewRequest = new PreviewRequest();
+        previewRequest.setContent(
+                "<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><body>" +
+                        "<div th:each=\"detail : ${authorizationDetails.all}\"><b th:text=\"${authorizationDetailTypes[detail.type].name}\"></b>" +
+                        "<i th:each=\"field : ${detail}\" th:unless=\"${field.key == 'type'}\" th:text=\"${field.key}\"></i></div>" +
+                        "</body></html>");
+        previewRequest.setTemplate(Template.OAUTH2_AUTHORIZATION_DETAILS_CONSENT.template());
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest, Locale.ENGLISH, BASE_URL).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(response -> response.getContent().contains("<b>Payment initiation</b><i>instructedAmount</i><i>creditorName</i>"));
+        observer.assertValue(response -> response.getContent().contains("<b>Account information</b><i>actions</i>"));
+    }
+
+    @Test
     public void shouldNotRenderDomainForm_missingValues() {
         when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
         when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.empty());

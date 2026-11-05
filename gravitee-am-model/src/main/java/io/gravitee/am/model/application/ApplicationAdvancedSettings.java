@@ -54,6 +54,7 @@ public class ApplicationAdvancedSettings {
 
     public void copyTo(Client client) {
         client.setAutoApproveScopes(this.skipConsent ? Collections.singletonList("true") : null);
+        client.setSkipConsent(this.skipConsent);
         client.setFlowsInherited(this.flowsInherited);
     }
 }

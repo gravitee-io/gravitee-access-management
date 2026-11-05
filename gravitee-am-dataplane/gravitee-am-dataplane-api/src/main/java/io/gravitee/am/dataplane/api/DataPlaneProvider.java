@@ -25,6 +25,7 @@ import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
 import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
 import io.gravitee.am.dataplane.api.repository.ResourceRepository;
+import io.gravitee.am.dataplane.api.repository.AuthorizationDetailApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -54,6 +55,8 @@ public interface DataPlaneProvider {
     GroupRepository getGroupRepository();
 
     ScopeApprovalRepository getScopeApprovalRepository();
+
+    AuthorizationDetailApprovalRepository getAuthorizationDetailApprovalRepository();
 
     UserActivityRepository getUserActivityRepository();
 

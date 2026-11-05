@@ -78,6 +78,7 @@ public class GatewayExpiredDataSweeperProvider implements ExpiredDataSweeperProv
             case tokens -> tokenRepository;
 
             case scope_approvals -> singleDataPlaneProvider.get().getScopeApprovalRepository();
+            case authorization_detail_approvals -> singleDataPlaneProvider.get().getAuthorizationDetailApprovalRepository();
             case login_attempts -> singleDataPlaneProvider.get().getLoginAttemptRepository();
             case uma_permission_ticket -> singleDataPlaneProvider.get().getPermissionTicketRepository();
             case user_activities -> singleDataPlaneProvider.get().getUserActivityRepository();

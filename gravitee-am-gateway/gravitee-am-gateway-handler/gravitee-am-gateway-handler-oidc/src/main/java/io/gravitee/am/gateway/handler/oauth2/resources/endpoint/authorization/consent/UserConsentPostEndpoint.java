@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.http.HttpHeaders;
@@ -35,10 +36,12 @@ public class UserConsentPostEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        // consent has been processed, replay authorization request
+        final String path = Boolean.TRUE.equals(routingContext.get(ConstantKeys.AUTHORIZATION_DETAILS_CONSENT_PENDING_KEY))
+                ? "/oauth/consent"
+                : "/oauth/authorize";
         try {
             final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
-                    routingContext.get(CONTEXT_PATH) + "/oauth/authorize", RequestUtils.getCleanedQueryParams(routingContext.request()), true);
+                    routingContext.get(CONTEXT_PATH) + path, RequestUtils.getCleanedQueryParams(routingContext.request()), true);
             doRedirect(routingContext.response(), authorizationRequestUrl);
         } catch (Exception e) {
             log.error("An error occurs while handling authorization approval request", e);

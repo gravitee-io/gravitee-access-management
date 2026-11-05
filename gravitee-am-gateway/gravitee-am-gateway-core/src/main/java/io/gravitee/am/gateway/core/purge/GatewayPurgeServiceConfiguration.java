@@ -37,6 +37,7 @@ public class GatewayPurgeServiceConfiguration {
             authorization_codes,
             refresh_tokens,
             scope_approvals,
+            authorization_detail_approvals,
             request_objects,
             login_attempts,
             uma_permission_ticket,
