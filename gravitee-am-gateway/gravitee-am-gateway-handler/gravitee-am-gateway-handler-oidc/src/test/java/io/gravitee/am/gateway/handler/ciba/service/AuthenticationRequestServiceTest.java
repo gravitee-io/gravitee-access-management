@@ -19,19 +19,20 @@ import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvid
 import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidPollingRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
-import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationRejectedException;
-import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
+import io.gravitee.am.common.exception.oauth2.AuthorizationPendingException;
+import io.gravitee.am.common.exception.oauth2.AuthorizationRejectedException;
+import io.gravitee.am.common.exception.oauth2.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
+import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientLookupService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
-import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIBASettings;
@@ -120,6 +121,9 @@ public class AuthenticationRequestServiceTest {
         java.lang.reflect.Field domainField = AuthenticationRequestServiceImpl.class.getDeclaredField("domain");
         domainField.setAccessible(true);
         domainField.set(service, this.domain);
+        java.lang.reflect.Field pollingServiceField = AuthenticationRequestServiceImpl.class.getDeclaredField("pollingService");
+        pollingServiceField.setAccessible(true);
+        pollingServiceField.set(service, new CIBAConfiguration().cibaPollingService(requestRepository, 900));
     }
 
     @Test
@@ -128,42 +132,47 @@ public class AuthenticationRequestServiceTest {
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain, "unknown", client).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertError(InvalidGrantException.class);
+        observer.assertError(InvalidPollingRequestException.class);
     }
 
     @Test
     public void shouldRetrieve_SlowDown() {
         CibaAuthRequest request = new CibaAuthRequest();
+        request.setId("reqid");
         request.setLastAccessAt(new Date(Instant.now().minusSeconds(1).toEpochMilli()));
         request.setStatus(AuthenticationRequestStatus.ONGOING.name());
         request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
         request.setClientId(client.getClientId());
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
+        when(requestRepository.touch(eq("reqid"), any(Date.class), eq(true))).thenReturn(Completable.complete());
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid", client).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(SlowDownException.class);
+
+        verify(requestRepository).touch(eq("reqid"), any(Date.class), eq(true));
     }
 
     @Test
     public void shouldRetrieve_Pending() {
         CibaAuthRequest request = new CibaAuthRequest();
+        request.setId("reqid");
         request.setLastAccessAt(new Date(Instant.now().minusSeconds(6).toEpochMilli()));
         request.setStatus(AuthenticationRequestStatus.ONGOING.name());
         request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
         request.setClientId(client.getClientId());
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
-        when(requestRepository.update(any())).thenReturn(Single.just(request));
+        when(requestRepository.touch(eq("reqid"), any(Date.class), eq(false))).thenReturn(Completable.complete());
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid", client).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(AuthorizationPendingException.class);
 
-        verify(requestRepository).update(request);
+        verify(requestRepository).touch(eq("reqid"), any(Date.class), eq(false));
     }
 
     @Test
@@ -174,7 +183,7 @@ public class AuthenticationRequestServiceTest {
         request.setClientId(client.getClientId());
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
-        when(requestRepository.delete(any())).thenReturn(Completable.complete());
+        when(requestRepository.delete(any())).thenReturn(Single.just(true));
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid", client).test();
 
@@ -190,12 +199,28 @@ public class AuthenticationRequestServiceTest {
         request.setClientId(client.getClientId());
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
-        when(requestRepository.delete(any())).thenReturn(Completable.complete());
+        when(requestRepository.delete(any())).thenReturn(Single.just(true));
 
         final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid", client).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertValueCount(1);
+    }
+
+    @Test
+    public void shouldNotRetrieveARequestAlreadyRedeemed() {
+        CibaAuthRequest request = new CibaAuthRequest();
+        request.setStatus(AuthenticationRequestStatus.SUCCESS.name());
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
+        request.setClientId(client.getClientId());
+
+        when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
+        when(requestRepository.delete(any())).thenReturn(Single.just(false));
+
+        final TestObserver<CibaAuthRequest> observer = service.retrieve(domain,"reqid", client).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertError(InvalidPollingRequestException.class);
     }
 
     @Test
@@ -622,6 +647,24 @@ public class AuthenticationRequestServiceTest {
         CibaAuthRequest entity = captor.getValue();
         assertNotNull(entity.getAuthorizationDetails());
         assertEquals("fdx_v1.0", entity.getAuthorizationDetails().get(0).get("type"));
+    }
+
+    @Test
+    public void shouldRegisterWithinPollingWindow() {
+        CibaAuthenticationRequest request = new CibaAuthenticationRequest();
+        request.setId("req-3");
+        request.setRequestedExpiry(120);
+
+        ArgumentCaptor<CibaAuthRequest> captor = ArgumentCaptor.forClass(CibaAuthRequest.class);
+        when(requestRepository.create(captor.capture())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        service.register(request, client).blockingGet();
+
+        CibaAuthRequest entity = captor.getValue();
+        assertEquals(client.getClientId(), entity.getClientId());
+        assertEquals(AuthenticationRequestStatus.ONGOING.name(), entity.getStatus());
+        assertEquals(entity.getCreatedAt(), entity.getLastAccessAt());
+        assertEquals(entity.getCreatedAt().toInstant().plusSeconds(120 + 900), entity.getExpireAt().toInstant());
     }
 
     @Test

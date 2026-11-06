@@ -38,6 +38,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -229,9 +230,12 @@ class AutomationDomainMapperTest {
     @Test
     void oidcReusableSubBlocksAreReusedByReference() {
         SecurityProfileSettings security = new SecurityProfileSettings();
+        DeviceFlowSettings deviceFlow = new DeviceFlowSettings();
+        deviceFlow.setEnabled(true);
 
         AutomationOidcSettings oidc = new AutomationOidcSettings();
         oidc.setSecurityProfileSettings(security);
+        oidc.setDeviceFlowSettings(deviceFlow);
 
         AutomationDomain in = new AutomationDomain();
         in.setName("My Domain");
@@ -242,6 +246,8 @@ class AutomationDomainMapperTest {
         AutomationDomainMapper.applyTo(in, target, List.of());
 
         assertSame(security, target.getOidc().getSecurityProfileSettings());
+        assertSame(deviceFlow, target.getOidc().getDeviceFlowSettings());
+        assertSame(deviceFlow, AutomationDomainMapper.toAutomationDomain(target).getOidc().getDeviceFlowSettings());
     }
 
     @Test

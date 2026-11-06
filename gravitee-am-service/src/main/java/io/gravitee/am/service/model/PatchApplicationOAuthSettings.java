@@ -19,6 +19,7 @@ import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.UserInfoClaim;
 import io.gravitee.am.model.application.ApplicationCrossAppAccessSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
@@ -106,6 +107,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<TokenExchangeOAuthSettings> tokenExchangeOAuthSettings;
 
     private Optional<ApplicationCrossAppAccessSettings> crossAppAccessSettings;
+    private Optional<ApplicationDeviceFlowSettings> deviceFlowSettings;
 
     private Optional<ApplicationLightweightJwtSettings> lightweightJwtSettings;
 
@@ -629,6 +631,14 @@ public class PatchApplicationOAuthSettings {
         this.lightweightJwtSettings = lightweightJwtSettings;
     }
 
+    public Optional<ApplicationDeviceFlowSettings> getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(Optional<ApplicationDeviceFlowSettings> deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -699,6 +709,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setTokenExchangeOAuthSettings, this.getTokenExchangeOAuthSettings());
         SetterUtils.safeSet(toPatch::setCrossAppAccessSettings, this.getCrossAppAccessSettings());
         SetterUtils.safeSet(toPatch::setLightweightJwtSettings, this.getLightweightJwtSettings());
+        SetterUtils.safeSet(toPatch::setDeviceFlowSettings, this.getDeviceFlowSettings());
         if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
             toPatch.setScopeSettings(this.getScopeSettings().get());
         }

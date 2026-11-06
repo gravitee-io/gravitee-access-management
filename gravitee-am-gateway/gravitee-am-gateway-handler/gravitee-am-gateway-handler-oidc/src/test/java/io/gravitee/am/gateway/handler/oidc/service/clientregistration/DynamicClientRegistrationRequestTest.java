@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import org.checkerframework.checker.units.qual.A;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -151,6 +155,52 @@ public class DynamicClientRegistrationRequestTest {
         Client result = patcher.update(toPatch);
 
         assertTrue("dpop_bound_access_tokens should have been applied", result.isDpopBoundAccessTokens());
+    }
+
+    @Test
+    public void shouldAcceptADeviceFlowOverrideFromTheRegistrationPayload() throws Exception {
+        DynamicClientRegistrationRequest request = readRequest(
+                "{\"client_name\":\"kiosk\",\"device_flow_settings\":{\"deviceCodeExpiry\":120,\"pollingInterval\":2}}");
+
+        Client result = request.patch(new Client());
+
+        assertEquals(120, result.getDeviceFlowSettings().getDeviceCodeExpiry());
+        assertEquals(2, result.getDeviceFlowSettings().getPollingInterval());
+    }
+
+    @Test
+    public void shouldLeaveTheClientInheritingWhenThePayloadCarriesNoOverride() throws Exception {
+        DynamicClientRegistrationRequest request = readRequest("{\"client_name\":\"tv\"}");
+
+        assertNull(request.patch(new Client()).getDeviceFlowSettings());
+    }
+
+    @Test
+    public void shouldClearTheDeviceFlowOverrideOnPatchWithANullValue() {
+        toPatch.setDeviceFlowSettings(new ApplicationDeviceFlowSettings());
+        patcher.setDeviceFlowSettings(Optional.empty());
+
+        assertNull(patcher.patch(toPatch).getDeviceFlowSettings());
+    }
+
+    @Test
+    public void shouldClearTheDeviceFlowOverrideOnUpdateWithoutIt() {
+        toPatch.setDeviceFlowSettings(new ApplicationDeviceFlowSettings());
+
+        assertNull(patcher.update(toPatch).getDeviceFlowSettings());
+    }
+
+    @Test
+    public void shouldKeepTheDeviceFlowOverrideOnPatchWithoutIt() {
+        ApplicationDeviceFlowSettings override = new ApplicationDeviceFlowSettings();
+        override.setDeviceCodeExpiry(120);
+        toPatch.setDeviceFlowSettings(override);
+
+        assertEquals(120, patcher.patch(toPatch).getDeviceFlowSettings().getDeviceCodeExpiry());
+    }
+
+    private DynamicClientRegistrationRequest readRequest(String payload) throws Exception {
+        return new ObjectMapper().registerModule(new Jdk8Module()).readValue(payload, DynamicClientRegistrationRequest.class);
     }
 
     @Test

@@ -46,6 +46,13 @@ import {
 } from './SecurityProfileSettings';
 import type { DPoPSettings } from './DPoPSettings';
 import { DPoPSettingsFromJSON, DPoPSettingsFromJSONTyped, DPoPSettingsToJSON, DPoPSettingsToJSONTyped } from './DPoPSettings';
+import type { DeviceFlowSettings } from './DeviceFlowSettings';
+import {
+  DeviceFlowSettingsFromJSON,
+  DeviceFlowSettingsFromJSONTyped,
+  DeviceFlowSettingsToJSON,
+  DeviceFlowSettingsToJSONTyped,
+} from './DeviceFlowSettings';
 import type { SpiffeDomainSettings } from './SpiffeDomainSettings';
 import {
   SpiffeDomainSettingsFromJSON,
@@ -78,6 +85,12 @@ export interface OIDCSettings {
    * @memberof OIDCSettings
    */
   clientRegistrationSettings?: ClientRegistrationSettings;
+  /**
+   *
+   * @type {DeviceFlowSettings}
+   * @memberof OIDCSettings
+   */
+  deviceFlowSettings?: DeviceFlowSettings;
   /**
    *
    * @type {DPoPSettings}
@@ -136,6 +149,7 @@ export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     cimdSettings: json['cimdSettings'] == null ? undefined : CIMDSettingsFromJSON(json['cimdSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    deviceFlowSettings: json['deviceFlowSettings'] == null ? undefined : DeviceFlowSettingsFromJSON(json['deviceFlowSettings']),
     dpopSettings: json['dpopSettings'] == null ? undefined : DPoPSettingsFromJSON(json['dpopSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
@@ -160,6 +174,7 @@ export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscr
     cibaSettings: CIBASettingsToJSON(value['cibaSettings']),
     cimdSettings: CIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
+    deviceFlowSettings: DeviceFlowSettingsToJSON(value['deviceFlowSettings']),
     dpopSettings: DPoPSettingsToJSON(value['dpopSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
