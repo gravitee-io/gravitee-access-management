@@ -41,6 +41,7 @@ import java.util.Set;
  * @param supportRefreshToken whether to generate a refresh token
  * @param resources RFC 8707 resource indicators
  * @param originalAuthorizationResources original resources approved during authorization
+ * @param authorizationDetails RFC 9396 authorization details to issue the token for
  * @param httpInfo HTTP request metadata for audit/logging
  * @param additionalParameters additional request parameters
  * @param context OAuth2 contextual data for policies
@@ -57,6 +58,7 @@ public record TokenCreationRequest(
         boolean supportRefreshToken,
         Set<String> resources,
         Set<String> originalAuthorizationResources,
+        AuthorizationDetails authorizationDetails,
         HttpRequestInfo httpInfo,
         MultiValueMap<String, String> additionalParameters,
         Map<String, Object> context,
@@ -69,7 +71,7 @@ public record TokenCreationRequest(
     public TokenCreationRequest withScopes(Set<String> newScopes) {
         return new TokenCreationRequest(
                 clientId, grantType, newScopes, resourceOwner, grantData,
-                supportRefreshToken, resources, originalAuthorizationResources, httpInfo,
+                supportRefreshToken, resources, originalAuthorizationResources, authorizationDetails, httpInfo,
                 additionalParameters, context, executionContext
         );
     }
@@ -80,7 +82,7 @@ public record TokenCreationRequest(
     public TokenCreationRequest withResources(Set<String> newResources) {
         return new TokenCreationRequest(
                 clientId, grantType, scopes, resourceOwner, grantData,
-                supportRefreshToken, newResources, originalAuthorizationResources, httpInfo,
+                supportRefreshToken, newResources, originalAuthorizationResources, authorizationDetails, httpInfo,
                 additionalParameters, context, executionContext
         );
     }
@@ -140,6 +142,7 @@ public record TokenCreationRequest(
                 false, // token exchange doesn't support refresh
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                null,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -157,6 +160,7 @@ public record TokenCreationRequest(
             String codeVerifier,
             String redirectUri,
             Map<String, Object> authorizationCode,
+            AuthorizationDetails authorizationDetails,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(
@@ -168,6 +172,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                authorizationDetails,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -191,6 +196,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                null,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -207,6 +213,7 @@ public record TokenCreationRequest(
             String refreshToken,
             Map<String, Object> decodedRefreshToken,
             Set<String> originalResources,
+            AuthorizationDetails authorizationDetails,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(
@@ -218,6 +225,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 originalResources,
+                authorizationDetails,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -243,6 +251,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                null,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -266,10 +275,11 @@ public record TokenCreationRequest(
                 GrantType.CIBA_GRANT_TYPE,
                 original.getScopes(),
                 user,
-                new GrantData.CibaData(authReqId, acrValues, authorizationDetails),
+                new GrantData.CibaData(authReqId, acrValues),
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                authorizationDetails,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -297,6 +307,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                null,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),
@@ -326,6 +337,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
+                null,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),

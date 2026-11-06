@@ -23,6 +23,7 @@ import io.gravitee.am.common.jwt.ClientProfile;
 import io.gravitee.am.common.jwt.EncodedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.RandomString;
@@ -74,7 +75,6 @@ import static java.util.stream.Stream.concat;
 @CustomLog
 public final class AccessTokenMinter extends BaseTokenMinter {
     private static final String PERMISSIONS = "permissions";
-    private static final String AUTHORIZATION_DETAILS = "authorization_details";
 
     // gis, domain and claims_request_parameter are internal claims the gateway reads back from the access token
     private static final Set<String> LIGHTWEIGHT_ACCESS_TOKEN_CLAIMS = Set.of(
@@ -87,6 +87,9 @@ public final class AccessTokenMinter extends BaseTokenMinter {
             Stream.of(Claims.ORIG_RESOURCES)).collect(Collectors.toUnmodifiableSet());
 
     private static final TypeReference<Map<String, Object>> CLAIMS_TYPE = new TypeReference<>() {};
+
+    // RFC 9396 §7 defines authorization_details as a token endpoint response member
+    private static final Set<String> AUTHORIZATION_ENDPOINT_GRANT_TYPES = Set.of(GrantType.IMPLICIT, GrantType.HYBRID);
 
 
     @Autowired
@@ -174,6 +177,8 @@ public final class AccessTokenMinter extends BaseTokenMinter {
 
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
+        // must follow the custom claims, which cannot replace it
+        setAuthorizationDetails(request, jwt);
 
         // Token Exchange (RFC 8693) - set "act" claim for delegation scenarios
         if (request.isDelegation() && request.getActClaim() != null) {
@@ -223,7 +228,9 @@ public final class AccessTokenMinter extends BaseTokenMinter {
         // set custom claims from the current access token
         Map<String, Object> customClaims = new HashMap<>(accessToken);
         Claims.getAllClaims().forEach(customClaims::remove);
+        customClaims.remove(AUTHORIZATION_DETAILS);
         jwt.putAll(customClaims);
+        setAuthorizationDetails(request, jwt);
 
         // Store originally granted resources in refresh token for RFC 8707 compliance
         setOrigResourcesClaim(jwt, request);
@@ -264,13 +271,14 @@ public final class AccessTokenMinter extends BaseTokenMinter {
             jwt.put(PERMISSIONS, permissions);
         }
 
-        // set authorization_details (RFC 9396 RAR)
-        AuthorizationDetails authorizationDetails = oAuth2Request.getAuthorizationDetails();
+        return jwt;
+    }
+
+    private static void setAuthorizationDetails(OAuth2Request request, JWT jwt) {
+        AuthorizationDetails authorizationDetails = request.getAuthorizationDetails();
         if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
             jwt.put(AUTHORIZATION_DETAILS, authorizationDetails.getRaw());
         }
-
-        return jwt;
     }
 
     private void enhanceJWT(JWT jwt, List<TokenClaim> customClaims, TokenTypeHint tokenTypeHint, ExecutionContext executionContext) {
@@ -409,7 +417,8 @@ public final class AccessTokenMinter extends BaseTokenMinter {
         }
         // set authorization_details as top-level token-response member (RFC 9396 RAR)
         AuthorizationDetails authorizationDetails = oAuth2Request.getAuthorizationDetails();
-        if (authorizationDetails != null && !authorizationDetails.isEmpty()) {
+        if (authorizationDetails != null && !authorizationDetails.isEmpty()
+                && !AUTHORIZATION_ENDPOINT_GRANT_TYPES.contains(oAuth2Request.getGrantType())) {
             token.getAdditionalInformation().put(AUTHORIZATION_DETAILS, authorizationDetails.getRaw());
         }
         Set<String> resources = oAuth2Request.getResources();

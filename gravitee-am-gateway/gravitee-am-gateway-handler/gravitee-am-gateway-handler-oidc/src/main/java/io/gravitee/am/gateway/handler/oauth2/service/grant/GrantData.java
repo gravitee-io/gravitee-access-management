@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.grant;
 
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.ActorTokenInfo;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
-import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.uma.PermissionRequest;
 import lombok.Builder;
 
@@ -106,13 +105,10 @@ public sealed interface GrantData permits
 
     /**
      * CIBA (Client Initiated Backchannel Authentication) grant specific data.
-     * authorizationDetails (RFC 9396 RAR) is grant-specific data carried per the sealed-interface
-     * contract — like AuthorizationCodeData's auth-code map and UmaData's permissions.
      */
     record CibaData(
             String authReqId,
-            List<String> acrValues,
-            AuthorizationDetails authorizationDetails
+            List<String> acrValues
     ) implements GrantData {}
 
     /**
