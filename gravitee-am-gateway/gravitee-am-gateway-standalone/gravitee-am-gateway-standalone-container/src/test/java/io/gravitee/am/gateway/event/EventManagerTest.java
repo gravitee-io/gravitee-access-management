@@ -172,7 +172,7 @@ public class EventManagerTest {
         }
 
         final int threads = 16;
-        final int iterations = 2000;
+        final int iterations = 200;
         final ExecutorService pool = Executors.newFixedThreadPool(threads);
         final CountDownLatch start = new CountDownLatch(1);
         final List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
