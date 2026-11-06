@@ -32,8 +32,12 @@ import lombok.CustomLog;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -114,6 +118,12 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
             authorizationCodeMongo.getRequestParameters().forEach((key, value) -> requestParameters.put(key, (List<String>) value));
             authorizationCode.setRequestParameters(requestParameters);
         }
+
+        if (authorizationCodeMongo.getAuthorizationDetails() != null) {
+            authorizationCode.setAuthorizationDetails(authorizationCodeMongo.getAuthorizationDetails().stream()
+                    .map(doc -> (Map<String, Object>) new HashMap<String, Object>(doc))
+                    .collect(Collectors.toCollection(ArrayList::new)));
+        }
         return authorizationCode;
     }
 
@@ -138,6 +148,10 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
             Document document = new Document();
             authorizationCode.getRequestParameters().forEach(document::append);
             authorizationCodeMongo.setRequestParameters(document);
+        }
+
+        if (authorizationCode.getAuthorizationDetails() != null) {
+            authorizationCodeMongo.setAuthorizationDetails(authorizationCode.getAuthorizationDetails().stream().map(Document::new).toList());
         }
 
         return authorizationCodeMongo;

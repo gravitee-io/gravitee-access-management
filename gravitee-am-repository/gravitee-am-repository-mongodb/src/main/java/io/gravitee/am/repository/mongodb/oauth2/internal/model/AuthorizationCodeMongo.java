@@ -22,6 +22,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -58,6 +59,9 @@ public class AuthorizationCodeMongo {
 
     @BsonProperty("request_parameters")
     private Document requestParameters;
+
+    @BsonProperty("authorization_details")
+    private List<Document> authorizationDetails;
 
     @Override
     public boolean equals(Object o) {

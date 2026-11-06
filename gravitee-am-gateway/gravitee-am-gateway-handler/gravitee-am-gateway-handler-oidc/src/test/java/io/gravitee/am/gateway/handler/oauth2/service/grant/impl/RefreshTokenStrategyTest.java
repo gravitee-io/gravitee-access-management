@@ -413,5 +413,48 @@ class RefreshTokenStrategyTest {
         GrantData.RefreshTokenData data = (GrantData.RefreshTokenData) result.grantData();
         assertNotNull(data.decodedRefreshToken());
         assertEquals("custom_value", data.decodedRefreshToken().get("custom_claim"));
+        assertNull(result.authorizationDetails());
+    }
+
+    @Test
+    void shouldCarryAuthorizationDetailsFromRefreshToken() {
+        List<Map<String, Object>> granted = List.of(Map.of("type", "payment_initiation", "actions", List.of("initiate")));
+
+        TokenCreationRequest result = processRefreshTokenWithAuthorizationDetails(granted);
+
+        assertEquals(granted, result.authorizationDetails().getRaw());
+    }
+
+    @Test
+    void shouldIgnoreAuthorizationDetailsClaimHoldingNonObjects() {
+        TokenCreationRequest result = processRefreshTokenWithAuthorizationDetails(List.of("admin", "user"));
+
+        assertNull(result.authorizationDetails());
+    }
+
+    @Test
+    void shouldIgnoreAuthorizationDetailsClaimMixingObjectsAndNonObjects() {
+        TokenCreationRequest result = processRefreshTokenWithAuthorizationDetails(List.of(Map.of("type", "payment_initiation"), "admin"));
+
+        assertNull(result.authorizationDetails());
+    }
+
+    private TokenCreationRequest processRefreshTokenWithAuthorizationDetails(Object claim) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.REFRESH_TOKEN, "refresh-token-value");
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put(Claims.AUTHORIZATION_DETAILS, claim);
+        Token refreshToken = new AccessToken("token-value");
+        refreshToken.setScope("read");
+        refreshToken.setClientId("client-id");
+        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + 3600000));
+        refreshToken.setAdditionalInformation(additionalInfo);
+        when(tokenService.refresh(eq("refresh-token-value"), any(), eq(client))).thenReturn(Single.just(refreshToken));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(), any())).thenReturn(Set.of());
+
+        return strategy.process(tokenRequest, client, domain).blockingGet();
     }
 }
