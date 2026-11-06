@@ -33,6 +33,12 @@ public interface CertificateServiceProxy {
 
     Maybe<Certificate> findById(String domain, String id);
 
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the certificate: one whose
+     * configuration cannot be decrypted is still returned, with an empty configuration.
+     */
+    Maybe<Certificate> findByIdForDisplay(String domain, String id);
+
     Single<List<CertificateEntity>> findByDomainAndUse(String domain, String use);
 
     Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal);

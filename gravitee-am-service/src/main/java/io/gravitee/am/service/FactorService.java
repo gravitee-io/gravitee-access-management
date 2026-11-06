@@ -36,6 +36,26 @@ public interface FactorService {
 
     Flowable<Factor> findByDomain(String domain);
 
+    /**
+     * Same as {@link #findById(String)}, for the endpoints that only display the factor.
+     * <p>
+     * A factor whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<Factor> findByIdForDisplay(String id);
+
+    /**
+     * Same as {@link #findById(String, String)}, with the behaviour of {@link #findByIdForDisplay(String)}.
+     */
+    Maybe<Factor> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Same as {@link #findByDomain(String)} in a single query, for the endpoints that only display the factors.
+     * <p>
+     * A factor whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<Factor> findByDomainForListing(String domain);
+
     Single<Factor> create(String domain, NewFactor factor, User principal);
 
     Single<Factor> update(String domain, String id, UpdateFactor updateFactor, User principal);
@@ -53,4 +73,9 @@ public interface FactorService {
     default Completable delete(String domain, String factorId) {
         return delete(domain, factorId, null);
     }
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

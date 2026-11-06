@@ -78,7 +78,7 @@ public class DeviceIdentifierResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_DEVICE_IDENTIFIER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> deviceIdentifierService.findById(domain, deviceIdentifierId))
+                        .flatMap(__ -> deviceIdentifierService.findByIdForDisplay(domain, deviceIdentifierId))
                         .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifierId)))
                         .map(deviceIdentifier -> Response.ok(deviceIdentifier).build()))
                 .subscribe(response::resume, response::resume);

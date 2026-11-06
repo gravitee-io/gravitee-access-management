@@ -44,6 +44,22 @@ public interface ReporterService {
 
     Maybe<Reporter> findById(Reference reference, String id);
 
+    /**
+     * Same as {@link #findById(Reference, String)}, for the endpoints that only display the reporter or check
+     * that it exists before deleting it.
+     * <p>
+     * A reporter whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<Reporter> findByIdForDisplay(Reference reference, String id);
+
+    /**
+     * Same as {@link #findByReference(Reference)} in a single query, for the endpoints that only display the reporters.
+     * <p>
+     * A reporter whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<Reporter> findByReferenceForListing(Reference reference);
+
     Single<Reporter> createDefault(Reference reference);
 
     /**
@@ -112,4 +128,9 @@ public interface ReporterService {
     }
 
     Completable notifyInheritedReporters(Reference parentReference, Reference affectedReference, Action action);
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

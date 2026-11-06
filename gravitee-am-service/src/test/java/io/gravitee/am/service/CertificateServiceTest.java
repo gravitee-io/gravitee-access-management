@@ -28,6 +28,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.CertificateAliasAlreadyExistsException;
@@ -291,6 +292,78 @@ public class CertificateServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldListWithoutConfiguration_flaggingTheOneThatCannotBeDecrypted() {
+        Certificate readable = new Certificate();
+        readable.setId("readable");
+        readable.setConfiguration("{\"storepass\":\"s3cr3t\"}");
+        Certificate unreadable = new Certificate();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(certificateRepository.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = certificateService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertTrue(listed.get(0).configurationReadable());
+        org.junit.Assert.assertFalse(listed.get(1).configurationReadable());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).certificate().getId());
+        org.junit.Assert.assertEquals("{}", listed.get(0).certificate().getConfiguration());
+        org.junit.Assert.assertEquals("{}", listed.get(1).certificate().getConfiguration());
+        org.junit.Assert.assertEquals("{\"storepass\":\"s3cr3t\"}", readable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        Certificate undecryptable = new Certificate();
+        undecryptable.setId("my-certificate");
+        undecryptable.setName("my certificate");
+        undecryptable.setDomain(DOMAIN.getId());
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(certificateRepository.findById("my-certificate"))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        Certificate found = certificateService.findByIdForDisplay(DOMAIN.getId(), "my-certificate").blockingGet();
+
+        org.junit.Assert.assertEquals("my certificate", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+    }
+
+    @Test
+    public void shouldNotFindByIdForDisplay_otherDomain() {
+        Certificate undecryptable = new Certificate();
+        undecryptable.setId("my-certificate");
+        undecryptable.setDomain("other-domain");
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(certificateRepository.findById("my-certificate"))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        certificateService.findByIdForDisplay(DOMAIN.getId(), "my-certificate").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors().assertNoValues().assertComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        Certificate certificate = Mockito.mock(Certificate.class);
+        when(certificate.getDomain()).thenReturn(DOMAIN.getId());
+        when(certificate.getId()).thenReturn("my-certificate");
+
+        when(domainRepository.findById(DOMAIN.getId())).thenReturn(Maybe.just(DOMAIN));
+        when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
+        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
+        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, new IllegalStateException("key not configured"))));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
+        when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(certificateRepository, times(1)).delete("my-certificate");
     }
 
     @Test
@@ -1064,4 +1137,24 @@ public class CertificateServiceTest {
         verify(certificateRepository, never()).update(any(Certificate.class));
     }
 
+    @Test
+    public void shouldDeleteByDomain_configurationsCannotBeDecrypted() {
+        when(certificateRepository.findIdsByDomain(DOMAIN.getId())).thenReturn(Flowable.just("certificate-1", "certificate-2"));
+        for (String id : new String[]{"certificate-1", "certificate-2"}) {
+            Certificate certificate = Mockito.mock(Certificate.class);
+            when(certificate.getDomain()).thenReturn(DOMAIN.getId());
+            when(certificate.getId()).thenReturn(id);
+            when(certificateRepository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, new IllegalStateException("key not configured"))));
+            when(certificateRepository.delete(id)).thenReturn(Completable.complete());
+        }
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> testObserver = certificateService.deleteByDomain(DOMAIN.getId(), null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(certificateRepository).delete("certificate-1");
+        verify(certificateRepository).delete("certificate-2");
+    }
 }

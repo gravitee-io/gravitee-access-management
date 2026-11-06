@@ -98,7 +98,7 @@ public class ServiceResourcesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapPublisher(___ -> resourceService.findByDomain(domain))
+                        .flatMapPublisher(___ -> resourceService.findByDomainForListing(domain))
                         .map(this::filterServiceResourceInfos)
                         .toList())
                 .subscribe(response::resume, response::resume);

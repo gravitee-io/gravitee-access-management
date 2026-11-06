@@ -208,4 +208,11 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Flowable<String> findIdsByReference(Reference reference) {
+        LOGGER.debug("findIdsByReference({})", reference);
+        return reporterRepository.findByReferenceTypeAndReferenceId(reference.type(), reference.id())
+                .map(JdbcReporter::getId)
+                .observeOn(Schedulers.computation());
+    }
 }

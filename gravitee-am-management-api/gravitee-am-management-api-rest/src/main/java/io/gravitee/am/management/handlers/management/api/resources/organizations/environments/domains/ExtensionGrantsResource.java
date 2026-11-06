@@ -92,7 +92,7 @@ public class ExtensionGrantsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> extensionGrantService.findByDomain(domain)
+                        .flatMapSingle(irrelevant -> extensionGrantService.findByDomainForListing(domain)
                                 .map(this::filterExtensionGrantInfos)
                                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName())).toList())
                         .map(sortedExtensionGrants -> Response.ok(sortedExtensionGrants).build()))

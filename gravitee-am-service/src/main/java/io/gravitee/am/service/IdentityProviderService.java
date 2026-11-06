@@ -21,6 +21,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
+import io.gravitee.am.service.model.ListedIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.rxjava3.core.Completable;
@@ -40,6 +41,22 @@ public interface IdentityProviderService {
     Single<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String id);
 
     Maybe<IdentityProvider> findById(String id);
+
+    /**
+     * Same as {@link #findById(String)}, for the endpoints that only display the identity provider.
+     * <p>
+     * An identity provider whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<IdentityProvider> findByIdForDisplay(String id);
+
+    /**
+     * Lists the identity providers of a reference in a single query, without their configuration.
+     * <p>
+     * An identity provider whose configuration cannot be decrypted is listed, flagged as not readable,
+     * instead of failing the whole list.
+     */
+    Flowable<ListedIdentityProvider> findAllForListing(ReferenceType referenceType, String referenceId);
 
     Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId);
 
@@ -100,4 +117,9 @@ public interface IdentityProviderService {
     }
 
     Flowable<IdentityProvider> findByCertificate(Reference reference, String id);
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

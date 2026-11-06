@@ -96,7 +96,7 @@ public class UserFactorsResource extends AbstractResource {
                             }
                             return Observable.fromIterable(user1.getFactors())
                                     .flatMapMaybe(enrolledFactor ->
-                                            factorService.findById(enrolledFactor.getFactorId())
+                                            factorService.findByIdForDisplay(enrolledFactor.getFactorId())
                                                     .map(factor -> {
                                                         EnrolledFactorEntity enrolledFactorEntity = new EnrolledFactorEntity(enrolledFactor);
                                                         enrolledFactorEntity.setType(factor.getType());

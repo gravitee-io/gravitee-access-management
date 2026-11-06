@@ -26,6 +26,8 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -95,6 +97,37 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     @Override
     public Maybe<ExtensionGrant> findById(String domain, String id) {
         return findById(id).filter(extensionGrant -> domain.equals(extensionGrant.getDomain()));
+    }
+
+    @Override
+    public Maybe<ExtensionGrant> findByIdForDisplay(String domain, String id) {
+        log.debug("Find extension grant by ID for display: {}", id);
+        return extensionGrantRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(ExtensionGrant.class))
+                .map(extensionGrant -> FieldEncryptor.isEncrypted(extensionGrant.getConfiguration()) ? withEmptyConfiguration(extensionGrant) : extensionGrant)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find an extension grant using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an extension grant using its ID: %s", id), ex));
+                })
+                .filter(extensionGrant -> domain.equals(extensionGrant.getDomain()));
+    }
+
+    @Override
+    public Flowable<ExtensionGrant> findByDomainForListing(String domain) {
+        log.debug("Find extension grants for listing by domain: {}", domain);
+        return extensionGrantRepository.findByDomainForListing(domain)
+                .map(extensionGrant -> FieldEncryptor.isEncrypted(extensionGrant.getConfiguration()) ? withEmptyConfiguration(extensionGrant) : extensionGrant)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find extension grants by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex));
+                });
+    }
+
+    private static ExtensionGrant withEmptyConfiguration(ExtensionGrant extensionGrant) {
+        var copy = new ExtensionGrant(extensionGrant);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     @Override
@@ -199,10 +232,16 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 });
     }
 
+    private Maybe<ExtensionGrant> findByIdForDeletion(String domain, String id) {
+        return extensionGrantRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(ExtensionGrant.class))
+                .filter(extensionGrant -> domain.equals(extensionGrant.getDomain()));
+    }
+
     @Override
     public Completable delete(String domain, String extensionGrantId, User principal) {
         log.debug("Delete extension grant {}", extensionGrantId);
-        return findById(domain, extensionGrantId)
+        return findByIdForDeletion(domain, extensionGrantId)
                 .switchIfEmpty(Maybe.error(new ExtensionGrantNotFoundException(extensionGrantId)))
                 // check for clients using this extension grant
                 .flatMapSingle(extensionGrant -> applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType() + "~" + extensionGrant.getId())
@@ -250,4 +289,9 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
         return type != null && GRANTS_REQUIRE_EXISTING_USER.contains(type);
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete by domain {}", domainId);
+        return extensionGrantRepository.deleteByDomain(domainId);
+    }
 }

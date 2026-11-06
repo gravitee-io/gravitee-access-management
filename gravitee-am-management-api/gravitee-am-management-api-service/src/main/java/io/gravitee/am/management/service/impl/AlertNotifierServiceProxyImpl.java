@@ -65,6 +65,16 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
     }
 
     @Override
+    public Single<AlertNotifier> getByIdForDisplay(ReferenceType referenceType, String referenceId, String notifierId) {
+        return alertNotifierService.getByIdForDisplay(referenceType, referenceId, notifierId).flatMap(this::filterSensitiveData);
+    }
+
+    @Override
+    public Flowable<AlertNotifier> findByDomainForListing(String domainId) {
+        return alertNotifierService.findByDomainForListing(domainId).flatMapSingle(this::filterSensitiveData);
+    }
+
+    @Override
     public Flowable<AlertNotifier> findByDomainAndCriteria(String domainId, AlertNotifierCriteria criteria) {
         return alertNotifierService.findByDomainAndCriteria(domainId, criteria).flatMapSingle(this::filterSensitiveData);
     }
@@ -96,6 +106,11 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
                                 .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_UPDATED).alertNotifier(updated).principal(byUser).oldValue(safeOldAlertNotifier)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_UPDATED).alertNotifier(safeOldAlertNotifier).principal(byUser).throwable(throwable))))
                 );
+    }
+
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        return alertNotifierService.deleteByDomain(domainId);
     }
 
     @Override

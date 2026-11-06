@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -32,5 +33,20 @@ public interface CertificateRepository extends CrudRepository<Certificate, Strin
 
     Flowable<Certificate> findByDomain(String domain);
 
+    /**
+     * Same certificates as {@link #findByDomain(String)}, in a single query, but one whose configuration cannot be
+     * decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted}) instead of failing the whole list.
+     * The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<Certificate> findByDomainForListing(String domain) {
+        return findByDomain(domain);
+    }
+
     Completable updateExpirationDate(String  certificateId, Date expiresAt);
+
+    /**
+     * @return the ids of the certificates of a domain, whose configuration is not decrypted
+     */
+    Flowable<String> findIdsByDomain(String domain);
 }

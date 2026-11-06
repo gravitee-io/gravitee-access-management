@@ -25,6 +25,10 @@ import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
+import io.gravitee.am.service.AuditService;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.gravitee.am.service.exception.ReporterDeleteException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.LicenseFeatureRequiredException;
@@ -347,6 +351,67 @@ class ReporterServiceTest {
     }
 
     @Test
+    void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        ReporterRepository repository = mock(ReporterRepository.class);
+        ReporterService service = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), repository, eventService, null, validationService, pluginLicenseGate, new ReporterAttributeMappingsValidator());
+        Reference reference = Reference.domain("domain-id");
+        Reporter readable = new Reporter();
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        Reporter unreadable = new Reporter();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(repository.findByReferenceForListing(reference)).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = service.findByReferenceForListing(reference).toList().blockingGet();
+
+        assertThat(listed).extracting(Reporter::getId).containsExactly("readable", "unreadable");
+        assertThat(listed).extracting(Reporter::getConfiguration).containsExactly("{\"secret\":\"s3cr3t\"}", "{}");
+        assertThat(unreadable.getConfiguration()).isEqualTo("enc:2025:AAAA:BBBB");
+    }
+
+    @Test
+    void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        ReporterRepository repository = mock(ReporterRepository.class);
+        ReporterService service = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), repository, eventService, null, validationService, pluginLicenseGate, new ReporterAttributeMappingsValidator());
+        Reporter undecryptable = new Reporter();
+        undecryptable.setId("reporter-id");
+        undecryptable.setName("my reporter");
+        undecryptable.setReference(Reference.domain("domain-id"));
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        Reporter found = service.findByIdForDisplay(Reference.domain("domain-id"), "reporter-id").blockingGet();
+
+        assertThat(found.getName()).isEqualTo("my reporter");
+        assertThat(found.getConfiguration()).isEqualTo("{}");
+        service.findByIdForDisplay(Reference.domain("other-domain"), "reporter-id").test().awaitDone(1, TimeUnit.SECONDS)
+                .assertNoValues().assertComplete();
+    }
+
+    @Test
+    void shouldDelete_configurationCannotBeDecrypted() {
+        ReporterRepository repository = mock(ReporterRepository.class);
+        AuditService auditService = mock(AuditService.class);
+        ReporterService service = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), repository, eventService, auditService, validationService, pluginLicenseGate, new ReporterAttributeMappingsValidator());
+        Reporter undecryptable = new Reporter();
+        undecryptable.setId("reporter-id");
+        undecryptable.setReference(Reference.domain("domain-id"));
+        undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(repository.delete("reporter-id")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        service.delete("reporter-id", null)
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(repository).delete("reporter-id");
+    }
+
+    @Test
     void canNotRemoveDefaultReporter() {
         environment.setProperty("repositories.management.type", "mongodb");
         environment.setProperty("repositories.management.mongodb.host", "some.host");
@@ -419,4 +484,28 @@ class ReporterServiceTest {
                 .assertError(LicenseFeatureRequiredException.class);
     }
 
+    @Test
+    void shouldDeleteByDomain_configurationsCannotBeDecrypted() {
+        ReporterRepository repository = mock(ReporterRepository.class);
+        AuditService auditService = mock(AuditService.class);
+        ReporterService service = new ReporterServiceImpl(new SystemReporterConfigResolver(new RepositoriesEnvironment(environment)), repository, eventService, auditService, validationService, pluginLicenseGate, new ReporterAttributeMappingsValidator());
+        when(repository.findIdsByReference(Reference.domain("domain-id"))).thenReturn(Flowable.just("reporter-1", "reporter-2"));
+        for (String id : new String[]{"reporter-1", "reporter-2"}) {
+            Reporter undecryptable = new Reporter();
+            undecryptable.setId(id);
+            undecryptable.setReference(Reference.domain("domain-id"));
+            when(repository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+            when(repository.delete(id)).thenReturn(Completable.complete());
+        }
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        service.deleteByDomain("domain-id")
+                .test()
+                .awaitDone(1, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(repository).delete("reporter-1");
+        verify(repository).delete("reporter-2");
+    }
 }

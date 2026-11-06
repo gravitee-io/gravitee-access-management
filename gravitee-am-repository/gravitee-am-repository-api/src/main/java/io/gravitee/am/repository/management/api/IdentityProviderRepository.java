@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 
@@ -29,6 +31,16 @@ public interface IdentityProviderRepository extends CrudRepository<IdentityProvi
 
     Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId);
 
+    /**
+     * Same identity providers as {@link #findAll(ReferenceType, String)}, in a single query, but one whose configuration
+     * cannot be decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted}) instead of failing the whole list.
+     * The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<IdentityProvider> findAllForListing(ReferenceType referenceType, String referenceId) {
+        return findAll(referenceType, referenceId);
+    }
+
     Flowable<IdentityProvider> findAll(ReferenceType referenceType);
 
     Flowable<IdentityProvider> findAll();
@@ -37,4 +49,8 @@ public interface IdentityProviderRepository extends CrudRepository<IdentityProvi
 
     Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
 
+    /**
+     * @return the ids of the identity providers of a reference, whose configuration is not decrypted
+     */
+    Flowable<String> findIdsByReference(Reference reference);
 }

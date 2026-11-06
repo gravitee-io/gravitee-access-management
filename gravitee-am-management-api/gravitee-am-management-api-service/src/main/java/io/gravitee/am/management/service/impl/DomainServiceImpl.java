@@ -55,7 +55,6 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.AlertNotifierService;
@@ -841,23 +840,15 @@ public class DomainServiceImpl implements DomainService {
                                 return Completable.concat(deleteApplicationsCompletable);
                             })
                             // delete identity providers
-                            .andThen(identityProviderService.findByDomain(domainId)
-                                    .flatMapCompletable(identityProvider ->
-                                            identityProviderService.delete(domainId, identityProvider.getId())
-                                    )
-                            )
+                            .andThen(identityProviderService.deleteByDomain(domainId))
                             // delete protected resources
                             .andThen(protectedResourceService.findByDomain(domainId)
                                     .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
                             )
                             // delete certificates
-                            .andThen(certificateService.findByDomain(domainId)
-                                    .flatMapCompletable(certificate -> certificateService.delete(domainId, certificate.getId(), principal, true))
-                            )
+                            .andThen(certificateService.deleteByDomain(domainId, principal))
                             // delete extension grants
-                            .andThen(extensionGrantService.findByDomain(domainId)
-                                    .flatMapCompletable(extensionGrant -> extensionGrantService.delete(domainId, extensionGrant.getId()))
-                            )
+                            .andThen(extensionGrantService.deleteByDomain(domainId))
                             // delete roles
                             .andThen(roleService.findByDomain(domainId)
                                     .flatMapCompletable(roles -> {
@@ -878,10 +869,8 @@ public class DomainServiceImpl implements DomainService {
                             // clear the data plane while the domain's reporters are still around to audit it
                             .andThen(clearDataPlane(domain, principal))
                             // delete reporters
-                            .andThen(reporterService.findByReference(Reference.domain(domainId))
-                                    .flatMapCompletable(reporter ->
-                                            reporterService.delete(reporter.getId()))
-                            ).andThen(reporterService.notifyInheritedReporters(Reference.organization(graviteeContext.getOrganizationId()),
+                            .andThen(Completable.defer(() -> reporterService.deleteByDomain(domainId)))
+                            .andThen(reporterService.notifyInheritedReporters(Reference.organization(graviteeContext.getOrganizationId()),
                                     Reference.domain(domainId),
                                     Action.DELETE))
                             // delete flows
@@ -894,24 +883,16 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(membership -> membershipService.delete(new Reference(membership.getReferenceType(), membership.getReferenceId()), membership.getId()))
                             )
                             // delete factors
-                            .andThen(factorService.findByDomain(domainId)
-                                    .flatMapCompletable(factor -> factorService.delete(domainId, factor.getId()))
-                            )
+                            .andThen(factorService.deleteByDomain(domainId))
                             // delete alert triggers
                             .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
                                     .flatMapCompletable(alertTrigger -> alertTriggerService.delete(alertTrigger.getReferenceType(), alertTrigger.getReferenceId(), alertTrigger.getId(), principal)
                                     )
                             )
                             // delete alert notifiers
-                            .andThen(alertNotifierService.findByDomainAndCriteria(domainId, new AlertNotifierCriteria())
-                                    .flatMapCompletable(alertNotifier -> alertNotifierService.delete(alertNotifier.getReferenceType(), alertNotifier.getReferenceId(), alertNotifier.getId(), principal)
-                                    )
-                            )
+                            .andThen(alertNotifierService.deleteByDomain(domainId))
                             // delete auth device notifier
-                            .andThen(authenticationDeviceNotifierService.findByDomain(domainId)
-                                    .flatMapCompletable(authDeviceNotifier -> authenticationDeviceNotifierService.delete(domainId, authDeviceNotifier.getId(), principal)
-                                    )
-                            )
+                            .andThen(authenticationDeviceNotifierService.deleteByDomain(domainId))
                             // delete i18n dictionaries
                             .andThen(i18nDictionaryService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(i18nDictionary -> i18nDictionaryService.delete(DOMAIN, domainId, i18nDictionary.getId(), principal)

@@ -91,7 +91,7 @@ public class CertificateResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> certificateService.findById(domain, certificate))
+                        .flatMap(irrelevant -> certificateService.findByIdForDisplay(domain, certificate))
                         .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
                         .map(cert -> Response.ok(ModifiedCertificateEntity.of(cert)).build()))
                 .subscribe(response::resume, response::resume);

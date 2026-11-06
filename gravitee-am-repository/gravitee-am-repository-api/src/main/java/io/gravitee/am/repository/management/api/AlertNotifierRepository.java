@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -61,4 +64,19 @@ public interface AlertNotifierRepository extends CrudRepository<AlertNotifier, S
      * @return the alert notifiers found.
      */
     Flowable<AlertNotifier> findByCriteria(ReferenceType referenceType, String referenceId, AlertNotifierCriteria criteria);
+
+    /**
+     * Same alert notifiers as {@link #findByCriteria(ReferenceType, String, AlertNotifierCriteria)}, in a single query, but one whose
+     * configuration cannot be decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted})
+     * instead of failing the whole list. The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<AlertNotifier> findByCriteriaForListing(ReferenceType referenceType, String referenceId, AlertNotifierCriteria criteria) {
+        return findByCriteria(referenceType, referenceId, criteria);
+    }
+
+    /**
+     * Deletes the alert notifiers of a reference without reading them, so that a configuration which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByReference(Reference reference);
 }

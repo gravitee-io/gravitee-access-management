@@ -85,7 +85,7 @@ public class ServiceResourceResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> resourceService.findById(domain, resource))
+                        .flatMap(__ -> resourceService.findByIdForDisplay(domain, resource))
                         .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resource)))
                         .map(res1 -> Response.ok(res1).build()))
                 .subscribe(response::resume, response::resume);

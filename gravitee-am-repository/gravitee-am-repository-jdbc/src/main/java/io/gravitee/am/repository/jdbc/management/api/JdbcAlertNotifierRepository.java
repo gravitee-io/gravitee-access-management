@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Component;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -121,6 +123,15 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? idsClause.or(enableClause) : idsClause.and(enableClause)));
 
         return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcAlertNotifier.class)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        LOGGER.debug("deleteByReference({})", reference);
+        return monoToCompletable(getTemplate().delete(JdbcAlertNotifier.class)
+                .matching(Query.query(where("reference_id").is(reference.id()).and(where("reference_type").is(reference.type().name()))))
+                .all().then())
                 .observeOn(Schedulers.computation());
     }
 }

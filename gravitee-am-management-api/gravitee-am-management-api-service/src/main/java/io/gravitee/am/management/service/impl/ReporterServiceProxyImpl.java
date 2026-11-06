@@ -83,6 +83,16 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
+    public Maybe<Reporter> findByIdForDisplay(Reference reference, String id) {
+        return reporterService.findByIdForDisplay(reference, id).flatMap(reporter -> filterSensitiveData(reporter).toMaybe());
+    }
+
+    @Override
+    public Flowable<Reporter> findByReferenceForListing(Reference reference) {
+        return reporterService.findByReferenceForListing(reference).flatMapSingle(this::filterSensitiveData);
+    }
+
+    @Override
     public Single<Reporter> createDefault(Reference reference) {
         return reporterService.createDefault(reference);
     }
@@ -149,6 +159,11 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
                 .flatMap(oldReporter -> updateSensitiveData(updateReporter, oldReporter))
                 .flatMap(reporterToUpdate -> reporterService.validateUpdate(reference, id, reporterToUpdate, isUpgrader))
                 .flatMap(this::filterSensitiveData);
+    }
+
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        return reporterService.deleteByDomain(domainId);
     }
 
     @Override

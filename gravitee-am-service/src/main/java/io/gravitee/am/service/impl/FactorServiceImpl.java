@@ -25,6 +25,8 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.repository.encryption.FieldEncryptor;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -108,6 +110,41 @@ public class FactorServiceImpl implements FactorService {
     @Override
     public Maybe<Factor> findById(String domain, String id) {
         return findById(id).filter(factor -> domain.equals(factor.getDomain()));
+    }
+
+    @Override
+    public Maybe<Factor> findByIdForDisplay(String id) {
+        log.debug("Find factor by ID for display: {}", id);
+        return factorRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Factor.class))
+                .map(factor -> FieldEncryptor.isEncrypted(factor.getConfiguration()) ? withEmptyConfiguration(factor) : factor)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find an factor using its ID: {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an factor using its ID: %s", id), ex));
+                });
+    }
+
+    @Override
+    public Maybe<Factor> findByIdForDisplay(String domain, String id) {
+        return findByIdForDisplay(id).filter(factor -> domain.equals(factor.getDomain()));
+    }
+
+    @Override
+    public Flowable<Factor> findByDomainForListing(String domain) {
+        log.debug("Find factors for listing by domain: {}", domain);
+        return factorRepository.findByDomainForListing(domain)
+                .map(factor -> FieldEncryptor.isEncrypted(factor.getConfiguration()) ? withEmptyConfiguration(factor) : factor)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurs while trying to find factors by domain", ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find factors by domain", ex));
+                });
+    }
+
+    private static Factor withEmptyConfiguration(Factor factor) {
+        var copy = new Factor(factor);
+        copy.setConfiguration("{}");
+        return copy;
     }
 
     @Override
@@ -205,11 +242,17 @@ public class FactorServiceImpl implements FactorService {
                 });
     }
 
+    private Maybe<Factor> findByIdForDeletion(String domain, String id) {
+        return factorRepository.findById(id)
+                .onErrorResumeNext(PluginDecryptConfigException.recoverEntity(Factor.class))
+                .filter(factor -> domain.equals(factor.getDomain()));
+    }
+
     @Override
     public Completable delete(String domain, String factorId, User principal) {
         log.debug("Delete factor {}", factorId);
 
-        return findById(domain, factorId)
+        return findByIdForDeletion(domain, factorId)
                 .switchIfEmpty(Maybe.error(new FactorNotFoundException(factorId)))
                 .flatMapSingle(factor -> applicationService.findByFactor(factorId).count()
                         .flatMap(applications -> {
@@ -243,5 +286,11 @@ public class FactorServiceImpl implements FactorService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete factor: %s", factorId), ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete by domain {}", domainId);
+        return factorRepository.deleteByDomain(domainId);
     }
 }

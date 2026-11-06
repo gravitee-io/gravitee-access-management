@@ -158,4 +158,18 @@ public class FactorRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
     }
 
+    @Test
+    public void testDeleteByDomain() {
+        Factor toDelete = buildFactor();
+        toDelete.setDomain("domainToDelete");
+        Factor toKeep = buildFactor();
+        toKeep.setDomain("domainToKeep");
+        String deletedId = factorRepository.create(toDelete).blockingGet().getId();
+        String keptId = factorRepository.create(toKeep).blockingGet().getId();
+
+        factorRepository.deleteByDomain("domainToDelete").blockingAwait();
+
+        org.junit.Assert.assertNull(factorRepository.findById(deletedId).blockingGet());
+        org.junit.Assert.assertNotNull(factorRepository.findById(keptId).blockingGet());
+    }
 }

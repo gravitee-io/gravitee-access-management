@@ -20,6 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.encryption.PluginDecryptConfigException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.exception.ExtensionGrantAlreadyExistsException;
 import io.gravitee.am.service.exception.ExtensionGrantNotFoundException;
@@ -408,6 +409,62 @@ public class ExtensionGrantServiceTest {
     }
 
     @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        ExtensionGrant readable = new ExtensionGrant();
+        readable.setId("readable");
+        readable.setConfiguration("{\"secret\":\"s3cr3t\"}");
+        ExtensionGrant unreadable = new ExtensionGrant();
+        unreadable.setId("unreadable");
+        unreadable.setConfiguration("enc:2025:AAAA:BBBB");
+        when(extensionGrantRepository.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = extensionGrantService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        ExtensionGrant extensionGrant = new ExtensionGrant();
+        extensionGrant.setId("my-extension-grant");
+        extensionGrant.setName("my grant");
+        extensionGrant.setDomain(DOMAIN.getId());
+        extensionGrant.setConfiguration("enc:2025:AAAA:BBBB");
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(extensionGrant, new IllegalStateException("key not configured"))));
+
+        ExtensionGrant found = extensionGrantService.findByIdForDisplay(DOMAIN.getId(), "my-extension-grant").blockingGet();
+
+        org.junit.Assert.assertEquals("my grant", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        extensionGrantService.findByIdForDisplay("other-domain", "my-extension-grant").test().awaitDone(10, TimeUnit.SECONDS).assertNoValues().assertComplete();
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
+        when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
+        when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
+        when(existingExtensionGrant.getDomain()).thenReturn(DOMAIN.getId());
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(existingExtensionGrant, new IllegalStateException("key not configured"))));
+        when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingExtensionGrant));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), "my-extension-grant").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(extensionGrantRepository, times(1)).delete("my-extension-grant");
+    }
+
+    @Test
     public void shouldDelete() {
         ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
         when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
@@ -485,5 +542,17 @@ public class ExtensionGrantServiceTest {
         ExtensionGrant extensionGrant = new ExtensionGrant();
         extensionGrant.setDomain("other-domain");
         return extensionGrant;
+    }
+
+    @Test
+    public void shouldDeleteByDomain() {
+        when(extensionGrantRepository.deleteByDomain(DOMAIN.getId())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = extensionGrantService.deleteByDomain(DOMAIN.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(extensionGrantRepository, never()).findByDomain(any());
     }
 }

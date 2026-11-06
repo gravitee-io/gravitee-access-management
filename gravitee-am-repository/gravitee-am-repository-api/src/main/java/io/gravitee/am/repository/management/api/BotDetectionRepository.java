@@ -19,6 +19,7 @@ import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -31,6 +32,16 @@ public interface BotDetectionRepository extends CrudRepository<BotDetection, Str
     Flowable<BotDetection> findAll();
 
     Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId);
+
+    /**
+     * Same bot detections as {@link #findByReference(ReferenceType, String)}, in a single query, but one whose
+     * configuration cannot be decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted})
+     * instead of failing the whole list. The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<BotDetection> findByReferenceForListing(ReferenceType referenceType, String referenceId) {
+        return findByReference(referenceType, referenceId);
+    }
 
     Completable deleteByReference(Reference reference);
 

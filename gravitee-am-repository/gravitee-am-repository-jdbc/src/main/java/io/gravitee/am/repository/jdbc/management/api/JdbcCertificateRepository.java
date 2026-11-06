@@ -195,4 +195,12 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         return this.certificateRepository.deleteById(id)
                 .doOnError(error -> LOGGER.error("Unable to delete Certificate with id {}", id, error));
     }
+
+    @Override
+    public Flowable<String> findIdsByDomain(String domain) {
+        LOGGER.debug("findIdsByDomain({})", domain);
+        return this.certificateRepository.findByDomain(domain)
+                .map(JdbcCertificate::getId)
+                .observeOn(Schedulers.computation());
+    }
 }

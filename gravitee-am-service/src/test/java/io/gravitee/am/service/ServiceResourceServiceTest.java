@@ -250,6 +250,66 @@ public class ServiceResourceServiceTest {
         verify(resourceRepository, never()).delete(any());
     }
 
+    private ServiceResource resourceInDomain(String id, String configuration) {
+        ServiceResource resource = new ServiceResource();
+        resource.setId(id);
+        resource.setReferenceId(DOMAIN.getId());
+        resource.setReferenceType(ReferenceType.DOMAIN);
+        resource.setConfiguration(configuration);
+        resource.setCreatedAt(new Date());
+        resource.setUpdatedAt(new Date());
+        return resource;
+    }
+
+    @Test
+    public void shouldDelete_configurationCannotBeDecrypted() {
+        ServiceResource undecryptable = resourceInDomain("resid", "enc:2025:AAAA:BBBB");
+        Factor undecryptableFactor = new Factor();
+        undecryptableFactor.setName("Factor");
+        undecryptableFactor.setConfiguration("{}");
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(resourceRepository.findById("resid")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(resourceRepository.delete("resid")).thenReturn(Completable.complete());
+        // a factor of the domain which cannot be decrypted is listed with an empty configuration
+        when(factorService.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(undecryptableFactor));
+
+        TestObserver<Void> testObserver = resourceService.delete(DOMAIN.getId(), "resid", null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(resourceRepository).delete("resid");
+    }
+
+    @Test
+    public void shouldListWithoutConfiguration_theOneThatCannotBeDecrypted() {
+        ServiceResource readable = resourceInDomain("readable", "{\"secret\":\"s3cr3t\"}");
+        ServiceResource unreadable = resourceInDomain("unreadable", "enc:2025:AAAA:BBBB");
+        when(resourceRepository.findByReferenceForListing(ReferenceType.DOMAIN, DOMAIN.getId())).thenReturn(Flowable.just(readable, unreadable));
+
+        var listed = resourceService.findByDomainForListing(DOMAIN.getId()).toList().blockingGet();
+
+        org.junit.Assert.assertEquals(2, listed.size());
+        org.junit.Assert.assertEquals("{\"secret\":\"s3cr3t\"}", listed.get(0).getConfiguration());
+        org.junit.Assert.assertEquals("unreadable", listed.get(1).getId());
+        org.junit.Assert.assertEquals("{}", listed.get(1).getConfiguration());
+        org.junit.Assert.assertEquals("enc:2025:AAAA:BBBB", unreadable.getConfiguration());
+    }
+
+    @Test
+    public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
+        ServiceResource undecryptable = resourceInDomain("resid", "enc:2025:AAAA:BBBB");
+        undecryptable.setName("my resource");
+        when(resourceRepository.findById("resid")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+
+        ServiceResource found = resourceService.findByIdForDisplay(DOMAIN.getId(), "resid").blockingGet();
+
+        org.junit.Assert.assertEquals("my resource", found.getName());
+        org.junit.Assert.assertEquals("{}", found.getConfiguration());
+        resourceService.findByIdForDisplay("other-domain", "resid").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertNoValues().assertComplete();
+    }
+
     @Test
     public void shouldDelete() {
         ServiceResource record = new ServiceResource();
@@ -262,7 +322,7 @@ public class ServiceResourceServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
         when(resourceRepository.delete(record.getId())).thenReturn(Completable.complete());
-        when(factorService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
+        when(factorService.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.empty());
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN.getId(), record.getId(), null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -284,7 +344,7 @@ public class ServiceResourceServiceTest {
         Factor factor = new Factor();
         factor.setName("Factor");
         factor.setConfiguration("{\"ref\": \"" + record.getId() + "\"}");
-        when(factorService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(factor));
+        when(factorService.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(factor));
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN.getId(), record.getId(), null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

@@ -16,19 +16,23 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.ListedIdentityProvider;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -64,7 +68,7 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         mockIdentityProvider2.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockIdentityProvider, mockIdentityProvider2)).when(identityProviderService).findByDomain(domainId);
+        doReturn(Flowable.just(new ListedIdentityProvider(mockIdentityProvider, true), new ListedIdentityProvider(mockIdentityProvider2, false))).when(identityProviderService).findAllForListing(ReferenceType.DOMAIN, domainId);
 
         final Response response = target("domains").path(domainId).path("identities").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -74,9 +78,60 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldFlagTheIdentityProviderWhoseConfigurationCannotBeRead() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+        final IdentityProvider readable = new IdentityProvider();
+        readable.setId("readable-id");
+        readable.setName("readable");
+        final IdentityProvider unreadable = new IdentityProvider();
+        unreadable.setId("unreadable-id");
+        unreadable.setName("unreadable");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Flowable.just(new ListedIdentityProvider(readable, true), new ListedIdentityProvider(unreadable, false)))
+                .when(identityProviderService).findAllForListing(ReferenceType.DOMAIN, domainId);
+
+        final Response response = target("domains").path(domainId).path("identities").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final List<Map<String, Object>> body = readEntity(response, List.class);
+        assertEquals(2, body.size());
+        assertEquals(Boolean.TRUE, body.get(0).get("configurationReadable"));
+        assertEquals("unreadable-id", body.get(1).get("id"));
+        assertEquals(Boolean.FALSE, body.get(1).get("configurationReadable"));
+    }
+
+    @Test
+    public void shouldNotOfferAsUserProviderTheIdentityProviderWhoseConfigurationCannotBeRead() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+        final IdentityProvider readable = new IdentityProvider();
+        readable.setId("readable-id");
+        readable.setName("readable");
+        final IdentityProvider unreadable = new IdentityProvider();
+        unreadable.setId("unreadable-id");
+        unreadable.setName("unreadable");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Flowable.just(new ListedIdentityProvider(readable, true), new ListedIdentityProvider(unreadable, false)))
+                .when(identityProviderService).findAllForListing(ReferenceType.DOMAIN, domainId);
+        doReturn(Maybe.just(mock(UserProvider.class))).when(identityProviderManager).getUserProvider("readable-id");
+
+        final Response response = target("domains").path(domainId).path("identities").queryParam("userProvider", true).request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final List<Map<String, Object>> body = readEntity(response, List.class);
+        assertEquals(1, body.size());
+        assertEquals("readable-id", body.get(0).get("id"));
+    }
+
+    @Test
     public void shouldGetIdentityProviders_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(identityProviderService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(identityProviderService).findAllForListing(ReferenceType.DOMAIN, domainId);
 
         final Response response = target("domains").path(domainId).path("identities").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

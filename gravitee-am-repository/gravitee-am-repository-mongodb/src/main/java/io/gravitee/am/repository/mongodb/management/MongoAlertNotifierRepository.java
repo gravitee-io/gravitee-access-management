@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import io.gravitee.am.model.Reference;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
@@ -158,5 +159,11 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
         alertNotifierMongo.setUpdatedAt(alertNotifier.getUpdatedAt());
 
         return alertNotifierMongo;
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()))))
+                .observeOn(Schedulers.computation());
     }
 }

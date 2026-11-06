@@ -38,7 +38,9 @@ public record CertificateEntity(
         CertificateStatus status,
         List<String> usage,
         List<Application> applications,
-        List<IdentityProvider> identityProviders
+        List<IdentityProvider> identityProviders,
+        // false when the stored configuration could not be decrypted, the certificate cannot be used until it is configured again
+        boolean configurationReadable
 ) {
 
     public static CertificateEntity singleDetails(Certificate certificate) {
@@ -51,7 +53,8 @@ public record CertificateEntity(
                 null,
                 null,
                 null,
-                null);
+                null,
+                true);
     }
 
     public static CertificateEntity forList(Certificate certificate,
@@ -59,6 +62,15 @@ public record CertificateEntity(
                                             boolean isRenewedSystemCert,
                                             List<Application> apps,
                 List<IdentityProvider> idps) {
+        return forList(certificate, certExpiryWarningThreshold, isRenewedSystemCert, apps, idps, true);
+    }
+
+    public static CertificateEntity forList(Certificate certificate,
+                                            Duration certExpiryWarningThreshold,
+                                            boolean isRenewedSystemCert,
+                                            List<Application> apps,
+                List<IdentityProvider> idps,
+                                            boolean configurationReadable) {
         return new CertificateEntity(certificate.getId(),
                 certificate.getName(),
                 certificate.getType(),
@@ -68,7 +80,8 @@ public record CertificateEntity(
                 determineStatus(certificate.getExpiresAt(), certExpiryWarningThreshold, isRenewedSystemCert),
                 extractUsages(certificate.getConfiguration()),
                 apps,
-                idps);
+                idps,
+                configurationReadable);
     }
 
     static CertificateStatus determineStatus(Date expiresAt, Duration certExpiryWarningThreshold, boolean isRenewedSystemCert) {

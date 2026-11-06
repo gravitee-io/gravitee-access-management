@@ -60,7 +60,7 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
 
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(mockExtensionGrant, mockExtensionGrant2)).when(extensionGrantService).findByDomain(domainId);
+        doReturn(Flowable.just(mockExtensionGrant, mockExtensionGrant2)).when(extensionGrantService).findByDomainForListing(domainId);
 
         final Response response = target("domains").path(domainId).path("extensionGrants").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -72,7 +72,7 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetExtensionGrants_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(extensionGrantService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(extensionGrantService).findByDomainForListing(domainId);
 
         final Response response = target("domains").path(domainId).path("extensionGrants").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.ReferenceType;
@@ -101,6 +102,15 @@ public class JdbcAuthenticationDeviceNotifierRepository extends AbstractJdbcRepo
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return monoToCompletable(getTemplate().delete(Query.query(from(where(ID_FIELD).is(id))), JdbcAuthenticationDeviceNotifier.class))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        LOGGER.debug("deleteByReference({})", reference);
+        return monoToCompletable(getTemplate().delete(JdbcAuthenticationDeviceNotifier.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(reference.id()).and(where(REF_TYPE_FIELD).is(reference.type().name()))))
+                .all().then())
                 .observeOn(Schedulers.computation());
     }
 }

@@ -14048,6 +14048,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Application"
+        configurationReadable:
+          type: boolean
         createdAt:
           type: integer
           format: int64
@@ -15083,6 +15085,8 @@ components:
     FilteredIdentityProviderInfo:
       type: object
       properties:
+        configurationReadable:
+          type: boolean
         external:
           type: boolean
         id:

@@ -62,7 +62,7 @@ public class GroupMembersResourceTest extends JerseySpringTest {
         identityProvider.setName("Gravitee");
 
         doReturn(Single.just(new Page<>(List.of(member), 0, 1))).when(organizationGroupService).findMembers(eq(ORGANIZATION_ID), eq(GROUP_ID), anyInt(), anyInt());
-        doReturn(Maybe.just(identityProvider)).when(idpService).findById("gravitee");
+        doReturn(Maybe.just(identityProvider)).when(idpService).findByIdForDisplay("gravitee");
 
         final Response response = target("organizations")
                 .path(ORGANIZATION_ID)

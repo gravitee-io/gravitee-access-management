@@ -32,6 +32,21 @@ import io.reactivex.rxjava3.core.Single;
 public interface AlertNotifierService {
     Single<AlertNotifier> getById(ReferenceType referenceType, String referenceId, String notifierId);
 
+    /**
+     * Same as {@link #getById(ReferenceType, String, String)}, for the endpoints that only display the alert notifier.
+     * <p>
+     * An alert notifier whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Single<AlertNotifier> getByIdForDisplay(ReferenceType referenceType, String referenceId, String notifierId);
+
+    /**
+     * Lists the alert notifiers of a domain in a single query, for the endpoints that only display them.
+     * <p>
+     * An alert notifier whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<AlertNotifier> findByDomainForListing(String domainId);
+
     Flowable<AlertNotifier> findByDomainAndCriteria(String domainId, AlertNotifierCriteria criteria);
 
     Flowable<AlertNotifier> findByReferenceAndCriteria(ReferenceType referenceType, String referenceId, AlertNotifierCriteria criteria);
@@ -41,4 +56,9 @@ public interface AlertNotifierService {
     Single<AlertNotifier> update(ReferenceType referenceType, String referenceId, String alertNotifierId, PatchAlertNotifier patchAlertNotifier, User byUser);
 
     Completable delete(ReferenceType referenceType, String referenceId, String notifierId, User byUser);
+
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

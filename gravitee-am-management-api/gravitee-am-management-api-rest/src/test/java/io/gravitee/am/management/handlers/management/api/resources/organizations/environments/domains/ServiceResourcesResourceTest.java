@@ -56,7 +56,7 @@ public class ServiceResourcesResourceTest extends JerseySpringTest {
         serviceResource.setConfiguration("{\"password\":\"secret\"}");
 
         doReturn(Maybe.just(domain())).when(domainService).findById(DOMAIN_ID);
-        doReturn(Flowable.just(serviceResource)).when(serviceResourceServiceProxy).findByDomain(DOMAIN_ID);
+        doReturn(Flowable.just(serviceResource)).when(serviceResourceServiceProxy).findByDomainForListing(DOMAIN_ID);
 
         final Response response = listResources();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -69,7 +69,7 @@ public class ServiceResourcesResourceTest extends JerseySpringTest {
     @Test
     public void shouldListWithDomainResourcePermission() {
         doReturn(Maybe.just(domain())).when(domainService).findById(DOMAIN_ID);
-        doReturn(Flowable.empty()).when(serviceResourceServiceProxy).findByDomain(DOMAIN_ID);
+        doReturn(Flowable.empty()).when(serviceResourceServiceProxy).findByDomainForListing(DOMAIN_ID);
 
         listResources();
 

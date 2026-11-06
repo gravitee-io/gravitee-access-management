@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import io.gravitee.am.model.Reference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
@@ -236,6 +237,14 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return this.identityProviderRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<String> findIdsByReference(Reference reference) {
+        LOGGER.debug("findIdsByReference({})", reference);
+        return this.identityProviderRepository.findAll(reference.type().name(), reference.id())
+                .map(JdbcIdentityProvider::getId)
                 .observeOn(Schedulers.computation());
     }
 }

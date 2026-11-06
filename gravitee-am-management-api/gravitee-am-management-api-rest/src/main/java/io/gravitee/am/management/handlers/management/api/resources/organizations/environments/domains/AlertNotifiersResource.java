@@ -22,7 +22,6 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.validators.notifier.NotifierValidator;
 import io.gravitee.am.service.validators.notifier.NotifierValidator.NotifierHolder;
@@ -87,7 +86,7 @@ public class AlertNotifiersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN_ALERT_NOTIFIER, Acl.LIST)
-                .andThen(alertNotifierService.findByDomainAndCriteria(domainId, new AlertNotifierCriteria()))
+                .andThen(alertNotifierService.findByDomainForListing(domainId))
                 .sorted(Comparator.comparing(AlertNotifier::getCreatedAt))
                 .toList()
                 .subscribe(response::resume, response::resume);

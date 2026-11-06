@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.KeepEncryptedOnFailure;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -29,4 +31,18 @@ public interface FactorRepository extends CrudRepository<Factor, String> {
 
     Flowable<Factor> findByDomain(String domain);
 
+    /**
+     * Same factors as {@link #findByDomain(String)}, in a single query, but one whose configuration cannot be
+     * decrypted is returned with its configuration still encrypted ({@code FieldEncryptor.isEncrypted}) instead of failing the whole list.
+     * The configuration must not be handed to a plugin.
+     */
+    @KeepEncryptedOnFailure
+    default Flowable<Factor> findByDomainForListing(String domain) {
+        return findByDomain(domain);
+    }
+
+    /**
+     * Deletes the factors of a domain without reading them, so that a configuration which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domain);
 }

@@ -57,7 +57,7 @@ public class UserIdentitiesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
-        doReturn(Maybe.just(mockIdentityProvider)).when(identityProviderService).findById(userIdentity.getProviderId());
+        doReturn(Maybe.just(mockIdentityProvider)).when(identityProviderService).findByIdForDisplay(userIdentity.getProviderId());
 
         final Response response = target("domains")
                 .path(domainId)

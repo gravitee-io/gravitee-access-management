@@ -37,6 +37,21 @@ public interface ExtensionGrantService {
 
     Flowable<ExtensionGrant> findByDomain(String tokenGranter);
 
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the extension grant.
+     * <p>
+     * An extension grant whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<ExtensionGrant> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Same as {@link #findByDomain(String)} in a single query, for the endpoints that only display the extension grants.
+     * <p>
+     * An extension grant whose configuration cannot be decrypted is listed, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<ExtensionGrant> findByDomainForListing(String domain);
+
     Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant, User principal);
 
     Single<ExtensionGrant> update(Domain domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal);
@@ -55,4 +70,8 @@ public interface ExtensionGrantService {
         return delete(domain, certificateId, null);
     }
 
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId);
 }

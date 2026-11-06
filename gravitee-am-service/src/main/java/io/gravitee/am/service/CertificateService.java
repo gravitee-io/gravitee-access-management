@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.model.ListedCertificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.reactivex.rxjava3.core.Completable;
@@ -40,6 +41,20 @@ public interface CertificateService {
     Flowable<Certificate> findAll();
 
     Flowable<Certificate> findByDomain(String domain);
+
+    /**
+     * Same as {@link #findById(String, String)}, for the endpoints that only display the certificate.
+     * <p>
+     * A certificate whose configuration cannot be decrypted is still returned, with an empty configuration.
+     * It must not be used to build a provider.
+     */
+    Maybe<Certificate> findByIdForDisplay(String domain, String id);
+
+    /**
+     * Lists the certificates of a domain in a single query. A certificate whose configuration cannot be
+     * decrypted is listed, flagged as not readable, with an empty configuration, instead of failing the whole list.
+     */
+    Flowable<ListedCertificate> findByDomainForListing(String domain);
 
     /**
      * This method is used to create a default certificate (mainly used when creating a new domain).
@@ -112,4 +127,8 @@ public interface CertificateService {
         return delete(domain, certificateId, null);
     }
 
+    /**
+     * Deletes everything of the domain without reading the plugin configurations, so that one which cannot be decrypted does not prevent it.
+     */
+    Completable deleteByDomain(String domainId, User principal);
 }
