@@ -261,7 +261,7 @@ class CibaStrategyTest {
     }
 
     @Test
-    void shouldThreadAuthorizationDetailsThroughCibaData() {
+    void shouldCarryAuthorizationDetailsFromCibaRequest() {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add(Parameters.AUTH_REQ_ID, "valid-auth-req-id");
 
@@ -289,11 +289,8 @@ class CibaStrategyTest {
         TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
 
         assertNotNull(result);
-        assertInstanceOf(GrantData.CibaData.class, result.grantData());
-        GrantData.CibaData data = (GrantData.CibaData) result.grantData();
-        assertNotNull(data.authorizationDetails(), "authorizationDetails should be carried through to CibaData");
-        assertEquals(1, data.authorizationDetails().getAll().size());
-        assertEquals("fdx_v1.0", data.authorizationDetails().getAll().get(0).getType(),
-                "authorization_details type should be threaded from CibaAuthRequest to CibaData");
+        assertNotNull(result.authorizationDetails());
+        assertEquals(1, result.authorizationDetails().getAll().size());
+        assertEquals("fdx_v1.0", result.authorizationDetails().getAll().get(0).getType());
     }
 }

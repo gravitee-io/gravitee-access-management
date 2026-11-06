@@ -23,6 +23,7 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.BackwardCompatibleTokenRepository;
 import io.gravitee.am.repository.oauth2.api.TokenRepository;
@@ -42,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.mockito.Mockito.any;
@@ -101,6 +103,38 @@ public class AuthorizationCodeServiceTest {
         verify(authorizationCodeRepository, times(1)).create(argThat(
                 code -> Objects.equals(code.getResources(), Set.of(resourceOne, resourceTwo)))
         );
+    }
+
+    @Test
+    public void shouldCreate_storeAuthorizationDetails() {
+        List<Map<String, Object>> granted = List.of(Map.of("type", "payment_initiation"));
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId("my-client-id");
+        authorizationRequest.setAuthorizationDetails(AuthorizationDetails.of(granted));
+
+        User user = new User();
+        user.setUsername("my-username-id");
+
+        when(authorizationCodeRepository.create(any())).thenReturn(Single.just(new AuthorizationCode()));
+
+        authorizationCodeService.create(authorizationRequest, user).test().assertComplete();
+
+        verify(authorizationCodeRepository).create(argThat(code -> granted.equals(code.getAuthorizationDetails())));
+    }
+
+    @Test
+    public void shouldCreate_withoutAuthorizationDetails() {
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId("my-client-id");
+
+        User user = new User();
+        user.setUsername("my-username-id");
+
+        when(authorizationCodeRepository.create(any())).thenReturn(Single.just(new AuthorizationCode()));
+
+        authorizationCodeService.create(authorizationRequest, user).test().assertComplete();
+
+        verify(authorizationCodeRepository).create(argThat(code -> code.getAuthorizationDetails() == null));
     }
 
     @Test

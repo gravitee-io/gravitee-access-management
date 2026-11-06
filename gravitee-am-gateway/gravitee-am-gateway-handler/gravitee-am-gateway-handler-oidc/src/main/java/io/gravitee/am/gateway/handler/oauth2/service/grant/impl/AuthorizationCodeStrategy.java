@@ -33,6 +33,7 @@ import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.am.gateway.handler.common.service.AuthenticationFlowContextService;
 import io.gravitee.common.util.MultiValueMap;
@@ -190,6 +191,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
                 codeVerifier,
                 redirectUri,
                 decodedAuthorizationCode,
+                authorizationCode.getAuthorizationDetails() == null ? null : AuthorizationDetails.of(authorizationCode.getAuthorizationDetails()),
                 supportRefresh
         );
     }

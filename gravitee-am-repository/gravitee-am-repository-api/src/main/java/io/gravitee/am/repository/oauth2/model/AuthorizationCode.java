@@ -20,6 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -90,6 +92,11 @@ public class AuthorizationCode {
      * The Authorization request parameters
      */
     private MultiValueMap<String,String> requestParameters;
+
+    /**
+     * The authorization details (RFC 9396) granted with this code
+     */
+    private List<Map<String, Object>> authorizationDetails;
 
     @Override
     public boolean equals(Object o) {

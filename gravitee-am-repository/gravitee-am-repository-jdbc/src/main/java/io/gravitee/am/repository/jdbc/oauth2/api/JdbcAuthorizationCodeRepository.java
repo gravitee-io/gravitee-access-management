@@ -62,6 +62,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
     public static final String COL_SCOPES = "scopes";
     public static final String COL_REQUEST_PARAMETERS = "request_parameters";
     public static final String COL_RESOURCES = "resources";
+    public static final String COL_AUTHORIZATION_DETAILS = "authorization_details";
     private static final List<String> columns = List.of(
             COL_ID,
             COL_CLIENT_ID,
@@ -74,7 +75,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
             COL_EXPIRE_AT,
             COL_SCOPES,
             COL_REQUEST_PARAMETERS,
-            COL_RESOURCES
+            COL_RESOURCES,
+            COL_AUTHORIZATION_DETAILS
     );
 
     private String insertStatement;
@@ -118,6 +120,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_RESOURCES, authorizationCode.getResources());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_SCOPES, authorizationCode.getScopes());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_REQUEST_PARAMETERS, authorizationCode.getRequestParameters());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_AUTHORIZATION_DETAILS, authorizationCode.getAuthorizationDetails());
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 

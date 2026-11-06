@@ -53,4 +53,7 @@ public class JdbcAuthorizationCode {
     private String scopes;
     @Column("request_parameters")
     private String requestParameters;
+
+    @Column("authorization_details")
+    private String authorizationDetails;
 }

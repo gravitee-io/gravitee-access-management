@@ -134,6 +134,11 @@ public interface Claims {
      */
     String ORIG_RESOURCES = "orig_resources";
 
+    /**
+     * RFC 9396 Rich Authorization Requests - the authorization details granted to the token
+     */
+    String AUTHORIZATION_DETAILS = "authorization_details";
+
     String CLIENT_ID = "client_id";
 
     String SESSION_ID = "session_id";

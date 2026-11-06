@@ -96,6 +96,9 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class TokenServiceImplTest {
 
+    private static final AuthorizationDetails GRANTED_AUTHORIZATION_DETAILS = AuthorizationDetails.of(List.of(
+            Map.of("type", "payment_initiation", "instructedAmount", Map.of("currency", "EUR", "amount", "123.50"))));
+
     @Mock
     IntrospectionAnyTokenService introspectionTokenService;
 
@@ -1396,6 +1399,79 @@ public class TokenServiceImplTest {
             assertThat(token.getAdditionalInformation()).doesNotContainKey("authorization_details");
             return true;
         });
+    }
+
+    @Test
+    public void keepsAuthorizationDetails_inRefreshToken() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setAuthorizationDetails(GRANTED_AUTHORIZATION_DETAILS);
+        setupCommonMocks(request);
+
+        executeTokenCreation(request, createClient("lightweight-client"), createUser("user"));
+
+        assertThat(captureRefreshTokenJWT()).containsEntry(Claims.AUTHORIZATION_DETAILS, GRANTED_AUTHORIZATION_DETAILS.getRaw());
+    }
+
+    @Test
+    public void keepsGrantedAuthorizationDetails_whenCustomClaimHasSameName() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setAuthorizationDetails(GRANTED_AUTHORIZATION_DETAILS);
+        Client client = lightweightClient(false);
+        client.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.AUTHORIZATION_DETAILS, "custom-value")));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).containsEntry(Claims.AUTHORIZATION_DETAILS, GRANTED_AUTHORIZATION_DETAILS.getRaw());
+        assertThat(jwtCaptor.getAllValues().get(1)).containsEntry(Claims.AUTHORIZATION_DETAILS, GRANTED_AUTHORIZATION_DETAILS.getRaw());
+    }
+
+    @Test
+    public void dropsCustomAuthorizationDetailsClaim_fromRefreshToken_whenNoneGranted() {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        Client client = lightweightClient(false);
+        client.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ACCESS_TOKEN, Claims.AUTHORIZATION_DETAILS, "custom-value")));
+        setupCustomClaimMocks(request);
+
+        executeTokenCreation(request, client, createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getAllValues().get(0)).containsEntry(Claims.AUTHORIZATION_DETAILS, "custom-value");
+        assertThat(jwtCaptor.getAllValues().get(1)).doesNotContainKey(Claims.AUTHORIZATION_DETAILS);
+    }
+
+    @Test
+    public void emitsAuthorizationDetails_asClaimOnly_forImplicitGrant() {
+        assertClaimWithoutResponseMember(GrantType.IMPLICIT);
+    }
+
+    @Test
+    public void emitsAuthorizationDetails_asClaimOnly_forHybridGrant() {
+        assertClaimWithoutResponseMember(GrantType.HYBRID);
+    }
+
+    private void assertClaimWithoutResponseMember(String grantType) {
+        OAuth2Request request = authorizationCodeRequest();
+        request.setSubject("user");
+        request.setGrantType(grantType);
+        request.setSupportRefreshToken(false);
+        request.setAuthorizationDetails(GRANTED_AUTHORIZATION_DETAILS);
+        setupCommonMocks(request);
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> Single.just((Token) invocation.getArgument(0)));
+
+        TestObserver<Token> observer = executeTokenCreation(request, createClient("lightweight-client"), createUser("user"));
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService).encodeJwt(jwtCaptor.capture(), any(Client.class));
+        assertThat(jwtCaptor.getValue()).containsEntry(Claims.AUTHORIZATION_DETAILS, GRANTED_AUTHORIZATION_DETAILS.getRaw());
+        observer.assertValue(token -> !token.getAdditionalInformation().containsKey(Claims.AUTHORIZATION_DETAILS));
     }
 
     @Test

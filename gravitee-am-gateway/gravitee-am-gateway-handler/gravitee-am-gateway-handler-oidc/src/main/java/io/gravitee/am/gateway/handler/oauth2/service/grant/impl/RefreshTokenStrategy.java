@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.jwt.OrigResourcesUtils;
 import io.gravitee.am.common.oauth2.GrantType;
@@ -30,12 +31,14 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -109,6 +112,7 @@ public class RefreshTokenStrategy implements GrantStrategy {
 
         // Extract original resources from refresh token
         Set<String> originalResources = OrigResourcesUtils.extractOrigResources(decodedRefreshToken);
+        AuthorizationDetails authorizationDetails = extractAuthorizationDetails(decodedRefreshToken);
 
         // Resolve final resources according to RFC 8707
         Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(request, originalResources);
@@ -127,6 +131,7 @@ public class RefreshTokenStrategy implements GrantStrategy {
                     refreshTokenValue,
                     decodedRefreshToken,
                     originalResources,
+                    authorizationDetails,
                     supportRefresh
             ).withScopes(resolvedScopes));
         }
@@ -141,9 +146,19 @@ public class RefreshTokenStrategy implements GrantStrategy {
                         refreshTokenValue,
                         decodedRefreshToken,
                         originalResources,
+                        authorizationDetails,
                         supportRefresh
                 ).withScopes(resolvedScopes))
                 .toSingle();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static AuthorizationDetails extractAuthorizationDetails(Map<String, Object> decodedRefreshToken) {
+        if (decodedRefreshToken != null && decodedRefreshToken.get(Claims.AUTHORIZATION_DETAILS) instanceof List<?> elements
+                && !elements.isEmpty() && elements.stream().allMatch(Map.class::isInstance)) {
+            return AuthorizationDetails.of((List<Map<String, ?>>) elements);
+        }
+        return null;
     }
 
     private Set<String> resolveScopes(Set<String> requestedScopes, String originalScopeString) {

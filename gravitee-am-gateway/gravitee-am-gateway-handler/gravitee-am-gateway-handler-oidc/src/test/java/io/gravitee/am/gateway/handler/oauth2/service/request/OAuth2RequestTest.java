@@ -22,11 +22,13 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.token.tokenexchange.IdJagTarget;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +39,15 @@ import java.util.UUID;
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public class OAuth2RequestTest {
+
+    @Test
+    public void authorizationRequest_should_carry_authorization_details_to_oauth2_request() {
+        final var authorizationRequest = new AuthorizationRequest();
+        final var authorizationDetails = AuthorizationDetails.of(List.of(Map.of("type", "payment_initiation")));
+        authorizationRequest.setAuthorizationDetails(authorizationDetails);
+
+        Assertions.assertEquals(authorizationDetails, authorizationRequest.createOAuth2Request().getAuthorizationDetails());
+    }
 
     @Test
     public void userApp_should_accept_openID_Scope_and_provide_idtoken() {
