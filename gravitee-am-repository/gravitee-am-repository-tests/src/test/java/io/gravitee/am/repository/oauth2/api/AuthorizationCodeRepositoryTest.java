@@ -21,6 +21,8 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -139,4 +141,41 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         observer.assertNoErrors();
     }
 
+    @Test
+    public void shouldStoreAuthorizationDetails() {
+        List<Map<String, Object>> authorizationDetails = List.of(
+                Map.of("type", "payment_initiation",
+                        "actions", List.of("initiate"),
+                        "instructedAmount", Map.of("currency", "EUR", "amount", "123.50")),
+                Map.of("type", "account_information"));
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("code-with-details");
+        authorizationCode.setClientId("client-id");
+        authorizationCode.setAuthorizationDetails(authorizationDetails);
+
+        authorizationCodeRepository.create(authorizationCode).blockingGet();
+
+        authorizationCodeRepository.findAndRemoveByCodeAndClientId("code-with-details", "client-id")
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(found -> authorizationDetails.equals(found.getAuthorizationDetails()));
+    }
+
+    @Test
+    public void shouldStoreCodeWithoutAuthorizationDetails() {
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("code-without-details");
+        authorizationCode.setClientId("client-id");
+
+        authorizationCodeRepository.create(authorizationCode).blockingGet();
+
+        authorizationCodeRepository.findAndRemoveByCodeAndClientId("code-without-details", "client-id")
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(found -> found.getAuthorizationDetails() == null);
+    }
 }
