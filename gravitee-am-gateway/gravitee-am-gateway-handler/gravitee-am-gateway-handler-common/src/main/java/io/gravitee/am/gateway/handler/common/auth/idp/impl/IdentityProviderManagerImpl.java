@@ -112,10 +112,15 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
         try {
             identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
-                    .concatMapSingle(this::updateAuthenticationProvider)
-                    .map(provider -> {
+                    .concatMapMaybe(identityProvider -> updateAuthenticationProvider(identityProvider)
+                            .toMaybe()
+                            .onErrorResumeNext(error -> {
+                                logger.error("Unable to load identity provider {} for domain {}, continue with the next ones", identityProvider.getId(), domain.getName(), error);
+                                domainReadinessService.pluginFailed(domain.getId(), identityProvider.getId(), error.getMessage());
+                                return Maybe.empty();
+                            }))
+                    .doOnNext(provider -> {
                         gatewayMetricProvider.incrementIdp();
-                        return provider;
                     })
                     .blockingLast();
             logger.info("Identity providers loaded for domain {}", domain.getName());

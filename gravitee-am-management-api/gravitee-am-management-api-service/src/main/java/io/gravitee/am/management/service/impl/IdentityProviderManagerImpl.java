@@ -213,7 +213,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     private Maybe<UserProvider> loadUserProvider(IdentityProvider identityProvider) {
-        return identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+        return Single.defer(() -> identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider))
                 .flatMapMaybe(userProviderOpt -> {
                     if (userProviderOpt.isPresent()) {
                         userProviders.put(identityProvider.getId(), userProviderOpt.get());
