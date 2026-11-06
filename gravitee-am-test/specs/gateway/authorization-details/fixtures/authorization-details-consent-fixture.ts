@@ -23,11 +23,13 @@ import { createScope } from '@management-commands/scope-management-commands';
 import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
 import { auditIdsOfType, auditsOfType, AuditEntry } from '@management-commands/audit-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { extractXsrfTokenAndActionResponse, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
 import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
+import { TokenClaim } from '@management-models/TokenClaim';
 import { Fixture } from '../../../test-fixture';
 import { AUTHORIZATION_DETAILS_TEST, account, paymentSchema, payment } from './authorization-details-fixture';
 
@@ -61,6 +63,12 @@ export interface ConsentFixture extends Fixture {
   /** Signs the user in and returns their session cookie and the redirect that follows login. */
   signIn: (user: TestUser, params: Record<string, string>) => Promise<Step>;
   setSkipConsent: (skipConsent: boolean) => Promise<void>;
+  /** Replaces the application's custom token claims. */
+  setTokenCustomClaims: (tokenCustomClaims: TokenClaim[]) => Promise<void>;
+  /** Sends a token request authenticated as the application. */
+  requestToken: (params: Record<string, string>) => Promise<any>;
+  /** Exchanges the code a callback carries for tokens, expecting success. */
+  exchangeCode: (callback: Step) => Promise<any>;
   /** USER_CONSENT_CONSENTED audit ids, as a baseline before an action. */
   consentAuditIds: () => Promise<Set<string>>;
   /** Waits until the USER_CONSENT_CONSENTED audits not in `knownIds` reach `until` in number, or satisfy it, and returns them. */
@@ -128,10 +136,12 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
     });
 
     const clientId = uniqueName('authz-consent-app', true);
+    const clientSecret = uniqueName('authz-consent-secret', true);
     const application = await createApplication(domainId, accessToken, {
       name: clientId,
       type: 'WEB',
       clientId,
+      clientSecret,
       redirectUris: [CONSENT_TEST.REDIRECT_URI],
     });
     const patchAdvanced = (skipConsent: boolean) =>
@@ -146,8 +156,8 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
           settings: {
             oauth: {
               redirectUris: [CONSENT_TEST.REDIRECT_URI],
-              grantTypes: ['authorization_code', 'implicit'],
-              responseTypes: ['code', 'token'],
+              grantTypes: ['authorization_code', 'implicit', 'refresh_token'],
+              responseTypes: ['code', 'token', 'code token'],
               // not a default scope, so a request without scope requests none
               scopeSettings: [{ scope: CONSENT_TEST.SCOPE, defaultScope: false }],
               authorizationDetailTypes: [
@@ -176,6 +186,12 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
       return { response, cookie: mergeCookies(cookie, response.headers['set-cookie']) };
     };
 
+    const requestToken = (params: Record<string, string>) =>
+      performPost(oidcConfig.token_endpoint, '', new URLSearchParams(params).toString(), {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + getBase64BasicAuth(clientId, clientSecret),
+      });
+
     let handedOut = 0;
     return {
       domain,
@@ -202,6 +218,21 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
       },
       setSkipConsent: async (skipConsent) => {
         await patchAdvanced(skipConsent);
+      },
+      setTokenCustomClaims: async (tokenCustomClaims) => {
+        await waitForSyncAfter(domainId, () =>
+          patchApplication(domainId, accessToken, { settings: { oauth: { tokenCustomClaims } } }, application.id),
+        );
+      },
+      requestToken,
+      exchangeCode: async (callback) => {
+        const response = await requestToken({
+          grant_type: 'authorization_code',
+          code: callbackParams(callback).get('code'),
+          redirect_uri: CONSENT_TEST.REDIRECT_URI,
+        });
+        expect(response.status).toBe(200);
+        return response;
       },
       consentAuditIds: () => auditIdsOfType(domainId, accessToken, CONSENT_TEST.CONSENTED),
       newConsentAudits: (knownIds, until) =>

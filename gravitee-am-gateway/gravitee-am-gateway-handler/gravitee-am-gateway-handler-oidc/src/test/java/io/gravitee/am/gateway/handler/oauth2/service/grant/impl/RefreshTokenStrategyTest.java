@@ -413,5 +413,29 @@ class RefreshTokenStrategyTest {
         GrantData.RefreshTokenData data = (GrantData.RefreshTokenData) result.grantData();
         assertNotNull(data.decodedRefreshToken());
         assertEquals("custom_value", data.decodedRefreshToken().get("custom_claim"));
+        assertNull(result.authorizationDetails());
+    }
+
+    @Test
+    void shouldCarryAuthorizationDetailsFromRefreshToken() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.REFRESH_TOKEN, "refresh-token-value");
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+        List<Map<String, Object>> granted = List.of(Map.of("type", "payment_initiation", "actions", List.of("initiate")));
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put(Claims.AUTHORIZATION_DETAILS, granted);
+        Token refreshToken = new AccessToken("token-value");
+        refreshToken.setScope("read");
+        refreshToken.setClientId("client-id");
+        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + 3600000));
+        refreshToken.setAdditionalInformation(additionalInfo);
+        when(tokenService.refresh(eq("refresh-token-value"), any(), eq(client))).thenReturn(Single.just(refreshToken));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(), any())).thenReturn(Set.of());
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertEquals(granted, result.authorizationDetails().getRaw());
     }
 }

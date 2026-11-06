@@ -260,6 +260,7 @@ public class StrategyGranterAdapter implements TokenGranter {
         oAuth2Request.setSupportRefreshToken(request.supportRefreshToken());
         oAuth2Request.setResources(request.resources());
         oAuth2Request.setOriginalAuthorizationResources(request.originalAuthorizationResources());
+        oAuth2Request.setAuthorizationDetails(request.authorizationDetails());
         if (request.context() != null) {
             oAuth2Request.setContext(request.context());
         }
@@ -346,7 +347,7 @@ public class StrategyGranterAdapter implements TokenGranter {
             case GrantData.UmaData data -> oAuth2Request.setPermissions(data.permissions());
             case GrantData.ClientCredentialsData ignored -> { }
             case GrantData.PasswordData ignored -> { }
-            case GrantData.CibaData data -> oAuth2Request.setAuthorizationDetails(data.authorizationDetails());
+            case GrantData.CibaData ignored -> { }
             case GrantData.ExtensionGrantData data -> oAuth2Request.setResourceGranted(data.resourceGranted());
         }
     }

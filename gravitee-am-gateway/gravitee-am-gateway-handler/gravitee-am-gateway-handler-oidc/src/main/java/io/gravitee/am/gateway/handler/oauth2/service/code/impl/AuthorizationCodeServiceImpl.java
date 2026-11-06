@@ -67,6 +67,9 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
         authorizationCode.setExpireAt(new Date(System.currentTimeMillis() + authorizationCodeValidity));
         authorizationCode.setCreatedAt(new Date());
         authorizationCode.setResources(authorizationRequest.getResources());
+        if (authorizationRequest.getAuthorizationDetails() != null) {
+            authorizationCode.setAuthorizationDetails(authorizationRequest.getAuthorizationDetails().getRaw());
+        }
 
         return authorizationCodeRepository.create(authorizationCode);
     }

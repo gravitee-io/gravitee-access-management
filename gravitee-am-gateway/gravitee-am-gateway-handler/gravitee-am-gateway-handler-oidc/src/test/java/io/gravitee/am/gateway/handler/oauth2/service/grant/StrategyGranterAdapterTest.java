@@ -170,6 +170,7 @@ class StrategyGranterAdapterTest {
                 true,
                 Set.of("https://api.example.com"),
                 Set.of("https://api.example.com"),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -333,6 +334,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of(),
                 Set.of(),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -400,6 +402,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of(),
                 Set.of(),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -472,6 +475,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of(),
                 Set.of(),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -544,6 +548,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of(),
                 Set.of(),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -579,7 +584,7 @@ class StrategyGranterAdapterTest {
     }
 
     @Test
-    void shouldMapCibaAuthorizationDetailsOntoOAuth2Request() {
+    void shouldMapAuthorizationDetailsOntoOAuth2Request() {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
         tokenRequest.setScopes(Set.of("openid"));
@@ -589,7 +594,7 @@ class StrategyGranterAdapterTest {
 
         Map<String, Object> d = new HashMap<>();
         d.put("type", "fdx_v1.0");
-        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null, AuthorizationDetails.of(List.of(d)));
+        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null);
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",
@@ -600,6 +605,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of(),
                 Set.of(),
+                AuthorizationDetails.of(List.of(d)),
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -628,12 +634,11 @@ class StrategyGranterAdapterTest {
         OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
         assertNotNull(capturedRequest.getAuthorizationDetails(), "Should have authorizationDetails");
         assertEquals(1, capturedRequest.getAuthorizationDetails().getAll().size());
-        assertEquals("fdx_v1.0", capturedRequest.getAuthorizationDetails().getAll().get(0).getType(),
-                "authorizationDetails type should be threaded through from CibaData");
+        assertEquals("fdx_v1.0", capturedRequest.getAuthorizationDetails().getAll().get(0).getType());
     }
 
     @Test
-    void shouldLeaveAuthorizationDetailsAbsentWhenCibaDataHasNullAuthorizationDetails() {
+    void shouldLeaveAuthorizationDetailsAbsentWhenNoneAreGranted() {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
         tokenRequest.setScopes(Set.of("openid"));
@@ -641,8 +646,7 @@ class StrategyGranterAdapterTest {
         User user = new User();
         user.setId("user-id");
 
-        // null authorizationDetails — the "no RAR" path
-        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null, null);
+        GrantData.CibaData cibaData = new GrantData.CibaData("auth-req-1", null);
 
         TokenCreationRequest creationRequest = new TokenCreationRequest(
                 "client-id",
@@ -653,6 +657,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of(),
                 Set.of(),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
@@ -679,8 +684,7 @@ class StrategyGranterAdapterTest {
         adapter.grant(tokenRequest, client).blockingGet();
 
         OAuth2Request capturedRequest = oAuth2RequestCaptor.getValue();
-        assertNull(capturedRequest.getAuthorizationDetails(),
-                "authorizationDetails should be null (absent) when CibaData carries no RAR — no NPE");
+        assertNull(capturedRequest.getAuthorizationDetails());
     }
 
     @Test
@@ -709,6 +713,7 @@ class StrategyGranterAdapterTest {
                 false,
                 Set.of("https://mcp.example.com/calendar"),
                 Set.of(),
+                null,
                 HttpRequestInfo.from(tokenRequest),
                 tokenRequest.getAdditionalParameters(),
                 tokenRequest.getContext(),
