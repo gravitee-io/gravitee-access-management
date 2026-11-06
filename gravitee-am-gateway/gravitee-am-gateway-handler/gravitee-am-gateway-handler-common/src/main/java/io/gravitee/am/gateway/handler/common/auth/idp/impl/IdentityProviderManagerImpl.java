@@ -105,6 +105,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     public void afterPropertiesSet() {
         logger.info("Initializing identity providers for domain {}", domain.getName());
 
+<<<<<<< HEAD
         try {
             identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                     .concatMapSingle(this::updateAuthenticationProvider)
@@ -117,6 +118,24 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
         }
+=======
+        identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
+                .concatMapMaybe(identityProvider -> updateAuthenticationProvider(identityProvider)
+                        .toMaybe()
+                        .onErrorResumeNext(error -> {
+                            logger.error("Unable to load identity provider {} for domain {}, continue with the next ones", identityProvider.getId(), domain.getName(), error);
+                            domainReadinessService.pluginFailed(domain.getId(), identityProvider.getId(), error.getMessage());
+                            return Maybe.empty();
+                        }))
+                .doOnComplete(() -> logger.info("Identity providers loaded for domain {}", domain.getName()))
+                .subscribe(
+                        provider -> gatewayMetricProvider.incrementIdp(),
+                        e -> {
+                            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+                            domainReadinessService.pluginInitFailed(domain.getId(), Type.IDENTITY_PROVIDER.name(), e.getMessage());
+                        }
+                );
+>>>>>>> 1364e38 (fix: keep loading the remaining identity providers when one fails at startup)
     }
 
     @Override
