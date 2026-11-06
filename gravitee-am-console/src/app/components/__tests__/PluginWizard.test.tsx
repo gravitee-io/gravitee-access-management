@@ -83,22 +83,24 @@ describe('PluginWizard', () => {
         fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Mail' } });
         expect(screen.getByRole('spinbutton', { name: /Port/ })).toHaveValue(587);
         fireEvent.change(screen.getByRole('textbox', { name: /Hostname/ }), { target: { value: 'smtp.acme.io' } });
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeEnabled());
         fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
         await waitFor(() => expect(onCreate).toHaveBeenCalledWith(SMTP, { name: 'Mail', config: { host: 'smtp.acme.io', port: 587 } }));
         expect(getSchema).toHaveBeenCalledWith(SMTP);
     });
 
-    it('blocks the create while the name is blank', async () => {
+    it('disables Create until the name and the required fields are filled', async () => {
         renderWizard();
 
         fireEvent.click(await screen.findByRole('radio', { name: 'SMTP' }));
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        fireEvent.change(await screen.findByRole('textbox', { name: /Hostname/ }), { target: { value: 'smtp.acme.io' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled());
+        fireEvent.change(screen.getByRole('textbox', { name: /Hostname/ }), { target: { value: 'smtp.acme.io' } });
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled());
+        fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Mail' } });
 
-        expect(await screen.findByText('Name is required')).toBeInTheDocument();
-        expect(onCreate).not.toHaveBeenCalled();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeEnabled());
     });
 
     it('filters the plugins on the name and the labels, without case', async () => {

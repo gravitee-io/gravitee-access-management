@@ -278,6 +278,32 @@ describe('adaptAmSchema', () => {
         expect(schema.allOf).toEqual([{ required: ['authentication'] }]);
     });
 
+    it('shows the HTML of a plugin title as plain text, and keeps the HTML of a description', () => {
+        const description = 'Set the signature key <i><b>(GIVEN_KEY)</b></i>.';
+        const { schema } = adaptAmSchema({
+            type: 'object',
+            properties: { resolverParameter: { type: 'string', title: 'Resolver <b>parameter</b>', description } },
+        });
+
+        expect(schema.properties?.resolverParameter).toMatchObject({ title: 'Resolver parameter', description });
+    });
+
+    it('takes a plain string list out of the schema, and keeps an enum list and a multiselect in it', () => {
+        const { schema, stringLists } = adaptAmSchema({
+            type: 'object',
+            required: ['scopes'],
+            properties: {
+                scopes: { type: 'array', title: 'Scopes', description: 'The scopes', items: { type: 'string' } },
+                methods: { type: 'array', items: { type: 'string', enum: ['GET', 'POST'] } },
+                events: { type: 'array', widget: 'graviteeMultiselect', enum: ['A'], items: { type: 'string' } },
+            },
+        });
+
+        expect(stringLists).toEqual([{ key: 'scopes', title: 'Scopes', description: 'The scopes', required: true, readOnly: false }]);
+        expect(Object.keys(schema.properties ?? {})).toEqual(['methods', 'events']);
+        expect(schema.required).toEqual([]);
+    });
+
     it('takes a file field out of the schema, so the console renders it beside the schema form', () => {
         const { schema, files } = adaptAmSchema({
             type: 'object',
@@ -313,6 +339,36 @@ describe('withSchemaDefaults', () => {
             timeStep: '30',
             label: 'x',
         });
+    });
+
+    it('starts an array with one item of the item defaults, as Angular json-schema-form does, in nested objects too', () => {
+        const condition: JsonSchema = {
+            type: 'object',
+            properties: {
+                value: { type: 'string', default: '{#response.status == 401}' },
+                exception: { type: 'string', default: 'BadCredentialsException' },
+            },
+        };
+        const http: JsonSchema = {
+            type: 'object',
+            properties: {
+                resource: {
+                    type: 'object',
+                    properties: {
+                        method: { type: 'string', default: 'POST' },
+                        errors: { type: 'array', items: condition },
+                    },
+                },
+                headers: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' } } } },
+            },
+        };
+
+        const filled = withSchemaDefaults(http, {});
+
+        expect((filled.resource as Record<string, unknown>).errors).toEqual([
+            { value: '{#response.status == 401}', exception: 'BadCredentialsException' },
+        ]);
+        expect(filled.headers ?? []).toEqual([]);
     });
 });
 

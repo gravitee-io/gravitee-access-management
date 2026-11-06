@@ -30,6 +30,15 @@ export interface SchemaFile {
     readonly required: boolean;
 }
 
+/** A top-level array of plain strings. Graphene renders each item as a collapsible section, so the console uses a tag input. */
+export interface SchemaStringList {
+    readonly key: string;
+    readonly title?: string;
+    readonly description?: string;
+    readonly required: boolean;
+    readonly readOnly: boolean;
+}
+
 export interface AmSchemaOptions {
     /** The choices of a `graviteeResource` field. With none, the field is read-only. */
     readonly resources?: readonly SchemaResource[];
@@ -42,6 +51,7 @@ export interface AdaptedSchema {
     /** The `if`/`then` blocks of the top-level `allOf`, each as a schema. Graphene's resolver ignores them inside `allOf`. */
     readonly conditions: readonly JsonSchema[];
     readonly files: readonly SchemaFile[];
+    readonly stringLists: readonly SchemaStringList[];
     readonly dictionaryEndpoints: readonly string[];
     /** Dotted paths of the widgets and conditions that Graphene cannot express. */
     readonly unsupported: readonly string[];
@@ -197,8 +207,28 @@ function adaptProperties(node: SchemaNode, adapted: SchemaNode, path: string, co
     }
 }
 
-function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
+/** Some plugin titles hold HTML. Graphene reads a title as a string, so the console shows it as plain text. */
+function plainText(text: unknown): string | undefined {
+    if (typeof text !== 'string') {
+        return undefined;
+    }
+    return text
+        .replace(/<br\s*\/?>|<\/br>/gi, ' ')
+        .replace(/<[^>]*>/g, '')
+        .replace(/ {2,}/g, ' ')
+        .trim();
+}
+
+function copyNode(node: SchemaNode): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
+    if (typeof adapted.title === 'string') {
+        adapted.title = plainText(adapted.title);
+    }
+    return adapted;
+}
+
+function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
+    const adapted = copyNode(node);
 
     const widget = widgetOf(node);
     if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
@@ -245,6 +275,17 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
     return adapted;
 }
 
+function isStringList(property: SchemaNode): boolean {
+    const items = property.items as SchemaNode | undefined;
+    return (
+        property.type === 'array' &&
+        items?.type === 'string' &&
+        items.enum === undefined &&
+        widgetOf(property) === undefined &&
+        property.condition === undefined
+    );
+}
+
 /** Translates an angular-schema-form plugin schema into the Graphene `JsonSchemaForm` dialect. */
 export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {}): AdaptedSchema {
     const context: AdaptContext = { options, dictionaryEndpoints: [], unsupported: [] };
@@ -254,14 +295,24 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         .filter(([, property]) => widgetOf(property) === 'file')
         .map(([key, property]) => ({
             key,
-            title: property.title as string | undefined,
+            title: plainText(property.title),
             description: property.description as string | undefined,
             required: required.includes(key),
         }));
+    const stringLists: SchemaStringList[] = Object.entries(properties)
+        .filter(([, property]) => isStringList(property))
+        .map(([key, property]) => ({
+            key,
+            title: plainText(property.title),
+            description: property.description as string | undefined,
+            required: required.includes(key),
+            readOnly: property.readonly === true,
+        }));
+    const extracted = (key: string) => files.some(file => file.key === key) || stringLists.some(list => list.key === key);
 
-    const adapted: SchemaNode = Object.fromEntries(Object.entries(schema).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
+    const adapted = copyNode(schema);
     if (schema.properties) {
-        adaptProperties(schema, adapted, '', context, key => files.some(file => file.key === key));
+        adaptProperties(schema, adapted, '', context, extracted);
     }
     const allOf = Array.isArray(schema.allOf) ? (schema.allOf as SchemaNode[]) : [];
     const conditions = allOf.filter(entry => entry.if !== undefined).map(entry => ({ type: 'object', ...entry }) as JsonSchema);
@@ -277,15 +328,37 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         schema: adapted as JsonSchema,
         conditions,
         files,
+        stringLists,
         dictionaryEndpoints: context.dictionaryEndpoints,
         unsupported: context.unsupported,
     };
 }
 
+/** An empty array whose items have defaults starts with one item of those defaults. */
+function withFirstArrayItems(schema: SchemaNode, value: Record<string, unknown>): Record<string, unknown> {
+    const filled = { ...value };
+    for (const [key, property] of Object.entries((schema.properties ?? {}) as Record<string, SchemaNode>)) {
+        const current = filled[key];
+        const items = property.items as SchemaNode | undefined;
+        if (property.type === 'array' && items?.properties && (current === undefined || (Array.isArray(current) && current.length === 0))) {
+            const item = extractDefaults(items as JsonSchema) as Record<string, unknown> | undefined;
+            if (item && Object.keys(item).length > 0) {
+                filled[key] = [item];
+            }
+        } else if (property.properties && (current === undefined || (typeof current === 'object' && !Array.isArray(current)))) {
+            const nested = withFirstArrayItems(property, (current ?? {}) as Record<string, unknown>);
+            if (current !== undefined || Object.keys(nested).length > 0) {
+                filled[key] = nested;
+            }
+        }
+    }
+    return filled;
+}
+
 /** An undefined value keeps its default. */
 export function withSchemaDefaults(schema: JsonSchema, configuration: Record<string, unknown>): Record<string, unknown> {
     return {
-        ...(extractDefaults(schema) as Record<string, unknown>),
+        ...withFirstArrayItems(schema as SchemaNode, extractDefaults(schema) as Record<string, unknown>),
         ...Object.fromEntries(Object.entries(configuration).filter(([, value]) => value !== undefined)),
     };
 }
