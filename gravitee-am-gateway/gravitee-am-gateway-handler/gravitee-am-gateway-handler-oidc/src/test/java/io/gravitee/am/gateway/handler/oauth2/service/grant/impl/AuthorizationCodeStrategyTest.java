@@ -43,6 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
@@ -181,6 +182,33 @@ class AuthorizationCodeStrategyTest {
         GrantData.AuthorizationCodeData data = (GrantData.AuthorizationCodeData) result.grantData();
         assertEquals("valid-code", data.code());
         assertEquals("https://callback.example.com", data.redirectUri());
+        assertNull(result.authorizationDetails());
+    }
+
+    @Test
+    void shouldCarryAuthorizationDetailsGrantedWithTheCode() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.CODE, "valid-code");
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setParameters(parameters);
+        User user = new User();
+        user.setId("user-id");
+        List<Map<String, Object>> granted = List.of(Map.of("type", "payment_initiation", "actions", List.of("initiate")));
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode("valid-code");
+        authorizationCode.setSubject("user-id");
+        authorizationCode.setTransactionId("tx-id");
+        authorizationCode.setRequestParameters(new LinkedMultiValueMap<>());
+        authorizationCode.setAuthorizationDetails(granted);
+        when(authorizationCodeService.remove(eq("valid-code"), eq(client))).thenReturn(Maybe.just(authorizationCode));
+        when(authenticationFlowContextService.removeContext(anyString(), anyInt())).thenReturn(Single.just(new AuthenticationFlowContext()));
+        when(userAuthenticationManager.loadPreAuthenticatedUser(eq("user-id"), any())).thenReturn(Maybe.just(user));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(), any())).thenReturn(Set.of());
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertEquals(granted, result.authorizationDetails().getRaw());
     }
 
     @Test
