@@ -19,6 +19,7 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.CertificateEvent;
 import io.gravitee.am.common.event.DomainCertificateSettingsEvent;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.TemporarilyUnavailableException;
 import io.gravitee.am.common.jwt.CertificateInfo;
@@ -33,6 +34,7 @@ import io.gravitee.am.monitoring.DomainReadinessService;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.common.event.Event;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.awaitility.Awaitility;
@@ -51,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -81,6 +84,9 @@ public class CertificateManagerImplTest {
 
     @Mock
     private DomainReadinessService domainReadinessService;
+
+    @Mock
+    private EventManager eventManager;
 
     @Mock
     private CertificateRepository certificateRepository;
@@ -296,6 +302,28 @@ public class CertificateManagerImplTest {
         // Assert - initPluginSync should be called, followed by pluginFailed
         verify(domainReadinessService, timeout(1000)).initPluginSync(DOMAIN_ID, CERTIFICATE_ID, Type.CERTIFICATE.name());
         verify(domainReadinessService, timeout(1000)).pluginFailed(eq(DOMAIN_ID), eq(CERTIFICATE_ID), anyString());
+    }
+
+    @Test
+    public void initialize_shouldLoadRemainingCertificatesWhenOneFailsToLoad() throws Exception {
+        when(certificateRepository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(certificate("broken-certificate"), certificate("healthy-certificate")));
+        doThrow(new IllegalStateException("invalid keystore")).doNothing()
+                .when(certificateProviderManager).create(Mockito.any(Certificate.class));
+
+        certificateManager.doStart();
+
+        verify(domainReadinessService, timeout(1000)).pluginLoaded(DOMAIN_ID, "healthy-certificate");
+        verify(domainReadinessService).pluginFailed(DOMAIN_ID, "broken-certificate", "invalid keystore");
+        verify(domainReadinessService, never()).pluginInitFailed(eq(DOMAIN_ID), anyString(), anyString());
+    }
+
+    private static Certificate certificate(String id) {
+        Certificate certificate = new Certificate();
+        certificate.setId(id);
+        certificate.setName(id);
+        certificate.setType("javakeystore-am-certificate");
+        certificate.setDomain(DOMAIN_ID);
+        return certificate;
     }
 
     @Test

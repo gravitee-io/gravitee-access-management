@@ -23,7 +23,9 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.common.event.EventManager;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -73,6 +75,12 @@ public class IdentityProviderManagerTest {
 
     @Mock
     private IdentityProviderPluginManager idpPluginManager;
+
+    @Mock
+    private IdentityProviderService identityProviderService;
+
+    @Mock
+    private EventManager eventManager;
 
     @InjectMocks
     private IdentityProviderManagerImpl cut = new IdentityProviderManagerImpl();
@@ -128,6 +136,32 @@ public class IdentityProviderManagerTest {
 
         verify(listener).registerAuthenticationProvider(any());
         verify(idpPluginManager).create(eq("gravitee-am-idp"), any(), any());
+    }
+
+    @Test
+    public void shouldLoadRemainingUserProvidersWhenOneFailsToInitializeAtStartup() throws Exception {
+        io.gravitee.am.model.IdentityProvider broken = domainIdentityProvider("broken-idp");
+        io.gravitee.am.model.IdentityProvider healthy = domainIdentityProvider("healthy-idp");
+        when(identityProviderService.findAll()).thenReturn(Flowable.just(broken, healthy));
+        when(idpPluginManager.create(eq("oauth2-generic-am-idp"), any(), eq(broken))).thenThrow(new IllegalArgumentException("invalid well-known URI"));
+        when(idpPluginManager.create(eq("oauth2-generic-am-idp"), any(), eq(healthy))).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
+        when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(Single.just(Optional.empty()));
+
+        cut.doStart();
+
+        assertFalse(cut.getIdentityProvider("broken-idp").isPresent());
+        assertTrue(cut.getIdentityProvider("healthy-idp").isPresent());
+    }
+
+    private static io.gravitee.am.model.IdentityProvider domainIdentityProvider(String id) {
+        io.gravitee.am.model.IdentityProvider identityProvider = new io.gravitee.am.model.IdentityProvider();
+        identityProvider.setId(id);
+        identityProvider.setName(id);
+        identityProvider.setType("oauth2-generic-am-idp");
+        identityProvider.setConfiguration("{}");
+        identityProvider.setReferenceType(ReferenceType.DOMAIN);
+        identityProvider.setReferenceId("domain-id");
+        return identityProvider;
     }
 
     private void defineDefaultSecurityConfig(boolean enabled) {
