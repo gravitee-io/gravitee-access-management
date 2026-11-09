@@ -108,7 +108,7 @@ describe('password rules', () => {
         expect(rules[0].passes('aaa', {})).toBe(true);
     });
 
-    it('checks each rule of a policy with the Angular messages', () => {
+    it('checks each rule of a policy with its message', () => {
         const rules = localRules({
             minLength: 4,
             includeNumbers: true,

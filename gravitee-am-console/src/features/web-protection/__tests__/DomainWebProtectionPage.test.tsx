@@ -69,7 +69,7 @@ const corsOn = { inherited: false, enabled: true, allowedOrigins: ['https://a.ex
 beforeEach(() => vi.clearAllMocks());
 
 describe('DomainWebProtectionPage', () => {
-    it('saves the Angular defaults for a domain with no settings, with CORS overridden', async () => {
+    it('saves the defaults for a domain with no settings, with CORS overridden', async () => {
         vi.mocked(patchDomainWebProtectionSettings).mockResolvedValueOnce(domain);
         renderPage(editor);
 
@@ -110,7 +110,7 @@ describe('DomainWebProtectionPage', () => {
         expect(screen.getByRole('switch', { name: 'Inherit platform settings', description: /X-Frame-Options/ })).not.toBeChecked();
     });
 
-    it('rejects a duplicate origin and a duplicate header with the Angular messages', () => {
+    it('rejects a duplicate origin and a duplicate header', () => {
         renderPage(editor, { ...domain, corsSettings: { ...corsOn, allowedHeaders: ['Content-Type'] } });
         const origin = screen.getByRole('combobox', { name: 'Allow-Origin' });
         const header = screen.getByRole('combobox', { name: 'Allow-Headers' });

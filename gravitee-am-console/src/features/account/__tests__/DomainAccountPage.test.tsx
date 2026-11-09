@@ -122,7 +122,7 @@ describe('DomainAccountPage', () => {
         expect(toast.success).toHaveBeenCalledWith('User Accounts Settings updated');
     });
 
-    it('applies the Angular defaults when brute force detection is turned on', async () => {
+    it('applies the defaults when brute force detection is turned on', async () => {
         vi.mocked(patchDomainAccountSettings).mockResolvedValueOnce(domain);
         renderPage(editor);
 

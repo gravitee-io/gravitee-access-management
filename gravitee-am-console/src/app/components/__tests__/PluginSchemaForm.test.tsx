@@ -151,7 +151,7 @@ describe('PluginSchemaForm', () => {
         expect(within(screen.getByRole('group', { name: 'Events' })).getByRole('button', { name: 'Add' })).toBeDisabled();
     });
 
-    it('warns the developer about the fields it shows without their Angular widget', () => {
+    it('warns the developer about the fields it shows without their widget', () => {
         const adapted = adaptAmSchema({
             type: 'object',
             properties: { script: { type: 'string', 'x-schema-form': { type: 'codemirror' } } },
@@ -355,7 +355,7 @@ describe('PluginSchemaForm in edit mode', () => {
 });
 
 describe('fileValue', () => {
-    it('writes the file as the Angular file widget does, with the content in base64', async () => {
+    it('writes the file with the content in base64', async () => {
         const value = await fileValue(new File(['hello'], 'hello.txt', { type: 'text/plain' }));
 
         expect(JSON.parse(value)).toEqual({ name: 'hello.txt', type: 'text/plain', size: 5, content: btoa('hello') });

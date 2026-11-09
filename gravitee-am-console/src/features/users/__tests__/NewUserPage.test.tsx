@@ -89,7 +89,7 @@ describe('NewUserPage', () => {
         await waitFor(() => expect(harness.create()).toBeEnabled());
     });
 
-    it('creates the user with the Angular payload, then opens it', async () => {
+    it('creates the user, then opens it', async () => {
         const harness = setup();
         await harness.fillProfile();
         await harness.typePassword('password42');

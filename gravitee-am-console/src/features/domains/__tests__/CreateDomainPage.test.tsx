@@ -71,7 +71,7 @@ beforeEach(() => {
 });
 
 describe('CreateDomainPage', () => {
-    it('creates the domain on the single data plane with the Angular fields, then opens it', async () => {
+    it('creates the domain on the single data plane, then opens it', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
         const harness = setupCreateDomainPageHarness();
 

@@ -95,7 +95,7 @@ describe('DomainEntrypointsPage', () => {
         expect(listDomainEntrypoints).toHaveBeenCalledWith(ref);
     });
 
-    it('saves the Angular patchEntrypoints fields in context-path mode', async () => {
+    it('saves the entrypoints fields in context-path mode', async () => {
         vi.mocked(patchDomainEntrypoints).mockResolvedValueOnce({ ...domain, path: '/partners' });
         renderPage(editor);
 

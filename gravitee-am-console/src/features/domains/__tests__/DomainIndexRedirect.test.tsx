@@ -29,7 +29,7 @@ describe('DomainIndexRedirect', () => {
         [['application_list', 'protected_resource_list'], 'applications'],
         [['protected_resource_list'], 'mcp-servers'],
         [[], 'settings'],
-    ])('with %j opens %s, as the Angular DomainComponent', async (permissions, section) => {
+    ])('with %j opens %s', async (permissions, section) => {
         render(
             <PermissionScope permissions={permissions}>
                 <MemoryRouter initialEntries={['/domains/acme']}>

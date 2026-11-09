@@ -77,7 +77,7 @@ beforeEach(() => {
 });
 
 describe('DomainDashboardPage', () => {
-    it('sends one analytics call per Angular widget over the last 24 hours, and shows the counts', async () => {
+    it('sends one analytics call per widget over the last 24 hours, and shows the counts', async () => {
         const harness = setupDomainDashboardPageHarness();
 
         expect(await screen.findByText('+42')).toBeInTheDocument();

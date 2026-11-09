@@ -43,7 +43,7 @@ describe('identity providers api', () => {
         expect(vi.mocked(http).mock.calls[0][0]).toBe(`${domainPath}/identities/..%2Fcertificates`);
     });
 
-    it('sends the seven fields of the Angular update, with an empty configuration for a system provider', async () => {
+    it('sends the seven update fields, with an empty configuration for a system provider', async () => {
         vi.mocked(http).mockResolvedValueOnce({});
         const provider: IdentityProvider = {
             id: 'default-idp-d1',

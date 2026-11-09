@@ -136,7 +136,7 @@ beforeEach(() => {
 });
 
 describe('IdentityProviderSettingsPage', () => {
-    it('saves the name, the whitelist and the configuration as the Angular update does', async () => {
+    it('saves the name, the whitelist and the configuration', async () => {
         const harness = setupSettingsPageHarness();
 
         await harness.rename('Google login');
@@ -164,7 +164,7 @@ describe('IdentityProviderSettingsPage', () => {
         expect(screen.queryByRole('textbox', { name: /Client ID/ })).not.toBeInTheDocument();
     });
 
-    it('shows the plugin description, as the Angular side panel does', async () => {
+    it('shows the plugin description', async () => {
         setupSettingsPageHarness();
 
         expect(await screen.findByText(/Google identity provider, let you register/)).toBeInTheDocument();

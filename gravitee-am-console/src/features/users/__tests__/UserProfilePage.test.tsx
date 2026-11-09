@@ -129,7 +129,7 @@ describe('UserLayout and UserProfilePage', () => {
         expect(screen.getByText('Pre-registered')).toBeInTheDocument();
     });
 
-    it('saves the eight Angular fields, keeping the stored object and null attributes', async () => {
+    it('saves the eight profile fields, keeping the stored object and null attributes', async () => {
         const updated = { ...alice, firstName: 'Alicia', displayName: 'Alicia Liddell' };
         vi.mocked(updateUser).mockResolvedValue(updated);
         setup();
