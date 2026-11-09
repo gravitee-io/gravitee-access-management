@@ -51,11 +51,22 @@ export function advancedSearchFilter({ applications, providers, disabledOnly }: 
         .join(' and ');
 }
 
-/** A stored row keeps its name. */
-export type Attribute = { readonly name: string; readonly value: string; readonly stored: boolean; readonly readOnly: boolean };
+/** A stored row keeps its name, and `storedValue` holds the value it was loaded with. */
+export type Attribute = {
+    readonly name: string;
+    readonly value: string;
+    readonly stored: boolean;
+    readonly readOnly: boolean;
+    readonly storedValue?: string;
+};
+
+/** A stored attribute that was already empty stays saveable. */
+export function isValueMissing(attribute: Attribute): boolean {
+    return !attribute.readOnly && attribute.value === '' && attribute.storedValue !== '';
+}
 
 export function isIncomplete(attribute: Attribute): boolean {
-    return !attribute.readOnly && (attribute.name === '' || attribute.value === '');
+    return attribute.name === '' || isValueMissing(attribute);
 }
 
 export function attributesOf(info: Record<string, unknown> | undefined): Attribute[] {
@@ -64,7 +75,7 @@ export function attributesOf(info: Record<string, unknown> | undefined): Attribu
         .map(([name, value]) =>
             typeof value === 'object'
                 ? { name, value: JSON.stringify(value), stored: true, readOnly: true }
-                : { name, value: String(value), stored: true, readOnly: false },
+                : { name, value: String(value), stored: true, readOnly: false, storedValue: String(value) },
         );
 }
 

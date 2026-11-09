@@ -63,6 +63,12 @@ export function UserProfilePage() {
     const canEdit = usePermissions().has('domain_user_update');
     const emailRequired = useQuery({ queryKey: ['email-required'], queryFn: isEmailRequired, staleTime: Infinity });
     const [form, setForm] = useState<FormState>(() => fromUser(user));
+    // A new key remounts the attributes editor, which forgets the fields it has flagged.
+    const [formKey, setFormKey] = useState(0);
+    const reset = (from: User) => {
+        setForm(fromUser(from));
+        setFormKey(key => key + 1);
+    };
     const [username, setUsername] = useState(user.username);
     const [confirmUsername, setConfirmUsername] = useState(false);
 
@@ -71,7 +77,7 @@ export function UserProfilePage() {
     if (syncedUser !== user) {
         setSyncedUser(user);
         if (JSON.stringify(form) === JSON.stringify(fromUser(syncedUser))) {
-            setForm(fromUser(user));
+            reset(user);
         }
         if (username === syncedUser.username) {
             setUsername(user.username);
@@ -249,6 +255,7 @@ export function UserProfilePage() {
                             />
                             <CardContent>
                                 <AttributesEditor
+                                    key={formKey}
                                     attributes={form.attributes}
                                     editable={canEdit}
                                     onChange={attributes => set({ attributes })}
@@ -258,13 +265,7 @@ export function UserProfilePage() {
                     )}
                 </form>
                 {canEdit && (
-                    <SaveBar
-                        formId={FORM_ID}
-                        dirty={dirty}
-                        saving={save.isPending}
-                        invalid={invalid}
-                        onDiscard={() => setForm(fromUser(user))}
-                    />
+                    <SaveBar formId={FORM_ID} dirty={dirty} saving={save.isPending} invalid={invalid} onDiscard={() => reset(user)} />
                 )}
             </div>
 

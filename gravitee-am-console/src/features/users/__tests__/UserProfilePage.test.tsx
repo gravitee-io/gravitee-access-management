@@ -201,6 +201,30 @@ describe('UserLayout and UserProfilePage', () => {
         expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     });
 
+    it('keeps a user with an already empty stored attribute saveable', async () => {
+        setup({ ...alice, additionalInformation: { team: '' } });
+        const firstName = await screen.findByLabelText('First name');
+
+        await userEvent.type(firstName, 'a');
+
+        expect(screen.getByLabelText('Value of team')).toHaveAttribute('aria-invalid', 'false');
+        expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    });
+
+    it('forgets the flagged attribute fields on discard', async () => {
+        setup();
+        await userEvent.click(await screen.findByRole('button', { name: 'Add attribute' }));
+        const newestName = () => screen.getAllByLabelText('Attribute name').slice(-1)[0];
+        await userEvent.click(newestName());
+        await userEvent.tab();
+        expect(screen.getByText('Enter a name')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Discard' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Add attribute' }));
+
+        expect(newestName()).toHaveAttribute('aria-invalid', 'false');
+    });
+
     it('blocks the save when a stored attribute value is emptied', async () => {
         setup();
         const team = await screen.findByLabelText('Value of team');

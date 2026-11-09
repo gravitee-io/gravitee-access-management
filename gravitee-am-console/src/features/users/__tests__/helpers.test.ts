@@ -68,7 +68,7 @@ describe('additional information', () => {
 
     it('shows the non-null values, an object as read-only JSON', () => {
         expect(attributesOf(stored)).toEqual([
-            { name: 'team', value: 'blue', stored: true, readOnly: false },
+            { name: 'team', value: 'blue', stored: true, readOnly: false, storedValue: 'blue' },
             { name: 'address', value: '{"city":"Oxford"}', stored: true, readOnly: true },
         ]);
     });

@@ -16,7 +16,7 @@
 import { Button, FieldError, Input } from '@gravitee/graphene-core';
 import { PlusIcon, XIcon } from '@gravitee/graphene-core/icons';
 import { useState } from 'react';
-import type { Attribute } from './user-helpers';
+import { type Attribute, isValueMissing } from './user-helpers';
 
 interface AttributesEditorProps {
     readonly attributes: readonly Attribute[];
@@ -38,17 +38,14 @@ export function AttributesEditor({ attributes, editable, onChange }: AttributesE
         onChange(attributes.filter((_, i) => i !== index));
         setBlurred(new Set());
     };
-    const showError = (field: string, fromStart: boolean) => focused !== field && (fromStart || blurred.has(field));
+    const showError = (field: string) => focused !== field && blurred.has(field);
 
     return (
         <div className="flex flex-col gap-2">
             {attributes.length === 0 && <p className="text-sm text-muted-foreground">No additional information.</p>}
             {attributes.map((attribute, index) => {
-                const nameError = attribute.name === '' && showError(`${index}-name`, false) ? 'Enter a name' : undefined;
-                const valueError =
-                    !attribute.readOnly && attribute.value === '' && showError(`${index}-value`, attribute.stored)
-                        ? 'Enter a value'
-                        : undefined;
+                const nameError = attribute.name === '' && showError(`${index}-name`) ? 'Enter a name' : undefined;
+                const valueError = isValueMissing(attribute) && showError(`${index}-value`) ? 'Enter a value' : undefined;
                 return (
                     <div key={index} className="flex items-start gap-2">
                         <div className="flex w-48 flex-col gap-1">
