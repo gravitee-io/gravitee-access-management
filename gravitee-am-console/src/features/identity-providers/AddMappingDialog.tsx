@@ -60,7 +60,8 @@ export function AddMappingDialog({ noun, targets, onCancel, onSave }: AddMapping
     const [user, setUser] = useState('');
     const [selected, setSelected] = useState<string[]>([]);
     const [query, setQuery] = useState('');
-    const shown = targets.filter(target => target.name.toLowerCase().includes(query.trim().toLowerCase()));
+    // A checked target stays in the list, so a search never hides what the save maps onto.
+    const shown = targets.filter(target => selected.includes(target.id) || target.name.toLowerCase().includes(query.trim().toLowerCase()));
     const toggle = (id: string, on: boolean) => setSelected(current => (on ? [...current, id] : current.filter(other => other !== id)));
 
     return (

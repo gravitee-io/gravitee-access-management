@@ -229,6 +229,23 @@ describe('IdentityProviderRolesPage', () => {
         expect(dialog).toHaveTextContent('No roles match your search.');
     });
 
+    it('keeps a checked role in the list while a search hides the others', async () => {
+        vi.mocked(listAllRoles).mockResolvedValue(Array.from({ length: 11 }, (_, i) => ({ id: `role-${i}`, name: `ROLE_${i}` })));
+        setupMapperTabHarness('roles');
+
+        await screen.findByRole('button', { name: 'Add role mapping' });
+        await buttonHarness({ name: 'Add role mapping' }).click();
+        await screen.findByRole('dialog', { name: 'Role mappings' });
+        await userEvent.click(screen.getByRole('checkbox', { name: 'ROLE_2' }));
+        await userEvent.type(screen.getByRole('searchbox', { name: 'Search roles' }), 'role_1');
+
+        expect(screen.getAllByRole('checkbox').map(box => box.getAttribute('id'))).toEqual([
+            'mapper-role-1',
+            'mapper-role-2',
+            'mapper-role-10',
+        ]);
+    });
+
     it('lists the mapped users under the role names', async () => {
         setupMapperTabHarness('roles');
 
