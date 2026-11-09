@@ -46,6 +46,13 @@ public record EncryptedField<T>(Class<T> type,
     }
 
     /**
+     * @return true when {@code value} is of the managed type and its stored field needs no encryption
+     */
+    boolean isUpToDate(Object value, FieldEncryptor encryptor) {
+        return type.isInstance(value) && encryptor.isEncryptedWithCurrentKey(getter.apply(type.cast(value)));
+    }
+
+    /**
      * Decrypts the field of {@code value} in place, when it is of the managed type.
      */
     Object decryptInPlace(Object value, FieldEncryptor encryptor) {

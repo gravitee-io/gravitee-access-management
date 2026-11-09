@@ -29,6 +29,7 @@ import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Wraps a repository so the {@link EncryptedField} of its entity is encrypted on the way in and
@@ -45,6 +46,8 @@ import java.util.Set;
  */
 public final class EncryptingRepositoryProxy implements InvocationHandler {
 
+    private static final ThreadLocal<Boolean> PENDING_ENCRYPTION_REQUESTED = new ThreadLocal<>();
+
     private final Object target;
     private final EncryptedField<?> field;
     private final FieldEncryptor encryptor;
@@ -53,6 +56,32 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
         this.target = target;
         this.field = field;
         this.encryptor = encryptor;
+    }
+
+    /**
+     * Runs {@code findAll}, a read returning a {@link Flowable} from a wrapped repository, so that it only emits
+     * the entities whose stored field is not already encrypted with the current key. They are emitted decrypted,
+     * like any read, and are meant to be updated.
+     * <p>
+     * The filter must see the stored value, which the proxy decrypts before the caller gets it, hence the
+     * thread-local request: the wrapped repository takes it when {@code findAll} is called, so the call must
+     * happen synchronously in {@code findAll}, on the calling thread. When it does not, for instance with a
+     * deferred call or a repository that is not wrapped, the request is still pending afterwards and this
+     * fails rather than emitting the entities that need no encryption too.
+     *
+     * @throws IllegalStateException when no wrapped repository was read during {@code findAll}
+     */
+    public static <T> Flowable<T> pendingEncryption(Supplier<Flowable<T>> findAll) {
+        PENDING_ENCRYPTION_REQUESTED.set(Boolean.TRUE);
+        try {
+            Flowable<T> pending = findAll.get();
+            if (PENDING_ENCRYPTION_REQUESTED.get() != null) {
+                throw new IllegalStateException("The pending encryption read must call a repository wrapped by the encryption synchronously");
+            }
+            return pending;
+        } finally {
+            PENDING_ENCRYPTION_REQUESTED.remove();
+        }
     }
 
     public static Object wrap(Object target, EncryptedField<?> field, FieldEncryptor encryptor) {
@@ -68,13 +97,22 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
             return invokeObjectMethod(proxy, method, args);
         }
         Object[] effectiveArgs = encryptArguments(args);
+        boolean pendingEncryptionOnly = consumePendingEncryptionRequest();
         Object result;
         try {
             result = method.invoke(target, effectiveArgs);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         }
-        return decryptResult(result, method.isAnnotationPresent(KeepEncryptedOnFailure.class));
+        return decryptResult(result, method.isAnnotationPresent(KeepEncryptedOnFailure.class), pendingEncryptionOnly);
+    }
+
+    private static boolean consumePendingEncryptionRequest() {
+        boolean requested = PENDING_ENCRYPTION_REQUESTED.get() != null;
+        if (requested) {
+            PENDING_ENCRYPTION_REQUESTED.remove();
+        }
+        return requested;
     }
 
     private Object invokeObjectMethod(Object proxy, Method method, Object[] args) throws Throwable {
@@ -105,7 +143,7 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Object decryptResult(Object result, boolean keepEncryptedOnFailure) {
+    private Object decryptResult(Object result, boolean keepEncryptedOnFailure, boolean pendingEncryptionOnly) {
         Function<Object, Object> decrypt = value -> decrypt(value, keepEncryptedOnFailure);
         if (result instanceof Single<?> single) {
             return ((Single<Object>) single).map(decrypt);
@@ -114,7 +152,11 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
             return ((Maybe<Object>) maybe).map(decrypt);
         }
         if (result instanceof Flowable<?> flowable) {
-            return ((Flowable<Object>) flowable).map(decrypt);
+            Flowable<Object> entities = (Flowable<Object>) flowable;
+            if (pendingEncryptionOnly) {
+                entities = entities.filter(value -> !field.isUpToDate(value, encryptor));
+            }
+            return entities.map(decrypt);
         }
         if (result instanceof Observable<?> observable) {
             return ((Observable<Object>) observable).map(decrypt);
