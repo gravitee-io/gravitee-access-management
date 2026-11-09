@@ -245,7 +245,7 @@ public class AuthenticationDeviceNotifierServiceTest {
         deviceNotifier.setId("deviceNotifier-id");
         deviceNotifier.setName("my notifier");
         deviceNotifier.setConfiguration("enc:2025:AAAA:BBBB");
-        when(authDeviceNotifierRepository.findById("deviceNotifier-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(deviceNotifier, new IllegalStateException("key not configured"))));
+        when(authDeviceNotifierRepository.findById("deviceNotifier-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(deviceNotifier, deviceNotifier.getId(), new IllegalStateException("key not configured"))));
 
         AuthenticationDeviceNotifier found = authDeviceNotifierService.findByIdForDisplay(DOMAIN.getId(), "deviceNotifier-id").blockingGet();
 
@@ -259,7 +259,7 @@ public class AuthenticationDeviceNotifierServiceTest {
     public void shouldDelete_configurationCannotBeDecrypted() {
         AuthenticationDeviceNotifier deviceNotifier = inDomain(new AuthenticationDeviceNotifier());
         deviceNotifier.setId("deviceNotifier-id");
-        when(authDeviceNotifierRepository.findById(deviceNotifier.getId())).thenReturn(Maybe.error(new PluginDecryptConfigException(deviceNotifier, new IllegalStateException("key not configured"))));
+        when(authDeviceNotifierRepository.findById(deviceNotifier.getId())).thenReturn(Maybe.error(new PluginDecryptConfigException(deviceNotifier, deviceNotifier.getId(), new IllegalStateException("key not configured"))));
         when(authDeviceNotifierRepository.delete(deviceNotifier.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

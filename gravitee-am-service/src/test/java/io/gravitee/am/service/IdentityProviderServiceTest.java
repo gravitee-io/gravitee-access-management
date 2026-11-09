@@ -768,7 +768,7 @@ public class IdentityProviderServiceTest {
         undecryptable.setName("my idp");
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
         when(identityProviderRepository.findById("my-identity-provider"))
-                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
 
         IdentityProvider found = identityProviderService.findByIdForDisplay("my-identity-provider").blockingGet();
 
@@ -802,7 +802,7 @@ public class IdentityProviderServiceTest {
         undecryptable.setReferenceId(DOMAIN);
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
-                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -1044,7 +1044,7 @@ public class IdentityProviderServiceTest {
             undecryptable.setReferenceType(ReferenceType.DOMAIN);
             undecryptable.setReferenceId(DOMAIN);
             when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq(id)))
-                    .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+                    .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
             when(identityProviderRepository.delete(id)).thenReturn(Completable.complete());
             when(applicationService.findByIdentityProvider(id)).thenReturn(Flowable.empty());
         }

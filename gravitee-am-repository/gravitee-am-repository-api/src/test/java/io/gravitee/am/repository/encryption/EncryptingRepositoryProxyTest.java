@@ -207,6 +207,7 @@ class EncryptingRepositoryProxyTest {
 
         assertThatThrownBy(() -> withoutOldKey.findById("r1").blockingGet())
                 .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Reporter 'r1'")
                 .hasMessageContaining("[2025]");
     }
 

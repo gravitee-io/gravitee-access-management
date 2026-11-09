@@ -237,7 +237,7 @@ public class DeviceIdentifierServiceTest {
     @Test
     public void shouldDelete_configurationCannotBeDecrypted() {
         DeviceIdentifier undecryptable = deviceIdentifier("device-id", "enc:2025:AAAA:BBBB");
-        when(deviceIdentifierRepository.findById("device-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(deviceIdentifierRepository.findById("device-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
         when(deviceIdentifierRepository.delete("device-id")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -268,7 +268,7 @@ public class DeviceIdentifierServiceTest {
     public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
         DeviceIdentifier undecryptable = deviceIdentifier("device-id", "enc:2025:AAAA:BBBB");
         undecryptable.setName("my device identifier");
-        when(deviceIdentifierRepository.findById("device-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(deviceIdentifierRepository.findById("device-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
 
         DeviceIdentifier found = deviceIdentifierService.findByIdForDisplay(DOMAIN.getId(), "device-id").blockingGet();
 

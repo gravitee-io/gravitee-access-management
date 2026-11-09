@@ -30,8 +30,8 @@ public class PluginDecryptConfigException extends IllegalStateException {
 
     private final transient Object entity;
 
-    public PluginDecryptConfigException(Object entity, Throwable cause) {
-        super(cause.getMessage(), cause);
+    public PluginDecryptConfigException(Object entity, String entityId, Throwable cause) {
+        super("Unable to decrypt the configuration of " + entity.getClass().getSimpleName() + " '" + entityId + "': " + cause.getMessage(), cause);
         this.entity = entity;
     }
 

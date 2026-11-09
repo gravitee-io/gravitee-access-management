@@ -97,6 +97,7 @@ import static org.mockito.Mockito.when;
 public class CertificateServiceTest {
 
     public static final Domain DOMAIN = new Domain("my-domain");
+    public static final String CERTIFICATE_ID = "my-certificate";
     public static String certificateSchemaDefinition;
     public static String certificateAwsSchemaDefinition;
     public static String certificateConfiguration;
@@ -169,8 +170,8 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldFindById() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(new Certificate()));
-        TestObserver<Certificate> testObserver = certificateService.findById("my-certificate").test();
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(new Certificate()));
+        TestObserver<Certificate> testObserver = certificateService.findById(CERTIFICATE_ID).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
@@ -180,8 +181,8 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldFindById_notExistingCertificate() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.empty());
-        TestObserver<Certificate> testObserver = certificateService.findById("my-certificate").test();
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.empty());
+        TestObserver<Certificate> testObserver = certificateService.findById(CERTIFICATE_ID).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
@@ -189,9 +190,9 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldFindById_technicalException() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.error(TechnicalException::new));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver<Certificate> testObserver = new TestObserver();
-        certificateService.findById("my-certificate").subscribe(testObserver);
+        certificateService.findById(CERTIFICATE_ID).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -200,28 +201,28 @@ public class CertificateServiceTest {
     @Test
     public void shouldFindByIdInDomain() {
         Certificate certificate = new Certificate();
-        certificate.setId("my-certificate");
+        certificate.setId(CERTIFICATE_ID);
         certificate.setDomain(DOMAIN.getId());
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
 
-        certificateService.findById(DOMAIN.getId(), "my-certificate").test()
+        certificateService.findById(DOMAIN.getId(), CERTIFICATE_ID).test()
                 .assertValue(certificate);
     }
 
     @Test
     public void shouldNotFindById_certificateOfAnotherDomain() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(otherDomainCertificate()));
 
-        certificateService.findById(DOMAIN.getId(), "my-certificate").test()
+        certificateService.findById(DOMAIN.getId(), CERTIFICATE_ID).test()
                 .assertComplete()
                 .assertNoValues();
     }
 
     @Test
     public void shouldNotUpdate_certificateOfAnotherDomain() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(otherDomainCertificate()));
 
-        certificateService.update(DOMAIN, "my-certificate", new UpdateCertificate(), new DefaultUser("user")).test()
+        certificateService.update(DOMAIN, CERTIFICATE_ID, new UpdateCertificate(), new DefaultUser("user")).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(CertificateNotFoundException.class);
 
@@ -231,9 +232,9 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldNotValidateUpdate_certificateOfAnotherDomain() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(otherDomainCertificate()));
 
-        certificateService.validateUpdate(DOMAIN, "my-certificate", new UpdateCertificate()).test()
+        certificateService.validateUpdate(DOMAIN, CERTIFICATE_ID, new UpdateCertificate()).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(CertificateNotFoundException.class);
 
@@ -242,9 +243,9 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldNotDelete_certificateOfAnotherDomain() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(otherDomainCertificate()));
 
-        certificateService.delete(DOMAIN.getId(), "my-certificate", new DefaultUser("user"), true).test()
+        certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID, new DefaultUser("user"), true).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(CertificateNotFoundException.class);
 
@@ -255,9 +256,9 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldNotDeleteAutomationManaged_certificateOfAnotherDomain() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(otherDomainCertificate()));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(otherDomainCertificate()));
 
-        certificateService.deleteAutomationManaged(DOMAIN.getId(), "my-certificate", new DefaultUser("user")).test()
+        certificateService.deleteAutomationManaged(DOMAIN.getId(), CERTIFICATE_ID, new DefaultUser("user")).test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(CertificateNotFoundException.class);
 
@@ -267,7 +268,7 @@ public class CertificateServiceTest {
 
     private static Certificate otherDomainCertificate() {
         Certificate certificate = new Certificate();
-        certificate.setId("my-certificate");
+        certificate.setId(CERTIFICATE_ID);
         certificate.setDomain("other-domain");
         certificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
         return certificate;
@@ -318,14 +319,14 @@ public class CertificateServiceTest {
     @Test
     public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
         Certificate undecryptable = new Certificate();
-        undecryptable.setId("my-certificate");
+        undecryptable.setId(CERTIFICATE_ID);
         undecryptable.setName("my certificate");
         undecryptable.setDomain(DOMAIN.getId());
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
-        when(certificateRepository.findById("my-certificate"))
-                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(certificateRepository.findById(CERTIFICATE_ID))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
 
-        Certificate found = certificateService.findByIdForDisplay(DOMAIN.getId(), "my-certificate").blockingGet();
+        Certificate found = certificateService.findByIdForDisplay(DOMAIN.getId(), CERTIFICATE_ID).blockingGet();
 
         org.junit.Assert.assertEquals("my certificate", found.getName());
         org.junit.Assert.assertEquals("{}", found.getConfiguration());
@@ -334,13 +335,13 @@ public class CertificateServiceTest {
     @Test
     public void shouldNotFindByIdForDisplay_otherDomain() {
         Certificate undecryptable = new Certificate();
-        undecryptable.setId("my-certificate");
+        undecryptable.setId(CERTIFICATE_ID);
         undecryptable.setDomain("other-domain");
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
-        when(certificateRepository.findById("my-certificate"))
-                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(certificateRepository.findById(CERTIFICATE_ID))
+                .thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
 
-        certificateService.findByIdForDisplay(DOMAIN.getId(), "my-certificate").test().awaitDone(10, TimeUnit.SECONDS)
+        certificateService.findByIdForDisplay(DOMAIN.getId(), CERTIFICATE_ID).test().awaitDone(10, TimeUnit.SECONDS)
                 .assertNoErrors().assertNoValues().assertComplete();
     }
 
@@ -348,22 +349,22 @@ public class CertificateServiceTest {
     public void shouldDelete_configurationCannotBeDecrypted() {
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN.getId());
-        when(certificate.getId()).thenReturn("my-certificate");
+        when(certificate.getId()).thenReturn(CERTIFICATE_ID);
 
         when(domainRepository.findById(DOMAIN.getId())).thenReturn(Maybe.just(DOMAIN));
         when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
-        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, new IllegalStateException("key not configured"))));
-        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
-        when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
+        when(protectedResourceService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.empty());
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, CERTIFICATE_ID, new IllegalStateException("key not configured"))));
+        when(applicationService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.empty());
+        when(certificateRepository.delete(CERTIFICATE_ID)).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(certificateRepository, times(1)).delete("my-certificate");
+        verify(certificateRepository, times(1)).delete(CERTIFICATE_ID);
     }
 
     @Test
@@ -371,96 +372,96 @@ public class CertificateServiceTest {
         // prepare certificate
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN.getId());
-        when(certificate.getId()).thenReturn("my-certificate");
+        when(certificate.getId()).thenReturn(CERTIFICATE_ID);
 
         when(domainRepository.findById(DOMAIN.getId())).thenReturn(Maybe.just(DOMAIN));
         when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
-        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
-        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
-        when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
+        when(protectedResourceService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.empty());
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
+        when(applicationService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.empty());
+        when(certificateRepository.delete(CERTIFICATE_ID)).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(applicationService, times(1)).findByCertificate("my-certificate");
-        verify(protectedResourceService, times(1)).findByCertificate("my-certificate");
-        verify(certificateRepository, times(1)).delete("my-certificate");
+        verify(certificateRepository, times(1)).findById(CERTIFICATE_ID);
+        verify(applicationService, times(1)).findByCertificate(CERTIFICATE_ID);
+        verify(protectedResourceService, times(1)).findByCertificate(CERTIFICATE_ID);
+        verify(certificateRepository, times(1)).delete(CERTIFICATE_ID);
         verify(eventService, times(1)).create(any());
     }
 
     @Test
     public void shouldDelete_technicalException() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.error(TechnicalException::new));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(applicationService, never()).findByCertificate("my-certificate");
-        verify(certificateRepository, never()).delete("my-certificate");
+        verify(certificateRepository, times(1)).findById(CERTIFICATE_ID);
+        verify(applicationService, never()).findByCertificate(CERTIFICATE_ID);
+        verify(certificateRepository, never()).delete(CERTIFICATE_ID);
     }
 
     @Test
     public void shouldDelete_notFound() {
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.empty());
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.empty());
 
-        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID).test();
 
         testObserver.assertError(CertificateNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(applicationService, never()).findByCertificate("my-certificate");
-        verify(certificateRepository, never()).delete("my-certificate");
+        verify(certificateRepository, times(1)).findById(CERTIFICATE_ID);
+        verify(applicationService, never()).findByCertificate(CERTIFICATE_ID);
+        verify(certificateRepository, never()).delete(CERTIFICATE_ID);
     }
 
     @Test
     public void shouldDelete_certificateWithClients() {
         Certificate certificate = new Certificate();
-        certificate.setId("my-certificate");
+        certificate.setId(CERTIFICATE_ID);
         certificate.setDomain(DOMAIN.getId());
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
-        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.just(new Application()));
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
+        when(applicationService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.just(new Application()));
 
-        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID).test();
 
         testObserver.assertError(CertificateWithApplicationsException.class);
         testObserver.assertNotComplete();
 
-        verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(applicationService, times(1)).findByCertificate("my-certificate");
-        verify(certificateRepository, never()).delete("my-certificate");
+        verify(certificateRepository, times(1)).findById(CERTIFICATE_ID);
+        verify(applicationService, times(1)).findByCertificate(CERTIFICATE_ID);
+        verify(certificateRepository, never()).delete(CERTIFICATE_ID);
     }
 
     @Test
     public void shouldDelete_certificateWithProtectedResources() {
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getDomain()).thenReturn(DOMAIN.getId());
-        when(certificate.getId()).thenReturn("my-certificate");
+        when(certificate.getId()).thenReturn(CERTIFICATE_ID);
 
-        when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
-        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
+        when(certificateRepository.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
+        when(applicationService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.empty());
         when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
-        when(protectedResourceService.findByCertificate("my-certificate")).thenReturn(Flowable.just(new ProtectedResource()));
+        when(protectedResourceService.findByCertificate(CERTIFICATE_ID)).thenReturn(Flowable.just(new ProtectedResource()));
 
-        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), "my-certificate").test();
+        TestObserver<Void> testObserver = certificateService.delete(DOMAIN.getId(), CERTIFICATE_ID).test();
 
         testObserver.assertError(CertificateWithProtectedResourceException.class);
         testObserver.assertNotComplete();
 
-        verify(certificateRepository, times(1)).findById("my-certificate");
-        verify(applicationService, times(1)).findByCertificate("my-certificate");
+        verify(certificateRepository, times(1)).findById(CERTIFICATE_ID);
+        verify(applicationService, times(1)).findByCertificate(CERTIFICATE_ID);
         verify(identityProviderService, times(1)).findByDomain(DOMAIN.getId());
-        verify(protectedResourceService, times(1)).findByCertificate("my-certificate");
-        verify(certificateRepository, never()).delete("my-certificate");
+        verify(protectedResourceService, times(1)).findByCertificate(CERTIFICATE_ID);
+        verify(certificateRepository, never()).delete(CERTIFICATE_ID);
     }
 
     @Test
@@ -1144,7 +1145,7 @@ public class CertificateServiceTest {
             Certificate certificate = Mockito.mock(Certificate.class);
             when(certificate.getDomain()).thenReturn(DOMAIN.getId());
             when(certificate.getId()).thenReturn(id);
-            when(certificateRepository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, new IllegalStateException("key not configured"))));
+            when(certificateRepository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(certificate, id, new IllegalStateException("key not configured"))));
             when(certificateRepository.delete(id)).thenReturn(Completable.complete());
         }
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
