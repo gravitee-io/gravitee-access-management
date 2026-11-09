@@ -57,6 +57,9 @@ type Filters = {
 const NO_FILTERS: Filters = { type: ANY, status: ANY, range: '1d' };
 
 function AuditStatusBadge({ status }: { readonly status?: 'success' | 'failure' }) {
+    if (status === undefined) {
+        return <Badge variant="outline">Unknown</Badge>;
+    }
     return status === 'success' ? (
         <Badge variant="success">
             <CircleCheckIcon className="mr-1 size-3" aria-hidden />
@@ -197,7 +200,10 @@ export function UserHistoryPage() {
                             </Button>
                         )}
                         <div className="ml-auto flex items-center gap-2">
-                            <Select value={filters.range} onValueChange={range => filter({ range: range as TimeRangeId })}>
+                            <Select
+                                value={filters.range}
+                                onValueChange={range => filter({ range: range as TimeRangeId, start: undefined, end: undefined })}
+                            >
                                 <SelectTrigger className="h-8 w-44" aria-label="Quick time range">
                                     <SelectValue />
                                 </SelectTrigger>

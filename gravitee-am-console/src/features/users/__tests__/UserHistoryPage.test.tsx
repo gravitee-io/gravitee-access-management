@@ -82,6 +82,34 @@ describe('UserHistoryPage', () => {
         await waitFor(() => expect(vi.mocked(listUserAudits).mock.lastCall?.[2]).toMatchObject({ status: 'FAILURE', page: 0 }));
     });
 
+    it('shows an event without an outcome as unknown', async () => {
+        vi.mocked(listUserAudits).mockResolvedValue({ data: [{ ...login, outcome: undefined }], currentPage: 0, totalCount: 1 });
+        setup();
+
+        expect(await screen.findByText('Unknown')).toBeInTheDocument();
+        expect(screen.queryByText('Failure')).not.toBeInTheDocument();
+    });
+
+    it('drops the picked dates when a quick range is chosen', async () => {
+        const span = () => {
+            const query = vi.mocked(listUserAudits).mock.lastCall?.[2];
+            return (query?.to ?? 0) - (query?.from ?? 0);
+        };
+        setup();
+        await screen.findByText('USER_LOGIN');
+        await userEvent.click(screen.getByRole('button', { name: 'Period' }));
+        const days = within((await screen.findAllByRole('grid'))[0]).getAllByRole('button');
+        await userEvent.click(days[10]);
+        await userEvent.click(days[11]);
+        await waitFor(() => expect((vi.mocked(listUserAudits).mock.lastCall?.[2].to ?? 0) % 1000).toBe(999));
+        await userEvent.keyboard('{Escape}');
+
+        await userEvent.click(screen.getByRole('combobox', { name: 'Quick time range' }));
+        await userEvent.click(await screen.findByRole('option', { name: 'Last hour' }));
+
+        await waitFor(() => expect(span()).toBe(60 * 60 * 1000));
+    });
+
     it('opens the event details with the IP, the user agent and the indented message', async () => {
         setup();
 
