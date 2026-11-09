@@ -59,7 +59,7 @@ export type NewUser = ApiModel<
     > & { additionalInformation?: Record<string, unknown> }
 >;
 
-/** The eight fields the Angular `UserService.update` sends. `client: null` removes the application. */
+/** `client: null` removes the application. */
 export interface UserProfileUpdate {
     readonly firstName?: string;
     readonly lastName?: string;
@@ -91,7 +91,7 @@ export type UserSearch = { readonly text: string } | { readonly filter: string }
 
 const SCIM_OPERATOR = /"(?:\\.|[^"\\])*"|\b[\w.-]+\s+(?<op>pr|eq|ne|co|sw|ew|gt|ge|lt|le)\b/gi;
 
-/** The Angular `isAdvancedSearch`: a search that holds a SCIM operator outside a quoted string. */
+/** True when the search holds a SCIM operator outside a quoted string. */
 export function isScimFilter(search: string): boolean {
     SCIM_OPERATOR.lastIndex = 0;
     let match;
@@ -118,7 +118,7 @@ function searchQuery(search: UserSearch): string {
     if (!search.text) {
         return '';
     }
-    // The Angular `UsersComponent` sends plain text as a prefix match on `q`, and a SCIM filter on `filter`.
+    // Plain text is a prefix match on `q`.
     return isScimFilter(search.text) ? `filter=${encodeURIComponent(search.text)}&` : `q=${encodeURIComponent(`${search.text}*`)}&`;
 }
 

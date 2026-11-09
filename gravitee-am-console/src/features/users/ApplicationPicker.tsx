@@ -36,7 +36,6 @@ interface ApplicationPickerProps {
     readonly describedBy?: string;
 }
 
-/** The Angular `app-select-applications`: searches the domain applications by name or client id. */
 export function ApplicationPicker({ id, value, onChange, describedBy }: ApplicationPickerProps) {
     const { ref } = useCurrentDomain();
     const [open, setOpen] = useState(false);

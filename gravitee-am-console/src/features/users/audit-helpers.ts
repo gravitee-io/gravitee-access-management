@@ -17,7 +17,6 @@ import type { Audit } from '../../lib/api/users';
 
 export type TimeRangeId = '1h' | '12h' | '1d' | '7d' | '30d' | '90d';
 
-/** The Angular `availableTimeRanges`. */
 export const TIME_RANGES: readonly { readonly id: TimeRangeId; readonly name: string }[] = [
     { id: '1h', name: 'Last hour' },
     { id: '12h', name: 'Last 12 hours' },
@@ -30,7 +29,7 @@ export const TIME_RANGES: readonly { readonly id: TimeRangeId; readonly name: st
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-/** The start of a quick range ending at `now`, as Angular subtracts it with moment. */
+/** `30d` spans 28 days and `90d` three calendar months, as in the Angular console. */
 export function rangeStart(id: TimeRangeId, now: number): number {
     switch (id) {
         case '1h':
@@ -51,14 +50,13 @@ export function rangeStart(id: TimeRangeId, now: number): number {
     }
 }
 
-/** The end of a picked period: the whole end day, so a range of one day is not empty. */
+/** Ends at the last millisecond of `day`, so a one-day range is not empty. */
 export function rangeEnd(day: Date): number {
     const end = new Date(day);
     end.setHours(23, 59, 59, 999);
     return end.getTime();
 }
 
-/** The Angular `auditDetails`: a success message as indented JSON, a failure message as is, else the event type. */
 export function auditDetails(audit: Audit): string {
     const message = audit.outcome?.message;
     if (!message) {

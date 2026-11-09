@@ -17,12 +17,10 @@ import type { User } from '../../lib/api/users';
 
 export type UserStatus = 'enabled' | 'disabled' | 'locked';
 
-/** The Angular `accountLocked`: locked, with no end date or an end date still ahead. */
 export function isAccountLocked(user: User, now = Date.now()): boolean {
     return !user.accountNonLocked && (!user.accountLockedUntil || user.accountLockedUntil > now);
 }
 
-/** The Angular avatar badge of the list: disabled first, then locked. */
 export function userStatus(user: User): UserStatus {
     if (!user.enabled) {
         return 'disabled';
@@ -43,7 +41,6 @@ function anyOf(clauses: string[]): string {
     return clauses.length > 1 ? `(${clauses.join(' or ')})` : clauses.join('');
 }
 
-/** The SCIM filter of the Angular `onAdvancedSearch`: `or` inside a criterion, `and` between criteria. */
 export function advancedSearchFilter({ applications, providers, disabledOnly }: AdvancedSearch): string {
     return [
         anyOf(applications.map(id => `client eq "${id}"`)),
@@ -54,7 +51,7 @@ export function advancedSearchFilter({ applications, providers, disabledOnly }: 
         .join(' and ');
 }
 
-/** One row of the additional information. A stored row keeps its name. An object value is read-only. */
+/** A stored row keeps its name. */
 export type Attribute = { readonly name: string; readonly value: string; readonly stored: boolean; readonly readOnly: boolean };
 
 export function attributesOf(info: Record<string, unknown> | undefined): Attribute[] {
@@ -67,10 +64,7 @@ export function attributesOf(info: Record<string, unknown> | undefined): Attribu
         );
 }
 
-/**
- * The `additionalInformation` the Angular profile sends: the stored map without the removed rows, the edited values,
- * and the added rows that have a name and a value. A stored null value is kept, as Angular hides it and keeps it.
- */
+/** A stored null value is kept, though no row shows it. */
 export function additionalInformationOf(attributes: readonly Attribute[], stored: Record<string, unknown> = {}): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     for (const [name, value] of Object.entries(stored)) {

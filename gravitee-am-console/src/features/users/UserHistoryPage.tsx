@@ -70,7 +70,6 @@ function AuditStatusBadge({ status }: { readonly status?: 'success' | 'failure' 
     );
 }
 
-/** The Angular `UserHistoryComponent`: the user's audit events, filtered by type, status and period. */
 export function UserHistoryPage() {
     const { user } = useUser();
     const { ref } = useCurrentDomain();

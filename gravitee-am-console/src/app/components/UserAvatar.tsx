@@ -26,7 +26,7 @@ interface AvatarUser {
 interface UserAvatarProps {
     readonly user: AvatarUser;
     readonly size?: 'default' | 'sm' | 'lg';
-    /** Tints the initial with the brand color, as a default badge. */
+    /** Tints the initials with the brand color. */
     readonly brand?: boolean;
 }
 

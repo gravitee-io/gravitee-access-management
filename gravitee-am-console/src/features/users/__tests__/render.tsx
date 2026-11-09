@@ -36,7 +36,6 @@ function Banner() {
     return <>{useLayoutSlots().slots.banner}</>;
 }
 
-/** Renders the routes at a path, with the permissions and the licence features given. */
 export function renderRoutes(path: string, routes: ReactNode, permissions: string[], features: string[] = []) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return renderWithGraphene(

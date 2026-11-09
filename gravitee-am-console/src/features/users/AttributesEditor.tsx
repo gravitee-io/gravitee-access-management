@@ -23,7 +23,6 @@ interface AttributesEditorProps {
     readonly onChange: (attributes: Attribute[]) => void;
 }
 
-/** The Angular "(+) add user attribute" rows: custom claims in the user's `additionalInformation`. */
 export function AttributesEditor({ attributes, editable, onChange }: AttributesEditorProps) {
     const update = (index: number, patch: Partial<Attribute>) =>
         onChange(attributes.map((attribute, i) => (i === index ? { ...attribute, ...patch } : attribute)));

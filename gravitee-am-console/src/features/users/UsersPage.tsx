@@ -56,7 +56,7 @@ export function UsersPage() {
         { label: 'Users' },
     ]);
 
-    // The API reads `q` before `filter`, so a text search and the advanced search replace each other, as in Angular.
+    // The API reads `q` before `filter`, so a text search and the advanced search replace each other.
     const filter = advancedSearchFilter(advanced);
     const search: UserSearch = filter ? { filter } : { text };
     const searchText = useCallback((value: string) => {

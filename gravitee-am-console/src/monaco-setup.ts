@@ -16,7 +16,6 @@
 import type { Environment } from 'monaco-editor';
 
 // Without a worker per language, Monaco runs its language services on the main thread and logs "Unexpected usage".
-// gamma-console sets the same for its federated modules; this console runs standalone, so it sets its own.
 const monacoEnvironment: Environment = {
     getWorker(_workerId: string, label: string): Worker {
         if (label === 'json') {

@@ -20,7 +20,6 @@ import { type DomainRef, domainPath } from './paths';
 
 export type PasswordPolicy = ApiModel<PasswordPolicyModel>;
 
-/** The checks the server ran, as `PasswordPolicyService.evaluatePassword` returns them. */
 export interface PasswordEvaluation {
     readonly excludePasswordsInDictionary?: boolean;
     readonly recentPasswordsNotReused?: boolean;
@@ -32,7 +31,7 @@ export async function getActivePasswordPolicy(ref: DomainRef, identityProviderId
     try {
         return (await http<PasswordPolicy | undefined>(`${domainPath(ref)}/password-policies/activePolicy${query}`)) ?? null;
     } catch (error) {
-        // The Angular service skips its 404 redirect here: no policy is not an error.
+        // A 404 means no policy applies.
         if (error instanceof HttpError && error.status === 404) {
             return null;
         }

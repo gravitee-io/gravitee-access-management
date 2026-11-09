@@ -35,7 +35,6 @@ function formatDate(value: number | null | undefined): string {
     return value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
 }
 
-/** The Angular "User activities" card: the two sign-in figures as tiles, the rest as labelled rows. */
 export function UserActivityCard({ user }: { readonly user: User }) {
     const rows: Row[] = [
         { label: 'Created', icon: CalendarIcon, value: formatDate(user.createdAt) },

@@ -34,7 +34,6 @@ function matchRule(id: string, pattern: RegExp, description: string, shouldMatch
     return { id, description, passes: password => pattern.test(password) === shouldMatch };
 }
 
-/** The in-browser rules of the Angular `PasswordPolicyStatusComponent`, in its order and with its messages. */
 export function localRules(policy: PasswordPolicy): LocalRule[] {
     if (policy.regex) {
         // The default fallback policy holds a regex and no other rule.
@@ -95,7 +94,7 @@ export function needsServerCheck(policy: PasswordPolicy): boolean {
     return !policy.regex && Boolean(policy.excludePasswordsInDictionary || policy.passwordHistoryEnabled);
 }
 
-/** The server results, or `checking` rows while the evaluation runs. The history needs a user id. */
+/** The history check needs a user id. */
 export function serverResults(
     policy: PasswordPolicy,
     userId: string | undefined,

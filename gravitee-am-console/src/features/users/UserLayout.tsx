@@ -63,7 +63,6 @@ import { PasswordRuleList, usePasswordCheck } from './PasswordPolicyCheck';
 import { UserStatusBadge } from './UserStatusBadge';
 import { isAccountLocked, isPendingRegistration } from './user-helpers';
 
-// AM-7944 adds the Authorized Apps, Multi-Factor Authentication, Credentials, Roles, Devices and Identities tabs.
 const TABS = [
     { key: 'profile', label: 'Profile' },
     { key: 'history', label: 'History' },
@@ -94,7 +93,6 @@ const CONFIRM: Record<Action, { title: string; description: string; label: strin
 
 export interface UserContext {
     readonly user: User;
-    /** The absolute path of this user. */
     readonly userPath: string;
 }
 
@@ -106,7 +104,6 @@ export function userQueryKey(ref: object, userId: string) {
     return ['user', ref, userId];
 }
 
-/** The Angular `UserComponent`: loads the user once for its tabs, and holds the account actions of the profile. */
 export function UserLayout() {
     const { userId = '' } = useParams();
     const { pathname } = useLocation();

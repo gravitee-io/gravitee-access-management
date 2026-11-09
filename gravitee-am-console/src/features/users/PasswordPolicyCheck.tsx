@@ -24,10 +24,7 @@ const SERVER_CHECK_DELAY_MS = 250;
 
 export type PasswordCheck = { readonly results: RuleResult[]; readonly valid: boolean };
 
-/**
- * The Angular `PasswordPolicyStatusComponent` as a hook: the policy rules against the password, the server rules once
- * typing settles. `policy` is undefined while it loads, and null when no policy applies.
- */
+/** `policy` is undefined while it loads, and null when no policy applies. The server rules run once typing settles. */
 export function usePasswordCheck(policy: PasswordPolicy | null | undefined, password: string, profile: PasswordProfile): PasswordCheck {
     const { ref } = useCurrentDomain();
     const settled = useDebouncedValue(password, SERVER_CHECK_DELAY_MS);

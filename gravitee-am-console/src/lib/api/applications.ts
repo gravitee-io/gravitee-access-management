@@ -25,7 +25,7 @@ export function listApplications(ref: DomainRef, page: number, size: number): Pr
     return http<Page<ApplicationSummary>>(`${domainPath(ref)}/applications?page=${page}&size=${size}`);
 }
 
-/** The Angular `ApplicationService.search`: a prefix match on the name or the client id. */
+/** A prefix match on the name or the client id. */
 export function searchApplications(ref: DomainRef, text: string): Promise<Page<ApplicationSummary>> {
     return http<Page<ApplicationSummary>>(`${domainPath(ref)}/applications?q=${encodeURIComponent(`${text}*`)}`);
 }

@@ -57,7 +57,6 @@ function fromUser(user: User): FormState {
     };
 }
 
-/** The Angular `UserProfileComponent`. The account actions are in the layout header. */
 export function UserProfilePage() {
     const { user } = useUser();
     const { ref } = useCurrentDomain();
@@ -120,7 +119,6 @@ export function UserProfilePage() {
                 additionalInformation: additionalInformationOf(form.attributes, user.additionalInformation),
                 forceResetPassword: form.forceResetPassword,
             }),
-        // The PUT answers without the application and identity provider names that GET adds.
         onSuccess: async () => {
             void queryClient.invalidateQueries({ queryKey: ['users', ref] });
             await queryClient.invalidateQueries({ queryKey: userQueryKey(ref, user.id) });
