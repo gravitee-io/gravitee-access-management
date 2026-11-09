@@ -71,20 +71,18 @@ function withCertificates(schema: SchemaNode, certificates: readonly Certificate
     });
 }
 
-/** The Angular `MaterialCertificateComponent`: a select of the domain certificates, read-only when there is none. */
+/**
+ * The Angular `MaterialCertificateComponent`: a select of None and the domain certificates. None writes null, which the
+ * form resolver and the Management API read as unset.
+ */
 function withCertificateSelects(schema: SchemaNode, certificates: readonly Certificate[]): SchemaNode {
     const properties = propertiesOf(schema);
     const fields = Object.keys(properties).filter(key => properties[key].widget === CERTIFICATE_WIDGET);
-    return mapFields(schema, fields, property =>
-        certificates.length > 0
-            ? {
-                  ...property,
-                  widget: 'select',
-                  enum: certificates.map(certificate => certificate.id),
-                  titleMap: Object.fromEntries(certificates.map(certificate => [certificate.id, certificate.name])),
-              }
-            : { ...property, widget: 'select', readonly: true },
-    );
+    return mapFields(schema, fields, property => ({
+        ...property,
+        widget: 'select',
+        oneOf: [{ const: null, title: 'None' }, ...certificates.map(certificate => ({ const: certificate.id, title: certificate.name }))],
+    }));
 }
 
 /** The Angular `DataSourcesService.applyDataSourceSelection`: a data source field becomes a select, or read-only when there is none. */

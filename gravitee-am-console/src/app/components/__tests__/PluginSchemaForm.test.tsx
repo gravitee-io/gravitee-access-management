@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Button } from '@gravitee/graphene-core';
-import { renderWithGraphene } from '@gravitee/graphene-core/testing';
+import { renderWithGraphene, selectHarness } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -199,6 +199,47 @@ describe('pluginSchemaResolver', () => {
         const config = { authentication: false, username: null };
 
         expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
+    });
+});
+
+describe('PluginSchemaForm certificate select', () => {
+    it('clears a picked certificate with None, which submits as unset', async () => {
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: {
+                certificate: {
+                    type: 'string',
+                    title: 'Signing certificate',
+                    widget: 'select',
+                    oneOf: [
+                        { const: null, title: 'None' },
+                        { const: 'c1', title: 'Signing cert' },
+                    ],
+                },
+            },
+        });
+        const onSubmit = vi.fn();
+        function Edit() {
+            const resolver = useMemo(() => pluginSchemaResolver<Values>(adapted, 'config'), []);
+            const form = useForm<Values>({ resolver, defaultValues: { config: { certificate: 'c1' } } });
+            return (
+                <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
+                    <PluginSchemaForm adapted={adapted} control={form.control} name="config" />
+                    <Button type="submit">Save</Button>
+                </form>
+            );
+        }
+        renderWithGraphene(
+            <QueryClientProvider client={new QueryClient()}>
+                <Edit />
+            </QueryClientProvider>,
+        );
+
+        expect(screen.getByRole('combobox', { name: /Signing certificate/ })).toHaveTextContent('Signing cert');
+        await selectHarness({ name: /Signing certificate/ }).selectOption('None');
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ config: { certificate: null } }, expect.anything()));
     });
 });
 

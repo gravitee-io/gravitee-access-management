@@ -47,7 +47,7 @@ describe('enrichCreationSchema', () => {
         });
     });
 
-    it('turns a certificate widget into a choice of the domain certificates, or a read-only field when there is none', () => {
+    it('turns a certificate widget into a choice of None and the domain certificates, as the Angular select does', () => {
         const schema = { properties: { graviteeCertificate: { type: 'string', widget: 'graviteeCertificate' } } };
         const certificates = [
             { id: 'c1', name: 'Signing cert', type: 'pkcs12', usage: ['sig'] },
@@ -58,12 +58,15 @@ describe('enrichCreationSchema', () => {
             graviteeCertificate: {
                 type: 'string',
                 widget: 'select',
-                enum: ['c1', 'c2'],
-                titleMap: { c1: 'Signing cert', c2: 'Encryption cert' },
+                oneOf: [
+                    { const: null, title: 'None' },
+                    { const: 'c1', title: 'Signing cert' },
+                    { const: 'c2', title: 'Encryption cert' },
+                ],
             },
         });
         expect(enrichCreationSchema(schema, context).properties).toEqual({
-            graviteeCertificate: { type: 'string', widget: 'select', readonly: true },
+            graviteeCertificate: { type: 'string', widget: 'select', oneOf: [{ const: null, title: 'None' }] },
         });
     });
 
