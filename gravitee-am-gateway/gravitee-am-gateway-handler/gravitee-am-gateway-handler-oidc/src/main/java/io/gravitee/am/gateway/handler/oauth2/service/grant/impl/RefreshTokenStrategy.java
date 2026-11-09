@@ -23,6 +23,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -60,14 +61,17 @@ public class RefreshTokenStrategy implements GrantStrategy {
     private final TokenService tokenService;
     private final UserAuthenticationManager userAuthenticationManager;
     private final ResourceConsistencyValidationService resourceConsistencyValidationService;
+    private final AuthorizationDetailsValidator authorizationDetailsValidator;
 
     public RefreshTokenStrategy(
             TokenService tokenService,
             UserAuthenticationManager userAuthenticationManager,
-            ResourceConsistencyValidationService resourceConsistencyValidationService) {
+            ResourceConsistencyValidationService resourceConsistencyValidationService,
+            AuthorizationDetailsValidator authorizationDetailsValidator) {
         this.tokenService = tokenService;
         this.userAuthenticationManager = userAuthenticationManager;
         this.resourceConsistencyValidationService = resourceConsistencyValidationService;
+        this.authorizationDetailsValidator = authorizationDetailsValidator;
     }
 
     @Override
@@ -94,15 +98,24 @@ public class RefreshTokenStrategy implements GrantStrategy {
             return Single.error(new InvalidRequestException("A refresh token must be supplied."));
         }
 
+        // before the refresh token is used
+        final AuthorizationDetails requestedAuthorizationDetails;
+        try {
+            requestedAuthorizationDetails = authorizationDetailsValidator.validate(request, client);
+        } catch (RuntimeException e) {
+            return Single.error(e);
+        }
+
         return tokenService.refresh(refreshTokenValue, request, client)
-                .flatMap(refreshToken -> processRefreshToken(request, client, refreshToken, refreshTokenValue));
+                .flatMap(refreshToken -> processRefreshToken(request, client, refreshToken, refreshTokenValue, requestedAuthorizationDetails));
     }
 
     private Single<TokenCreationRequest> processRefreshToken(
             TokenRequest request,
             Client client,
             Token refreshToken,
-            String refreshTokenValue) {
+            String refreshTokenValue,
+            AuthorizationDetails requestedAuthorizationDetails) {
 
         String subject = refreshToken.getSubject();
         Map<String, Object> decodedRefreshToken = refreshToken.getAdditionalInformation();
@@ -113,6 +126,7 @@ public class RefreshTokenStrategy implements GrantStrategy {
         // Extract original resources from refresh token
         Set<String> originalResources = OrigResourcesUtils.extractOrigResources(decodedRefreshToken);
         AuthorizationDetails authorizationDetails = extractAuthorizationDetails(decodedRefreshToken);
+        authorizationDetailsValidator.validateGranted(requestedAuthorizationDetails, authorizationDetails);
 
         // Resolve final resources according to RFC 8707
         Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(request, originalResources);

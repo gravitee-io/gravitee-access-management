@@ -16,24 +16,33 @@
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantData;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ClientCredentialsStrategyTest {
+
+    @Mock
+    private AuthorizationDetailsValidator authorizationDetailsValidator;
 
     private ClientCredentialsStrategy strategy;
     private Domain domain;
@@ -41,7 +50,7 @@ class ClientCredentialsStrategyTest {
 
     @BeforeEach
     void setUp() {
-        strategy = new ClientCredentialsStrategy();
+        strategy = new ClientCredentialsStrategy(authorizationDetailsValidator);
         domain = new Domain();
         domain.setId("domain-id");
 
@@ -83,5 +92,34 @@ class ClientCredentialsStrategyTest {
         assertNull(result.resourceOwner()); // No user for client credentials
         assertFalse(result.supportRefreshToken()); // No refresh token for client credentials
         assertInstanceOf(GrantData.ClientCredentialsData.class, result.grantData());
+        assertNull(result.authorizationDetails());
+    }
+
+    @Test
+    void shouldIssueTheRequestedAuthorizationDetailsUnchanged() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        AuthorizationDetails requested = AuthorizationDetails.of(List.of(
+                Map.of("type", "payment_initiation", "actions", List.of("initiate")),
+                Map.of("type", "account_information")));
+        when(authorizationDetailsValidator.validate(tokenRequest, client)).thenReturn(requested);
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertEquals(requested.getRaw(), result.authorizationDetails().getRaw());
+        assertFalse(result.supportRefreshToken());
+    }
+
+    @Test
+    void shouldFailWhenTheRequestedAuthorizationDetailsAreInvalid() {
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        when(authorizationDetailsValidator.validate(tokenRequest, client))
+                .thenThrow(new InvalidAuthorizationDetailsException("authorization_details[0] of type 'internal_transfer' is not allowed for this client"));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(InvalidAuthorizationDetailsException.class)
+                .assertError(e -> e.getMessage().equals("authorization_details[0] of type 'internal_transfer' is not allowed for this client"));
     }
 }

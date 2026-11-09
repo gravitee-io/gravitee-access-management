@@ -31,7 +31,7 @@ import { Application } from '@management-models/Application';
 import { Domain } from '@management-models/Domain';
 import { TokenClaim } from '@management-models/TokenClaim';
 import { Fixture } from '../../../test-fixture';
-import { AUTHORIZATION_DETAILS_TEST, account, paymentSchema, payment } from './authorization-details-fixture';
+import { AUTHORIZATION_DETAILS_TEST, account, paymentSchema, payment, toDetailsParam } from './authorization-details-fixture';
 
 export { account, payment };
 
@@ -62,13 +62,19 @@ export interface ConsentFixture extends Fixture {
   authorize: (params: Record<string, string>, cookie?: string) => Promise<Step>;
   /** Signs the user in and returns their session cookie and the redirect that follows login. */
   signIn: (user: TestUser, params: Record<string, string>) => Promise<Step>;
+  /** Signs the user in, approves the scopes in `params.scope` when given and then the details, and returns the callback. */
+  approve: (user: TestUser, details: unknown[], params?: Record<string, string>) => Promise<Step>;
   setSkipConsent: (skipConsent: boolean) => Promise<void>;
   /** Replaces the application's custom token claims. */
   setTokenCustomClaims: (tokenCustomClaims: TokenClaim[]) => Promise<void>;
   /** Sends a token request authenticated as the application. */
   requestToken: (params: Record<string, string>) => Promise<any>;
+  /** Sends the code a callback carries to the token endpoint. */
+  redeemCode: (callback: Step, params?: Record<string, string>) => Promise<any>;
   /** Exchanges the code a callback carries for tokens, expecting success. */
   exchangeCode: (callback: Step) => Promise<any>;
+  refresh: (refreshToken: string, params?: Record<string, string>) => Promise<any>;
+  requestClientCredentialsToken: (params?: Record<string, string>) => Promise<any>;
   /** USER_CONSENT_CONSENTED audit ids, as a baseline before an action. */
   consentAuditIds: () => Promise<Set<string>>;
   /** Waits until the USER_CONSENT_CONSENTED audits not in `knownIds` reach `until` in number, or satisfy it, and returns them. */
@@ -156,7 +162,7 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
           settings: {
             oauth: {
               redirectUris: [CONSENT_TEST.REDIRECT_URI],
-              grantTypes: ['authorization_code', 'implicit', 'refresh_token'],
+              grantTypes: ['authorization_code', 'implicit', 'refresh_token', 'client_credentials', 'password'],
               responseTypes: ['code', 'token', 'code token'],
               // not a default scope, so a request without scope requests none
               scopeSettings: [{ scope: CONSENT_TEST.SCOPE, defaultScope: false }],
@@ -192,6 +198,26 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
         Authorization: 'Basic ' + getBase64BasicAuth(clientId, clientSecret),
       });
 
+    const signIn = async (user: TestUser, params: Record<string, string>): Promise<Step> => {
+      const loginForm = await extractXsrfTokenAndActionResponse((await authorize(params)).response);
+      const postLogin = await performFormPost(
+        loginForm.action,
+        '',
+        { 'X-XSRF-TOKEN': loginForm.token, username: user.username, password: user.password, client_id: clientId },
+        { Cookie: loginForm.headers['set-cookie'], 'Content-type': 'application/x-www-form-urlencoded' },
+      ).expect(302);
+      const cookie = mergeCookies(loginForm.headers['set-cookie'], postLogin.headers['set-cookie']);
+      return follow({ response: postLogin, cookie });
+    };
+
+    const redeemCode = (callback: Step, params: Record<string, string> = {}) =>
+      requestToken({
+        grant_type: 'authorization_code',
+        code: callbackParams(callback).get('code'),
+        redirect_uri: CONSENT_TEST.REDIRECT_URI,
+        ...params,
+      });
+
     let handedOut = 0;
     return {
       domain,
@@ -205,16 +231,13 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
         return users[handedOut++];
       },
       authorize,
-      signIn: async (user, params) => {
-        const loginForm = await extractXsrfTokenAndActionResponse((await authorize(params)).response);
-        const postLogin = await performFormPost(
-          loginForm.action,
-          '',
-          { 'X-XSRF-TOKEN': loginForm.token, username: user.username, password: user.password, client_id: clientId },
-          { Cookie: loginForm.headers['set-cookie'], 'Content-type': 'application/x-www-form-urlencoded' },
-        ).expect(302);
-        const cookie = mergeCookies(loginForm.headers['set-cookie'], postLogin.headers['set-cookie']);
-        return follow({ response: postLogin, cookie });
+      signIn,
+      approve: async (user, details, params = {}) => {
+        let step = await signIn(user, { ...params, authorization_details: toDetailsParam(...details) });
+        if (params.scope) {
+          step = await submitConsent(await openConsentPage(step), true, params.scope.split(' '));
+        }
+        return follow(await submitConsent(await openConsentPage(step), true));
       },
       setSkipConsent: async (skipConsent) => {
         await patchAdvanced(skipConsent);
@@ -225,15 +248,14 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
         );
       },
       requestToken,
+      redeemCode,
       exchangeCode: async (callback) => {
-        const response = await requestToken({
-          grant_type: 'authorization_code',
-          code: callbackParams(callback).get('code'),
-          redirect_uri: CONSENT_TEST.REDIRECT_URI,
-        });
+        const response = await redeemCode(callback);
         expect(response.status).toBe(200);
         return response;
       },
+      refresh: (refreshToken, params = {}) => requestToken({ grant_type: 'refresh_token', refresh_token: refreshToken, ...params }),
+      requestClientCredentialsToken: (params = {}) => requestToken({ grant_type: 'client_credentials', ...params }),
       consentAuditIds: () => auditIdsOfType(domainId, accessToken, CONSENT_TEST.CONSENTED),
       newConsentAudits: (knownIds, until) =>
         retryUntil(
@@ -345,6 +367,15 @@ export const expectError = (step: Step, error: string, separator: '?' | '#' = '?
 
 /** The consent recorded by a USER_CONSENT_CONSENTED audit, read from its outcome. */
 export const recordedConsent = (audit: AuditEntry): any[] => JSON.parse(audit.outcome.message).map((change) => change.value);
+
+/** Expects a token error response (RFC 6749 §5.2) and no token. */
+export const expectTokenError = (response: any, error: string, description: string): void => {
+  expect(response.status).toBe(400);
+  expect(response.headers['content-type']).toContain('application/json');
+  expect(response.body.error).toEqual(error);
+  expect(response.body.error_description).toEqual(description);
+  expect(response.body).not.toHaveProperty('access_token');
+};
 
 /** Replaces the authorization_details parameter of a gateway URL. */
 export const withAuthorizationDetails = (url: string, authorizationDetails: string): string => {

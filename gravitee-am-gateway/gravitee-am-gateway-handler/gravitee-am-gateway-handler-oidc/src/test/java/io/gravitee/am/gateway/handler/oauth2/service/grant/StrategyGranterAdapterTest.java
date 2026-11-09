@@ -129,7 +129,7 @@ class StrategyGranterAdapterTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setScopes(Set.of("read"));
 
-        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, false);
+        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, null, false);
 
         Token expectedToken = new AccessToken("access-token-value");
 
@@ -211,7 +211,7 @@ class StrategyGranterAdapterTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setScopes(Set.of("read"));
 
-        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, false);
+        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, null, false);
 
         Token expectedToken = new AccessToken("access-token-value");
 
@@ -265,7 +265,7 @@ class StrategyGranterAdapterTest {
         tokenRequest.setClientId("client-id");
         tokenRequest.setScopes(Set.of("read"));
 
-        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, false);
+        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, null, false);
 
         Token expectedToken = new AccessToken("access-token-value");
 
@@ -926,7 +926,7 @@ class StrategyGranterAdapterTest {
     }
 
     private void mockGrantFlow(TokenRequest tokenRequest) {
-        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, false);
+        TokenCreationRequest creationRequest = TokenCreationRequest.forClientCredentials(tokenRequest, null, false);
         when(strategy.process(eq(tokenRequest), eq(client), eq(domain))).thenReturn(Single.just(creationRequest));
         ExecutionContext ec = mock(ExecutionContext.class);
         lenient().when(ec.getAttributes()).thenReturn(new HashMap<>());

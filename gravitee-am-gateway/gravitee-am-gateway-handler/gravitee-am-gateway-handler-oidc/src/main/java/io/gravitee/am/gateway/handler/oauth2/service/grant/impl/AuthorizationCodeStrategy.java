@@ -23,6 +23,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
@@ -62,6 +63,7 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
     private final UserAuthenticationManager userAuthenticationManager;
     private final AuthenticationFlowContextService authenticationFlowContextService;
     private final ResourceConsistencyValidationService resourceConsistencyValidationService;
+    private final AuthorizationDetailsValidator authorizationDetailsValidator;
     private final boolean exitOnError;
 
     public AuthorizationCodeStrategy(
@@ -69,11 +71,13 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
             UserAuthenticationManager userAuthenticationManager,
             AuthenticationFlowContextService authenticationFlowContextService,
             ResourceConsistencyValidationService resourceConsistencyValidationService,
+            AuthorizationDetailsValidator authorizationDetailsValidator,
             boolean exitOnError) {
         this.authorizationCodeService = authorizationCodeService;
         this.userAuthenticationManager = userAuthenticationManager;
         this.authenticationFlowContextService = authenticationFlowContextService;
         this.resourceConsistencyValidationService = resourceConsistencyValidationService;
+        this.authorizationDetailsValidator = authorizationDetailsValidator;
         this.exitOnError = exitOnError;
     }
 
@@ -105,10 +109,18 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
         String codeVerifier = parameters.getFirst(Parameters.CODE_VERIFIER);
         String redirectUri = parameters.getFirst(Parameters.REDIRECT_URI);
 
+        // before the code is consumed and its request parameters are copied into this request
+        final AuthorizationDetails requestedAuthorizationDetails;
+        try {
+            requestedAuthorizationDetails = authorizationDetailsValidator.validate(request, client);
+        } catch (RuntimeException e) {
+            return Single.error(e);
+        }
+
         return authorizationCodeService.remove(code, client)
                 .switchIfEmpty(Single.error(new InvalidGrantException("Invalid authorization code")))
                 .flatMap(authorizationCode -> processAuthorizationCode(
-                        request, client, authorizationCode, codeVerifier, redirectUri));
+                        request, client, authorizationCode, codeVerifier, redirectUri, requestedAuthorizationDetails));
     }
 
     private Single<TokenCreationRequest> processAuthorizationCode(
@@ -116,7 +128,8 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
             Client client,
             AuthorizationCode authorizationCode,
             String codeVerifier,
-            String redirectUri) {
+            String redirectUri,
+            AuthorizationDetails requestedAuthorizationDetails) {
 
         // Validate redirect URI
         validateRedirectUri(redirectUri, authorizationCode);
@@ -125,6 +138,8 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
         validatePKCE(codeVerifier, authorizationCode);
 
         validateDPoPJkt(request, authorizationCode);
+
+        authorizationDetailsValidator.validateGranted(requestedAuthorizationDetails, grantedAuthorizationDetails(authorizationCode));
 
         // Load user and create token request
         return authenticationFlowContextService
@@ -191,9 +206,13 @@ public class AuthorizationCodeStrategy implements GrantStrategy {
                 codeVerifier,
                 redirectUri,
                 decodedAuthorizationCode,
-                authorizationCode.getAuthorizationDetails() == null ? null : AuthorizationDetails.of(authorizationCode.getAuthorizationDetails()),
+                grantedAuthorizationDetails(authorizationCode),
                 supportRefresh
         );
+    }
+
+    private static AuthorizationDetails grantedAuthorizationDetails(AuthorizationCode authorizationCode) {
+        return authorizationCode.getAuthorizationDetails() == null ? null : AuthorizationDetails.of(authorizationCode.getAuthorizationDetails());
     }
 
     private void validateRedirectUri(String redirectUri, AuthorizationCode authorizationCode) {

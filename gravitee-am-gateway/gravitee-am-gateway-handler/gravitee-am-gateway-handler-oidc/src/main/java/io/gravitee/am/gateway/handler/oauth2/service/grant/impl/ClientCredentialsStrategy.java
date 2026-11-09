@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.grant.impl;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -34,6 +35,11 @@ import lombok.CustomLog;
 @CustomLog
 public class ClientCredentialsStrategy implements GrantStrategy {
 
+    private final AuthorizationDetailsValidator authorizationDetailsValidator;
+
+    public ClientCredentialsStrategy(AuthorizationDetailsValidator authorizationDetailsValidator) {
+        this.authorizationDetailsValidator = authorizationDetailsValidator;
+    }
 
     @Override
     public boolean supports(TokenRequest tokenRequest, Client client, Domain domain) {
@@ -55,6 +61,7 @@ public class ClientCredentialsStrategy implements GrantStrategy {
 
         // Client credentials does NOT support refresh tokens per RFC 6749 Section 4.4.3
         // "A refresh token SHOULD NOT be included"
-        return Single.just(TokenCreationRequest.forClientCredentials(request, false));
+        return Single.fromCallable(() -> TokenCreationRequest.forClientCredentials(
+                request, authorizationDetailsValidator.validate(request, client), false));
     }
 }

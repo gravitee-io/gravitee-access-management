@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantStrategy;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.StrategyGranterAdapter;
@@ -127,6 +128,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private ResourceConsistencyValidationService resourceConsistencyValidationService;
 
     @Autowired
+    private AuthorizationDetailsValidator authorizationDetailsValidator;
+
+    @Autowired
     private TokenExchangeService tokenExchangeService;
 
     @Autowired
@@ -184,7 +188,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         tokenRequestResolver.setManagers(scopeManager, protectedResourceManager);
 
         // Register Client Credentials strategy
-        registerStrategy(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsStrategy());
+        registerStrategy(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsStrategy(authorizationDetailsValidator));
 
         // Register Password strategy
         registerStrategy(GrantType.PASSWORD, new PasswordStrategy(userAuthenticationManager));
@@ -196,6 +200,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 userAuthenticationManager,
                 authenticationFlowContextService,
                 resourceConsistencyValidationService,
+                authorizationDetailsValidator,
                 exitOnError
         ));
 
@@ -203,7 +208,8 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         registerStrategy(GrantType.REFRESH_TOKEN, new RefreshTokenStrategy(
                 tokenService,
                 userAuthenticationManager,
-                resourceConsistencyValidationService
+                resourceConsistencyValidationService,
+                authorizationDetailsValidator
         ));
 
         // Register Token Exchange strategy
