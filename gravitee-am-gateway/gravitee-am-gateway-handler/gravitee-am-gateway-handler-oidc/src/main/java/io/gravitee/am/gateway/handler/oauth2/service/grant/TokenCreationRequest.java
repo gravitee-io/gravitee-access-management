@@ -185,6 +185,7 @@ public record TokenCreationRequest(
      */
     public static TokenCreationRequest forClientCredentials(
             TokenRequest original,
+            AuthorizationDetails authorizationDetails,
             boolean supportRefresh) {
 
         return new TokenCreationRequest(
@@ -196,7 +197,7 @@ public record TokenCreationRequest(
                 supportRefresh,
                 original.getResources(),
                 original.getOriginalAuthorizationResources(),
-                null,
+                authorizationDetails,
                 HttpRequestInfo.from(original),
                 original.getAdditionalParameters(),
                 original.getContext(),

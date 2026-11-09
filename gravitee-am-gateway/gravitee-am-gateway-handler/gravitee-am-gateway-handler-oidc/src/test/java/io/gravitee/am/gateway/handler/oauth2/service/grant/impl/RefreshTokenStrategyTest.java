@@ -21,7 +21,9 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.GrantData;
 import io.gravitee.am.gateway.handler.oauth2.service.grant.TokenCreationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -31,6 +33,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -52,7 +55,12 @@ import java.util.Set;
 import static io.gravitee.am.gateway.handler.oauth2.service.grant.AssertionFixtures.grantRequest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,13 +75,20 @@ class RefreshTokenStrategyTest {
     @Mock
     private ResourceConsistencyValidationService resourceConsistencyValidationService;
 
+    @Mock
+    private AuthorizationDetailsValidator authorizationDetailsValidator;
+
+    private static final Map<String, Object> PAYMENT_DETAIL = Map.of("type", "payment_initiation", "actions", List.of("initiate"));
+    private static final Map<String, Object> ACCOUNT_DETAIL = Map.of("type", "account_information");
+
     private RefreshTokenStrategy strategy;
     private Domain domain;
     private Client client;
 
     @BeforeEach
     void setUp() {
-        strategy = new RefreshTokenStrategy(tokenService, userAuthenticationManager, resourceConsistencyValidationService);
+        strategy = new RefreshTokenStrategy(tokenService, userAuthenticationManager, resourceConsistencyValidationService,
+                authorizationDetailsValidator);
 
         domain = new Domain();
         domain.setId("domain-id");
@@ -439,22 +454,74 @@ class RefreshTokenStrategyTest {
         assertNull(result.authorizationDetails());
     }
 
+    @Test
+    void shouldValidateRequestedAuthorizationDetailsBeforeUsingTheRefreshToken() {
+        TokenRequest tokenRequest = refreshTokenRequest();
+        when(authorizationDetailsValidator.validate(tokenRequest, client))
+                .thenThrow(new InvalidRequestException("authorization_details is not valid JSON"));
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(InvalidRequestException.class)
+                .assertError(e -> e.getMessage().equals("authorization_details is not valid JSON"));
+        verify(tokenService, never()).refresh(anyString(), any(), any());
+    }
+
+    @Test
+    void shouldIssueTheGrantedAuthorizationDetailsWhenTheRequestedOnesMatch() {
+        TokenRequest tokenRequest = refreshTokenRequest();
+        when(authorizationDetailsValidator.validate(tokenRequest, client))
+                .thenReturn(AuthorizationDetails.of(List.of(ACCOUNT_DETAIL, PAYMENT_DETAIL)));
+        refreshing(List.of(PAYMENT_DETAIL, ACCOUNT_DETAIL));
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertEquals(List.of(PAYMENT_DETAIL, ACCOUNT_DETAIL), result.authorizationDetails().getRaw());
+        verify(authorizationDetailsValidator).validateGranted(
+                AuthorizationDetails.of(List.of(ACCOUNT_DETAIL, PAYMENT_DETAIL)), AuthorizationDetails.of(List.of(PAYMENT_DETAIL, ACCOUNT_DETAIL)));
+    }
+
+    @Test
+    void shouldFailWhenTheRequestedAuthorizationDetailsWereNotGranted() {
+        TokenRequest tokenRequest = refreshTokenRequest();
+        AuthorizationDetails requested = AuthorizationDetails.of(List.of(PAYMENT_DETAIL));
+        when(authorizationDetailsValidator.validate(tokenRequest, client)).thenReturn(requested);
+        refreshing(null);
+        doThrow(new InvalidAuthorizationDetailsException("no authorization_details were granted"))
+                .when(authorizationDetailsValidator).validateGranted(requested, null);
+
+        strategy.process(tokenRequest, client, domain)
+                .test()
+                .assertError(InvalidAuthorizationDetailsException.class)
+                .assertError(e -> e.getMessage().equals("no authorization_details were granted"));
+    }
+
     private TokenCreationRequest processRefreshTokenWithAuthorizationDetails(Object claim) {
+        refreshing(claim);
+        return strategy.process(refreshTokenRequest(), client, domain).blockingGet();
+    }
+
+    private static TokenRequest refreshTokenRequest() {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add(Parameters.REFRESH_TOKEN, "refresh-token-value");
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setClientId("client-id");
         tokenRequest.setParameters(parameters);
+        return tokenRequest;
+    }
+
+    private void refreshing(Object authorizationDetailsClaim) {
         Map<String, Object> additionalInfo = new HashMap<>();
-        additionalInfo.put(Claims.AUTHORIZATION_DETAILS, claim);
+        if (authorizationDetailsClaim != null) {
+            additionalInfo.put(Claims.AUTHORIZATION_DETAILS, authorizationDetailsClaim);
+        }
         Token refreshToken = new AccessToken("token-value");
         refreshToken.setScope("read");
         refreshToken.setClientId("client-id");
         refreshToken.setExpireAt(new Date(System.currentTimeMillis() + 3600000));
         refreshToken.setAdditionalInformation(additionalInfo);
         when(tokenService.refresh(eq("refresh-token-value"), any(), eq(client))).thenReturn(Single.just(refreshToken));
-        when(resourceConsistencyValidationService.resolveFinalResources(any(), any())).thenReturn(Set.of());
-
-        return strategy.process(tokenRequest, client, domain).blockingGet();
+        // not reached when the authorization details check fails
+        lenient().when(resourceConsistencyValidationService.resolveFinalResources(any(), any())).thenReturn(Set.of());
     }
 }

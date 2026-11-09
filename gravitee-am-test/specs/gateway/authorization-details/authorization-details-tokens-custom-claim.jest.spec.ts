@@ -41,7 +41,7 @@ describe('Authorization details in tokens - custom token claim', () => {
     const tokens = (await fixture.exchangeCode(callback)).body;
     expect(decodeJwt(tokens.access_token).authorization_details).toEqual(details);
 
-    const refreshed = await fixture.requestToken({ grant_type: 'refresh_token', refresh_token: tokens.refresh_token });
+    const refreshed = await fixture.refresh(tokens.refresh_token);
 
     expect(refreshed.status).toBe(200);
     expect(decodeJwt(refreshed.body.access_token).authorization_details).toEqual(details);
