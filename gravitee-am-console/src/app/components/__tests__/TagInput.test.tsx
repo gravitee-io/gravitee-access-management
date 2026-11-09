@@ -94,6 +94,16 @@ describe('TagInput', () => {
         expect(harness.input).toHaveValue('');
     });
 
+    it('splits a pasted text at the caret and replaces the selection', async () => {
+        const harness = setupTagInputHarness([], false, true);
+
+        await harness.type('opnid');
+        (harness.input as HTMLInputElement).setSelectionRange(0, 5);
+        await userEvent.paste('openid profile');
+
+        expect(harness.onChange).toHaveBeenLastCalledWith(['openid', 'profile']);
+    });
+
     it('keeps a space in the typed text by default', async () => {
         const harness = setupTagInputHarness();
 

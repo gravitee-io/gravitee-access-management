@@ -98,7 +98,8 @@ export function TagInput({
                         const pasted = event.clipboardData.getData('text');
                         if (addOnSpace && /\s/.test(pasted)) {
                             event.preventDefault();
-                            add(text + pasted);
+                            const { selectionStart, selectionEnd } = event.currentTarget;
+                            add(text.slice(0, selectionStart ?? text.length) + pasted + text.slice(selectionEnd ?? text.length));
                         }
                     }}
                     onBlur={() => {
