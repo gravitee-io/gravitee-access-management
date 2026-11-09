@@ -74,11 +74,12 @@ export function IdentityProviderSettingsPage() {
     if (provider.system) {
         return <Navigate to={`${providerPath}/mappers`} replace />;
     }
-    const error = schema.error ?? certificates.error ?? dataSources.error ?? installation.error ?? plugins.error;
+    // The plugin list only gives the licence feature, so the page shows without it, as the layout does.
+    const error = schema.error ?? certificates.error ?? dataSources.error ?? installation.error;
     if (error) {
         return <ErrorPanel description="Could not load the provider configuration." error={error} />;
     }
-    if (!adapted || !schema.data || !plugins.data) {
+    if (!adapted || !schema.data || plugins.isPending) {
         return <Skeleton className="h-64 w-full" />;
     }
     return (
@@ -87,7 +88,7 @@ export function IdentityProviderSettingsPage() {
             adapted={adapted}
             configuration={withBooleanDefaults(schema.data, parseConfiguration(provider))}
             pinned={pinned}
-            feature={plugins.data.find(plugin => plugin.id === provider.type)?.feature}
+            feature={plugins.data?.find(plugin => plugin.id === provider.type)?.feature}
         />
     );
 }

@@ -183,6 +183,13 @@ describe('IdentityProviderSettingsPage', () => {
         expect(await screen.findByText('Could not load the domain entrypoints.')).toBeInTheDocument();
     });
 
+    it('shows the settings when the plugin list fails, which only gives the licence feature', async () => {
+        vi.mocked(listIdentityProviderPlugins).mockRejectedValue(new HttpError(500, 'Service unavailable'));
+        const harness = setupSettingsPageHarness();
+
+        expect(await harness.findName()).toHaveValue('Google');
+    });
+
     it('locks the fields while a save runs, so the reset after it loses no edit', async () => {
         vi.mocked(updateIdentityProvider).mockReturnValue(new Promise(() => undefined));
         const harness = setupSettingsPageHarness();
