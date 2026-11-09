@@ -65,6 +65,7 @@ describe('UserHistoryPage', () => {
 
         expect(await screen.findByText('USER_LOGIN')).toBeInTheDocument();
         expect(screen.getByText('Success')).toBeInTheDocument();
+        expect(screen.getByRole('region', { name: 'User history' })).toHaveTextContent('2023');
         const query = vi.mocked(listUserAudits).mock.calls[0][2];
         expect(vi.mocked(listUserAudits).mock.calls[0].slice(0, 2)).toEqual([ref, 'u-1']);
         expect(query).toMatchObject({ page: 0, size: 10, type: undefined, status: undefined });
@@ -119,6 +120,16 @@ describe('UserHistoryPage', () => {
         expect(within(dialog).getByText('10.0.0.1')).toBeInTheDocument();
         expect(within(dialog).getByText('curl')).toBeInTheDocument();
         expect(within(dialog).getByTestId('audit-details').textContent).toBe('{\n  "client": "portal"\n}');
+    });
+
+    it('maximizes the event details', async () => {
+        setup();
+        await userEvent.click(await screen.findByRole('button', { name: 'View USER_LOGIN details' }));
+        const maximize = within(await screen.findByRole('dialog', { name: 'USER_LOGIN' })).getByRole('button', { name: 'Maximize' });
+
+        await userEvent.click(maximize);
+
+        expect(maximize).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('hides the event details without the audit read permission', async () => {

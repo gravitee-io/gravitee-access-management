@@ -32,7 +32,7 @@ import {
     SelectValue,
 } from '@gravitee/graphene-core';
 import { CodeEditor } from '@gravitee/graphene-core/code-editor';
-import { CircleCheckIcon, CircleXIcon, EyeIcon, RefreshCwIcon, ScrollTextIcon } from '@gravitee/graphene-core/icons';
+import { CircleCheckIcon, CircleXIcon, ExpandIcon, EyeIcon, RefreshCwIcon, ScrollTextIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
@@ -80,6 +80,7 @@ export function UserHistoryPage() {
     const [filters, setFilters] = useState<Filters>(NO_FILTERS);
     const [page, setPage] = useState(1);
     const [selected, setSelected] = useState<Audit | null>(null);
+    const [maximized, setMaximized] = useState(false);
     const filter = (patch: Partial<Filters>) => {
         setFilters(current => ({ ...current, ...patch }));
         setPage(1);
@@ -106,7 +107,11 @@ export function UserHistoryPage() {
 
     const filtered = filters.type !== ANY || filters.status !== ANY || Boolean(filters.start) || Boolean(filters.end);
     const columns: ColumnDef<Audit, unknown>[] = [
-        { accessorKey: 'timestamp', header: 'Date', cell: ({ row }) => <DateCell value={new Date(row.original.timestamp)} /> },
+        {
+            accessorKey: 'timestamp',
+            header: 'Date',
+            cell: ({ row }) => <DateCell value={new Date(row.original.timestamp)} format="absolute" />,
+        },
         {
             accessorKey: 'type',
             header: 'Event',
@@ -223,11 +228,32 @@ export function UserHistoryPage() {
                 }
             />
 
-            <Dialog open={selected !== null} onOpenChange={open => !open && setSelected(null)}>
-                <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>{selected?.type}</DialogTitle>
-                        <DialogDescription>{selected ? formatAuditDate(selected.timestamp) : ''}</DialogDescription>
+            <Dialog
+                open={selected !== null}
+                onOpenChange={open => {
+                    if (!open) {
+                        setSelected(null);
+                        setMaximized(false);
+                    }
+                }}
+            >
+                <DialogContent
+                    className={maximized ? 'max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-2rem)]' : 'max-w-[calc(100%-2rem)] sm:max-w-2xl'}
+                >
+                    <DialogHeader className="flex-row items-start justify-between gap-2 pr-8">
+                        <div className="grid gap-1">
+                            <DialogTitle>{selected?.type}</DialogTitle>
+                            <DialogDescription>{selected ? formatAuditDate(selected.timestamp) : ''}</DialogDescription>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Maximize"
+                            aria-pressed={maximized}
+                            onClick={() => setMaximized(current => !current)}
+                        >
+                            <ExpandIcon aria-hidden />
+                        </Button>
                     </DialogHeader>
                     {selected && (
                         <div className="flex flex-col gap-4">
@@ -241,7 +267,12 @@ export function UserHistoryPage() {
                                     <dd className="truncate text-sm">{selected.accessPoint?.userAgent ?? '—'}</dd>
                                 </div>
                             </dl>
-                            <CodeEditor value={auditDetails(selected)} language="json" readOnly height={240} />
+                            <CodeEditor
+                                value={auditDetails(selected)}
+                                language="json"
+                                readOnly
+                                height={maximized ? 'calc(100vh - 16rem)' : 240}
+                            />
                         </div>
                     )}
                 </DialogContent>
