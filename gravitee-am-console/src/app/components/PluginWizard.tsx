@@ -71,6 +71,8 @@ interface PluginWizardProps<P extends WizardPlugin> {
     /** The first element of the schema query key, for example `identity-provider-schema`. */
     readonly schemaKey: string;
     readonly getSchema: (plugin: P) => Promise<Record<string, unknown>>;
+    /** Applied to the loaded schema. A change of the result keeps the values typed in step 2. */
+    readonly transformSchema?: (plugin: P, schema: Record<string, unknown>) => Record<string, unknown>;
     readonly resources?: readonly SchemaResource[];
     readonly onSelect?: (plugin: P) => void;
     /** Rendered below the name in step 2. */
@@ -269,6 +271,7 @@ export function PluginWizard<P extends WizardPlugin>({
     getSchema,
     resources,
     onSelect,
+    transformSchema,
     extraFields,
     creating,
     onCreate,
@@ -306,7 +309,11 @@ export function PluginWizard<P extends WizardPlugin>({
         enabled: step === 1 && !!selected,
         staleTime: Infinity,
     });
-    const { adapted } = useAdaptedSchema(schema, resources);
+    const transformed = useMemo(
+        () => (schema && selected && transformSchema ? transformSchema(selected, schema) : schema),
+        [schema, selected, transformSchema],
+    );
+    const { adapted } = useAdaptedSchema(transformed, resources);
     const shown = (plugins ?? []).filter(plugin => matches(plugin, filter));
     const focusableId = shown.find(plugin => plugin.id === selected?.id)?.id ?? shown[0]?.id;
 

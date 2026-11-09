@@ -32,9 +32,11 @@ function BrowserBack() {
     return <button onClick={() => navigate(-1)}>Browser back</button>;
 }
 
-function renderWizard(plugins: WizardPlugin[] = [SMTP]) {
+type Transform = (plugin: WizardPlugin, schema: Record<string, unknown>) => Record<string, unknown>;
+
+function renderWizard(plugins: WizardPlugin[] = [SMTP], transformSchema?: Transform) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    return render(
+    const tree = (transform?: Transform) => (
         <QueryClientProvider client={client}>
             <LicenseScope license={{ features: [] }}>
                 <MemoryRouter>
@@ -50,6 +52,7 @@ function renderWizard(plugins: WizardPlugin[] = [SMTP]) {
                                 pluginsError={null}
                                 schemaKey="wizard-test-schema"
                                 getSchema={getSchema}
+                                transformSchema={transform}
                                 creating={false}
                                 onCreate={onCreate}
                             />
@@ -58,8 +61,10 @@ function renderWizard(plugins: WizardPlugin[] = [SMTP]) {
                     </LayoutSlotsProvider>
                 </MemoryRouter>
             </LicenseScope>
-        </QueryClientProvider>,
+        </QueryClientProvider>
     );
+    const result = render(tree(transformSchema));
+    return { ...result, rerenderWith: (transform: Transform) => result.rerender(tree(transform)) };
 }
 
 beforeEach(() => {
@@ -88,6 +93,22 @@ describe('PluginWizard', () => {
 
         await waitFor(() => expect(onCreate).toHaveBeenCalledWith(SMTP, { name: 'Mail', config: { host: 'smtp.acme.io', port: 587 } }));
         expect(getSchema).toHaveBeenCalledWith(SMTP);
+    });
+
+    it('keeps the typed values when the schema transform changes, for example after a refetch of its inputs', async () => {
+        const titled =
+            (title: string): Transform =>
+            (_plugin, schema) => ({ ...schema, properties: { ...(schema.properties as object), host: { type: 'string', title } } });
+        const wizard = renderWizard([SMTP], titled('Hostname'));
+
+        fireEvent.click(await screen.findByRole('radio', { name: 'SMTP' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'Mail' } });
+        wizard.rerenderWith(titled('Server'));
+
+        expect(await screen.findByRole('textbox', { name: /Server/ })).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Mail');
+        expect(getSchema).toHaveBeenCalledTimes(1);
     });
 
     it('disables Create until the name and the required fields are filled', async () => {
