@@ -31,7 +31,7 @@ const EXAMPLES = [
     ["{#profile['my-claim'] == 'default'}", 'Developers'],
 ] as const;
 
-/** Maps user expressions onto the first 100 groups of the domain, as the Angular `GroupsResolver` loads them. */
+/** Maps user expressions onto the first 100 groups of the domain. */
 export function IdentityProviderGroupsPage() {
     const { provider } = useIdentityProvider();
     const { ref } = useCurrentDomain();

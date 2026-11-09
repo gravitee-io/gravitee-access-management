@@ -75,7 +75,6 @@ export function localRules(policy: PasswordPolicy): LocalRule[] {
         rules.push({
             id: 'profile',
             description: 'Should not contain information from profile',
-            // Angular lowercases the password and not the profile values.
             passes: (password, { firstName, lastName, email }) => {
                 const lower = password.toLowerCase();
                 return (

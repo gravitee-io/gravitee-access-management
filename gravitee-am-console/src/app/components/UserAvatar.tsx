@@ -26,7 +26,6 @@ interface AvatarUser {
 interface UserAvatarProps {
     readonly user: AvatarUser;
     readonly size?: 'default' | 'sm' | 'lg';
-    /** Tints the initials with the brand color. */
     readonly brand?: boolean;
 }
 

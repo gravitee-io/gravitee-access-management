@@ -33,7 +33,6 @@ export function usePasswordCheck(policy: PasswordPolicy | null | undefined, pass
         queryKey: ['password-evaluation', ref, policy?.id, profile.id, settled],
         queryFn: () => evaluatePassword(ref, policy?.id ?? '', profile.id, settled),
         enabled: serverCheck && settled !== '',
-        // The key holds the typed password: drop it from the cache as soon as nothing reads it.
         gcTime: 0,
     });
 

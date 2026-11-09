@@ -31,7 +31,7 @@ const EXAMPLES = [
     ["{#profile['my-claim'] == 'default'}", 'ROLE_USER'],
 ] as const;
 
-/** Maps user expressions onto every role of the domain, as the Angular `RolesResolver` loads them. */
+/** Maps user expressions onto every role of the domain. */
 export function IdentityProviderRolesPage() {
     const { provider } = useIdentityProvider();
     const { ref } = useCurrentDomain();

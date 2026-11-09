@@ -38,7 +38,6 @@ type FormState = {
     readonly lastName: string;
     readonly email: string;
     readonly application: PickedApplication | null;
-    /** The `client` sent back: the stored value until the picker changes it, then the picked id or null. */
     readonly client: string | null | undefined;
     readonly forceResetPassword: boolean;
     readonly attributes: Attribute[];

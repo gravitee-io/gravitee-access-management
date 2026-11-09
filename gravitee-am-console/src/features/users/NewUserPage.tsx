@@ -78,7 +78,6 @@ export function NewUserPage() {
     const [attributes, setAttributes] = useState<Attribute[]>([]);
 
     const emailRequired = useQuery({ queryKey: ['email-required'], queryFn: isEmailRequired, staleTime: Infinity });
-    // The picker keeps its None option when the providers fail: the user is stored in the default provider.
     const providers = useQuery({ queryKey: ['user-identity-providers', ref], queryFn: () => listUserIdentityProviders(ref) });
     const identityProviderId = source === NONE ? undefined : source;
     const policy = useQuery({

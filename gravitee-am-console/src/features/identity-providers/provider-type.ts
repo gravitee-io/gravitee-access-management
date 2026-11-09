@@ -15,7 +15,6 @@
  */
 import type { IdentityProviderPlugin } from '../../lib/api/identity-providers';
 
-/** The Angular `displayType`: the plugin display name, else "Custom". */
 export function providerTypeName(plugins: readonly IdentityProviderPlugin[] | undefined, type: string): string {
     const plugin = plugins?.find(candidate => candidate.id === type);
     return plugin ? (plugin.displayName ?? plugin.name) : 'Custom';

@@ -29,7 +29,6 @@ export const TIME_RANGES: readonly { readonly id: TimeRangeId; readonly name: st
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-/** `30d` spans 28 days and `90d` three calendar months, as in the Angular console. */
 export function rangeStart(id: TimeRangeId, now: number): number {
     switch (id) {
         case '1h':

@@ -34,7 +34,6 @@ import { type AdvancedSearch, NO_ADVANCED_SEARCH, advancedSearchFilter } from '.
 
 type Cell = CellContext<User, unknown>;
 const DISABLED = 'disabled';
-// The Angular advanced search loads the first 50 applications.
 const APPLICATION_OPTIONS = 50;
 
 export function UsersPage() {
@@ -113,7 +112,6 @@ export function UsersPage() {
         },
         { accessorKey: 'username', header: 'Username' },
         { id: 'status', header: 'Status', cell: ({ row }) => <UserStatusBadge user={row.original} /> },
-        // Angular shows these columns to a reader only.
         ...(canRead
             ? [
                   {

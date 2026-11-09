@@ -41,7 +41,7 @@ interface ExpressionMapperPanelProps {
 
 /**
  * User expressions (`attribute=value` or EL) mapped onto roles or groups at authentication. An add or a remove saves at
- * once, as in Angular.
+ * once.
  */
 export function ExpressionMapperPanel({
     noun,
