@@ -44,8 +44,8 @@ import java.util.function.Supplier;
  * the values already on the current key are left untouched, so running it again changes nothing.
  * <p>
  * The run is recorded as a system task whose id holds the key id and the minute of the call: a call repeated
- * within the same minute, a double submit for instance, finds the task of the first one, while a later call
- * runs again and picks up what was stored since. Once a run succeeded, older keys are no longer used by this
+ * within the same minute, a double submit for instance, finds the task of the first one and is refused while
+ * it runs, and every call that runs picks up what was stored since the previous one. Once a run succeeded, older keys are no longer used by this
  * plugin type.
  *
  * @author GraviteeSource Team
@@ -93,8 +93,8 @@ public abstract class ConfigurationEncryptionTask<T> {
     }
 
     /**
-     * Encrypts the configurations with {@code keyId}, unless the call of the same minute already succeeded or
-     * is still running. Never fails: a failure is reported in the result and recorded on the task, so a
+     * Encrypts the configurations with {@code keyId}, unless a call of the same minute is still running.
+     * A task already finished is run again, which only reads when nothing is left to rewrite. Never fails: a failure is reported in the result and recorded on the task, so a
      * later call runs it again.
      */
     public Single<ConfigurationEncryptionResult> run(String keyId) {
@@ -103,9 +103,8 @@ public abstract class ConfigurationEncryptionTask<T> {
         return systemTaskRepository.findById(taskId)
                 .switchIfEmpty(Single.defer(() -> createTask(taskId, operationId)))
                 .flatMap(task -> switch (SystemTaskStatus.valueOf(task.getStatus())) {
-                    case SUCCESS -> Single.just(result(Status.ALREADY_DONE, 0, null));
                     case ONGOING -> Single.just(result(Status.IN_PROGRESS, 0, null));
-                    case INITIALIZED, FAILURE -> claim(task, operationId)
+                    case INITIALIZED, SUCCESS, FAILURE -> claim(task, operationId)
                             .flatMap(claimed -> claimed ? encryptAll(task, keyId, operationId) : Single.just(result(Status.IN_PROGRESS, 0, null)));
                 })
                 .onErrorReturn(err -> {
@@ -149,7 +148,7 @@ public abstract class ConfigurationEncryptionTask<T> {
     }
 
     private Single<ConfigurationEncryptionResult> encryptAll(SystemTask task, String keyId, String operationId) {
-        return EncryptingRepositoryProxy.pendingEncryption(findAll)
+        return EncryptingRepositoryProxy.findAllPendingEncryption(findAll)
                 .concatMapSingle(repository::update)
                 .count()
                 .flatMap(count -> complete(task, SystemTaskStatus.SUCCESS, operationId)

@@ -77,7 +77,7 @@ class ConfigurationEncryptionServiceTest {
 
     @Test
     void should_audit_the_reencryption_against_the_default_organization() {
-        service(task("factor", Status.DONE), task("reporter", Status.ALREADY_DONE)).encryptAll("v2").blockingGet();
+        service(task("factor", Status.DONE), task("reporter", Status.IN_PROGRESS)).encryptAll("v2").blockingGet();
 
         Audit audit = capturedAudit();
         assertThat(audit.getType()).isEqualTo(EventType.PLUGIN_CONFIGURATIONS_REENCRYPTED);
@@ -87,7 +87,7 @@ class ConfigurationEncryptionServiceTest {
         assertThat(audit.getTarget().getType()).isEqualTo(EntityType.ENCRYPTION_KEY);
         assertThat(audit.getActor().getId()).isEqualTo("system");
         assertThat(audit.getOutcome().getStatus()).isEqualTo(io.gravitee.am.common.audit.Status.SUCCESS);
-        assertThat(audit.getOutcome().getMessage()).contains("factor", "DONE", "reporter", "ALREADY_DONE");
+        assertThat(audit.getOutcome().getMessage()).contains("factor", "DONE", "reporter", "IN_PROGRESS");
     }
 
     @Test

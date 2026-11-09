@@ -71,7 +71,7 @@ public final class EncryptingRepositoryProxy implements InvocationHandler {
      *
      * @throws IllegalStateException when no wrapped repository was read during {@code findAll}
      */
-    public static <T> Flowable<T> pendingEncryption(Supplier<Flowable<T>> findAll) {
+    public static <T> Flowable<T> findAllPendingEncryption(Supplier<Flowable<T>> findAll) {
         PENDING_ENCRYPTION_REQUESTED.set(Boolean.TRUE);
         try {
             Flowable<T> pending = findAll.get();

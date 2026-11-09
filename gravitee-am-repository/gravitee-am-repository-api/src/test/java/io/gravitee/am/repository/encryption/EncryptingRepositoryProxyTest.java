@@ -268,7 +268,7 @@ class EncryptingRepositoryProxyTest {
         ReporterRepository rotated = wrap(store, NEXT_KEY.id(), KEY, NEXT_KEY);
         rotated.create(reporter("current", CONFIGURATION)).blockingGet();
 
-        List<Reporter> pending = EncryptingRepositoryProxy.pendingEncryption(rotated::findAll).toList().blockingGet();
+        List<Reporter> pending = EncryptingRepositoryProxy.findAllPendingEncryption(rotated::findAll).toList().blockingGet();
 
         assertThat(pending).extracting(Reporter::getId).containsExactlyInAnyOrder("old-key", "clear");
         assertThat(pending).extracting(Reporter::getConfiguration).containsOnly(CONFIGURATION);
@@ -279,11 +279,11 @@ class EncryptingRepositoryProxyTest {
         repository.create(reporter("old-key", CONFIGURATION)).blockingGet();
         store.create(reporter("clear", CONFIGURATION)).blockingGet();
         ReporterRepository rotated = wrap(store, NEXT_KEY.id(), KEY, NEXT_KEY);
-        EncryptingRepositoryProxy.pendingEncryption(rotated::findAll)
+        EncryptingRepositoryProxy.findAllPendingEncryption(rotated::findAll)
                 .concatMapSingle(rotated::update).toList().blockingGet();
         String encryptedOnce = store.stored("old-key").getConfiguration();
 
-        List<Reporter> pending = EncryptingRepositoryProxy.pendingEncryption(rotated::findAll).toList().blockingGet();
+        List<Reporter> pending = EncryptingRepositoryProxy.findAllPendingEncryption(rotated::findAll).toList().blockingGet();
 
         assertThat(pending).isEmpty();
         assertThat(store.stored("old-key").getConfiguration()).isEqualTo(encryptedOnce).startsWith("enc:2026:");
@@ -294,7 +294,7 @@ class EncryptingRepositoryProxyTest {
     void should_list_every_entity_again_once_the_pending_read_is_done() {
         repository.create(reporter("r1", CONFIGURATION)).blockingGet();
 
-        EncryptingRepositoryProxy.pendingEncryption(repository::findAll).toList().blockingGet();
+        EncryptingRepositoryProxy.findAllPendingEncryption(repository::findAll).toList().blockingGet();
 
         assertThat(repository.findAll().toList().blockingGet()).extracting(Reporter::getId).containsExactly("r1");
     }
@@ -303,7 +303,7 @@ class EncryptingRepositoryProxyTest {
     void should_fail_the_pending_read_when_the_repository_is_not_wrapped() {
         store.create(reporter("r1", CONFIGURATION)).blockingGet();
 
-        assertThatThrownBy(() -> EncryptingRepositoryProxy.pendingEncryption(store::findAll))
+        assertThatThrownBy(() -> EncryptingRepositoryProxy.findAllPendingEncryption(store::findAll))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -311,7 +311,7 @@ class EncryptingRepositoryProxyTest {
     void should_fail_the_pending_read_when_the_repository_is_only_called_on_subscription() {
         repository.create(reporter("r1", CONFIGURATION)).blockingGet();
 
-        assertThatThrownBy(() -> EncryptingRepositoryProxy.pendingEncryption(() -> Flowable.defer(repository::findAll)))
+        assertThatThrownBy(() -> EncryptingRepositoryProxy.findAllPendingEncryption(() -> Flowable.defer(repository::findAll)))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(repository.findAll().toList().blockingGet()).hasSize(1);
     }

@@ -164,13 +164,17 @@ class ConfigurationEncryptionTaskTest {
     }
 
     @Test
-    void should_not_run_again_for_the_same_key_in_the_same_minute() {
+    void should_check_the_configurations_again_in_the_same_minute_after_a_success() {
         when(systemTaskRepository.findById(IDP_TASK_ID)).thenReturn(Maybe.just(task(SystemTaskStatus.SUCCESS, "previous")));
+        stubUpdateIf();
+        when(identityProviderRepository.findAll()).thenReturn(Flowable.empty());
 
         ConfigurationEncryptionResult result = identityProviderTask().run("v2").blockingGet();
 
-        assertThat(result.status()).isEqualTo(Status.ALREADY_DONE);
-        verify(identityProviderRepository, never()).findAll();
+        assertThat(result).isEqualTo(new ConfigurationEncryptionResult("identity_provider", Status.DONE, 0, null));
+        verify(systemTaskRepository).updateIf(any(), eq("previous"));
+        verify(identityProviderRepository).findAll();
+        assertThat(taskStatuses).containsExactly(SystemTaskStatus.ONGOING.name(), SystemTaskStatus.SUCCESS.name());
     }
 
     @Test
@@ -253,21 +257,6 @@ class ConfigurationEncryptionTaskTest {
         var task = identityProviderTask();
 
         assertThat(task.taskId("v2_x")).isEqualTo("encrypt_identity_provider_v2_x_202611091015").isNotEqualTo(task.taskId("v2"));
-    }
-
-    @Test
-    void should_run_again_in_a_later_minute_after_a_success() {
-        when(systemTaskRepository.findById(IDP_TASK_ID)).thenReturn(Maybe.just(task(SystemTaskStatus.SUCCESS, "previous")));
-        var task = identityProviderTask();
-        assertThat(task.run("v2").blockingGet().status()).isEqualTo(Status.ALREADY_DONE);
-        clock.advance(Duration.ofMinutes(1));
-        stubNewTask();
-        when(identityProviderRepository.findAll()).thenReturn(Flowable.empty());
-
-        ConfigurationEncryptionResult result = task.run("v2").blockingGet();
-
-        assertThat(result).isEqualTo(new ConfigurationEncryptionResult("identity_provider", Status.DONE, 0, null));
-        verify(systemTaskRepository).findById("encrypt_identity_provider_v2_202611091016");
     }
 
     @Test

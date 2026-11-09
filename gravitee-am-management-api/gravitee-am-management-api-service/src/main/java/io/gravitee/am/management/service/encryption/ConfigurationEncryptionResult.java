@@ -32,8 +32,6 @@ public record ConfigurationEncryptionResult(String plugin, Status status, long e
     public enum Status {
         /** encrypted by this call */
         DONE,
-        /** a previous call already encrypted them with this key */
-        ALREADY_DONE,
         /** another call, possibly on another node, is encrypting them */
         IN_PROGRESS,
         /** a later call runs it again */
