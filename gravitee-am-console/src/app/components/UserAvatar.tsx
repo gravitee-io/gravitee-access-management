@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@gravitee/graphene-core';
 interface AvatarUser {
     readonly username?: string;
     readonly name?: string;
+    readonly displayName?: string;
     readonly picture?: string;
     readonly additionalInformation?: { readonly picture?: string };
 }
@@ -25,16 +26,27 @@ interface AvatarUser {
 interface UserAvatarProps {
     readonly user: AvatarUser;
     readonly size?: 'default' | 'sm' | 'lg';
+    /** Tints the initial with the brand color, as a default badge. */
+    readonly brand?: boolean;
 }
 
-export function UserAvatar({ user, size }: UserAvatarProps) {
+function initialsOf(text: string): string {
+    const [first = '', second = ''] = text.split(/[\s.@_-]+/).filter(Boolean);
+    return (first.charAt(0) + second.charAt(0)).toUpperCase();
+}
+
+export function UserAvatar({ user, size, brand = false }: UserAvatarProps) {
     const name = user.username || user.name || '';
     const picture = user.picture || user.additionalInformation?.picture;
     return (
         <Avatar size={size}>
             {picture && <AvatarImage src={picture} alt={name} />}
-            <AvatarFallback aria-label={name} role="img">
-                {name.charAt(0).toUpperCase()}
+            <AvatarFallback
+                aria-label={name}
+                role="img"
+                className={brand ? 'bg-primary/10 font-medium text-badge-default-foreground dark:bg-primary/20' : undefined}
+            >
+                {initialsOf(user.displayName || name)}
             </AvatarFallback>
         </Avatar>
     );

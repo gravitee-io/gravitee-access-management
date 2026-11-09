@@ -17,9 +17,6 @@ import {
     Button,
     Card,
     CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
     Checkbox,
     Field,
     FieldDescription,
@@ -27,6 +24,7 @@ import {
     FieldLabel,
     Input,
     Label,
+    PageFocused,
     PasswordInput,
     Select,
     SelectContent,
@@ -35,7 +33,7 @@ import {
     SelectValue,
     toast,
 } from '@gravitee/graphene-core';
-import { ArrowLeftIcon } from '@gravitee/graphene-core/icons';
+import { AppWindowIcon, ArrowLeftIcon, KeyRoundIcon, TagIcon, UserIcon } from '@gravitee/graphene-core/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -48,6 +46,7 @@ import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { ApplicationPicker, type PickedApplication } from './ApplicationPicker';
 import { AttributesEditor } from './AttributesEditor';
+import { IconCardHeader } from './IconCardHeader';
 import { PasswordRuleList, usePasswordCheck } from './PasswordPolicyCheck';
 import { type Attribute, EMAIL_PATTERN, additionalInformationOf } from './user-helpers';
 
@@ -132,184 +131,171 @@ export function NewUserPage() {
     };
 
     return (
-        <form className="flex flex-col gap-6" onSubmit={submit} noValidate>
-            <div className="space-y-1">
-                <Button asChild variant="ghost" size="sm" className="-ml-2">
-                    <Link to={listPath}>
-                        <ArrowLeftIcon aria-hidden />
-                        Users
-                    </Link>
-                </Button>
-                <PageHeader
-                    title="Create a user"
-                    description="The user will be able to sign in to the applications registered in this domain."
-                />
-            </div>
+        <PageFocused>
+            <form className="flex flex-col gap-6" onSubmit={submit} noValidate>
+                <div className="space-y-1">
+                    <Button asChild variant="ghost" size="sm" className="-ml-2">
+                        <Link to={listPath}>
+                            <ArrowLeftIcon aria-hidden />
+                            Users
+                        </Link>
+                    </Button>
+                    <PageHeader
+                        title="Create a user"
+                        description="The user will be able to sign in to the applications registered in this domain."
+                    />
+                </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Profile</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-5">
-                    <div className="grid gap-5 sm:grid-cols-2">
-                        <Field>
-                            <FieldLabel htmlFor="user-first-name">First name</FieldLabel>
-                            <Input id="user-first-name" value={firstName} onChange={event => setFirstName(event.target.value)} required />
-                            <FieldDescription>The first name of the User.</FieldDescription>
-                        </Field>
-                        <Field>
-                            <FieldLabel htmlFor="user-last-name">Last name</FieldLabel>
-                            <Input id="user-last-name" value={lastName} onChange={event => setLastName(event.target.value)} required />
-                            <FieldDescription>The last name of the User.</FieldDescription>
-                        </Field>
-                    </div>
-                    <Field data-invalid={emailInvalid || undefined}>
-                        <FieldLabel htmlFor="user-email">Email</FieldLabel>
-                        <Input
-                            id="user-email"
-                            type="email"
-                            value={email}
-                            aria-invalid={emailInvalid}
-                            aria-describedby="user-email-message"
-                            required={emailRequired.data ?? true}
-                            onChange={event => {
-                                setEmail(event.target.value);
-                                if (event.target.value === '') {
-                                    setUseEmailAsUsername(false);
-                                }
-                            }}
-                        />
-                        {emailInvalid ? (
-                            <FieldError id="user-email-message">Not a valid email</FieldError>
-                        ) : (
-                            <FieldDescription id="user-email-message">Email address for the User.</FieldDescription>
-                        )}
-                    </Field>
-                    <Field>
-                        <FieldLabel htmlFor="user-username">Username</FieldLabel>
-                        <Input
-                            id="user-username"
-                            value={effectiveUsername}
-                            onChange={event => setUsername(event.target.value)}
-                            disabled={useEmailAsUsername}
-                            required
-                        />
-                        <FieldDescription>Username for the User.</FieldDescription>
-                        <div className="flex items-center gap-2">
-                            <Checkbox
-                                id="user-email-as-username"
-                                checked={useEmailAsUsername}
-                                disabled={email === '' || emailInvalid}
-                                onCheckedChange={checked => {
-                                    setUseEmailAsUsername(checked === true);
-                                    setUsername('');
+                <Card>
+                    <IconCardHeader icon={<UserIcon />} title="Profile" />
+                    <CardContent className="grid gap-5">
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <Field>
+                                <FieldLabel htmlFor="user-first-name">First name</FieldLabel>
+                                <Input
+                                    id="user-first-name"
+                                    value={firstName}
+                                    onChange={event => setFirstName(event.target.value)}
+                                    required
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="user-last-name">Last name</FieldLabel>
+                                <Input id="user-last-name" value={lastName} onChange={event => setLastName(event.target.value)} required />
+                            </Field>
+                        </div>
+                        <Field data-invalid={emailInvalid || undefined}>
+                            <FieldLabel htmlFor="user-email">Email</FieldLabel>
+                            <Input
+                                id="user-email"
+                                type="email"
+                                value={email}
+                                aria-invalid={emailInvalid}
+                                aria-describedby={emailInvalid ? 'user-email-error' : undefined}
+                                required={emailRequired.data ?? true}
+                                onChange={event => {
+                                    setEmail(event.target.value);
+                                    if (event.target.value === '') {
+                                        setUseEmailAsUsername(false);
+                                    }
                                 }}
                             />
-                            <Label htmlFor="user-email-as-username" className="font-normal">
-                                Use email as username
-                            </Label>
-                        </div>
-                    </Field>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Credentials</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-5">
-                    <SettingToggle
-                        id="user-pre-registration"
-                        label="Enable pre-registration"
-                        description="The user will receive an email to complete their profile and activate their account."
-                        checked={preRegistration}
-                        onChange={setPreRegistration}
-                    />
-                    {!preRegistration && (
+                            {emailInvalid && <FieldError id="user-email-error">Not a valid email</FieldError>}
+                        </Field>
                         <Field>
-                            <FieldLabel htmlFor="user-password">Password</FieldLabel>
-                            <PasswordInput
-                                id="user-password"
-                                value={password}
-                                autoComplete="new-password"
-                                onChange={event => setPassword(event.target.value)}
+                            <FieldLabel htmlFor="user-username">Username</FieldLabel>
+                            <Input
+                                id="user-username"
+                                value={effectiveUsername}
+                                onChange={event => setUsername(event.target.value)}
+                                disabled={useEmailAsUsername}
                                 required
                             />
-                            <FieldDescription>Password for the User.</FieldDescription>
-                            <PasswordRuleList results={passwordCheck.results} />
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="user-email-as-username"
+                                    checked={useEmailAsUsername}
+                                    disabled={email === '' || emailInvalid}
+                                    onCheckedChange={checked => {
+                                        setUseEmailAsUsername(checked === true);
+                                        setUsername('');
+                                    }}
+                                />
+                                <Label htmlFor="user-email-as-username" className="font-normal">
+                                    Use email as username
+                                </Label>
+                            </div>
                         </Field>
-                    )}
-                    <SettingToggle
-                        id="user-force-reset"
-                        label="Force password reset"
-                        description="Ask this user to reset their password at first sign in."
-                        checked={forceResetPassword}
-                        onChange={setForceResetPassword}
-                    />
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Registration</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-5">
-                    <Field>
-                        <FieldLabel htmlFor="user-application">Application</FieldLabel>
-                        <ApplicationPicker
-                            id="user-application"
-                            value={application}
-                            onChange={setApplication}
-                            describedBy="user-application-hint"
+                <Card>
+                    <IconCardHeader icon={<KeyRoundIcon />} title="Credentials" />
+                    <CardContent className="grid gap-5">
+                        <SettingToggle
+                            id="user-pre-registration"
+                            label="Pre-registration"
+                            description="The user receives an email to complete their profile and activate their account."
+                            checked={preRegistration}
+                            onChange={setPreRegistration}
                         />
-                        <FieldDescription id="user-application-hint">
-                            Assign user to an application. Useful if you want to apply application guidelines (email, templates) to your
-                            user.
-                        </FieldDescription>
-                    </Field>
-                    <Field>
-                        <FieldLabel htmlFor="user-source">Identity provider</FieldLabel>
-                        <Select value={source} onValueChange={setSource}>
-                            <SelectTrigger id="user-source">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={NONE}>None</SelectItem>
-                                {(providers.data ?? []).map(provider => (
-                                    <SelectItem key={provider.id} value={provider.id}>
-                                        {provider.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FieldDescription>
-                            Assign user to an identity provider. The user will be stored in the selected identity provider instead of the
-                            default one.
-                        </FieldDescription>
-                    </Field>
-                </CardContent>
-            </Card>
+                        {!preRegistration && (
+                            <Field>
+                                <FieldLabel htmlFor="user-password">Password</FieldLabel>
+                                <PasswordInput
+                                    id="user-password"
+                                    value={password}
+                                    autoComplete="new-password"
+                                    onChange={event => setPassword(event.target.value)}
+                                    required
+                                />
+                                <FieldDescription>Must satisfy the password policy of the user&apos;s identity provider.</FieldDescription>
+                                <PasswordRuleList results={passwordCheck.results} />
+                            </Field>
+                        )}
+                        <SettingToggle
+                            id="user-force-reset"
+                            label="Force password reset"
+                            description="Ask this user to reset their password at first sign in."
+                            checked={forceResetPassword}
+                            onChange={setForceResetPassword}
+                        />
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Additional information</CardTitle>
-                    <CardDescription>
-                        Custom information about the user. These details will be available in the user&apos;s profile.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AttributesEditor attributes={attributes} editable onChange={setAttributes} />
-                </CardContent>
-            </Card>
+                <Card>
+                    <IconCardHeader icon={<AppWindowIcon />} title="Registration" />
+                    <CardContent className="grid gap-5">
+                        <Field>
+                            <FieldLabel htmlFor="user-application">Application</FieldLabel>
+                            <ApplicationPicker
+                                id="user-application"
+                                value={application}
+                                onChange={setApplication}
+                                describedBy="user-application-hint"
+                            />
+                            <FieldDescription id="user-application-hint">The application the user registered through.</FieldDescription>
+                        </Field>
+                        <Field>
+                            <FieldLabel htmlFor="user-source">Identity provider</FieldLabel>
+                            <Select value={source} onValueChange={setSource}>
+                                <SelectTrigger id="user-source">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={NONE}>None</SelectItem>
+                                    {(providers.data ?? []).map(provider => (
+                                        <SelectItem key={provider.id} value={provider.id}>
+                                            {provider.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldDescription>Store the user in this identity provider instead of the default one.</FieldDescription>
+                        </Field>
+                    </CardContent>
+                </Card>
 
-            <div className="flex items-center justify-end gap-2">
-                <Button variant="outline" type="button" onClick={() => navigate(listPath)}>
-                    Cancel
-                </Button>
-                <Button type="submit" disabled={!valid || create.isPending}>
-                    {create.isPending ? 'Creating…' : 'Create user'}
-                </Button>
-            </div>
-        </form>
+                <Card>
+                    <IconCardHeader
+                        icon={<TagIcon />}
+                        title="Additional information"
+                        description="Custom information about the user, available in their profile."
+                    />
+                    <CardContent>
+                        <AttributesEditor attributes={attributes} editable onChange={setAttributes} />
+                    </CardContent>
+                </Card>
+
+                <div className="flex items-center justify-end gap-2">
+                    <Button variant="outline" type="button" onClick={() => navigate(listPath)}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" disabled={!valid || create.isPending}>
+                        {create.isPending ? 'Creating…' : 'Create user'}
+                    </Button>
+                </div>
+            </form>
+        </PageFocused>
     );
 }

@@ -117,7 +117,7 @@ describe('NewUserPage', () => {
     it('creates a pre-registered user without a password, with the added attributes', async () => {
         const harness = setup();
         await harness.fillProfile();
-        await userEvent.click(screen.getByRole('switch', { name: 'Enable pre-registration' }));
+        await userEvent.click(screen.getByRole('switch', { name: 'Pre-registration' }));
         await userEvent.click(screen.getByRole('button', { name: 'Add attribute' }));
         await userEvent.type(screen.getByLabelText('Attribute name'), 'team');
         await userEvent.type(screen.getByLabelText('Value of team'), 'blue');
@@ -161,7 +161,7 @@ describe('NewUserPage', () => {
         await userEvent.type(screen.getByLabelText('First name'), 'Alice');
         await userEvent.type(screen.getByLabelText('Last name'), 'Liddell');
         await userEvent.type(screen.getByLabelText('Username'), 'alice');
-        await userEvent.click(screen.getByRole('switch', { name: 'Enable pre-registration' }));
+        await userEvent.click(screen.getByRole('switch', { name: 'Pre-registration' }));
 
         await waitFor(() => expect(harness.create()).toBeEnabled());
     });

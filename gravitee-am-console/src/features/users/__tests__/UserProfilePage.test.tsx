@@ -114,9 +114,19 @@ describe('UserLayout and UserProfilePage', () => {
 
         expect(await screen.findByRole('heading', { name: 'Alice Liddell' })).toBeInTheDocument();
         expect(screen.getByText('Enabled')).toBeInTheDocument();
-        expect(screen.getByText('Logins count').nextSibling).toHaveTextContent('3');
+        expect(screen.getByText('Internal')).toBeInTheDocument();
+        expect(screen.queryByText('Pre-registered')).not.toBeInTheDocument();
+        expect(screen.getByText('Changing the username also unlocks the account.')).toBeInTheDocument();
+        expect(screen.getByText('Logins').nextSibling).toHaveTextContent('3');
         expect(screen.getByText('Last application').nextSibling).toHaveTextContent('Portal');
         expect(getUser).toHaveBeenCalledWith(ref, 'u-1');
+    });
+
+    it('marks an external user and a pending pre-registration', async () => {
+        setup({ ...alice, internal: false, preRegistration: true, registrationCompleted: false });
+
+        expect(await screen.findByText('External')).toBeInTheDocument();
+        expect(screen.getByText('Pre-registered')).toBeInTheDocument();
     });
 
     it('saves the eight Angular fields, keeping the stored object and null attributes', async () => {
@@ -229,7 +239,7 @@ describe('UserLayout and UserProfilePage', () => {
 
         await harness.openAction('Reset password');
         const dialog = await screen.findByRole('dialog', { name: 'Reset password' });
-        await userEvent.type(within(dialog).getByLabelText('Password'), 'n3w-password');
+        await userEvent.type(within(dialog).getByLabelText('New password'), 'n3w-password');
         await userEvent.click(within(dialog).getByRole('button', { name: 'Reset password' }));
 
         await waitFor(() => expect(resetUserPassword).toHaveBeenCalledWith(ref, 'u-1', 'n3w-password'));

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Button, DataTable, DataTableEmptyState, DateCell, FacetedFilter } from '@gravitee/graphene-core';
+import { Badge, Button, DataTable, DataTableEmptyState, DateCell, FacetedFilter } from '@gravitee/graphene-core';
 import { PlusIcon, SearchIcon, UsersIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { CellContext, ColumnDef } from '@tanstack/react-table';
@@ -100,7 +100,7 @@ export function UsersPage() {
             header: 'Name',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <UserAvatar user={row.original} size="sm" />
+                    <UserAvatar user={row.original} size="sm" brand />
                     {canRead ? (
                         <Link to={`${listPath}/${row.original.id}`} className="font-medium hover:underline">
                             {row.original.displayName}
@@ -119,7 +119,10 @@ export function UsersPage() {
                   {
                       accessorKey: 'source',
                       header: 'Identity provider',
-                      cell: ({ row }: Cell) => (row.original.serviceAccount ? 'N/A' : row.original.source),
+                      cell: ({ row }: Cell) =>
+                          row.original.serviceAccount
+                              ? 'N/A'
+                              : row.original.source && <Badge variant="outline">{row.original.source}</Badge>,
                   },
                   {
                       accessorKey: 'loggedAt',

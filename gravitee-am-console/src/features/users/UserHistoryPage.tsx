@@ -18,6 +18,7 @@ import {
     Button,
     DataTable,
     DataTableEmptyState,
+    DateCell,
     DatePicker,
     Dialog,
     DialogContent,
@@ -103,8 +104,16 @@ export function UserHistoryPage() {
 
     const filtered = filters.type !== ANY || filters.status !== ANY || Boolean(filters.start) || Boolean(filters.end);
     const columns: ColumnDef<Audit, unknown>[] = [
-        { accessorKey: 'timestamp', header: 'Date', cell: ({ row }) => formatAuditDate(row.original.timestamp) },
-        { accessorKey: 'type', header: 'Event', cell: ({ row }) => <span className="font-mono text-xs">{row.original.type}</span> },
+        { accessorKey: 'timestamp', header: 'Date', cell: ({ row }) => <DateCell value={new Date(row.original.timestamp)} /> },
+        {
+            accessorKey: 'type',
+            header: 'Event',
+            cell: ({ row }) => (
+                <Badge variant="outline" className="font-mono">
+                    {row.original.type}
+                </Badge>
+            ),
+        },
         { id: 'status', header: 'Status', cell: ({ row }) => <AuditStatusBadge status={row.original.outcome?.status} /> },
         {
             id: 'details',

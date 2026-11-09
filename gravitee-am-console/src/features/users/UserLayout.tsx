@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import {
+    Badge,
     Button,
     Dialog,
     DialogContent,
@@ -202,13 +203,17 @@ export function UserLayout() {
                 </Button>
                 <header className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-4">
-                        <UserAvatar user={user} size="lg" />
+                        <UserAvatar user={user} size="lg" brand />
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                                 <h1 className="truncate">{user.displayName}</h1>
                                 <UserStatusBadge user={user} />
                             </div>
-                            <p className="truncate text-sm text-muted-foreground">{user.username}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <p className="truncate text-sm text-muted-foreground">{user.username}</p>
+                                <Badge variant="highlight">{user.internal ? 'Internal' : 'External'}</Badge>
+                                {isPendingRegistration(user) && <Badge variant="highlight">Pre-registered</Badge>}
+                            </div>
                         </div>
                     </div>
                     {(actions.length > 0 || canDelete) && (
@@ -297,14 +302,14 @@ function ResetPasswordDialog({ user, onClose }: { readonly user: User; readonly 
                     <DialogDescription>Set a new password for {user.displayName}.</DialogDescription>
                 </DialogHeader>
                 <Field>
-                    <FieldLabel htmlFor="user-reset-password">Password</FieldLabel>
+                    <FieldLabel htmlFor="user-reset-password">New password</FieldLabel>
                     <PasswordInput
                         id="user-reset-password"
                         value={password}
                         autoComplete="new-password"
                         onChange={event => setPassword(event.target.value)}
                     />
-                    <FieldDescription>User&apos;s password</FieldDescription>
+                    <FieldDescription>Must satisfy the password policy of the user&apos;s identity provider.</FieldDescription>
                     <PasswordRuleList results={check.results} />
                 </Field>
                 <DialogFooter>

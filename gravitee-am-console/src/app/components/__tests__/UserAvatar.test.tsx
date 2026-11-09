@@ -35,6 +35,18 @@ describe('UserAvatar', () => {
         expect(screen.getByRole('img', { name: 'alice' })).toHaveTextContent('A');
     });
 
+    it('shows the initials of the display name', () => {
+        renderWithGraphene(<UserAvatar user={{ username: 'alice', displayName: 'Alice Liddell' }} />);
+
+        expect(screen.getByRole('img', { name: 'alice' })).toHaveTextContent('AL');
+    });
+
+    it('splits an email username into initials', () => {
+        renderWithGraphene(<UserAvatar user={{ username: 'emma.schulz@example.com' }} />);
+
+        expect(screen.getByRole('img', { name: 'emma.schulz@example.com' })).toHaveTextContent('ES');
+    });
+
     it('falls back to the name without a username', () => {
         renderWithGraphene(<UserAvatar user={{ name: 'bob' }} />);
 
