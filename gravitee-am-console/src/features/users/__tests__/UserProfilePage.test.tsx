@@ -116,7 +116,7 @@ describe('UserLayout and UserProfilePage', () => {
         expect(screen.getByText('Enabled')).toBeInTheDocument();
         expect(screen.getByText('Internal')).toBeInTheDocument();
         expect(screen.queryByText('Pre-registered')).not.toBeInTheDocument();
-        expect(screen.getByText('Changing the username also unlocks the account.')).toBeInTheDocument();
+        expect(screen.getByText('The username of the user.')).toBeInTheDocument();
         expect(screen.getByText('Logins').nextSibling).toHaveTextContent('3');
         expect(screen.getByText('Last application').nextSibling).toHaveTextContent('Portal');
         expect(getUser).toHaveBeenCalledWith(ref, 'u-1');
@@ -204,6 +204,7 @@ describe('UserLayout and UserProfilePage', () => {
         await userEvent.clear(username);
         await userEvent.type(username, 'alice2');
         await userEvent.click(screen.getByRole('button', { name: 'Update username' }));
+        expect(await screen.findByText(/It also unlocks the account\./)).toBeInTheDocument();
         await harness.confirm('Update username', 'Update');
 
         await waitFor(() => expect(updateUsername).toHaveBeenCalledWith(ref, 'u-1', 'alice2'));

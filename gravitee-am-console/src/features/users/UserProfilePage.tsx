@@ -99,12 +99,6 @@ export function UserProfilePage() {
         username === '' ? 'Enter username' : !USERNAME_PATTERN.test(username) ? 'Username cannot start or end with whitespace' : undefined;
 
     const showUsernameError = username !== user.username && Boolean(usernameError);
-    const usernameDescription =
-        user.internal && canEdit
-            ? 'Changing the username also unlocks the account.'
-            : user.internal
-              ? 'The username the account signs in with.'
-              : 'Managed by the external identity provider the user signs in with.';
 
     const save = useMutation({
         mutationFn: () =>
@@ -149,7 +143,7 @@ export function UserProfilePage() {
         <div className="grid gap-6 lg:grid-cols-3">
             <div className="flex flex-col gap-6 lg:col-span-2">
                 <Card>
-                    <IconCardHeader icon={<FingerprintIcon />} title="Username" description={usernameDescription} />
+                    <IconCardHeader icon={<FingerprintIcon />} title="Username" description="The username of the user." />
                     <CardContent>
                         <div className="flex items-start gap-2">
                             <Field className="flex-1" data-invalid={showUsernameError || undefined}>
@@ -279,7 +273,7 @@ export function UserProfilePage() {
             <ConfirmDialog
                 open={confirmUsername}
                 title="Update username"
-                description={`The username changes from ${user.username} to ${username}. The user signs in with the new one from now on.`}
+                description={`The username changes from ${user.username} to ${username}. The user signs in with the new one from now on. It also unlocks the account.`}
                 confirmLabel="Update"
                 pending={rename.isPending}
                 onOpenChange={setConfirmUsername}
