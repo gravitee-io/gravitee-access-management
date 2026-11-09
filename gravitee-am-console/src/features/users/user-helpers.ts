@@ -38,11 +38,16 @@ export type AdvancedSearch = { readonly applications: string[]; readonly provide
 
 export const NO_ADVANCED_SEARCH: AdvancedSearch = { applications: [], providers: [], disabledOnly: false };
 
+// The SCIM parser binds `and` before `or`, so a criterion with several values needs its parentheses.
+function anyOf(clauses: string[]): string {
+    return clauses.length > 1 ? `(${clauses.join(' or ')})` : clauses.join('');
+}
+
 /** The SCIM filter of the Angular `onAdvancedSearch`: `or` inside a criterion, `and` between criteria. */
 export function advancedSearchFilter({ applications, providers, disabledOnly }: AdvancedSearch): string {
     return [
-        applications.map(id => `client eq "${id}"`).join(' or '),
-        providers.map(id => `source eq "${id}"`).join(' or '),
+        anyOf(applications.map(id => `client eq "${id}"`)),
+        anyOf(providers.map(id => `source eq "${id}"`)),
         disabledOnly ? 'enabled eq false' : '',
     ]
         .filter(Boolean)
@@ -77,7 +82,9 @@ export function additionalInformationOf(attributes: readonly Attribute[], stored
         if (attribute.readOnly) {
             result[attribute.name] = stored[attribute.name];
         } else if (attribute.stored) {
-            result[attribute.name] = attribute.value;
+            // A row holds its value as text: an unedited boolean or number goes back as stored.
+            const storedValue = stored[attribute.name];
+            result[attribute.name] = attribute.value === String(storedValue) ? storedValue : attribute.value;
         } else if (attribute.name && attribute.value) {
             result[attribute.name] = attribute.value;
         }

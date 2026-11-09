@@ -34,7 +34,13 @@ describe('isScimFilter', () => {
 describe('advancedSearchFilter', () => {
     it('joins the values of a criterion with or and the criteria with and', () => {
         expect(advancedSearchFilter({ applications: ['a1', 'a2'], providers: ['p1'], disabledOnly: true })).toBe(
-            'client eq "a1" or client eq "a2" and source eq "p1" and enabled eq false',
+            '(client eq "a1" or client eq "a2") and source eq "p1" and enabled eq false',
+        );
+    });
+
+    it('groups each criterion with several values, as the SCIM parser binds and before or', () => {
+        expect(advancedSearchFilter({ applications: ['a1'], providers: ['p1', 'p2'], disabledOnly: false })).toBe(
+            'client eq "a1" and (source eq "p1" or source eq "p2")',
         );
     });
 
@@ -76,6 +82,13 @@ describe('additional information', () => {
         ];
 
         expect(additionalInformationOf(rows, stored)).toEqual({ hidden: null, team: 'red', address: { city: 'Oxford' }, role: 'admin' });
+    });
+
+    it('keeps the type of a boolean or number value that was not edited', () => {
+        const claims = { email_verified: true, updated_at: 1699000000, logins: 3 };
+        const rows = attributesOf(claims).map(row => (row.name === 'logins' ? { ...row, value: '4' } : row));
+
+        expect(additionalInformationOf(rows, claims)).toEqual({ email_verified: true, updated_at: 1699000000, logins: '4' });
     });
 });
 
