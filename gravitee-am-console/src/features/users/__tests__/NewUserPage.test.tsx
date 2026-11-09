@@ -145,13 +145,16 @@ describe('NewUserPage', () => {
         expect(screen.getByLabelText('Username')).toBeDisabled();
     });
 
-    it('describes an invalid email with its error', async () => {
+    it('describes an invalid email with its error once the field loses focus', async () => {
         setup();
         const email = screen.getByLabelText('Email');
 
         await userEvent.type(email, 'alice');
+        expect(email).toHaveAttribute('aria-invalid', 'false');
+        expect(screen.queryByText('Not a valid email')).not.toBeInTheDocument();
+        await userEvent.tab();
 
-        expect(email).toBeInvalid();
+        expect(email).toHaveAttribute('aria-invalid', 'true');
         expect(email).toHaveAccessibleDescription('Not a valid email');
     });
 

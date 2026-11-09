@@ -68,6 +68,7 @@ export function NewUserPage() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
+    const [emailBlurred, setEmailBlurred] = useState(false);
     const [username, setUsername] = useState('');
     const [useEmailAsUsername, setUseEmailAsUsername] = useState(false);
     const [preRegistration, setPreRegistration] = useState(false);
@@ -89,6 +90,7 @@ export function NewUserPage() {
     const effectiveUsername = useEmailAsUsername ? email : username;
     const emailMissing = (emailRequired.data ?? true) && email === '';
     const emailInvalid = email !== '' && !EMAIL_PATTERN.test(email);
+    const showEmailError = emailBlurred && emailInvalid;
     const valid =
         firstName !== '' &&
         lastName !== '' &&
@@ -164,15 +166,16 @@ export function NewUserPage() {
                                 <Input id="user-last-name" value={lastName} onChange={event => setLastName(event.target.value)} required />
                             </Field>
                         </div>
-                        <Field data-invalid={emailInvalid || undefined}>
+                        <Field data-invalid={showEmailError || undefined}>
                             <FieldLabel htmlFor="user-email">Email</FieldLabel>
                             <Input
                                 id="user-email"
                                 type="email"
                                 value={email}
-                                aria-invalid={emailInvalid}
-                                aria-describedby={emailInvalid ? 'user-email-error' : undefined}
+                                aria-invalid={showEmailError}
+                                aria-describedby={showEmailError ? 'user-email-error' : undefined}
                                 required={emailRequired.data ?? true}
+                                onBlur={() => setEmailBlurred(true)}
                                 onChange={event => {
                                     setEmail(event.target.value);
                                     if (event.target.value === '') {
@@ -180,7 +183,7 @@ export function NewUserPage() {
                                     }
                                 }}
                             />
-                            {emailInvalid && <FieldError id="user-email-error">Not a valid email</FieldError>}
+                            {showEmailError && <FieldError id="user-email-error">Not a valid email</FieldError>}
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="user-username">Username</FieldLabel>
