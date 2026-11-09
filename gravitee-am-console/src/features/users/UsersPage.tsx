@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Badge, Button, DataTable, DataTableEmptyState, DateCell, FacetedFilter } from '@gravitee/graphene-core';
-import { PlusIcon, SearchIcon, UsersIcon } from '@gravitee/graphene-core/icons';
+import {
+    Badge,
+    Button,
+    DataTable,
+    DataTableEmptyState,
+    DateCell,
+    FacetedFilter,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@gravitee/graphene-core';
+import { CircleHelpIcon, PlusIcon, SearchIcon, UsersIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { CellContext, ColumnDef } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
@@ -65,10 +75,8 @@ export function UsersPage() {
     }, []);
     const searchAdvanced = (patch: Partial<AdvancedSearch>) => {
         setAdvanced(current => ({ ...current, ...patch }));
-        if (text) {
-            setText('');
-            setSearchKey(key => key + 1);
-        }
+        setText('');
+        setSearchKey(key => key + 1);
         setPage(1);
     };
     const clearSearch = () => {
@@ -175,11 +183,15 @@ export function UsersPage() {
                     skeletonCount={pageSize}
                     serverSide
                     toolbar={
-                        <div
-                            className="flex flex-wrap items-center gap-2"
-                            title='Search by name, username or email, or enter a SCIM filter such as userName sw "alice"'
-                        >
-                            <SearchField key={searchKey} label="users" onSearch={searchText} />
+                        <div className="flex w-full flex-wrap items-center gap-2">
+                            <SearchField
+                                key={searchKey}
+                                label="users"
+                                defaultValue={filter}
+                                onSearch={searchText}
+                                className="min-w-64 flex-1"
+                            />
+                            <SearchSyntaxHelp />
                             <FacetedFilter
                                 title="Identity provider"
                                 options={(providers.data ?? []).map(provider => ({ value: provider.id, label: provider.name }))}
@@ -235,5 +247,60 @@ export function UsersPage() {
                 />
             )}
         </div>
+    );
+}
+
+const OPERATORS = [
+    ['eq', 'equal'],
+    ['ne', 'not equal'],
+    ['co', 'contains'],
+    ['sw', 'starts with'],
+    ['ew', 'ends with'],
+    ['pr', 'present (has a value)'],
+    ['gt', 'greater than'],
+    ['ge', 'greater than or equal to'],
+    ['lt', 'less than'],
+    ['le', 'less than or equal to'],
+];
+
+const EXAMPLES = [
+    ['Disabled users', 'enabled eq false'],
+    ['Users updated in the second half of 2019', 'updatedAt gt "2019-06-01T00:00:00.000Z" and updatedAt lt "2020-01-01T00:00:00.000Z"'],
+    ['Users by first name', 'firstName co "john"'],
+];
+
+function SearchSyntaxHelp() {
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="Search syntax">
+                    <CircleHelpIcon aria-hidden />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-[28rem] max-w-[calc(100vw-2rem)] text-sm">
+                <div className="flex flex-col gap-3">
+                    <p>
+                        Search by name, username or email, or enter a SCIM 2.0 filter: an attribute of the user, an operator and a value.
+                        Combine expressions with <code>and</code> and <code>or</code>. Brackets and <code>not</code> are not supported.
+                    </p>
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                        {OPERATORS.map(([operator, meaning]) => (
+                            <div key={operator} className="contents">
+                                <dt className="font-mono">{operator}</dt>
+                                <dd className="text-muted-foreground">{meaning}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                    <dl className="flex flex-col gap-2">
+                        {EXAMPLES.map(([title, example]) => (
+                            <div key={title}>
+                                <dt className="text-muted-foreground">{title}</dt>
+                                <dd className="font-mono text-xs break-all">{example}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </div>
+            </PopoverContent>
+        </Popover>
     );
 }

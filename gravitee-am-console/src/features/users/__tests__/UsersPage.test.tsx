@@ -98,6 +98,16 @@ describe('UsersPage', () => {
         await harness.pickFilter('Status', 'Disabled');
 
         await waitFor(() => expect(listUsers).toHaveBeenLastCalledWith(ref, { filter: 'client eq "app-1" and enabled eq false' }, 0, 25));
+        expect(screen.getByRole('searchbox', { name: 'Search users' })).toHaveValue('client eq "app-1" and enabled eq false');
+    });
+
+    it('explains the SCIM search syntax', async () => {
+        setup();
+        await screen.findByRole('link', { name: 'Alice Liddell' });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Search syntax' }));
+
+        expect(await screen.findByText('enabled eq false')).toBeInTheDocument();
     });
 
     it('shows the first-use state when the domain has no user', async () => {
