@@ -91,6 +91,20 @@ public final class FieldEncryptor {
     }
 
     /**
+     * @return true when {@code value} is already stored the way {@link #encrypt} would store it: encrypted
+     * with the current key, or in clear text when there is no current key. A missing value has nothing to encrypt.
+     */
+    public boolean isEncryptedWithCurrentKey(String value) {
+        if (value == null) {
+            return true;
+        }
+        if (currentKeyId == null) {
+            return !isEncrypted(value);
+        }
+        return isEncrypted(value) && currentKeyId.equals(parse(value).keyId());
+    }
+
+    /**
      * Encrypts {@code value} with the current key. A value already encrypted with an older key is
      * encrypted again with the current one. Without a current key, {@code value} is returned in clear text.
      */

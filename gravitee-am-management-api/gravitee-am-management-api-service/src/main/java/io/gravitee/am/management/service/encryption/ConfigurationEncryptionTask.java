@@ -20,6 +20,7 @@ import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.SystemTaskTypes;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.encryption.EncryptingRepositoryProxy;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -28,18 +29,24 @@ import lombok.CustomLog;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Rewrites every stored configuration of one plugin type, so it ends up encrypted with the current key:
+ * Rewrites the stored configurations of one plugin type that are not yet encrypted with the current key:
  * the repository decrypts each value on read, with whatever key encrypted it, and encrypts it on write
- * with the current key. Values stored in clear text before encryption was enabled get encrypted too.
+ * with the current key. Values stored in clear text before encryption was enabled get encrypted too, and
+ * the values already on the current key are left untouched, so running it again changes nothing.
  * <p>
- * The run is recorded as a system task whose id holds the key id: it runs once per key, and again after
- * each rotation. Once it succeeded, older keys are no longer used by this plugin type.
+ * The run is recorded as a system task whose id holds the key id and the minute of the call: a call repeated
+ * within the same minute, a double submit for instance, finds the task of the first one, while a later call
+ * runs again and picks up what was stored since. Once a run succeeded, older keys are no longer used by this
+ * plugin type.
  *
  * @author GraviteeSource Team
  */
@@ -50,24 +57,35 @@ public abstract class ConfigurationEncryptionTask<T> {
     // size of the system_tasks id column
     private static final int MAX_TASK_ID_LENGTH = 64;
     private static final int HASHED_KEY_ID_LENGTH = 16;
+    private static final DateTimeFormatter MINUTE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmm").withZone(ZoneOffset.UTC);
 
     private final SystemTaskRepository systemTaskRepository;
     private final String plugin;
     private final CrudRepository<T, String> repository;
     private final Supplier<Flowable<T>> findAll;
+    private final Clock clock;
 
     /**
      * @param plugin  names the plugin type in the task id and in the report
-     * @param findAll every stored entity of the plugin type
+     * @param findAll every stored entity of the plugin type, read from the repository wrapped by the encryption
      */
     protected ConfigurationEncryptionTask(SystemTaskRepository systemTaskRepository,
                                           String plugin,
                                           CrudRepository<T, String> repository,
                                           Supplier<Flowable<T>> findAll) {
+        this(systemTaskRepository, plugin, repository, findAll, Clock.systemUTC());
+    }
+
+    ConfigurationEncryptionTask(SystemTaskRepository systemTaskRepository,
+                                String plugin,
+                                CrudRepository<T, String> repository,
+                                Supplier<Flowable<T>> findAll,
+                                Clock clock) {
         this.systemTaskRepository = systemTaskRepository;
         this.plugin = plugin;
         this.repository = repository;
         this.findAll = findAll;
+        this.clock = clock;
     }
 
     public String plugin() {
@@ -75,8 +93,8 @@ public abstract class ConfigurationEncryptionTask<T> {
     }
 
     /**
-     * Encrypts the configurations with {@code keyId}, unless it already succeeded for that key or another
-     * call is running it. Never fails: a failure is reported in the result and recorded on the task, so a
+     * Encrypts the configurations with {@code keyId}, unless the call of the same minute already succeeded or
+     * is still running. Never fails: a failure is reported in the result and recorded on the task, so a
      * later call runs it again.
      */
     public Single<ConfigurationEncryptionResult> run(String keyId) {
@@ -97,11 +115,12 @@ public abstract class ConfigurationEncryptionTask<T> {
     }
 
     String taskId(String keyId) {
-        String taskId = TASK_ID_PREFIX + plugin + "_" + keyId;
+        String minute = MINUTE_FORMAT.format(clock.instant());
+        String taskId = TASK_ID_PREFIX + plugin + "_" + keyId + "_" + minute;
         if (taskId.length() <= MAX_TASK_ID_LENGTH) {
             return taskId;
         }
-        return TASK_ID_PREFIX + plugin + "_" + hash(keyId);
+        return TASK_ID_PREFIX + plugin + "_" + hash(keyId) + "_" + minute;
     }
 
     private Single<SystemTask> createTask(String taskId, String operationId) {
@@ -130,7 +149,7 @@ public abstract class ConfigurationEncryptionTask<T> {
     }
 
     private Single<ConfigurationEncryptionResult> encryptAll(SystemTask task, String keyId, String operationId) {
-        return findAll.get()
+        return EncryptingRepositoryProxy.pendingEncryption(findAll)
                 .concatMapSingle(repository::update)
                 .count()
                 .flatMap(count -> complete(task, SystemTaskStatus.SUCCESS, operationId)

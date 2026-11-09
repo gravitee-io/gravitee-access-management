@@ -41,6 +41,24 @@ class FieldEncryptorTest {
     }
 
     @Test
+    void should_recognize_a_value_encrypted_with_the_current_key() {
+        assertThat(ROTATED.isEncryptedWithCurrentKey(ROTATED.encrypt(CONFIGURATION))).isTrue();
+        assertThat(ROTATED.isEncryptedWithCurrentKey(ENCRYPTOR.encrypt(CONFIGURATION))).isFalse();
+        assertThat(ROTATED.isEncryptedWithCurrentKey(CONFIGURATION)).isFalse();
+    }
+
+    @Test
+    void should_consider_a_missing_value_as_not_needing_encryption() {
+        assertThat(ROTATED.isEncryptedWithCurrentKey(null)).isTrue();
+    }
+
+    @Test
+    void should_consider_clear_text_as_the_current_state_without_a_current_key() {
+        assertThat(DECRYPT_ONLY.isEncryptedWithCurrentKey(CONFIGURATION)).isTrue();
+        assertThat(DECRYPT_ONLY.isEncryptedWithCurrentKey(ENCRYPTOR.encrypt(CONFIGURATION))).isFalse();
+    }
+
+    @Test
     void should_return_clear_text_stored_before_encryption_as_is() {
         assertThat(ENCRYPTOR.decrypt(CONFIGURATION)).isEqualTo(CONFIGURATION);
     }
