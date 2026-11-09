@@ -156,6 +156,9 @@ describe('NewUserPage', () => {
 
         expect(email).toHaveAttribute('aria-invalid', 'true');
         expect(email).toHaveAccessibleDescription('Not a valid email');
+        await userEvent.click(email);
+        await userEvent.type(email, '@');
+        expect(email).toHaveAttribute('aria-invalid', 'false');
     });
 
     it('lets the email be empty when the platform does not require it', async () => {

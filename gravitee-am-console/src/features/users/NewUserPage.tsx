@@ -175,6 +175,7 @@ export function NewUserPage() {
                                 aria-invalid={showEmailError}
                                 aria-describedby={showEmailError ? 'user-email-error' : undefined}
                                 required={emailRequired.data ?? true}
+                                onFocus={() => setEmailBlurred(false)}
                                 onBlur={() => setEmailBlurred(true)}
                                 onChange={event => {
                                     setEmail(event.target.value);
