@@ -132,20 +132,23 @@ export function IdentityProviderSettingsForm({ provider, adapted, configuration,
     return (
         <div className="flex flex-col gap-6">
             <form id={FORM_ID} noValidate onSubmit={onSubmit} className="flex flex-col gap-6">
-                <ProviderGeneralCard form={form} external={provider.external === true} disabled={!canUpdate} />
+                {/* A save resets the form to the saved provider, so an edit typed during the save would be lost. */}
+                <fieldset disabled={save.isPending} className="contents">
+                    <ProviderGeneralCard form={form} external={provider.external === true} disabled={!canUpdate} />
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Configuration</CardTitle>
-                        {adapted.schema.description && (
-                            <CardDescription className="whitespace-pre-line">{richText(adapted.schema.description)}</CardDescription>
-                        )}
-                    </CardHeader>
-                    <CardContent className="grid gap-5">
-                        {provider.type === MONGO_IDP_TYPE && <MongoStorageGuidance />}
-                        <PluginSchemaForm adapted={adapted} control={form.control} name="config" disabled={!canUpdate} />
-                    </CardContent>
-                </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Configuration</CardTitle>
+                            {adapted.schema.description && (
+                                <CardDescription className="whitespace-pre-line">{richText(adapted.schema.description)}</CardDescription>
+                            )}
+                        </CardHeader>
+                        <CardContent className="grid gap-5">
+                            {provider.type === MONGO_IDP_TYPE && <MongoStorageGuidance />}
+                            <PluginSchemaForm adapted={adapted} control={form.control} name="config" disabled={!canUpdate} />
+                        </CardContent>
+                    </Card>
+                </fieldset>
             </form>
 
             {provider.external && <IdentityProviderIntegration provider={provider} />}

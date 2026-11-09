@@ -183,6 +183,17 @@ describe('IdentityProviderSettingsPage', () => {
         expect(await screen.findByText('Could not load the domain entrypoints.')).toBeInTheDocument();
     });
 
+    it('locks the fields while a save runs, so the reset after it loses no edit', async () => {
+        vi.mocked(updateIdentityProvider).mockReturnValue(new Promise(() => undefined));
+        const harness = setupSettingsPageHarness();
+
+        await harness.rename('Google login');
+        await harness.save();
+
+        await waitFor(() => expect(screen.getByRole('textbox', { name: 'Name' })).toBeDisabled());
+        expect(screen.getByRole('textbox', { name: /Client ID/ })).toBeDisabled();
+    });
+
     it('describes the name input with its error when the name is cleared', async () => {
         const harness = setupSettingsPageHarness();
 
