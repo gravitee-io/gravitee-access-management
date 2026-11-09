@@ -331,7 +331,7 @@ public class FactorServiceTest {
         factor.setName("my factor");
         factor.setDomain(DOMAIN);
         factor.setConfiguration("enc:2025:AAAA:BBBB");
-        when(factorRepository.findById("factor-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(factor, new IllegalStateException("key not configured"))));
+        when(factorRepository.findById("factor-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(factor, factor.getId(), new IllegalStateException("key not configured"))));
 
         Factor found = factorService.findByIdForDisplay(DOMAIN, "factor-id").blockingGet();
 
@@ -345,7 +345,7 @@ public class FactorServiceTest {
         Factor factor = new Factor();
         factor.setId("factor-id");
         factor.setDomain(DOMAIN);
-        when(factorRepository.findById(factor.getId())).thenReturn(Maybe.error(new PluginDecryptConfigException(factor, new IllegalStateException("key not configured"))));
+        when(factorRepository.findById(factor.getId())).thenReturn(Maybe.error(new PluginDecryptConfigException(factor, factor.getId(), new IllegalStateException("key not configured"))));
         when(applicationService.findByFactor(factor.getId())).thenReturn(Flowable.empty());
         when(factorRepository.delete(factor.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));

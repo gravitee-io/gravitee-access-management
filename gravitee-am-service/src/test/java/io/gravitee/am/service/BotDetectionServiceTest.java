@@ -239,7 +239,7 @@ public class BotDetectionServiceTest {
         BotDetection detection = inDomain(new BotDetection());
         detection.setId("detection-id");
         detection.setConfiguration("enc:2025:AAAA:BBBB");
-        when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(detection, new IllegalStateException("key not configured"))));
+        when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(detection, detection.getId(), new IllegalStateException("key not configured"))));
         when(botDetectionRepository.delete(detection.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
@@ -278,7 +278,7 @@ public class BotDetectionServiceTest {
         detection.setId("detection-id");
         detection.setName("my detection");
         detection.setConfiguration("enc:2025:AAAA:BBBB");
-        when(botDetectionRepository.findById("detection-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(detection, new IllegalStateException("key not configured"))));
+        when(botDetectionRepository.findById("detection-id")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(detection, detection.getId(), new IllegalStateException("key not configured"))));
 
         BotDetection found = botDetectionService.findByIdForDisplay(DOMAIN, "detection-id").blockingGet();
 

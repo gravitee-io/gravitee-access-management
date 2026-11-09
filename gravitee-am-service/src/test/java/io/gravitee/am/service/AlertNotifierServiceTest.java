@@ -281,7 +281,7 @@ public class AlertNotifierServiceTest {
         undecryptable.setReferenceType(ReferenceType.DOMAIN);
         undecryptable.setReferenceId(DOMAIN_ID);
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
-        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, ALERT_NOTIFIER_ID, new IllegalStateException("key not configured"))));
 
         final AlertNotifier found = cut.getByIdForDisplay(ReferenceType.DOMAIN, DOMAIN_ID, ALERT_NOTIFIER_ID).blockingGet();
 
@@ -298,7 +298,7 @@ public class AlertNotifierServiceTest {
         undecryptable.setReferenceType(ReferenceType.DOMAIN);
         undecryptable.setReferenceId(DOMAIN_ID);
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
-        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(alertNotifierRepository.findById(ALERT_NOTIFIER_ID)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, ALERT_NOTIFIER_ID, new IllegalStateException("key not configured"))));
         when(alertNotifierRepository.delete(ALERT_NOTIFIER_ID)).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

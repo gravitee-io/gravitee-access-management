@@ -23,12 +23,14 @@ import java.util.function.UnaryOperator;
  * Describes the string field of an entity that is stored encrypted.
  *
  * @param type the entity class
+ * @param idGetter reads the entity id, reported when the field cannot be decrypted
  * @param getter reads the field
  * @param setter writes the field
  * @param copier copies the entity, so the caller's instance is never modified before it is stored
  * @author GraviteeSource Team
  */
 public record EncryptedField<T>(Class<T> type,
+                                Function<T, String> idGetter,
                                 Function<T, String> getter,
                                 BiConsumer<T, String> setter,
                                 UnaryOperator<T> copier) {
@@ -56,7 +58,7 @@ public record EncryptedField<T>(Class<T> type,
                 try {
                     setter.accept(entity, encryptor.decrypt(stored));
                 } catch (IllegalStateException e) {
-                    throw new PluginDecryptConfigException(entity, e);
+                    throw new PluginDecryptConfigException(entity, idGetter.apply(entity), e);
                 }
             }
         }

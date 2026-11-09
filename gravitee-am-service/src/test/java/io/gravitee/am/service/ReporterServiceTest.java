@@ -379,7 +379,7 @@ class ReporterServiceTest {
         undecryptable.setName("my reporter");
         undecryptable.setReference(Reference.domain("domain-id"));
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
-        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
 
         Reporter found = service.findByIdForDisplay(Reference.domain("domain-id"), "reporter-id").blockingGet();
 
@@ -398,7 +398,7 @@ class ReporterServiceTest {
         undecryptable.setId("reporter-id");
         undecryptable.setReference(Reference.domain("domain-id"));
         undecryptable.setConfiguration("enc:2025:AAAA:BBBB");
-        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(repository.findById("reporter-id")).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
         when(repository.delete("reporter-id")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -494,7 +494,7 @@ class ReporterServiceTest {
             Reporter undecryptable = new Reporter();
             undecryptable.setId(id);
             undecryptable.setReference(Reference.domain("domain-id"));
-            when(repository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+            when(repository.findById(id)).thenReturn(Maybe.error(new PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
             when(repository.delete(id)).thenReturn(Completable.complete());
         }
         when(eventService.create(any())).thenReturn(Single.just(new Event()));

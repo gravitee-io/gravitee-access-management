@@ -51,17 +51,17 @@ import static java.util.Map.entry;
 public final class EncryptedFieldRegistry {
 
     private static final Map<Class<?>, EncryptedField<?>> FIELDS = Map.ofEntries(
-            entry(ReporterRepository.class, new EncryptedField<>(Reporter.class, Reporter::getConfiguration, Reporter::setConfiguration, Reporter::new)),
-            entry(IdentityProviderRepository.class, new EncryptedField<>(IdentityProvider.class, IdentityProvider::getConfiguration, IdentityProvider::setConfiguration, IdentityProvider::new)),
-            entry(AlertNotifierRepository.class, new EncryptedField<>(AlertNotifier.class, AlertNotifier::getConfiguration, AlertNotifier::setConfiguration, AlertNotifier::new)),
-            entry(AuthenticationDeviceNotifierRepository.class, new EncryptedField<>(AuthenticationDeviceNotifier.class, AuthenticationDeviceNotifier::getConfiguration, AuthenticationDeviceNotifier::setConfiguration, AuthenticationDeviceNotifier::new)),
-            entry(BotDetectionRepository.class, new EncryptedField<>(BotDetection.class, BotDetection::getConfiguration, BotDetection::setConfiguration, BotDetection::new)),
-            entry(CertificateRepository.class, new EncryptedField<>(Certificate.class, Certificate::getConfiguration, Certificate::setConfiguration, Certificate::new)),
-            entry(DataPlaneDefinitionRepository.class, new EncryptedField<>(DataPlaneDefinition.class, DataPlaneDefinition::getConfiguration, DataPlaneDefinition::setConfiguration, DataPlaneDefinition::new)),
-            entry(DeviceIdentifierRepository.class, new EncryptedField<>(DeviceIdentifier.class, DeviceIdentifier::getConfiguration, DeviceIdentifier::setConfiguration, DeviceIdentifier::new)),
-            entry(ExtensionGrantRepository.class, new EncryptedField<>(ExtensionGrant.class, ExtensionGrant::getConfiguration, ExtensionGrant::setConfiguration, ExtensionGrant::new)),
-            entry(FactorRepository.class, new EncryptedField<>(Factor.class, Factor::getConfiguration, Factor::setConfiguration, Factor::new)),
-            entry(ServiceResourceRepository.class, new EncryptedField<>(ServiceResource.class, ServiceResource::getConfiguration, ServiceResource::setConfiguration, ServiceResource::new))
+            entry(ReporterRepository.class, new EncryptedField<>(Reporter.class, Reporter::getId, Reporter::getConfiguration, Reporter::setConfiguration, Reporter::new)),
+            entry(IdentityProviderRepository.class, new EncryptedField<>(IdentityProvider.class, IdentityProvider::getId, IdentityProvider::getConfiguration, IdentityProvider::setConfiguration, IdentityProvider::new)),
+            entry(AlertNotifierRepository.class, new EncryptedField<>(AlertNotifier.class, AlertNotifier::getId, AlertNotifier::getConfiguration, AlertNotifier::setConfiguration, AlertNotifier::new)),
+            entry(AuthenticationDeviceNotifierRepository.class, new EncryptedField<>(AuthenticationDeviceNotifier.class, AuthenticationDeviceNotifier::getId, AuthenticationDeviceNotifier::getConfiguration, AuthenticationDeviceNotifier::setConfiguration, AuthenticationDeviceNotifier::new)),
+            entry(BotDetectionRepository.class, new EncryptedField<>(BotDetection.class, BotDetection::getId, BotDetection::getConfiguration, BotDetection::setConfiguration, BotDetection::new)),
+            entry(CertificateRepository.class, new EncryptedField<>(Certificate.class, Certificate::getId, Certificate::getConfiguration, Certificate::setConfiguration, Certificate::new)),
+            entry(DataPlaneDefinitionRepository.class, new EncryptedField<>(DataPlaneDefinition.class, DataPlaneDefinition::getId, DataPlaneDefinition::getConfiguration, DataPlaneDefinition::setConfiguration, DataPlaneDefinition::new)),
+            entry(DeviceIdentifierRepository.class, new EncryptedField<>(DeviceIdentifier.class, DeviceIdentifier::getId, DeviceIdentifier::getConfiguration, DeviceIdentifier::setConfiguration, DeviceIdentifier::new)),
+            entry(ExtensionGrantRepository.class, new EncryptedField<>(ExtensionGrant.class, ExtensionGrant::getId, ExtensionGrant::getConfiguration, ExtensionGrant::setConfiguration, ExtensionGrant::new)),
+            entry(FactorRepository.class, new EncryptedField<>(Factor.class, Factor::getId, Factor::getConfiguration, Factor::setConfiguration, Factor::new)),
+            entry(ServiceResourceRepository.class, new EncryptedField<>(ServiceResource.class, ServiceResource::getId, ServiceResource::getConfiguration, ServiceResource::setConfiguration, ServiceResource::new))
     );
 
     private EncryptedFieldRegistry() {

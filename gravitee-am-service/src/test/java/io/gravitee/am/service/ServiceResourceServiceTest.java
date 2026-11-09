@@ -268,7 +268,7 @@ public class ServiceResourceServiceTest {
         undecryptableFactor.setName("Factor");
         undecryptableFactor.setConfiguration("{}");
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(resourceRepository.findById("resid")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(resourceRepository.findById("resid")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
         when(resourceRepository.delete("resid")).thenReturn(Completable.complete());
         // a factor of the domain which cannot be decrypted is listed with an empty configuration
         when(factorService.findByDomainForListing(DOMAIN.getId())).thenReturn(Flowable.just(undecryptableFactor));
@@ -300,7 +300,7 @@ public class ServiceResourceServiceTest {
     public void shouldFindByIdForDisplay_configurationCannotBeDecrypted() {
         ServiceResource undecryptable = resourceInDomain("resid", "enc:2025:AAAA:BBBB");
         undecryptable.setName("my resource");
-        when(resourceRepository.findById("resid")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, new IllegalStateException("key not configured"))));
+        when(resourceRepository.findById("resid")).thenReturn(Maybe.error(new io.gravitee.am.repository.encryption.PluginDecryptConfigException(undecryptable, undecryptable.getId(), new IllegalStateException("key not configured"))));
 
         ServiceResource found = resourceService.findByIdForDisplay(DOMAIN.getId(), "resid").blockingGet();
 

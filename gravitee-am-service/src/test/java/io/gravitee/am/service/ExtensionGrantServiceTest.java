@@ -434,7 +434,7 @@ public class ExtensionGrantServiceTest {
         extensionGrant.setName("my grant");
         extensionGrant.setDomain(DOMAIN.getId());
         extensionGrant.setConfiguration("enc:2025:AAAA:BBBB");
-        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(extensionGrant, new IllegalStateException("key not configured"))));
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(extensionGrant, extensionGrant.getId(), new IllegalStateException("key not configured"))));
 
         ExtensionGrant found = extensionGrantService.findByIdForDisplay(DOMAIN.getId(), "my-extension-grant").blockingGet();
 
@@ -449,7 +449,7 @@ public class ExtensionGrantServiceTest {
         when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
         when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
         when(existingExtensionGrant.getDomain()).thenReturn(DOMAIN.getId());
-        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(existingExtensionGrant, new IllegalStateException("key not configured"))));
+        when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.error(new PluginDecryptConfigException(existingExtensionGrant, "my-extension-grant", new IllegalStateException("key not configured"))));
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
         when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingExtensionGrant));
         when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
