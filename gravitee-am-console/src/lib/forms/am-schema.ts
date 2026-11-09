@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { extractDefaults, type JsonSchema } from '@gravitee/graphene-core';
+import { isRecord } from '../guards';
 
 type SchemaNode = Record<string, unknown>;
 
@@ -373,4 +374,75 @@ export function compatibleResources<R extends SchemaResource & { readonly type: 
         resource =>
             category === 'any' || (resourcePlugins.find(plugin => plugin.id === resource.type)?.categories ?? []).includes(category),
     );
+}
+
+/** Drops the null properties, as the Management API does before it validates a configuration. */
+export function withoutNulls(value: unknown): unknown {
+    if (Array.isArray(value)) {
+        return value.map(withoutNulls);
+    }
+    if (isRecord(value)) {
+        return Object.fromEntries(
+            Object.entries(value)
+                .filter(([, child]) => child !== null)
+                .map(([key, child]) => [key, withoutNulls(child)]),
+        );
+    }
+    return value;
+}
+
+/** Evaluates the keywords the plugin `if` blocks use. A missing property satisfies its `properties` entry, as in JSON Schema. */
+function satisfies(schema: SchemaNode, value: unknown): boolean {
+    const properties = isRecord(schema.properties) ? schema.properties : {};
+    return (
+        (!('const' in schema) || value === schema.const) &&
+        (!Array.isArray(schema.enum) || schema.enum.includes(value)) &&
+        (!Array.isArray(schema.required) || (isRecord(value) && schema.required.every(key => value[key] !== undefined))) &&
+        (!isRecord(value) ||
+            Object.entries(properties).every(
+                ([key, child]) => value[key] === undefined || (isRecord(child) && satisfies(child, value[key])),
+            )) &&
+        (!Array.isArray(schema.allOf) || schema.allOf.every(child => isRecord(child) && satisfies(child, value))) &&
+        (!Array.isArray(schema.anyOf) || schema.anyOf.some(child => isRecord(child) && satisfies(child, value))) &&
+        (!isRecord(schema.not) || !satisfies(schema.not, value))
+    );
+}
+
+/** The indexes of the conditions whose `if` the configuration meets. */
+export function activeConditions(conditions: readonly JsonSchema[], configuration: Record<string, unknown>): number[] {
+    const present = withoutNulls(configuration);
+    return conditions.flatMap((condition, index) => {
+        const test = (condition as SchemaNode).if;
+        return isRecord(test) && satisfies(test, present) ? [index] : [];
+    });
+}
+
+function withRequired(node: SchemaNode, then: SchemaNode): SchemaNode {
+    const merged: SchemaNode = { ...node };
+    if (Array.isArray(then.required)) {
+        merged.required = [...new Set([...((node.required as string[] | undefined) ?? []), ...(then.required as string[])])];
+    }
+    const properties = node.properties as Record<string, SchemaNode> | undefined;
+    if (properties && isRecord(then.properties)) {
+        merged.properties = Object.fromEntries(
+            Object.entries(properties).map(([key, child]) => {
+                const nested = (then.properties as SchemaNode)[key];
+                return [key, isRecord(nested) ? withRequired(child, nested) : child];
+            }),
+        );
+    }
+    return merged;
+}
+
+/** Marks the fields that the met conditions require, so their label shows the required marker. */
+export function withConditionalRequired(schema: JsonSchema, conditions: readonly JsonSchema[]): JsonSchema {
+    const rendered = Object.keys((schema as SchemaNode).properties ?? {});
+    return conditions.reduce<SchemaNode>((merged, condition) => {
+        const then = (condition as SchemaNode).then;
+        if (!isRecord(then)) {
+            return merged;
+        }
+        const required = Array.isArray(then.required) ? (then.required as string[]).filter(key => rendered.includes(key)) : undefined;
+        return withRequired(merged, { ...then, required });
+    }, schema as SchemaNode) as JsonSchema;
 }

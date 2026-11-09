@@ -194,6 +194,57 @@ describe('pluginSchemaResolver', () => {
 
         expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
     });
+
+    it('passes a stored null, which the Management API drops, and keeps it in the values', async () => {
+        const config = { authentication: false, username: null };
+
+        expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
+    });
+});
+
+describe('PluginSchemaForm conditional fields', () => {
+    const adapted = adaptAmSchema({
+        type: 'object',
+        properties: {
+            responseType: { type: 'string', title: 'Response type', enum: ['code', 'id_token'], default: 'code' },
+            clientSecret: { type: 'string', title: 'Client secret' },
+        },
+        allOf: [{ if: { properties: { responseType: { const: 'code' } } }, then: { required: ['clientSecret'] } }],
+    });
+
+    it('marks a field as required while the condition that requires it holds', () => {
+        renderWithGraphene(
+            <QueryClientProvider client={new QueryClient()}>
+                <ConfigurationForm adapted={adapted} onSubmit={vi.fn()} />
+            </QueryClientProvider>,
+        );
+
+        expect(document.querySelector('[data-slot=field-label][for="config.clientSecret"]')?.textContent).toContain('*');
+    });
+
+    it('moves the marker when the condition changes, and keeps the typed values', async () => {
+        const toggled = adaptAmSchema({
+            type: 'object',
+            properties: {
+                authentication: { type: 'boolean', title: 'Authentication' },
+                username: { type: 'string', title: 'Username' },
+            },
+            allOf: [{ if: { properties: { authentication: { const: true } } }, then: { required: ['username'] } }],
+        });
+        renderWithGraphene(
+            <QueryClientProvider client={new QueryClient()}>
+                <ConfigurationForm adapted={toggled} onSubmit={vi.fn()} />
+            </QueryClientProvider>,
+        );
+        const label = () => document.querySelector('[data-slot=field-label][for="config.username"]')?.textContent;
+        await userEvent.type(screen.getByRole('textbox', { name: /Username/ }), 'admin');
+        expect(label()).not.toContain('*');
+
+        await userEvent.click(screen.getByRole('switch', { name: /Authentication/ }));
+
+        await waitFor(() => expect(label()).toContain('*'));
+        expect(screen.getByRole('textbox', { name: /Username/ })).toHaveValue('admin');
+    });
 });
 
 describe('PluginSchemaForm in edit mode', () => {

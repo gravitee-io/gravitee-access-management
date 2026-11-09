@@ -30,9 +30,27 @@ import {
 } from '@gravitee/graphene-core';
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { type Control, type FieldErrors, type FieldValues, type Path, type PathValue, type Resolver, useController } from 'react-hook-form';
+import {
+    type Control,
+    type FieldErrors,
+    type FieldValues,
+    type Path,
+    type PathValue,
+    type Resolver,
+    useController,
+    useWatch,
+} from 'react-hook-form';
 import { http } from '../../lib/api/http';
-import { type AdaptedSchema, adaptAmSchema, type SchemaFile, type SchemaResource, type SchemaStringList } from '../../lib/forms/am-schema';
+import {
+    activeConditions,
+    type AdaptedSchema,
+    adaptAmSchema,
+    type SchemaFile,
+    type SchemaResource,
+    type SchemaStringList,
+    withConditionalRequired,
+    withoutNulls,
+} from '../../lib/forms/am-schema';
 import { richText } from '../../lib/forms/rich-text';
 import { TagInput } from './TagInput';
 
@@ -106,8 +124,10 @@ function mergeErrors(target: ErrorTree, source: ErrorTree): ErrorTree {
 export function pluginSchemaResolver<T extends Record<string, unknown>>(adapted: AdaptedSchema, basePath: string): Resolver<T> {
     const resolvers = [adapted.schema, ...adapted.conditions].map(schema => jsonSchemaResolver<T>(schema, { basePath }));
     return async (values, context, options) => {
-        const results = await Promise.all(resolvers.map(resolver => resolver(values, context, options)));
-        const configuration = (values[basePath] ?? {}) as Record<string, unknown>;
+        // A stored configuration can hold nulls, which the Management API drops before it validates.
+        const checked = { ...values, [basePath]: withoutNulls(values[basePath]) } as T;
+        const results = await Promise.all(resolvers.map(resolver => resolver(checked, context, options)));
+        const configuration = (checked[basePath] ?? {}) as Record<string, unknown>;
         const fileErrors = Object.fromEntries(
             [
                 ...adapted.files.filter(file => file.required && !configuration[file.key]),
@@ -255,7 +275,12 @@ interface PluginSchemaFormProps<T extends FieldValues> {
 }
 
 export function PluginSchemaForm<T extends FieldValues>({ adapted, control, name, disabled }: PluginSchemaFormProps<T>) {
-    const display = useMemo(() => withRichDescriptions(adapted.schema), [adapted.schema]);
+    const configuration = useWatch({ control, name: name as Path<T> }) as Record<string, unknown> | undefined;
+    const active = activeConditions(adapted.conditions, configuration ?? {}).join(',');
+    const display = useMemo(() => {
+        const met = active ? active.split(',').map(index => adapted.conditions[Number(index)]) : [];
+        return withRichDescriptions(withConditionalRequired(adapted.schema, met));
+    }, [adapted, active]);
     return (
         <div className="flex flex-col gap-4">
             {import.meta.env.DEV && adapted.unsupported.length > 0 && (

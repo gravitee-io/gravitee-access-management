@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 import type { JsonSchema } from '@gravitee/graphene-core';
-import { adaptAmSchema, compatibleResources, withSchemaDefaults } from '../am-schema';
+import {
+    activeConditions,
+    adaptAmSchema,
+    compatibleResources,
+    withConditionalRequired,
+    withoutNulls,
+    withSchemaDefaults,
+} from '../am-schema';
 
 describe('adaptAmSchema', () => {
     it('translates angular-schema-form widgets and title maps into the Graphene dialect', () => {
@@ -388,5 +395,71 @@ describe('compatibleResources', () => {
 
     it('keeps every resource for the any category', () => {
         expect(compatibleResources('any', resources, resourcePlugins)).toEqual(resources);
+    });
+});
+
+describe('withoutNulls', () => {
+    it('drops the null properties at every depth and keeps the rest', () => {
+        expect(withoutNulls({ a: null, b: 0, c: { d: null, e: false }, f: [{ g: null, h: '' }] })).toEqual({
+            b: 0,
+            c: { e: false },
+            f: [{ h: '' }],
+        });
+    });
+});
+
+describe('activeConditions', () => {
+    // The SMTP resource conditions, the most complex in the plugins.
+    const conditions = [
+        {
+            if: {
+                allOf: [
+                    { properties: { authentication: { const: true } } },
+                    {
+                        anyOf: [
+                            { not: { required: ['authenticationType'] } },
+                            { properties: { authenticationType: { const: 'basic' } }, required: ['authenticationType'] },
+                        ],
+                    },
+                ],
+            },
+            then: { required: ['username', 'password'] },
+        },
+        {
+            if: {
+                properties: { authentication: { const: true }, authenticationType: { const: 'oauth2' } },
+                required: ['authenticationType'],
+            },
+            then: { required: ['oauth2Configuration'] },
+        },
+    ] as JsonSchema[];
+
+    it('returns the conditions whose if the configuration meets, with a null read as unset', () => {
+        expect(activeConditions(conditions, { authentication: true, authenticationType: null })).toEqual([0]);
+        expect(activeConditions(conditions, { authentication: true, authenticationType: 'oauth2' })).toEqual([1]);
+        expect(activeConditions(conditions, { authentication: false })).toEqual([]);
+    });
+});
+
+describe('withConditionalRequired', () => {
+    it('adds the required fields of the conditions, nested ones included, and skips a field the schema does not render', () => {
+        const schema = {
+            type: 'object',
+            required: ['host'],
+            properties: {
+                host: { type: 'string' },
+                username: { type: 'string' },
+                oauth2: { type: 'object', properties: { clientId: { type: 'string' } } },
+            },
+        } as JsonSchema;
+        const conditions = [
+            { then: { required: ['username', 'truststore'] } },
+            { then: { required: ['oauth2'], properties: { oauth2: { required: ['clientId'] } } } },
+        ] as JsonSchema[];
+
+        const merged = withConditionalRequired(schema, conditions) as Record<string, unknown>;
+
+        expect(merged.required).toEqual(['host', 'username', 'oauth2']);
+        expect((merged.properties as Record<string, Record<string, unknown>>).oauth2.required).toEqual(['clientId']);
     });
 });
