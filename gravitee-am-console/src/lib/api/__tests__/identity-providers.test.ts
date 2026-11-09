@@ -16,6 +16,7 @@
 import { compare } from 'bcryptjs';
 import { http } from '../http';
 import {
+    getIdentityProvider,
     getIdentityProviderSchema,
     type IdentityProvider,
     listIdentityProviderPlugins,
@@ -32,6 +33,14 @@ const domainPath = '/organizations/DEFAULT/environments/env-1/domains/d1';
 describe('identity providers api', () => {
     beforeEach(() => {
         vi.mocked(http).mockReset();
+    });
+
+    it('encodes the provider id in the path', async () => {
+        vi.mocked(http).mockResolvedValueOnce({});
+
+        await getIdentityProvider(ref, '../certificates');
+
+        expect(vi.mocked(http).mock.calls[0][0]).toBe(`${domainPath}/identities/..%2Fcertificates`);
     });
 
     it('sends the seven fields of the Angular update, with an empty configuration for a system provider', async () => {

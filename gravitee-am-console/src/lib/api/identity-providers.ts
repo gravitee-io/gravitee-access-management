@@ -51,7 +51,7 @@ export function listUserIdentityProviders(ref: DomainRef): Promise<IdentityProvi
 }
 
 export function getIdentityProvider(ref: DomainRef, identityProviderId: string): Promise<IdentityProvider> {
-    return http<IdentityProvider>(`${domainPath(ref)}/identities/${identityProviderId}`);
+    return http<IdentityProvider>(`${domainPath(ref)}/identities/${encodeURIComponent(identityProviderId)}`);
 }
 
 export function createIdentityProvider(ref: DomainRef, provider: NewIdentityProvider): Promise<IdentityProvider> {
@@ -62,14 +62,14 @@ export function updateIdentityProvider(ref: DomainRef, provider: IdentityProvide
     const { name, type, domainWhitelist, mappers, roleMapper, groupMapper } = provider;
     // The API requires a configuration. Angular sends an empty one for a system provider.
     const configuration = provider.configuration ?? '{}';
-    return http<IdentityProvider>(`${domainPath(ref)}/identities/${provider.id}`, {
+    return http<IdentityProvider>(`${domainPath(ref)}/identities/${encodeURIComponent(provider.id)}`, {
         method: 'PUT',
         body: JSON.stringify({ name, type, configuration, domainWhitelist, mappers, roleMapper, groupMapper }),
     });
 }
 
 export function deleteIdentityProvider(ref: DomainRef, identityProviderId: string): Promise<void> {
-    return http<void>(`${domainPath(ref)}/identities/${identityProviderId}`, { method: 'DELETE' });
+    return http<void>(`${domainPath(ref)}/identities/${encodeURIComponent(identityProviderId)}`, { method: 'DELETE' });
 }
 
 const EXPAND = 'expand=icon&expand=displayName&expand=labels';
