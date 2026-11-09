@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Button } from '@gravitee/graphene-core';
-import { renderWithGraphene } from '@gravitee/graphene-core/testing';
+import { renderWithGraphene, selectHarness } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -103,6 +103,37 @@ describe('PluginSchemaForm', () => {
         });
     });
 
+    it('edits the scopes as tags, adding each one on a space, and submits them as a list', async () => {
+        const onSubmit = vi.fn();
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: { scopes: { type: 'array', title: 'Scopes', items: { type: 'string' } } },
+        });
+        renderWithGraphene(<ConfigurationForm adapted={adapted} onSubmit={onSubmit} />);
+
+        await userEvent.type(screen.getByRole('combobox', { name: 'Scopes' }), 'openid profile ');
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+        await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+        expect(onSubmit.mock.calls[0][0]).toEqual({ config: { scopes: ['openid', 'profile'] } });
+        expect(screen.queryByText(/Item 1/)).not.toBeInTheDocument();
+    });
+
+    it('blocks the submit while a required string list is empty', async () => {
+        const onSubmit = vi.fn();
+        const adapted = adaptAmSchema({
+            type: 'object',
+            required: ['scopes'],
+            properties: { scopes: { type: 'array', title: 'Scopes', items: { type: 'string' } } },
+        });
+        renderWithGraphene(<ConfigurationForm adapted={adapted} onSubmit={onSubmit} />);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+        expect(await screen.findByText('This field is required')).toBeInTheDocument();
+        expect(onSubmit).not.toHaveBeenCalled();
+    });
+
     it('blocks the submit while a required file is missing', async () => {
         const onSubmit = renderForm();
 
@@ -162,6 +193,98 @@ describe('pluginSchemaResolver', () => {
         const config = { authentication: false };
 
         expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
+    });
+
+    it('passes a stored null, which the Management API drops, and keeps it in the values', async () => {
+        const config = { authentication: false, username: null };
+
+        expect(await resolve(config)).toEqual({ values: { config }, errors: {} });
+    });
+});
+
+describe('PluginSchemaForm certificate select', () => {
+    it('clears a picked certificate with None, which submits as unset', async () => {
+        const adapted = adaptAmSchema({
+            type: 'object',
+            properties: {
+                certificate: {
+                    type: 'string',
+                    title: 'Signing certificate',
+                    widget: 'select',
+                    oneOf: [
+                        { const: null, title: 'None' },
+                        { const: 'c1', title: 'Signing cert' },
+                    ],
+                },
+            },
+        });
+        const onSubmit = vi.fn();
+        function Edit() {
+            const resolver = useMemo(() => pluginSchemaResolver<Values>(adapted, 'config'), []);
+            const form = useForm<Values>({ resolver, defaultValues: { config: { certificate: 'c1' } } });
+            return (
+                <form noValidate onSubmit={form.handleSubmit(onSubmit)}>
+                    <PluginSchemaForm adapted={adapted} control={form.control} name="config" />
+                    <Button type="submit">Save</Button>
+                </form>
+            );
+        }
+        renderWithGraphene(
+            <QueryClientProvider client={new QueryClient()}>
+                <Edit />
+            </QueryClientProvider>,
+        );
+
+        expect(screen.getByRole('combobox', { name: /Signing certificate/ })).toHaveTextContent('Signing cert');
+        await selectHarness({ name: /Signing certificate/ }).selectOption('None');
+        await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ config: { certificate: null } }, expect.anything()));
+    });
+});
+
+describe('PluginSchemaForm conditional fields', () => {
+    const adapted = adaptAmSchema({
+        type: 'object',
+        properties: {
+            responseType: { type: 'string', title: 'Response type', enum: ['code', 'id_token'], default: 'code' },
+            clientSecret: { type: 'string', title: 'Client secret' },
+        },
+        allOf: [{ if: { properties: { responseType: { const: 'code' } } }, then: { required: ['clientSecret'] } }],
+    });
+
+    it('marks a field as required while the condition that requires it holds', () => {
+        renderWithGraphene(
+            <QueryClientProvider client={new QueryClient()}>
+                <ConfigurationForm adapted={adapted} onSubmit={vi.fn()} />
+            </QueryClientProvider>,
+        );
+
+        expect(document.querySelector('[data-slot=field-label][for="config.clientSecret"]')?.textContent).toContain('*');
+    });
+
+    it('moves the marker when the condition changes, and keeps the typed values', async () => {
+        const toggled = adaptAmSchema({
+            type: 'object',
+            properties: {
+                authentication: { type: 'boolean', title: 'Authentication' },
+                username: { type: 'string', title: 'Username' },
+            },
+            allOf: [{ if: { properties: { authentication: { const: true } } }, then: { required: ['username'] } }],
+        });
+        renderWithGraphene(
+            <QueryClientProvider client={new QueryClient()}>
+                <ConfigurationForm adapted={toggled} onSubmit={vi.fn()} />
+            </QueryClientProvider>,
+        );
+        const label = () => document.querySelector('[data-slot=field-label][for="config.username"]')?.textContent;
+        await userEvent.type(screen.getByRole('textbox', { name: /Username/ }), 'admin');
+        expect(label()).not.toContain('*');
+
+        await userEvent.click(screen.getByRole('switch', { name: /Authentication/ }));
+
+        await waitFor(() => expect(label()).toContain('*'));
+        expect(screen.getByRole('textbox', { name: /Username/ })).toHaveValue('admin');
     });
 });
 

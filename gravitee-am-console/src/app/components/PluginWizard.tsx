@@ -35,9 +35,10 @@ import {
 import { ArrowLeftIcon, ArrowRightIcon, DatabaseIcon, LockIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { useQuery } from '@tanstack/react-query';
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
-import { type Resolver, type ResolverResult, useForm } from 'react-hook-form';
+import { type FieldErrors, type ResolverResult, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AdaptedSchema, type SchemaResource, withSchemaDefaults } from '../../lib/forms/am-schema';
+import { richText } from '../../lib/forms/rich-text';
 import { LicenseGuard, useLicense } from '../../lib/session/license';
 import { ErrorPanel } from './ErrorPanel';
 import { PluginSchemaForm, pluginSchemaResolver, useAdaptedSchema } from './PluginSchemaForm';
@@ -70,6 +71,8 @@ interface PluginWizardProps<P extends WizardPlugin> {
     /** The first element of the schema query key, for example `identity-provider-schema`. */
     readonly schemaKey: string;
     readonly getSchema: (plugin: P) => Promise<Record<string, unknown>>;
+    /** Applied to the loaded schema. A change of the result keeps the values typed in step 2. */
+    readonly transformSchema?: (plugin: P, schema: Record<string, unknown>) => Record<string, unknown>;
     readonly resources?: readonly SchemaResource[];
     readonly onSelect?: (plugin: P) => void;
     /** Rendered below the name in step 2. */
@@ -80,8 +83,10 @@ interface PluginWizardProps<P extends WizardPlugin> {
 
 const STEPS = ['Platform', 'Settings'] as const;
 
-const nameResolver: Resolver<PluginWizardValues> = async (values): Promise<ResolverResult<PluginWizardValues>> =>
-    values.name.trim() ? { values, errors: {} } : { values: {}, errors: { name: { type: 'required', message: 'Name is required' } } };
+export const nameResolver = async <T extends { readonly name: string }>(values: T): Promise<ResolverResult<T>> =>
+    values.name.trim()
+        ? { values, errors: {} }
+        : { values: {}, errors: { name: { type: 'required', message: 'Name is required' } } as FieldErrors<T> };
 
 function displayName(plugin: WizardPlugin): string {
     return plugin.displayName ?? plugin.name;
@@ -114,7 +119,7 @@ function StepIndicator({
                         aria-current={i === step ? 'step' : undefined}
                         disabled={i === step || (i === 1 && !canOpenSettings)}
                         onClick={() => onOpen(i)}
-                        className="flex items-center gap-1.5 rounded-md disabled:cursor-default enabled:hover:underline"
+                        className="group flex items-center gap-1.5 rounded-md disabled:cursor-default"
                     >
                         <span
                             aria-hidden
@@ -124,7 +129,11 @@ function StepIndicator({
                         >
                             {i + 1}
                         </span>
-                        <span className={`text-sm ${i <= step ? 'font-medium' : 'text-muted-foreground'}`}>{label}</span>
+                        <span
+                            className={`text-sm group-enabled:group-hover:underline ${i <= step ? 'font-medium' : 'text-muted-foreground'}`}
+                        >
+                            {label}
+                        </span>
                     </button>
                     {i < STEPS.length - 1 && <div className="h-px w-8 bg-border" />}
                 </div>
@@ -227,7 +236,7 @@ function ConfigureForm<P extends WizardPlugin>({
             <Card>
                 <CardHeader>
                     <CardTitle>{displayName(plugin)}</CardTitle>
-                    {adapted.schema.description && <CardDescription>{adapted.schema.description}</CardDescription>}
+                    {adapted.schema.description && <CardDescription>{richText(adapted.schema.description)}</CardDescription>}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                     <Field data-invalid={!!nameError}>
@@ -244,7 +253,7 @@ function ConfigureForm<P extends WizardPlugin>({
                     <ArrowLeftIcon aria-hidden />
                     Back
                 </Button>
-                <Button type="submit" disabled={creating}>
+                <Button type="submit" disabled={creating || !form.formState.isValid}>
                     {creating ? 'Creating…' : 'Create'}
                 </Button>
             </div>
@@ -262,6 +271,7 @@ export function PluginWizard<P extends WizardPlugin>({
     pluginsError,
     schemaKey,
     getSchema,
+    transformSchema,
     resources,
     onSelect,
     extraFields,
@@ -301,7 +311,11 @@ export function PluginWizard<P extends WizardPlugin>({
         enabled: step === 1 && !!selected,
         staleTime: Infinity,
     });
-    const { adapted } = useAdaptedSchema(schema, resources);
+    const transformed = useMemo(
+        () => (schema && selected && transformSchema ? transformSchema(selected, schema) : schema),
+        [schema, selected, transformSchema],
+    );
+    const { adapted } = useAdaptedSchema(transformed, resources);
     const shown = (plugins ?? []).filter(plugin => matches(plugin, filter));
     const focusableId = shown.find(plugin => plugin.id === selected?.id)?.id ?? shown[0]?.id;
 

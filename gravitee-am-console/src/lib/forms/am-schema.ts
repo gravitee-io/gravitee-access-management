@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { extractDefaults, type JsonSchema } from '@gravitee/graphene-core';
+import { isRecord } from '../guards';
 
 type SchemaNode = Record<string, unknown>;
 
@@ -30,6 +31,15 @@ export interface SchemaFile {
     readonly required: boolean;
 }
 
+/** A top-level array of plain strings. Graphene renders each item as a collapsible section, so the console uses a tag input. */
+export interface SchemaStringList {
+    readonly key: string;
+    readonly title?: string;
+    readonly description?: string;
+    readonly required: boolean;
+    readonly readOnly: boolean;
+}
+
 export interface AmSchemaOptions {
     /** The choices of a `graviteeResource` field. With none, the field is read-only. */
     readonly resources?: readonly SchemaResource[];
@@ -42,6 +52,7 @@ export interface AdaptedSchema {
     /** The `if`/`then` blocks of the top-level `allOf`, each as a schema. Graphene's resolver ignores them inside `allOf`. */
     readonly conditions: readonly JsonSchema[];
     readonly files: readonly SchemaFile[];
+    readonly stringLists: readonly SchemaStringList[];
     readonly dictionaryEndpoints: readonly string[];
     /** Dotted paths of the widgets and conditions that Graphene cannot express. */
     readonly unsupported: readonly string[];
@@ -197,8 +208,28 @@ function adaptProperties(node: SchemaNode, adapted: SchemaNode, path: string, co
     }
 }
 
-function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
+/** Some plugin titles hold HTML. Graphene reads a title as a string, so the console shows it as plain text. */
+function plainText(text: unknown): string | undefined {
+    if (typeof text !== 'string') {
+        return undefined;
+    }
+    return text
+        .replace(/<br\s*\/?>|<\/br>/gi, ' ')
+        .replace(/<[^>]*>/g, '')
+        .replace(/ {2,}/g, ' ')
+        .trim();
+}
+
+function copyNode(node: SchemaNode): SchemaNode {
     const adapted: SchemaNode = Object.fromEntries(Object.entries(node).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
+    if (typeof adapted.title === 'string') {
+        adapted.title = plainText(adapted.title);
+    }
+    return adapted;
+}
+
+function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptContext): SchemaNode {
+    const adapted = copyNode(node);
 
     const widget = widgetOf(node);
     if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
@@ -245,6 +276,17 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
     return adapted;
 }
 
+function isStringList(property: SchemaNode): boolean {
+    const items = property.items as SchemaNode | undefined;
+    return (
+        property.type === 'array' &&
+        items?.type === 'string' &&
+        items.enum === undefined &&
+        widgetOf(property) === undefined &&
+        property.condition === undefined
+    );
+}
+
 /** Translates an angular-schema-form plugin schema into the Graphene `JsonSchemaForm` dialect. */
 export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {}): AdaptedSchema {
     const context: AdaptContext = { options, dictionaryEndpoints: [], unsupported: [] };
@@ -254,14 +296,24 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         .filter(([, property]) => widgetOf(property) === 'file')
         .map(([key, property]) => ({
             key,
-            title: property.title as string | undefined,
+            title: plainText(property.title),
             description: property.description as string | undefined,
             required: required.includes(key),
         }));
+    const stringLists: SchemaStringList[] = Object.entries(properties)
+        .filter(([, property]) => isStringList(property))
+        .map(([key, property]) => ({
+            key,
+            title: plainText(property.title),
+            description: property.description as string | undefined,
+            required: required.includes(key),
+            readOnly: property.readonly === true,
+        }));
+    const extracted = (key: string) => files.some(file => file.key === key) || stringLists.some(list => list.key === key);
 
-    const adapted: SchemaNode = Object.fromEntries(Object.entries(schema).filter(([keyword]) => !DROPPED_KEYWORDS.includes(keyword)));
+    const adapted = copyNode(schema);
     if (schema.properties) {
-        adaptProperties(schema, adapted, '', context, key => files.some(file => file.key === key));
+        adaptProperties(schema, adapted, '', context, extracted);
     }
     const allOf = Array.isArray(schema.allOf) ? (schema.allOf as SchemaNode[]) : [];
     const conditions = allOf.filter(entry => entry.if !== undefined).map(entry => ({ type: 'object', ...entry }) as JsonSchema);
@@ -277,15 +329,37 @@ export function adaptAmSchema(schema: SchemaNode, options: AmSchemaOptions = {})
         schema: adapted as JsonSchema,
         conditions,
         files,
+        stringLists,
         dictionaryEndpoints: context.dictionaryEndpoints,
         unsupported: context.unsupported,
     };
 }
 
+/** An empty array whose items have defaults starts with one item of those defaults. */
+function withFirstArrayItems(schema: SchemaNode, value: Record<string, unknown>): Record<string, unknown> {
+    const filled = { ...value };
+    for (const [key, property] of Object.entries((schema.properties ?? {}) as Record<string, SchemaNode>)) {
+        const current = filled[key];
+        const items = property.items as SchemaNode | undefined;
+        if (property.type === 'array' && items?.properties && (current === undefined || (Array.isArray(current) && current.length === 0))) {
+            const item = extractDefaults(items as JsonSchema) as Record<string, unknown> | undefined;
+            if (item && Object.keys(item).length > 0) {
+                filled[key] = [item];
+            }
+        } else if (property.properties && (current === undefined || (typeof current === 'object' && !Array.isArray(current)))) {
+            const nested = withFirstArrayItems(property, (current ?? {}) as Record<string, unknown>);
+            if (current !== undefined || Object.keys(nested).length > 0) {
+                filled[key] = nested;
+            }
+        }
+    }
+    return filled;
+}
+
 /** An undefined value keeps its default. */
 export function withSchemaDefaults(schema: JsonSchema, configuration: Record<string, unknown>): Record<string, unknown> {
     return {
-        ...(extractDefaults(schema) as Record<string, unknown>),
+        ...withFirstArrayItems(schema as SchemaNode, extractDefaults(schema) as Record<string, unknown>),
         ...Object.fromEntries(Object.entries(configuration).filter(([, value]) => value !== undefined)),
     };
 }
@@ -300,4 +374,75 @@ export function compatibleResources<R extends SchemaResource & { readonly type: 
         resource =>
             category === 'any' || (resourcePlugins.find(plugin => plugin.id === resource.type)?.categories ?? []).includes(category),
     );
+}
+
+/** Drops the null properties, as the Management API does before it validates a configuration. */
+export function withoutNulls(value: unknown): unknown {
+    if (Array.isArray(value)) {
+        return value.map(withoutNulls);
+    }
+    if (isRecord(value)) {
+        return Object.fromEntries(
+            Object.entries(value)
+                .filter(([, child]) => child !== null)
+                .map(([key, child]) => [key, withoutNulls(child)]),
+        );
+    }
+    return value;
+}
+
+/** Evaluates the keywords the plugin `if` blocks use. A missing property satisfies its `properties` entry, as in JSON Schema. */
+function satisfies(schema: SchemaNode, value: unknown): boolean {
+    const properties = isRecord(schema.properties) ? schema.properties : {};
+    return (
+        (!('const' in schema) || value === schema.const) &&
+        (!Array.isArray(schema.enum) || schema.enum.includes(value)) &&
+        (!Array.isArray(schema.required) || (isRecord(value) && schema.required.every(key => value[key] !== undefined))) &&
+        (!isRecord(value) ||
+            Object.entries(properties).every(
+                ([key, child]) => value[key] === undefined || (isRecord(child) && satisfies(child, value[key])),
+            )) &&
+        (!Array.isArray(schema.allOf) || schema.allOf.every(child => isRecord(child) && satisfies(child, value))) &&
+        (!Array.isArray(schema.anyOf) || schema.anyOf.some(child => isRecord(child) && satisfies(child, value))) &&
+        (!isRecord(schema.not) || !satisfies(schema.not, value))
+    );
+}
+
+/** The indexes of the conditions whose `if` the configuration meets. */
+export function activeConditions(conditions: readonly JsonSchema[], configuration: Record<string, unknown>): number[] {
+    const present = withoutNulls(configuration);
+    return conditions.flatMap((condition, index) => {
+        const test = (condition as SchemaNode).if;
+        return isRecord(test) && satisfies(test, present) ? [index] : [];
+    });
+}
+
+function withRequired(node: SchemaNode, then: SchemaNode): SchemaNode {
+    const merged: SchemaNode = { ...node };
+    if (Array.isArray(then.required)) {
+        merged.required = [...new Set([...((node.required as string[] | undefined) ?? []), ...(then.required as string[])])];
+    }
+    const properties = node.properties as Record<string, SchemaNode> | undefined;
+    if (properties && isRecord(then.properties)) {
+        merged.properties = Object.fromEntries(
+            Object.entries(properties).map(([key, child]) => {
+                const nested = (then.properties as SchemaNode)[key];
+                return [key, isRecord(nested) ? withRequired(child, nested) : child];
+            }),
+        );
+    }
+    return merged;
+}
+
+/** Marks the fields that the met conditions require, so their label shows the required marker. */
+export function withConditionalRequired(schema: JsonSchema, conditions: readonly JsonSchema[]): JsonSchema {
+    const rendered = Object.keys((schema as SchemaNode).properties ?? {});
+    return conditions.reduce<SchemaNode>((merged, condition) => {
+        const then = (condition as SchemaNode).then;
+        if (!isRecord(then)) {
+            return merged;
+        }
+        const required = Array.isArray(then.required) ? (then.required as string[]).filter(key => rendered.includes(key)) : undefined;
+        return withRequired(merged, { ...then, required });
+    }, schema as SchemaNode) as JsonSchema;
 }

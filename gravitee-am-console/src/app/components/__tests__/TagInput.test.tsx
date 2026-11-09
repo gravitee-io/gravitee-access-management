@@ -18,13 +18,20 @@ import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TagInput } from '../TagInput';
 
-function setupTagInputHarness(values: string[] = ['openid'], addOnBlur = false) {
+function setupTagInputHarness(values: string[] = ['openid'], addOnBlur = false, addOnSpace = false) {
     const onChange = vi.fn();
     const onDuplicate = vi.fn();
     renderWithGraphene(
         <>
             <label htmlFor="scopes">Scopes</label>
-            <TagInput id="scopes" values={values} onChange={onChange} onDuplicate={onDuplicate} addOnBlur={addOnBlur} />
+            <TagInput
+                id="scopes"
+                values={values}
+                onChange={onChange}
+                onDuplicate={onDuplicate}
+                addOnBlur={addOnBlur}
+                addOnSpace={addOnSpace}
+            />
         </>,
     );
     const input = screen.getByRole('combobox', { name: 'Scopes' });
@@ -65,6 +72,45 @@ describe('TagInput', () => {
         await userEvent.tab();
 
         expect(harness.onChange).toHaveBeenCalledWith(['openid', 'email']);
+    });
+
+    it('adds the typed tag on a space when addOnSpace is set', async () => {
+        const harness = setupTagInputHarness(['openid'], false, true);
+
+        await harness.type('email ');
+
+        expect(harness.onChange).toHaveBeenCalledWith(['openid', 'email']);
+        expect(harness.input).toHaveValue('');
+    });
+
+    it('splits a pasted text on its spaces when addOnSpace is set, and reports the duplicates', async () => {
+        const harness = setupTagInputHarness(['openid'], false, true);
+
+        await userEvent.click(harness.input);
+        await userEvent.paste('openid profile  email');
+
+        expect(harness.onChange).toHaveBeenCalledWith(['openid', 'profile', 'email']);
+        expect(harness.onDuplicate).toHaveBeenCalledWith('openid');
+        expect(harness.input).toHaveValue('');
+    });
+
+    it('splits a pasted text at the caret and replaces the selection', async () => {
+        const harness = setupTagInputHarness([], false, true);
+
+        await harness.type('opnid');
+        (harness.input as HTMLInputElement).setSelectionRange(0, 5);
+        await userEvent.paste('openid profile');
+
+        expect(harness.onChange).toHaveBeenLastCalledWith(['openid', 'profile']);
+    });
+
+    it('keeps a space in the typed text by default', async () => {
+        const harness = setupTagInputHarness();
+
+        await harness.type('my value');
+
+        expect(harness.onChange).not.toHaveBeenCalled();
+        expect(harness.input).toHaveValue('my value');
     });
 
     it('does not add the typed tag on blur by default', async () => {

@@ -24,6 +24,8 @@ interface TagInputProps {
     readonly onDuplicate?: (value: string) => void;
     /** Also adds the typed value when the input loses focus. */
     readonly addOnBlur?: boolean;
+    /** Also adds the typed value on a space, and splits a pasted text on its spaces. For values that hold no space. */
+    readonly addOnSpace?: boolean;
     readonly placeholder?: string;
     readonly disabled?: boolean;
     readonly invalid?: boolean;
@@ -37,6 +39,7 @@ export function TagInput({
     onChange,
     onDuplicate,
     addOnBlur = false,
+    addOnSpace = false,
     placeholder,
     disabled,
     invalid,
@@ -45,17 +48,23 @@ export function TagInput({
 }: TagInputProps) {
     const [text, setText] = useState('');
 
-    function add() {
-        const value = text.trim();
-        if (!value) {
-            return;
+    function add(input = text) {
+        const tokens = (addOnSpace ? input.split(/\s+/) : [input]).map(token => token.trim()).filter(Boolean);
+        const next = [...values];
+        for (const token of tokens) {
+            if (next.includes(token)) {
+                onDuplicate?.(token);
+            } else {
+                next.push(token);
+            }
         }
-        if (values.includes(value)) {
-            onDuplicate?.(value);
-            return;
+        if (next.length > values.length) {
+            onChange(next);
         }
-        onChange([...values, value]);
-        setText('');
+        // A single duplicate keeps its text, so the user can fix it.
+        if (next.length > values.length || tokens.length > 1) {
+            setText('');
+        }
     }
 
     return (
@@ -80,9 +89,17 @@ export function TagInput({
                     aria-invalid={invalid}
                     aria-describedby={describedBy}
                     onKeyDown={event => {
-                        if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                        if ((event.key === 'Enter' || (addOnSpace && event.key === ' ')) && !event.nativeEvent.isComposing) {
                             event.preventDefault();
                             add();
+                        }
+                    }}
+                    onPaste={event => {
+                        const pasted = event.clipboardData.getData('text');
+                        if (addOnSpace && /\s/.test(pasted)) {
+                            event.preventDefault();
+                            const { selectionStart, selectionEnd } = event.currentTarget;
+                            add(text.slice(0, selectionStart ?? text.length) + pasted + text.slice(selectionEnd ?? text.length));
                         }
                     }}
                     onBlur={() => {

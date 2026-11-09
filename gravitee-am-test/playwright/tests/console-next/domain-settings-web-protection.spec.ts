@@ -36,9 +36,9 @@ test.describe('React console: domain settings, web protection', () => {
     await page.goto(webProtectionPath(testDomain.hrid));
     await cors.getByRole('switch', { name: 'Inherit platform settings' }).click();
     await cors.getByRole('switch', { name: 'Enable CORS' }).click();
-    await cors.getByRole('spinbutton', { name: 'Max age (seconds)' }).fill('-55');
+    await cors.getByRole('spinbutton', { name: 'Max age', exact: true }).fill('-55');
 
-    await expect(cors.getByRole('spinbutton', { name: 'Max age (seconds)' })).toHaveAttribute('aria-invalid', 'true');
+    await expect(cors.getByRole('spinbutton', { name: 'Max age', exact: true })).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
