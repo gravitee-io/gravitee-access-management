@@ -47,6 +47,26 @@ describe('enrichCreationSchema', () => {
         });
     });
 
+    it('turns a certificate widget into a choice of the domain certificates, or a read-only field when there is none', () => {
+        const schema = { properties: { graviteeCertificate: { type: 'string', widget: 'graviteeCertificate' } } };
+        const certificates = [
+            { id: 'c1', name: 'Signing cert', type: 'pkcs12', usage: ['sig'] },
+            { id: 'c2', name: 'Encryption cert', type: 'pkcs12', usage: ['enc'] },
+        ];
+
+        expect(enrichCreationSchema(schema, { ...context, certificates }).properties).toEqual({
+            graviteeCertificate: {
+                type: 'string',
+                widget: 'select',
+                enum: ['c1', 'c2'],
+                titleMap: { c1: 'Signing cert', c2: 'Encryption cert' },
+            },
+        });
+        expect(enrichCreationSchema(schema, context).properties).toEqual({
+            graviteeCertificate: { type: 'string', widget: 'select', readonly: true },
+        });
+    });
+
     it('hints the pinned storage fields of a MongoDB provider when the platform restricts the system cluster', () => {
         const schema = { properties: { database: { type: 'string' }, useSystemCluster: { type: 'boolean', title: 'Use system cluster' } } };
 

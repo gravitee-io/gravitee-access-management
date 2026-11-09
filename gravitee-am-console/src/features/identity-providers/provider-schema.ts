@@ -26,6 +26,7 @@ const PINNED_STORAGE_FIELDS = ['database', 'usersCollection'];
 const PINNED_STORAGE_TOGGLE = 'useSystemCluster';
 const CREATION_HINT = 'The platform sets this value when "use system cluster" is selected.';
 const IMMUTABLE_HINT = 'Once saved, this option cannot be changed.';
+const CERTIFICATE_WIDGET = 'graviteeCertificate';
 
 /** The OpenID Connect and LDAP schema versions that accept a client certificate for mTLS. */
 const MTLS_SCHEMAS = [
@@ -68,6 +69,22 @@ function withCertificates(schema: SchemaNode, certificates: readonly Certificate
             readonly: false,
         },
     });
+}
+
+/** The Angular `MaterialCertificateComponent`: a select of the domain certificates, read-only when there is none. */
+function withCertificateSelects(schema: SchemaNode, certificates: readonly Certificate[]): SchemaNode {
+    const properties = propertiesOf(schema);
+    const fields = Object.keys(properties).filter(key => properties[key].widget === CERTIFICATE_WIDGET);
+    return mapFields(schema, fields, property =>
+        certificates.length > 0
+            ? {
+                  ...property,
+                  widget: 'select',
+                  enum: certificates.map(certificate => certificate.id),
+                  titleMap: Object.fromEntries(certificates.map(certificate => [certificate.id, certificate.name])),
+              }
+            : { ...property, widget: 'select', readonly: true },
+    );
 }
 
 /** The Angular `DataSourcesService.applyDataSourceSelection`: a data source field becomes a select, or read-only when there is none. */
@@ -116,7 +133,7 @@ function withDisclaimer(schema: SchemaNode): SchemaNode {
 
 /** The creation schema: the Angular step 2 enrichers, then the data source fields. */
 export function enrichCreationSchema(schema: SchemaNode, context: SchemaContext): SchemaNode {
-    let enriched = withCertificates(schema, context.certificates);
+    let enriched = withCertificateSelects(withCertificates(schema, context.certificates), context.certificates);
     if (context.systemClusterRestricted && context.type === MONGO_IDP_TYPE) {
         enriched = mapFields(enriched, PINNED_STORAGE_FIELDS, property => appendDescription(property, CREATION_HINT));
         enriched = withDisclaimer(enriched);
@@ -137,7 +154,7 @@ export function pinnedFields(type: string, providerRestricted: boolean, installa
 
 /** The settings schema: the Angular settings enrichers, the default rule, then the data source fields. */
 export function enrichSettingsSchema(schema: SchemaNode, context: SchemaContext & { readonly providerRestricted: boolean }): SchemaNode {
-    let enriched = withCertificates(schema, context.certificates);
+    let enriched = withCertificateSelects(withCertificates(schema, context.certificates), context.certificates);
     enriched = mapFields(enriched, pinnedFields(context.type, context.providerRestricted, context.systemClusterRestricted), property => ({
         ...property,
         readonly: true,
