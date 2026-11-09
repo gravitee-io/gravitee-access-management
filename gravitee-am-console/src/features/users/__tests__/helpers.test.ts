@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { isScimFilter, type User } from '../../../lib/api/users';
-import { auditDetails, rangeStart } from '../audit-helpers';
+import { auditDetails, rangeEnd, rangeStart } from '../audit-helpers';
 import { localRules, needsServerCheck, serverResults } from '../password-rules';
 import { additionalInformationOf, advancedSearchFilter, attributesOf, displayNameOf, isAccountLocked, userStatus } from '../user-helpers';
 
@@ -158,5 +158,11 @@ describe('audit helpers', () => {
         expect(rangeStart('1h', now)).toBe(now - 3_600_000);
         expect(rangeStart('30d', now)).toBe(now - 28 * 86_400_000);
         expect(new Date(rangeStart('90d', now)).getUTCMonth()).toBe(7);
+    });
+
+    it('ends a picked range at the last millisecond of its end day', () => {
+        const end = rangeEnd(new Date(2026, 10, 9));
+
+        expect(end).toBe(new Date(2026, 10, 10).getTime() - 1);
     });
 });

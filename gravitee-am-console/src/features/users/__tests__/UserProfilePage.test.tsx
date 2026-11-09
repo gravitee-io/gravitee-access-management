@@ -220,6 +220,31 @@ describe('UserLayout and UserProfilePage', () => {
         expect(await screen.findByText('Disabled')).toBeInTheDocument();
     });
 
+    it('keeps an unsaved edit when an action reloads the user', async () => {
+        vi.mocked(updateUserStatus).mockResolvedValue({ ...alice, enabled: false });
+        const harness = setup();
+        const firstName = await screen.findByLabelText('First name');
+        await userEvent.clear(firstName);
+        await userEvent.type(firstName, 'Alicia');
+        vi.mocked(getUser).mockResolvedValue({ ...alice, enabled: false });
+
+        await harness.openAction('Disable user');
+        await harness.confirm('Disable user', 'Disable');
+
+        expect(await screen.findByText('Disabled')).toBeInTheDocument();
+        expect(screen.getByLabelText('First name')).toHaveValue('Alicia');
+        expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    });
+
+    it('asks for a username when the field is emptied', async () => {
+        setup();
+        const username = await screen.findByRole('textbox', { name: 'Username' });
+
+        await userEvent.clear(username);
+
+        expect(username).toHaveAccessibleDescription('Enter username');
+    });
+
     it('unlocks a locked user', async () => {
         vi.mocked(unlockUser).mockResolvedValue();
         const harness = setup({ ...alice, accountNonLocked: false, accountLockedUntil: Date.now() + 60_000 });
@@ -255,7 +280,7 @@ describe('UserLayout and UserProfilePage', () => {
         await harness.confirm('Delete user', 'Delete');
 
         await waitFor(() => expect(deleteUser).toHaveBeenCalledWith(ref, 'u-1'));
-        expect(toast.success).toHaveBeenCalledWith('user alice deleted');
+        expect(toast.success).toHaveBeenCalledWith('User alice deleted');
         expect(await screen.findByText('Users list')).toBeInTheDocument();
     });
 

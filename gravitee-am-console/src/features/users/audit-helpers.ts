@@ -51,6 +51,13 @@ export function rangeStart(id: TimeRangeId, now: number): number {
     }
 }
 
+/** The end of a picked period: the whole end day, so a range of one day is not empty. */
+export function rangeEnd(day: Date): number {
+    const end = new Date(day);
+    end.setHours(23, 59, 59, 999);
+    return end.getTime();
+}
+
 /** The Angular `auditDetails`: a success message as indented JSON, a failure message as is, else the event type. */
 export function auditDetails(audit: Audit): string {
     const message = audit.outcome?.message;

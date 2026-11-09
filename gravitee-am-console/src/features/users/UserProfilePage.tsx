@@ -69,10 +69,15 @@ export function UserProfilePage() {
     const [confirmUsername, setConfirmUsername] = useState(false);
 
     const [syncedUser, setSyncedUser] = useState(user);
+    // An action in the layout reloads the user: keep what the admin typed and take only the untouched fields.
     if (syncedUser !== user) {
         setSyncedUser(user);
-        setForm(fromUser(user));
-        setUsername(user.username);
+        if (JSON.stringify(form) === JSON.stringify(fromUser(syncedUser))) {
+            setForm(fromUser(user));
+        }
+        if (username === syncedUser.username) {
+            setUsername(user.username);
+        }
     }
 
     const set = (patch: Partial<FormState>) => setForm(current => ({ ...current, ...patch }));
@@ -93,7 +98,7 @@ export function UserProfilePage() {
     const invalid = Object.values(errors).some(Boolean);
     const dirty = JSON.stringify(form) !== JSON.stringify(fromUser(user));
     const usernameError =
-        username === '' ? 'Enter Username' : !USERNAME_PATTERN.test(username) ? 'Username cannot start or end with whitespace' : undefined;
+        username === '' ? 'Enter username' : !USERNAME_PATTERN.test(username) ? 'Username cannot start or end with whitespace' : undefined;
 
     const showUsernameError = username !== user.username && Boolean(usernameError);
     const usernameDescription =

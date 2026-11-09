@@ -19,7 +19,7 @@ import {
     DataTable,
     DataTableEmptyState,
     DateCell,
-    DatePicker,
+    DateRangePicker,
     Dialog,
     DialogContent,
     DialogDescription,
@@ -41,7 +41,7 @@ import { type Audit, type AuditQuery, listAuditEventTypes, listUserAudits } from
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 import { useUser } from './UserLayout';
-import { auditDetails, formatAuditDate, rangeStart, TIME_RANGES, type TimeRangeId } from './audit-helpers';
+import { auditDetails, formatAuditDate, rangeEnd, rangeStart, TIME_RANGES, type TimeRangeId } from './audit-helpers';
 
 const ANY = '__any__';
 const PAGE_SIZE = 10;
@@ -92,7 +92,7 @@ export function UserHistoryPage() {
                 page: page - 1,
                 size: PAGE_SIZE,
                 from: filters.start ? filters.start.getTime() : rangeStart(filters.range, now),
-                to: filters.end ? filters.end.getTime() : now,
+                to: filters.end ? rangeEnd(filters.end) : now,
                 type: filters.type === ANY ? undefined : filters.type,
                 status: filters.status === ANY ? undefined : (filters.status as AuditQuery['status']),
             };
@@ -181,19 +181,12 @@ export function UserHistoryPage() {
                                 <SelectItem value="FAILURE">Failure</SelectItem>
                             </SelectContent>
                         </Select>
-                        <DatePicker
-                            className="h-8 w-44"
-                            aria-label="Start date"
-                            placeholder="Start date"
-                            value={filters.start}
-                            onChange={start => filter({ start })}
-                        />
-                        <DatePicker
-                            className="h-8 w-44"
-                            aria-label="End date"
-                            placeholder="End date"
-                            value={filters.end}
-                            onChange={end => filter({ end })}
+                        <DateRangePicker
+                            className="h-8 w-64"
+                            aria-label="Period"
+                            placeholder="Start and end dates"
+                            value={filters.start ? { from: filters.start, to: filters.end } : undefined}
+                            onChange={range => filter({ start: range?.from, end: range?.to })}
                         />
                         {filtered && (
                             <Button

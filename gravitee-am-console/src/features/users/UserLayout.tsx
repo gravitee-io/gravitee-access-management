@@ -150,7 +150,7 @@ export function UserLayout() {
             setPending(null);
             void queryClient.invalidateQueries({ queryKey: ['users', ref] });
             if (action === 'delete') {
-                toast.success(`user ${user?.username} deleted`);
+                toast.success(`User ${user?.username} deleted`);
                 navigate(listPath);
                 return;
             }
