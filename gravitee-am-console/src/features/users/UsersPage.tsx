@@ -34,6 +34,7 @@ import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { UserAvatar } from '../../app/components/UserAvatar';
 import { listApplications } from '../../lib/api/applications';
+import { HttpError } from '../../lib/api/http';
 import { listIdentityProviders } from '../../lib/api/identity-providers';
 import { listUsers, type User, type UserSearch } from '../../lib/api/users';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
@@ -224,7 +225,14 @@ export function UsersPage() {
                     }
                     emptyMessage={
                         users.error ? (
-                            <ErrorPanel description="Could not run this search. Check the syntax of the SCIM filter." error={users.error} />
+                            <ErrorPanel
+                                description={
+                                    users.error instanceof HttpError && users.error.status === 400
+                                        ? 'Could not run this search. Check the syntax of the SCIM filter.'
+                                        : 'Could not run this search.'
+                                }
+                                error={users.error}
+                            />
                         ) : (
                             <DataTableEmptyState
                                 variant="no-results"

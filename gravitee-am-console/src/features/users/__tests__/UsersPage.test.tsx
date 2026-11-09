@@ -115,6 +115,16 @@ describe('UsersPage', () => {
         expect(await screen.findByRole('link', { name: 'Alice Liddell' })).toBeInTheDocument();
     });
 
+    it('gives the SCIM syntax hint only when the API rejects the search as invalid', async () => {
+        const harness = setup();
+        await screen.findByRole('link', { name: 'Alice Liddell' });
+        vi.mocked(listUsers).mockRejectedValue(new HttpError(500, 'Service unavailable'));
+
+        await harness.search('zed');
+
+        expect(await screen.findByText('Could not run this search.')).toBeInTheDocument();
+    });
+
     it('explains the SCIM search syntax', async () => {
         setup();
         await screen.findByRole('link', { name: 'Alice Liddell' });
