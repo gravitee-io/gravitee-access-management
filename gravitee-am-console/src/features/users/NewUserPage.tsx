@@ -84,7 +84,7 @@ export function NewUserPage() {
         queryKey: ['password-policy', ref, identityProviderId],
         queryFn: () => getActivePasswordPolicy(ref, identityProviderId),
     });
-    const passwordCheck = usePasswordCheck(policy.data, password, { firstName, lastName, email });
+    const passwordCheck = usePasswordCheck(policy.isError ? null : policy.data, password, { firstName, lastName, email });
 
     const effectiveUsername = useEmailAsUsername ? email : username;
     const emailMissing = (emailRequired.data ?? true) && email === '';

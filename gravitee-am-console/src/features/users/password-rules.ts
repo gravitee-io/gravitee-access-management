@@ -65,8 +65,8 @@ export function localRules(policy: PasswordPolicy): LocalRule[] {
         rules.push(
             matchRule(
                 'consecutiveChars',
-                new RegExp(`(.)\\1{${maxConsecutiveLetters - 1}}`),
-                `Doesn't contain the same character ${maxConsecutiveLetters} times in a row`,
+                new RegExp(`(.)\\1{${maxConsecutiveLetters}}`),
+                `Doesn't contain the same character more than ${maxConsecutiveLetters} times in a row`,
                 false,
             ),
         );
@@ -78,9 +78,9 @@ export function localRules(policy: PasswordPolicy): LocalRule[] {
             passes: (password, { firstName, lastName, email }) => {
                 const lower = password.toLowerCase();
                 return (
-                    !(firstName && lower.includes(firstName)) &&
-                    !(lastName && lower.includes(lastName)) &&
-                    !(email && lower.includes(email))
+                    !(firstName && lower.includes(firstName.toLowerCase())) &&
+                    !(lastName && lower.includes(lastName.toLowerCase())) &&
+                    !(email && lower.includes(email.toLowerCase()))
                 );
             },
         });

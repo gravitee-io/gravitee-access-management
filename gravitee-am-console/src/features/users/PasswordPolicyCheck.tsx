@@ -50,7 +50,7 @@ export function usePasswordCheck(policy: PasswordPolicy | null | undefined, pass
         }),
     );
     const current = settled === password && evaluation.isSuccess ? evaluation.data : undefined;
-    const results = serverCheck ? [...local, ...serverResults(policy, profile.id, current)] : local;
+    const results = serverCheck && !evaluation.isError ? [...local, ...serverResults(policy, profile.id, current)] : local;
     return { results, valid: results.every(result => result.status === 'valid') };
 }
 

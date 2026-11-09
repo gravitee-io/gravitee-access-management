@@ -280,7 +280,7 @@ function ResetPasswordDialog({ user, onClose }: { readonly user: User; readonly 
         queryKey: ['password-policy', ref, user.sourceId],
         queryFn: () => getActivePasswordPolicy(ref, user.sourceId),
     });
-    const check = usePasswordCheck(policy.data, password, user);
+    const check = usePasswordCheck(policy.isError ? null : policy.data, password, user);
     const reset = useMutation({
         mutationFn: () => resetUserPassword(ref, user.id, password),
         onSuccess: () => {

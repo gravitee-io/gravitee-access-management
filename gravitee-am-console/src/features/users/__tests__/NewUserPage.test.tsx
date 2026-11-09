@@ -18,6 +18,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route } from 'react-router-dom';
 import { searchApplications } from '../../../lib/api/applications';
+import { HttpError } from '../../../lib/api/http';
 import { listUserIdentityProviders } from '../../../lib/api/identity-providers';
 import { evaluatePassword, getActivePasswordPolicy } from '../../../lib/api/password-policies';
 import { createUser, isEmailRequired } from '../../../lib/api/users';
@@ -178,5 +179,29 @@ describe('NewUserPage', () => {
         await waitFor(() => expect(evaluatePassword).toHaveBeenCalledWith(ref, 'pp-1', undefined, 'password'));
         expect(await screen.findByRole('img', { name: 'Failed' })).toBeInTheDocument();
         expect(harness.create()).toBeDisabled();
+    });
+
+    it('leaves the password to the server when the policy cannot be read', async () => {
+        vi.mocked(getActivePasswordPolicy).mockRejectedValue(new HttpError(403, 'Forbidden'));
+        const harness = setup();
+        await harness.fillProfile();
+
+        await harness.typePassword('short');
+
+        await waitFor(() => expect(harness.create()).toBeEnabled());
+        expect(screen.queryByRole('list', { name: 'Password policy' })).not.toBeInTheDocument();
+    });
+
+    it('keeps the local rules and drops the server rules when the evaluation fails', async () => {
+        vi.mocked(getActivePasswordPolicy).mockResolvedValue({ id: 'pp-1', minLength: 8, excludePasswordsInDictionary: true });
+        vi.mocked(evaluatePassword).mockRejectedValue(new HttpError(403, 'Forbidden'));
+        const harness = setup();
+        await harness.fillProfile();
+
+        await harness.typePassword('password');
+
+        await waitFor(() => expect(harness.create()).toBeEnabled());
+        expect(screen.getByText('Has at least 8 characters')).toBeInTheDocument();
+        expect(screen.queryByText('Should not be a common password')).not.toBeInTheDocument();
     });
 });

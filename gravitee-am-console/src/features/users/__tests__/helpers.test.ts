@@ -124,12 +124,23 @@ describe('password rules', () => {
             'Contains a number',
             'Contains a special character',
             'Contains both lowercase and uppercase letters',
-            "Doesn't contain the same character 3 times in a row",
+            "Doesn't contain the same character more than 3 times in a row",
             'Should not contain information from profile',
         ]);
         expect(results('Ab1!')).toEqual([true, true, true, true, true, true]);
-        expect(results('aaa')).toEqual([false, false, false, false, false, true]);
+        expect(results('aaa')).toEqual([false, false, false, false, true, true]);
+        expect(results('aaaa')).toEqual([true, false, false, false, false, true]);
         expect(results('Alice1!')).toEqual([true, true, true, true, true, false]);
+    });
+
+    it('finds the profile values in the password whatever their case', () => {
+        const [profileRule] = localRules({ excludeUserProfileInfoInPassword: true });
+        const profile = { firstName: 'Alice', lastName: 'Liddell', email: 'Alice@Acme.com' };
+
+        expect(profileRule.passes('xALICEx1', profile)).toBe(false);
+        expect(profileRule.passes('xliddellx1', profile)).toBe(false);
+        expect(profileRule.passes('alice@acme.com1', profile)).toBe(false);
+        expect(profileRule.passes('Wonderland1', profile)).toBe(true);
     });
 
     it('asks the server for the dictionary and the history, the history only for a known user', () => {
