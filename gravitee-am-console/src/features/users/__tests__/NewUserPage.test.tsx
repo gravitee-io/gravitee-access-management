@@ -144,6 +144,16 @@ describe('NewUserPage', () => {
         expect(screen.getByLabelText('Username')).toBeDisabled();
     });
 
+    it('describes an invalid email with its error', async () => {
+        setup();
+        const email = screen.getByLabelText('Email');
+
+        await userEvent.type(email, 'alice');
+
+        expect(email).toBeInvalid();
+        expect(email).toHaveAccessibleDescription('Not a valid email');
+    });
+
     it('lets the email be empty when the platform does not require it', async () => {
         vi.mocked(isEmailRequired).mockResolvedValue(false);
         const harness = setup();

@@ -167,7 +167,7 @@ describe('UserLayout and UserProfilePage', () => {
         setup();
         await userEvent.clear(await screen.findByLabelText('Last name'));
 
-        expect(screen.getByText('Enter last name')).toBeInTheDocument();
+        expect(screen.getByLabelText('Last name')).toHaveAccessibleDescription('Enter last name');
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
@@ -192,7 +192,7 @@ describe('UserLayout and UserProfilePage', () => {
         await userEvent.clear(username);
         await userEvent.type(username, ' alice');
 
-        expect(screen.getByText('Username cannot start or end with whitespace')).toBeInTheDocument();
+        expect(username).toHaveAccessibleDescription('Username cannot start or end with whitespace');
         expect(screen.getByRole('button', { name: 'Update username' })).toBeDisabled();
     });
 

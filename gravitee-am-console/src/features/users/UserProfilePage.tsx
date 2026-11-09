@@ -180,12 +180,13 @@ export function UserProfilePage() {
                                     value={username}
                                     disabled={!user.internal || !canEdit}
                                     aria-invalid={Boolean(username !== user.username && usernameError)}
+                                    aria-describedby="user-profile-username-message"
                                     onChange={event => setUsername(event.target.value)}
                                 />
                                 {username !== user.username && usernameError ? (
-                                    <FieldError>{usernameError}</FieldError>
+                                    <FieldError id="user-profile-username-message">{usernameError}</FieldError>
                                 ) : (
-                                    <FieldDescription>The name of the username.</FieldDescription>
+                                    <FieldDescription id="user-profile-username-message">The name of the username.</FieldDescription>
                                 )}
                             </Field>
                             {user.internal && canEdit && (
@@ -347,6 +348,8 @@ interface TextFieldProps {
 }
 
 function TextField({ id, label, hint, value, error, disabled, onChange }: TextFieldProps) {
+    // The error replaces the hint, so both take the id the input points at.
+    const messageId = `${id}-message`;
     return (
         <Field data-invalid={error ? true : undefined}>
             <FieldLabel htmlFor={id}>{label}</FieldLabel>
@@ -355,9 +358,10 @@ function TextField({ id, label, hint, value, error, disabled, onChange }: TextFi
                 value={value}
                 disabled={disabled}
                 aria-invalid={Boolean(error)}
+                aria-describedby={messageId}
                 onChange={event => onChange(event.target.value)}
             />
-            {error ? <FieldError>{error}</FieldError> : <FieldDescription>{hint}</FieldDescription>}
+            {error ? <FieldError id={messageId}>{error}</FieldError> : <FieldDescription id={messageId}>{hint}</FieldDescription>}
         </Field>
     );
 }

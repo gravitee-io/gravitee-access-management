@@ -170,6 +170,7 @@ export function NewUserPage() {
                             type="email"
                             value={email}
                             aria-invalid={emailInvalid}
+                            aria-describedby="user-email-message"
                             required={emailRequired.data ?? true}
                             onChange={event => {
                                 setEmail(event.target.value);
@@ -179,9 +180,9 @@ export function NewUserPage() {
                             }}
                         />
                         {emailInvalid ? (
-                            <FieldError>Not a valid email</FieldError>
+                            <FieldError id="user-email-message">Not a valid email</FieldError>
                         ) : (
-                            <FieldDescription>Email address for the User.</FieldDescription>
+                            <FieldDescription id="user-email-message">Email address for the User.</FieldDescription>
                         )}
                     </Field>
                     <Field>
