@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -245,5 +246,67 @@ public class IntrospectionServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(introspectionResponse -> introspectionResponse.containsKey(Claims.AUD));
+    }
+
+    @Test
+    public void shouldReturnAuthorizationDetailsUnchanged() {
+        List<Map<String, Object>> authorizationDetails = List.of(
+                Map.of("type", "payment_initiation", "instructedAmount", Map.of("currency", "EUR", "amount", "123.50")),
+                Map.of("type", "account_information", "actions", List.of("read", "list_accounts")));
+        AccessToken accessToken = new AccessToken("token");
+        accessToken.setSubject("user");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        accessToken.setAdditionalInformation(Map.of(Claims.AUTHORIZATION_DETAILS, authorizationDetails));
+        when(tokenService.introspect("token", "client-id")).thenReturn(Maybe.just(accessToken));
+        User user = new User();
+        user.setUsername("jdoe");
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").callerClientId("client-id").build();
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(IntrospectionResponse::isActive);
+        testObserver.assertValue(introspectionResponse -> "jdoe".equals(introspectionResponse.getUsername()));
+        testObserver.assertValue(introspectionResponse -> authorizationDetails.equals(introspectionResponse.get(Claims.AUTHORIZATION_DETAILS)));
+    }
+
+    @Test
+    public void shouldReturnAuthorizationDetailsWithoutUsernameForClientCredentialsToken() {
+        List<Map<String, Object>> authorizationDetails = List.of(Map.of("type", "account_information"));
+        AccessToken accessToken = new AccessToken("token");
+        accessToken.setSubject("client-id");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        accessToken.setAdditionalInformation(Map.of(Claims.AUTHORIZATION_DETAILS, authorizationDetails));
+        when(tokenService.introspect("token", (String) null)).thenReturn(Maybe.just(accessToken));
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").build();
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> authorizationDetails.equals(introspectionResponse.get(Claims.AUTHORIZATION_DETAILS)));
+        testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey("username"));
+        verify(subjectManager, never()).findUserBySub(any());
+    }
+
+    @Test
+    public void shouldReturnOnlyActiveFalseForUnknownToken() {
+        when(tokenService.introspect("token", (String) null)).thenReturn(Maybe.empty());
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.builder().token("token").build();
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.equals(Map.of("active", false)));
     }
 }
