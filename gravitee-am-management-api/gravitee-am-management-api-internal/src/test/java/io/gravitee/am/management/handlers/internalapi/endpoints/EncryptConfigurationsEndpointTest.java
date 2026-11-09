@@ -86,7 +86,7 @@ class EncryptConfigurationsEndpointTest {
 
     @Test
     void shouldReturn200WithTheReportWhenEveryPluginIsEncrypted() {
-        givenResults(result("identity_provider", Status.DONE, 3), result("reporter", Status.ALREADY_DONE, 0));
+        givenResults(result("identity_provider", Status.DONE, 3), result("reporter", Status.DONE, 0));
 
         endpoint.handle(routingContext);
 
@@ -94,7 +94,7 @@ class EncryptConfigurationsEndpointTest {
         assertThat(body())
                 .contains("\"keyId\":\"v2\"")
                 .contains("\"plugin\":\"identity_provider\",\"status\":\"DONE\",\"encrypted\":3")
-                .contains("\"plugin\":\"reporter\",\"status\":\"ALREADY_DONE\"");
+                .contains("\"plugin\":\"reporter\",\"status\":\"DONE\",\"encrypted\":0");
     }
 
     @Test
