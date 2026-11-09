@@ -23,7 +23,7 @@ import { createScope } from '@management-commands/scope-management-commands';
 import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
 import { auditIdsOfType, auditsOfType, AuditEntry } from '@management-commands/audit-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
-import { extractXsrfTokenAndActionResponse, performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfTokenAndActionResponse, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
@@ -67,6 +67,8 @@ export interface ConsentFixture extends Fixture {
   setSkipConsent: (skipConsent: boolean) => Promise<void>;
   /** Replaces the application's custom token claims. */
   setTokenCustomClaims: (tokenCustomClaims: TokenClaim[]) => Promise<void>;
+  /** Replaces the authorization detail types the application enables. */
+  setApplicationAuthorizationDetailTypes: (types: string[]) => Promise<void>;
   /** Sends a token request authenticated as the application. */
   requestToken: (params: Record<string, string>) => Promise<any>;
   /** Sends the code a callback carries to the token endpoint. */
@@ -75,6 +77,9 @@ export interface ConsentFixture extends Fixture {
   exchangeCode: (callback: Step) => Promise<any>;
   refresh: (refreshToken: string, params?: Record<string, string>) => Promise<any>;
   requestClientCredentialsToken: (params?: Record<string, string>) => Promise<any>;
+  /** Introspects a token as the application and returns the response body. */
+  introspect: (token: string, tokenTypeHint?: string) => Promise<any>;
+  revoke: (token: string, tokenTypeHint: string) => Promise<void>;
   /** USER_CONSENT_CONSENTED audit ids, as a baseline before an action. */
   consentAuditIds: () => Promise<Set<string>>;
   /** Waits until the USER_CONSENT_CONSENTED audits not in `knownIds` reach `until` in number, or satisfy it, and returns them. */
@@ -102,6 +107,8 @@ export interface ConsentPage {
 
 export interface ConsentFixtureOptions {
   skipConsent?: boolean;
+  /** Lifetime of the access and refresh tokens. */
+  tokenValiditySeconds?: number;
 }
 
 export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): Promise<ConsentFixture> => {
@@ -166,6 +173,10 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
               responseTypes: ['code', 'token', 'code token'],
               // not a default scope, so a request without scope requests none
               scopeSettings: [{ scope: CONSENT_TEST.SCOPE, defaultScope: false }],
+              ...(options.tokenValiditySeconds !== undefined && {
+                accessTokenValiditySeconds: options.tokenValiditySeconds,
+                refreshTokenValiditySeconds: options.tokenValiditySeconds,
+              }),
               authorizationDetailTypes: [
                 { type: AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE },
                 { type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE },
@@ -192,19 +203,20 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
       return { response, cookie: mergeCookies(cookie, response.headers['set-cookie']) };
     };
 
-    const requestToken = (params: Record<string, string>) =>
-      performPost(oidcConfig.token_endpoint, '', new URLSearchParams(params).toString(), {
+    const clientRequest = (endpoint: string, params: Record<string, string>) =>
+      performPost(endpoint, '', new URLSearchParams(params).toString(), {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + getBase64BasicAuth(clientId, clientSecret),
       });
 
+    const requestToken = (params: Record<string, string>) => clientRequest(oidcConfig.token_endpoint, params);
+
     const signIn = async (user: TestUser, params: Record<string, string>): Promise<Step> => {
       const loginForm = await extractXsrfTokenAndActionResponse((await authorize(params)).response);
-      const postLogin = await performFormPost(
+      const postLogin = await postForm(
         loginForm.action,
-        '',
         { 'X-XSRF-TOKEN': loginForm.token, username: user.username, password: user.password, client_id: clientId },
-        { Cookie: loginForm.headers['set-cookie'], 'Content-type': 'application/x-www-form-urlencoded' },
+        mergeCookies(loginForm.headers['set-cookie']),
       ).expect(302);
       const cookie = mergeCookies(loginForm.headers['set-cookie'], postLogin.headers['set-cookie']);
       return follow({ response: postLogin, cookie });
@@ -247,6 +259,16 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
           patchApplication(domainId, accessToken, { settings: { oauth: { tokenCustomClaims } } }, application.id),
         );
       },
+      setApplicationAuthorizationDetailTypes: async (types) => {
+        await waitForSyncAfter(domainId, () =>
+          patchApplication(
+            domainId,
+            accessToken,
+            { settings: { oauth: { authorizationDetailTypes: types.map((type) => ({ type })) } } },
+            application.id,
+          ),
+        );
+      },
       requestToken,
       redeemCode,
       exchangeCode: async (callback) => {
@@ -256,6 +278,18 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
       },
       refresh: (refreshToken, params = {}) => requestToken({ grant_type: 'refresh_token', refresh_token: refreshToken, ...params }),
       requestClientCredentialsToken: (params = {}) => requestToken({ grant_type: 'client_credentials', ...params }),
+      introspect: async (token, tokenTypeHint) => {
+        const response = await clientRequest(oidcConfig.introspection_endpoint, {
+          token,
+          ...(tokenTypeHint && { token_type_hint: tokenTypeHint }),
+        });
+        expect(response.status).toBe(200);
+        return response.body;
+      },
+      revoke: async (token, tokenTypeHint) => {
+        const response = await clientRequest(oidcConfig.revocation_endpoint, { token, token_type_hint: tokenTypeHint });
+        expect(response.status).toBe(200);
+      },
       consentAuditIds: () => auditIdsOfType(domainId, accessToken, CONSENT_TEST.CONSENTED),
       newConsentAudits: (knownIds, until) =>
         retryUntil(
@@ -335,15 +369,21 @@ export const openConsentPage = async (step: Step): Promise<ConsentPage> => {
 
 /** Submits a consent page and returns the redirect that follows. */
 export const submitConsent = async (page: ConsentPage, approval: boolean, scopes: string[] = [], action = page.action): Promise<Step> => {
-  const scopeFields = Object.fromEntries(scopes.map((scope) => [`scope.${scope}`, true]));
-  const response = await performFormPost(
+  const scopeFields = Object.fromEntries(scopes.map((scope) => [`scope.${scope}`, 'true']));
+  const response = await postForm(
     action,
-    '',
-    { 'X-XSRF-TOKEN': page.token, ...scopeFields, user_oauth_approval: approval },
-    { Cookie: page.cookie, 'Content-type': 'application/x-www-form-urlencoded' },
+    { 'X-XSRF-TOKEN': page.token, ...scopeFields, user_oauth_approval: String(approval) },
+    page.cookie,
   ).expect(302);
   return { response, cookie: mergeCookies(page.cookie, response.headers['set-cookie']) };
 };
+
+/** Submits an HTML form the way a browser does, URL-encoded. */
+const postForm = (action: string, fields: Record<string, string>, cookie: string) =>
+  performPost(action, '', new URLSearchParams(fields).toString(), {
+    Cookie: cookie,
+    'Content-type': 'application/x-www-form-urlencoded',
+  });
 
 /** The parameters of the redirect back to the client, from the query or the fragment. */
 export const callbackParams = (step: Step, separator: '?' | '#' = '?'): URLSearchParams => {
