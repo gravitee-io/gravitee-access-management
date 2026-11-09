@@ -31,6 +31,7 @@ import {
 } from '../../lib/api/identity-providers';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { Can, usePermissions } from '../../lib/session/permissions';
+import { providerTypeName } from './provider-type';
 
 export function IdentityProvidersPage() {
     const { ref, basePath } = useCurrentDomain();
@@ -58,14 +59,7 @@ export function IdentityProvidersPage() {
         onError: deleteError => toast.error(`Could not delete the provider. ${deleteError.message}`),
     });
 
-    // The Angular `displayType`: the plugin display name, else "Custom".
-    const typeName = useCallback(
-        (type: string) => {
-            const plugin = plugins.data?.find(candidate => candidate.id === type);
-            return plugin ? (plugin.displayName ?? plugin.name) : 'Custom';
-        },
-        [plugins.data],
-    );
+    const typeName = useCallback((type: string) => providerTypeName(plugins.data, type), [plugins.data]);
     const columns = useMemo<ColumnDef<IdentityProviderSummary, unknown>[]>(
         () => [
             {

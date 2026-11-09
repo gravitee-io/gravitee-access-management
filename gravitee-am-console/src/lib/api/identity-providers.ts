@@ -90,7 +90,7 @@ export async function getIdentityProviderSchema(type: string): Promise<Record<st
     return (await http<Record<string, unknown> | undefined>(`/platform/plugins/identities/${type}/schema`)) ?? {};
 }
 
-const INLINE_TYPE = 'inline-am-idp';
+export const INLINE_TYPE = 'inline-am-idp';
 const MASKED_PASSWORD = '********';
 /** The stored configuration as an object. */
 export function parseConfiguration(provider: IdentityProvider): Record<string, unknown> {

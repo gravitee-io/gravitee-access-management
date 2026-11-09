@@ -35,7 +35,7 @@ import {
 import { ArrowLeftIcon, ArrowRightIcon, DatabaseIcon, LockIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { useQuery } from '@tanstack/react-query';
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
-import { type Resolver, type ResolverResult, useForm } from 'react-hook-form';
+import { type FieldErrors, type ResolverResult, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AdaptedSchema, type SchemaResource, withSchemaDefaults } from '../../lib/forms/am-schema';
 import { richText } from '../../lib/forms/rich-text';
@@ -83,8 +83,10 @@ interface PluginWizardProps<P extends WizardPlugin> {
 
 const STEPS = ['Platform', 'Settings'] as const;
 
-const nameResolver: Resolver<PluginWizardValues> = async (values): Promise<ResolverResult<PluginWizardValues>> =>
-    values.name.trim() ? { values, errors: {} } : { values: {}, errors: { name: { type: 'required', message: 'Name is required' } } };
+export const nameResolver = async <T extends { readonly name: string }>(values: T): Promise<ResolverResult<T>> =>
+    values.name.trim()
+        ? { values, errors: {} }
+        : { values: {}, errors: { name: { type: 'required', message: 'Name is required' } } as FieldErrors<T> };
 
 function displayName(plugin: WizardPlugin): string {
     return plugin.displayName ?? plugin.name;
@@ -269,9 +271,9 @@ export function PluginWizard<P extends WizardPlugin>({
     pluginsError,
     schemaKey,
     getSchema,
+    transformSchema,
     resources,
     onSelect,
-    transformSchema,
     extraFields,
     creating,
     onCreate,

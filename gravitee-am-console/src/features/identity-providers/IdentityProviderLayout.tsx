@@ -24,6 +24,7 @@ import { isNotFound } from '../../lib/api/http';
 import { getIdentityProvider, type IdentityProvider, listIdentityProviderPlugins } from '../../lib/api/identity-providers';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
+import { providerTypeName } from './provider-type';
 
 const TABS = [
     { key: 'settings', label: 'Settings' },
@@ -86,7 +87,6 @@ export function IdentityProviderLayout() {
 
     const tabs = provider.system ? TABS.filter(tab => tab.key !== 'settings') : TABS;
     const active = pathname.slice(providerPath.length + 1).split('/')[0] || tabs[0].key;
-    const plugin = plugins.data?.find(candidate => candidate.id === provider.type);
     const context: IdentityProviderContext = { provider, listPath, providerPath };
 
     return (
@@ -100,7 +100,7 @@ export function IdentityProviderLayout() {
                 </Button>
                 <div className="flex flex-wrap items-center gap-2">
                     <h1>{provider.name}</h1>
-                    {plugins.isSuccess && <Badge variant="outline">{plugin ? (plugin.displayName ?? plugin.name) : 'Custom'}</Badge>}
+                    {plugins.isSuccess && <Badge variant="outline">{providerTypeName(plugins.data, provider.type)}</Badge>}
                     {provider.system && <Badge variant="secondary">System</Badge>}
                 </div>
             </div>

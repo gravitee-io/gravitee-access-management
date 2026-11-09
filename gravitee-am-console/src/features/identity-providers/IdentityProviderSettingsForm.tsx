@@ -16,12 +16,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, composeResolvers, toast } from '@gravitee/graphene-core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { type Resolver, type ResolverResult, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
 import { PluginSchemaForm, pluginSchemaResolver } from '../../app/components/PluginSchemaForm';
+import { nameResolver } from '../../app/components/PluginWizard';
 import { SaveBar } from '../../app/components/SaveBar';
 import { UpgradeDialog } from '../../app/components/UpgradeDialog';
 import {
+    INLINE_TYPE,
     type IdentityProvider,
     parseConfiguration,
     serializeConfiguration,
@@ -40,10 +42,6 @@ import { ProviderGeneralCard, type ProviderValues } from './ProviderGeneralCard'
 import { MONGO_IDP_TYPE } from './provider-schema';
 
 const FORM_ID = 'identity-provider-settings';
-const INLINE_TYPE = 'inline-am-idp';
-
-const nameResolver: Resolver<ProviderValues> = async (values): Promise<ResolverResult<ProviderValues>> =>
-    values.name.trim() ? { values, errors: {} } : { values: {}, errors: { name: { type: 'required', message: 'Name is required' } } };
 
 function usernames(users: unknown): string[] {
     return Array.isArray(users)
