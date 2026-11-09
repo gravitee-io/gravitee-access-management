@@ -23,7 +23,7 @@ Before you commit, run `yarn typecheck && yarn lint && yarn test && yarn build` 
 | Routing        | react-router 7, one `BrowserRouter`, nested routes, one `routes.tsx` per area                   | `src/app/App.tsx`, `src/features/<area>/routes.tsx` |
 | Data           | TanStack Query 5                                                                                | `src/app/App.tsx` for the client, pages for queries |
 | Forms          | react-hook-form 7 with Graphene `Field` parts                                                   | Graphene peer dependency                            |
-| Editors        | Monaco through Graphene `CodeEditor`. The story that first uses it adds the worker setup        | Graphene peer dependency                            |
+| Editors        | Monaco through Graphene `CodeEditor`, workers set in `src/monaco-setup.ts`. Add a language's worker there when a page first edits it | `src/monaco-setup.ts`                               |
 | Tests          | Vitest 4, Testing Library, jsdom, `src/test/setup.ts`                                           | `src/**/__tests__/`                                 |
 | Build          | rsbuild, `assetPrefix: './'`, `public/` copied to `dist/`                                       | `rsbuild.config.ts`                                 |
 | Runtime config | `constants.json` with `baseURL`, plus `build.json` with `version`, read before the first render | `src/config/app-config.ts`                          |
