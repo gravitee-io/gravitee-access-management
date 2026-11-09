@@ -15,7 +15,8 @@
  */
 import { Button, FieldError, Input } from '@gravitee/graphene-core';
 import { PlusIcon, XIcon } from '@gravitee/graphene-core/icons';
-import { type Attribute, isIncomplete } from './user-helpers';
+import { useState } from 'react';
+import type { Attribute } from './user-helpers';
 
 interface AttributesEditorProps {
     readonly attributes: readonly Attribute[];
@@ -26,13 +27,28 @@ interface AttributesEditorProps {
 export function AttributesEditor({ attributes, editable, onChange }: AttributesEditorProps) {
     const update = (index: number, patch: Partial<Attribute>) =>
         onChange(attributes.map((attribute, i) => (i === index ? { ...attribute, ...patch } : attribute)));
+    // A field shows its error once it has lost focus, and hides it while it is edited.
+    const [focused, setFocused] = useState<string | null>(null);
+    const [blurred, setBlurred] = useState<ReadonlySet<string>>(new Set());
+    const leave = (field: string) => {
+        setFocused(null);
+        setBlurred(current => new Set(current).add(field));
+    };
+    const remove = (index: number) => {
+        onChange(attributes.filter((_, i) => i !== index));
+        setBlurred(new Set());
+    };
+    const showError = (field: string, fromStart: boolean) => focused !== field && (fromStart || blurred.has(field));
 
     return (
         <div className="flex flex-col gap-2">
             {attributes.length === 0 && <p className="text-sm text-muted-foreground">No additional information.</p>}
             {attributes.map((attribute, index) => {
-                const nameError = isIncomplete(attribute) && attribute.name === '' ? 'Enter a name' : undefined;
-                const valueError = isIncomplete(attribute) && attribute.name !== '' ? 'Enter a value' : undefined;
+                const nameError = attribute.name === '' && showError(`${index}-name`, false) ? 'Enter a name' : undefined;
+                const valueError =
+                    !attribute.readOnly && attribute.value === '' && showError(`${index}-value`, attribute.stored)
+                        ? 'Enter a value'
+                        : undefined;
                 return (
                     <div key={index} className="flex items-start gap-2">
                         <div className="flex w-48 flex-col gap-1">
@@ -43,6 +59,8 @@ export function AttributesEditor({ attributes, editable, onChange }: AttributesE
                                 disabled={!editable || attribute.stored}
                                 aria-invalid={Boolean(nameError)}
                                 aria-describedby={nameError ? `attribute-${index}-name-error` : undefined}
+                                onFocus={() => setFocused(`${index}-name`)}
+                                onBlur={() => leave(`${index}-name`)}
                                 onChange={event => update(index, { name: event.target.value })}
                             />
                             {nameError && <FieldError id={`attribute-${index}-name-error`}>{nameError}</FieldError>}
@@ -55,6 +73,8 @@ export function AttributesEditor({ attributes, editable, onChange }: AttributesE
                                 disabled={!editable || attribute.readOnly}
                                 aria-invalid={Boolean(valueError)}
                                 aria-describedby={valueError ? `attribute-${index}-value-error` : undefined}
+                                onFocus={() => setFocused(`${index}-value`)}
+                                onBlur={() => leave(`${index}-value`)}
                                 onChange={event => update(index, { value: event.target.value })}
                                 className={attribute.readOnly ? 'font-mono' : undefined}
                             />
@@ -66,7 +86,7 @@ export function AttributesEditor({ attributes, editable, onChange }: AttributesE
                                 size="icon-sm"
                                 type="button"
                                 aria-label={`Remove ${attribute.name || 'attribute'}`}
-                                onClick={() => onChange(attributes.filter((_, i) => i !== index))}
+                                onClick={() => remove(index)}
                             >
                                 <XIcon aria-hidden />
                             </Button>

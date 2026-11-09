@@ -188,12 +188,28 @@ describe('UserLayout and UserProfilePage', () => {
         const name = names[names.length - 1];
 
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+        expect(name).toHaveAttribute('aria-invalid', 'false');
         await userEvent.type(name, 'role');
-        expect(screen.getByLabelText('Value of role')).toHaveAccessibleDescription('Enter a value');
+        const value = screen.getByLabelText('Value of role');
+        await userEvent.click(value);
+        expect(value).toHaveAttribute('aria-invalid', 'false');
+        await userEvent.tab();
+        expect(value).toHaveAccessibleDescription('Enter a value');
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-        await userEvent.type(screen.getByLabelText('Value of role'), 'admin');
+        await userEvent.type(value, 'admin');
 
         expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    });
+
+    it('blocks the save when a stored attribute value is emptied', async () => {
+        setup();
+        const team = await screen.findByLabelText('Value of team');
+
+        await userEvent.clear(team);
+        await userEvent.tab();
+
+        expect(team).toHaveAccessibleDescription('Enter a value');
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
     it('updates the username after a confirmation', async () => {

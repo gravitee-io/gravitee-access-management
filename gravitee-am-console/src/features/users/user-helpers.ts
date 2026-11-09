@@ -55,7 +55,7 @@ export function advancedSearchFilter({ applications, providers, disabledOnly }: 
 export type Attribute = { readonly name: string; readonly value: string; readonly stored: boolean; readonly readOnly: boolean };
 
 export function isIncomplete(attribute: Attribute): boolean {
-    return !attribute.stored && (attribute.name === '' || attribute.value === '');
+    return !attribute.readOnly && (attribute.name === '' || attribute.value === '');
 }
 
 export function attributesOf(info: Record<string, unknown> | undefined): Attribute[] {
