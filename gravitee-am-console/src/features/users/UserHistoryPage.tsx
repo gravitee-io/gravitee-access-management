@@ -256,7 +256,7 @@ export function UserHistoryPage() {
                         </Button>
                     </DialogHeader>
                     {selected && (
-                        <div className="flex flex-col gap-4">
+                        <div className="flex min-w-0 flex-col gap-4">
                             <dl className="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <dt className="text-xs text-muted-foreground">IP</dt>
@@ -267,7 +267,9 @@ export function UserHistoryPage() {
                                     <dd className="truncate text-sm">{selected.accessPoint?.userAgent ?? '—'}</dd>
                                 </div>
                             </dl>
+                            {/* Monaco keeps the width it had when the dialog shrinks, so each size gets its own editor. */}
                             <CodeEditor
+                                key={String(maximized)}
                                 value={auditDetails(selected)}
                                 language="json"
                                 readOnly
