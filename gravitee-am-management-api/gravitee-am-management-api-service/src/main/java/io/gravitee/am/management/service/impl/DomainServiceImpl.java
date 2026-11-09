@@ -833,72 +833,53 @@ public class DomainServiceImpl implements DomainService {
                     if (domain.getOidc() != null && domain.getOidc().getCimdSettings() != null) {
                         domain.getOidc().getCimdSettings().setTemplateId(null);
                     }
-                    // delete applications
                     return applicationService.findByDomain(domainId)
                             .flatMapCompletable(applications -> {
                                 List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId(), domain)).toList();
                                 return Completable.concat(deleteApplicationsCompletable);
                             })
-                            // delete identity providers
                             .andThen(identityProviderService.deleteByDomain(domainId))
-                            // delete protected resources
                             .andThen(protectedResourceService.findByDomain(domainId)
                                     .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
                             )
-                            // delete certificates
                             .andThen(certificateService.deleteByDomain(domainId, principal))
-                            // delete extension grants
                             .andThen(extensionGrantService.deleteByDomain(domainId))
-                            // delete roles
                             .andThen(roleService.findByDomain(domainId)
                                     .flatMapCompletable(roles -> {
                                         List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(DOMAIN, domainId, r.getId())).toList();
                                         return Completable.concat(deleteRolesCompletable);
                                     })
                             )
-                            // delete scopes, which are control plane rows: their approvals go with the data plane
                             .andThen(scopeService.deleteByDomain(domain))
-                            // delete email templates
                             .andThen(emailTemplateService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(emailTemplate -> emailTemplateService.delete(emailTemplate.getId()))
                             )
-                            // delete form templates
                             .andThen(formService.findByDomain(domainId)
                                     .flatMapCompletable(formTemplate -> formService.delete(domainId, formTemplate.getId()))
                             )
-                            // clear the data plane while the domain's reporters are still around to audit it
                             .andThen(clearDataPlane(domain, principal))
-                            // delete reporters
                             .andThen(Completable.defer(() -> reporterService.deleteByDomain(domainId)))
                             .andThen(reporterService.notifyInheritedReporters(Reference.organization(graviteeContext.getOrganizationId()),
                                     Reference.domain(domainId),
                                     Action.DELETE))
-                            // delete flows
                             .andThen(flowService.findAll(DOMAIN, domainId)
                                     .filter(f -> f.getId() != null)
                                     .flatMapCompletable(flows -> flowService.delete(flows.getId()))
                             )
-                            // delete memberships
                             .andThen(membershipService.findByReference(domainId, DOMAIN)
                                     .flatMapCompletable(membership -> membershipService.delete(new Reference(membership.getReferenceType(), membership.getReferenceId()), membership.getId()))
                             )
-                            // delete factors
                             .andThen(factorService.deleteByDomain(domainId))
-                            // delete alert triggers
                             .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
                                     .flatMapCompletable(alertTrigger -> alertTriggerService.delete(alertTrigger.getReferenceType(), alertTrigger.getReferenceId(), alertTrigger.getId(), principal)
                                     )
                             )
-                            // delete alert notifiers
                             .andThen(alertNotifierService.deleteByDomain(domainId))
-                            // delete auth device notifier
                             .andThen(authenticationDeviceNotifierService.deleteByDomain(domainId))
-                            // delete i18n dictionaries
                             .andThen(i18nDictionaryService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(i18nDictionary -> i18nDictionaryService.delete(DOMAIN, domainId, i18nDictionary.getId(), principal)
                                     )
                             )
-                            // delete theme
                             // TODO improve this by implement a deleteThemeByReferenceId method
                             .andThen(themeService.findByReference(ReferenceType.DOMAIN, domainId)
                                     .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
