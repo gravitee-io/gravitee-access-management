@@ -48,7 +48,7 @@ import { ApplicationPicker, type PickedApplication } from './ApplicationPicker';
 import { AttributesEditor } from './AttributesEditor';
 import { IconCardHeader } from './IconCardHeader';
 import { PasswordRuleList, usePasswordCheck } from './PasswordPolicyCheck';
-import { type Attribute, EMAIL_PATTERN, additionalInformationOf } from './user-helpers';
+import { type Attribute, EMAIL_PATTERN, additionalInformationOf, isIncomplete } from './user-helpers';
 
 const NONE = '__none__';
 
@@ -95,6 +95,7 @@ export function NewUserPage() {
         !emailMissing &&
         !emailInvalid &&
         effectiveUsername !== '' &&
+        !attributes.some(isIncomplete) &&
         (preRegistration || (password !== '' && passwordCheck.valid));
 
     const create = useMutation({

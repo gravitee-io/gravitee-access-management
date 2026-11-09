@@ -181,6 +181,21 @@ describe('UserLayout and UserProfilePage', () => {
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
+    it('blocks the save until a new attribute has a name and a value', async () => {
+        setup();
+        await userEvent.click(await screen.findByRole('button', { name: 'Add attribute' }));
+        const names = screen.getAllByLabelText('Attribute name');
+        const name = names[names.length - 1];
+
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+        await userEvent.type(name, 'role');
+        expect(screen.getByLabelText('Value of role')).toHaveAccessibleDescription('Enter a value');
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+        await userEvent.type(screen.getByLabelText('Value of role'), 'admin');
+
+        expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    });
+
     it('updates the username after a confirmation', async () => {
         vi.mocked(updateUsername).mockResolvedValue({ ...alice, username: 'alice2' });
         const harness = setup();

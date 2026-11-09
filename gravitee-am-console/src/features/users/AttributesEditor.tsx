@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Button, Input } from '@gravitee/graphene-core';
+import { Button, FieldError, Input } from '@gravitee/graphene-core';
 import { PlusIcon, XIcon } from '@gravitee/graphene-core/icons';
-import type { Attribute } from './user-helpers';
+import { type Attribute, isIncomplete } from './user-helpers';
 
 interface AttributesEditorProps {
     readonly attributes: readonly Attribute[];
@@ -30,37 +30,50 @@ export function AttributesEditor({ attributes, editable, onChange }: AttributesE
     return (
         <div className="flex flex-col gap-2">
             {attributes.length === 0 && <p className="text-sm text-muted-foreground">No additional information.</p>}
-            {attributes.map((attribute, index) => (
-                <div key={index} className="flex items-center gap-2">
-                    <Input
-                        aria-label="Attribute name"
-                        placeholder="Name"
-                        value={attribute.name}
-                        disabled={!editable || attribute.stored}
-                        onChange={event => update(index, { name: event.target.value })}
-                        className="w-48"
-                    />
-                    <Input
-                        aria-label={`Value of ${attribute.name || 'attribute'}`}
-                        placeholder="Value"
-                        value={attribute.value}
-                        disabled={!editable || attribute.readOnly}
-                        onChange={event => update(index, { value: event.target.value })}
-                        className={attribute.readOnly ? 'font-mono' : undefined}
-                    />
-                    {editable && (
-                        <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            type="button"
-                            aria-label={`Remove ${attribute.name || 'attribute'}`}
-                            onClick={() => onChange(attributes.filter((_, i) => i !== index))}
-                        >
-                            <XIcon aria-hidden />
-                        </Button>
-                    )}
-                </div>
-            ))}
+            {attributes.map((attribute, index) => {
+                const nameError = isIncomplete(attribute) && attribute.name === '' ? 'Enter a name' : undefined;
+                const valueError = isIncomplete(attribute) && attribute.name !== '' ? 'Enter a value' : undefined;
+                return (
+                    <div key={index} className="flex items-start gap-2">
+                        <div className="flex w-48 flex-col gap-1">
+                            <Input
+                                aria-label="Attribute name"
+                                placeholder="Name"
+                                value={attribute.name}
+                                disabled={!editable || attribute.stored}
+                                aria-invalid={Boolean(nameError)}
+                                aria-describedby={nameError ? `attribute-${index}-name-error` : undefined}
+                                onChange={event => update(index, { name: event.target.value })}
+                            />
+                            {nameError && <FieldError id={`attribute-${index}-name-error`}>{nameError}</FieldError>}
+                        </div>
+                        <div className="flex flex-1 flex-col gap-1">
+                            <Input
+                                aria-label={`Value of ${attribute.name || 'attribute'}`}
+                                placeholder="Value"
+                                value={attribute.value}
+                                disabled={!editable || attribute.readOnly}
+                                aria-invalid={Boolean(valueError)}
+                                aria-describedby={valueError ? `attribute-${index}-value-error` : undefined}
+                                onChange={event => update(index, { value: event.target.value })}
+                                className={attribute.readOnly ? 'font-mono' : undefined}
+                            />
+                            {valueError && <FieldError id={`attribute-${index}-value-error`}>{valueError}</FieldError>}
+                        </div>
+                        {editable && (
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                type="button"
+                                aria-label={`Remove ${attribute.name || 'attribute'}`}
+                                onClick={() => onChange(attributes.filter((_, i) => i !== index))}
+                            >
+                                <XIcon aria-hidden />
+                            </Button>
+                        )}
+                    </div>
+                );
+            })}
             {editable && (
                 <Button
                     variant="outline"

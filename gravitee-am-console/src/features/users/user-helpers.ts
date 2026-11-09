@@ -54,6 +54,10 @@ export function advancedSearchFilter({ applications, providers, disabledOnly }: 
 /** A stored row keeps its name. */
 export type Attribute = { readonly name: string; readonly value: string; readonly stored: boolean; readonly readOnly: boolean };
 
+export function isIncomplete(attribute: Attribute): boolean {
+    return !attribute.stored && (attribute.name === '' || attribute.value === '');
+}
+
 export function attributesOf(info: Record<string, unknown> | undefined): Attribute[] {
     return Object.entries(info ?? {})
         .filter(([, value]) => value !== null && value !== undefined)

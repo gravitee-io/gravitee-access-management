@@ -28,7 +28,7 @@ import { AttributesEditor } from './AttributesEditor';
 import { IconCardHeader } from './IconCardHeader';
 import { UserActivityCard } from './UserActivityCard';
 import { useUser, userQueryKey } from './UserLayout';
-import { type Attribute, EMAIL_PATTERN, additionalInformationOf, attributesOf, displayNameOf } from './user-helpers';
+import { type Attribute, EMAIL_PATTERN, additionalInformationOf, attributesOf, displayNameOf, isIncomplete } from './user-helpers';
 
 const FORM_ID = 'user-profile-form';
 const USERNAME_PATTERN = /^[^\s].*[^\s]$/;
@@ -93,7 +93,7 @@ export function UserProfilePage() {
                   ? 'Not a valid email'
                   : undefined,
     };
-    const invalid = Object.values(errors).some(Boolean);
+    const invalid = Object.values(errors).some(Boolean) || form.attributes.some(isIncomplete);
     const dirty = JSON.stringify(form) !== JSON.stringify(fromUser(user));
     const usernameError =
         username === '' ? 'Enter username' : !USERNAME_PATTERN.test(username) ? 'Username cannot start or end with whitespace' : undefined;
