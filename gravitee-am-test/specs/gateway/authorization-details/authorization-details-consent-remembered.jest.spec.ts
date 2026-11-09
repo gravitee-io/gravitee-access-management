@@ -29,7 +29,6 @@ import {
   setupConsentFixture,
   Step,
   submitConsent,
-  TestUser,
 } from './fixtures/authorization-details-consent-fixture';
 
 // RFC 9396: an approval is remembered, matched exactly, for the user and the application
@@ -46,19 +45,11 @@ afterAll(async () => {
   if (fixture) await fixture.cleanUp();
 });
 
-/** Signs the user in and approves the details, returning the signed-in session. */
-const approve = async (user: TestUser, details: unknown[]): Promise<Step> => {
-  const signedIn = await fixture.signIn(user, { authorization_details: toDetailsParam(...details) });
-  const callback = await follow(await submitConsent(await openConsentPage(signedIn), true));
-  expectCode(callback);
-  return callback;
-};
-
 const authorizeAgain = (session: Step, params: Record<string, string>): Promise<Step> => fixture.authorize(params, session.cookie);
 
 describe('Authorization detail consent - remembered consent', () => {
   it(jira`should not ask again for details the user approved ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [payment(), account()]);
+    const session = await fixture.approve(fixture.nextUser(), [payment(), account()]);
 
     const again = await authorizeAgain(session, { authorization_details: toDetailsParam(payment(), account()) });
 
@@ -66,7 +57,7 @@ describe('Authorization detail consent - remembered consent', () => {
   });
 
   it(jira`should match approved details whatever their order and member order ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [payment('EUR', '10.00'), account()]);
+    const session = await fixture.approve(fixture.nextUser(), [payment('EUR', '10.00'), account()]);
 
     const again = await authorizeAgain(session, {
       authorization_details: toDetailsParam(account(), {
@@ -79,7 +70,7 @@ describe('Authorization detail consent - remembered consent', () => {
   });
 
   it(jira`should ask again for a detail that differs from the approved one ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [account({ actions: ['read', 'write'] })]);
+    const session = await fixture.approve(fixture.nextUser(), [account({ actions: ['read', 'write'] })]);
 
     const again = await authorizeAgain(session, { authorization_details: toDetailsParam(account({ actions: ['write', 'read'] })) });
 
@@ -87,7 +78,7 @@ describe('Authorization detail consent - remembered consent', () => {
   });
 
   it(jira`should only show the details not approved yet, and grant every requested detail ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [payment()]);
+    const session = await fixture.approve(fixture.nextUser(), [payment()]);
     const again = await authorizeAgain(session, { authorization_details: toDetailsParam(payment(), account()) });
 
     const page = await openConsentPage(again);
@@ -107,7 +98,7 @@ describe('Authorization detail consent - remembered consent', () => {
   });
 
   it(jira`should ask again for an approved detail the user rejected later ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [account()]);
+    const session = await fixture.approve(fixture.nextUser(), [account()]);
     const prompted = await authorizeAgain(session, { prompt: 'consent', authorization_details: toDetailsParam(account()) });
     const rejected = await follow(await submitConsent(await openConsentPage(prompted), false));
     expectError(rejected, 'access_denied');
@@ -120,7 +111,7 @@ describe('Authorization detail consent - remembered consent', () => {
 
 describe('Authorization detail consent - prompt', () => {
   it(jira`should show every requested detail with prompt=consent, even approved ones ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [payment()]);
+    const session = await fixture.approve(fixture.nextUser(), [payment()]);
 
     const again = await authorizeAgain(session, { prompt: 'consent', authorization_details: toDetailsParam(payment(), account()) });
 
@@ -129,7 +120,7 @@ describe('Authorization detail consent - prompt', () => {
   });
 
   it(jira`should require interaction with prompt=none when details are not approved yet ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [payment()]);
+    const session = await fixture.approve(fixture.nextUser(), [payment()]);
 
     const again = await authorizeAgain(session, { prompt: 'none', authorization_details: toDetailsParam(account()) });
 
@@ -137,7 +128,7 @@ describe('Authorization detail consent - prompt', () => {
   });
 
   it(jira`should issue a code with prompt=none when every detail is approved ${'AM-8058'}`, async () => {
-    const session = await approve(fixture.nextUser(), [payment()]);
+    const session = await fixture.approve(fixture.nextUser(), [payment()]);
 
     const again = await authorizeAgain(session, { prompt: 'none', authorization_details: toDetailsParam(payment()) });
 

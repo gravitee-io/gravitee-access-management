@@ -20,7 +20,9 @@ import io.gravitee.am.common.event.AuthorizationDetailTypeEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
+import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
@@ -30,19 +32,26 @@ import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.event.Event;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -72,6 +81,10 @@ class AuthorizationDetailsValidatorTest {
                 }
               }
             }""";
+
+    private static final Map<String, Object> GRANTED_PAYMENT = Map.of("type", PAYMENT, "actions", List.of("initiate", "status"));
+    private static final Map<String, Object> GRANTED_ACCOUNT = Map.of("type", ACCOUNT, "locations", List.of("https://bank.example.com"));
+    private static final AuthorizationDetails GRANTED = AuthorizationDetails.of(List.of(GRANTED_PAYMENT, GRANTED_ACCOUNT));
 
     private final Map<String, AuthorizationDetailType> domainTypes = new HashMap<>();
     private final AuthorizationDetailTypeManager manager = mock(AuthorizationDetailTypeManager.class);
@@ -250,6 +263,77 @@ class AuthorizationDetailsValidatorTest {
                 .extracting(AuthorizationDetail::getActions).isEqualTo(List.of("list_accounts"));
         assertThat(details.getByType().get(PAYMENT)).singleElement()
                 .extracting(detail -> detail.get("instructedAmount")).isEqualTo(Map.of("currency", "EUR", "amount", "1"));
+    }
+
+    @Test
+    void shouldReturnNullWhenATokenRequestHasNoAuthorizationDetails() {
+        assertThat(validator.validate(tokenRequest(null), client)).isNull();
+    }
+
+    @Test
+    void shouldValidateTheAuthorizationDetailsOfATokenRequest() {
+        assertThat(validator.validate(tokenRequest(VALID_PAYMENT), client).getRaw())
+                .containsExactly(Map.of("type", PAYMENT, "instructedAmount", Map.of("currency", "EUR", "amount", "1")));
+        assertThatThrownBy(() -> validator.validate(tokenRequest("[{\"type\":\"internal_transfer\"}]"), client))
+                .isInstanceOf(InvalidAuthorizationDetailsException.class)
+                .hasMessage("authorization_details[0] of type 'internal_transfer' is not allowed for this client");
+    }
+
+    @Test
+    void shouldAcceptNothingRequestedWhateverWasGranted() {
+        assertThatCode(() -> validator.validateGranted(null, GRANTED)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validateGranted(null, null)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldAcceptTheGrantedDetailsInAnyOrder() {
+        assertThatCode(() -> validator.validateGranted(AuthorizationDetails.of(List.of(GRANTED_ACCOUNT, GRANTED_PAYMENT)), GRANTED))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldIgnoreMemberOrderWithinAGrantedElement() {
+        Map<String, Object> reordered = new LinkedHashMap<>();
+        reordered.put("actions", List.of("initiate", "status"));
+        reordered.put("type", PAYMENT);
+
+        assertThatCode(() -> validator.validateGranted(AuthorizationDetails.of(List.of(reordered, GRANTED_ACCOUNT)), GRANTED))
+                .doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("detailsDifferentFromGranted")
+    void shouldRejectDetailsThatDifferFromTheGrantedOnes(String difference, List<Map<String, Object>> requested) {
+        assertThatThrownBy(() -> validator.validateGranted(AuthorizationDetails.of(requested), GRANTED))
+                .isInstanceOf(InvalidAuthorizationDetailsException.class)
+                .hasMessage("authorization_details do not match the granted authorization details");
+    }
+
+    static Stream<Arguments> detailsDifferentFromGranted() {
+        return Stream.of(
+                Arguments.of("subset", List.of(GRANTED_PAYMENT)),
+                Arguments.of("extra element", List.of(GRANTED_PAYMENT, GRANTED_ACCOUNT, Map.of("type", NOT_ENABLED))),
+                Arguments.of("duplicated element", List.of(GRANTED_PAYMENT, GRANTED_ACCOUNT, GRANTED_PAYMENT)),
+                Arguments.of("changed value", List.of(Map.of("type", PAYMENT, "actions", List.of("initiate")), GRANTED_ACCOUNT)),
+                Arguments.of("reordered nested array", List.of(Map.of("type", PAYMENT, "actions", List.of("status", "initiate")), GRANTED_ACCOUNT)),
+                Arguments.of("replaced element", List.of(GRANTED_PAYMENT, Map.of("type", ACCOUNT))));
+    }
+
+    @Test
+    void shouldRejectDetailsWhenNoneWereGranted() {
+        assertThatThrownBy(() -> validator.validateGranted(GRANTED, null))
+                .isInstanceOf(InvalidAuthorizationDetailsException.class)
+                .hasMessage("no authorization_details were granted");
+    }
+
+    private static TokenRequest tokenRequest(String authorizationDetails) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        if (authorizationDetails != null) {
+            parameters.add(Parameters.AUTHORIZATION_DETAILS, authorizationDetails);
+        }
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setParameters(parameters);
+        return tokenRequest;
     }
 
     private void assertRejected(String authorizationDetails, Class<? extends OAuth2Exception> error, String description) {

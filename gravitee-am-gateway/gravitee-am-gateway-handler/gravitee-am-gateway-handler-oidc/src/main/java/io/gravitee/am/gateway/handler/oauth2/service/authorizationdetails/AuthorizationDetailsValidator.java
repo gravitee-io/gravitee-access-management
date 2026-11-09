@@ -25,6 +25,7 @@ import io.gravitee.am.common.event.AuthorizationDetailTypeEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidAuthorizationDetailsException;
+import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.SpecificationVersion;
@@ -122,6 +123,32 @@ public class AuthorizationDetailsValidator extends AbstractService implements In
             checkSemantics(elements.get(index), index, client);
         }
         return AuthorizationDetails.of(MAPPER.convertValue(elements, DETAILS));
+    }
+
+    /**
+     * @return the validated {@code authorization_details} parameter, or {@code null} when the request has none
+     */
+    public AuthorizationDetails validate(TokenRequest tokenRequest, Client client) {
+        String authorizationDetails = tokenRequest.parameters() == null ? null : tokenRequest.parameters().getFirst(AUTHORIZATION_DETAILS);
+        return authorizationDetails == null ? null : validate(authorizationDetails, client);
+    }
+
+    /**
+     * Fails with {@link InvalidAuthorizationDetailsException} unless the requested details equal the granted ones in any
+     * order. A {@code null} request passes.
+     *
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc9396#section-6.1">RFC 9396 Section 6.1</a>
+     */
+    public void validateGranted(AuthorizationDetails requested, AuthorizationDetails granted) {
+        if (requested == null) {
+            return;
+        }
+        if (granted == null || granted.isEmpty()) {
+            throw new InvalidAuthorizationDetailsException("no " + AUTHORIZATION_DETAILS + " were granted");
+        }
+        if (!AuthorizationDetailDigest.ofAll(requested.getAll()).equals(AuthorizationDetailDigest.ofAll(granted.getAll()))) {
+            throw new InvalidAuthorizationDetailsException(AUTHORIZATION_DETAILS + " do not match the granted authorization details");
+        }
     }
 
     private static JsonNode parse(String authorizationDetails) {
