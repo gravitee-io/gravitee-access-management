@@ -100,6 +100,8 @@ export function UsersPage() {
 
     const searching = text !== '' || filter !== '';
     const isFirstUse = users.data?.totalCount === 0 && !searching;
+    // A search the API rejects, such as a SCIM filter still being typed, keeps the search field on screen.
+    const loadFailed = users.error !== null && !searching;
 
     const columns: ColumnDef<User, unknown>[] = [
         {
@@ -160,9 +162,9 @@ export function UsersPage() {
             <PageHeader
                 title="Users"
                 description="People who can sign in to the applications registered in this domain."
-                actions={!users.error && !isFirstUse && <Can all={['domain_user_create']}>{createButton}</Can>}
+                actions={!loadFailed && !isFirstUse && <Can all={['domain_user_create']}>{createButton}</Can>}
             />
-            {users.error ? (
+            {loadFailed ? (
                 <ErrorPanel description="Could not load the users." error={users.error} />
             ) : isFirstUse ? (
                 <div className="rounded-lg border border-border">
@@ -178,7 +180,7 @@ export function UsersPage() {
                 <DataTable
                     aria-label="Users"
                     columns={columns}
-                    data={users.data?.data ?? []}
+                    data={users.error ? [] : (users.data?.data ?? [])}
                     loading={users.isFetching}
                     skeletonCount={pageSize}
                     serverSide
@@ -221,22 +223,26 @@ export function UsersPage() {
                         </div>
                     }
                     emptyMessage={
-                        <DataTableEmptyState
-                            variant="no-results"
-                            icon={<SearchIcon />}
-                            title="No users match your search"
-                            description='Try another name, username or email, or a SCIM filter such as userName sw "alice".'
-                            action={
-                                <Button variant="outline" size="sm" onClick={clearSearch}>
-                                    Clear filters
-                                </Button>
-                            }
-                        />
+                        users.error ? (
+                            <ErrorPanel description="Could not run this search. Check the syntax of the SCIM filter." error={users.error} />
+                        ) : (
+                            <DataTableEmptyState
+                                variant="no-results"
+                                icon={<SearchIcon />}
+                                title="No users match your search"
+                                description='Try another name, username or email, or a SCIM filter such as userName sw "alice".'
+                                action={
+                                    <Button variant="outline" size="sm" onClick={clearSearch}>
+                                        Clear filters
+                                    </Button>
+                                }
+                            />
+                        )
                     }
                     pagination={{
                         page,
                         pageSize,
-                        totalCount: users.data?.totalCount ?? 0,
+                        totalCount: users.error ? 0 : (users.data?.totalCount ?? 0),
                         onPageChange: setPage,
                         onPageSizeChange: size => {
                             setPageSize(size);

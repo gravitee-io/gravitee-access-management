@@ -101,6 +101,20 @@ describe('UsersPage', () => {
         expect(screen.getByRole('searchbox', { name: 'Search users' })).toHaveValue('client eq "app-1" and enabled eq false');
     });
 
+    it('keeps the search field when the API rejects the search', async () => {
+        const harness = setup();
+        await screen.findByRole('link', { name: 'Alice Liddell' });
+        vi.mocked(listUsers).mockRejectedValue(new HttpError(400, 'Invalid filter'));
+
+        await harness.search('enabled eq');
+
+        expect(await screen.findByText('Could not run this search. Check the syntax of the SCIM filter.')).toBeInTheDocument();
+        expect(screen.getByRole('searchbox', { name: 'Search users' })).toHaveValue('enabled eq');
+        vi.mocked(listUsers).mockResolvedValue({ data: [alice], currentPage: 0, totalCount: 1 });
+        await harness.search(' true');
+        expect(await screen.findByRole('link', { name: 'Alice Liddell' })).toBeInTheDocument();
+    });
+
     it('explains the SCIM search syntax', async () => {
         setup();
         await screen.findByRole('link', { name: 'Alice Liddell' });
