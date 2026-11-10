@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { inputHarness } from '@gravitee/graphene-core/testing';
+import { QueryClient } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route } from 'react-router-dom';
@@ -33,8 +34,8 @@ const rows: ApplicationSummaryRow[] = [
 
 const page = (data: ApplicationSummaryRow[], totalCount = data.length) => ({ data, currentPage: 0, totalCount });
 
-function renderPage(permissions = ['application_list', 'application_create']) {
-    return renderRoutes(applicationsPath, <Route path={applicationsPath} element={<ApplicationsPage />} />, permissions);
+function renderPage(permissions = ['application_list', 'application_create'], client?: QueryClient) {
+    return renderRoutes(applicationsPath, <Route path={applicationsPath} element={<ApplicationsPage />} />, permissions, [], client);
 }
 
 beforeEach(() => {
@@ -75,6 +76,22 @@ describe('ApplicationsPage', () => {
         expect(await screen.findByText('No applications match your search')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
         await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, ''));
+    });
+
+    it('keeps the list while the cleared search reloads', async () => {
+        // gcTime 0 drops the unfiltered page from the cache, so clearing the search fetches it again.
+        renderPage(undefined, new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }));
+        await screen.findByRole('link', { name: 'Portal' });
+        vi.mocked(listDomainApplications).mockResolvedValue(page([], 0));
+        await inputHarness({ name: 'Search applications' }).type('zzz');
+        await screen.findByText('No applications match your search');
+        vi.mocked(listDomainApplications).mockReturnValue(new Promise(() => {}));
+
+        await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, ''));
+        expect(screen.queryByText('No applications yet')).not.toBeInTheDocument();
+        expect(screen.getByRole('searchbox', { name: 'Search applications' })).toBeInTheDocument();
     });
 
     it('shows the first-use state with the create action when the domain has no application', async () => {

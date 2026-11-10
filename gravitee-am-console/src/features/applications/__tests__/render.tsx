@@ -47,8 +47,13 @@ function Banner() {
     return <>{useLayoutSlots().slots.banner}</>;
 }
 
-export function renderRoutes(path: string, routes: ReactNode, permissions: string[], features: string[] = []) {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+export function renderRoutes(
+    path: string,
+    routes: ReactNode,
+    permissions: string[],
+    features: string[] = [],
+    client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
     return renderWithGraphene(
         <QueryClientProvider client={client}>
             <LicenseScope license={{ features }}>

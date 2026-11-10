@@ -49,12 +49,12 @@ export function ApplicationsPage() {
     };
     useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: `${basePath}/dashboard` }, { label: 'Applications' }]);
 
-    const { data, error, isFetching } = useQuery({
+    const { data, error, isFetching, isPlaceholderData } = useQuery({
         queryKey: ['applications', ref, 'list', page, pageSize, query],
         queryFn: () => listDomainApplications(ref, page - 1, pageSize, query),
         placeholderData: keepPreviousData,
     });
-    const isFirstUse = data?.totalCount === 0 && !query;
+    const isFirstUse = !isPlaceholderData && data?.totalCount === 0 && !query;
 
     const columns: ColumnDef<ApplicationSummaryRow, unknown>[] = [
         {
