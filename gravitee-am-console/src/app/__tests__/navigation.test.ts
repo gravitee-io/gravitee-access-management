@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { APPLICATION_NAV_GROUPS, applicationNavGroups } from '../navigation';
+import { APPLICATION_NAV_GROUPS, applicationNavGroups, ORGANIZATION_SETTINGS_NAV_GROUPS, permittedNavGroups } from '../navigation';
 
 const granted =
     (...permissions: string[]) =>
@@ -105,5 +105,36 @@ describe('applicationNavGroups', () => {
             'settings/account',
             'settings/session',
         ]);
+    });
+});
+
+const organizationKeys = (granted: string[], cloudMode = false) =>
+    permittedNavGroups(
+        ORGANIZATION_SETTINGS_NAV_GROUPS,
+        (...permissions) => permissions.some(permission => granted.includes(permission)),
+        cloudMode,
+    )
+        .flatMap(group => group.items)
+        .map(item => item.key);
+
+describe('organization settings menu', () => {
+    it('shows an item with the permission of its route', () => {
+        expect(
+            organizationKeys([
+                'organization_settings_read',
+                'organization_tag_list',
+                'organization_entrypoint_list',
+                'organization_form_list',
+            ]),
+        ).toEqual(['general', 'forms', 'tags', 'entrypoints']);
+    });
+
+    it('shows nothing without a permission', () => {
+        expect(organizationKeys([])).toEqual([]);
+    });
+
+    it('shows Cockpit with installation_read, except in cloud mode', () => {
+        expect(organizationKeys(['installation_read'])).toEqual(['cockpit']);
+        expect(organizationKeys(['installation_read'], true)).toEqual([]);
     });
 });

@@ -40,13 +40,12 @@ export const DOMAIN_NAV_GROUP: NavGroup = {
     ],
 };
 
-export const MAIN_NAV_GROUPS: NavGroup[] = [
-    DOMAIN_NAV_GROUP,
-    {
-        label: 'Organization',
-        items: [{ key: ORGANIZATION_KEY, title: 'Organization', icon: UserCogIcon }],
-    },
-];
+export const ORGANIZATION_NAV_GROUP: NavGroup = {
+    label: 'Organization',
+    items: [{ key: ORGANIZATION_KEY, title: 'Organization', icon: UserCogIcon }],
+};
+
+export const MAIN_NAV_GROUPS: NavGroup[] = [DOMAIN_NAV_GROUP, ORGANIZATION_NAV_GROUP];
 
 export function navItems(groups: NavGroup[]) {
     return groups.flatMap(group => group.items);
@@ -57,6 +56,8 @@ interface PermittedNavItem {
     readonly title: string;
     /** The menu shows the item when the user has one of these permissions. */
     readonly perms: readonly string[];
+    /** The menu hides the item when the installation is managed. */
+    readonly hideInCloudMode?: boolean;
 }
 
 interface PermittedNavGroup {
@@ -143,11 +144,49 @@ export const DOMAIN_SETTINGS_NAV_GROUPS: readonly PermittedNavGroup[] = [
     { label: 'SAML 2.0', items: [{ key: 'saml2', title: 'SAML 2.0', perms: ['domain_saml_read'] }] },
 ];
 
-export function permittedNavGroups(groups: readonly PermittedNavGroup[], hasAny: (...permissions: string[]) => boolean): NavGroup[] {
+export const ORGANIZATION_SETTINGS_NAV_GROUPS: readonly PermittedNavGroup[] = [
+    {
+        label: 'Console',
+        items: [
+            { key: 'general', title: 'Authentication', perms: ['organization_settings_read'] },
+            { key: 'members', title: 'Administrative roles', perms: ['organization_member_list'] },
+            { key: 'forms', title: 'Forms', perms: ['organization_form_list'] },
+            { key: 'providers', title: 'Identity providers', perms: ['organization_identity_provider_list'] },
+        ],
+    },
+    {
+        label: 'User Management',
+        items: [
+            { key: 'users', title: 'Users', perms: ['organization_user_list'] },
+            { key: 'groups', title: 'Groups', perms: ['organization_group_list'] },
+            { key: 'roles', title: 'Roles', perms: ['organization_role_list'] },
+        ],
+    },
+    {
+        label: 'Gateway',
+        items: [
+            { key: 'tags', title: 'Sharding tags', perms: ['organization_tag_list'] },
+            { key: 'entrypoints', title: 'Entrypoints', perms: ['organization_entrypoint_list'] },
+        ],
+    },
+    { label: 'Audit', items: [{ key: 'audits', title: 'Audit', perms: ['organization_audit_list'] }] },
+    {
+        label: 'Cockpit',
+        items: [{ key: 'cockpit', title: 'Discover cockpit', perms: ['installation_read'], hideInCloudMode: true }],
+    },
+];
+
+export function permittedNavGroups(
+    groups: readonly PermittedNavGroup[],
+    hasAny: (...permissions: string[]) => boolean,
+    cloudMode = false,
+): NavGroup[] {
     return groups
         .map(group => ({
             label: group.label,
-            items: group.items.filter(item => hasAny(...item.perms)).map(({ key, title }) => ({ key, title })),
+            items: group.items
+                .filter(item => hasAny(...item.perms) && !(cloudMode && item.hideInCloudMode))
+                .map(({ key, title }) => ({ key, title })),
         }))
         .filter(group => group.items.length > 0);
 }

@@ -31,11 +31,12 @@ import type { Domain } from '../lib/api/domains';
 import type { CurrentUser } from '../lib/api/management-api';
 import { useEnvironmentDomains } from '../lib/session/domains';
 import { useCurrentEnvironment } from '../lib/session/environment';
+import { usePermissions } from '../lib/session/permissions';
 import { useUserPreferences } from '../lib/session/preferences';
 import { useSession } from '../lib/session/session';
 import { DomainSwitcher } from './components/DomainSwitcher';
 import { NotFoundPanel } from './components/NotFoundPanel';
-import { DOMAIN_NAV_GROUP, MAIN_NAV_GROUPS, ORGANIZATION_KEY } from './navigation';
+import { DOMAIN_NAV_GROUP, MAIN_NAV_GROUPS, ORGANIZATION_KEY, ORGANIZATION_NAV_GROUP } from './navigation';
 
 const AM_APP_KEY = 'am';
 const APPS: AppDefinition[] = [{ key: AM_APP_KEY, label: 'Access Management', icon: <GioIamIcon className="size-5" /> }];
@@ -67,6 +68,7 @@ export function Shell() {
     const environment = useCurrentEnvironment();
     const navigate = useNavigate();
     const { slots } = useLayoutSlots();
+    const { has } = usePermissions();
     const domainMatch = useMatch('/environments/:envHrid/domains/:domainHrid/:section?/*');
     const organizationMatch = useMatch('/environments/:envHrid/organization/*');
 
@@ -85,7 +87,10 @@ export function Shell() {
     }
     const currentDomain = pickCurrentDomain(domains, urlDomainHrid, lastDomainHrid, preferences?.defaultDomainId);
     const unknownDomain = !!domainPage && !!urlDomainHrid && !currentDomain;
-    const navGroups = domainPage && domains.length === 0 ? MAIN_NAV_GROUPS.filter(group => group !== DOMAIN_NAV_GROUP) : MAIN_NAV_GROUPS;
+    const noDomains = !!domainPage && domains.length === 0;
+    const navGroups = MAIN_NAV_GROUPS.filter(
+        group => !(group === DOMAIN_NAV_GROUP && noDomains) && !(group === ORGANIZATION_NAV_GROUP && !has('organization_settings_read')),
+    );
     const activeItemKey = organizationMatch ? ORGANIZATION_KEY : urlDomainHrid && (domainMatch?.params.section ?? 'dashboard');
 
     const selectItem = (key: string) => {

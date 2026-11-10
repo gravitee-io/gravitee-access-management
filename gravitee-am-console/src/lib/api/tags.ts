@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type { NewTag } from '@am-models/NewTag';
 import type { Tag as TagModel } from '@am-models/Tag';
 import { http } from './http';
 import type { ApiModel } from './model';
@@ -22,4 +23,23 @@ export type Tag = ApiModel<TagModel, 'id' | 'name'>;
 
 export function listTags(organizationId: string): Promise<Tag[]> {
     return http<Tag[]>(`/organizations/${organizationId}/tags`);
+}
+
+export function getTag(organizationId: string, tagId: string): Promise<Tag> {
+    return http<Tag>(`/organizations/${organizationId}/tags/${encodeURIComponent(tagId)}`);
+}
+
+export function createTag(organizationId: string, tag: NewTag): Promise<Tag> {
+    return http<Tag>(`/organizations/${organizationId}/tags`, { method: 'POST', body: JSON.stringify(tag) });
+}
+
+export function updateTag(organizationId: string, tagId: string, tag: NewTag): Promise<Tag> {
+    return http<Tag>(`/organizations/${organizationId}/tags/${encodeURIComponent(tagId)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: tag.name, description: tag.description }),
+    });
+}
+
+export function deleteTag(organizationId: string, tagId: string): Promise<void> {
+    return http<void>(`/organizations/${organizationId}/tags/${encodeURIComponent(tagId)}`, { method: 'DELETE' });
 }

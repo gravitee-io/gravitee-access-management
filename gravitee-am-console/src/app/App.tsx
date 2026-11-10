@@ -25,6 +25,7 @@ import { EnvironmentPage } from '../features/environment/EnvironmentPage';
 import { HomePage } from '../features/home/HomePage';
 import { kitRoutes } from '../features/kit/routes';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
+import { organizationRoutes } from '../features/organization/routes';
 import { domainSettingsRoutes } from '../features/settings/routes';
 import { redirectToLogin } from '../lib/api/auth';
 import { HttpError } from '../lib/api/http';
@@ -87,7 +88,7 @@ export function App() {
                                                             {domainSettingsRoutes}
                                                         </Route>
                                                     </Route>
-                                                    <Route path="organization/*" element={<PlaceholderPage title="Organization" />} />
+                                                    {organizationRoutes}
                                                     {kitRoutes}
                                                 </Route>
                                             </Route>
