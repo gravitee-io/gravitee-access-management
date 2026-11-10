@@ -337,6 +337,42 @@ describe('remember me', () => {
       expect(afterExpiry.headers['location']).toContain('/login');
     });
 
+    it('remember-me cookie with a forged signature should not authenticate the user', async () => {
+      fixture = await initEnv({
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 3600,
+          },
+          cookieSettings: {
+            inherited: false,
+            session: {
+              persistent: false,
+            },
+          },
+        },
+      });
+
+      const clientId = fixture.app.settings.oauth.clientId;
+      const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
+      const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
+      const rememberMeCookie = postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='));
+      expect(rememberMeCookie).toBeDefined();
+
+      const [name, jwt] = rememberMeCookie.split(';')[0].split('=');
+      const [header, payload] = jwt.split('.');
+      const forgedCookie = `${name}=${header}.${payload}.${Buffer.from('forged-signature').toString('base64url')}`;
+
+      const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+
+      const forged = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
+        Cookie: forgedCookie,
+      }).expect(302);
+      expect(forged.headers['location']).toContain('/login');
+      expect(forged.headers['location']).not.toContain('/rememberedLogin');
+    });
+
     afterEach(async () => {
       if (fixture) {
         await fixture.cleanUp();
