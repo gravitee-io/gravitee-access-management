@@ -44,10 +44,69 @@ export interface AuthorizationDetailsCibaFixture extends Fixture {
   enableTypes: (types: string[]) => Promise<void>;
 }
 
+const typeSettings = (types: string[]) => types.map((type) => ({ type }));
+
+/** Creates the reference types of {@link AUTHORIZATION_DETAILS_TEST} on the domain. */
+export const createReferenceTypes = async (domainId: string, accessToken: string): Promise<void> => {
+  await createAuthorizationDetailType(domainId, accessToken, {
+    type: AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE,
+    name: 'Payment initiation',
+    schema: paymentSchema(AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE),
+    discovery: true,
+  });
+  await createAuthorizationDetailType(domainId, accessToken, {
+    type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE,
+    name: 'Account information',
+    discovery: true,
+  });
+  await createAuthorizationDetailType(domainId, accessToken, {
+    type: AUTHORIZATION_DETAILS_TEST.NOT_ENABLED_TYPE,
+    name: 'Internal transfer',
+    discovery: false,
+  });
+};
+
 /**
- * Federated CIBA towards {@link createCibaUpstreamOpMock}. The hint domain has the reference types of
- * {@link AUTHORIZATION_DETAILS_TEST}, with the payment and account types enabled on its application.
+ * Enables the payment and account types on the application and registers the public key of
+ * {@link cimdPrivateKeyJwtPrivateJwk} for its request objects, then waits for the gateway to sync.
  */
+export const configureCibaApplication = async (domainId: string, applicationId: string, accessToken: string): Promise<void> => {
+  const { kty, n, e } = cimdPrivateKeyJwtPrivateJwk;
+  // patchApplication drops the RSA members of a JWK
+  await waitForSyncAfter(domainId, async () => {
+    const response = await performPatch(
+      getDomainManagerUrl(domainId),
+      `/applications/${applicationId}`,
+      {
+        settings: {
+          oauth: {
+            jwks: { keys: [{ kty, n, e, use: 'sig', kid: CIMD_PRIVATE_KEY_JWT_KID, alg: 'RS256' }] },
+            requestObjectSigningAlg: 'RS256',
+            authorizationDetailTypes: typeSettings([AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE, AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE]),
+          },
+        },
+      },
+      { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    );
+    expect(response.status).toBe(200);
+  });
+};
+
+export const signRequestObject = async (clientId: string, audience: string, claims: Record<string, unknown>): Promise<string> => {
+  const privateKey = await jose.importJWK(cimdPrivateKeyJwtPrivateJwk as jose.JWK, 'RS256');
+  const now = Math.floor(Date.now() / 1000);
+  return new jose.SignJWT(claims)
+    .setProtectedHeader({ alg: 'RS256', kid: CIMD_PRIVATE_KEY_JWT_KID })
+    .setIssuer(clientId)
+    .setAudience(audience)
+    .setJti(crypto.randomUUID())
+    .setIssuedAt(now)
+    .setNotBefore(now)
+    .setExpirationTime(now + 300)
+    .sign(privateKey);
+};
+
+/** Federated CIBA towards {@link createCibaUpstreamOpMock}. */
 export const setupAuthorizationDetailsCibaFixture = async (): Promise<AuthorizationDetailsCibaFixture> => {
   const accessToken = await requestAdminAccessToken();
   const upstream = await createCibaUpstreamOpMock();
@@ -61,53 +120,15 @@ export const setupAuthorizationDetailsCibaFixture = async (): Promise<Authorizat
     const hint = hintDomain;
     const domainId = hint.domain.id;
 
-    const createType = (type: NewAuthorizationDetailType) => createAuthorizationDetailType(domainId, accessToken, type);
-    await createType({
-      type: AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE,
-      name: 'Payment initiation',
-      schema: paymentSchema(AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE),
-      discovery: true,
-    });
-    await createType({ type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE, name: 'Account information', discovery: true });
-    await createType({ type: AUTHORIZATION_DETAILS_TEST.NOT_ENABLED_TYPE, name: 'Internal transfer', discovery: false });
-
-    const typeSettings = (types: string[]) => types.map((type) => ({ type }));
-    const { kty, n, e } = cimdPrivateKeyJwtPrivateJwk;
-    // patchApplication drops the RSA members of a JWK
-    await waitForSyncAfter(domainId, async () => {
-      const response = await performPatch(
-        getDomainManagerUrl(domainId),
-        `/applications/${hint.applicationId}`,
-        {
-          settings: {
-            oauth: {
-              jwks: { keys: [{ kty, n, e, use: 'sig', kid: CIMD_PRIVATE_KEY_JWT_KID, alg: 'RS256' }] },
-              requestObjectSigningAlg: 'RS256',
-              authorizationDetailTypes: typeSettings([AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE, AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE]),
-            },
-          },
-        },
-        { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-      );
-      expect(response.status).toBe(200);
-    });
+    await createReferenceTypes(domainId, accessToken);
+    await configureCibaApplication(domainId, hint.applicationId, accessToken);
 
     const cibaEndpoint = `${process.env.AM_GATEWAY_URL}/${hint.domain.hrid}/oidc/ciba/authenticate`;
     const audience = `${process.env.AM_GATEWAY_URL}/${hint.domain.hrid}/oidc`;
     const basicAuth = `Basic ${Buffer.from(`${hint.clientId}:${hint.clientSecret}`).toString('base64')}`;
 
     const authenticateWithRequestObject = async (claims: Record<string, unknown>): Promise<any> => {
-      const privateKey = await jose.importJWK(cimdPrivateKeyJwtPrivateJwk as jose.JWK, 'RS256');
-      const now = Math.floor(Date.now() / 1000);
-      const request = await new jose.SignJWT({ scope: 'openid', login_hint: UPSTREAM_LOGIN_HINT, ...claims })
-        .setProtectedHeader({ alg: 'RS256', kid: CIMD_PRIVATE_KEY_JWT_KID })
-        .setIssuer(hint.clientId)
-        .setAudience(audience)
-        .setJti(crypto.randomUUID())
-        .setIssuedAt(now)
-        .setNotBefore(now)
-        .setExpirationTime(now + 300)
-        .sign(privateKey);
+      const request = await signRequestObject(hint.clientId, audience, { scope: 'openid', login_hint: UPSTREAM_LOGIN_HINT, ...claims });
       return performPost(cibaEndpoint, '', new URLSearchParams({ client_id: hint.clientId, request }).toString(), {
         'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: basicAuth,
@@ -120,7 +141,7 @@ export const setupAuthorizationDetailsCibaFixture = async (): Promise<Authorizat
       authenticate: (params = {}) => hint.initiateCiba(UPSTREAM_LOGIN_HINT, params),
       authenticateWithRequestObject,
       pollTokenUntilGranted: hint.pollTokenUntilGranted,
-      createType: (type) => waitForSyncAfter(domainId, () => createType(type)),
+      createType: (type) => waitForSyncAfter(domainId, () => createAuthorizationDetailType(domainId, accessToken, type)),
       enableTypes: async (types) => {
         await waitForSyncAfter(domainId, () =>
           patchApplication(
