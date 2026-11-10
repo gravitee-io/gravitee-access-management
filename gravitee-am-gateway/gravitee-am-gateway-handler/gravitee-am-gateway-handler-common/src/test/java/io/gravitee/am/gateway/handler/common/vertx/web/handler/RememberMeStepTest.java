@@ -234,6 +234,16 @@ public class RememberMeStepTest {
     }
 
     @Test
+    public void mustRemoveCookieAndDoNext_userDisabled() {
+        final var user = new io.gravitee.am.model.User();
+        user.setEnabled(false);
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieRefused();
+    }
+
+    @Test
     public void mustExit_passwordResetBeforeCookieIssued() {
         final var user = new io.gravitee.am.model.User();
         user.setLastPasswordReset(new Date(ISSUED_AT_SECONDS * 1000L - 5000L));

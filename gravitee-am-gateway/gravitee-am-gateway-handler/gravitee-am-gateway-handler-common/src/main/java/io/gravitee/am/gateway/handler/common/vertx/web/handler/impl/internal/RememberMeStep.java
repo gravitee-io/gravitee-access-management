@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
+import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -81,6 +82,10 @@ public class RememberMeStep extends AuthenticationFlowStep {
                 .map(tuple -> {
                     final var user = tuple.getT1();
                     final var cookie = tuple.getT2();
+
+                    if (!user.isEnabled()) {
+                        throw new AccountDisabledException(user.getId());
+                    }
 
                     // "iat" claim is stored in epoch seconds format
                     if (isIssuedBeforeUserInvalidation(user, cookie.getIat() * 1000L)) {
