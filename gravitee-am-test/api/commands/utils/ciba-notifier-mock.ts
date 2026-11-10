@@ -33,6 +33,7 @@ export interface CibaNotifierMock {
   notifierConfiguration: (outcome: CibaNotifierOutcome) => string;
   register: (callback: CibaNotifierCallback) => Promise<void>;
   remove: () => Promise<void>;
+  getNotifications: () => Promise<URLSearchParams[]>;
 }
 
 export const createCibaNotifierMock = (): CibaNotifierMock => {
@@ -94,5 +95,16 @@ export const createCibaNotifierMock = (): CibaNotifierMock => {
     }
   };
 
-  return { notifierConfiguration, register, remove };
+  const getNotifications = async (): Promise<URLSearchParams[]> => {
+    const response = await crossFetch(`${WIREMOCK_ADMIN}/requests/find`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'POST', urlPathPattern: `${basePath}/.*` }),
+    });
+    expect(response.status).toEqual(200);
+    const { requests } = await response.json();
+    return requests.map((request: { body: string }) => new URLSearchParams(request.body));
+  };
+
+  return { notifierConfiguration, register, remove, getNotifications };
 };

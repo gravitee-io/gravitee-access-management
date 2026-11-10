@@ -35,6 +35,7 @@ import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvi
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -54,11 +55,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.any;
@@ -183,6 +186,54 @@ public class AuthenticationRequestAcknowledgeHandlerTest extends RxWebTestBase {
         verify(authReqService).notify(captor.capture());
         assertEquals("acme|abc", captor.getValue().getLoginHint());
         assertEquals("hint-token", captor.getValue().getLoginHintToken());
+    }
+
+    @Test
+    public void notification_request_carries_authorization_details_unchanged() throws Exception {
+        final List<Map<String, Object>> details = List.of(
+                Map.of("type", "payment_initiation", "instructedAmount", Map.of("currency", "EUR", "amount", "123.50")),
+                Map.of("type", "account_information", "actions", List.of("list_accounts")));
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setSubject("usernameuuid");
+        cibaRequest.setAuthorizationDetails(AuthorizationDetails.of(details));
+
+        assertEquals(details, captureNotificationRequest(cibaRequest).getAuthorizationDetails());
+    }
+
+    @Test
+    public void notification_request_has_no_authorization_details_when_request_has_none() throws Exception {
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setSubject("usernameuuid");
+
+        assertNull(captureNotificationRequest(cibaRequest).getAuthorizationDetails());
+    }
+
+    private ADNotificationRequest captureNotificationRequest(CibaAuthenticationRequest cibaRequest) throws Exception {
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.CIBA_AUTH_REQUEST_KEY, cibaRequest);
+            routingContext.next();
+        });
+
+        when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("signed_jwt"));
+        final CibaAuthRequest req = new CibaAuthRequest();
+        req.setCreatedAt(new Date());
+        req.setExpireAt(new Date());
+        when(authReqService.register(any(), any())).thenReturn(Single.just(req));
+        when(authReqService.updateAuthDeviceInformation(any())).thenReturn(Single.just(req));
+        when(authReqService.notify(any())).thenReturn(Single.just(new ADNotificationResponse("jit")));
+
+        testRequest(
+                HttpMethod.POST,
+                CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+
+        ArgumentCaptor<ADNotificationRequest> captor = ArgumentCaptor.forClass(ADNotificationRequest.class);
+        verify(authReqService).notify(captor.capture());
+        return captor.getValue();
     }
 
     @Test
