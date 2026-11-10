@@ -16,6 +16,7 @@
 import { LayoutSlotsProvider, ThemeProvider, Toaster, TooltipProvider } from '@gravitee/graphene-core';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { applicationRoutes } from '../features/applications/routes';
 import { authRoutes } from '../features/auth/routes';
 import { DomainIndexRedirect } from '../features/domains/DomainIndexRedirect';
 import { DomainLayout } from '../features/domains/DomainLayout';
@@ -75,10 +76,7 @@ export function App() {
                                                         <Route element={<DomainLayout />}>
                                                             <Route index element={<DomainIndexRedirect />} />
                                                             {domainDashboardRoute}
-                                                            <Route
-                                                                path="applications/*"
-                                                                element={<PlaceholderPage title="Applications" />}
-                                                            />
+                                                            {applicationRoutes}
                                                             <Route path="agents/*" element={<PlaceholderPage title="Agents" />} />
                                                             <Route path="mcp-servers/*" element={<PlaceholderPage title="MCP Servers" />} />
                                                             <Route

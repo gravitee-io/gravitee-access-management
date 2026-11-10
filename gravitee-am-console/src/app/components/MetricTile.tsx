@@ -16,7 +16,7 @@
 import { Metric } from '@gravitee/graphene-charts';
 import { Card, CardContent } from '@gravitee/graphene-core';
 import type { ComponentType } from 'react';
-import { count, type WidgetResult } from './dashboard-data';
+import { count, type WidgetResult } from './analytics-widgets';
 
 interface MetricTileProps {
     readonly label: string;
@@ -32,14 +32,14 @@ export function MetricTile({ label, icon, result, prefix = '' }: MetricTileProps
         <Card>
             <CardContent>
                 {result.status === 'loading' ? (
-                    <Metric label={label} icon={icon} value="" state="loading" />
+                    <Metric className="h-20" label={label} icon={icon} value="" state="loading" />
                 ) : value === undefined ? (
                     <>
-                        <Metric label={label} icon={icon} value="" state="empty" />
+                        <Metric className="h-20" label={label} icon={icon} value="" state="empty" />
                         {result.status === 'error' && <p className="text-sm text-muted-foreground">Failed to fetch data</p>}
                     </>
                 ) : (
-                    <Metric label={label} icon={icon} value={`${value > 0 ? prefix : ''}${value.toLocaleString()}`} />
+                    <Metric className="h-20" label={label} icon={icon} value={`${value > 0 ? prefix : ''}${value.toLocaleString()}`} />
                 )}
             </CardContent>
         </Card>

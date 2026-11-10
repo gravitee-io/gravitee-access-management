@@ -24,7 +24,7 @@ import {
 } from '@gravitee/graphene-charts';
 import { Card, CardContent, CardHeader, CardTitle } from '@gravitee/graphene-core';
 import { WidgetFailure } from './WidgetFailure';
-import { histogram, sentenceCase, seriesColor, type TimeRange, type WidgetResult } from './dashboard-data';
+import { histogram, sentenceCase, seriesColor, type TimeRange, type WidgetResult } from './analytics-widgets';
 
 interface ActivityChartProps {
     readonly title: string;
