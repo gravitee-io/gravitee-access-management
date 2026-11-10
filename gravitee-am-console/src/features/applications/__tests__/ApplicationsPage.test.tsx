@@ -85,6 +85,14 @@ describe('ApplicationsPage', () => {
         expect(screen.getByRole('link', { name: 'Create application' })).toHaveAttribute('href', `${applicationsPath}/new`);
     });
 
+    it('shows the first-use state without the create action to a user who cannot create', async () => {
+        vi.mocked(listDomainApplications).mockResolvedValue(page([], 0));
+        renderPage(['application_list']);
+
+        expect(await screen.findByText('No applications yet')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Create application' })).not.toBeInTheDocument();
+    });
+
     it('offers the create action only with application_create', async () => {
         const { unmount } = renderPage();
         await screen.findByRole('link', { name: 'Portal' });
