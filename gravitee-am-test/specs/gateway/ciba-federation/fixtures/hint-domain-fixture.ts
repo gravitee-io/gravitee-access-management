@@ -31,8 +31,8 @@ import { IdentityProvider } from '@management-models/IdentityProvider';
 import { Fixture } from '../../../test-fixture';
 
 const CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
-const CIBA_TOKEN_POLL_INTERVAL_MS = 5500;
-const CIBA_TOKEN_POLL_TIMEOUT_MS = 90000;
+export const CIBA_TOKEN_POLL_INTERVAL_MS = 5500;
+export const CIBA_TOKEN_POLL_TIMEOUT_MS = 90000;
 
 export interface HintDomainFixture extends Fixture {
   domain: Domain;
@@ -47,7 +47,8 @@ export interface HintDomainFixture extends Fixture {
   pollTokenUntilGranted: (authReqId: string) => Promise<any>;
 }
 
-const isCibaTokenGrantedResponse = (res: any): boolean => {
+/** Throws on any error but authorization_pending and slow_down. */
+export const isCibaTokenGrantedResponse = (res: any): boolean => {
   if (res.status === 200 && res.body?.access_token) {
     return true;
   }

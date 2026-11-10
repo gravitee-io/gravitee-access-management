@@ -21,6 +21,7 @@ import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
 import io.gravitee.am.authdevice.notifier.http.HttpAuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.authdevice.notifier.http.provider.spring.HttpAuthenticationDeviceProviderSpringConfiguration;
 import io.gravitee.common.http.HttpStatusCode;
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.hasText;
@@ -165,6 +167,11 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         }
 
         return formData;
+    }
+
+    @Override
+    public Set<NotifierCapability> capabilities() {
+        return Set.of(NotifierCapability.AUTHORIZATION_DETAILS);
     }
 
     @Override
