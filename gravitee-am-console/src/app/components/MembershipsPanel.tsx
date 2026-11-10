@@ -29,6 +29,7 @@ import {
     DialogHeader,
     DialogTitle,
     Field,
+    FieldError,
     FieldLabel,
     Input,
     Select,
@@ -306,6 +307,7 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                                     setSearch(event.target.value);
                                 }}
                             />
+                            {!member && text && users.error && <FieldError>Could not search the users. {users.error.message}</FieldError>}
                             {!member && text && users.data && (
                                 <ul aria-label="Matching users" className="rounded-md border border-border">
                                     {foundUsers.length === 0 ? (
@@ -348,6 +350,7 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {groups.error && <FieldError>Could not load the groups. {groups.error.message}</FieldError>}
                         </Field>
                     )}
                     <Field>

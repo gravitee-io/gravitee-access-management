@@ -216,6 +216,27 @@ describe('MembershipsPanel', () => {
         await waitFor(() => expect(saveMember).toHaveBeenCalledWith(membersPath, { memberId: 'g2', memberType: 'GROUP', role: 'r-owner' }));
     });
 
+    it('shows an error when the user search fails', async () => {
+        vi.mocked(searchOrganizationUsers).mockRejectedValue(new HttpError(403, 'Forbidden'));
+        renderPanel();
+        const dialog = await openAddDialog();
+
+        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not search the users. Forbidden');
+        expect(within(dialog).queryByRole('list', { name: 'Matching users' })).not.toBeInTheDocument();
+    });
+
+    it('shows an error when the groups do not load', async () => {
+        vi.mocked(listOrganizationGroups).mockRejectedValue(new HttpError(403, 'Forbidden'));
+        renderPanel();
+        const dialog = await openAddDialog();
+
+        await selectHarness({ name: 'Type' }).selectOption('Group');
+
+        expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not load the groups. Forbidden');
+    });
+
     it('reports a failed save with the server message', async () => {
         vi.mocked(saveMember).mockRejectedValue(new HttpError(400, 'Role not allowed'));
         renderPanel();
