@@ -33,17 +33,7 @@ import {
     cn,
     toast,
 } from '@gravitee/graphene-core';
-import {
-    AppWindowIcon,
-    ArrowLeftIcon,
-    ArrowRightIcon,
-    CheckIcon,
-    GlobeIcon,
-    LockIcon,
-    MonitorIcon,
-    ServerIcon,
-    type LucideIcon,
-} from '@gravitee/graphene-core/icons';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, type LucideIcon } from '@gravitee/graphene-core/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +49,7 @@ import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { CimdReviewStep } from './CimdReviewStep';
 import { ClientSecretDialog } from './ClientSecretDialog';
+import { APPLICATION_TYPE_ICONS } from './application-types';
 
 type CreationMode = 'manual' | 'cimd';
 
@@ -91,16 +82,26 @@ const EMPTY: Draft = {
 };
 
 const APPLICATION_TYPES: Record<NewApplicationType, { label: string; description: string; examples: string; icon: LucideIcon }> = {
-    WEB: { label: 'Web', description: 'Traditional web apps', examples: '.NET, Java', icon: GlobeIcon },
-    BROWSER: { label: 'Single-Page App', description: 'JavaScript front-end apps', examples: 'Angular, React, VueJS', icon: AppWindowIcon },
-    NATIVE: { label: 'Native', description: 'Mobile, Desktop apps', examples: 'iOS, Android', icon: MonitorIcon },
+    WEB: { label: 'Web', description: 'Traditional web apps', examples: '.NET, Java', icon: APPLICATION_TYPE_ICONS.web },
+    BROWSER: {
+        label: 'Single-Page App',
+        description: 'JavaScript front-end apps',
+        examples: 'Angular, React, VueJS',
+        icon: APPLICATION_TYPE_ICONS.browser,
+    },
+    NATIVE: { label: 'Native', description: 'Mobile, Desktop apps', examples: 'iOS, Android', icon: APPLICATION_TYPE_ICONS.native },
     SERVICE: {
         label: 'Backend to Backend',
         description: 'Machine-to-Machine apps',
         examples: 'Shell script, daemon, CLI',
-        icon: ServerIcon,
+        icon: APPLICATION_TYPE_ICONS.service,
     },
-    RESOURCE_SERVER: { label: 'Resource Server', description: 'Resource Server apps', examples: 'APIs', icon: LockIcon },
+    RESOURCE_SERVER: {
+        label: 'Resource Server',
+        description: 'Resource Server apps',
+        examples: 'APIs',
+        icon: APPLICATION_TYPE_ICONS.resource_server,
+    },
 };
 
 function Stepper({ steps, current }: Readonly<{ steps: string[]; current: number }>) {

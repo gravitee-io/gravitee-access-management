@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { AppWindowIcon, BotIcon, GlobeIcon, LockIcon, type LucideIcon, MonitorIcon, ServerIcon } from '@gravitee/graphene-core/icons';
 import type { ApplicationType } from '../../lib/api/applications';
 
 export const APPLICATION_TYPE_LABELS: Record<ApplicationType, string> = {
@@ -22,4 +23,13 @@ export const APPLICATION_TYPE_LABELS: Record<ApplicationType, string> = {
     service: 'Backend to Backend',
     resource_server: 'Resource Server',
     agent: 'Agent',
+};
+
+export const APPLICATION_TYPE_ICONS: Record<ApplicationType, LucideIcon> = {
+    web: GlobeIcon,
+    browser: AppWindowIcon,
+    native: MonitorIcon,
+    service: ServerIcon,
+    resource_server: LockIcon,
+    agent: BotIcon,
 };

@@ -27,7 +27,7 @@ import { useSectionSidebar } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { LoadPermissionScope, RequirePermission, usePermissions } from '../../lib/session/permissions';
 import { ApplicationContext, type ApplicationContextValue, applicationQueryKey } from './ApplicationContext';
-import { APPLICATION_TYPE_LABELS } from './application-types';
+import { applicationStatusBadge, applicationTypeBadge } from './application-badges';
 
 /** The application permissions add to the domain ones, so a member of the application alone can open it. */
 export function ApplicationLayout() {
@@ -77,7 +77,7 @@ function ApplicationSection({ application, listPath }: { readonly application: A
     const applicationPath = `${listPath}/${application.id}`;
     useSectionSidebar({
         title: application.name,
-        badges: [APPLICATION_TYPE_LABELS[application.type], application.enabled ? 'Enabled' : 'Disabled'],
+        badges: [applicationTypeBadge(application.type), applicationStatusBadge(application)],
         groups: applicationNavGroups(APPLICATION_NAV_GROUPS, { type: application.type, samlEnabled: !!domain.saml?.enabled, hasAny }),
         base: applicationPath,
         crumbs: [

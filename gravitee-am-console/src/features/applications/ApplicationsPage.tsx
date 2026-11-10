@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Badge, BadgeCell, Button, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
+import { Button, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
 import { AppWindowIcon, PlusIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -24,16 +24,10 @@ import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
 import { type ApplicationSummaryRow, listDomainApplications } from '../../lib/api/applications';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
+import { SectionBadge } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { Can, usePermissions } from '../../lib/session/permissions';
-import { APPLICATION_TYPE_LABELS } from './application-types';
-
-function ApplicationStatus({ application }: { readonly application: ApplicationSummaryRow }) {
-    if (!application.enabled) {
-        return <Badge variant="secondary">Disabled</Badge>;
-    }
-    return application.template ? <Badge variant="outline">Template</Badge> : <Badge variant="success">Enabled</Badge>;
-}
+import { applicationStatusBadge, applicationTypeBadge } from './application-badges';
 
 export function ApplicationsPage() {
     const { domain, ref, basePath, domainsPath } = useCurrentDomain();
@@ -72,11 +66,11 @@ export function ApplicationsPage() {
                 </Link>
             ),
         },
-        { id: 'status', header: 'Status', cell: ({ row }) => <ApplicationStatus application={row.original} /> },
+        { id: 'status', header: 'Status', cell: ({ row }) => <SectionBadge badge={applicationStatusBadge(row.original)} /> },
         {
             accessorKey: 'type',
             header: 'Type',
-            cell: ({ row }) => <BadgeCell value={APPLICATION_TYPE_LABELS[row.original.type] ?? row.original.type} variant="outline" />,
+            cell: ({ row }) => <SectionBadge badge={applicationTypeBadge(row.original.type)} />,
         },
         {
             accessorKey: 'updatedAt',
