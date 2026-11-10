@@ -15,7 +15,7 @@
  */
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Fixture } from '../../../test-fixture';
-import { setupTargetDomain, TargetDomainFixture } from './target-domain-fixture';
+import { asFederationUpstream, setupTargetDomain, TargetDomainFixture } from './target-domain-fixture';
 import { setupHintDomain, HintDomainFixture } from './hint-domain-fixture';
 
 export interface CibaFederationFixture extends Fixture {
@@ -27,7 +27,7 @@ export const setupCibaFederationFixture = async (): Promise<CibaFederationFixtur
   const accessToken = await requestAdminAccessToken();
 
   const targetDomain = await setupTargetDomain(accessToken);
-  const hintDomain = await setupHintDomain(accessToken, targetDomain);
+  const hintDomain = await setupHintDomain(accessToken, asFederationUpstream(targetDomain));
 
   return {
     accessToken,

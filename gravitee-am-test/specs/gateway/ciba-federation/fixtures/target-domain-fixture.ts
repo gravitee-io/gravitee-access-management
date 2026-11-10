@@ -31,6 +31,7 @@ import { uniqueName } from '@utils-commands/misc';
 import { CibaNotifierMock, createCibaNotifierMock } from '@utils-commands/ciba-notifier-mock';
 import { Domain } from '@management-models/Domain';
 import { Fixture } from '../../../test-fixture';
+import type { FederationUpstream } from './hint-domain-fixture';
 
 const CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
 
@@ -41,6 +42,12 @@ export const TARGET_USER = {
   lastName: 'TargetUser',
   email: 'ciba.federation.target.user@test.com',
 };
+
+export const asFederationUpstream = (targetDomain: TargetDomainFixture): FederationUpstream => ({
+  wellKnownUri: `${process.env.AM_INTERNAL_GATEWAY_URL}/${targetDomain.domain.hrid}/oidc/.well-known/openid-configuration`,
+  clientId: targetDomain.resourceApp.clientId,
+  clientSecret: targetDomain.resourceApp.clientSecret,
+});
 
 export interface TargetDomainFixture extends Fixture {
   domain: Domain;
