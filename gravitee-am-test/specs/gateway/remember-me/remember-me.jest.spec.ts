@@ -15,7 +15,7 @@
  */
 
 import { expect } from '@jest/globals';
-import { resetUserPassword } from '@management-commands/user-management-commands';
+import { resetUserPassword, updateUsername } from '@management-commands/user-management-commands';
 import { logoutUser, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import {
@@ -374,7 +374,26 @@ describe('remember me', () => {
       expect(forged.headers['location']).not.toContain('/rememberedLogin');
     });
 
-    it('remember-me cookie should not authenticate the user after an admin password reset', async () => {
+    afterEach(async () => {
+      if (fixture) {
+        await fixture.cleanUp();
+      }
+    });
+  });
+
+  describe('cookies issued before an admin change on the user', () => {
+    const userChanges = [
+      {
+        name: 'password reset',
+        apply: () => resetUserPassword(fixture.domain.id, fixture.accessToken, fixture.user.id, 'NewZxcPrm7123!!'),
+      },
+      {
+        name: 'username reset',
+        apply: () => updateUsername(fixture.domain.id, fixture.accessToken, fixture.user.id, `renamed-${fixture.user.username}`),
+      },
+    ];
+
+    it.each(userChanges)('session and remember-me cookies should not authenticate the user after a $name', async ({ apply }) => {
       fixture = await initEnv({
         settings: {
           account: {
@@ -394,31 +413,31 @@ describe('remember me', () => {
       const clientId = fixture.app.settings.oauth.clientId;
       const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
       const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
-      const rememberMeCookie = postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='));
+      const cookieFor = (name: string) => postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith(`${name}=`))?.split(';')[0];
+      const sessionCookie = cookieFor('GRAVITEE_IO_AM_SESSION');
+      const rememberMeCookie = cookieFor('GRAVITEE_IO_REMEMBER_ME');
+      expect(sessionCookie).toBeDefined();
       expect(rememberMeCookie).toBeDefined();
-      const cookieHeader = rememberMeCookie.split(';')[0];
 
       const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
-      const beforeReset = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
-        Cookie: cookieHeader,
-      }).expect(302);
-      expect(beforeReset.headers['location']).toContain('/rememberedLogin');
+      const authorizeWith = (cookie: string) =>
+        performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, { Cookie: cookie }).expect(302);
 
-      // the gateway tolerates one second between the cookie and the reset date
+      // both cookies are accepted while the user is untouched
+      const sessionBefore = await authorizeWith(sessionCookie);
+      expect(sessionBefore.headers['location']).not.toContain('/login');
+      const rememberMeBefore = await authorizeWith(rememberMeCookie);
+      expect(rememberMeBefore.headers['location']).toContain('/rememberedLogin');
+
+      // the gateway tolerates one second between the sign-in and the change
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      await resetUserPassword(fixture.domain.id, fixture.accessToken, fixture.user.id, 'NewZxcPrm7123!!');
+      await apply();
 
-      const afterReset = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
-        Cookie: cookieHeader,
-      }).expect(302);
-      expect(afterReset.headers['location']).toContain('/login');
-      expect(afterReset.headers['location']).not.toContain('/rememberedLogin');
-    });
-
-    afterEach(async () => {
-      if (fixture) {
-        await fixture.cleanUp();
-      }
+      const sessionAfter = await authorizeWith(sessionCookie);
+      expect(sessionAfter.headers['location']).not.toContain('code=');
+      const rememberMeAfter = await authorizeWith(rememberMeCookie);
+      expect(rememberMeAfter.headers['location']).toContain('/login');
+      expect(rememberMeAfter.headers['location']).not.toContain('/rememberedLogin');
     });
   });
 });
