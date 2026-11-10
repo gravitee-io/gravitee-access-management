@@ -15,6 +15,7 @@
  */
 
 import { expect } from '@jest/globals';
+import { resetUserPassword } from '@management-commands/user-management-commands';
 import { logoutUser, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import {
@@ -373,6 +374,47 @@ describe('remember me', () => {
       expect(forged.headers['location']).not.toContain('/rememberedLogin');
     });
 
+    it('remember-me cookie should not authenticate the user after an admin password reset', async () => {
+      fixture = await initEnv({
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 3600,
+          },
+          cookieSettings: {
+            inherited: false,
+            session: {
+              persistent: false,
+            },
+          },
+        },
+      });
+
+      const clientId = fixture.app.settings.oauth.clientId;
+      const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
+      const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
+      const rememberMeCookie = postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='));
+      expect(rememberMeCookie).toBeDefined();
+      const cookieHeader = rememberMeCookie.split(';')[0];
+
+      const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+      const beforeReset = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
+        Cookie: cookieHeader,
+      }).expect(302);
+      expect(beforeReset.headers['location']).toContain('/rememberedLogin');
+
+      // the gateway tolerates one second between the cookie and the reset date
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await resetUserPassword(fixture.domain.id, fixture.accessToken, fixture.user.id, 'NewZxcPrm7123!!');
+
+      const afterReset = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
+        Cookie: cookieHeader,
+      }).expect(302);
+      expect(afterReset.headers['location']).toContain('/login');
+      expect(afterReset.headers['location']).not.toContain('/rememberedLogin');
+    });
+
     afterEach(async () => {
       if (fixture) {
         await fixture.cleanUp();
@@ -380,4 +422,3 @@ describe('remember me', () => {
     });
   });
 });
-
