@@ -19,6 +19,7 @@ import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Domain } from '../../lib/api/domains';
 import { useEnvironmentDomains } from '../../lib/session/domains';
+import { PermissionScope } from '../../lib/session/permissions';
 import { Shell } from '../Shell';
 
 vi.mock('../../lib/session/session', () => ({
@@ -35,18 +36,20 @@ vi.mock('../../lib/session/domains', () => ({ useEnvironmentDomains: vi.fn() }))
 
 const domains: Domain[] = [{ id: 'd1', hrid: 'one', name: 'One', enabled: true }];
 
-function renderShellAt(path: string) {
+function renderShellAt(path: string, permissions = ['organization_settings_read']) {
     return renderWithGraphene(
         <TooltipProvider>
-            <LayoutSlotsProvider>
-                <MemoryRouter initialEntries={[path]}>
-                    <Routes>
-                        <Route path="/environments/:envHrid" element={<Shell />}>
-                            <Route path="domains/:domainHrid/dashboard" element={<p>Dashboard page</p>} />
-                        </Route>
-                    </Routes>
-                </MemoryRouter>
-            </LayoutSlotsProvider>
+            <PermissionScope permissions={permissions}>
+                <LayoutSlotsProvider>
+                    <MemoryRouter initialEntries={[path]}>
+                        <Routes>
+                            <Route path="/environments/:envHrid" element={<Shell />}>
+                                <Route path="domains/:domainHrid/dashboard" element={<p>Dashboard page</p>} />
+                            </Route>
+                        </Routes>
+                    </MemoryRouter>
+                </LayoutSlotsProvider>
+            </PermissionScope>
         </TooltipProvider>,
     );
 }
@@ -108,6 +111,18 @@ describe('Shell', () => {
             expect(screen.queryByRole('button', { name: item })).not.toBeInTheDocument();
         }
         expect(screen.getByRole('button', { name: 'Organization' })).toBeInTheDocument();
+    });
+
+    it('hides Organization without organization_settings_read', () => {
+        vi.mocked(useEnvironmentDomains).mockReturnValue({
+            data: { data: domains, currentPage: 0, totalCount: 1 },
+            isPending: false,
+        } as never);
+
+        renderShellAt('/environments/prod/domains/one/dashboard', []);
+
+        expect(screen.queryByRole('button', { name: 'Organization' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Applications' })).toBeInTheDocument();
     });
 
     it('shows the domain menu when the environment has a domain', () => {
