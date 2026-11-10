@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -26,6 +27,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
@@ -64,8 +66,15 @@ public class RememberMeStep extends AuthenticationFlowStep {
             return;
         }
 
+        // if client is unknown ignore the cookie otherwise we cannot verify it
+        Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        if (client == null) {
+            flow.doNext(routingContext);
+            return;
+        }
+
         // Extract current user form remember-me cookie
-        extractUserFormRememberMeCookie(routingContext.request().getCookie(cookieName))
+        extractUserFormRememberMeCookie(client, routingContext.request().getCookie(cookieName))
                 .subscribe(
                         user -> {
                             setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
@@ -79,11 +88,11 @@ public class RememberMeStep extends AuthenticationFlowStep {
                 );
     }
 
-    private Single<User> extractUserFormRememberMeCookie(final Cookie rememberMeCookie) {
+    private Single<User> extractUserFormRememberMeCookie(final Client client, final Cookie rememberMeCookie) {
 
         final var rememberMeCookieValue = rememberMeCookie.getValue();
 
-        return jwtService.decode(rememberMeCookieValue, SESSION)
+        return jwtService.decodeAndVerify(rememberMeCookieValue, client, SESSION)
                 .flatMap(jwt -> {
 
                     final var userId = (String) jwt.get(USER_ID_KEY);
