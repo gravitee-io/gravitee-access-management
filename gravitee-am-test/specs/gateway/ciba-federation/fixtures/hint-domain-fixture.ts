@@ -29,7 +29,6 @@ import { uniqueName } from '@utils-commands/misc';
 import { Domain } from '@management-models/Domain';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { Fixture } from '../../../test-fixture';
-import { TargetDomainFixture } from './target-domain-fixture';
 
 const CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
 const CIBA_TOKEN_POLL_INTERVAL_MS = 5500;
@@ -38,10 +37,12 @@ const CIBA_TOKEN_POLL_TIMEOUT_MS = 90000;
 export interface HintDomainFixture extends Fixture {
   domain: Domain;
   oidcConfig: any;
+  applicationId: string;
   clientId: string;
   clientSecret: string;
   federationIdp: IdentityProvider;
-  initiateCiba: (loginHint: string) => Promise<any>;
+  /** Sends a backchannel authentication request with `openid` scope, overridden by `params`. */
+  initiateCiba: (loginHint: string, params?: Record<string, string>) => Promise<any>;
   pollToken: (authReqId: string) => Promise<any>;
   pollTokenUntilGranted: (authReqId: string) => Promise<any>;
 }
@@ -83,7 +84,10 @@ async function createCallbackApplication(domainId: string, accessToken: string):
   return { clientId: updated.settings.oauth.clientId, clientSecret };
 }
 
-async function createHintApplication(domainId: string, accessToken: string): Promise<{ clientId: string; clientSecret: string }> {
+async function createHintApplication(
+  domainId: string,
+  accessToken: string,
+): Promise<{ applicationId: string; clientId: string; clientSecret: string }> {
   const created = await createApplication(domainId, accessToken, {
     name: uniqueName('ciba-fed-hint-client', true),
     type: 'WEB',
@@ -106,10 +110,17 @@ async function createHintApplication(domainId: string, accessToken: string): Pro
     },
     created.id,
   );
-  return { clientId: updated.settings.oauth.clientId, clientSecret };
+  return { applicationId: created.id, clientId: updated.settings.oauth.clientId, clientSecret };
 }
 
-export const setupHintDomain = async (accessToken: string, targetDomain: TargetDomainFixture): Promise<HintDomainFixture> => {
+/** The OpenID Provider the federation notifier relays to, and the client it authenticates as. */
+export interface FederationUpstream {
+  wellKnownUri: string;
+  clientId: string;
+  clientSecret: string;
+}
+
+export const setupHintDomain = async (accessToken: string, upstream: FederationUpstream): Promise<HintDomainFixture> => {
   let domain: Domain | null = null;
 
   try {
@@ -122,10 +133,10 @@ export const setupHintDomain = async (accessToken: string, targetDomain: TargetD
       type: 'oauth2-generic-am-idp',
       external: true,
       configuration: JSON.stringify({
-        clientId: targetDomain.resourceApp.clientId,
-        clientSecret: targetDomain.resourceApp.clientSecret,
+        clientId: upstream.clientId,
+        clientSecret: upstream.clientSecret,
         clientAuthenticationMethod: 'client_secret_post',
-        wellKnownUri: `${process.env.AM_INTERNAL_GATEWAY_URL}/${targetDomain.domain.hrid}/oidc/.well-known/openid-configuration`,
+        wellKnownUri: upstream.wellKnownUri,
         responseType: 'code',
         responseMode: 'default',
         scopes: ['openid'],
@@ -166,7 +177,7 @@ export const setupHintDomain = async (accessToken: string, targetDomain: TargetD
       },
     });
 
-    const { clientId, clientSecret } = await createHintApplication(domain.id, accessToken);
+    const { applicationId, clientId, clientSecret } = await createHintApplication(domain.id, accessToken);
 
     await startDomain(domain.id, accessToken);
     const startedDomain = await waitForDomainStart(domain);
@@ -175,8 +186,8 @@ export const setupHintDomain = async (accessToken: string, targetDomain: TargetD
     const tokenEndpoint = startedDomain.oidcConfig.token_endpoint;
     const basicAuth = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`;
 
-    const initiateCiba = async (loginHint: string): Promise<any> => {
-      const params = new URLSearchParams({ scope: 'openid', login_hint: loginHint, client_id: clientId });
+    const initiateCiba = async (loginHint: string, extraParams: Record<string, string> = {}): Promise<any> => {
+      const params = new URLSearchParams({ scope: 'openid', login_hint: loginHint, client_id: clientId, ...extraParams });
       return performPost(cibaEndpoint, '', params.toString(), {
         'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: basicAuth,
@@ -200,6 +211,7 @@ export const setupHintDomain = async (accessToken: string, targetDomain: TargetD
     return {
       domain: startedDomain.domain,
       oidcConfig: startedDomain.oidcConfig,
+      applicationId,
       clientId,
       clientSecret,
       federationIdp,
