@@ -125,7 +125,7 @@ describe('adaptAmSchema', () => {
         expect(unsupported).toEqual(['port (condition)']);
     });
 
-    it('drops a property without a type, as the Angular json-schema-form does not render it', () => {
+    it('drops a property without a type', () => {
         const { schema } = adaptAmSchema({
             type: 'object',
             required: ['factorType', 'returnDigits'],
@@ -163,7 +163,7 @@ describe('adaptAmSchema', () => {
         expect(schema.properties).toEqual({ graviteeResource: { ...select, title: 'Resource' }, smtp: select });
     });
 
-    it('matches the graviteeResource property name only at the top level, as Angular does', () => {
+    it('matches the graviteeResource property name only at the top level', () => {
         const { schema } = adaptAmSchema({
             type: 'object',
             properties: { mail: { type: 'object', properties: { graviteeResource: { type: 'string' } } } },
@@ -348,7 +348,7 @@ describe('withSchemaDefaults', () => {
         });
     });
 
-    it('starts an array with one item of the item defaults, as Angular json-schema-form does, in nested objects too', () => {
+    it('starts an array with one item of the item defaults, in nested objects too', () => {
         const condition: JsonSchema = {
             type: 'object',
             properties: {

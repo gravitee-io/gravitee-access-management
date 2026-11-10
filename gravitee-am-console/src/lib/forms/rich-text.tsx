@@ -64,7 +64,7 @@ function toNode(node: ChildNode, key: string): ReactNode {
 }
 
 /**
- * The HTML of a plugin description as React elements, as Angular shows it with `innerHTML`. Only bold, italic, code,
+ * The HTML of a plugin description as React elements. Only bold, italic, code,
  * line breaks and http(s) links keep their markup. A script or style is dropped. Any other tag gives its text.
  */
 export function richText(text: string): ReactNode {

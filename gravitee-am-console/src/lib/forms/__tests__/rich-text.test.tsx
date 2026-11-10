@@ -25,7 +25,7 @@ describe('richText', () => {
         expect(richText('Plain text.')).toBe('Plain text.');
     });
 
-    it('keeps bold, italic, code and line breaks, including the Angular </br>', () => {
+    it('keeps bold, italic, code and line breaks, including </br>', () => {
         expect(html('Set <i><b>(GIVEN_KEY)</b></i> or <code>JWKS_URL</code>.<br/>Then save.</br>Done.')).toBe(
             'Set <em><strong>(GIVEN_KEY)</strong></em> or <code class="font-mono text-xs">JWKS_URL</code>.<br>Then save.<br>Done.',
         );

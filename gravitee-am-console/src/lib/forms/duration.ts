@@ -30,7 +30,6 @@ const SECONDS_PER_DAY = 86_400;
 // moment: a month is 146097 / 4800 days and a year 12 months, rounded to whole days when converted to seconds.
 const DAYS_PER_MONTH = 146_097 / 4_800;
 
-/** The Angular `moment.duration(amount, unit).asSeconds()`. */
 export function toSeconds(amount: number, unit: DurationUnit): number {
     switch (unit) {
         case 'seconds':

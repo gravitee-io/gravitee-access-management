@@ -88,7 +88,7 @@ export function IdentityProviderSettingsForm({ provider, adapted, configuration,
     }, [form]);
     const save = useMutation({
         mutationFn: async (values: ProviderValues) => {
-            // A read-only field goes back as stored, as the Angular `withPinnedStorage` does.
+            // A read-only field goes back as stored.
             const stored = parseConfiguration(provider);
             const config = { ...values.config, ...Object.fromEntries(pinned.map(field => [field, stored[field]])) };
             return updateIdentityProvider(ref, {

@@ -30,7 +30,6 @@ export function listRoles(ref: DomainRef, page: number, size: number): Promise<P
     return http<Page<Role>>(`${domainPath(ref)}/roles?page=${page}&size=${size}`);
 }
 
-/** Every role of the domain, page by page, as the Angular `RoleService.findAllByDomain` loads them. */
 export async function listAllRoles(ref: DomainRef): Promise<Role[]> {
     const first = await listRoles(ref, 0, ROLES_PAGE_SIZE);
     const pageCount = Math.ceil(first.totalCount / ROLES_PAGE_SIZE);

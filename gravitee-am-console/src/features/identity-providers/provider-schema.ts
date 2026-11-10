@@ -52,7 +52,6 @@ function withProperties(schema: SchemaNode, properties: Properties): SchemaNode 
     return { ...schema, properties };
 }
 
-/** The Angular `enrichFormWithCerts`. */
 function withCertificates(schema: SchemaNode, certificates: readonly Certificate[]): SchemaNode {
     const mtls = certificates.filter(certificate => certificate.usage?.includes('mtls'));
     const supported = MTLS_SCHEMAS.some(known => known.id === schema.id && known.version === schema.version);
@@ -71,10 +70,7 @@ function withCertificates(schema: SchemaNode, certificates: readonly Certificate
     });
 }
 
-/**
- * The Angular `MaterialCertificateComponent`: a select of None and the domain certificates. None writes null, which the
- * form resolver and the Management API read as unset.
- */
+/** A select of None and the domain certificates. None writes null, which the form resolver and the Management API read as unset. */
 function withCertificateSelects(schema: SchemaNode, certificates: readonly Certificate[]): SchemaNode {
     const properties = propertiesOf(schema);
     const fields = Object.keys(properties).filter(key => properties[key].widget === CERTIFICATE_WIDGET);
@@ -85,7 +81,7 @@ function withCertificateSelects(schema: SchemaNode, certificates: readonly Certi
     }));
 }
 
-/** The Angular `DataSourcesService.applyDataSourceSelection`: a data source field becomes a select, or read-only when there is none. */
+/** A data source field becomes a select, or read-only when there is none. */
 function withDataSources(node: SchemaNode, name: string, dataSources: readonly DataSource[]): SchemaNode {
     let adapted = node;
     if (node.properties) {
@@ -124,12 +120,11 @@ function appendDescription(property: SchemaNode, text: string): SchemaNode {
     return { ...property, description: property.description ? `${String(property.description)} ${text}` : text };
 }
 
-/** The Angular `enrichFormWithSystemClusterDisclaimer`. Graphene renders the description of a boolean, so the hint goes there. */
+/** Graphene renders the description of a boolean, so the hint goes there. */
 function withDisclaimer(schema: SchemaNode): SchemaNode {
     return mapFields(schema, [PINNED_STORAGE_TOGGLE], property => appendDescription(property, IMMUTABLE_HINT));
 }
 
-/** The creation schema: the Angular step 2 enrichers, then the data source fields. */
 export function enrichCreationSchema(schema: SchemaNode, context: SchemaContext): SchemaNode {
     let enriched = withCertificateSelects(withCertificates(schema, context.certificates), context.certificates);
     if (context.systemClusterRestricted && context.type === MONGO_IDP_TYPE) {
@@ -139,7 +134,7 @@ export function enrichCreationSchema(schema: SchemaNode, context: SchemaContext)
     return withDataSources(enriched, '', context.dataSources);
 }
 
-/** The fields a MongoDB provider may not change, as the Angular `ProviderSettingsComponent.withPinnedStorage` lists them. */
+/** The fields a MongoDB provider may not change. */
 export function pinnedFields(type: string, providerRestricted: boolean, installationRestricted: boolean): string[] {
     if (type !== MONGO_IDP_TYPE) {
         return [];
@@ -150,7 +145,6 @@ export function pinnedFields(type: string, providerRestricted: boolean, installa
     return installationRestricted ? [PINNED_STORAGE_TOGGLE] : [];
 }
 
-/** The settings schema: the Angular settings enrichers, the default rule, then the data source fields. */
 export function enrichSettingsSchema(schema: SchemaNode, context: SchemaContext & { readonly providerRestricted: boolean }): SchemaNode {
     let enriched = withCertificateSelects(withCertificates(schema, context.certificates), context.certificates);
     enriched = mapFields(enriched, pinnedFields(context.type, context.providerRestricted, context.systemClusterRestricted), property => ({
@@ -160,7 +154,7 @@ export function enrichSettingsSchema(schema: SchemaNode, context: SchemaContext 
     if (context.systemClusterRestricted && context.type === MONGO_IDP_TYPE) {
         enriched = withDisclaimer(enriched);
     }
-    // Angular blanks every default, so a stored null stays null on edit. `withBooleanDefaults` gives the booleans theirs.
+    // Every default is blanked, so a stored null stays null on edit. `withBooleanDefaults` gives the booleans theirs.
     enriched = withProperties(
         enriched,
         Object.fromEntries(Object.entries(propertiesOf(enriched)).map(([key, property]) => [key, { ...property, default: undefined }])),

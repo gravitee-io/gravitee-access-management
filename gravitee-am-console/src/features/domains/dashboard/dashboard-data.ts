@@ -15,7 +15,6 @@
  */
 import type { AnalyticsQuery, AnalyticsResponse, AnalyticsType } from '../../../lib/api/analytics';
 
-/** `utils/time-range-utils.ts` in the Angular console. */
 export const TIME_RANGES = [
     { id: '1h', name: 'Last hour', value: 60, unit: 'minutes', interval: 1000 * 60 },
     { id: '12h', name: 'Last 12 hours', value: 12, unit: 'hours', interval: 1000 * 60 * 60 },
@@ -48,7 +47,6 @@ export function rangeStart(range: TimeRange, to: number): number {
     return start.getTime();
 }
 
-/** The widgets of the Angular `DomainDashboardComponent`. */
 export const WIDGET_KEYS = [
     'logins',
     'signUps',

@@ -52,7 +52,7 @@ interface Mapping {
 
 type Column = 'key' | 'value';
 
-/** The Angular `defaultMappers`, shown until the provider has mappers of its own. */
+/** Shown until the provider has mappers of its own. */
 const DEFAULT_MAPPERS: Record<string, string> = {
     sub: 'uid',
     email: 'mail',

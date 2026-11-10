@@ -47,7 +47,7 @@ describe('enrichCreationSchema', () => {
         });
     });
 
-    it('turns a certificate widget into a choice of None and the domain certificates, as the Angular select does', () => {
+    it('turns a certificate widget into a choice of None and the domain certificates', () => {
         const schema = { properties: { graviteeCertificate: { type: 'string', widget: 'graviteeCertificate' } } };
         const certificates = [
             { id: 'c1', name: 'Signing cert', type: 'pkcs12', usage: ['sig'] },

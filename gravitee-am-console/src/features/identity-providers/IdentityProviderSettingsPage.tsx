@@ -70,7 +70,7 @@ export function IdentityProviderSettingsPage() {
     );
     const { adapted } = useAdaptedSchema(enriched);
 
-    // A system provider has no editable settings. Angular opens its mappers.
+    // A system provider has no editable settings, so it opens its mappers.
     if (provider.system) {
         return <Navigate to={`${providerPath}/mappers`} replace />;
     }

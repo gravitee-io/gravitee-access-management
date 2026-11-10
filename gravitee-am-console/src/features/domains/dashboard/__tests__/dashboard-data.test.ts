@@ -28,7 +28,7 @@ describe('dashboard-data', () => {
         expect(rangeStart(range('12h'), to)).toBe(to - 12 * 3_600_000);
     });
 
-    it('builds the Angular query of a widget', () => {
+    it('builds the analytics query of a widget', () => {
         const to = new Date(2026, 9, 21, 12, 0).getTime();
 
         expect(widgetQuery('topApplications', range('7d'), to)).toEqual({

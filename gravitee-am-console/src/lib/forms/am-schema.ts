@@ -89,7 +89,7 @@ function widgetOf(node: SchemaNode): string | undefined {
     return (node.widget ?? (node['x-schema-form'] as SchemaNode | undefined)?.type) as string | undefined;
 }
 
-/** The Angular json-schema-form does not render a property without a type, so its value is not in the configuration. */
+/** A property without a type has no stored value. */
 function isRendered(node: SchemaNode): boolean {
     return ['type', '$ref', 'oneOf', 'anyOf', 'allOf'].some(keyword => node[keyword] !== undefined);
 }
@@ -252,7 +252,7 @@ function adaptNode(node: SchemaNode, key: string, path: string, context: AdaptCo
         adapted.readOnly = true;
     }
     const enumItems = adapted.type === 'array' && Array.isArray((adapted.items as SchemaNode | undefined)?.enum);
-    // angular-schema-form renders an array of enum items as checkboxes. Graphene has no checkbox group, so the field is a multiselect.
+    // Graphene has no checkbox group, so an array of enum items is a multiselect.
     if (enumItems) {
         adapted.uniqueItems = true;
     }

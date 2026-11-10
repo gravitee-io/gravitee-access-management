@@ -64,7 +64,6 @@ interface PermittedNavGroup {
     readonly items: readonly PermittedNavItem[];
 }
 
-/** The keys are the route segments of the Angular domain settings. */
 export const DOMAIN_SETTINGS_NAV_GROUPS: readonly PermittedNavGroup[] = [
     {
         label: 'Settings',

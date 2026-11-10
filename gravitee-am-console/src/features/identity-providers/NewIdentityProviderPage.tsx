@@ -34,7 +34,6 @@ import { useCurrentDomain } from '../../lib/session/domain';
 import { MongoStorageGuidance } from './MongoStorageGuidance';
 import { enrichCreationSchema, MONGO_IDP_TYPE } from './provider-schema';
 
-/** The Angular step 1 pre-fills the whitelist of these two plugins. */
 const DEFAULT_WHITELIST: Record<string, string[]> = {
     'google-am-idp': ['gmail.com'],
     'azure-ad-am-idp': ['microsoft.com'],
@@ -51,7 +50,6 @@ export function NewIdentityProviderPage() {
         queryFn: listIdentityProviderPlugins,
         staleTime: Infinity,
     });
-    // The Angular route resolves these before the wizard opens. They enrich the plugin schema.
     const certificates = useQuery({ queryKey: ['certificates', ref], queryFn: () => listCertificates(ref) });
     const dataSources = useQuery({
         queryKey: ['data-sources', ref.organizationId, ref.environmentId],

@@ -91,7 +91,7 @@ beforeEach(() => {
 });
 
 describe('DomainGeneralPage', () => {
-    it('saves the Angular patchGeneralSettings fields, with the path unchanged', async () => {
+    it('saves the general settings fields, with the path unchanged', async () => {
         vi.mocked(patchDomainGeneralSettings).mockResolvedValueOnce({ ...domain, description: 'Partners' });
         renderPage(editor);
 
@@ -145,7 +145,7 @@ describe('DomainGeneralPage', () => {
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
-    it('adds a post-logout redirect URI and rejects a duplicate with the Angular message', () => {
+    it('adds a post-logout redirect URI and rejects a duplicate', () => {
         renderPage(editor);
         const input = screen.getByRole('textbox', { name: 'Add post-logout redirect URI' });
 

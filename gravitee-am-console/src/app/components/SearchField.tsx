@@ -23,20 +23,23 @@ interface SearchFieldProps {
     /** The plural noun of the list, as in "Search scopes". */
     readonly label: string;
     readonly onSearch: (query: string) => void;
+    readonly defaultValue?: string;
+    readonly className?: string;
 }
 
 /** Calls `onSearch` with the trimmed text 300 ms after the last change. */
-export function SearchField({ label, onSearch }: SearchFieldProps) {
+export function SearchField({ label, onSearch, defaultValue, className = 'w-64' }: SearchFieldProps) {
     const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
     useEffect(() => () => clearTimeout(timer.current), []);
 
     return (
-        <InputGroup className="h-8 w-64 max-w-full">
+        <InputGroup className={`h-8 max-w-full ${className}`}>
             <InputGroupAddon align="inline-start">
                 <SearchIcon aria-hidden />
             </InputGroupAddon>
             <InputGroupInput
                 type="search"
+                defaultValue={defaultValue}
                 placeholder={`Search ${label}...`}
                 aria-label={`Search ${label}`}
                 onChange={event => {
