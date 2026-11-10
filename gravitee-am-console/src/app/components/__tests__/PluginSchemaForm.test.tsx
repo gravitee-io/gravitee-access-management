@@ -148,7 +148,7 @@ describe('PluginSchemaForm', () => {
         renderForm();
 
         expect(await screen.findByLabelText(/Keystore file/)).toBeInTheDocument();
-        expect(within(screen.getByRole('group', { name: 'Events' })).getByRole('button', { name: 'Add' })).toBeDisabled();
+        expect(within(screen.getByRole('group', { name: 'Events' })).getByRole('button', { name: 'Add item' })).toBeDisabled();
     });
 
     it('warns the developer about the fields it shows without their widget', () => {
