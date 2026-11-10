@@ -43,7 +43,6 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +50,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.SessionValidityUtils.isIssuedBeforeUserInvalidation;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -140,25 +140,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             return;
         }
         CookieSession session = (CookieSession) context.session().getDelegate();
-        var dates = List.of(
-                // if user has reset its password, check the last login date to make sure that the current session is not compromised
-                ofNullable(user.getLastPasswordReset()),
-                // We check if the username has been reset and invalidate the session
-                ofNullable(user.getLastUsernameReset()),
-                // if user has been sign out in a REST manner way, check the last login date to make sure that the current session is not compromised
-                ofNullable(user.getLastLogoutAt())
-        );
-
-        final long sessionTime = session.lastLogin().getTime();
-        final boolean isIllegalStateAccount = dates.stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(Date::getTime)
-                // "exp" claim is stored in epoch seconds format in the cookie session
-                // we need to compare both dates without the milliseconds
-                .anyMatch(time -> time - sessionTime > 1000L);
-
-        if (isIllegalStateAccount) {
+        if (isIssuedBeforeUserInvalidation(user, session.lastLogin().getTime())) {
             handler.handle(Future.failedFuture(new AccountIllegalStateException(user.getId())));
         } else {
             handler.handle(Future.succeededFuture());
