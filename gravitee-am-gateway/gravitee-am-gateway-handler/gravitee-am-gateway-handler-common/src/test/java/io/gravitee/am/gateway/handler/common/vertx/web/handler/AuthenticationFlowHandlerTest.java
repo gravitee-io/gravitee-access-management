@@ -1497,6 +1497,94 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK");
     }
 
+    @Test
+    public void shouldContinueUser_RecoveryCodeSelectionRuleFalse() throws Exception {
+        setRecoveryCodeScenario("{false}", null);
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotContinueUser_RecoveryCodeSelectionRuleTrue() throws Exception {
+        setRecoveryCodeScenario("{true}", null);
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/recovery_code"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldContinueUser_RecoveryCodeSelectionRuleInvalid() throws Exception {
+        setRecoveryCodeScenario("invalid-selection-rule", null);
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotContinueUser_RecoveryCodeIsOnlyAndDefaultFactorWhateverTheRule() throws Exception {
+        setRecoveryCodeScenario("{false}", "factor-2");
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/recovery_code"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    private void setRecoveryCodeScenario(String recoverySelectionRule, String onlyFactorId) {
+        router.route().order(-1).handler(rc -> {
+            Client client = new Client();
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            final Factor recoveryFactor = new Factor();
+            recoveryFactor.setFactorType(FactorType.RECOVERY_CODE);
+            recoveryFactor.setId("factor-2");
+            when(factorManager.getFactor("factor-2")).thenReturn(recoveryFactor);
+
+            var factorSettings = new FactorSettings();
+            var factor = new ApplicationFactorSettings();
+            factor.setId(FACTOR_ID);
+            factor.setSelectionRule("");
+            var factor2 = new ApplicationFactorSettings();
+            factor2.setId("factor-2");
+            factor2.setSelectionRule(recoverySelectionRule);
+            if (onlyFactorId != null) {
+                factorSettings.setDefaultFactorId(onlyFactorId);
+                factorSettings.setApplicationFactors(List.of(factor2));
+            } else {
+                factorSettings.setApplicationFactors(List.of(factor, factor2));
+            }
+            client.setFactorSettings(factorSettings);
+
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId(FACTOR_ID);
+            enrolledFactor.setStatus(ACTIVATED);
+            EnrolledFactor factorRecovery = new EnrolledFactor();
+            factorRecovery.setFactorId("factor-2");
+
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(List.of(enrolledFactor, factorRecovery));
+            rc.getDelegate().setUser(new User(endUser));
+
+            rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+    }
+
     private void setFactors(Client client) {
         client.setFactors(Collections.singleton(FACTOR_ID));
 
