@@ -56,7 +56,7 @@ const portal: Application = {
     },
 };
 
-const EDITOR = ['application_settings_read', 'application_settings_update'];
+const EDITOR = ['application_settings_read', 'application_settings_update', 'application_openid_read', 'application_openid_update'];
 const OWNER = [...EDITOR, 'application_settings_delete'];
 
 function renderPage(permissions: string[], application: Application = portal, domain: Record<string, unknown> = {}) {
@@ -116,6 +116,45 @@ describe('ApplicationGeneralPage', () => {
             }),
         );
         expect(toast.success).toHaveBeenCalledWith('Application updated');
+    });
+
+    it('saves on Enter in the name', async () => {
+        vi.mocked(patchApplication).mockResolvedValue(portal);
+        renderPage(EDITOR);
+
+        const name = screen.getByRole<HTMLInputElement>('textbox', { name: 'Name' });
+        fireEvent.change(name, { target: { value: 'Portal v2' } });
+        fireEvent.submit(name.form ?? name);
+
+        await waitFor(() => expect(patchApplication).toHaveBeenCalledWith(ref, 'app-1', expect.objectContaining({ name: 'Portal v2' })));
+    });
+
+    it('leaves the OAuth settings out of the save, read-only, without application_openid_update', async () => {
+        vi.mocked(patchApplication).mockResolvedValue(portal);
+        renderPage(['application_settings_read', 'application_settings_update']);
+
+        expect(screen.queryByRole('textbox', { name: 'Add redirect URI' })).not.toBeInTheDocument();
+        expect(screen.getByRole('switch', { name: /Single sign-out/ })).toBeDisabled();
+        fireEvent.click(screen.getByRole('switch', { name: /Skip user consent/ }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        await waitFor(() =>
+            expect(patchApplication).toHaveBeenCalledWith(ref, 'app-1', {
+                name: 'Portal',
+                description: 'The customer portal',
+                settings: { advanced: { skipConsent: true } },
+                template: false,
+            }),
+        );
+    });
+
+    it('shows Insufficient permission in place of the OAuth settings the API leaves out', () => {
+        renderPage(EDITOR, { ...portal, settings: { advanced: { skipConsent: false } } });
+
+        expect(screen.getAllByText('Insufficient permission')).toHaveLength(3);
+        expect(screen.queryByText('There are no redirect URIs.')).not.toBeInTheDocument();
+        expect(screen.queryByRole('switch', { name: /Single sign-out/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('switch', { name: /Silent re-authentication/ })).not.toBeInTheDocument();
     });
 
     it('rejects a redirect URI that is already listed', () => {

@@ -133,7 +133,8 @@ function ProvidersForm({ initial, typeName }: ProvidersFormProps) {
     const { ref } = useCurrentDomain();
     const { application } = useApplication();
     const queryClient = useQueryClient();
-    const canEdit = usePermissions().has('application_identity_provider_update');
+    // Without the read right the API leaves the links out, so a save would unlink every provider.
+    const canEdit = usePermissions().has('application_identity_provider_read', 'application_identity_provider_update');
     const [saved, setSaved] = useState(initial);
     const [lists, setLists] = useState(initial);
     const [editing, setEditing] = useState<{ list: ListName; row: ProviderRow } | null>(null);

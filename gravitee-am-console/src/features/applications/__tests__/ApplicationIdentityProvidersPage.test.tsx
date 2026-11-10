@@ -38,7 +38,7 @@ vi.mock('@gravitee/graphene-core', async importOriginal => ({
 }));
 
 const pagePath = `${applicationsPath}/app-1/idp`;
-const UPDATE = ['application_identity_provider_list', 'application_identity_provider_update'];
+const UPDATE = ['application_identity_provider_list', 'application_identity_provider_read', 'application_identity_provider_update'];
 
 const application: Application = {
     ...webApplication,
@@ -193,6 +193,14 @@ describe('ApplicationIdentityProvidersPage', () => {
         expect(within(dialog).getByRole('textbox', { name: 'Rule' })).toHaveAttribute('readonly');
         expect(within(dialog).queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
         expect(within(dialog).queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+    });
+
+    it('is read-only when the user cannot read the linked providers', async () => {
+        renderPage(['application_identity_provider_list', 'application_identity_provider_update']);
+
+        await screen.findByRole('table', { name: 'Identity providers' });
+        expect(screen.getByRole('switch', { name: 'Use LDAP' })).toBeDisabled();
+        expect(screen.queryByRole('button', { name: /^Move / })).not.toBeInTheDocument();
     });
 
     it('shows the empty state when the domain has no identity provider', async () => {

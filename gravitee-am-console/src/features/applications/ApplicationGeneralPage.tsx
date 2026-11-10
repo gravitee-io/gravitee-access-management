@@ -119,6 +119,9 @@ export function ApplicationGeneralPage() {
     const { has } = usePermissions();
     const canEdit = has('application_settings_update');
     const canDelete = has('application_settings_delete');
+    // The API leaves settings.oauth out without application_openid_read, and refuses a save that holds it without the update right.
+    const oauthReadable = !!application.settings?.oauth;
+    const canEditOauth = canEdit && oauthReadable && has('application_openid_update');
     const [form, setForm] = useState<FormState>(() => fromApplication(application));
     const [nameTouched, setNameTouched] = useState(false);
     // The dialog reads the last action, so its text stays the same while it closes.
@@ -139,13 +142,15 @@ export function ApplicationGeneralPage() {
                 name: form.name,
                 description: form.description,
                 settings: {
-                    oauth: {
-                        redirectUris: [...form.redirectUris],
-                        requestUris: [...form.requestUris],
-                        postLogoutRedirectUris: [...form.postLogoutRedirectUris],
-                        singleSignOut: form.singleSignOut,
-                        silentReAuthentication: form.silentReAuthentication,
-                    },
+                    ...(canEditOauth && {
+                        oauth: {
+                            redirectUris: [...form.redirectUris],
+                            requestUris: [...form.requestUris],
+                            postLogoutRedirectUris: [...form.postLogoutRedirectUris],
+                            singleSignOut: form.singleSignOut,
+                            silentReAuthentication: form.silentReAuthentication,
+                        },
+                    }),
                     advanced: { skipConsent: form.skipConsent },
                 },
                 template: form.template,
@@ -207,18 +212,21 @@ export function ApplicationGeneralPage() {
     const isCimdTemplate = !!cimd?.enabled && cimd.templateId === application.id;
     const types = CHANGEABLE_TYPES.filter(type => type !== 'resource_server' || domain.uma?.enabled);
     const texts = confirmTexts(pending);
-    const uriList = (list: UriList, label: string, duplicateNoun: string, placeholder: string, emptyText: string) => (
-        <ValueListInput
-            label={label}
-            values={form[list]}
-            editable={canEdit}
-            placeholder={placeholder}
-            emptyText={emptyText}
-            onChange={values => set({ [list]: values })}
-            onDuplicate={uri => toast.error(`Error : ${duplicateNoun} "${uri}" already exists`)}
-            onRemoveRequest={uri => ask({ kind: 'remove-uri', list, uri })}
-        />
-    );
+    const uriList = (list: UriList, label: string, duplicateNoun: string, placeholder: string, emptyText: string) =>
+        !oauthReadable ? (
+            <p className="text-sm text-muted-foreground">Insufficient permission</p>
+        ) : (
+            <ValueListInput
+                label={label}
+                values={form[list]}
+                editable={canEditOauth}
+                placeholder={placeholder}
+                emptyText={emptyText}
+                onChange={values => set({ [list]: values })}
+                onDuplicate={uri => toast.error(`Error : ${duplicateNoun} "${uri}" already exists`)}
+                onRemoveRequest={uri => ask({ kind: 'remove-uri', list, uri })}
+            />
+        );
 
     return (
         <div className="flex flex-col gap-6">
@@ -236,6 +244,7 @@ export function ApplicationGeneralPage() {
                         <FieldLabel htmlFor="application-name">Name</FieldLabel>
                         <Input
                             id="application-name"
+                            form={FORM_ID}
                             value={form.name}
                             disabled={!canEdit}
                             aria-invalid={nameTouched && nameMissing}
@@ -331,22 +340,26 @@ export function ApplicationGeneralPage() {
                     <CardContent className="grid gap-5">
                         {userFacing && (
                             <>
-                                <SettingToggle
-                                    id="application-single-sign-out"
-                                    label="Single sign-out"
-                                    description="On logout, also call the external identity provider's end-session endpoint, when it has one."
-                                    checked={form.singleSignOut}
-                                    disabled={!canEdit}
-                                    onChange={singleSignOut => set({ singleSignOut })}
-                                />
-                                <SettingToggle
-                                    id="application-silent-reauthentication"
-                                    label="Silent re-authentication"
-                                    description="Allow id_token_hint and prompt=none, so new tokens can be requested without user interaction."
-                                    checked={form.silentReAuthentication}
-                                    disabled={!canEdit}
-                                    onChange={silentReAuthentication => set({ silentReAuthentication })}
-                                />
+                                {oauthReadable && (
+                                    <>
+                                        <SettingToggle
+                                            id="application-single-sign-out"
+                                            label="Single sign-out"
+                                            description="On logout, also call the external identity provider's end-session endpoint, when it has one."
+                                            checked={form.singleSignOut}
+                                            disabled={!canEditOauth}
+                                            onChange={singleSignOut => set({ singleSignOut })}
+                                        />
+                                        <SettingToggle
+                                            id="application-silent-reauthentication"
+                                            label="Silent re-authentication"
+                                            description="Allow id_token_hint and prompt=none, so new tokens can be requested without user interaction."
+                                            checked={form.silentReAuthentication}
+                                            disabled={!canEditOauth}
+                                            onChange={silentReAuthentication => set({ silentReAuthentication })}
+                                        />
+                                    </>
+                                )}
                                 <SettingToggle
                                     id="application-skip-consent"
                                     label="Skip user consent"
