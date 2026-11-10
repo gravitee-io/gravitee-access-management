@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
+import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
+import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -29,7 +32,13 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
 import static io.gravitee.am.gateway.handler.common.vertx.web.RoutingContextHelper.setUser;
+import static java.util.Optional.ofNullable;
+
 import lombok.CustomLog;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
@@ -74,6 +83,31 @@ public class RememberMeStep extends AuthenticationFlowStep {
 
         // Extract current user form remember-me cookie
         extractUserFormRememberMeCookie(client, routingContext.request().getCookie(cookieName))
+                .map(tuple -> {
+                    final var user = tuple.getT1();
+                    final var cookie = tuple.getT2();
+
+                    var dates = List.of(
+                            ofNullable(user.getLastPasswordReset()),
+                            ofNullable(user.getLastUsernameReset()),
+                            ofNullable(user.getLastLogoutAt())
+                    );
+
+                    // "iat" claim is stored in epoch seconds format, compare both dates in milliseconds
+                    // and tolerate the truncated second as SSOSessionHandler does
+                    final long cookieIssuedAt = cookie.getIat() * 1000L;
+                    final boolean isIllegalStateAccount = dates.stream()
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .map(Date::getTime)
+                            .anyMatch(time -> time - cookieIssuedAt > 1000L);
+
+                    if (isIllegalStateAccount) {
+                        throw new AccountIllegalStateException("The user account is in an illegal state. Please contact your administrator.");
+                    }
+
+                    return user;
+                })
                 .subscribe(
                         user -> {
                             setUser(routingContext, new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user));
@@ -87,7 +121,7 @@ public class RememberMeStep extends AuthenticationFlowStep {
                 );
     }
 
-    private Single<User> extractUserFormRememberMeCookie(final Client client, final Cookie rememberMeCookie) {
+    private Single<Tuple<User, JWT>> extractUserFormRememberMeCookie(final Client client, final Cookie rememberMeCookie) {
 
         final var rememberMeCookieValue = rememberMeCookie.getValue();
 
@@ -97,7 +131,8 @@ public class RememberMeStep extends AuthenticationFlowStep {
                     final var userId = (String) jwt.get(USER_ID_KEY);
 
                     return userService.findById(userId)
-                            .switchIfEmpty(Single.error(new UserNotFoundException(userId)));
+                            .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                            .map(user -> Tuple.of(user, jwt));
                 });
     }
 }
