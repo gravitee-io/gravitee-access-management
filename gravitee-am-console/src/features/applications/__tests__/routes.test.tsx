@@ -70,6 +70,12 @@ describe('application routes', () => {
         ['the metadata', '/app-1/settings/metadata', [...READ, 'application_openid_read'], 'Metadata page'],
         ['the members', '/app-1/settings/members', [...READ, 'application_settings_read'], 'Members page'],
         ['a section a later story ports', '/app-1/design/forms', [...READ, 'application_flow_list'], 'Forms'],
+        [
+            'a section without the permission of its group',
+            '/app-1/settings/factors',
+            [...READ, 'application_factor_list'],
+            'Multifactor Auth',
+        ],
     ])('shows Not allowed on %s without its permission', async (_name, section, permissions, page) => {
         renderAt(section, permissions);
 
@@ -98,6 +104,15 @@ describe('application routes', () => {
 
         expect(await screen.findByText('Overview page')).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: title })).not.toBeInTheDocument();
+    });
+
+    it('opens the overview for the flows of an agent, which has no Design group', async () => {
+        vi.mocked(getApplication).mockResolvedValue({ ...webApplication, type: 'agent' });
+
+        renderAt('/app-1/design/flows', [...READ, 'application_flow_list']);
+
+        expect(await screen.findByText('Overview page')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Flows' })).not.toBeInTheDocument();
     });
 
     it('takes the permissions of an application member into account', async () => {

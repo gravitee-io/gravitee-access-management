@@ -255,17 +255,41 @@ interface ApplicationNavContext {
     readonly hasAny: (...permissions: string[]) => boolean;
 }
 
-/** The application menu, with the entries the user, the application type and the domain allow. */
-export function applicationNavGroups(
-    groups: readonly ApplicationNavGroup[],
-    { type, samlEnabled, hasAny }: ApplicationNavContext,
-): NavGroup[] {
+type SectionAccess = 'open' | 'forbidden' | 'absent';
+
+function ruleAccess(rule: Partial<ApplicationNavRule>, { type, samlEnabled, hasAny }: ApplicationNavContext): SectionAccess {
     const appType = type.toUpperCase();
-    const allows = (rule: Partial<ApplicationNavRule>) =>
-        (!rule.perms || hasAny(...rule.perms)) &&
-        (!rule.types || rule.types.some(allowed => allowed === appType)) &&
-        (!rule.requiresSaml || samlEnabled) &&
-        (!rule.requiresAgent || appType === 'AGENT');
+    if (
+        (rule.types && !rule.types.some(allowed => allowed === appType)) ||
+        (rule.requiresSaml && !samlEnabled) ||
+        (rule.requiresAgent && appType !== 'AGENT')
+    ) {
+        return 'absent';
+    }
+    return rule.perms && !hasAny(...rule.perms) ? 'forbidden' : 'open';
+}
+
+/**
+ * Whether a section of the application menu opens, with the rules of its group and its entry: `forbidden` for a missing
+ * permission, `absent` when the application type or the domain does not have the section.
+ */
+export function applicationSectionAccess(section: string, context: ApplicationNavContext): SectionAccess {
+    const group = APPLICATION_NAV_GROUPS.find(candidate => candidate.items.some(item => item.key === section));
+    const item = group?.items.find(candidate => candidate.key === section);
+    if (!group || !item) {
+        throw new Error(`No application menu entry for the section ${section}`);
+    }
+    const parent = group.parent ? ruleAccess(group.parent, context) : 'open';
+    const own = ruleAccess(item, context);
+    if (parent === 'absent' || own === 'absent') {
+        return 'absent';
+    }
+    return parent === 'open' ? own : parent;
+}
+
+/** The application menu, with the entries the user, the application type and the domain allow. */
+export function applicationNavGroups(groups: readonly ApplicationNavGroup[], context: ApplicationNavContext): NavGroup[] {
+    const allows = (rule: Partial<ApplicationNavRule>) => ruleAccess(rule, context) === 'open';
     return groups
         .filter(group => !group.parent || allows(group.parent))
         .map(group => ({ label: group.label, items: group.items.filter(allows).map(({ key, title }) => ({ key, title })) }))

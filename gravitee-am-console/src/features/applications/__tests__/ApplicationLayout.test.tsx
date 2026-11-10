@@ -20,6 +20,7 @@ import { HttpError } from '../../../lib/api/http';
 import { listApplicationPermissions } from '../../../lib/api/permissions';
 import { ApplicationLayout } from '../ApplicationLayout';
 import { ApplicationSettingsLayout } from '../ApplicationSettingsLayout';
+import { RequireApplicationSection } from '../RequireApplicationSection';
 import { RequireApplicationType } from '../RequireApplicationType';
 import { applicationsPath, currentDomain, ref, renderRoutes, webApplication } from './render';
 
@@ -41,7 +42,12 @@ function renderLayout(path: string, domainPermissions: string[], applicationPerm
             <Route path="settings" element={<ApplicationSettingsLayout />}>
                 <Route path="general" element={<p>General page</p>} />
                 <Route path="members" element={<p>Members page</p>} />
-                <Route path="factors" element={<p>Factors page</p>} />
+                <Route element={<RequireApplicationSection section="settings/secrets-certificates" />}>
+                    <Route path="secrets-certificates" element={<p>Certificates page</p>} />
+                </Route>
+                <Route element={<RequireApplicationSection section="settings/factors" />}>
+                    <Route path="factors" element={<p>Factors page</p>} />
+                </Route>
             </Route>
         </Route>,
         domainPermissions,
@@ -104,14 +110,26 @@ describe('ApplicationLayout', () => {
     });
 
     it('opens the first settings page the user may read', async () => {
-        renderLayout(`${appPath}/settings`, ['application_read', 'application_member_list']);
+        renderLayout(`${appPath}/settings`, ['application_read', 'application_certificate_list', 'application_member_list']);
 
         expect(await screen.findByText('Members page')).toBeInTheDocument();
     });
 
-    it('opens the factors with application_factor_read, as Angular does', async () => {
-        renderLayout(`${appPath}/settings`, ['application_read', 'application_factor_read']);
+    it('opens the certificates with the permission their section asks for', async () => {
+        renderLayout(`${appPath}/settings`, ['application_read', 'application_certificate_list']);
 
-        expect(await screen.findByText('Factors page')).toBeInTheDocument();
+        expect(await screen.findByText('Certificates page')).toBeInTheDocument();
+    });
+
+    it('opens the overview when the user may open no settings page', async () => {
+        renderLayout(`${appPath}/settings`, [
+            'application_read',
+            'application_certificate_read',
+            'application_factor_read',
+            'application_factor_list',
+        ]);
+
+        expect(await screen.findByText('Overview page')).toBeInTheDocument();
+        expect(screen.queryByText('Not allowed')).not.toBeInTheDocument();
     });
 });

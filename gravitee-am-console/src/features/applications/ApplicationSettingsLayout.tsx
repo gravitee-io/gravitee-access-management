@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { applicationSectionAccess } from '../../app/navigation';
+import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 import { useApplication } from './ApplicationContext';
 
-/** The settings pages in the order the index opens the first one the user may read. */
-const SETTINGS_LANDING: readonly { readonly path: string; readonly permission: string }[] = [
-    { path: 'general', permission: 'application_settings_read' },
-    { path: 'oauth2', permission: 'application_openid_read' },
-    { path: 'members', permission: 'application_member_list' },
-    { path: 'secrets-certificates', permission: 'application_certificate_read' },
-    { path: 'factors', permission: 'application_factor_read' },
-];
+/** The settings pages in the Angular order. The index opens the first one the user may open. */
+const SETTINGS_LANDING = ['general', 'oauth2', 'members', 'secrets-certificates', 'factors'] as const;
 
 export function ApplicationSettingsLayout() {
-    const { applicationPath } = useApplication();
+    const { application, applicationPath } = useApplication();
+    const { domain } = useCurrentDomain();
     const { pathname } = useLocation();
-    const { has } = usePermissions();
+    const { hasAny } = usePermissions();
     if (pathname.replace(/\/$/, '') === `${applicationPath}/settings`) {
-        const landing = SETTINGS_LANDING.find(page => has(page.permission));
-        return <Navigate to={landing ? landing.path : `${applicationPath}/overview`} replace />;
+        const context = { type: application.type, samlEnabled: !!domain.saml?.enabled, hasAny };
+        const landing = SETTINGS_LANDING.find(page => applicationSectionAccess(`settings/${page}`, context) === 'open');
+        return <Navigate to={landing ?? `${applicationPath}/overview`} replace />;
     }
     return <Outlet />;
 }

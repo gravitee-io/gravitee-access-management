@@ -15,29 +15,19 @@
  */
 import { Navigate, Outlet } from 'react-router-dom';
 import { ForbiddenPanel } from '../../app/components/ForbiddenPanel';
-import { APPLICATION_NAV_GROUPS } from '../../app/navigation';
+import { applicationSectionAccess } from '../../app/navigation';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 import { useApplication } from './ApplicationContext';
 
-const SECTIONS = new Map(APPLICATION_NAV_GROUPS.flatMap(group => group.items).map(item => [item.key, item]));
-
-/** Guards a section with the rules of its menu entry: a missing permission shows Not allowed, a section the application or the domain does not have opens the overview. */
+/** Guards a section with the rules of its menu group and entry: a missing permission shows Not allowed, a section the application or the domain does not have opens the overview. */
 export function RequireApplicationSection({ section }: { readonly section: string }) {
     const { application, applicationPath } = useApplication();
     const { domain } = useCurrentDomain();
     const { hasAny } = usePermissions();
-    const item = SECTIONS.get(section);
-    if (!item) {
-        throw new Error(`No application menu entry for the section ${section}`);
-    }
-    const type = application.type.toUpperCase();
-    if (
-        (item.types && !item.types.some(allowed => allowed === type)) ||
-        (item.requiresSaml && !domain.saml?.enabled) ||
-        (item.requiresAgent && type !== 'AGENT')
-    ) {
+    const access = applicationSectionAccess(section, { type: application.type, samlEnabled: !!domain.saml?.enabled, hasAny });
+    if (access === 'absent') {
         return <Navigate to={`${applicationPath}/overview`} replace />;
     }
-    return item.perms && !hasAny(...item.perms) ? <ForbiddenPanel /> : <Outlet />;
+    return access === 'forbidden' ? <ForbiddenPanel /> : <Outlet />;
 }
