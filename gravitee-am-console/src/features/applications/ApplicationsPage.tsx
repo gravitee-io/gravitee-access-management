@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Button, DataTable, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
+import { Button, DataTable, DataTableColumnHeader, DataTableEmptyState, DateCell } from '@gravitee/graphene-core';
 import { AppWindowIcon, PlusIcon, SearchIcon } from '@gravitee/graphene-core/icons';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { SearchField } from '../../app/components/SearchField';
-import { type ApplicationSummaryRow, listDomainApplications } from '../../lib/api/applications';
+import { type ApplicationSort, type ApplicationSummaryRow, listDomainApplications } from '../../lib/api/applications';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { SectionBadge } from '../../lib/layout/useSectionSidebar';
 import { useCurrentDomain } from '../../lib/session/domain';
@@ -36,6 +36,8 @@ export function ApplicationsPage() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [query, setQuery] = useState('');
+    const [sorting, setSorting] = useState<SortingState>([{ id: 'updatedAt', desc: true }]);
+    const sort = toApplicationSort(sorting);
     // A new key remounts the search field, which empties it.
     const [searchKey, setSearchKey] = useState(0);
     const search = useCallback((text: string) => {
@@ -50,8 +52,8 @@ export function ApplicationsPage() {
     useBreadcrumbs([{ label: 'Domains', to: domainsPath }, { label: domain.name, to: `${basePath}/dashboard` }, { label: 'Applications' }]);
 
     const { data, error, isFetching, isPlaceholderData } = useQuery({
-        queryKey: ['applications', ref, 'list', page, pageSize, query],
-        queryFn: () => listDomainApplications(ref, page - 1, pageSize, query),
+        queryKey: ['applications', ref, 'list', page, pageSize, query, sort],
+        queryFn: () => listDomainApplications(ref, page - 1, pageSize, query, sort),
         placeholderData: keepPreviousData,
     });
     const isFirstUse = !isPlaceholderData && data?.totalCount === 0 && !query;
@@ -59,7 +61,7 @@ export function ApplicationsPage() {
     const columns: ColumnDef<ApplicationSummaryRow, unknown>[] = [
         {
             accessorKey: 'name',
-            header: 'Name',
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
             cell: ({ row }) => (
                 <Link to={`${listPath}/${row.original.id}`} className="font-medium hover:underline">
                     {row.original.name}
@@ -70,11 +72,12 @@ export function ApplicationsPage() {
         {
             accessorKey: 'type',
             header: 'Type',
+            enableSorting: false,
             cell: ({ row }) => <SectionBadge badge={applicationTypeBadge(row.original.type)} />,
         },
         {
             accessorKey: 'updatedAt',
-            header: 'Last updated',
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Last updated" />,
             cell: ({ row }) => <DateCell value={row.original.updatedAt ? new Date(row.original.updatedAt) : null} />,
         },
     ];
@@ -115,6 +118,11 @@ export function ApplicationsPage() {
                     loading={isFetching}
                     skeletonCount={pageSize}
                     serverSide
+                    sorting={sorting}
+                    onSortingChange={updater => {
+                        setSorting(updater);
+                        setPage(1);
+                    }}
                     toolbar={<SearchField key={searchKey} label="applications" onSearch={search} />}
                     emptyMessage={
                         <DataTableEmptyState
@@ -144,4 +152,11 @@ export function ApplicationsPage() {
             )}
         </div>
     );
+}
+
+function toApplicationSort(sorting: SortingState): ApplicationSort {
+    const [first] = sorting;
+    return first?.id === 'name'
+        ? { field: 'name', dir: first.desc ? 'desc' : 'asc' }
+        : { field: 'updatedAt', dir: first?.desc === false ? 'asc' : 'desc' };
 }

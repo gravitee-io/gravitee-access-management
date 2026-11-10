@@ -66,11 +66,22 @@ export type ApplicationPatch = ApiModel<
 /** The request types, upper case. Agents have their own area. */
 export const NON_AGENT_APPLICATION_TYPES = ['WEB', 'NATIVE', 'BROWSER', 'SERVICE', 'RESOURCE_SERVER'] as const;
 
-export function listDomainApplications(ref: DomainRef, page: number, size: number, query: string): Promise<Page<ApplicationSummaryRow>> {
+export interface ApplicationSort {
+    readonly field: 'name' | 'updatedAt';
+    readonly dir: 'asc' | 'desc';
+}
+
+export function listDomainApplications(
+    ref: DomainRef,
+    page: number,
+    size: number,
+    query: string,
+    sort: ApplicationSort,
+): Promise<Page<ApplicationSummaryRow>> {
     const search = query ? `&q=${encodeURIComponent(`*${query}*`)}` : '';
     const types = NON_AGENT_APPLICATION_TYPES.map(type => `&type=${type}`).join('');
     return http<Page<ApplicationSummaryRow>>(
-        `${domainPath(ref)}/applications/search?page=${page}&limit=${size}&sort=updatedAt&dir=desc${search}${types}`,
+        `${domainPath(ref)}/applications/search?page=${page}&limit=${size}&sort=${sort.field}&dir=${sort.dir}${search}${types}`,
     );
 }
 

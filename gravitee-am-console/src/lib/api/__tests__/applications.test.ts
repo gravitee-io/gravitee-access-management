@@ -47,15 +47,21 @@ describe('applications api', () => {
     });
 
     it('searches the applications that are not agents, a page at a time, the last updated first', async () => {
-        await listDomainApplications(ref, 2, 25, '');
+        await listDomainApplications(ref, 2, 25, '', { field: 'updatedAt', dir: 'desc' });
 
         expect(lastCall().path).toBe(`${domainPath}/applications/search?page=2&limit=25&sort=updatedAt&dir=desc${TYPES}`);
     });
 
     it('searches the applications with a contains match on the name or the client id', async () => {
-        await listDomainApplications(ref, 0, 25, 'my app');
+        await listDomainApplications(ref, 0, 25, 'my app', { field: 'updatedAt', dir: 'desc' });
 
         expect(lastCall().path).toBe(`${domainPath}/applications/search?page=0&limit=25&sort=updatedAt&dir=desc&q=*my%20app*${TYPES}`);
+    });
+
+    it('searches the applications in the sort the user picked', async () => {
+        await listDomainApplications(ref, 0, 10, '', { field: 'name', dir: 'asc' });
+
+        expect(lastCall().path).toBe(`${domainPath}/applications/search?page=0&limit=10&sort=name&dir=asc${TYPES}`);
     });
 
     it('reads an application by its id', async () => {

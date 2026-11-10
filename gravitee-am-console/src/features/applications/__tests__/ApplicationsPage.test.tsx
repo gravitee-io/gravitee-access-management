@@ -32,6 +32,8 @@ const rows: ApplicationSummaryRow[] = [
     { id: 'a3', name: 'Template app', type: 'browser', enabled: true, template: true },
 ];
 
+const NEWEST = { field: 'updatedAt', dir: 'desc' };
+
 const page = (data: ApplicationSummaryRow[], totalCount = data.length) => ({ data, currentPage: 0, totalCount });
 
 function renderPage(permissions = ['application_list', 'application_create'], client?: QueryClient) {
@@ -48,7 +50,7 @@ describe('ApplicationsPage', () => {
         renderPage();
 
         expect(await screen.findByRole('link', { name: 'Portal' })).toHaveAttribute('href', `${applicationsPath}/a1`);
-        expect(listDomainApplications).toHaveBeenCalledWith(ref, 0, 10, '');
+        expect(listDomainApplications).toHaveBeenCalledWith(ref, 0, 10, '', NEWEST);
         const table = screen.getByRole('table');
         const statuses = within(table)
             .getAllByRole('row')
@@ -65,6 +67,20 @@ describe('ApplicationsPage', () => {
         ]);
     });
 
+    it('sorts the applications on the server by name or by last update', async () => {
+        renderPage();
+        await screen.findByRole('link', { name: 'Portal' });
+        const table = screen.getByRole('table');
+
+        await userEvent.click(within(table).getByRole('button', { name: 'Name' }));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', { field: 'name', dir: 'asc' }));
+        expect(within(table).getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'ascending');
+
+        await userEvent.click(within(table).getByRole('button', { name: 'Last updated' }));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', { field: 'updatedAt', dir: 'asc' }));
+        expect(within(table).queryByRole('button', { name: 'Type' })).not.toBeInTheDocument();
+    });
+
     it('searches the applications from the first page', async () => {
         renderPage();
         await screen.findByRole('link', { name: 'Portal' });
@@ -72,10 +88,10 @@ describe('ApplicationsPage', () => {
 
         await inputHarness({ name: 'Search applications' }).type('port');
 
-        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, 'port'));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, 'port', NEWEST));
         expect(await screen.findByText('No applications match your search')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
-        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, ''));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', NEWEST));
     });
 
     it('keeps the list while the cleared search reloads', async () => {
@@ -89,7 +105,7 @@ describe('ApplicationsPage', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
 
-        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, ''));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', NEWEST));
         expect(screen.queryByText('No applications yet')).not.toBeInTheDocument();
         expect(screen.getByRole('searchbox', { name: 'Search applications' })).toBeInTheDocument();
     });
