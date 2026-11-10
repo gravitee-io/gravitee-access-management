@@ -38,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -74,6 +75,8 @@ public class RememberMeStepTest {
 
     @Mock
     private UserContextInternal userContextInternal;
+
+    private static final long ISSUED_AT_SECONDS = 1_700_000_000L;
 
     private final Client client = new Client();
 
@@ -198,5 +201,83 @@ public class RememberMeStepTest {
         verify(jwtService, never()).decode(anyString(), any(JWTService.TokenType.class));
         verify(authenticationFlowChain, times(0)).exit(step);
         verify(authenticationFlowChain, times(1)).doNext(routingContext);
+    }
+
+    @Test
+    public void mustRemoveCookieAndDoNext_passwordResetAfterCookieIssued() {
+        final var user = new io.gravitee.am.model.User();
+        user.setLastPasswordReset(new Date(ISSUED_AT_SECONDS * 1000L + 5000L));
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieRefused();
+    }
+
+    @Test
+    public void mustRemoveCookieAndDoNext_usernameResetAfterCookieIssued() {
+        final var user = new io.gravitee.am.model.User();
+        user.setLastUsernameReset(new Date(ISSUED_AT_SECONDS * 1000L + 5000L));
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieRefused();
+    }
+
+    @Test
+    public void mustRemoveCookieAndDoNext_logoutAfterCookieIssued() {
+        final var user = new io.gravitee.am.model.User();
+        user.setLastLogoutAt(new Date(ISSUED_AT_SECONDS * 1000L + 5000L));
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieRefused();
+    }
+
+    @Test
+    public void mustExit_passwordResetBeforeCookieIssued() {
+        final var user = new io.gravitee.am.model.User();
+        user.setLastPasswordReset(new Date(ISSUED_AT_SECONDS * 1000L - 5000L));
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieAccepted();
+    }
+
+    @Test
+    public void mustExit_passwordResetWithinTheIssuedSecond() {
+        final var user = new io.gravitee.am.model.User();
+        user.setLastPasswordReset(new Date(ISSUED_AT_SECONDS * 1000L + 1000L));
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieAccepted();
+    }
+
+    private void executeWithCookieIssuedAt(io.gravitee.am.model.User user) {
+        when(routingContext.user()).thenReturn(null);
+        when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
+        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        final var jwt = new JWT();
+        jwt.setIat(ISSUED_AT_SECONDS);
+        jwt.put(USER_ID_KEY, "12345");
+        when(jwtService.decodeAndVerify("value", client, JWTService.TokenType.SESSION)).thenReturn(Single.just(jwt));
+        when(userGatewayService.findById("12345")).thenReturn(Maybe.just(user));
+
+        step.execute(routingContext, authenticationFlowChain);
+    }
+
+    private void verifyCookieRefused() {
+        verify(httpServerResponse, times(1)).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        verify(userContextInternal, never()).setUser(any(io.vertx.ext.auth.User.class));
+        verify(authenticationFlowChain, times(0)).exit(step);
+        verify(authenticationFlowChain, times(1)).doNext(routingContext);
+    }
+
+    private void verifyCookieAccepted() {
+        verify(httpServerResponse, never()).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        verify(userContextInternal, times(1)).setUser(any(io.vertx.ext.auth.User.class));
+        verify(authenticationFlowChain, times(1)).exit(step);
+        verify(authenticationFlowChain, times(0)).doNext(routingContext);
     }
 }
