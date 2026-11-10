@@ -173,7 +173,7 @@ public class RememberMeStepTest {
 
         step.execute(routingContext, authenticationFlowChain);
 
-        verifyNoInteractions(jwtService, userGatewayService);
+        verifyNoInteractions(jwtService, gatewayUserService);
         verify(authenticationFlowChain, times(0)).exit(step);
         verify(authenticationFlowChain, times(1)).doNext(routingContext);
     }
@@ -188,7 +188,7 @@ public class RememberMeStepTest {
         step.execute(routingContext, authenticationFlowChain);
 
         verify(httpServerResponse, times(1)).removeCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME);
-        verifyNoInteractions(userGatewayService);
+        verifyNoInteractions(gatewayUserService);
         verify(jwtService, never()).decode(anyString(), any(JWTService.TokenType.class));
         verify(authenticationFlowChain, times(0)).exit(step);
         verify(authenticationFlowChain, times(1)).doNext(routingContext);
@@ -225,6 +225,16 @@ public class RememberMeStepTest {
     }
 
     @Test
+    public void mustRemoveCookieAndDoNext_userDisabled() {
+        final var user = new io.gravitee.am.model.User();
+        user.setEnabled(false);
+
+        executeWithCookieIssuedAt(user);
+
+        verifyCookieRefused();
+    }
+
+    @Test
     public void mustExit_passwordResetBeforeCookieIssued() {
         final var user = new io.gravitee.am.model.User();
         user.setLastPasswordReset(new Date(ISSUED_AT_SECONDS * 1000L - 5000L));
@@ -253,7 +263,7 @@ public class RememberMeStepTest {
         jwt.setIat(ISSUED_AT_SECONDS);
         jwt.put(USER_ID_KEY, "12345");
         when(jwtService.decodeAndVerify("value", client, JWTService.TokenType.SESSION)).thenReturn(Single.just(jwt));
-        when(userGatewayService.findById("12345")).thenReturn(Maybe.just(user));
+        when(gatewayUserService.findById("12345")).thenReturn(Maybe.just(user));
 
         step.execute(routingContext, authenticationFlowChain);
     }
