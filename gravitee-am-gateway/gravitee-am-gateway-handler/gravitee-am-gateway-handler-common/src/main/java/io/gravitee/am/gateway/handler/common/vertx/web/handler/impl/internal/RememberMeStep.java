@@ -33,11 +33,7 @@ import org.slf4j.LoggerFactory;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.SESSION;
-import static java.util.Optional.ofNullable;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import static io.gravitee.am.gateway.handler.common.utils.SessionValidityUtils.isIssuedBeforeUserInvalidation;
 
 /**
  * @author Aurélien PACAUD (aurelien.pacaud at graviteesource.com)
@@ -86,22 +82,8 @@ public class RememberMeStep extends AuthenticationFlowStep {
                     final var user = tuple.getT1();
                     final var cookie = tuple.getT2();
 
-                    var dates = List.of(
-                            ofNullable(user.getLastPasswordReset()),
-                            ofNullable(user.getLastUsernameReset()),
-                            ofNullable(user.getLastLogoutAt())
-                    );
-
-                    // "iat" claim is stored in epoch seconds format, compare both dates in milliseconds
-                    // and tolerate the truncated second as SSOSessionHandler does
-                    final long cookieIssuedAt = cookie.getIat() * 1000L;
-                    final boolean isIllegalStateAccount = dates.stream()
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .map(Date::getTime)
-                            .anyMatch(time -> time - cookieIssuedAt > 1000L);
-
-                    if (isIllegalStateAccount) {
+                    // "iat" claim is stored in epoch seconds format
+                    if (isIssuedBeforeUserInvalidation(user, cookie.getIat() * 1000L)) {
                         throw new AccountIllegalStateException("The user account is in an illegal state. Please contact your administrator.");
                     }
 
