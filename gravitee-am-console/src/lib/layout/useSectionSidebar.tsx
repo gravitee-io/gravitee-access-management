@@ -37,7 +37,7 @@ export function SectionBadge({ badge }: { readonly badge: SidebarBadge }) {
     const Icon = badge.icon;
     return (
         <Badge variant={badge.variant}>
-            {Icon && <Icon className="mr-1 size-3" aria-hidden />}
+            {Icon && <Icon data-icon="inline-start" aria-hidden />}
             {badge.label}
         </Badge>
     );

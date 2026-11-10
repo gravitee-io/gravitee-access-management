@@ -114,7 +114,7 @@ export function ApplicationMetadataPage() {
             <form id={FORM_ID} onSubmit={submit}>
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Metadata</CardTitle>
+                        <CardTitle>Metadata</CardTitle>
                         <CardDescription>Name and value pairs attached to this application.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">

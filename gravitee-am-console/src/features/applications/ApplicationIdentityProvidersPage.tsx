@@ -317,7 +317,7 @@ function ProviderTable({ title, description, rows, typeName, canEdit, onChange, 
                                             aria-label={`${row.selectionRule ? 'Selection rule' : 'New selection rule'} of ${row.name}`}
                                             onClick={() => onEditRule(row)}
                                         >
-                                            <FilterIcon aria-hidden className={row.selectionRule ? 'text-success' : undefined} />
+                                            <FilterIcon aria-hidden />
                                             {row.selectionRule ? 'Rule set' : 'Add rule'}
                                         </Button>
                                     ) : (

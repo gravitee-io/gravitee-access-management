@@ -229,7 +229,7 @@ export function ApplicationGeneralPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Details</CardTitle>
+                    <CardTitle>Details</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-5">
                     <Field data-invalid={nameTouched && nameMissing}>
@@ -271,7 +271,7 @@ export function ApplicationGeneralPage() {
                     <>
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">Redirect URIs</CardTitle>
+                                <CardTitle>Redirect URIs</CardTitle>
                                 <CardDescription>
                                     Where users may be sent after logging in. Restricting them prevents redirects to unsafe websites.{' '}
                                     {domain.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage
@@ -291,7 +291,7 @@ export function ApplicationGeneralPage() {
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">Post-logout redirect URIs</CardTitle>
+                                <CardTitle>Post-logout redirect URIs</CardTitle>
                                 <CardDescription>Where users may be sent after signing out.</CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -306,7 +306,7 @@ export function ApplicationGeneralPage() {
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">Request URIs</CardTitle>
+                                <CardTitle>Request URIs</CardTitle>
                                 <CardDescription>
                                     URLs the application may pass as request_uri. Restricting them prevents server-side request forgery.
                                 </CardDescription>
@@ -326,7 +326,7 @@ export function ApplicationGeneralPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Behavior</CardTitle>
+                        <CardTitle>Behavior</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-5">
                         {userFacing && (
@@ -389,7 +389,7 @@ export function ApplicationGeneralPage() {
             {canDelete && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Danger zone</CardTitle>
+                        <CardTitle>Danger zone</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col divide-y divide-border">
                         {canEdit && (
