@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.gravitee.am.authdevice.notifier.api.exception.DeviceNotificationException;
 import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
 import io.gravitee.am.authdevice.notifier.http.HttpAuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.vertx.rxjava3.core.Vertx;
@@ -41,7 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.absent;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -50,6 +51,7 @@ import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticatio
 import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.PARAM_AUTHORIZATION_DETAILS;
 import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.STATE;
 import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.TRANSACTION_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -228,11 +230,17 @@ public class HttpAuthenticationDeviceNotifierProviderTest {
         notificationRequest.setTransactionId("transaction_id");
         notificationRequest.setState("mystate");
         notificationRequest.setAuthorizationDetails(List.of(
-                Map.of("type", "fdx_v1.0", "consentRequest", Map.of("durationType", "ONE_TIME"))
+                Map.of("type", "fdx_v1.0", "consentRequest", Map.of("durationType", "ONE_TIME")),
+                Map.of("type", "account_information", "actions", List.of("list_accounts"))
         ));
 
         wiremock.stubFor(post(NOTIFY_ENDPOINT)
-                .withFormParam(PARAM_AUTHORIZATION_DETAILS, containing("fdx_v1.0").and(containing("ONE_TIME")))
+                .withFormParam(PARAM_AUTHORIZATION_DETAILS, equalToJson("""
+                        [
+                          {"type": "fdx_v1.0", "consentRequest": {"durationType": "ONE_TIME"}},
+                          {"type": "account_information", "actions": ["list_accounts"]}
+                        ]
+                        """))
                 .willReturn(okJson("""
 {
  "tid": "transaction_id",
@@ -272,4 +280,8 @@ public class HttpAuthenticationDeviceNotifierProviderTest {
         observer.assertValue(r -> r.getTransactionId().equals("transaction_id"));
     }
 
+    @Test
+    void notifier_should_support_authorization_details() {
+        assertEquals(Set.of(NotifierCapability.AUTHORIZATION_DETAILS), new HttpAuthenticationDeviceNotifierProvider(webClient, config).capabilities());
+    }
 }

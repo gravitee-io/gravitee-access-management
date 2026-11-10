@@ -53,9 +53,10 @@ export interface TargetDomainFixture extends Fixture {
   domain: Domain;
   oidcConfig: any;
   user: any;
-  resourceApp: { clientId: string; clientSecret: string };
+  resourceApp: { id: string; clientId: string; clientSecret: string };
   delegatedServiceApp: { clientId: string; clientSecret: string };
   switchNotifier: (target: 'accept-all' | 'reject-all') => Promise<void>;
+  getNotifications: () => Promise<URLSearchParams[]>;
 }
 
 async function createNotifier(
@@ -79,7 +80,10 @@ async function createNotifier(
   return response.body.id;
 }
 
-async function createResourceApplication(domainId: string, accessToken: string): Promise<{ clientId: string; clientSecret: string }> {
+async function createResourceApplication(
+  domainId: string,
+  accessToken: string,
+): Promise<{ id: string; clientId: string; clientSecret: string }> {
   const created = await createApplication(domainId, accessToken, {
     name: uniqueName('ciba-fed-resource', true),
     type: 'WEB',
@@ -102,7 +106,7 @@ async function createResourceApplication(domainId: string, accessToken: string):
     },
     created.id,
   );
-  return { clientId: updated.settings.oauth.clientId, clientSecret };
+  return { id: created.id, clientId: updated.settings.oauth.clientId, clientSecret };
 }
 
 async function createDelegatedServiceApplication(
@@ -206,6 +210,7 @@ export const setupTargetDomain = async (accessToken: string): Promise<TargetDoma
       resourceApp,
       delegatedServiceApp,
       switchNotifier,
+      getNotifications: cibaNotifier.getNotifications,
       cleanUp: async () => {
         await cibaNotifier.remove();
         await safeDeleteDomain(domain?.id, accessToken);
