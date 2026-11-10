@@ -17,15 +17,23 @@ export type MetadataEntry = {
     readonly id: string;
     readonly name: string;
     readonly value: string;
+    /** The stored value when it is not text, sent back as it is until the user edits it. */
+    readonly raw?: unknown;
 };
 
+function display(value: unknown): string {
+    return typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value ?? '');
+}
+
 export function toEntries(metadata: Readonly<Record<string, unknown>> | undefined): MetadataEntry[] {
-    return Object.entries(metadata ?? {}).map(([name, value]) => ({ id: name, name, value: String(value ?? '') }));
+    return Object.entries(metadata ?? {}).map(([name, value]) =>
+        typeof value === 'string' ? { id: name, name, value } : { id: name, name, value: display(value), raw: value },
+    );
 }
 
 /** The whole map: the API replaces the stored metadata with it. */
-export function toMetadata(entries: readonly MetadataEntry[]): Record<string, string> {
-    return Object.fromEntries(entries.map(entry => [entry.name.trim(), entry.value]));
+export function toMetadata(entries: readonly MetadataEntry[]): Record<string, unknown> {
+    return Object.fromEntries(entries.map(entry => [entry.name.trim(), entry.raw !== undefined ? entry.raw : entry.value]));
 }
 
 /** The name error of each entry, by entry id. */

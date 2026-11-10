@@ -41,6 +41,7 @@ function renderLayout(path: string, domainPermissions: string[], applicationPerm
             <Route path="settings" element={<ApplicationSettingsLayout />}>
                 <Route path="general" element={<p>General page</p>} />
                 <Route path="members" element={<p>Members page</p>} />
+                <Route path="factors" element={<p>Factors page</p>} />
             </Route>
         </Route>,
         domainPermissions,
@@ -106,5 +107,11 @@ describe('ApplicationLayout', () => {
         renderLayout(`${appPath}/settings`, ['application_read', 'application_member_list']);
 
         expect(await screen.findByText('Members page')).toBeInTheDocument();
+    });
+
+    it('opens the factors with application_factor_read, as Angular does', async () => {
+        renderLayout(`${appPath}/settings`, ['application_read', 'application_factor_read']);
+
+        expect(await screen.findByText('Factors page')).toBeInTheDocument();
     });
 });

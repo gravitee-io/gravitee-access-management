@@ -73,6 +73,21 @@ describe('ApplicationMetadataPage', () => {
         expect(toast.success).toHaveBeenCalledWith('Application updated');
     });
 
+    it('sends the values that are not text back unchanged, and an edited one as typed', async () => {
+        const stored = { ...portal, metadata: { team: 'blue', limit: 5, cfg: { a: 1 } } };
+        vi.mocked(patchApplication).mockResolvedValue(stored);
+        renderPage(EDITOR, stored);
+
+        expect(screen.getByRole('textbox', { name: 'Value of cfg' })).toHaveValue('{"a":1}');
+        fireEvent.change(screen.getByRole('textbox', { name: 'Value of team' }), { target: { value: 'red' } });
+        fireEvent.change(screen.getByRole('textbox', { name: 'Value of limit' }), { target: { value: '7' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+        await waitFor(() =>
+            expect(patchApplication).toHaveBeenCalledWith(ref, 'app-1', { metadata: { team: 'red', limit: '7', cfg: { a: 1 } } }),
+        );
+    });
+
     it('rejects a name that already exists on add', () => {
         renderPage(EDITOR);
 

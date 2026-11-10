@@ -22,8 +22,8 @@ const SETTINGS_LANDING: readonly { readonly path: string; readonly permission: s
     { path: 'general', permission: 'application_settings_read' },
     { path: 'oauth2', permission: 'application_openid_read' },
     { path: 'members', permission: 'application_member_list' },
-    { path: 'secrets-certificates', permission: 'application_certificate_list' },
-    { path: 'factors', permission: 'application_factor_list' },
+    { path: 'secrets-certificates', permission: 'application_certificate_read' },
+    { path: 'factors', permission: 'application_factor_read' },
 ];
 
 export function ApplicationSettingsLayout() {

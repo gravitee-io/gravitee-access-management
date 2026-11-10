@@ -189,7 +189,9 @@ export function ApplicationMetadataPage() {
                                                             className="h-8"
                                                             value={entry.value}
                                                             onKeyDown={ignoreEnter}
-                                                            onChange={event => update(entry.id, { value: event.target.value })}
+                                                            onChange={event =>
+                                                                update(entry.id, { value: event.target.value, raw: undefined })
+                                                            }
                                                         />
                                                     ) : (
                                                         entry.value

@@ -32,7 +32,7 @@ vi.mock('../ApplicationGeneralPage', () => ({ ApplicationGeneralPage: () => <p>G
 vi.mock('../ApplicationMetadataPage', () => ({ ApplicationMetadataPage: () => <p>Metadata page</p> }));
 vi.mock('../ApplicationMembersPage', () => ({ ApplicationMembersPage: () => <p>Members page</p> }));
 
-const READ = ['application_list', 'application_read'];
+const READ = ['application_read'];
 
 function renderAt(section: string, permissions: string[]) {
     return renderRoutes(`${applicationsPath}${section}`, <Route path={domainBasePath}>{applicationRoutes}</Route>, permissions);
@@ -47,12 +47,13 @@ beforeEach(() => {
 describe('application routes', () => {
     it.each([
         ['the list', '', ['application_list'], 'Applications page'],
-        ['the creation', '/new', ['application_list', 'application_create'], 'Create page'],
+        ['the creation', '/new', ['application_create'], 'Create page'],
         ['the identity providers', '/app-1/idp', [...READ, 'application_identity_provider_list'], 'Identity providers page'],
         ['the analytics', '/app-1/analytics', [...READ, 'application_analytics_list'], 'Analytics page'],
         ['the general settings', '/app-1/settings/general', [...READ, 'application_settings_read'], 'General page'],
         ['the metadata', '/app-1/settings/metadata', [...READ, 'application_settings_read'], 'Metadata page'],
-        ['the members', '/app-1/settings/members', [...READ, 'application_openid_read', 'application_member_list'], 'Members page'],
+        ['the members', '/app-1/settings/members', [...READ, 'application_member_list'], 'Members page'],
+        ['a section a later story ports', '/app-1/design/forms', [...READ, 'application_form_list'], 'Forms'],
     ])('opens %s with its permissions', async (_name, section, permissions, page) => {
         renderAt(section, permissions);
 
@@ -62,12 +63,13 @@ describe('application routes', () => {
     it.each([
         ['the list', '', [], 'Applications page'],
         ['the creation', '/new', ['application_list'], 'Create page'],
+        ['the application', '/app-1/overview', [], 'Overview page'],
         ['the identity providers', '/app-1/idp', READ, 'Identity providers page'],
         ['the analytics', '/app-1/analytics', READ, 'Analytics page'],
-        ['the settings', '/app-1/settings/members', [...READ, 'application_member_list'], 'Members page'],
         ['the general settings', '/app-1/settings/general', [...READ, 'application_openid_read'], 'General page'],
         ['the metadata', '/app-1/settings/metadata', [...READ, 'application_openid_read'], 'Metadata page'],
         ['the members', '/app-1/settings/members', [...READ, 'application_settings_read'], 'Members page'],
+        ['a section a later story ports', '/app-1/design/forms', [...READ, 'application_flow_list'], 'Forms'],
     ])('shows Not allowed on %s without its permission', async (_name, section, permissions, page) => {
         renderAt(section, permissions);
 
@@ -75,10 +77,33 @@ describe('application routes', () => {
         expect(screen.queryByText(page)).not.toBeInTheDocument();
     });
 
+    it('opens an application for a member of it alone', async () => {
+        vi.mocked(listApplicationPermissions).mockResolvedValue(['application_read']);
+
+        renderAt('/app-1/overview', []);
+
+        expect(await screen.findByText('Overview page')).toBeInTheDocument();
+    });
+
+    it.each([
+        ['SAML 2.0 while the domain has SAML off', '/app-1/settings/saml2', 'application_saml_read', 'SAML 2.0'],
+        [
+            'the resources of an application that is not a resource server',
+            '/app-1/settings/resources',
+            'application_resource_list',
+            'Resources',
+        ],
+    ])('opens the overview for %s', async (_name, section, permission, title) => {
+        renderAt(section, [...READ, permission]);
+
+        expect(await screen.findByText('Overview page')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: title })).not.toBeInTheDocument();
+    });
+
     it('takes the permissions of an application member into account', async () => {
         vi.mocked(listApplicationPermissions).mockResolvedValue(['application_read', 'application_analytics_list']);
 
-        renderAt('/app-1/analytics', ['application_list']);
+        renderAt('/app-1/analytics', []);
 
         expect(await screen.findByText('Analytics page')).toBeInTheDocument();
     });

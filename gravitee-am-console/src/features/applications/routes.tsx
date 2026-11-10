@@ -18,6 +18,7 @@ import { PlaceholderPage } from '../../app/components/PlaceholderPage';
 import type { ApplicationType } from '../../lib/api/applications';
 import { lazyPage } from '../../lib/routing/lazyPage';
 import { RequirePermission } from '../../lib/session/permissions';
+import { RequireApplicationSection } from './RequireApplicationSection';
 import { RequireApplicationType } from './RequireApplicationType';
 
 const USER_FACING: readonly ApplicationType[] = ['web', 'native', 'browser', 'resource_server'];
@@ -38,8 +39,10 @@ const PLACEHOLDERS: readonly { readonly path: string; readonly title: string }[]
 ];
 
 export const applicationRoutes = (
-    <Route path="applications" element={<RequirePermission anyOf={['application_list']} />}>
-        <Route index element={lazyPage(() => import('./ApplicationsPage'), 'ApplicationsPage')} />
+    <Route path="applications">
+        <Route element={<RequirePermission anyOf={['application_list']} />}>
+            <Route index element={lazyPage(() => import('./ApplicationsPage'), 'ApplicationsPage')} />
+        </Route>
         <Route element={<RequirePermission anyOf={['application_create']} />}>
             <Route path="new" element={lazyPage(() => import('./CreateApplicationPage'), 'CreateApplicationPage')} />
         </Route>
@@ -60,26 +63,22 @@ export const applicationRoutes = (
                     <Route path="analytics" element={lazyPage(() => import('./ApplicationAnalyticsPage'), 'ApplicationAnalyticsPage')} />
                 </Route>
             </Route>
-            <Route
-                element={
-                    <RequirePermission anyOf={['application_settings_read', 'application_openid_read', 'application_certificate_list']} />
-                }
-            >
-                <Route path="settings" element={lazyPage(() => import('./ApplicationSettingsLayout'), 'ApplicationSettingsLayout')}>
-                    <Route element={<RequirePermission anyOf={['application_settings_read']} />}>
-                        <Route path="general" element={lazyPage(() => import('./ApplicationGeneralPage'), 'ApplicationGeneralPage')} />
-                        <Route element={<RequireApplicationType types={['agent']} />}>
-                            <Route path="agent" element={lazyPage(() => import('./ApplicationAgentPage'), 'ApplicationAgentPage')} />
-                        </Route>
-                        <Route path="metadata" element={lazyPage(() => import('./ApplicationMetadataPage'), 'ApplicationMetadataPage')} />
+            <Route path="settings" element={lazyPage(() => import('./ApplicationSettingsLayout'), 'ApplicationSettingsLayout')}>
+                <Route element={<RequirePermission anyOf={['application_settings_read']} />}>
+                    <Route path="general" element={lazyPage(() => import('./ApplicationGeneralPage'), 'ApplicationGeneralPage')} />
+                    <Route element={<RequireApplicationType types={['agent']} />}>
+                        <Route path="agent" element={lazyPage(() => import('./ApplicationAgentPage'), 'ApplicationAgentPage')} />
                     </Route>
-                    <Route element={<RequirePermission anyOf={['application_member_list']} />}>
-                        <Route path="members" element={lazyPage(() => import('./ApplicationMembersPage'), 'ApplicationMembersPage')} />
-                    </Route>
+                    <Route path="metadata" element={lazyPage(() => import('./ApplicationMetadataPage'), 'ApplicationMetadataPage')} />
+                </Route>
+                <Route element={<RequirePermission anyOf={['application_member_list']} />}>
+                    <Route path="members" element={lazyPage(() => import('./ApplicationMembersPage'), 'ApplicationMembersPage')} />
                 </Route>
             </Route>
             {PLACEHOLDERS.map(({ path, title }) => (
-                <Route key={path} path={path} element={<PlaceholderPage title={title} />} />
+                <Route key={path} element={<RequireApplicationSection section={path} />}>
+                    <Route path={path} element={<PlaceholderPage title={title} />} />
+                </Route>
             ))}
         </Route>
     </Route>
