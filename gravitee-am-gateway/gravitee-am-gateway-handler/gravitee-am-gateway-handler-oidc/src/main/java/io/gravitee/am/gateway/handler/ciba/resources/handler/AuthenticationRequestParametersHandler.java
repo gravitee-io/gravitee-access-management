@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.ciba.resources.handler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.authdevice.notifier.api.model.NotifierCapability;
@@ -26,15 +25,10 @@ import io.gravitee.am.common.exception.oauth2.MissingUserCodeException;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequestResolver;
-import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
-import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
-import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
@@ -43,8 +37,6 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.common.ciba.Parameters.AUTHORIZATION_DETAILS;
@@ -63,22 +55,21 @@ import lombok.CustomLog;
 @CustomLog
 public class AuthenticationRequestParametersHandler implements Handler<RoutingContext> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final TypeReference<List<Map<String, Object>>> AUTHORIZATION_DETAILS_TYPE = new TypeReference<>() { };
 
     private final CibaAuthenticationRequestResolver cibaRequestResolver;
     private final int bindingMessageMaxLength;
     private final boolean fapiEnabled;
     private final Domain domain;
     private final AuthenticationDeviceNotifierManager deviceNotifierManager;
+    private final AuthorizationDetailsValidator authorizationDetailsValidator;
 
-    public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager, ProtectedResourceManager protectedResourceManager, AuthenticationDeviceNotifierManager deviceNotifierManager) {
+    public AuthenticationRequestParametersHandler(Domain domain, CibaAuthenticationRequestResolver cibaRequestResolver, AuthenticationDeviceNotifierManager deviceNotifierManager, AuthorizationDetailsValidator authorizationDetailsValidator) {
         this.bindingMessageMaxLength = domain.getOidc().getCibaSettings().getBindingMessageLength();
         this.fapiEnabled = domain.usePlainFapiProfile() || domain.useFapiBrazilProfile();
         this.domain = domain;
         this.deviceNotifierManager = deviceNotifierManager;
-
-        cibaRequestResolver = new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService, subjectManager, deviceNotifierManager);
-        cibaRequestResolver.setManagers(scopeManager, protectedResourceManager);
+        this.authorizationDetailsValidator = authorizationDetailsValidator;
+        this.cibaRequestResolver = cibaRequestResolver;
     }
 
     boolean authorizationDetailsEnabled() {
@@ -108,7 +99,7 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
             validateHints(request);
             validateBindingMessage(request);
             validateUserCode(client, request);
-            applyAuthorizationDetails(context, request);
+            applyAuthorizationDetails(context, client, request);
 
             cibaRequestResolver
                     .resolve(request, client)
@@ -163,59 +154,35 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
         }
     }
 
-    private void applyAuthorizationDetails(RoutingContext context, CibaAuthenticationRequest request) {
+    private void applyAuthorizationDetails(RoutingContext context, Client client, CibaAuthenticationRequest request) {
         if (!authorizationDetailsEnabled()) {
-            return; // capability absent => stock: never read or parse the parameter
-        }
-        final List<Map<String, Object>> details = resolveAuthorizationDetails(context);
-        if (details == null) {
             return;
         }
-        validateAuthorizationDetailTypes(details);
-        request.setAuthorizationDetails(AuthorizationDetails.of(details));
+        request.setAuthorizationDetails(validateAuthorizationDetails(context, client));
     }
 
-    /**
-     * authorization_details is a structured RFC 9396 parameter. Under FAPI/CIBA a signed request
-     * object is mandatory, and Nimbus hands the claim back as a java.util.List — which the stock
-     * ParamUtils.getOAuthParameter renders through List.toString() ("[{type=x}]"), i.e. not JSON,
-     * guaranteeing a 400 on exactly that profile. So read the structured claim straight off the
-     * request object here and only fall back to the raw query-string parameter (which getOAuthParameter
-     * returns verbatim) when no request object carries it. PAR does not apply to the backchannel endpoint.
-     */
-    private List<Map<String, Object>> resolveAuthorizationDetails(RoutingContext context) {
+    private AuthorizationDetails validateAuthorizationDetails(RoutingContext context, Client client) {
         final JWT requestObject = context.get(REQUEST_OBJECT_KEY);
         if (requestObject != null) {
+            final Object claim;
             try {
-                final Object claim = requestObject.getJWTClaimsSet().getClaim(AUTHORIZATION_DETAILS);
-                if (claim != null) {
-                    return OBJECT_MAPPER.convertValue(claim, AUTHORIZATION_DETAILS_TYPE);
-                }
-            } catch (ParseException | IllegalArgumentException e) {
-                throw new InvalidRequestException("Invalid authorization_details");
+                claim = requestObject.getJWTClaimsSet().getClaim(AUTHORIZATION_DETAILS);
+            } catch (ParseException e) {
+                throw new InvalidRequestException("Invalid request object");
+            }
+            if (claim != null) {
+                return authorizationDetailsValidator.validate(toJson(claim), client);
             }
         }
-        final String raw = getOAuthParameter(context, AUTHORIZATION_DETAILS);
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        try {
-            return OBJECT_MAPPER.readValue(raw, AUTHORIZATION_DETAILS_TYPE);
-        } catch (JsonProcessingException e) {
-            throw new InvalidRequestException("Invalid authorization_details");
-        }
+        final String parameter = getOAuthParameter(context, AUTHORIZATION_DETAILS);
+        return parameter == null ? null : authorizationDetailsValidator.validate(parameter, client);
     }
 
-    /** RFC 9396 §2: each authorization_details element MUST be a JSON object carrying a string "type". */
-    private void validateAuthorizationDetailTypes(List<Map<String, Object>> details) {
-        if (details == null) {
-            return;
-        }
-        for (Map<String, Object> element : details) {
-            Object type = element == null ? null : element.get("type");
-            if (!(type instanceof String s) || s.isBlank()) {
-                throw new InvalidRequestException("Each authorization_details entry must have a non-empty string \"type\" (RFC 9396 §2)");
-            }
+    private static String toJson(Object claim) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(claim);
+        } catch (JsonProcessingException e) {
+            throw new InvalidRequestException("Invalid request object");
         }
     }
 }

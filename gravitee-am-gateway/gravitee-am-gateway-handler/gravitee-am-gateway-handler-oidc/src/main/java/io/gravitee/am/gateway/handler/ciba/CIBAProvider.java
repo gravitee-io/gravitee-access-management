@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestAcknowledgeHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestCallbackHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParametersHandler;
+import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequestResolver;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -33,6 +34,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHa
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseProviderConfigurationHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
+import io.gravitee.am.gateway.handler.oauth2.service.authorizationdetails.AuthorizationDetailsValidator;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
@@ -126,6 +128,9 @@ public class CIBAProvider extends AbstractProtocolProvider {
     @Autowired
     private AuthenticationDeviceNotifierManager deviceNotifierManager;
 
+    @Autowired
+    private AuthorizationDetailsValidator authorizationDetailsValidator;
+
     @Override
     public String path() {
         return CIBA_PATH;
@@ -153,7 +158,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
                 .handler(clientAuthHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(this.openIDDiscoveryService))
                 .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService))
-                .handler(new AuthenticationRequestParametersHandler(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager, deviceNotifierManager))
+                .handler(new AuthenticationRequestParametersHandler(domain, cibaRequestResolver(), deviceNotifierManager, authorizationDetailsValidator))
                 .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain, jwtService, identityProviderManager, deviceNotifierManager));
 
         // To process the callback content we perform authentication of the caller that must be registered as AM client.
@@ -168,6 +173,12 @@ public class CIBAProvider extends AbstractProtocolProvider {
         errorHandler(cibaRouter);
 
         router.route(subRouterPath()).subRouter(cibaRouter);
+    }
+
+    private CibaAuthenticationRequestResolver cibaRequestResolver() {
+        final CibaAuthenticationRequestResolver resolver = new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService, subjectManager, deviceNotifierManager);
+        resolver.setManagers(scopeManager, protectedResourceManager);
+        return resolver;
     }
 
     private void errorHandler(Router router) {
