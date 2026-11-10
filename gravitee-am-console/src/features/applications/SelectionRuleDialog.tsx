@@ -23,7 +23,6 @@ import {
     DialogTitle,
     Field,
     FieldDescription,
-    FieldLabel,
 } from '@gravitee/graphene-core';
 import { CodeEditor } from '@gravitee/graphene-core/code-editor';
 import type { Monaco, OnMount } from '@monaco-editor/react';
@@ -96,8 +95,10 @@ export function SelectionRuleDialog({ providerName, rule, readOnly, onApply, onC
                         An Expression Language condition. When it is true, the user is sent to this identity provider.
                     </DialogDescription>
                 </DialogHeader>
-                <Field>
-                    <FieldLabel>Rule</FieldLabel>
+                <Field role="group" aria-labelledby="selection-rule-label">
+                    <p id="selection-rule-label" className="text-sm font-medium">
+                        Rule
+                    </p>
                     <CodeEditor
                         value={value}
                         onChange={next => setValue(next ?? '')}

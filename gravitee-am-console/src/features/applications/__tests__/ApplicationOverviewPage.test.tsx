@@ -90,6 +90,9 @@ describe('ApplicationOverviewPage', () => {
         renderPage(withOAuth('native', { grantTypes: ['authorization_code'], forcePKCE: true }));
 
         expect(await screen.findByText(/code_challenge_method=S256/)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'Application information' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 3, name: 'JavaScript' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 3, name: 'Java' })).toBeInTheDocument();
         expect(codeBlocks().find(block => block.includes('grant_type=authorization_code'))).toMatch(/&code_verifier=[A-Za-z0-9_-]+'$/);
     });
 

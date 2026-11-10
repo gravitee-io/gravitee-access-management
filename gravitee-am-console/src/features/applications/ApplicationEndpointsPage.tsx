@@ -74,7 +74,9 @@ export function ApplicationEndpointsPage() {
                 endpointGroups(domain).map(group => (
                     <Card key={group.title}>
                         <CardHeader>
-                            <CardTitle className="text-base">{group.title}</CardTitle>
+                            <CardTitle role="heading" aria-level={2}>
+                                {group.title}
+                            </CardTitle>
                             <CardDescription>{group.description}</CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-5">

@@ -57,7 +57,9 @@ function Section({ title, children }: { readonly title: string; readonly childre
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-base">{title}</CardTitle>
+                <CardTitle role="heading" aria-level={2}>
+                    {title}
+                </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-relaxed">{children}</CardContent>
         </Card>
@@ -236,9 +238,13 @@ export function ApplicationOverviewPage() {
                     generate a <b>code_verifier</b> for the token endpoint and a <b>code_challenge</b> for the authorization endpoint. Both
                     are cryptographically random values your application creates.
                 </p>
-                <p className="font-medium">JavaScript</p>
+                <p role="heading" aria-level={3} className="font-medium">
+                    JavaScript
+                </p>
                 <CodeBlock copyable={false} code={PKCE_JS} />
-                <p className="font-medium">Java</p>
+                <p role="heading" aria-level={3} className="font-medium">
+                    Java
+                </p>
                 <CodeBlock copyable={false} code={PKCE_JAVA} />
             </Section>
             <Section title="Get user information">

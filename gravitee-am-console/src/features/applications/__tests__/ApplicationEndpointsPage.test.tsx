@@ -82,6 +82,7 @@ describe('ApplicationEndpointsPage', () => {
             'https://auth.acme.com/acme/scim/ServiceProviderConfig',
         );
         expect(screen.getByLabelText('SAML 2.0 IdP metadata')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'SCIM 2.0' })).toBeInTheDocument();
         expect(screen.getByLabelText('UMA 2.0 configuration endpoint')).toBeInTheDocument();
         expect(screen.getByLabelText('Backchannel authentication endpoint')).toBeInTheDocument();
     });

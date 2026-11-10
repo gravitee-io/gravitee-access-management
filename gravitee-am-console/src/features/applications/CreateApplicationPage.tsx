@@ -37,6 +37,7 @@ import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, type LucideIcon } from '@grav
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../app/components/PageHeader';
 import {
     type Application,
     type CimdValidation,
@@ -216,32 +217,35 @@ export function CreateApplicationPage() {
                         <ArrowLeftIcon aria-hidden />
                         Applications
                     </Button>
-                    <h1 className="text-2xl font-semibold">Create an application</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Set up the connection between your software and the authorization server, for authentication and account management.
-                    </p>
+                    <PageHeader
+                        title="Create an application"
+                        description="Set up the connection between your software and the authorization server, for authentication and account management."
+                    />
                 </div>
 
                 <Stepper steps={steps} current={step} />
 
                 {step === 0 ? (
-                    <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Application type">
+                    <RadioGroup
+                        className="grid gap-3 sm:grid-cols-2"
+                        aria-label="Application type"
+                        value={draft.type ?? ''}
+                        onValueChange={value => set({ type: types.find(type => type === value) })}
+                    >
                         {types.map(type => {
                             const meta = APPLICATION_TYPES[type];
                             const Icon = meta.icon;
                             const selected = draft.type === type;
                             return (
-                                <button
+                                <Label
                                     key={type}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={selected}
-                                    onClick={() => set({ type })}
+                                    htmlFor={`type-${type}`}
                                     className={cn(
-                                        'flex items-start gap-3 rounded-lg border border-border p-4 text-left transition-colors hover:border-primary',
+                                        'flex cursor-pointer items-start gap-3 rounded-lg border border-border p-4 leading-normal font-normal transition-colors hover:border-primary',
                                         selected && 'border-primary bg-primary/5 ring-2 ring-primary',
                                     )}
                                 >
+                                    <RadioGroupItem id={`type-${type}`} value={type} className="mt-1" />
                                     <Icon
                                         className={cn('mt-0.5 size-5', selected ? 'text-primary' : 'text-muted-foreground')}
                                         aria-hidden
@@ -251,10 +255,10 @@ export function CreateApplicationPage() {
                                         <span className="text-sm text-muted-foreground">{meta.description}</span>
                                         <span className="text-xs text-muted-foreground">e.g. {meta.examples}</span>
                                     </span>
-                                </button>
+                                </Label>
                             );
                         })}
-                    </div>
+                    </RadioGroup>
                 ) : null}
 
                 {step === 1 && draft.type ? (

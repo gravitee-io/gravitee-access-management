@@ -44,6 +44,7 @@ describe('ApplicationAgentPage', () => {
         const type = screen.getByRole('textbox', { name: 'Agent type' });
         expect(type).toHaveValue('Hosted delegated');
         expect(type).toHaveAttribute('readonly');
+        expect(screen.getByRole('heading', { level: 2, name: 'Agent settings' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'OAuth 2.0 / OIDC' })).toHaveAttribute('href', `${appPath}/settings/oauth2`);
     });
 

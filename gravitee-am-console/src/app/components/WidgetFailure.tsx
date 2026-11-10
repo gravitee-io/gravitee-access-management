@@ -14,5 +14,9 @@
  * limitations under the License.
  */
 export function WidgetFailure() {
-    return <p className="py-6 text-center text-sm text-muted-foreground">Failed to fetch data</p>;
+    return (
+        <p role="alert" className="py-6 text-center text-sm text-muted-foreground">
+            Failed to fetch data
+        </p>
+    );
 }

@@ -36,7 +36,11 @@ export function MetricTile({ label, icon, result, prefix = '' }: MetricTileProps
                 ) : value === undefined ? (
                     <>
                         <Metric className="h-20" label={label} icon={icon} value="" state="empty" />
-                        {result.status === 'error' && <p className="text-sm text-muted-foreground">Failed to fetch data</p>}
+                        {result.status === 'error' && (
+                            <p role="alert" className="text-sm text-muted-foreground">
+                                Failed to fetch data
+                            </p>
+                        )}
                     </>
                 ) : (
                     <Metric className="h-20" label={label} icon={icon} value={`${value > 0 ? prefix : ''}${value.toLocaleString()}`} />

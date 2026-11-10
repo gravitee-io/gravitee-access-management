@@ -97,7 +97,7 @@ describe('DomainDashboardPage', () => {
         );
         setupDomainDashboardPageHarness();
 
-        expect(await screen.findByText('Failed to fetch data')).toBeInTheDocument();
+        expect(await screen.findByRole('alert')).toHaveTextContent('Failed to fetch data');
         expect(screen.getByText('+42')).toBeInTheDocument();
     });
 

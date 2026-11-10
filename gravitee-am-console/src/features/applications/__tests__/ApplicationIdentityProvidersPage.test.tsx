@@ -154,6 +154,7 @@ describe('ApplicationIdentityProvidersPage', () => {
         const dialog = screen.getByRole('dialog', { name: 'Selection rule — Google' });
 
         expect(within(dialog).getByRole('textbox', { name: 'Rule' })).toHaveValue("{#request.params['username'] matches '.+@gmail.com$'}");
+        expect(within(dialog).getByRole('group', { name: 'Rule' })).toBeInTheDocument();
     });
 
     it('selects the provider when its rule is applied', async () => {

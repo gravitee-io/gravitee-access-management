@@ -43,7 +43,9 @@ export function ApplicationAgentPage() {
             <PageHeader title="Agent identity" description="How this agent acts: for a user, or on its own." />
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Agent settings</CardTitle>
+                    <CardTitle role="heading" aria-level={2}>
+                        Agent settings
+                    </CardTitle>
                     <CardDescription>
                         Grant types, token lifetimes, scopes, client authentication and JWKS are set on the{' '}
                         <Link to={`${applicationPath}/settings/oauth2`} className="font-medium text-foreground underline">

@@ -78,6 +78,21 @@ describe('CreateApplicationPage', () => {
         expect(screen.getByRole('radio', { name: /^Resource Server/ })).toBeInTheDocument();
     });
 
+    it('moves the type choice with the arrow keys, from one tab stop', async () => {
+        renderPage();
+
+        await userEvent.tab();
+        await userEvent.tab();
+        expect(screen.getByRole('radio', { name: /^Web/ })).toHaveFocus();
+        await userEvent.keyboard('{ArrowDown}');
+        expect(screen.getByRole('radio', { name: /^Single-Page App/ })).toHaveFocus();
+        await userEvent.keyboard(' ');
+
+        expect(screen.getByRole('radio', { name: /^Single-Page App/ })).toBeChecked();
+        await userEvent.tab();
+        expect(document.activeElement).not.toHaveAttribute('role', 'radio');
+    });
+
     it('shows the required field errors once a field loses focus', async () => {
         renderPage();
         pickType('Web');
