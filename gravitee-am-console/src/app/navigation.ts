@@ -270,21 +270,16 @@ function ruleAccess(rule: Partial<ApplicationNavRule>, { type, samlEnabled, hasA
 }
 
 /**
- * Whether a section of the application menu opens, with the rules of its group and its entry: `forbidden` for a missing
- * permission, `absent` when the application type or the domain does not have the section.
+ * Whether a section of the application menu opens, with the rules of its entry: `forbidden` for a missing permission,
+ * `absent` when the application type or the domain does not have the section. The group rules only hide the group in
+ * the menu, as Angular's parent routes have no guard.
  */
 export function applicationSectionAccess(section: string, context: ApplicationNavContext): SectionAccess {
-    const group = APPLICATION_NAV_GROUPS.find(candidate => candidate.items.some(item => item.key === section));
-    const item = group?.items.find(candidate => candidate.key === section);
-    if (!group || !item) {
+    const item = APPLICATION_NAV_GROUPS.flatMap(group => group.items).find(candidate => candidate.key === section);
+    if (!item) {
         throw new Error(`No application menu entry for the section ${section}`);
     }
-    const parent = group.parent ? ruleAccess(group.parent, context) : 'open';
-    const own = ruleAccess(item, context);
-    if (parent === 'absent' || own === 'absent') {
-        return 'absent';
-    }
-    return parent === 'open' ? own : parent;
+    return ruleAccess(item, context);
 }
 
 /** The application menu, with the entries the user, the application type and the domain allow. */

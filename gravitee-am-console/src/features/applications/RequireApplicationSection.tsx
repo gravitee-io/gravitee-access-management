@@ -20,7 +20,7 @@ import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 import { useApplication } from './ApplicationContext';
 
-/** Guards a section with the rules of its menu group and entry: a missing permission shows Not allowed, a section the application or the domain does not have opens the overview. */
+/** Guards a section with the rules of its menu entry: a missing permission shows Not allowed, a section the application or the domain does not have opens the overview. */
 export function RequireApplicationSection({ section }: { readonly section: string }) {
     const { application, applicationPath } = useApplication();
     const { domain } = useCurrentDomain();

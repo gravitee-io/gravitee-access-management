@@ -110,7 +110,7 @@ describe('ApplicationLayout', () => {
     });
 
     it('opens the first settings page the user may read', async () => {
-        renderLayout(`${appPath}/settings`, ['application_read', 'application_certificate_list', 'application_member_list']);
+        renderLayout(`${appPath}/settings`, ['application_read', 'application_member_list']);
 
         expect(await screen.findByText('Members page')).toBeInTheDocument();
     });
@@ -122,12 +122,7 @@ describe('ApplicationLayout', () => {
     });
 
     it('opens the overview when the user may open no settings page', async () => {
-        renderLayout(`${appPath}/settings`, [
-            'application_read',
-            'application_certificate_read',
-            'application_factor_read',
-            'application_factor_list',
-        ]);
+        renderLayout(`${appPath}/settings`, ['application_read', 'application_certificate_read', 'application_factor_read']);
 
         expect(await screen.findByText('Overview page')).toBeInTheDocument();
         expect(screen.queryByText('Not allowed')).not.toBeInTheDocument();
