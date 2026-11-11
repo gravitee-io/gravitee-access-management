@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export function WidgetFailure() {
-    return <p className="py-6 text-center text-sm text-muted-foreground">Failed to fetch data</p>;
+/** Rejects where the browser has no clipboard, as on a plain HTTP origin other than localhost. */
+export function copyText(text: string): Promise<void> {
+    return 'clipboard' in navigator ? navigator.clipboard.writeText(text) : Promise.reject(new Error('The clipboard is not available.'));
 }

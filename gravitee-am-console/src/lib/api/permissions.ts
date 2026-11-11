@@ -23,3 +23,7 @@ export function listEnvironmentPermissions(organizationId: string, environmentId
 export function listDomainPermissions(ref: DomainRef): Promise<string[]> {
     return http<string[]>(`${domainPath(ref)}/members/permissions`);
 }
+
+export function listApplicationPermissions(ref: DomainRef, applicationId: string): Promise<string[]> {
+    return http<string[]>(`${domainPath(ref)}/applications/${encodeURIComponent(applicationId)}/members/permissions`);
+}

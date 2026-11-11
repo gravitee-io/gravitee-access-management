@@ -15,8 +15,9 @@
  */
 import { BreakdownChart } from '@gravitee/graphene-charts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gravitee/graphene-core';
-import { WidgetFailure } from './WidgetFailure';
-import { type Group, sentenceCase, type WidgetResult } from './dashboard-data';
+import { WidgetFailure } from '../../../app/components/WidgetFailure';
+import { sentenceCase, type WidgetResult } from '../../../app/components/analytics-widgets';
+import type { Group } from './dashboard-data';
 
 interface BreakdownCardProps {
     readonly title: string;

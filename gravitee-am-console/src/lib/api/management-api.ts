@@ -69,3 +69,20 @@ export type InstallationConfiguration = ApiModel<InstallationConfigurationModel>
 export function getInstallationConfiguration(): Promise<InstallationConfiguration> {
     return http<InstallationConfiguration>('/platform/configuration/installation').catch(() => ({}));
 }
+
+/** A property of the grammar: a leaf names its `_type`, an object holds more properties. */
+export interface SpelGrammarNode {
+    readonly _type?: string;
+    readonly [property: string]: SpelGrammarNode | string | undefined;
+}
+
+/** The roots of the expression language, such as `request`, and `_enums`, the known values of a leaf type. */
+export interface SpelGrammar {
+    readonly _enums?: Readonly<Record<string, readonly string[]>>;
+    readonly [root: string]: SpelGrammarNode | Readonly<Record<string, readonly string[]>> | undefined;
+}
+
+/** The expression language grammar that the expression editors complete from. */
+export function getSpelGrammar(): Promise<SpelGrammar> {
+    return http<SpelGrammar>('/platform/configuration/spel/grammar');
+}

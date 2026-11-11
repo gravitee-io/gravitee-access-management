@@ -22,8 +22,9 @@ import {
     DoughnutChart,
 } from '@gravitee/graphene-charts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gravitee/graphene-core';
-import { WidgetFailure } from './WidgetFailure';
-import { registration, type WidgetResult } from './dashboard-data';
+import { WidgetFailure } from '../../../app/components/WidgetFailure';
+import type { WidgetResult } from '../../../app/components/analytics-widgets';
+import { registration } from './dashboard-data';
 
 interface RegistrationCardProps {
     readonly result: WidgetResult;

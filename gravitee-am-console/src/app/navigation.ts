@@ -151,3 +151,142 @@ export function permittedNavGroups(groups: readonly PermittedNavGroup[], hasAny:
         }))
         .filter(group => group.items.length > 0);
 }
+
+type ApplicationTypeName = 'WEB' | 'NATIVE' | 'BROWSER' | 'SERVICE' | 'RESOURCE_SERVER' | 'AGENT';
+
+interface ApplicationNavRule {
+    /** The menu shows the entry when the user has one of these permissions. */
+    readonly perms: readonly string[];
+    /** The application types that have the entry. All types when absent. */
+    readonly types?: readonly ApplicationTypeName[];
+    readonly requiresSaml?: boolean;
+    readonly requiresAgent?: boolean;
+}
+
+interface ApplicationNavItem extends Partial<ApplicationNavRule> {
+    readonly key: string;
+    readonly title: string;
+}
+
+interface ApplicationNavGroup {
+    readonly label: string;
+    /** The rule of the parent route that holds the items, such as `design` or `settings`. */
+    readonly parent?: ApplicationNavRule;
+    readonly items: readonly ApplicationNavItem[];
+}
+
+const USER_FACING: readonly ApplicationTypeName[] = ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'];
+const APPLICATION_SETTINGS: ApplicationNavRule = {
+    perms: ['application_settings_read', 'application_openid_read', 'application_certificate_list'],
+};
+
+export const APPLICATION_NAV_GROUPS: readonly ApplicationNavGroup[] = [
+    {
+        label: 'Application',
+        items: [
+            { key: 'overview', title: 'Overview' },
+            { key: 'endpoints', title: 'Endpoints' },
+            {
+                key: 'idp',
+                title: 'Identity Providers',
+                perms: ['application_identity_provider_list'],
+                types: [...USER_FACING, 'AGENT'],
+            },
+            { key: 'analytics', title: 'Analytics', perms: ['application_analytics_list'], types: USER_FACING },
+        ],
+    },
+    {
+        label: 'Design',
+        parent: {
+            perms: ['application_email_template_list', 'application_email_template_read', 'application_form_list', 'application_form_read'],
+            types: [...USER_FACING, 'SERVICE'],
+        },
+        items: [
+            { key: 'design/forms', title: 'Forms', perms: ['application_form_list', 'application_form_read'], types: USER_FACING },
+            {
+                key: 'design/emails',
+                title: 'Emails',
+                perms: ['application_email_template_list', 'application_email_template_read'],
+                types: USER_FACING,
+            },
+            { key: 'design/flows', title: 'Flows', perms: ['application_flow_list', 'application_flow_read'] },
+        ],
+    },
+    {
+        label: 'Settings',
+        parent: APPLICATION_SETTINGS,
+        items: [
+            { key: 'settings/general', title: 'General', perms: ['application_settings_read'] },
+            { key: 'settings/agent', title: 'Agent Identity', perms: ['application_settings_read'], requiresAgent: true },
+            { key: 'settings/metadata', title: 'Application metadata', perms: ['application_settings_read'] },
+            { key: 'settings/oauth2', title: 'OAuth 2.0 / OIDC', perms: ['application_openid_read'] },
+            {
+                key: 'settings/saml2',
+                title: 'SAML 2.0',
+                perms: ['application_saml_read'],
+                types: ['WEB', 'NATIVE', 'BROWSER'],
+                requiresSaml: true,
+            },
+            { key: 'settings/login', title: 'Login', perms: ['application_settings_read'], types: USER_FACING },
+            { key: 'settings/members', title: 'Administrative roles', perms: ['application_member_list'] },
+        ],
+    },
+    {
+        label: 'Security',
+        parent: APPLICATION_SETTINGS,
+        items: [
+            {
+                key: 'settings/secrets-certificates',
+                title: 'Secrets & Certificates',
+                perms: ['application_settings_read', 'application_certificate_list'],
+            },
+            { key: 'settings/factors', title: 'Multifactor Auth', perms: ['application_factor_list'], types: USER_FACING },
+            { key: 'settings/account', title: 'User Accounts', perms: ['application_settings_read'], types: USER_FACING },
+            { key: 'settings/session', title: 'Session management', perms: ['application_settings_read'] },
+            { key: 'settings/resources', title: 'Resources', perms: ['application_resource_list'], types: ['RESOURCE_SERVER'] },
+        ],
+    },
+];
+
+interface ApplicationNavContext {
+    /** The application type as the API returns it, in lower case. */
+    readonly type: string;
+    readonly samlEnabled: boolean;
+    readonly hasAny: (...permissions: string[]) => boolean;
+}
+
+type SectionAccess = 'open' | 'forbidden' | 'absent';
+
+function ruleAccess(rule: Partial<ApplicationNavRule>, { type, samlEnabled, hasAny }: ApplicationNavContext): SectionAccess {
+    const appType = type.toUpperCase();
+    if (
+        (rule.types && !rule.types.some(allowed => allowed === appType)) ||
+        (rule.requiresSaml && !samlEnabled) ||
+        (rule.requiresAgent && appType !== 'AGENT')
+    ) {
+        return 'absent';
+    }
+    return rule.perms && !hasAny(...rule.perms) ? 'forbidden' : 'open';
+}
+
+/**
+ * Whether a section of the application menu opens, with the rules of its entry: `forbidden` for a missing permission,
+ * `absent` when the application type or the domain does not have the section. The group rules only hide the group in
+ * the menu, as Angular's parent routes have no guard.
+ */
+export function applicationSectionAccess(section: string, context: ApplicationNavContext): SectionAccess {
+    const item = APPLICATION_NAV_GROUPS.flatMap(group => group.items).find(candidate => candidate.key === section);
+    if (!item) {
+        throw new Error(`No application menu entry for the section ${section}`);
+    }
+    return ruleAccess(item, context);
+}
+
+/** The application menu, with the entries the user, the application type and the domain allow. */
+export function applicationNavGroups(groups: readonly ApplicationNavGroup[], context: ApplicationNavContext): NavGroup[] {
+    const allows = (rule: Partial<ApplicationNavRule>) => ruleAccess(rule, context) === 'open';
+    return groups
+        .filter(group => !group.parent || allows(group.parent))
+        .map(group => ({ label: group.label, items: group.items.filter(allows).map(({ key, title }) => ({ key, title })) }))
+        .filter(group => group.items.length > 0);
+}

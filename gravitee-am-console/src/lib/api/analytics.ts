@@ -51,10 +51,20 @@ export interface AnalyticsGroupBy {
 
 export type AnalyticsResponse = AnalyticsCount | AnalyticsHistogram | AnalyticsGroupBy;
 
-export function searchAnalytics(ref: DomainRef, query: AnalyticsQuery): Promise<AnalyticsResponse> {
+function analyticsParams(query: AnalyticsQuery): URLSearchParams {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) {
         if (value !== undefined) params.set(key, String(value));
     }
-    return http<AnalyticsResponse>(`${domainPath(ref)}/analytics?${params}`);
+    return params;
+}
+
+export function searchAnalytics(ref: DomainRef, query: AnalyticsQuery): Promise<AnalyticsResponse> {
+    return http<AnalyticsResponse>(`${domainPath(ref)}/analytics?${analyticsParams(query)}`);
+}
+
+export function searchApplicationAnalytics(ref: DomainRef, applicationId: string, query: AnalyticsQuery): Promise<AnalyticsResponse> {
+    return http<AnalyticsResponse>(
+        `${domainPath(ref)}/applications/${encodeURIComponent(applicationId)}/analytics?${analyticsParams(query)}`,
+    );
 }

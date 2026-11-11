@@ -13,21 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { groups, histogram, rangeStart, registration, sentenceCase, seriesColor, TIME_RANGES, widgetQuery } from '../dashboard-data';
+import { TIME_RANGES } from '../../../../app/components/analytics-widgets';
+import { groups, registration, widgetQuery } from '../dashboard-data';
 
 const range = (id: string) => TIME_RANGES.find(r => r.id === id)!;
 
 describe('dashboard-data', () => {
-    it('starts each time range as moment().subtract does', () => {
-        const to = new Date(2026, 9, 21, 12, 0).getTime();
-
-        expect(rangeStart(range('1h'), to)).toBe(new Date(2026, 9, 21, 11, 0).getTime());
-        expect(rangeStart(range('30d'), to)).toBe(new Date(2026, 8, 23, 12, 0).getTime());
-        expect(rangeStart(range('90d'), to)).toBe(new Date(2026, 6, 21, 12, 0).getTime());
-        expect(rangeStart(range('90d'), new Date(2026, 4, 31, 12, 0).getTime())).toBe(new Date(2026, 1, 28, 12, 0).getTime());
-        expect(rangeStart(range('12h'), to)).toBe(to - 12 * 3_600_000);
-    });
-
     it('builds the analytics query of a widget', () => {
         const to = new Date(2026, 9, 21, 12, 0).getTime();
 
@@ -57,35 +48,5 @@ describe('dashboard-data', () => {
     it('reads the registration as completed out of total', () => {
         expect(registration({ values: { total: 4, completed: 3 } })).toEqual({ completed: 3, total: 4 });
         expect(registration(undefined)).toEqual({ completed: 0, total: 0 });
-    });
-
-    it('keeps every histogram bucket as a series', () => {
-        const result = histogram(
-            {
-                timestamp: { from: 0, to: 7_200_000, interval: 3_600_000 },
-                values: [
-                    { field: 'user_login', name: 'user_login_success', data: [3, 4] },
-                    { field: 'user_login', name: 'user_login_failure', data: [1, 0] },
-                ],
-            },
-            range('1d'),
-        );
-
-        expect(result.series).toEqual(['user_login_success', 'user_login_failure']);
-        expect(result.data.map(({ category: _, ...values }) => values)).toEqual([
-            { user_login_success: 3, user_login_failure: 1 },
-            { user_login_success: 4, user_login_failure: 0 },
-        ]);
-    });
-
-    it('colors the login outcomes with the semantic tokens and the other series with the chart palette', () => {
-        expect(seriesColor('user_login_success', 0)).toBe('var(--success)');
-        expect(seriesColor('failure', 1)).toBe('var(--destructive)');
-        expect(seriesColor('active', 0)).toBe('var(--chart-1)');
-        expect(seriesColor('locked', 6)).toBe('var(--chart-2)');
-    });
-
-    it('writes a key as a sentence', () => {
-        expect(sentenceCase('user_login_failure')).toBe('User login failure');
     });
 });
