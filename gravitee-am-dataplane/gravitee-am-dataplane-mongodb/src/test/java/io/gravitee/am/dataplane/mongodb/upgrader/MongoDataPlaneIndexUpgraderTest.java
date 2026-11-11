@@ -48,6 +48,6 @@ public class MongoDataPlaneIndexUpgraderTest {
                 .changesets())
                 .extracting(MongoIndexDeclarations.Changeset::id, MongoIndexDeclarations.Changeset::checksum)
                 .containsExactly(tuple("initial-indexes", "c6d96eb35f27"),
-                        tuple("authorization-detail-approvals", "9384a3db7125"));
+                        tuple("authorization-detail-approvals", "b8c5a3821945"));
     }
 }

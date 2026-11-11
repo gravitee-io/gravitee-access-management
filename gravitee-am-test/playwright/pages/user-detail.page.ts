@@ -23,6 +23,36 @@ export class UserDetailPage extends BasePage {
     await this.navigate(`/environments/${this.envHrid}/domains/${domainId}/settings/users/${userId}`);
   }
 
+  /** Navigate directly to a user's authorized applications. */
+  async navigateToApplications(domainId: string, userId: string): Promise<void> {
+    await this.navigate(`/environments/${this.envHrid}/domains/${domainId}/settings/users/${userId}/applications`);
+  }
+
+  applicationRow(applicationName: string): Locator {
+    return this.page.locator('datatable-body-row').filter({ hasText: applicationName });
+  }
+
+  /** Open an application from the authorized applications list. */
+  async openApplication(applicationName: string): Promise<void> {
+    await this.applicationRow(applicationName).locator('a[mat-button]').click();
+  }
+
+  get authorizationDetailConsents(): Locator {
+    return this.page.locator('[data-testid="userAuthorizationDetailConsents"]');
+  }
+
+  authorizationDetailConsentRow(type: string): Locator {
+    return this.authorizationDetailConsents.locator('datatable-body-row').filter({ hasText: type });
+  }
+
+  get authorizationDetailConsentDetail(): Locator {
+    return this.page.locator('[data-testid="userAuthorizationDetailConsentDetail"] .CodeMirror-code');
+  }
+
+  async expandAuthorizationDetailConsent(type: string): Promise<void> {
+    await this.authorizationDetailConsentRow(type).locator('a[title="Expand/Collapse Row"]').click();
+  }
+
   get displayName(): Locator {
     return this.page.locator('[data-testid="userDisplayName"]').first();
   }

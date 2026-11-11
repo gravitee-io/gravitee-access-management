@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { find } from 'lodash';
+import { DatatableComponent } from '@swimlane/ngx-datatable';
 
 import { SnackbarService } from '../../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../../services/dialog.service';
@@ -36,7 +37,19 @@ export class UserApplicationComponent implements OnInit {
   applicationDisplayName: string;
   clientId: string;
   consents: any[];
+  authorizationDetailConsents: any[];
   canRevoke: boolean;
+  detailEditorOptions = {
+    lineWrapping: true,
+    lineNumbers: true,
+    readOnly: true,
+    mode: 'application/json',
+    foldGutter: true,
+    gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+  };
+
+  @ViewChild('authorizationDetailsTable')
+  authorizationDetailsTable: DatatableComponent;
 
   constructor(
     private route: ActivatedRoute,
@@ -51,14 +64,15 @@ export class UserApplicationComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.userId = this.route.snapshot.params['userId'];
-    this.consents = this.route.snapshot.data['consents'];
+    this.consents = this.route.snapshot.data['consents'] ?? [];
+    this.authorizationDetailConsents = this.route.snapshot.data['authorizationDetailConsents'] ?? [];
     this.clientId = this.route.snapshot.queryParamMap.get('clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
     this.applicationDisplayName = this.resolveApplicationDisplayName();
   }
 
   private resolveApplicationDisplayName(): string {
-    const fromConsent = this.consents?.[0]?.clientEntity?.name;
+    const fromConsent = (this.consents?.[0] ?? this.authorizationDetailConsents?.[0])?.clientEntity?.name;
     if (fromConsent) {
       return fromConsent;
     }
@@ -92,7 +106,7 @@ export class UserApplicationComponent implements OnInit {
         switchMap(() => this.userService.revokeConsent(this.domainId, this.userId, consent.id)),
         tap(() => {
           this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
-          if (this.consents.length === 1) {
+          if (this.consents.length === 1 && this.authorizationDetailConsents.length === 0) {
             this.router.navigate(['..'], { relativeTo: this.route });
           } else {
             this.loadConsents();
@@ -108,6 +122,18 @@ export class UserApplicationComponent implements OnInit {
       this.consents = [...this.consents];
       this.applicationDisplayName = this.resolveApplicationDisplayName();
     });
+  }
+
+  get showScopeConsents() {
+    return this.consents.length > 0 || this.authorizationDetailConsents.length === 0;
+  }
+
+  toggleExpandRow(row) {
+    this.authorizationDetailsTable.rowDetail.toggleExpandRow(row);
+  }
+
+  formatDetail(row) {
+    return JSON.stringify(row.detail, null, 2);
   }
 
   canRevokeAccess() {

@@ -109,6 +109,12 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/consents' + (clientId ? '?clientId=' + clientId : ''));
   }
 
+  authorizationDetailConsents(domainId, userId, clientId): Observable<any> {
+    return this.http.get<any>(
+      this.usersURL + domainId + '/users/' + userId + '/consents/authorization-details' + (clientId ? '?clientId=' + clientId : ''),
+    );
+  }
+
   revokeConsents(domainId, userId, clientId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents' + (clientId ? '?clientId=' + clientId : ''));
   }

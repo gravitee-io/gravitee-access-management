@@ -31,6 +31,11 @@ public interface AuthorizationDetailApprovalRepository extends CrudRepository<Au
     Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId);
 
     /**
+     * Returns the approvals that have not expired.
+     */
+    Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId);
+
+    /**
      * Creates the approval, or replaces the one with the same domain, client, user and digest.
      */
     Single<AuthorizationDetailApproval> upsert(AuthorizationDetailApproval approval);

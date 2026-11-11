@@ -41,10 +41,10 @@
       <ngx-datatable-column>
         <ng-template let-row="row" ngx-datatable-cell-template>
           <mat-icon
-            [ngStyle]="{ color: canRevokeAccessForClient(row.clientId) ? 'green' : 'orange' }"
-            matTooltip="{{ canRevokeAccessForClient(row.clientId) ? 'Application approved' : 'Application denied' }}"
+            [ngStyle]="{ color: isApprovedForClient(row.clientId) ? 'green' : 'orange' }"
+            matTooltip="{{ isApprovedForClient(row.clientId) ? 'Application approved' : 'Application denied' }}"
           >
-            {{ canRevokeAccessForClient(row.clientId) ? 'done' : 'not_interested' }}
+            {{ isApprovedForClient(row.clientId) ? 'done' : 'not_interested' }}
           </mat-icon>
         </ng-template>
       </ngx-datatable-column>

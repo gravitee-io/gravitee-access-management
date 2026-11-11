@@ -62,6 +62,18 @@ public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepos
     }
 
     @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("findByDomainAndUser({}, {})", domain, userId);
+        return fluxToFlowable(getTemplate().select(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(userId)
+                        .and(domain(domain))
+                        .and(notExpiredAt(LocalDateTime.now(UTC)))))
+                .all())
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<AuthorizationDetailApproval> upsert(AuthorizationDetailApproval approval) {
         return monoToMaybe(getTemplate().select(JdbcAuthorizationDetailApproval.class)
                 .matching(Query.query(userIdMatches(approval.getUserId())

@@ -113,6 +113,11 @@ public class UserConsentsResource extends AbstractResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
+    @Path("authorization-details")
+    public UserAuthorizationDetailConsentsResource getUserAuthorizationDetailConsentsResource() {
+        return resourceContext.getResource(UserAuthorizationDetailConsentsResource.class);
+    }
+
     @Path("{consent}")
     public UserConsentResource getUserConsentResource() {
         return resourceContext.getResource(UserConsentResource.class);

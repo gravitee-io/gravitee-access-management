@@ -239,6 +239,21 @@ class AuthorizationDetailTypeServiceImplTest {
     }
 
     @Test
+    void shouldFindAllByDomain() {
+        AuthorizationDetailType existing = AuthorizationDetailType.builder().id("id-1").domain(DOMAIN_ID).build();
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(existing));
+
+        service.findByDomain(DOMAIN_ID).test().assertValues(existing);
+    }
+
+    @Test
+    void shouldWrapAFailureToFindAllByDomain() {
+        when(repository.findByDomain(DOMAIN_ID)).thenReturn(Flowable.error(new IllegalStateException("unavailable")));
+
+        service.findByDomain(DOMAIN_ID).test().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
     void shouldFindPageByDomain() {
         AuthorizationDetailTypeCursorRequest cursor = AuthorizationDetailTypeCursorRequest.initialCursor("type", "ASC", 0, "payment*");
         CursorPage<AuthorizationDetailType, AuthorizationDetailTypeCursorRequest> page =
