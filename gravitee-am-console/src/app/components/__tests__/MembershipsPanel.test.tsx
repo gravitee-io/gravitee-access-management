@@ -182,7 +182,7 @@ describe('MembershipsPanel', () => {
         renderPanel();
         const dialog = await openAddDialog();
 
-        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+        await userEvent.type(within(dialog).getByRole('combobox', { name: 'User' }), 'al');
         const matches = await within(dialog).findByRole('list', { name: 'Matching users' });
         expect(
             within(matches)
@@ -230,11 +230,20 @@ describe('MembershipsPanel', () => {
         expect(screen.getByRole('listbox').closest('[data-side]')).toHaveAttribute('data-side', 'bottom');
     });
 
+    // Chrome ignores autocomplete="off" when its heuristics match, and the word "name" makes it offer a card holder name.
     it('keeps the browser autofill off the user search', async () => {
+        vi.mocked(searchOrganizationUsers).mockResolvedValue([{ id: 'alice', username: 'alice' }]);
         renderPanel();
         const dialog = await openAddDialog();
+        const search = within(dialog).getByRole('combobox', { name: 'User' });
 
-        expect(within(dialog).getByRole('textbox', { name: 'User' })).toHaveAttribute('autocomplete', 'off');
+        expect(search).toHaveAttribute('autocomplete', 'off');
+        expect(search).toHaveAttribute('aria-autocomplete', 'list');
+        expect(search.getAttribute('placeholder')).not.toMatch(/name/i);
+        expect(search).toHaveAttribute('aria-expanded', 'false');
+        await userEvent.type(search, 'al');
+        await within(dialog).findByRole('list', { name: 'Matching users' });
+        expect(search).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('shows an error when the user search fails', async () => {
@@ -242,7 +251,7 @@ describe('MembershipsPanel', () => {
         renderPanel();
         const dialog = await openAddDialog();
 
-        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+        await userEvent.type(within(dialog).getByRole('combobox', { name: 'User' }), 'al');
 
         expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not search the users. Forbidden');
         expect(within(dialog).queryByRole('list', { name: 'Matching users' })).not.toBeInTheDocument();

@@ -268,6 +268,7 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
         enabled: type === 'GROUP',
     });
     const foundUsers = (users.data ?? []).filter(found => !existing.has(found.id));
+    const showMatches = Boolean(!member && text && users.data);
     const freeGroups = (groups.data ?? []).filter(group => !existing.has(group.id));
 
     return (
@@ -302,8 +303,12 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                             <FieldLabel htmlFor="member-user">User</FieldLabel>
                             <Input
                                 id="member-user"
+                                role="combobox"
+                                aria-autocomplete="list"
+                                aria-expanded={showMatches}
+                                aria-controls="member-user-matches"
                                 autoComplete="off"
-                                placeholder="Enter username"
+                                placeholder="Search users"
                                 value={member ? member.label : search}
                                 onChange={event => {
                                     setMember(null);
@@ -311,8 +316,8 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                                 }}
                             />
                             {!member && text && users.error && <FieldError>Could not search the users. {users.error.message}</FieldError>}
-                            {!member && text && users.data && (
-                                <ul aria-label="Matching users" className="rounded-md border border-border">
+                            {showMatches && (
+                                <ul id="member-user-matches" aria-label="Matching users" className="rounded-md border border-border">
                                     {foundUsers.length === 0 ? (
                                         <li className="px-3 py-2 text-sm text-muted-foreground">No matching users.</li>
                                     ) : (
