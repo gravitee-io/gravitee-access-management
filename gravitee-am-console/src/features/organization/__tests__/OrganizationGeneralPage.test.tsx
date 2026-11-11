@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { toast } from '@gravitee/graphene-core';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { buttonHarness } from '@gravitee/graphene-core/testing';
+import { screen, waitFor } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import { getOrganizationSettings, listOrganizationIdentityProviders, patchOrganizationSettings } from '../../../lib/api/organization';
 import { OrganizationGeneralPage } from '../OrganizationGeneralPage';
@@ -67,8 +68,9 @@ describe('OrganizationGeneralPage', () => {
         vi.mocked(patchOrganizationSettings).mockResolvedValueOnce({ identities: ['google'] });
         renderPage();
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Remove Inline users' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await screen.findByRole('button', { name: 'Remove Inline users' });
+        await buttonHarness({ name: 'Remove Inline users' }).click();
+        await buttonHarness({ name: 'Save' }).click();
 
         await waitFor(() => expect(patchOrganizationSettings).toHaveBeenCalledWith(ORG, { identities: ['google'] }));
         expect(toast.success).toHaveBeenCalledWith('Settings updated');
