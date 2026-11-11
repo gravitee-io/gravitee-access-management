@@ -18,7 +18,7 @@ import { Route } from 'react-router-dom';
 import { listOrganizationEntrypoints, getOrganizationEntrypoint } from '../../../lib/api/entrypoints';
 import { getOrganizationForm } from '../../../lib/api/forms';
 import { getInstallationConfiguration } from '../../../lib/api/management-api';
-import { getCockpitInstallation, getOrganizationSettings } from '../../../lib/api/organization';
+import { getInstallation, getOrganizationSettings } from '../../../lib/api/organization';
 import { getTag, listTags } from '../../../lib/api/tags';
 import { organizationRoutes } from '../routes';
 import { currentEnvironment, organizationPath, renderRoutes, session } from './render';
@@ -29,7 +29,7 @@ vi.mock('../../../lib/api/forms', () => ({ getOrganizationForm: vi.fn() }));
 vi.mock('../../../lib/api/organization', () => ({
     getOrganizationSettings: vi.fn(),
     listOrganizationIdentityProviders: vi.fn(),
-    getCockpitInstallation: vi.fn(),
+    getInstallation: vi.fn(),
 }));
 vi.mock('../../../lib/api/management-api', () => ({ getInstallationConfiguration: vi.fn() }));
 vi.mock('../../../lib/session/session', () => ({ useSession: () => session }));
@@ -65,7 +65,7 @@ describe('organizationRoutes', () => {
         ['entrypoints/e1', [SETTINGS, 'organization_entrypoint_list'], getOrganizationEntrypoint],
         ['forms', [SETTINGS], getOrganizationForm],
         ['forms/form?template=LOGIN', [SETTINGS, 'organization_form_list'], getOrganizationForm],
-        ['cockpit', [SETTINGS], getCockpitInstallation],
+        ['cockpit', [SETTINGS], getInstallation],
     ])('shows the not allowed panel in place of %s without its permission, and loads nothing', async (path, permissions, loader) => {
         renderAt(
             `${organizationPath}/${path}`,
@@ -83,6 +83,6 @@ describe('organizationRoutes', () => {
         renderAt(`${organizationPath}/cockpit`, [SETTINGS, 'installation_read']);
 
         expect(await screen.findByRole('heading', { name: 'Authentication' })).toBeInTheDocument();
-        expect(getCockpitInstallation).not.toHaveBeenCalled();
+        expect(getInstallation).not.toHaveBeenCalled();
     });
 });

@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ComponentType } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
-import { getCockpitInstallation, type Installation } from '../../lib/api/organization';
+import { getInstallation, type Installation } from '../../lib/api/organization';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useOrganizationPath } from './useOrganizationPath';
 
@@ -84,7 +84,7 @@ function statusOf(value: string | undefined): Status {
 export function CockpitPage() {
     const base = useOrganizationPath();
     useBreadcrumbs([{ label: 'Organization', to: `${base}/general` }, { label: 'Discover cockpit' }]);
-    const { data, error, refetch } = useQuery({ queryKey: ['installation-entity'], queryFn: getCockpitInstallation });
+    const { data, error, refetch } = useQuery({ queryKey: ['installation-entity'], queryFn: getInstallation });
 
     return (
         <div className="flex flex-col gap-6">
