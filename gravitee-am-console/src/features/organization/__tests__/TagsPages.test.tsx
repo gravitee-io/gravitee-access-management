@@ -70,6 +70,20 @@ beforeEach(() => {
 });
 
 describe('TagsPage', () => {
+    it('pages the tags ten at a time', async () => {
+        vi.mocked(listTags).mockResolvedValueOnce(
+            Array.from({ length: 12 }, (_, index) => ({ id: `t${index}`, name: `Tag ${String(index).padStart(2, '0')}` })),
+        );
+
+        renderTags(tagsPath);
+
+        expect(await screen.findByRole('link', { name: 'Tag 00' })).toBeInTheDocument();
+        expect(screen.getAllByRole('link', { name: /^Tag / })).toHaveLength(10);
+        await buttonHarness({ name: 'Next page' }).click();
+        expect(screen.getAllByRole('link', { name: /^Tag / })).toHaveLength(2);
+        expect(screen.getByRole('link', { name: 'Tag 11' })).toBeInTheDocument();
+    });
+
     it('lists the tags of the organization sorted by name', async () => {
         renderTags(tagsPath);
 
