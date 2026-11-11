@@ -17,15 +17,22 @@ import { useQuery } from '@tanstack/react-query';
 import { getInstallationConfiguration } from '../../lib/api/management-api';
 
 export function useInstallationConfiguration() {
-    return useQuery({ queryKey: ['installation'], queryFn: getInstallationConfiguration, staleTime: Infinity });
+    // A failed lookup is not retried on each mount: it would flip the pending state back and loop through the layout spinner.
+    return useQuery({ queryKey: ['installation'], queryFn: getInstallationConfiguration, staleTime: Infinity, retryOnMount: false });
 }
 
-export function isManaged(installation: { readonly type?: string } | undefined): boolean {
-    return installation?.type === 'managed';
+interface InstallationQuery {
+    readonly isError: boolean;
+    readonly data?: { readonly type?: string };
+}
+
+/** True when the installation is managed. A failed request counts as managed, so the self-managed actions stay hidden. */
+export function isManaged(installation: InstallationQuery): boolean {
+    return installation.isError || installation.data?.type === 'managed';
 }
 
 /** True when the installation is managed. Read as managed until the installation type loads. */
 export function useCloudMode(): boolean {
     const installation = useInstallationConfiguration();
-    return installation.isPending || isManaged(installation.data);
+    return installation.isPending || isManaged(installation);
 }
