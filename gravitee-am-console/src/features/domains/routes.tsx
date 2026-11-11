@@ -29,7 +29,7 @@ export const domainListRoutes = (
             path="new-domain"
             element={
                 <RequirePermission anyOf={['domain_create']}>
-                    {lazyPage(() => import('./CreateDomainPage'), 'CreateDomainPage')}
+                    {lazyPage(() => import('./NewDomainPage'), 'NewDomainPage')}
                 </RequirePermission>
             }
         />

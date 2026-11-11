@@ -22,7 +22,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { listDataPlanes } from '../../../lib/api/data-planes';
 import { createDomain } from '../../../lib/api/domains';
 import { HttpError } from '../../../lib/api/http';
-import { CreateDomainPage } from '../CreateDomainPage';
+import { NewDomainPage } from '../NewDomainPage';
 
 vi.mock('@gravitee/graphene-core', async importOriginal => ({
     ...(await importOriginal<Record<string, unknown>>()),
@@ -35,7 +35,7 @@ vi.mock('../../../lib/session/environment', () => ({
     useCurrentEnvironment: () => ({ id: 'env-1', name: 'Development', hrids: ['dev'] }),
 }));
 
-function setupCreateDomainPageHarness() {
+function setupNewDomainPageHarness() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     renderWithGraphene(
         <QueryClientProvider client={client}>
@@ -43,7 +43,7 @@ function setupCreateDomainPageHarness() {
                 <LayoutSlotsProvider>
                     <TooltipProvider>
                         <Routes>
-                            <Route path="/environments/dev/domains/new" element={<CreateDomainPage />} />
+                            <Route path="/environments/dev/domains/new" element={<NewDomainPage />} />
                             <Route path="/environments/dev/domains/:hrid" element={<p>Domain page</p>} />
                         </Routes>
                     </TooltipProvider>
@@ -70,10 +70,10 @@ beforeEach(() => {
     vi.mocked(createDomain).mockResolvedValue({ id: 'd9', hrid: 'customer-identity', name: 'Customer Identity', enabled: false });
 });
 
-describe('CreateDomainPage', () => {
+describe('NewDomainPage', () => {
     it('creates the domain on the single data plane, then opens it', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
-        const harness = setupCreateDomainPageHarness();
+        const harness = setupNewDomainPageHarness();
 
         await harness.typeName('Customer Identity');
         await harness.submitWhenEnabled();
@@ -91,7 +91,7 @@ describe('CreateDomainPage', () => {
 
     it('sends the description once typed', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
-        const harness = setupCreateDomainPageHarness();
+        const harness = setupNewDomainPageHarness();
 
         await harness.typeName('Acme');
         await harness.typeDescription('Customer realm');
@@ -109,7 +109,7 @@ describe('CreateDomainPage', () => {
             { id: 'eu', name: 'Europe' },
             { id: 'us', name: 'America' },
         ]);
-        const harness = setupCreateDomainPageHarness();
+        const harness = setupNewDomainPageHarness();
 
         await harness.typeName('Acme');
 
@@ -120,7 +120,7 @@ describe('CreateDomainPage', () => {
     it('keeps the form when the creation fails', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([{ id: 'default', name: 'Default' }]);
         vi.mocked(createDomain).mockRejectedValueOnce(new HttpError(400, 'Domain with name [Acme] already exists'));
-        const harness = setupCreateDomainPageHarness();
+        const harness = setupNewDomainPageHarness();
 
         await harness.typeName('Acme');
         await harness.submitWhenEnabled();
@@ -134,7 +134,7 @@ describe('CreateDomainPage', () => {
 
     it('says why a domain cannot be created when the environment has no data plane', async () => {
         vi.mocked(listDataPlanes).mockResolvedValue([]);
-        const harness = setupCreateDomainPageHarness();
+        const harness = setupNewDomainPageHarness();
 
         await harness.typeName('Acme');
 
@@ -147,7 +147,7 @@ describe('CreateDomainPage', () => {
 
     it('shows the error panel when the data planes do not load', async () => {
         vi.mocked(listDataPlanes).mockRejectedValue(new HttpError(500, 'Service unavailable'));
-        setupCreateDomainPageHarness();
+        setupNewDomainPageHarness();
 
         expect(await screen.findByText('Could not load the data planes, so a domain cannot be created.')).toBeInTheDocument();
     });

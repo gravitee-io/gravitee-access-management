@@ -63,7 +63,7 @@ interface IdentityProviderSettingsFormProps {
     readonly feature?: string;
 }
 
-/** The editable settings of a custom provider. Save sits in the layout banner. */
+/** The editable settings of a custom provider. Save sits in the floating `SaveBar`. */
 export function IdentityProviderSettingsForm({ provider, adapted, configuration, pinned, feature }: IdentityProviderSettingsFormProps) {
     const { ref } = useCurrentDomain();
     const queryClient = useQueryClient();
@@ -117,7 +117,7 @@ export function IdentityProviderSettingsForm({ provider, adapted, configuration,
         }
         save.mutate(values);
     };
-    // Save sits in the layout banner, outside a LicenseGuard, so the submit opens the upgrade dialog.
+    // Save sits in the SaveBar, outside a LicenseGuard, so the submit opens the upgrade dialog.
     const onSubmit = (event: FormEvent<HTMLFormElement>) => {
         if (licenseMissing) {
             event.preventDefault();

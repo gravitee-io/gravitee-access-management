@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Button, useLayoutConfig } from '@gravitee/graphene-core';
-import { useEffect, useRef } from 'react';
+import { Button } from '@gravitee/graphene-core';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 interface SaveBarProps {
     /** The id of the `<form>` that Save submits. */
@@ -25,21 +25,53 @@ interface SaveBarProps {
     readonly onDiscard: () => void;
 }
 
-/** Renders in the sticky layout banner while `dirty` is true. */
-export function SaveBar({ formId, dirty, saving, invalid = false, onDiscard }: SaveBarProps) {
-    // onDiscard changes on each render. In the deps, it would set the banner in a loop.
-    const discard = useRef(onDiscard);
-    useEffect(() => {
-        discard.current = onDiscard;
-    });
+interface Box {
+    readonly left: number;
+    readonly width: number;
+}
 
-    useLayoutConfig(
-        {
-            banner: dirty ? (
-                <div className="flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-3">
+/** Floats at the bottom of the content column while `dirty` is true, so the page does not move when it appears. */
+export function SaveBar({ formId, dirty, saving, invalid = false, onDiscard }: SaveBarProps) {
+    // Absolute, so it takes no room or flex gap. Its parent gives the column the fixed bar lines up with.
+    const anchor = useRef<HTMLSpanElement>(null);
+    const [box, setBox] = useState<Box>();
+
+    useLayoutEffect(() => {
+        const column = anchor.current?.parentElement;
+        if (!dirty || !column) {
+            setBox(undefined);
+            return undefined;
+        }
+        const measure = () => {
+            const { left, width } = column.getBoundingClientRect();
+            setBox(current => (current?.left === left && current.width === width ? current : { left, width }));
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(column);
+        window.addEventListener('resize', measure);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', measure);
+        };
+    }, [dirty]);
+
+    if (!dirty) {
+        return null;
+    }
+    return (
+        <>
+            <span ref={anchor} aria-hidden className="absolute" />
+            {box && (
+                <div
+                    role="region"
+                    aria-label="Unsaved changes"
+                    className="fixed bottom-4 z-20 flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-4 py-3 shadow-lg motion-safe:animate-save-bar-in"
+                    style={{ left: box.left, width: box.width }}
+                >
                     <p className="text-sm">You have unsaved changes.</p>
                     <div className="flex gap-2">
-                        <Button type="button" variant="outline" disabled={saving} onClick={() => discard.current()}>
+                        <Button type="button" variant="outline" disabled={saving} onClick={onDiscard}>
                             Discard
                         </Button>
                         <Button type="submit" form={formId} disabled={saving || invalid}>
@@ -47,11 +79,7 @@ export function SaveBar({ formId, dirty, saving, invalid = false, onDiscard }: S
                         </Button>
                     </div>
                 </div>
-            ) : null,
-            bannerSticky: true,
-        },
-        [formId, dirty, saving, invalid],
+            )}
+        </>
     );
-
-    return null;
 }

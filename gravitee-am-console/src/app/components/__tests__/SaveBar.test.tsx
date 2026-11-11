@@ -24,9 +24,9 @@ interface HarnessProps {
     readonly invalid?: boolean;
 }
 
-function Banner() {
+function LayoutBanner() {
     const { slots } = useLayoutSlots();
-    return <>{slots.banner}</>;
+    return <div aria-label="Layout banner">{slots.banner}</div>;
 }
 
 function setupSaveBarHarness({ dirty = true, saving = false, invalid = false }: HarnessProps = {}) {
@@ -34,7 +34,7 @@ function setupSaveBarHarness({ dirty = true, saving = false, invalid = false }: 
     const onDiscard = vi.fn();
     const ui = (discard: () => void) => (
         <LayoutSlotsProvider>
-            <Banner />
+            <LayoutBanner />
             <form id="settings" onSubmit={onSubmit} />
             <SaveBar formId="settings" dirty={dirty} saving={saving} invalid={invalid} onDiscard={discard} />
         </LayoutSlotsProvider>
@@ -49,6 +49,13 @@ describe('SaveBar', () => {
 
         expect(screen.queryByText('You have unsaved changes.')).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    });
+
+    it('floats over the page instead of taking the layout banner', () => {
+        setupSaveBarHarness();
+
+        expect(screen.getByRole('region', { name: 'Unsaved changes' })).toHaveTextContent('You have unsaved changes.');
+        expect(screen.getByLabelText('Layout banner')).toBeEmptyDOMElement();
     });
 
     it('submits the form named by formId', async () => {

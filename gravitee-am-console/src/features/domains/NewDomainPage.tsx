@@ -45,7 +45,7 @@ import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useCurrentEnvironment } from '../../lib/session/environment';
 import { useSession } from '../../lib/session/session';
 
-export function CreateDomainPage() {
+export function NewDomainPage() {
     const { user } = useSession();
     const environment = useCurrentEnvironment();
     const navigate = useNavigate();
