@@ -94,6 +94,54 @@ public class AuthorizationDetailApprovalRepositoryTest extends AbstractDataPlane
     }
 
     @Test
+    public void shouldFindTheApprovalsOfAUserForEveryClient() {
+        repository.create(approval(fullUserId, "digest-1", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherClient = approval(fullUserId, "digest-2", inDays(30));
+        otherClient.setClientId("other-client");
+        repository.create(otherClient).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        var found = repository.findByDomainAndUser(DOMAIN, fullUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values();
+
+        assertThat(found).extracting(AuthorizationDetailApproval::getClientId)
+                .containsExactlyInAnyOrder(CLIENT, "other-client");
+    }
+
+    @Test
+    public void shouldFindTheApprovalsOfAnExternalUserForEveryClient() {
+        repository.create(approval(fullUserId, "digest-1", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.findByDomainAndUser(DOMAIN, externalUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+    }
+
+    @Test
+    public void shouldOnlyFindTheApprovalsOfTheUserInTheDomain() {
+        repository.create(approval(fullUserId, "digest-1", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherDomain = approval(fullUserId, "digest-2", inDays(30));
+        otherDomain.setDomain("other-domain");
+        repository.create(otherDomain).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        repository.create(approval(new UserId("other-user", null, null), "digest-3", inDays(30)))
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        var found = repository.findByDomainAndUser(DOMAIN, fullUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values();
+
+        assertThat(found).extracting(AuthorizationDetailApproval::getDigest).containsExactly("digest-1");
+    }
+
+    @Test
+    public void shouldNotFindExpiredApprovalsOfAUser() {
+        repository.create(approval(fullUserId, "digest-1", inDays(-1))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        repository.create(approval(fullUserId, "digest-2", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        var found = repository.findByDomainAndUser(DOMAIN, fullUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values();
+
+        assertThat(found).extracting(AuthorizationDetailApproval::getDigest).containsExactly("digest-2");
+    }
+
+    @Test
     public void shouldReplaceTheApprovalWithTheSameDigestOnUpsert() {
         AuthorizationDetailApproval first = repository.upsert(approval(fullUserId, "digest-1", inDays(1)))
                 .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values().get(0);

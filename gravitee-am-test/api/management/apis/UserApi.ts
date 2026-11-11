@@ -37,6 +37,9 @@ import {
   AuditPage,
   AuditPageFromJSON,
   AuditPageToJSON,
+  AuthorizationDetailApprovalEntity,
+  AuthorizationDetailApprovalEntityFromJSON,
+  AuthorizationDetailApprovalEntityToJSON,
   BulkResponse,
   BulkResponseFromJSON,
   BulkResponseToJSON,
@@ -250,6 +253,14 @@ export interface ListUserAuditLogsRequest {
   to?: number;
   size?: number;
   page?: number;
+}
+
+export interface ListUserAuthorizationDetailConsentsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  clientId?: string;
 }
 
 export interface ListUserCertificateCredentialsRequest {
@@ -2093,6 +2104,87 @@ export class UserApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<AuditPage> {
     const response = await this.listUserAuditLogsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Lists the authorization details the user approved or denied that have not expired. User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get a user\'s authorization detail consents
+   */
+  async listUserAuthorizationDetailConsentsRaw(
+    requestParameters: ListUserAuthorizationDetailConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<AuthorizationDetailApprovalEntity>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listUserAuthorizationDetailConsents.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listUserAuthorizationDetailConsents.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listUserAuthorizationDetailConsents.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling listUserAuthorizationDetailConsents.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.clientId !== undefined) {
+      queryParameters['clientId'] = requestParameters.clientId;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/authorization-details`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthorizationDetailApprovalEntityFromJSON));
+  }
+
+  /**
+   * Lists the authorization details the user approved or denied that have not expired. User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get a user\'s authorization detail consents
+   */
+  async listUserAuthorizationDetailConsents(
+    requestParameters: ListUserAuthorizationDetailConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<AuthorizationDetailApprovalEntity>> {
+    const response = await this.listUserAuthorizationDetailConsentsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

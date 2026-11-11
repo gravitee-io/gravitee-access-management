@@ -29,6 +29,8 @@ import java.util.List;
 
 public interface AuthorizationDetailApprovalService extends DomainDataPlaneCleanup {
 
+    Flowable<AuthorizationDetailApproval> findByDomainAndUser(Domain domain, UserId userId);
+
     Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(Domain domain, UserId userId, String clientId);
 
     /**

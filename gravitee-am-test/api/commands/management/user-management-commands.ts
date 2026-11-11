@@ -170,6 +170,15 @@ export const listUserConsents = (domainId: string, accessToken: string, userId: 
     clientId,
   });
 
+export const listUserAuthorizationDetailConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+  getUserApi(accessToken).listUserAuthorizationDetailConsents({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    clientId,
+  });
+
 export const revokeUserConsent = (domainId: string, accessToken: string, userId: string, consentId: string) =>
   getUserApi(accessToken).revokeUserConsent({
     organizationId: process.env.AM_DEF_ORG_ID,

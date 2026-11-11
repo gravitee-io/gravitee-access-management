@@ -169,6 +169,9 @@ public class DataPlaneIndexTest {
                 .append("clientId", 1).append("userId", 1).append("digest", 1));
         expected.put("d1c1ue1us1dg1", new Document("domain", 1)
                 .append("clientId", 1).append("userExternalId", 1).append("userSource", 1).append("digest", 1));
+        expected.put("d1u1", new Document("domain", 1).append("userId", 1));
+        expected.put("d1ue1us1", new Document("domain", 1)
+                .append("userExternalId", 1).append("userSource", 1));
 
         assertLookupIndexes("authorization_detail_approvals", expected);
     }

@@ -246,6 +246,7 @@ import { EmailResolver } from './resolvers/email.resolver';
 import { SelectApplicationsComponent } from './domain/components/applications/select-applications.component';
 import { SelectTemplateApplicationComponent } from './domain/components/applications/select-template-application.component';
 import { ConsentsResolver } from './resolvers/consents.resolver';
+import { AuthorizationDetailConsentsResolver } from './resolvers/authorization-detail-consents.resolver';
 import { AuthorizationEngineService } from './services/authorization-engine.service';
 import { OpenFGAService } from './services/openfga.service';
 import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.resolver';
@@ -974,6 +975,7 @@ import { McpServerPermissionsResolver } from './resolvers/mcp-server-permissions
     EmailResolver,
     DictionariesResolver,
     ConsentsResolver,
+    AuthorizationDetailConsentsResolver,
     AuthorizationEnginePluginsResolver,
     AuthorizationEnginesResolver,
     AuthorizationEngineResolver,
