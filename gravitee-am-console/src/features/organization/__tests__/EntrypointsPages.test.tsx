@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { toast } from '@gravitee/graphene-core';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { buttonHarness, inputHarness } from '@gravitee/graphene-core/testing';
+import { screen, waitFor, within } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import {
     createOrganizationEntrypoint,
@@ -141,10 +142,11 @@ describe('OrganizationEntrypointsPage', () => {
         vi.mocked(deleteOrganizationEntrypoint).mockResolvedValueOnce(undefined);
         renderEntrypoints(entrypointsPath);
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Delete Europe' }));
+        await screen.findByRole('button', { name: 'Delete Europe' });
+        await buttonHarness({ name: 'Delete Europe' }).click();
         const dialog = await screen.findByRole('dialog');
         expect(dialog).toHaveTextContent('Are you sure you want to delete this entrypoint?');
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+        await buttonHarness({ name: 'Delete', within: dialog }).click();
 
         await waitFor(() => expect(deleteOrganizationEntrypoint).toHaveBeenCalledWith(ORG, 'eu-entry'));
         await waitFor(() => expect(listOrganizationEntrypoints).toHaveBeenCalledTimes(2));
@@ -157,16 +159,16 @@ describe('NewOrganizationEntrypointPage', () => {
         vi.mocked(createOrganizationEntrypoint).mockResolvedValueOnce(eu);
         renderEntrypoints(`${entrypointsPath}/new`);
 
-        const create = screen.getByRole('button', { name: 'Create' });
-        fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Europe' } });
-        fireEvent.change(screen.getByRole('textbox', { name: 'Entrypoint url' }), { target: { value: 'eu.example.com' } });
-        expect(create).toBeDisabled();
+        await inputHarness({ name: 'Name' }).type('Europe');
+        await inputHarness({ name: 'Entrypoint url' }).type('eu.example.com');
+        expect(buttonHarness({ name: 'Create' }).isDisabled()).toBe(true);
         expect(screen.getByRole('textbox', { name: 'Entrypoint url' })).toHaveAccessibleDescription(
             'The url must start with http:// or https://.',
         );
 
-        fireEvent.change(screen.getByRole('textbox', { name: 'Entrypoint url' }), { target: { value: 'https://eu.example.com' } });
-        fireEvent.click(create);
+        await inputHarness({ name: 'Entrypoint url' }).clear();
+        await inputHarness({ name: 'Entrypoint url' }).type('https://eu.example.com');
+        await buttonHarness({ name: 'Create' }).click();
 
         await waitFor(() =>
             expect(createOrganizationEntrypoint).toHaveBeenCalledWith(ORG, {
@@ -186,9 +188,11 @@ describe('OrganizationEntrypointPage', () => {
         renderEntrypoints(`${entrypointsPath}/eu-entry`);
 
         expect(await screen.findByText('eu | Europe')).toBeInTheDocument();
-        fireEvent.change(screen.getByRole('textbox', { name: 'Entrypoint url' }), { target: { value: 'https://europe.example.com' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Remove sharding tag eu' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(inputHarness({ name: 'Entrypoint url' }).getElement()).not.toHaveAttribute('readonly'));
+        await inputHarness({ name: 'Entrypoint url' }).clear();
+        await inputHarness({ name: 'Entrypoint url' }).type('https://europe.example.com');
+        await buttonHarness({ name: 'Remove sharding tag eu' }).click();
+        await buttonHarness({ name: 'Save' }).click();
 
         await waitFor(() =>
             expect(updateOrganizationEntrypoint).toHaveBeenCalledWith(ORG, 'eu-entry', {

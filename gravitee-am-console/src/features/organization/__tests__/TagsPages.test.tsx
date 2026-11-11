@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { toast } from '@gravitee/graphene-core';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { buttonHarness, inputHarness } from '@gravitee/graphene-core/testing';
+import { screen, waitFor } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import { HttpError } from '../../../lib/api/http';
 import { createTag, deleteTag, getTag, listTags, updateTag } from '../../../lib/api/tags';
@@ -102,7 +103,8 @@ describe('TagsPage', () => {
         vi.mocked(listTags).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
 
         renderTags(tagsPath);
-        fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+        await screen.findByRole('button', { name: 'Retry' });
+        await buttonHarness({ name: 'Retry' }).click();
 
         expect(await screen.findByRole('link', { name: 'Europe' })).toBeInTheDocument();
         expect(listTags).toHaveBeenCalledTimes(2);
@@ -129,10 +131,11 @@ describe('TagsPage', () => {
         vi.mocked(deleteTag).mockResolvedValueOnce(undefined);
         renderTags(tagsPath);
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Delete Europe' }));
+        await screen.findByRole('button', { name: 'Delete Europe' });
+        await buttonHarness({ name: 'Delete Europe' }).click();
         const dialog = await screen.findByRole('dialog');
         expect(dialog).toHaveTextContent('Are you sure you want to delete this sharding tag?');
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+        await buttonHarness({ name: 'Delete', within: dialog }).click();
 
         await waitFor(() => expect(deleteTag).toHaveBeenCalledWith(ORG, 'eu'));
         await waitFor(() => expect(listTags).toHaveBeenCalledTimes(2));
@@ -145,11 +148,10 @@ describe('NewTagPage', () => {
         vi.mocked(createTag).mockResolvedValueOnce(eu);
         renderTags(`${tagsPath}/new`);
 
-        const create = screen.getByRole('button', { name: 'Create' });
-        expect(create).toBeDisabled();
-        fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Europe' } });
-        fireEvent.change(screen.getByRole('textbox', { name: 'Description' }), { target: { value: 'European gateways' } });
-        fireEvent.click(create);
+        expect(buttonHarness({ name: 'Create' }).isDisabled()).toBe(true);
+        await inputHarness({ name: 'Name' }).type('Europe');
+        await inputHarness({ name: 'Description' }).type('European gateways');
+        await buttonHarness({ name: 'Create' }).click();
 
         await waitFor(() => expect(createTag).toHaveBeenCalledWith(ORG, { name: 'Europe', description: 'European gateways' }));
         expect(toast.success).toHaveBeenCalledWith('Sharding Tag Europe created');
@@ -162,8 +164,10 @@ describe('TagPage', () => {
         vi.mocked(updateTag).mockResolvedValueOnce({ ...eu, name: 'EU' });
         renderTags(`${tagsPath}/eu`);
 
-        fireEvent.change(await screen.findByRole('textbox', { name: 'Name' }), { target: { value: 'EU' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await screen.findByRole('textbox', { name: 'Name' });
+        await inputHarness({ name: 'Name' }).clear();
+        await inputHarness({ name: 'Name' }).type('EU');
+        await buttonHarness({ name: 'Save' }).click();
 
         await waitFor(() => expect(updateTag).toHaveBeenCalledWith(ORG, 'eu', { name: 'EU', description: 'European gateways' }));
         expect(toast.success).toHaveBeenCalledWith('Sharding tag updated');
@@ -182,9 +186,10 @@ describe('TagPage', () => {
         vi.mocked(deleteTag).mockResolvedValueOnce(undefined);
         renderTags(`${tagsPath}/eu`);
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+        await screen.findByRole('button', { name: 'Delete' });
+        await buttonHarness({ name: 'Delete' }).click();
         const dialog = await screen.findByRole('dialog');
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+        await buttonHarness({ name: 'Delete', within: dialog }).click();
 
         await waitFor(() => expect(deleteTag).toHaveBeenCalledWith(ORG, 'eu'));
         expect(await screen.findByRole('heading', { name: 'Sharding tags' })).toBeInTheDocument();

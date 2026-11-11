@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { toast } from '@gravitee/graphene-core';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { buttonHarness, switchHarness } from '@gravitee/graphene-core/testing';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route } from 'react-router-dom';
 import { createOrganizationForm, deleteOrganizationForm, getOrganizationForm, updateOrganizationForm } from '../../../lib/api/forms';
@@ -92,7 +93,7 @@ describe('OrganizationFormPage', () => {
         expect(editor).toHaveValue('<html>custom</html>');
         expect(getOrganizationForm).toHaveBeenCalledWith(ORG, 'LOGIN');
         fireEvent.change(editor, { target: { value: '<html>edited</html>' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await buttonHarness({ name: 'Save' }).click();
 
         await waitFor(() =>
             expect(updateOrganizationForm).toHaveBeenCalledWith(ORG, 'form-1', {
@@ -113,9 +114,9 @@ describe('OrganizationFormPage', () => {
         expect(editor).toHaveValue('// Custom form...');
         expect(editor).toHaveAttribute('readonly');
         expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole('switch', { name: /Enable custom login form/ }));
+        await switchHarness({ name: /Enable custom login form/ }).toggle();
         fireEvent.change(editor, { target: { value: '<html>custom</html>' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await buttonHarness({ name: 'Save' }).click();
 
         await waitFor(() =>
             expect(createOrganizationForm).toHaveBeenCalledWith(ORG, { template: 'LOGIN', enabled: true, content: '<html>custom</html>' }),
@@ -141,11 +142,12 @@ describe('OrganizationFormPage', () => {
         vi.mocked(deleteOrganizationForm).mockResolvedValueOnce(undefined);
         renderForms(formPath);
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+        await screen.findByRole('button', { name: 'Delete' });
+        await buttonHarness({ name: 'Delete' }).click();
         const dialog = await screen.findByRole('dialog');
         expect(dialog).toHaveTextContent('Are you sure you want to delete this form?');
         vi.mocked(getOrganizationForm).mockResolvedValue({ template: 'login', enabled: false });
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+        await buttonHarness({ name: 'Delete', within: dialog }).click();
 
         await waitFor(() => expect(deleteOrganizationForm).toHaveBeenCalledWith(ORG, 'form-1'));
         expect(await screen.findByDisplayValue('// Custom form...')).toBeInTheDocument();
