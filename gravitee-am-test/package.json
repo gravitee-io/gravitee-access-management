@@ -82,6 +82,6 @@
     "jsonwebtoken": "9.0.3",
     "jwk-to-pem": "2.0.7",
     "kafkajs": "2.2.4",
-    "node-forge": "1.4.0"
+    "node-forge": "1.4.3"
   }
 }
