@@ -17,6 +17,7 @@ import { screen } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import { listOrganizationEntrypoints, getOrganizationEntrypoint } from '../../../lib/api/entrypoints';
 import { getOrganizationForm } from '../../../lib/api/forms';
+import { HttpError } from '../../../lib/api/http';
 import { getInstallationConfiguration } from '../../../lib/api/management-api';
 import { getInstallation, getOrganizationSettings } from '../../../lib/api/organization';
 import { getTag, listTags } from '../../../lib/api/tags';
@@ -74,6 +75,16 @@ describe('organizationRoutes', () => {
 
         expect(await screen.findByText('Not allowed')).toBeInTheDocument();
         expect(loader).not.toHaveBeenCalled();
+    });
+
+    it('leaves the Cockpit page when the installation type cannot be loaded', async () => {
+        vi.mocked(getInstallationConfiguration).mockRejectedValue(new HttpError(500, 'Service unavailable'));
+        vi.mocked(getOrganizationSettings).mockResolvedValue({ identities: [] });
+
+        renderAt(`${organizationPath}/cockpit`, [SETTINGS, 'installation_read']);
+
+        expect(await screen.findByRole('heading', { name: 'Authentication' })).toBeInTheDocument();
+        expect(getInstallation).not.toHaveBeenCalled();
     });
 
     it('leaves the Cockpit page for the first page of the section in cloud mode', async () => {

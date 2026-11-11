@@ -27,7 +27,7 @@ export function OrganizationLayout() {
     if (installation.isPending) {
         return <Spinner />;
     }
-    return <OrganizationSidebar cloudMode={isManaged(installation.data)} />;
+    return <OrganizationSidebar cloudMode={isManaged(installation)} />;
 }
 
 function OrganizationSidebar({ cloudMode }: { readonly cloudMode: boolean }) {

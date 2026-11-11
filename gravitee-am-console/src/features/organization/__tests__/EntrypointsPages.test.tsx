@@ -118,6 +118,17 @@ describe('OrganizationEntrypointsPage', () => {
         expect(screen.getByRole('link', { name: 'Create entrypoint' })).toHaveAttribute('href', `${entrypointsPath}/new`);
     });
 
+    it('hides the create, edit and delete actions when the installation type cannot be loaded', async () => {
+        vi.mocked(getInstallationConfiguration).mockRejectedValue(new HttpError(500, 'Service unavailable'));
+
+        renderEntrypoints(entrypointsPath);
+
+        expect(await screen.findByText('Europe')).toBeInTheDocument();
+        await waitFor(() => expect(getInstallationConfiguration).toHaveBeenCalled());
+        expect(screen.queryByRole('link', { name: 'Create entrypoint' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Delete Europe' })).not.toBeInTheDocument();
+    });
+
     it('hides the create, edit and delete actions in cloud mode', async () => {
         vi.mocked(getInstallationConfiguration).mockResolvedValue({ type: 'managed' });
 

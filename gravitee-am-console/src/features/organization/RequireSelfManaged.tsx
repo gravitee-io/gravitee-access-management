@@ -26,5 +26,5 @@ export function RequireSelfManaged({ children }: { readonly children: ReactNode 
     if (installation.isPending) {
         return <Spinner />;
     }
-    return isManaged(installation.data) ? <Navigate to={`${base}/general`} replace /> : children;
+    return isManaged(installation) ? <Navigate to={`${base}/general`} replace /> : children;
 }
