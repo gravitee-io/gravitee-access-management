@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { LayoutSlotsProvider, toast, TooltipProvider, useLayoutSlots } from '@gravitee/graphene-core';
+import { LayoutSlotsProvider, toast, TooltipProvider } from '@gravitee/graphene-core';
 import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
@@ -50,10 +50,6 @@ vi.mock('../../../lib/session/domain', () => ({
     }),
 }));
 
-function Banner() {
-    return <>{useLayoutSlots().slots.banner}</>;
-}
-
 function renderPage(permissions: string[], current: Domain = domain) {
     session.domain = current;
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -62,7 +58,6 @@ function renderPage(permissions: string[], current: Domain = domain) {
             <PermissionScope permissions={permissions}>
                 <MemoryRouter>
                     <LayoutSlotsProvider>
-                        <Banner />
                         <TooltipProvider>
                             <DomainEntrypointsPage />
                         </TooltipProvider>

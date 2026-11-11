@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { LayoutSlotsProvider, TooltipProvider, useLayoutSlots } from '@gravitee/graphene-core';
+import { LayoutSlotsProvider, TooltipProvider } from '@gravitee/graphene-core';
 import { renderWithGraphene } from '@gravitee/graphene-core/testing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -31,11 +31,6 @@ export const currentDomain = {
     domainsPath: '/environments/dev/domains',
 };
 
-/** The layout banner, where `SaveBar` renders. */
-function Banner() {
-    return <>{useLayoutSlots().slots.banner}</>;
-}
-
 /** Renders the routes at a path, with the permissions and the licence features given. */
 export function renderRoutes(path: string, routes: ReactNode, permissions: string[], features: string[] = []) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -45,7 +40,6 @@ export function renderRoutes(path: string, routes: ReactNode, permissions: strin
                 <PermissionScope permissions={permissions}>
                     <MemoryRouter initialEntries={[path]}>
                         <LayoutSlotsProvider>
-                            <Banner />
                             <TooltipProvider>
                                 <Routes>{routes}</Routes>
                             </TooltipProvider>

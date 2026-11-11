@@ -19,3 +19,14 @@
    lands in the vendors chunk, which the page loads before this file. */
 @import '@gravitee/graphene-core/styles';
 @source './**/*.{ts,tsx}';
+
+@theme {
+    --animate-save-bar-in: save-bar-in 200ms ease-out;
+
+    @keyframes save-bar-in {
+        from {
+            opacity: 0;
+            transform: translateY(0.5rem);
+        }
+    }
+}
