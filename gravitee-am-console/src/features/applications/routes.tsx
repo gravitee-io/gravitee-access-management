@@ -44,7 +44,7 @@ export const applicationRoutes = (
             <Route index element={lazyPage(() => import('./ApplicationsPage'), 'ApplicationsPage')} />
         </Route>
         <Route element={<RequirePermission anyOf={['application_create']} />}>
-            <Route path="new" element={lazyPage(() => import('./CreateApplicationPage'), 'CreateApplicationPage')} />
+            <Route path="new" element={lazyPage(() => import('./NewApplicationPage'), 'NewApplicationPage')} />
         </Route>
         <Route path=":appId" element={lazyPage(() => import('./ApplicationLayout'), 'ApplicationLayout')}>
             <Route index element={<Navigate to="overview" replace />} />

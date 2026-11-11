@@ -131,7 +131,7 @@ function Stepper({ steps, current }: Readonly<{ steps: string[]; current: number
  * A linear stepper: the platform, the settings, and for a CIMD import the review of the fetched document. A manual
  * create shows the client secret once before it lands on the application.
  */
-export function CreateApplicationPage() {
+export function NewApplicationPage() {
     const { domain, ref, basePath, domainsPath } = useCurrentDomain();
     const navigate = useNavigate();
     const queryClient = useQueryClient();

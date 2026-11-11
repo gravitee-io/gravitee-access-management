@@ -24,7 +24,7 @@ vi.mock('../../../lib/api/applications', async importOriginal => ({ ...(await im
 vi.mock('../../../lib/api/permissions', () => ({ listApplicationPermissions: vi.fn() }));
 vi.mock('../../../lib/session/domain', () => ({ useCurrentDomain: () => currentDomain }));
 vi.mock('../ApplicationsPage', () => ({ ApplicationsPage: () => <p>Applications page</p> }));
-vi.mock('../CreateApplicationPage', () => ({ CreateApplicationPage: () => <p>Create page</p> }));
+vi.mock('../NewApplicationPage', () => ({ NewApplicationPage: () => <p>Create page</p> }));
 vi.mock('../ApplicationOverviewPage', () => ({ ApplicationOverviewPage: () => <p>Overview page</p> }));
 vi.mock('../ApplicationIdentityProvidersPage', () => ({ ApplicationIdentityProvidersPage: () => <p>Identity providers page</p> }));
 vi.mock('../ApplicationAnalyticsPage', () => ({ ApplicationAnalyticsPage: () => <p>Analytics page</p> }));

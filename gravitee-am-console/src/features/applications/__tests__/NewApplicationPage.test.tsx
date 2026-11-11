@@ -20,7 +20,7 @@ import { Route } from 'react-router-dom';
 import { createApplication, createCimdApplication, validateCimd } from '../../../lib/api/applications';
 import type { Domain } from '../../../lib/api/domains';
 import { HttpError } from '../../../lib/api/http';
-import { CreateApplicationPage } from '../CreateApplicationPage';
+import { NewApplicationPage } from '../NewApplicationPage';
 import { applicationsPath, currentDomain, ref, renderRoutes } from './render';
 
 const session = vi.hoisted(() => ({ domain: {} as Domain }));
@@ -41,7 +41,7 @@ function renderPage(domain: Partial<Domain> = {}) {
     return renderRoutes(
         `${applicationsPath}/new`,
         <>
-            <Route path={`${applicationsPath}/new`} element={<CreateApplicationPage />} />
+            <Route path={`${applicationsPath}/new`} element={<NewApplicationPage />} />
             <Route path={`${applicationsPath}/:appId`} element={<p>Application detail</p>} />
         </>,
         ['application_create'],
@@ -66,7 +66,7 @@ beforeEach(() => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: vi.fn().mockResolvedValue(undefined) }, configurable: true });
 });
 
-describe('CreateApplicationPage', () => {
+describe('NewApplicationPage', () => {
     it('offers the resource server type only when UMA is on, and never the agent type', () => {
         const { unmount } = renderPage();
         expect(screen.getAllByRole('radio')).toHaveLength(4);
