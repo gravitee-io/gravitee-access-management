@@ -98,6 +98,24 @@ describe('TagsPage', () => {
         expect(screen.queryByText('Sharding tags will appear here')).not.toBeInTheDocument();
     });
 
+    it('loads the list again when Retry is clicked after a failure', async () => {
+        vi.mocked(listTags).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
+
+        renderTags(tagsPath);
+        fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+        expect(await screen.findByRole('link', { name: 'Europe' })).toBeInTheDocument();
+        expect(listTags).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows the name column before the id column', async () => {
+        renderTags(tagsPath);
+
+        await screen.findByRole('link', { name: 'Europe' });
+        const headers = screen.getAllByRole('columnheader').map(header => header.textContent);
+        expect(headers.indexOf('Name')).toBeLessThan(headers.indexOf('ID'));
+    });
+
     it('hides the create, edit and delete actions without their permissions', async () => {
         renderTags(tagsPath, ['organization_tag_list']);
 

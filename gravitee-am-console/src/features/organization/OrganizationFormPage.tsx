@@ -100,7 +100,7 @@ export function OrganizationFormPage() {
         );
     }
     if (form.error) {
-        return <ErrorPanel description="Could not load the form." error={form.error} />;
+        return <ErrorPanel description="Could not load the form." error={form.error} onRetry={() => void form.refetch()} />;
     }
     if (!form.data) {
         return <Skeleton className="h-72 w-full" />;

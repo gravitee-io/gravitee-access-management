@@ -84,7 +84,11 @@ export function OrganizationEntrypointPage() {
                 }
             />
         ) : (
-            <ErrorPanel description="Could not load the entrypoint." error={error} />
+            <ErrorPanel
+                description="Could not load the entrypoint."
+                error={error}
+                onRetry={() => void Promise.all([entrypoint.refetch(), tags.refetch()])}
+            />
         );
     }
     if (!entrypoint.data || !tags.data) {

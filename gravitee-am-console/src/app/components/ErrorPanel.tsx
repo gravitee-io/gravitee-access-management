@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@gravitee/graphene-core';
+import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@gravitee/graphene-core';
 import { TriangleAlertIcon } from '@gravitee/graphene-core/icons';
 
 interface ErrorPanelProps {
     /** What did not load, as a sentence. */
     readonly description: string;
     readonly error?: unknown;
+    /** Shows a Retry button that reloads what failed. */
+    readonly onRetry?: () => void;
 }
 
-export function ErrorPanel({ description, error }: ErrorPanelProps) {
+export function ErrorPanel({ description, error, onRetry }: ErrorPanelProps) {
     const message = error instanceof Error ? error.message : undefined;
     return (
         <Empty role="alert" className="border border-border">
@@ -33,9 +35,14 @@ export function ErrorPanel({ description, error }: ErrorPanelProps) {
                 <EmptyTitle>Unable to load</EmptyTitle>
                 <EmptyDescription>{description}</EmptyDescription>
             </EmptyHeader>
-            {message && (
+            {(message || onRetry) && (
                 <EmptyContent>
-                    <p className="font-mono text-xs text-muted-foreground">{message}</p>
+                    {message && <p className="font-mono text-xs text-muted-foreground">{message}</p>}
+                    {onRetry && (
+                        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+                            Retry
+                        </Button>
+                    )}
                 </EmptyContent>
             )}
         </Empty>
