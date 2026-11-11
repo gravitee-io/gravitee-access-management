@@ -216,6 +216,20 @@ describe('MembershipsPanel', () => {
         await waitFor(() => expect(saveMember).toHaveBeenCalledWith(membersPath, { memberId: 'g2', memberType: 'GROUP', role: 'r-owner' }));
     });
 
+    // The dialog is translated, which breaks Radix's default item-aligned placement: the list lands at the top right of
+    // the screen. jsdom has no layout, so this checks the lists open below their field instead.
+    it.each(['Type', 'Group', 'Role'])('opens the %s list below its field in the add dialog', async name => {
+        renderPanel();
+        await openAddDialog();
+        if (name === 'Group') {
+            await selectHarness({ name: 'Type' }).selectOption('Group');
+        }
+
+        await selectHarness({ name }).open();
+
+        expect(screen.getByRole('listbox').closest('[data-side]')).toHaveAttribute('data-side', 'bottom');
+    });
+
     it('shows an error when the user search fails', async () => {
         vi.mocked(searchOrganizationUsers).mockRejectedValue(new HttpError(403, 'Forbidden'));
         renderPanel();

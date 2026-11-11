@@ -82,7 +82,7 @@ const toNewMemberType = (member: Member): NewMembership['memberType'] => (member
 
 function RoleOptions({ roles }: { readonly roles: readonly MembershipRole[] }) {
     return (
-        <SelectContent>
+        <SelectContent position="popper">
             {roles.map(role => (
                 <SelectItem key={role.id} value={role.id} disabled={isRoleDisabled(role)}>
                     {role.name}
@@ -248,6 +248,8 @@ interface AddMemberDialogProps {
     readonly onAdd: (member: NewMembership) => void;
 }
 
+// Its lists open with `position="popper"`. The dialog is translated, which sends the default item-aligned list to the
+// top right of the screen.
 function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMemberDialogProps) {
     const { user } = useSession();
     const [type, setType] = useState<NewMembership['memberType']>('USER');
@@ -289,7 +291,7 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                             <SelectTrigger id="member-type">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent position="popper">
                                 <SelectItem value="USER">User</SelectItem>
                                 <SelectItem value="GROUP">Group</SelectItem>
                             </SelectContent>
@@ -342,7 +344,7 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                                 <SelectTrigger id="member-group">
                                     <SelectValue placeholder="Select a group" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent position="popper">
                                     {freeGroups.map(group => (
                                         <SelectItem key={group.id} value={group.id}>
                                             {group.name}
