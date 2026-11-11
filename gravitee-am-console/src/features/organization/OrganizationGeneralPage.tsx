@@ -82,7 +82,11 @@ export function OrganizationGeneralPage() {
                 description="The platform preferences let you configure how your users will connect to the Access Management Admin Portal."
             />
             {error ? (
-                <ErrorPanel description="Could not load the authentication settings." error={error} />
+                <ErrorPanel
+                    description="Could not load the authentication settings."
+                    error={error}
+                    onRetry={() => void Promise.all([settings.refetch(), providers.refetch()])}
+                />
             ) : !settings.data || !providers.data ? (
                 <Skeleton className="h-72 w-full" />
             ) : (

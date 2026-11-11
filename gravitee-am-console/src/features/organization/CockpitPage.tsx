@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ComponentType } from 'react';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
-import { getInstallation, type Installation } from '../../lib/api/organization';
+import { getCockpitInstallation, type Installation } from '../../lib/api/organization';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
 import { useOrganizationPath } from './useOrganizationPath';
 
@@ -84,13 +84,13 @@ function statusOf(value: string | undefined): Status {
 export function CockpitPage() {
     const base = useOrganizationPath();
     useBreadcrumbs([{ label: 'Organization', to: `${base}/general` }, { label: 'Discover cockpit' }]);
-    const { data, error } = useQuery({ queryKey: ['installation-entity'], queryFn: getInstallation });
+    const { data, error, refetch } = useQuery({ queryKey: ['installation-entity'], queryFn: getCockpitInstallation });
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Cockpit" description="Manage organizations and environments centrally with Gravitee Cockpit." />
             {error ? (
-                <ErrorPanel description="Could not load the installation." error={error} />
+                <ErrorPanel description="Could not load the installation." error={error} onRetry={() => void refetch()} />
             ) : !data ? (
                 <Skeleton className="h-72 w-full" />
             ) : (

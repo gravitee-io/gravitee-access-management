@@ -35,7 +35,7 @@ export function OrganizationEntrypointsPage() {
     const cloudMode = useCloudMode();
     const listPath = `${useOrganizationPath()}/entrypoints`;
     const [pendingDelete, setPendingDelete] = useState<OrganizationEntrypoint | null>(null);
-    const { data, error, isPending } = useQuery({
+    const { data, error, isPending, refetch } = useQuery({
         queryKey: ['organization-entrypoints', user.org],
         queryFn: () => listOrganizationEntrypoints(user.org),
     });
@@ -130,7 +130,7 @@ export function OrganizationEntrypointsPage() {
                 actions={createButton}
             />
             {error ? (
-                <ErrorPanel description="Could not load the entrypoints." error={error} />
+                <ErrorPanel description="Could not load the entrypoints." error={error} onRetry={() => void refetch()} />
             ) : isFirstUse ? (
                 <div className="rounded-lg border border-border">
                     <DataTableEmptyState

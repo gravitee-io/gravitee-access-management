@@ -51,7 +51,7 @@ export function TagPage() {
     const { user } = useSession();
     const base = useOrganizationPath();
     const listPath = `${base}/tags`;
-    const { data, error, isPending } = useQuery({
+    const { data, error, isPending, refetch } = useQuery({
         queryKey: ['tag', user.org, tagId],
         queryFn: () => getTag(user.org, tagId),
         retry: false,
@@ -74,7 +74,7 @@ export function TagPage() {
                 }
             />
         ) : (
-            <ErrorPanel description="Could not load the sharding tag." error={error} />
+            <ErrorPanel description="Could not load the sharding tag." error={error} onRetry={() => void refetch()} />
         );
     }
     if (isPending) {

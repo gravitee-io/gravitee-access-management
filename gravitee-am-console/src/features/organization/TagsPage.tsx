@@ -33,7 +33,7 @@ export function TagsPage() {
     const { has } = usePermissions();
     const listPath = `${useOrganizationPath()}/tags`;
     const [pendingDelete, setPendingDelete] = useState<Tag | null>(null);
-    const { data, error, isPending } = useQuery({ queryKey: ['tags', user.org], queryFn: () => listTags(user.org) });
+    const { data, error, isPending, refetch } = useQuery({ queryKey: ['tags', user.org], queryFn: () => listTags(user.org) });
     const remove = useMutation({
         mutationFn: (id: string) => deleteTag(user.org, id),
         onSuccess: () => {
@@ -46,7 +46,6 @@ export function TagsPage() {
 
     const columns = useMemo<ColumnDef<Tag, unknown>[]>(
         () => [
-            { accessorKey: 'id', header: 'ID', cell: ({ row }) => <span className="font-mono text-sm">{row.original.id}</span> },
             {
                 accessorKey: 'name',
                 header: 'Name',
@@ -59,6 +58,7 @@ export function TagsPage() {
                         <span className="font-medium">{row.original.name}</span>
                     ),
             },
+            { accessorKey: 'id', header: 'ID', cell: ({ row }) => <span className="font-mono text-sm">{row.original.id}</span> },
             {
                 accessorKey: 'description',
                 header: 'Description',
@@ -109,7 +109,7 @@ export function TagsPage() {
                 actions={createButton}
             />
             {error ? (
-                <ErrorPanel description="Could not load the sharding tags." error={error} />
+                <ErrorPanel description="Could not load the sharding tags." error={error} onRetry={() => void refetch()} />
             ) : isFirstUse ? (
                 <div className="rounded-lg border border-border">
                     <DataTableEmptyState

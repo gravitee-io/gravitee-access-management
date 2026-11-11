@@ -43,6 +43,6 @@ export function listOrganizationIdentityProviders(organizationId: string): Promi
     return http<OrganizationIdentityProvider[]>(`/organizations/${organizationId}/identities`);
 }
 
-export function getInstallation(): Promise<Installation> {
+export function getCockpitInstallation(): Promise<Installation> {
     return http<Installation>('/platform/installation');
 }
