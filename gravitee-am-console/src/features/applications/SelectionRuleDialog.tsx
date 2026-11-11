@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-    Button,
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    Field,
-    FieldDescription,
-} from '@gravitee/graphene-core';
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Field } from '@gravitee/graphene-core';
 import { CodeEditor } from '@gravitee/graphene-core/code-editor';
 import type { Monaco, OnMount } from '@monaco-editor/react';
 import { useQuery } from '@tanstack/react-query';
@@ -108,7 +98,6 @@ export function SelectionRuleDialog({ providerName, rule, readOnly, onApply, onC
                         options={{ ariaLabel: 'Rule', minimap: { enabled: false }, lineNumbers: 'off', wordWrap: 'on' }}
                         onMount={(editor, monaco) => setMounted({ editor, monaco })}
                     />
-                    <FieldDescription>For example {"{#request.params['username'] matches '.+@acme.example$'}"}</FieldDescription>
                 </Field>
                 <DialogFooter>
                     <Button type="button" variant="ghost" onClick={onClose}>
