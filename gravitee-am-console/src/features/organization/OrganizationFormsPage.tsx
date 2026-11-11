@@ -66,7 +66,8 @@ export function OrganizationFormsPage() {
                     </Button>
                 ) : (
                     <span title="You don't have required permission">
-                        <LockIcon aria-label="You don't have required permission" className="size-4 text-muted-foreground" />
+                        <LockIcon aria-hidden className="size-4 text-muted-foreground" />
+                        <span className="sr-only">You don&apos;t have required permission</span>
                     </span>
                 ),
         },

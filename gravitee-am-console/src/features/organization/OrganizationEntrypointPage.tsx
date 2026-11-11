@@ -13,7 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Skeleton, toast } from '@gravitee/graphene-core';
+import {
+    Badge,
+    Button,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    PageFocused,
+    Skeleton,
+    toast,
+} from '@gravitee/graphene-core';
 import { ArrowLeftIcon } from '@gravitee/graphene-core/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent, useState } from 'react';
@@ -134,94 +145,97 @@ function EntrypointDetail({ entrypoint, tags, listPath }: EntrypointDetailProps)
     };
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="space-y-1">
-                <Button asChild variant="ghost" size="sm" className="-ml-2">
-                    <Link to={listPath}>
-                        <ArrowLeftIcon aria-hidden />
-                        Entrypoints
-                    </Link>
-                </Button>
-                <div className="flex items-center gap-2">
-                    <h1>{entrypoint.name}</h1>
-                    {entrypoint.defaultEntrypoint && <Badge variant="secondary">Default</Badge>}
+        <PageFocused>
+            <div className="flex flex-col gap-6">
+                <div className="space-y-1">
+                    <Button asChild variant="ghost" size="sm" className="-ml-2">
+                        <Link to={listPath}>
+                            <ArrowLeftIcon aria-hidden />
+                            Entrypoints
+                        </Link>
+                    </Button>
+                    <div className="flex items-center gap-2">
+                        <h1>{entrypoint.name}</h1>
+                        {entrypoint.defaultEntrypoint && <Badge variant="secondary">Default</Badge>}
+                    </div>
                 </div>
-            </div>
 
-            <form id={FORM_ID} className="flex flex-col gap-6" onSubmit={submit}>
+                <form id={FORM_ID} className="flex flex-col gap-6" onSubmit={submit}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Details</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <EntrypointFields
+                                draft={draft}
+                                tags={tags}
+                                readOnly={readOnly}
+                                lockIdentity={entrypoint.defaultEntrypoint}
+                                onChange={patch => setDraft(current => ({ ...current, ...patch }))}
+                            />
+                        </CardContent>
+                    </Card>
+                </form>
+
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Details</CardTitle>
+                        <CardTitle className="text-base">Manage entrypoint</CardTitle>
+                        <CardDescription>
+                            An entrypoint determines which url your end-users will have to use to contact the AM Gateway. Entrypoints are
+                            associated with tags. When a tag is also associated to a domain, the corresponding entrypoint will be
+                            automatically selected to display the right url to use to contact the Gateway.
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <EntrypointFields
-                            draft={draft}
-                            tags={tags}
-                            readOnly={readOnly}
-                            lockIdentity={entrypoint.defaultEntrypoint}
-                            onChange={patch => setDraft(current => ({ ...current, ...patch }))}
-                        />
+                    <CardContent className="text-sm text-muted-foreground">
+                        So, if you associate one of the following tags [ {draft.tags.length > 0 ? draft.tags.join(', ') : 'No tag defined'}{' '}
+                        ] to a domain <code>my-domain</code>, domain users will access to AM Gateway through the following url{' '}
+                        <code>{draft.url}/my-domain</code>
                     </CardContent>
                 </Card>
-            </form>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Manage entrypoint</CardTitle>
-                    <CardDescription>
-                        An entrypoint determines which url your end-users will have to use to contact the AM Gateway. Entrypoints are
-                        associated with tags. When a tag is also associated to a domain, the corresponding entrypoint will be automatically
-                        selected to display the right url to use to contact the Gateway.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                    So, if you associate one of the following tags [ {draft.tags.length > 0 ? draft.tags.join(', ') : 'No tag defined'} ] to
-                    a domain <code>my-domain</code>, domain users will access to AM Gateway through the following url{' '}
-                    <code>{draft.url}/my-domain</code>
-                </CardContent>
-            </Card>
+                {!readOnly && (
+                    <SaveBar
+                        formId={FORM_ID}
+                        dirty={dirty}
+                        saving={save.isPending}
+                        invalid={!valid}
+                        onDiscard={() => setDraft(fromEntrypoint(entrypoint))}
+                    />
+                )}
 
-            {!readOnly && (
-                <SaveBar
-                    formId={FORM_ID}
-                    dirty={dirty}
-                    saving={save.isPending}
-                    invalid={!valid}
-                    onDiscard={() => setDraft(fromEntrypoint(entrypoint))}
-                />
-            )}
-
-            {canDelete && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Danger zone</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-                            <div className="flex flex-1 flex-col gap-0.5">
-                                <p className="text-sm font-medium">Delete entrypoint</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Entrypoint will be deleted and will not be used for gateway deployment. This operation cannot be undone.
-                                </p>
+                {canDelete && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Danger zone</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex flex-1 flex-col gap-0.5">
+                                    <p className="text-sm font-medium">Delete entrypoint</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Entrypoint will be deleted and will not be used for gateway deployment. This operation cannot be
+                                        undone.
+                                    </p>
+                                </div>
+                                <Button variant="destructive" disabled={remove.isPending} onClick={() => setConfirmOpen(true)}>
+                                    Delete
+                                </Button>
                             </div>
-                            <Button variant="destructive" disabled={remove.isPending} onClick={() => setConfirmOpen(true)}>
-                                Delete
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                        </CardContent>
+                    </Card>
+                )}
 
-            <ConfirmDialog
-                open={confirmOpen}
-                title="Delete Entrypoint"
-                description="Are you sure you want to delete this entrypoint ?"
-                confirmLabel="Delete"
-                destructive
-                pending={remove.isPending}
-                onOpenChange={setConfirmOpen}
-                onConfirm={() => remove.mutate()}
-            />
-        </div>
+                <ConfirmDialog
+                    open={confirmOpen}
+                    title="Delete Entrypoint"
+                    description="Are you sure you want to delete this entrypoint ?"
+                    confirmLabel="Delete"
+                    destructive
+                    pending={remove.isPending}
+                    onOpenChange={setConfirmOpen}
+                    onConfirm={() => remove.mutate()}
+                />
+            </div>
+        </PageFocused>
     );
 }
