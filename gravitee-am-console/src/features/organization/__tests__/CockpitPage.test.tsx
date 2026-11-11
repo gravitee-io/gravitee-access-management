@@ -16,11 +16,11 @@
 import { screen } from '@testing-library/react';
 import { Route } from 'react-router-dom';
 import { HttpError } from '../../../lib/api/http';
-import { getCockpitInstallation } from '../../../lib/api/organization';
+import { getInstallation } from '../../../lib/api/organization';
 import { CockpitPage } from '../CockpitPage';
 import { currentEnvironment, organizationPath, renderRoutes } from './render';
 
-vi.mock('../../../lib/api/organization', () => ({ getCockpitInstallation: vi.fn() }));
+vi.mock('../../../lib/api/organization', () => ({ getInstallation: vi.fn() }));
 vi.mock('../../../lib/session/environment', () => ({ useCurrentEnvironment: () => currentEnvironment }));
 
 function renderPage() {
@@ -39,7 +39,7 @@ describe('CockpitPage', () => {
         ['REJECTED', 'No luck !', 'Open Cockpit'],
         ['DELETED', 'Installation unlinked !', 'Open Cockpit'],
     ])('shows the message of the %s status', async (status, title, link) => {
-        vi.mocked(getCockpitInstallation).mockResolvedValueOnce({
+        vi.mocked(getInstallation).mockResolvedValueOnce({
             id: 'install-1',
             additionalInformation: { COCKPIT_URL: url, ...(status && { COCKPIT_INSTALLATION_STATUS: status }) },
         });
@@ -52,7 +52,7 @@ describe('CockpitPage', () => {
     });
 
     it('shows the error panel when the installation fails to load', async () => {
-        vi.mocked(getCockpitInstallation).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
+        vi.mocked(getInstallation).mockRejectedValueOnce(new HttpError(500, 'Service unavailable'));
 
         renderPage();
 
