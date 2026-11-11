@@ -127,7 +127,7 @@ export function OrganizationEntrypointsPage() {
             <PageHeader
                 title="Entrypoints"
                 description="The URLs end-user applications use to contact the AM Gateway. A domain shows the entrypoint that shares one of its sharding tags."
-                actions={!error && !isFirstUse ? createButton : undefined}
+                actions={createButton}
             />
             {error ? (
                 <ErrorPanel description="Could not load the entrypoints." error={error} />
@@ -138,7 +138,6 @@ export function OrganizationEntrypointsPage() {
                         icon={<GlobeIcon />}
                         title="Entrypoints will appear here"
                         description="Start creating a entrypoint."
-                        primaryAction={createButton}
                     />
                 </div>
             ) : (

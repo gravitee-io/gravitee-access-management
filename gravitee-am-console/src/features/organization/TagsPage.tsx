@@ -106,7 +106,7 @@ export function TagsPage() {
             <PageHeader
                 title="Sharding tags"
                 description="Sharding tags determine which AM gateways each security domain is deployed to."
-                actions={!error && !isFirstUse ? createButton : undefined}
+                actions={createButton}
             />
             {error ? (
                 <ErrorPanel description="Could not load the sharding tags." error={error} />
@@ -117,7 +117,6 @@ export function TagsPage() {
                         icon={<ServerIcon />}
                         title="Sharding tags will appear here"
                         description="Start creating a sharding tag."
-                        primaryAction={createButton}
                     />
                 </div>
             ) : (

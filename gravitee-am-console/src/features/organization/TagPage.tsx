@@ -25,6 +25,7 @@ import {
     FieldDescription,
     FieldLabel,
     Input,
+    PageFocused,
     Skeleton,
     toast,
 } from '@gravitee/graphene-core';
@@ -123,117 +124,119 @@ function TagDetail({ tag, listPath }: { readonly tag: Tag; readonly listPath: st
     };
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="space-y-1">
-                <Button asChild variant="ghost" size="sm" className="-ml-2">
-                    <Link to={listPath}>
-                        <ArrowLeftIcon aria-hidden />
-                        Sharding tags
-                    </Link>
-                </Button>
-                <h1>{tag.name}</h1>
-            </div>
+        <PageFocused>
+            <div className="flex flex-col gap-6">
+                <div className="space-y-1">
+                    <Button asChild variant="ghost" size="sm" className="-ml-2">
+                        <Link to={listPath}>
+                            <ArrowLeftIcon aria-hidden />
+                            Sharding tags
+                        </Link>
+                    </Button>
+                    <h1>{tag.name}</h1>
+                </div>
 
-            <form id={FORM_ID} className="flex flex-col gap-6" onSubmit={submit}>
+                <form id={FORM_ID} className="flex flex-col gap-6" onSubmit={submit}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-5">
+                            <Field>
+                                <FieldLabel htmlFor="tag-id">ID</FieldLabel>
+                                <Input id="tag-id" value={tag.id} disabled readOnly />
+                                <FieldDescription>
+                                    Sharding tag’s technical id which will be set to the gateway configuration file
+                                </FieldDescription>
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="tag-name">Name</FieldLabel>
+                                <Input
+                                    id="tag-name"
+                                    value={name}
+                                    readOnly={!canEdit}
+                                    required
+                                    onChange={event => setName(event.target.value)}
+                                />
+                                <FieldDescription>Sharding tag’s name</FieldDescription>
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="tag-description">Description</FieldLabel>
+                                <Input
+                                    id="tag-description"
+                                    value={description}
+                                    readOnly={!canEdit}
+                                    onChange={event => setDescription(event.target.value)}
+                                />
+                                <FieldDescription>Sharding tag’s description</FieldDescription>
+                            </Field>
+                        </CardContent>
+                    </Card>
+                </form>
+
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Details</CardTitle>
+                        <CardTitle className="text-base">Manage sharding tag</CardTitle>
+                        <CardDescription>
+                            A sharding-tag determines how security domain will be deployed across multiple AM Gateway. To make the
+                            association between security domains and Gateway instances, you must copy/paste the shard tag’s ID to the
+                            gravitee.yml file of the gateway instance.
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-5">
-                        <Field>
-                            <FieldLabel htmlFor="tag-id">ID</FieldLabel>
-                            <Input id="tag-id" value={tag.id} disabled readOnly />
-                            <FieldDescription>
-                                Sharding tag’s technical id which will be set to the gateway configuration file
-                            </FieldDescription>
-                        </Field>
-                        <Field>
-                            <FieldLabel htmlFor="tag-name">Name</FieldLabel>
-                            <Input
-                                id="tag-name"
-                                value={name}
-                                readOnly={!canEdit}
-                                required
-                                onChange={event => setName(event.target.value)}
-                            />
-                            <FieldDescription>Sharding tag’s name</FieldDescription>
-                        </Field>
-                        <Field>
-                            <FieldLabel htmlFor="tag-description">Description</FieldLabel>
-                            <Input
-                                id="tag-description"
-                                value={description}
-                                readOnly={!canEdit}
-                                onChange={event => setDescription(event.target.value)}
-                            />
-                            <FieldDescription>Sharding tag’s description</FieldDescription>
-                        </Field>
+                    <CardContent className="flex flex-col gap-3">
+                        <CopyableText className="max-w-full" value={tag.id} />
+                        <pre className="rounded-md bg-muted p-3 font-mono text-sm">
+                            {'# Sharding tags configuration\n# tags: public,private,!international'}
+                        </pre>
                     </CardContent>
                 </Card>
-            </form>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Manage sharding tag</CardTitle>
-                    <CardDescription>
-                        A sharding-tag determines how security domain will be deployed across multiple AM Gateway. To make the association
-                        between security domains and Gateway instances, you must copy/paste the shard tag’s ID to the gravitee.yml file of
-                        the gateway instance.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3">
-                    <CopyableText className="max-w-full" value={tag.id} />
-                    <pre className="rounded-md bg-muted p-3 font-mono text-sm">
-                        {'# Sharding tags configuration\n# tags: public,private,!international'}
-                    </pre>
-                </CardContent>
-            </Card>
+                {canEdit && (
+                    <SaveBar
+                        formId={FORM_ID}
+                        dirty={dirty}
+                        saving={save.isPending}
+                        invalid={!valid}
+                        onDiscard={() => {
+                            setName(tag.name);
+                            setDescription(tag.description ?? '');
+                        }}
+                    />
+                )}
 
-            {canEdit && (
-                <SaveBar
-                    formId={FORM_ID}
-                    dirty={dirty}
-                    saving={save.isPending}
-                    invalid={!valid}
-                    onDiscard={() => {
-                        setName(tag.name);
-                        setDescription(tag.description ?? '');
-                    }}
-                />
-            )}
-
-            {canDelete && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Danger zone</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-                            <div className="flex flex-1 flex-col gap-0.5">
-                                <p className="text-sm font-medium">Delete sharding tag</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Sharding tag will be deleted and will not be used for gateway deployment. This operation cannot be
-                                    undone.
-                                </p>
+                {canDelete && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Danger zone</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex flex-1 flex-col gap-0.5">
+                                    <p className="text-sm font-medium">Delete sharding tag</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Sharding tag will be deleted and will not be used for gateway deployment. This operation cannot be
+                                        undone.
+                                    </p>
+                                </div>
+                                <Button variant="destructive" disabled={remove.isPending} onClick={() => setConfirmOpen(true)}>
+                                    Delete
+                                </Button>
                             </div>
-                            <Button variant="destructive" disabled={remove.isPending} onClick={() => setConfirmOpen(true)}>
-                                Delete
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                        </CardContent>
+                    </Card>
+                )}
 
-            <ConfirmDialog
-                open={confirmOpen}
-                title="Delete Sharding Tag"
-                description="Are you sure you want to delete this sharding tag ?"
-                confirmLabel="Delete"
-                destructive
-                pending={remove.isPending}
-                onOpenChange={setConfirmOpen}
-                onConfirm={() => remove.mutate()}
-            />
-        </div>
+                <ConfirmDialog
+                    open={confirmOpen}
+                    title="Delete Sharding Tag"
+                    description="Are you sure you want to delete this sharding tag ?"
+                    confirmLabel="Delete"
+                    destructive
+                    pending={remove.isPending}
+                    onOpenChange={setConfirmOpen}
+                    onConfirm={() => remove.mutate()}
+                />
+            </div>
+        </PageFocused>
     );
 }

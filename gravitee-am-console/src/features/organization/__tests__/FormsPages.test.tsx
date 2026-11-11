@@ -79,7 +79,7 @@ describe('OrganizationFormsPage', () => {
         renderForms(formsPath, ['organization_form_list']);
 
         expect(screen.queryByRole('link', { name: 'Edit Login template' })).not.toBeInTheDocument();
-        expect(screen.getByLabelText("You don't have required permission")).toBeInTheDocument();
+        expect(screen.getByText("You don't have required permission")).toBeInTheDocument();
     });
 });
 
