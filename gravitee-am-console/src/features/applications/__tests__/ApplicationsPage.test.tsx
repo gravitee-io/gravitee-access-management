@@ -1,0 +1,146 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { inputHarness } from '@gravitee/graphene-core/testing';
+import { QueryClient } from '@tanstack/react-query';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Route } from 'react-router-dom';
+import { type ApplicationSummaryRow, listDomainApplications } from '../../../lib/api/applications';
+import { HttpError } from '../../../lib/api/http';
+import { ApplicationsPage } from '../ApplicationsPage';
+import { applicationsPath, currentDomain, ref, renderRoutes } from './render';
+
+vi.mock('../../../lib/api/applications', () => ({ listDomainApplications: vi.fn() }));
+vi.mock('../../../lib/session/domain', () => ({ useCurrentDomain: () => currentDomain }));
+
+const rows: ApplicationSummaryRow[] = [
+    { id: 'a1', name: 'Portal', type: 'web', enabled: true, updatedAt: 1_700_000_000_000 },
+    { id: 'a2', name: 'Batch', type: 'service', enabled: false },
+    { id: 'a3', name: 'Template app', type: 'browser', enabled: true, template: true },
+];
+
+const NEWEST = { field: 'updatedAt', dir: 'desc' };
+
+const page = (data: ApplicationSummaryRow[], totalCount = data.length) => ({ data, currentPage: 0, totalCount });
+
+function renderPage(permissions = ['application_list', 'application_create'], client?: QueryClient) {
+    return renderRoutes(applicationsPath, <Route path={applicationsPath} element={<ApplicationsPage />} />, permissions, [], client);
+}
+
+beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(listDomainApplications).mockResolvedValue(page(rows));
+});
+
+describe('ApplicationsPage', () => {
+    it('lists the first page of the applications, with their status and type', async () => {
+        renderPage();
+
+        expect(await screen.findByRole('link', { name: 'Portal' })).toHaveAttribute('href', `${applicationsPath}/a1`);
+        expect(listDomainApplications).toHaveBeenCalledWith(ref, 0, 10, '', NEWEST);
+        const table = screen.getByRole('table');
+        const statuses = within(table)
+            .getAllByRole('row')
+            .slice(1)
+            .map(row =>
+                within(row)
+                    .getAllByRole('cell')
+                    .map(cell => cell.textContent),
+            );
+        expect(statuses.map(([name, status, type]) => [name, status, type])).toEqual([
+            ['Portal', 'Enabled', 'Web'],
+            ['Batch', 'Disabled', 'Backend to Backend'],
+            ['Template app', 'Template', 'Single-Page App'],
+        ]);
+    });
+
+    it('sorts the applications on the server by name or by last update', async () => {
+        renderPage();
+        await screen.findByRole('link', { name: 'Portal' });
+        const table = screen.getByRole('table');
+
+        await userEvent.click(within(table).getByRole('button', { name: 'Name' }));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', { field: 'name', dir: 'asc' }));
+        expect(within(table).getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'ascending');
+
+        await userEvent.click(within(table).getByRole('button', { name: 'Last updated' }));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', { field: 'updatedAt', dir: 'asc' }));
+        expect(within(table).queryByRole('button', { name: 'Type' })).not.toBeInTheDocument();
+    });
+
+    it('searches the applications from the first page', async () => {
+        renderPage();
+        await screen.findByRole('link', { name: 'Portal' });
+        vi.mocked(listDomainApplications).mockResolvedValue(page([], 0));
+
+        await inputHarness({ name: 'Search applications' }).type('port');
+
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, 'port', NEWEST));
+        expect(await screen.findByText('No applications match your search')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', NEWEST));
+    });
+
+    it('keeps the list while the cleared search reloads', async () => {
+        // gcTime 0 drops the unfiltered page from the cache, so clearing the search fetches it again.
+        renderPage(undefined, new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }));
+        await screen.findByRole('link', { name: 'Portal' });
+        vi.mocked(listDomainApplications).mockResolvedValue(page([], 0));
+        await inputHarness({ name: 'Search applications' }).type('zzz');
+        await screen.findByText('No applications match your search');
+        vi.mocked(listDomainApplications).mockReturnValue(new Promise(() => {}));
+
+        await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+
+        await waitFor(() => expect(listDomainApplications).toHaveBeenLastCalledWith(ref, 0, 10, '', NEWEST));
+        expect(screen.queryByText('No applications yet')).not.toBeInTheDocument();
+        expect(screen.getByRole('searchbox', { name: 'Search applications' })).toBeInTheDocument();
+    });
+
+    it('shows the first-use state with the create action when the domain has no application', async () => {
+        vi.mocked(listDomainApplications).mockResolvedValue(page([], 0));
+        renderPage();
+
+        expect(await screen.findByText('No applications yet')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Create application' })).toHaveAttribute('href', `${applicationsPath}/new`);
+    });
+
+    it('shows the first-use state without the create action to a user who cannot create', async () => {
+        vi.mocked(listDomainApplications).mockResolvedValue(page([], 0));
+        renderPage(['application_list']);
+
+        expect(await screen.findByText('No applications yet')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Create application' })).not.toBeInTheDocument();
+    });
+
+    it('offers the create action only with application_create', async () => {
+        const { unmount } = renderPage();
+        await screen.findByRole('link', { name: 'Portal' });
+        expect(screen.getByRole('link', { name: 'Create application' })).toHaveAttribute('href', `${applicationsPath}/new`);
+        unmount();
+
+        renderPage(['application_list']);
+        await screen.findByRole('link', { name: 'Portal' });
+        expect(screen.queryByRole('link', { name: 'Create application' })).not.toBeInTheDocument();
+    });
+
+    it('shows an error when the applications do not load', async () => {
+        vi.mocked(listDomainApplications).mockRejectedValue(new HttpError(500, 'boom'));
+        renderPage();
+
+        expect(await screen.findByText('Could not load the applications.')).toBeInTheDocument();
+    });
+});

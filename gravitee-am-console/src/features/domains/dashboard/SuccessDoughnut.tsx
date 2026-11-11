@@ -23,8 +23,9 @@ import {
     DoughnutChart,
 } from '@gravitee/graphene-charts';
 import { Card, CardContent, CardHeader, CardTitle } from '@gravitee/graphene-core';
-import { WidgetFailure } from './WidgetFailure';
-import { groups, sentenceCase, seriesColor, type WidgetResult } from './dashboard-data';
+import { WidgetFailure } from '../../../app/components/WidgetFailure';
+import { sentenceCase, seriesColor, type WidgetResult } from '../../../app/components/analytics-widgets';
+import { groups } from './dashboard-data';
 
 interface SuccessDoughnutProps {
     readonly title: string;

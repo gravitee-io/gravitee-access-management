@@ -22,13 +22,30 @@ import {
     type NavGroup,
     useLayoutConfig,
 } from '@gravitee/graphene-core';
-import { useState } from 'react';
+import type { LucideIcon } from '@gravitee/graphene-core/icons';
+import { type ComponentProps, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { navItems } from '../../app/navigation';
 
+export interface SidebarBadge {
+    readonly label: string;
+    readonly variant: ComponentProps<typeof Badge>['variant'];
+    readonly icon?: LucideIcon;
+}
+
+export function SectionBadge({ badge }: { readonly badge: SidebarBadge }) {
+    const Icon = badge.icon;
+    return (
+        <Badge variant={badge.variant}>
+            {Icon && <Icon data-icon="inline-start" aria-hidden />}
+            {badge.label}
+        </Badge>
+    );
+}
+
 interface SectionSidebarOptions {
     readonly title: string;
-    readonly badges?: readonly string[];
+    readonly badges?: readonly SidebarBadge[];
     readonly groups: NavGroup[];
     /** The absolute path the item keys are relative to. */
     readonly base: string;
@@ -66,9 +83,7 @@ export function useSectionSidebar({ title, badges = [], groups, base, crumbs }: 
                             {badges.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5">
                                     {badges.map(badge => (
-                                        <Badge key={badge} variant="outline">
-                                            {badge}
-                                        </Badge>
+                                        <SectionBadge key={badge.label} badge={badge} />
                                     ))}
                                 </div>
                             )}
@@ -81,6 +96,15 @@ export function useSectionSidebar({ title, badges = [], groups, base, crumbs }: 
             ),
             leading: <ContextToggleButton expanded={expanded} onToggle={() => setExpanded(value => !value)} />,
         },
-        [activeKey, activeLabel, base, detailOwnsBreadcrumbs, expanded, title, JSON.stringify(badges), JSON.stringify(crumbs)],
+        [
+            activeKey,
+            activeLabel,
+            base,
+            detailOwnsBreadcrumbs,
+            expanded,
+            title,
+            badges.map(badge => `${badge.label}:${badge.variant}`).join(),
+            JSON.stringify(crumbs),
+        ],
     );
 }

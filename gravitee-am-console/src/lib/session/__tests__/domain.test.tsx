@@ -20,7 +20,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { getDomainByHrid } from '../../api/domains';
 import { HttpError } from '../../api/http';
 import { listDomainPermissions } from '../../api/permissions';
-import { DomainScope, useCurrentDomain } from '../domain';
+import { DomainScope, useCurrentDomain, useFreshDomain } from '../domain';
 import { usePermissions } from '../permissions';
 
 vi.mock('../../api/domains', () => ({ getDomainByHrid: vi.fn() }));
@@ -38,20 +38,26 @@ function Probe() {
     );
 }
 
-function renderScope() {
+function FreshProbe() {
+    return <p>{useFreshDomain().domain.name}</p>;
+}
+
+function renderScope(page = <Probe />) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return renderWithGraphene(
         <QueryClientProvider client={client}>
             <MemoryRouter initialEntries={['/environments/dev/domains/acme']}>
                 <Routes>
                     <Route path="/environments/:envHrid/domains/:domainHrid" element={<DomainScope />}>
-                        <Route index element={<Probe />} />
+                        <Route index element={page} />
                     </Route>
                 </Routes>
             </MemoryRouter>
         </QueryClientProvider>,
     );
 }
+
+beforeEach(() => vi.clearAllMocks());
 
 describe('DomainScope', () => {
     it('reads the domain by hrid and its permissions by id', async () => {
@@ -63,6 +69,18 @@ describe('DomainScope', () => {
         expect(await screen.findByText('Acme d1 /environments/dev/domains/acme true')).toBeInTheDocument();
         expect(getDomainByHrid).toHaveBeenCalledWith('DEFAULT', 'env-1', 'acme');
         expect(listDomainPermissions).toHaveBeenCalledWith({ organizationId: 'DEFAULT', environmentId: 'env-1', domainId: 'd1' });
+    });
+
+    it('reads the domain again for a page that needs it fresh', async () => {
+        vi.mocked(getDomainByHrid)
+            .mockResolvedValueOnce({ id: 'd1', hrid: 'acme', name: 'Acme', enabled: true })
+            .mockResolvedValueOnce({ id: 'd1', hrid: 'acme', name: 'Acme renamed', enabled: true });
+        vi.mocked(listDomainPermissions).mockResolvedValue([]);
+
+        renderScope(<FreshProbe />);
+
+        expect(await screen.findByText('Acme renamed')).toBeInTheDocument();
+        expect(getDomainByHrid).toHaveBeenCalledTimes(2);
     });
 
     it('shows the not found panel for an unknown hrid', async () => {

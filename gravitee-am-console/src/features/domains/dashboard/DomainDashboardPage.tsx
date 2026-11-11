@@ -15,27 +15,22 @@
  */
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gravitee/graphene-core';
 import { AppWindowIcon, PlusIcon, RefreshCwIcon, UserCheckIcon, UsersIcon, ZapIcon } from '@gravitee/graphene-core/icons';
-import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ActivityChart } from '../../../app/components/ActivityChart';
 import { ErrorPanel } from '../../../app/components/ErrorPanel';
+import { MetricTile } from '../../../app/components/MetricTile';
 import { PageHeader } from '../../../app/components/PageHeader';
-import { type AnalyticsResponse, searchAnalytics } from '../../../lib/api/analytics';
+import { DEFAULT_TIME_RANGE, TIME_RANGES, toWidgetResult } from '../../../app/components/analytics-widgets';
+import { searchAnalytics } from '../../../lib/api/analytics';
 import { useBreadcrumbs } from '../../../lib/layout/useBreadcrumbs';
 import { useCurrentDomain } from '../../../lib/session/domain';
 import { Can } from '../../../lib/session/permissions';
-import { ActivityChart } from './ActivityChart';
 import { BreakdownCard } from './BreakdownCard';
-import { MetricTile } from './MetricTile';
 import { RegistrationCard } from './RegistrationCard';
 import { SuccessDoughnut } from './SuccessDoughnut';
-import { DEFAULT_TIME_RANGE, groups, TIME_RANGES, WIDGET_KEYS, type WidgetKey, widgetQuery, type WidgetResult } from './dashboard-data';
-
-function toWidgetResult(query: UseQueryResult<AnalyticsResponse>): WidgetResult {
-    if (query.isFetching) return { status: 'loading' };
-    if (query.isError) return { status: 'error' };
-    return { status: 'ready', data: query.data };
-}
+import { groups, WIDGET_KEYS, type WidgetKey, widgetQuery } from './dashboard-data';
 
 export function DomainDashboardPage() {
     const { domain, ref, basePath, domainsPath } = useCurrentDomain();
