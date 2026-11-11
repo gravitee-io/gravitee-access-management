@@ -48,6 +48,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.AuthorizationDetailTypeAuditBuilder;
 import io.gravitee.am.service.validators.authorizationdetailtype.AuthorizationDetailTypeValidator;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.CustomLog;
@@ -92,6 +93,17 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                     log.error("An error occurred while trying to find an authorization detail type using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurred while trying to find an authorization detail type using its ID: %s", id), ex));
+                });
+    }
+
+    @Override
+    public Flowable<AuthorizationDetailType> findByDomain(String domain) {
+        log.debug("Find all authorization detail types by domain: {}", domain);
+        return repository.findByDomain(domain)
+                .onErrorResumeNext(ex -> {
+                    log.error("An error occurred while trying to find the authorization detail types of domain {}", domain, ex);
+                    return Flowable.error(new TechnicalManagementException(
+                            String.format("An error occurred while trying to find the authorization detail types of domain %s", domain), ex));
                 });
     }
 

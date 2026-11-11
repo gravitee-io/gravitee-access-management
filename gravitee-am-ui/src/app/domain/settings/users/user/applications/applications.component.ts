@@ -15,6 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { find, groupBy, sortBy, uniqBy } from 'lodash';
 
@@ -33,7 +34,9 @@ export class UserApplicationsComponent implements OnInit {
   private domainId: string;
   private user: any;
   private consents: any[];
+  private authorizationDetailConsents: any[];
   private appConsentsGrouped: any = {};
+  private appAuthorizationDetailConsentsGrouped: any = {};
   appConsents: any[];
   canRevoke: boolean;
 
@@ -49,14 +52,12 @@ export class UserApplicationsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.user = this.route.snapshot.data['user'];
-    this.consents = sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
-    this.appConsentsGrouped = groupBy(this.consents, 'clientId');
-    this.appConsents = uniqBy(this.consents, 'clientId');
+    this.setConsents(this.route.snapshot.data['consents'], this.route.snapshot.data['authorizationDetailConsents']);
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
   get isEmpty() {
-    return !this.consents || this.consents.length === 0;
+    return this.consents.length === 0 && this.authorizationDetailConsents.length === 0;
   }
 
   revoke(event, consent) {
@@ -90,17 +91,29 @@ export class UserApplicationsComponent implements OnInit {
   }
 
   loadConsents() {
-    this.userService.consents(this.domainId, this.user.id, null).subscribe((consents) => {
-      this.consents = consents;
-      this.appConsents = uniqBy(this.consents, 'clientId');
-    });
+    forkJoin([
+      this.userService.consents(this.domainId, this.user.id, null),
+      this.userService.authorizationDetailConsents(this.domainId, this.user.id, null),
+    ]).subscribe(([consents, authorizationDetailConsents]) => this.setConsents(consents, authorizationDetailConsents));
+  }
+
+  private setConsents(consents: any[], authorizationDetailConsents: any[]) {
+    this.consents = consents ?? [];
+    this.authorizationDetailConsents = authorizationDetailConsents ?? [];
+    this.appConsentsGrouped = groupBy(this.consents, 'clientId');
+    this.appAuthorizationDetailConsentsGrouped = groupBy(this.authorizationDetailConsents, 'clientId');
+    this.appConsents = uniqBy(sortBy([...this.consents, ...this.authorizationDetailConsents], 'updatedAt').reverse(), 'clientId');
   }
 
   rowClass = (row) => {
     return {
-      'row-disabled': !this.canRevokeAccessForClient(row.clientId),
+      'row-disabled': !this.isApprovedForClient(row.clientId),
     };
   };
+
+  isApprovedForClient(clientId) {
+    return this.canRevokeAccessForClient(clientId) || find(this.appAuthorizationDetailConsentsGrouped[clientId], { status: 'approved' });
+  }
 
   canRevokeAccessForClient(clientId) {
     return find(this.appConsentsGrouped[clientId], { status: 'approved' });

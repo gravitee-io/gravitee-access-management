@@ -104,6 +104,8 @@
         "authorization_detail_approvals": [
           { "name": "d1c1u1dg1", "key": { "domain": 1, "clientId": 1, "userId": 1, "digest": 1 } },
           { "name": "d1c1ue1us1dg1", "key": { "domain": 1, "clientId": 1, "userExternalId": 1, "userSource": 1, "digest": 1 } },
+          { "name": "d1u1", "key": { "domain": 1, "userId": 1 } },
+          { "name": "d1ue1us1", "key": { "domain": 1, "userExternalId": 1, "userSource": 1 } },
           { "name": "e1", "key": { "expiresAt": 1 }, "expireAfterSeconds": 0 }
         ]
       }

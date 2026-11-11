@@ -68,6 +68,14 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     }
 
     @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
+        return Flowable.fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain),
+                        userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date()))))
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Maybe<AuthorizationDetailApproval> findById(String id) {
         return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRES_AT, new Date()))).first())
                 .firstElement()

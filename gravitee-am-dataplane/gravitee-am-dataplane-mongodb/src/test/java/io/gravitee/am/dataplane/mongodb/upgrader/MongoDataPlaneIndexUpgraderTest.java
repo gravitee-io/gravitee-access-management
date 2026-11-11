@@ -52,6 +52,6 @@ public class MongoDataPlaneIndexUpgraderTest {
                 .containsExactly(tuple("initial-indexes", "c6d96eb35f27"),
                         tuple("drop-redundant-indexes", "75e008f183bc"),
                         tuple("drop-unused-indexes", "68643f9e6801"),
-                        tuple("authorization-detail-approvals", "9384a3db7125"));
+                        tuple("authorization-detail-approvals", "b8c5a3821945"));
     }
 }

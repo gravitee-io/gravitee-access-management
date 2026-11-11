@@ -28,24 +28,22 @@ import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
-import io.gravitee.node.logging.NodeLoggerFactory;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import lombok.AllArgsConstructor;
+import lombok.CustomLog;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@CustomLog
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDetailApprovalService {
-
-    private static final Logger LOGGER = NodeLoggerFactory.getLogger(AuthorizationDetailApprovalServiceImpl.class);
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
@@ -54,11 +52,20 @@ public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDeta
     private AuditService auditService;
 
     @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(Domain domain, UserId userId) {
+        log.debug("Find authorization detail approvals by domain: {} and user: {}", domain.getId(), userId);
+        return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).findByDomainAndUser(domain.getId(), userId)
+                .onErrorResumeNext(ex -> Flowable.error(new TechnicalManagementException(
+                        String.format("An error occurred while trying to find authorization detail approvals for domain: %s and user: %s",
+                                domain.getId(), userId), ex)));
+    }
+
+    @Override
     public Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(Domain domain, UserId userId, String clientId) {
-        LOGGER.debug("Find authorization detail approvals by domain: {}, user: {} and client: {}", domain.getId(), userId, clientId);
+        log.debug("Find authorization detail approvals by domain: {}, user: {} and client: {}", domain.getId(), userId, clientId);
         return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).findByDomainAndUserAndClient(domain.getId(), userId, clientId)
                 .onErrorResumeNext(ex -> Flowable.error(new TechnicalManagementException(
-                        String.format("An error occurs while trying to find authorization detail approvals for domain: %s, user: %s and client: %s",
+                        String.format("An error occurred while trying to find authorization detail approvals for domain: %s, user: %s and client: %s",
                                 domain.getId(), userId, clientId), ex)));
     }
 
@@ -80,7 +87,7 @@ public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDeta
                         .type(EventType.USER_CONSENT_CONSENTED)
                         .throwable(throwable)))
                 .onErrorResumeNext(ex -> Completable.error(new TechnicalManagementException(
-                        String.format("An error occurs while trying to save authorization detail consent for domain: %s and client: %s",
+                        String.format("An error occurred while trying to save authorization detail consent for domain: %s and client: %s",
                                 domain.getId(), client.getId()), ex)));
     }
 

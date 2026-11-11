@@ -135,6 +135,23 @@ class AuthorizationDetailApprovalServiceTest {
     }
 
     @Test
+    void shouldFindTheApprovalsOfTheUser() {
+        UserId userId = UserId.internal("user-id");
+        AuthorizationDetailApproval approval = new AuthorizationDetailApproval();
+        when(repository.findByDomainAndUser("domain-id", userId)).thenReturn(Flowable.just(approval));
+
+        service.findByDomainAndUser(DOMAIN, userId).test().assertValues(approval);
+    }
+
+    @Test
+    void shouldWrapAFailureToFindTheApprovalsOfTheUser() {
+        UserId userId = UserId.internal("user-id");
+        when(repository.findByDomainAndUser("domain-id", userId)).thenReturn(Flowable.error(new IllegalStateException("unavailable")));
+
+        service.findByDomainAndUser(DOMAIN, userId).test().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
     void shouldPurgeTheDomain() {
         when(repository.deleteByDomain("domain-id")).thenReturn(Completable.complete());
 

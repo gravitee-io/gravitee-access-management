@@ -40,6 +40,21 @@ databaseChangeLog:
 
         - createIndex:
             tableName: authorization_detail_approvals
+            indexName: idx_authorization_detail_approvals_domain_user
+            columns:
+              - column: { name: domain }
+              - column: { name: user_id }
+
+        - createIndex:
+            tableName: authorization_detail_approvals
+            indexName: idx_authorization_detail_approvals_domain_user_ext
+            columns:
+              - column: { name: domain }
+              - column: { name: user_source }
+              - column: { name: user_external_id }
+
+        - createIndex:
+            tableName: authorization_detail_approvals
             indexName: idx_authorization_detail_approvals_expire
             columns:
               - column: { name: expires_at }

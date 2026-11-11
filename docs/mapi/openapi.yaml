@@ -9838,6 +9838,55 @@ paths:
       tags:
       - user
       - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/authorization-details:
+    get:
+      description: "Lists the authorization details the user approved or denied that\
+        \ have not expired. User must have the DOMAIN_USER[READ] permission on the\
+        \ specified domain or DOMAIN_USER[READ] permission on the specified environment\
+        \ or DOMAIN_USER[READ] permission on the specified organization"
+      operationId: listUserAuthorizationDetailConsents
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: clientId
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthorizationDetailApprovalEntity"
+          description: User authorization detail consents successfully fetched
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+      summary: Get a user's authorization detail consents
+      tags:
+      - user
+      - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/{consent}:
     delete:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
@@ -14096,6 +14145,46 @@ components:
           type: integer
           format: int64
           description: Epoch timestamp in milliseconds.
+    AuthorizationDetailApprovalEntity:
+      type: object
+      properties:
+        clientEntity:
+          $ref: "#/components/schemas/ApplicationEntity"
+        clientId:
+          type: string
+        createdAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        detail:
+          type: object
+          additionalProperties:
+            type: object
+        digest:
+          type: string
+        domain:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+          - APPROVED
+          - DENIED
+        type:
+          type: string
+        typeEntity:
+          $ref: "#/components/schemas/AuthorizationDetailTypeEntity"
+        updatedAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp in milliseconds.
+        userId:
+          $ref: "#/components/schemas/UserId"
     AuthorizationDetailType:
       type: object
       properties:
@@ -14153,6 +14242,17 @@ components:
         totalCount:
           type: integer
           format: int64
+    AuthorizationDetailTypeEntity:
+      type: object
+      description: "The domain's definition of the type, absent when the type has\
+        \ been deleted."
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
     AuthorizationEngine:
       type: object
       properties:

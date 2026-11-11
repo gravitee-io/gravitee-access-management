@@ -110,6 +110,7 @@ import { GroupRolesResolver } from './resolvers/group-roles.resolver';
 import { ScimComponent } from './domain/settings/scim/scim.component';
 import { EmailResolver } from './resolvers/email.resolver';
 import { ConsentsResolver } from './resolvers/consents.resolver';
+import { AuthorizationDetailConsentsResolver } from './resolvers/authorization-detail-consents.resolver';
 import { AuditResolver } from './resolvers/audit.resolver';
 import { AuditsComponent } from './domain/settings/audits/audits.component';
 import { AuditComponent } from './domain/settings/audits/audit/audit.component';
@@ -2680,6 +2681,7 @@ export const routes: Routes = [
                                     component: UserApplicationsComponent,
                                     resolve: {
                                       consents: ConsentsResolver,
+                                      authorizationDetailConsents: AuthorizationDetailConsentsResolver,
                                     },
                                   },
                                   {
@@ -2688,6 +2690,7 @@ export const routes: Routes = [
                                     resolve: {
                                       application: ApplicationResolver,
                                       consents: ConsentsResolver,
+                                      authorizationDetailConsents: AuthorizationDetailConsentsResolver,
                                     },
                                     data: {
                                       breadcrumb: {

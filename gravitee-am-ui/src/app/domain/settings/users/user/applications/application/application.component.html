@@ -32,9 +32,11 @@
         </button>
       </div>
     </div>
+    <h3 *ngIf="showScopeConsents">Scopes</h3>
     <ngx-datatable
+      *ngIf="showScopeConsents"
       class="material"
-      [columnMode]="'flex'"
+      [columnMode]="'force'"
       [headerHeight]="40"
       [footerHeight]="50"
       [rowHeight]="50"
@@ -42,7 +44,7 @@
       [sorts]="[{ prop: 'status', dir: 'desc' }]"
       [rowClass]="getRowClass"
     >
-      <ngx-datatable-column>
+      <ngx-datatable-column prop="status" [width]="80" [resizeable]="false" [canAutoResize]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <mat-icon
             [ngStyle]="{ color: row.status === 'approved' ? 'green' : 'orange' }"
@@ -52,22 +54,22 @@
           </mat-icon>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Permission" [flexGrow]="2">
+      <ngx-datatable-column name="Permission" prop="scope" [width]="220" [minWidth]="150">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.scopeEntity.key }} | <small>{{ row.scopeEntity.name }}</small> | <small>{{ row.scopeEntity.description }}</small>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Approval date" [flexGrow]="1">
+      <ngx-datatable-column name="Approval date" prop="updatedAt" [width]="160" [minWidth]="140">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.updatedAt | humanDate }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Expires at" [flexGrow]="1">
+      <ngx-datatable-column name="Expires at" [width]="120" [minWidth]="100">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span>{{ row.expiresAt | humanDate }}</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column [flexGrow]="1">
+      <ngx-datatable-column [width]="60" [resizeable]="false" [canAutoResize]="false" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <button *ngIf="row.status === 'approved' && canRevoke" mat-button (click)="revokeConsent($event, row)">
@@ -77,6 +79,76 @@
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
+    <div
+      *ngIf="authorizationDetailConsents.length > 0"
+      class="user-application-authorization-details"
+      data-testid="userAuthorizationDetailConsents"
+    >
+      <h3>Authorization details</h3>
+      <ngx-datatable
+        #authorizationDetailsTable
+        class="material"
+        [columnMode]="'force'"
+        [headerHeight]="40"
+        [footerHeight]="50"
+        [rowHeight]="50"
+        [rows]="authorizationDetailConsents"
+        [sorts]="[{ prop: 'status', dir: 'desc' }]"
+        [rowClass]="getRowClass"
+      >
+        <ngx-datatable-row-detail [rowHeight]="220">
+          <ng-template let-row="row" ngx-datatable-row-detail-template>
+            <div class="user-application-authorization-detail" data-testid="userAuthorizationDetailConsentDetail">
+              <ngx-codemirror [ngModel]="formatDetail(row)" [options]="detailEditorOptions"></ngx-codemirror>
+            </div>
+          </ng-template>
+        </ngx-datatable-row-detail>
+        <ngx-datatable-column [width]="40" [resizeable]="false" [canAutoResize]="false" [sortable]="false">
+          <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
+            <a
+              class="expanded"
+              href="javascript:void(0)"
+              [class.datatable-icon-right]="!expanded"
+              [class.datatable-icon-down]="expanded"
+              title="Expand/Collapse Row"
+              (click)="toggleExpandRow(row)"
+            >
+            </a>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column prop="status" [width]="80" [resizeable]="false" [canAutoResize]="false">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-icon
+              [ngStyle]="{ color: row.status === 'approved' ? 'green' : 'orange' }"
+              matTooltip="{{ row.status === 'approved' ? 'Authorization detail approved' : 'Authorization detail denied' }}"
+            >
+              {{ row.status === 'approved' ? 'done' : 'not_interested' }}
+            </mat-icon>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Type" prop="type" [width]="220" [minWidth]="150">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.type }}
+            <span *ngIf="row.typeEntity?.name"
+              >| <small>{{ row.typeEntity.name }}</small></span
+            >
+            <span *ngIf="row.typeEntity?.description"
+              >| <small>{{ row.typeEntity.description }}</small></span
+            >
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Approval date" prop="updatedAt" [width]="160" [minWidth]="140">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{ row.updatedAt | humanDate }}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Expires at" [width]="120" [minWidth]="100">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <span>{{ row.expiresAt | humanDate }}</span>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
   </div>
 </div>
 <div class="gv-page-description" fxFlex>
