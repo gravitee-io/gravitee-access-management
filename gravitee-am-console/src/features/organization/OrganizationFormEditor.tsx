@@ -131,7 +131,7 @@ export function OrganizationFormEditor({ template, form, listPath }: Organizatio
                     heading="Delete form"
                     description={`Form template will be deleted, it will no longer be use to override default ${name} template. This operation cannot be undone.`}
                     confirmTitle="Delete form"
-                    confirmDescription="Are you sure you want to delete this form ?"
+                    confirmDescription="Are you sure you want to delete this form?"
                     pending={remove.isPending}
                     onDelete={close => remove.mutate(undefined, { onSuccess: close })}
                 />

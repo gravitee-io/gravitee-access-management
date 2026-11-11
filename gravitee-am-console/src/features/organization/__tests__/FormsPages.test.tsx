@@ -143,7 +143,7 @@ describe('OrganizationFormPage', () => {
 
         fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
         const dialog = await screen.findByRole('dialog');
-        expect(dialog).toHaveTextContent('Are you sure you want to delete this form ?');
+        expect(dialog).toHaveTextContent('Are you sure you want to delete this form?');
         vi.mocked(getOrganizationForm).mockResolvedValue({ template: 'login', enabled: false });
         fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
 

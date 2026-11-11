@@ -29,40 +29,40 @@ export interface StatusView {
 
 export const STATUS_VIEWS: Record<Status, StatusView> = {
     NONE: {
-        title: 'Meet Cockpit...',
-        message: 'Create an account on Cockpit, register your current installation and start creating new organizations and environments !',
+        title: 'Meet Cockpit',
+        message: 'Create an account on Cockpit, register your current installation and start creating new organizations and environments.',
         badge: 'Not connected',
         badgeVariant: 'outline',
         icon: CloudIcon,
         tone: 'text-muted-foreground',
     },
     PENDING: {
-        title: 'Almost there !',
-        message: 'Your installation is connected but you still have to accept it on Cockpit !',
+        title: 'Installation pending',
+        message: 'Your installation is connected, but you still have to accept it on Cockpit.',
         badge: 'Pending',
         badgeVariant: 'secondary',
         icon: ClockIcon,
         tone: 'text-warning',
     },
     ACCEPTED: {
-        title: 'Congratulation !',
-        message: 'Your installation is now connected to Cockpit, you can now explore all the possibilities offered by Cockpit !',
+        title: 'Installation connected',
+        message: 'Your installation is connected to Cockpit. You can now explore everything Cockpit offers.',
         badge: 'Connected',
         badgeVariant: 'success',
         icon: CircleCheckIcon,
         tone: 'text-success',
     },
     REJECTED: {
-        title: 'No luck !',
-        message: 'Seems that your installation is connected to Cockpit, but has been rejected...',
+        title: 'Installation rejected',
+        message: 'Your installation is connected to Cockpit, but it has been rejected.',
         badge: 'Rejected',
         badgeVariant: 'destructive',
         icon: CircleXIcon,
         tone: 'text-destructive',
     },
     DELETED: {
-        title: 'Installation unlinked !',
-        message: 'Seems that your installation is connected to Cockpit, but is not linked anymore...',
+        title: 'Installation unlinked',
+        message: 'Your installation is connected to Cockpit, but it is no longer linked.',
         badge: 'Unlinked',
         badgeVariant: 'secondary',
         icon: RefreshCwOffIcon,
@@ -70,6 +70,10 @@ export const STATUS_VIEWS: Record<Status, StatusView> = {
     },
 };
 
+function isStatus(value: string): value is Status {
+    return value in STATUS_VIEWS;
+}
+
 export function statusOf(value: string | undefined): Status {
-    return value !== undefined && value in STATUS_VIEWS ? (value as Status) : 'NONE';
+    return value !== undefined && isStatus(value) ? value : 'NONE';
 }

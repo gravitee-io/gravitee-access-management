@@ -149,7 +149,7 @@ export function TagDetail({ tag, listPath }: { readonly tag: Tag; readonly listP
                         heading="Delete sharding tag"
                         description="Sharding tag will be deleted and will not be used for gateway deployment. This operation cannot be undone."
                         confirmTitle="Delete Sharding Tag"
-                        confirmDescription="Are you sure you want to delete this sharding tag ?"
+                        confirmDescription="Are you sure you want to delete this sharding tag?"
                         pending={remove.isPending}
                         onDelete={() => remove.mutate()}
                     />

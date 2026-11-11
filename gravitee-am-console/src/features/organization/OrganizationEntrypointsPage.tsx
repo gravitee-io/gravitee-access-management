@@ -17,7 +17,7 @@ import { Badge, Button, DataTable, DataTableEmptyState, toast } from '@gravitee/
 import { GlobeIcon, PlusIcon, Trash2Icon } from '@gravitee/graphene-core/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
@@ -34,6 +34,7 @@ export function OrganizationEntrypointsPage() {
     const { has } = usePermissions();
     const cloudMode = useCloudMode();
     const listPath = `${useOrganizationPath()}/entrypoints`;
+    const listRef = useRef<HTMLDivElement>(null);
     const [pendingDelete, setPendingDelete] = useState<OrganizationEntrypoint | null>(null);
     const { data, error, isPending, refetch } = useQuery({
         queryKey: ['organization-entrypoints', user.org],
@@ -43,6 +44,7 @@ export function OrganizationEntrypointsPage() {
         mutationFn: (id: string) => deleteOrganizationEntrypoint(user.org, id),
         onSuccess: () => {
             setPendingDelete(null);
+            listRef.current?.focus();
             void queryClient.invalidateQueries({ queryKey: ['organization-entrypoints', user.org] });
             toast.success('Entrypoint deleted');
         },
@@ -137,16 +139,25 @@ export function OrganizationEntrypointsPage() {
                         variant="first-use"
                         icon={<GlobeIcon />}
                         title="Entrypoints will appear here"
-                        description="Start creating a entrypoint."
+                        description="Create an entrypoint."
                     />
                 </div>
             ) : (
-                <DataTable aria-label="Entrypoints" columns={columns} data={rows} loading={isPending} skeletonCount={4} />
+                <div ref={listRef} tabIndex={-1} className="outline-none">
+                    <DataTable
+                        aria-label="Entrypoints"
+                        columns={columns}
+                        data={rows}
+                        loading={isPending}
+                        skeletonCount={4}
+                        tableOptions={{ getRowId: row => row.id }}
+                    />
+                </div>
             )}
             <ConfirmDialog
                 open={pendingDelete !== null}
                 title="Delete Entrypoint"
-                description="Are you sure you want to delete this entrypoint ?"
+                description="Are you sure you want to delete this entrypoint?"
                 confirmLabel="Delete"
                 destructive
                 pending={remove.isPending}

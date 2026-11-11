@@ -67,7 +67,7 @@ export function FormContentCard({ enabled, readOnly, content, onChange }: FormCo
                             title="Preview"
                             sandbox=""
                             srcDoc={content}
-                            className="h-[560px] w-full rounded-md border border-border bg-background"
+                            className="h-96 w-full rounded-md border border-border bg-background"
                         />
                     </TabsContent>
                 </Tabs>

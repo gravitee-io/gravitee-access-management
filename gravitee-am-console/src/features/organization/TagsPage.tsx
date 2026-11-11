@@ -17,7 +17,7 @@ import { Button, DataTable, DataTableEmptyState, toast } from '@gravitee/graphen
 import { PlusIcon, ServerIcon, Trash2Icon } from '@gravitee/graphene-core/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../../app/components/ConfirmDialog';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
@@ -32,12 +32,14 @@ export function TagsPage() {
     const queryClient = useQueryClient();
     const { has } = usePermissions();
     const listPath = `${useOrganizationPath()}/tags`;
+    const listRef = useRef<HTMLDivElement>(null);
     const [pendingDelete, setPendingDelete] = useState<Tag | null>(null);
     const { data, error, isPending, refetch } = useQuery({ queryKey: ['tags', user.org], queryFn: () => listTags(user.org) });
     const remove = useMutation({
         mutationFn: (id: string) => deleteTag(user.org, id),
         onSuccess: () => {
             setPendingDelete(null);
+            listRef.current?.focus();
             void queryClient.invalidateQueries({ queryKey: ['tags', user.org] });
             toast.success('Sharding tag deleted');
         },
@@ -116,16 +118,25 @@ export function TagsPage() {
                         variant="first-use"
                         icon={<ServerIcon />}
                         title="Sharding tags will appear here"
-                        description="Start creating a sharding tag."
+                        description="Create a sharding tag."
                     />
                 </div>
             ) : (
-                <DataTable aria-label="Sharding tags" columns={columns} data={rows} loading={isPending} skeletonCount={4} />
+                <div ref={listRef} tabIndex={-1} className="outline-none">
+                    <DataTable
+                        aria-label="Sharding tags"
+                        columns={columns}
+                        data={rows}
+                        loading={isPending}
+                        skeletonCount={4}
+                        tableOptions={{ getRowId: row => row.id }}
+                    />
+                </div>
             )}
             <ConfirmDialog
                 open={pendingDelete !== null}
                 title="Delete Sharding Tag"
-                description="Are you sure you want to delete this sharding tag ?"
+                description="Are you sure you want to delete this sharding tag?"
                 confirmLabel="Delete"
                 destructive
                 pending={remove.isPending}
