@@ -35,6 +35,9 @@ export function OrganizationEntrypointsPage() {
     const cloudMode = useCloudMode();
     const listPath = `${useOrganizationPath()}/entrypoints`;
     const listRef = useRef<HTMLDivElement>(null);
+    // The Management API returns every row in one list, so the table pages it client-side.
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [pendingDelete, setPendingDelete] = useState<OrganizationEntrypoint | null>(null);
     const { data, error, isPending, refetch } = useQuery({
         queryKey: ['organization-entrypoints', user.org],
@@ -112,6 +115,8 @@ export function OrganizationEntrypointsPage() {
     );
 
     const rows = useMemo(() => [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [data]);
+    // A delete can shrink the list below the current page.
+    const currentPage = Math.min(page, Math.max(1, Math.ceil(rows.length / pageSize)));
     const isFirstUse = data?.length === 0;
     const createButton = cloudMode ? null : (
         <Can all={['organization_entrypoint_create']}>
@@ -147,9 +152,19 @@ export function OrganizationEntrypointsPage() {
                     <DataTable
                         aria-label="Entrypoints"
                         columns={columns}
-                        data={rows}
+                        data={rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)}
                         loading={isPending}
-                        skeletonCount={4}
+                        skeletonCount={pageSize}
+                        pagination={{
+                            page: currentPage,
+                            pageSize,
+                            totalCount: rows.length,
+                            onPageChange: setPage,
+                            onPageSizeChange: size => {
+                                setPageSize(size);
+                                setPage(1);
+                            },
+                        }}
                         tableOptions={{ getRowId: row => row.id }}
                     />
                 </div>

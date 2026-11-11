@@ -90,6 +90,24 @@ beforeEach(() => {
 });
 
 describe('OrganizationEntrypointsPage', () => {
+    it('pages the entrypoints ten at a time', async () => {
+        vi.mocked(listOrganizationEntrypoints).mockResolvedValueOnce(
+            Array.from({ length: 12 }, (_, index) => ({
+                id: `e${index}`,
+                name: `Entry ${String(index).padStart(2, '0')}`,
+                url: 'https://e.example.com',
+            })),
+        );
+
+        renderEntrypoints(entrypointsPath);
+
+        expect(await screen.findByRole('link', { name: 'Entry 00' })).toBeInTheDocument();
+        expect(screen.getAllByRole('link', { name: /^Entry / })).toHaveLength(10);
+        await buttonHarness({ name: 'Next page' }).click();
+        expect(screen.getAllByRole('link', { name: /^Entry / })).toHaveLength(2);
+        expect(screen.getByRole('link', { name: 'Entry 11' })).toBeInTheDocument();
+    });
+
     it('lists the entrypoints with the environment name and marks the default one', async () => {
         renderEntrypoints(entrypointsPath);
 

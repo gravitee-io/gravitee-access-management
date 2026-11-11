@@ -33,6 +33,9 @@ export function TagsPage() {
     const { has } = usePermissions();
     const listPath = `${useOrganizationPath()}/tags`;
     const listRef = useRef<HTMLDivElement>(null);
+    // The Management API returns every row in one list, so the table pages it client-side.
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [pendingDelete, setPendingDelete] = useState<Tag | null>(null);
     const { data, error, isPending, refetch } = useQuery({ queryKey: ['tags', user.org], queryFn: () => listTags(user.org) });
     const remove = useMutation({
@@ -91,6 +94,8 @@ export function TagsPage() {
     );
 
     const rows = useMemo(() => [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [data]);
+    // A delete can shrink the list below the current page.
+    const currentPage = Math.min(page, Math.max(1, Math.ceil(rows.length / pageSize)));
     const isFirstUse = data?.length === 0;
     const createButton = (
         <Can all={['organization_tag_create']}>
@@ -126,9 +131,19 @@ export function TagsPage() {
                     <DataTable
                         aria-label="Sharding tags"
                         columns={columns}
-                        data={rows}
+                        data={rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)}
                         loading={isPending}
-                        skeletonCount={4}
+                        skeletonCount={pageSize}
+                        pagination={{
+                            page: currentPage,
+                            pageSize,
+                            totalCount: rows.length,
+                            onPageChange: setPage,
+                            onPageSizeChange: size => {
+                                setPageSize(size);
+                                setPage(1);
+                            },
+                        }}
                         tableOptions={{ getRowId: row => row.id }}
                     />
                 </div>
