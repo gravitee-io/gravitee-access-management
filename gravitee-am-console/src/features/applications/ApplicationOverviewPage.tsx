@@ -16,12 +16,12 @@
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@gravitee/graphene-core';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { CodeBlock, Note } from '../../app/components/CodeBlock';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { useCurrentDomain } from '../../lib/session/domain';
 import { usePermissions } from '../../lib/session/permissions';
 import { useApplication } from './ApplicationContext';
-import { OverviewCodeBlock as CodeBlock, OverviewNote as Note } from './OverviewCodeBlock';
 import { useEndpointBaseUrl } from './endpoint-base-url';
 import { cleanELParameters, createPkce, exchangesWithPost, type Pkce, requestsWithBasic } from './overview-guide';
 

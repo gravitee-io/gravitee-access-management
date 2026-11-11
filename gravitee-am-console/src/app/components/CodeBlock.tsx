@@ -16,9 +16,9 @@
 import { Button, toast } from '@gravitee/graphene-core';
 import { CopyIcon, InfoIcon } from '@gravitee/graphene-core/icons';
 import type { ReactNode } from 'react';
-import { copyText } from './copy-text';
+import { copyText } from '../../lib/clipboard';
 
-export function OverviewCodeBlock({ code, copyable = true }: { readonly code: string; readonly copyable?: boolean }) {
+export function CodeBlock({ code, copyable = true }: { readonly code: string; readonly copyable?: boolean }) {
     const copy = () =>
         copyText(code)
             .then(() => toast.success('Copied to clipboard'))
@@ -41,7 +41,7 @@ export function OverviewCodeBlock({ code, copyable = true }: { readonly code: st
     );
 }
 
-export function OverviewNote({ children }: { readonly children: ReactNode }) {
+export function Note({ children }: { readonly children: ReactNode }) {
     return (
         <div className="flex gap-2 rounded-md border border-border p-3 text-sm text-muted-foreground">
             <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />

@@ -29,7 +29,7 @@ import {
 } from '@gravitee/graphene-core';
 import { CopyIcon } from '@gravitee/graphene-core/icons';
 import { useState } from 'react';
-import { copyText } from './copy-text';
+import { copyText } from '../../lib/clipboard';
 
 interface ClientSecretDialogProps {
     /** The dialog is open while it is set. */

@@ -32,8 +32,8 @@ import {
 import { CopyIcon } from '@gravitee/graphene-core/icons';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
+import { copyText } from '../../lib/clipboard';
 import { useCurrentDomain } from '../../lib/session/domain';
-import { copyText } from './copy-text';
 import { useEndpointBaseUrl } from './endpoint-base-url';
 import { type Endpoint, endpointGroups } from './endpoint-groups';
 

@@ -36,7 +36,7 @@ import {
 import { Code2Icon } from '@gravitee/graphene-core/icons';
 import { type ReactNode, useState } from 'react';
 import type { CimdValidation } from '../../lib/api/applications';
-import { copyText } from './copy-text';
+import { copyText } from '../../lib/clipboard';
 
 interface CimdReviewStepProps {
     readonly preview: CimdValidation;
