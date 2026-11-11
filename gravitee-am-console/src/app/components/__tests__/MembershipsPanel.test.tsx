@@ -182,7 +182,7 @@ describe('MembershipsPanel', () => {
         renderPanel();
         const dialog = await openAddDialog();
 
-        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+        await userEvent.type(within(dialog).getByRole('searchbox', { name: 'User' }), 'al');
         const matches = await within(dialog).findByRole('list', { name: 'Matching users' });
         expect(
             within(matches)
@@ -216,12 +216,32 @@ describe('MembershipsPanel', () => {
         await waitFor(() => expect(saveMember).toHaveBeenCalledWith(membersPath, { memberId: 'g2', memberType: 'GROUP', role: 'r-owner' }));
     });
 
+    it.each(['Type', 'Group', 'Role'])('opens the %s list below its field in the add dialog', async name => {
+        renderPanel();
+        await openAddDialog();
+        if (name === 'Group') {
+            await selectHarness({ name: 'Type' }).selectOption('Group');
+        }
+
+        await selectHarness({ name }).open();
+
+        expect(screen.getByRole('listbox').closest('[data-side]')).toHaveAttribute('data-side', 'bottom');
+    });
+
+    it('keeps the browser autofill off the user search', async () => {
+        renderPanel();
+        const dialog = await openAddDialog();
+        const search = within(dialog).getByRole('searchbox', { name: 'User' });
+
+        expect(search).toHaveAttribute('autocomplete', 'off');
+    });
+
     it('shows an error when the user search fails', async () => {
         vi.mocked(searchOrganizationUsers).mockRejectedValue(new HttpError(403, 'Forbidden'));
         renderPanel();
         const dialog = await openAddDialog();
 
-        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+        await userEvent.type(within(dialog).getByRole('searchbox', { name: 'User' }), 'al');
 
         expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not search the users. Forbidden');
         expect(within(dialog).queryByRole('list', { name: 'Matching users' })).not.toBeInTheDocument();
