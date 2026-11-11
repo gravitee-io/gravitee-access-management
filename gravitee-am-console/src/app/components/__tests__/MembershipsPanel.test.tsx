@@ -230,6 +230,13 @@ describe('MembershipsPanel', () => {
         expect(screen.getByRole('listbox').closest('[data-side]')).toHaveAttribute('data-side', 'bottom');
     });
 
+    it('keeps the browser autofill off the user search', async () => {
+        renderPanel();
+        const dialog = await openAddDialog();
+
+        expect(within(dialog).getByRole('textbox', { name: 'User' })).toHaveAttribute('autocomplete', 'off');
+    });
+
     it('shows an error when the user search fails', async () => {
         vi.mocked(searchOrganizationUsers).mockRejectedValue(new HttpError(403, 'Forbidden'));
         renderPanel();
