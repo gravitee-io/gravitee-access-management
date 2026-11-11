@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { Button, Spinner } from '@gravitee/graphene-core';
-import { useQuery } from '@tanstack/react-query';
-import { createContext, use } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createContext, use, useEffect } from 'react';
 import { Link, Outlet, useParams } from 'react-router-dom';
 import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { NotFoundPanel } from '../../app/components/NotFoundPanel';
@@ -43,6 +43,18 @@ export function useCurrentDomain(): DomainScopeValue {
     if (!value) {
         throw new Error('useCurrentDomain() called outside <DomainScope>');
     }
+    return value;
+}
+
+/** Reads the domain again on mount, for a page that shows settings the Angular console or the API may have changed since. */
+export function useFreshDomain(): DomainScopeValue {
+    const value = useCurrentDomain();
+    const queryClient = useQueryClient();
+    const { organizationId, environmentId } = value.ref;
+    const { hrid } = value.domain;
+    useEffect(() => {
+        void queryClient.invalidateQueries({ queryKey: ['domain', organizationId, environmentId, hrid], exact: true });
+    }, [queryClient, organizationId, environmentId, hrid]);
     return value;
 }
 

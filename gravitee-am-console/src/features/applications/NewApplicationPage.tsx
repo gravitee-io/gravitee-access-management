@@ -47,7 +47,7 @@ import {
     validateCimd,
 } from '../../lib/api/applications';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
-import { useCurrentDomain } from '../../lib/session/domain';
+import { useFreshDomain } from '../../lib/session/domain';
 import { CimdReviewStep } from './CimdReviewStep';
 import { ClientSecretDialog } from './ClientSecretDialog';
 import { APPLICATION_TYPE_ICONS } from './application-types';
@@ -132,7 +132,7 @@ function Stepper({ steps, current }: Readonly<{ steps: string[]; current: number
  * create shows the client secret once before it lands on the application.
  */
 export function NewApplicationPage() {
-    const { domain, ref, basePath, domainsPath } = useCurrentDomain();
+    const { domain, ref, basePath, domainsPath } = useFreshDomain();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [step, setStep] = useState(0);

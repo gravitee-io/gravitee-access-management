@@ -34,7 +34,7 @@ vi.mock('../../../lib/api/applications', () => ({
     createCimdApplication: vi.fn(),
     validateCimd: vi.fn(),
 }));
-vi.mock('../../../lib/session/domain', () => ({ useCurrentDomain: () => ({ ...currentDomain, domain: session.domain }) }));
+vi.mock('../../../lib/session/domain', () => ({ useFreshDomain: () => ({ ...currentDomain, domain: session.domain }) }));
 
 function renderPage(domain: Partial<Domain> = {}) {
     session.domain = { ...currentDomain.domain, ...domain };
