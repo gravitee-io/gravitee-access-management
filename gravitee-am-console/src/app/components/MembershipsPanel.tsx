@@ -248,8 +248,6 @@ interface AddMemberDialogProps {
     readonly onAdd: (member: NewMembership) => void;
 }
 
-// Its lists open with `position="popper"`. The dialog is translated, which sends the default item-aligned list to the
-// top right of the screen.
 function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMemberDialogProps) {
     const { user } = useSession();
     const [type, setType] = useState<NewMembership['memberType']>('USER');
