@@ -32,7 +32,7 @@ export function FormTemplateInfoDialog({ open, template, phrase, onOpenChange }:
                     <DialogDescription>This is the minimal HTML element required to perform {phrase}.</DialogDescription>
                 </DialogHeader>
                 {template === 'LOGIN' && (
-                    <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">{LOGIN_FORM_EXAMPLE}</pre>
+                    <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-sm">{LOGIN_FORM_EXAMPLE}</pre>
                 )}
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>

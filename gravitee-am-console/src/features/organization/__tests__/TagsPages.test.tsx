@@ -131,7 +131,7 @@ describe('TagsPage', () => {
 
         fireEvent.click(await screen.findByRole('button', { name: 'Delete Europe' }));
         const dialog = await screen.findByRole('dialog');
-        expect(dialog).toHaveTextContent('Are you sure you want to delete this sharding tag ?');
+        expect(dialog).toHaveTextContent('Are you sure you want to delete this sharding tag?');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
         await waitFor(() => expect(deleteTag).toHaveBeenCalledWith(ORG, 'eu'));

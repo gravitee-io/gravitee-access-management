@@ -143,7 +143,7 @@ describe('OrganizationEntrypointsPage', () => {
 
         fireEvent.click(await screen.findByRole('button', { name: 'Delete Europe' }));
         const dialog = await screen.findByRole('dialog');
-        expect(dialog).toHaveTextContent('Are you sure you want to delete this entrypoint ?');
+        expect(dialog).toHaveTextContent('Are you sure you want to delete this entrypoint?');
         fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
         await waitFor(() => expect(deleteOrganizationEntrypoint).toHaveBeenCalledWith(ORG, 'eu-entry'));

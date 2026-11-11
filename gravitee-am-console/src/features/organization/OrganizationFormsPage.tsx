@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Button, DataTable } from '@gravitee/graphene-core';
+import { Button, Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@gravitee/graphene-core';
 import { LockIcon, PencilIcon } from '@gravitee/graphene-core/icons';
-import type { ColumnDef } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../app/components/PageHeader';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
@@ -37,46 +36,37 @@ export function OrganizationFormsPage() {
     const canView = has('organization_form_read');
     useBreadcrumbs([{ label: 'Organization', to: `${base}/general` }, { label: 'Forms' }]);
 
-    const columns: ColumnDef<FormTemplate, unknown>[] = [
-        {
-            accessorKey: 'name',
-            header: 'Name',
-            enableSorting: false,
-            cell: ({ row }) => (
-                <div className="flex flex-col">
-                    <span className="font-medium">{row.original.name}</span>
-                    <small className="text-muted-foreground">{row.original.description}</small>
-                </div>
-            ),
-        },
-        {
-            id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
-            enableSorting: false,
-            cell: ({ row }) =>
-                canView ? (
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link
-                            to={`${base}/forms/form?template=${row.original.template}`}
-                            aria-label={`Edit ${row.original.name} template`}
-                            title="Edit template"
-                        >
-                            <PencilIcon />
-                        </Link>
-                    </Button>
-                ) : (
-                    <span title="You don't have required permission">
-                        <LockIcon aria-hidden className="size-4 text-muted-foreground" />
-                        <span className="sr-only">You don&apos;t have required permission</span>
-                    </span>
-                ),
-        },
-    ];
-
     return (
         <div className="flex flex-col gap-6">
             <PageHeader title="Forms" description="The sign-in page of the Access Management console itself." />
-            <DataTable aria-label="Forms" columns={columns} data={[...ORGANIZATION_FORMS]} />
+            <ItemGroup aria-label="Forms">
+                {ORGANIZATION_FORMS.map(form => (
+                    <Item key={form.template} variant="outline">
+                        <ItemContent>
+                            <ItemTitle>{form.name}</ItemTitle>
+                            <ItemDescription>{form.description}</ItemDescription>
+                        </ItemContent>
+                        <ItemActions>
+                            {canView ? (
+                                <Button variant="ghost" size="icon" asChild>
+                                    <Link
+                                        to={`${base}/forms/form?template=${form.template}`}
+                                        aria-label={`Edit ${form.name} template`}
+                                        title="Edit template"
+                                    >
+                                        <PencilIcon />
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <span title="You don't have required permission">
+                                    <LockIcon aria-hidden className="size-4 text-muted-foreground" />
+                                    <span className="sr-only">You don&apos;t have required permission</span>
+                                </span>
+                            )}
+                        </ItemActions>
+                    </Item>
+                ))}
+            </ItemGroup>
         </div>
     );
 }

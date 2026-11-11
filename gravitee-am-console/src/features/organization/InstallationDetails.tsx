@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, CopyableText } from '@gravitee/graphene-core';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, cn, CopyableText } from '@gravitee/graphene-core';
 import { ExternalLinkIcon } from '@gravitee/graphene-core/icons';
 import type { Installation } from '../../lib/api/organization';
 import { STATUS_VIEWS, statusOf } from './cockpit-status';
@@ -28,9 +28,11 @@ export function InstallationDetails({ installation }: { readonly installation: I
             <Card>
                 <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
                     <div className="rounded-full bg-muted p-3">
-                        <Icon className={`size-6 ${view.tone}`} aria-hidden />
+                        <Icon className={cn('size-6', view.tone)} aria-hidden />
                     </div>
-                    <h2 className="text-lg font-semibold">{view.title}</h2>
+                    <CardTitle role="heading" aria-level={2} className="text-lg">
+                        {view.title}
+                    </CardTitle>
                     <p className="max-w-xl text-sm text-muted-foreground">{view.message}</p>
                     {url && (
                         <Button variant={status === 'NONE' ? 'default' : 'outline'} asChild>

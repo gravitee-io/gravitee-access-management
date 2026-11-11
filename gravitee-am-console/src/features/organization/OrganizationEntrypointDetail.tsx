@@ -147,7 +147,7 @@ export function OrganizationEntrypointDetail({ entrypoint, tags, listPath }: Ent
                         heading="Delete entrypoint"
                         description="Entrypoint will be deleted and will not be used for gateway deployment. This operation cannot be undone."
                         confirmTitle="Delete Entrypoint"
-                        confirmDescription="Are you sure you want to delete this entrypoint ?"
+                        confirmDescription="Are you sure you want to delete this entrypoint?"
                         pending={remove.isPending}
                         onDelete={() => remove.mutate()}
                     />

@@ -49,7 +49,7 @@ export function ProviderSelect({ id, label, placeholder, options, value, disable
                 multiple
                 items={items}
                 value={selected}
-                onValueChange={next => onChange((next as typeof items).map(item => item.value))}
+                onValueChange={next => onChange(next.map(item => item.value))}
                 isItemEqualToValue={(item, current) => item.value === current.value}
                 disabled={disabled}
             >
@@ -64,7 +64,7 @@ export function ProviderSelect({ id, label, placeholder, options, value, disable
                 <ComboboxContent>
                     <ComboboxEmpty>No provider found.</ComboboxEmpty>
                     <ComboboxList>
-                        {(item: (typeof items)[number]) => (
+                        {item => (
                             <ComboboxItem key={item.value} value={item}>
                                 {item.label}
                             </ComboboxItem>

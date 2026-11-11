@@ -33,11 +33,11 @@ const url = 'https://cockpit.gravitee.io';
 
 describe('CockpitPage', () => {
     it.each([
-        [undefined, 'Meet Cockpit...', 'Discover Cockpit'],
-        ['PENDING', 'Almost there !', 'Open Cockpit'],
-        ['ACCEPTED', 'Congratulation !', 'Open Cockpit'],
-        ['REJECTED', 'No luck !', 'Open Cockpit'],
-        ['DELETED', 'Installation unlinked !', 'Open Cockpit'],
+        [undefined, 'Meet Cockpit', 'Discover Cockpit'],
+        ['PENDING', 'Installation pending', 'Open Cockpit'],
+        ['ACCEPTED', 'Installation connected', 'Open Cockpit'],
+        ['REJECTED', 'Installation rejected', 'Open Cockpit'],
+        ['DELETED', 'Installation unlinked', 'Open Cockpit'],
     ])('shows the message of the %s status', async (status, title, link) => {
         vi.mocked(getInstallation).mockResolvedValueOnce({
             id: 'install-1',
