@@ -300,6 +300,7 @@ function AddMemberDialog({ roles, existing, saving, onOpenChange, onAdd }: AddMe
                             <FieldLabel htmlFor="member-user">User</FieldLabel>
                             <Input
                                 id="member-user"
+                                type="search"
                                 autoComplete="off"
                                 placeholder="Search users"
                                 value={member ? member.label : search}

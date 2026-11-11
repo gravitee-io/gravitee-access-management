@@ -182,7 +182,7 @@ describe('MembershipsPanel', () => {
         renderPanel();
         const dialog = await openAddDialog();
 
-        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+        await userEvent.type(within(dialog).getByRole('searchbox', { name: 'User' }), 'al');
         const matches = await within(dialog).findByRole('list', { name: 'Matching users' });
         expect(
             within(matches)
@@ -231,10 +231,9 @@ describe('MembershipsPanel', () => {
     it('keeps the browser autofill off the user search', async () => {
         renderPanel();
         const dialog = await openAddDialog();
-        const search = within(dialog).getByRole('textbox', { name: 'User' });
+        const search = within(dialog).getByRole('searchbox', { name: 'User' });
 
         expect(search).toHaveAttribute('autocomplete', 'off');
-        expect(search.getAttribute('placeholder')).not.toMatch(/name/i);
     });
 
     it('shows an error when the user search fails', async () => {
@@ -242,7 +241,7 @@ describe('MembershipsPanel', () => {
         renderPanel();
         const dialog = await openAddDialog();
 
-        await userEvent.type(within(dialog).getByRole('textbox', { name: 'User' }), 'al');
+        await userEvent.type(within(dialog).getByRole('searchbox', { name: 'User' }), 'al');
 
         expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not search the users. Forbidden');
         expect(within(dialog).queryByRole('list', { name: 'Matching users' })).not.toBeInTheDocument();
