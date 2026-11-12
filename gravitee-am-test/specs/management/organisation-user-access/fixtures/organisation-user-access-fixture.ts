@@ -16,9 +16,13 @@
 import { createOrganisationUser, deleteOrganisationUser } from '@management-commands/organisation-user-commands';
 import { requestAccessToken, requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { getOrganisationManagementUrl, getUserApi } from '@management-commands/service/utils';
+import { addOrganizationMembership, userMembership } from '@management-commands/membership-management-commands';
+import { findOrganizationRoleByName } from '@management-commands/role-management-commands';
+import { ListRolesTypeEnum } from '@management-apis/RoleApi';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { User } from '@management-models/User';
+import { automationUrl, envPath } from '../../automation/fixtures/automation-client';
 
 const request = require('supertest');
 const btoa = require('btoa');
@@ -35,10 +39,19 @@ export const waitForNextSecond = () => new Promise((resolve) => setTimeout(resol
 export interface OrganisationUserAccessFixture {
   adminAccessToken: string;
   createUser: () => Promise<User>;
+  /** An organization user holding the ORGANIZATION_OWNER role. */
+  createAdministrator: () => Promise<User>;
+  /** A service account (no password, cannot sign in) holding the ORGANIZATION_OWNER role. */
+  createServiceAccount: () => Promise<User>;
+  deleteUser: (userId: string) => Promise<void>;
   login: (username: string, password: string) => Promise<string>;
   loginStatus: (username: string, password: string) => Promise<number>;
   currentUserStatus: (bearer: string) => Promise<number>;
+  /** Status of an Automation API call that needs DOMAIN[LIST], which ORGANIZATION_OWNER grants. */
+  automationStatus: (bearer: string) => Promise<number>;
   createAccountToken: (userId: string) => Promise<string>;
+  createAccountTokenWithId: (userId: string) => Promise<{ tokenId: string; token: string }>;
+  revokeAccountToken: (userId: string, tokenId: string) => Promise<void>;
   listAccountTokens: (userId: string) => Promise<any[]>;
   updateStatus: (userId: string, enabled: boolean) => Promise<User>;
   updateProfile: (userId: string, firstName: string) => Promise<User>;
@@ -51,19 +64,37 @@ export const setupOrganisationUserAccessFixture = async (): Promise<Organisation
   const adminAccessToken = await requestAdminAccessToken();
   const createdUserIds: string[] = [];
   const organizationId = process.env.AM_DEF_ORG_ID;
+  const organizationOwnerRole = await findOrganizationRoleByName(adminAccessToken, 'ORGANIZATION_OWNER', ListRolesTypeEnum.Organization);
 
-  const createUser = async (): Promise<User> => {
+  const createOrganizationUser = async (serviceAccount: boolean): Promise<User> => {
     const username = uniqueName(ORG_USER_ACCESS_TEST.USER_PREFIX, true).toLowerCase();
     const user = await createOrganisationUser(adminAccessToken, {
       username,
       firstName: 'Org',
       lastName: 'Access',
       email: `${username}@mail.com`,
-      password: ORG_USER_ACCESS_TEST.PASSWORD,
+      password: serviceAccount ? undefined : ORG_USER_ACCESS_TEST.PASSWORD,
       preRegistration: false,
+      serviceAccount,
     });
     createdUserIds.push(user.id);
     return user;
+  };
+
+  const createUser = (): Promise<User> => createOrganizationUser(false);
+
+  const grantOrganizationOwner = async (user: User): Promise<User> => {
+    await addOrganizationMembership(adminAccessToken, userMembership(user.id, organizationOwnerRole.id));
+    return user;
+  };
+
+  const createAdministrator = (): Promise<User> => createOrganizationUser(false).then(grantOrganizationOwner);
+
+  const createServiceAccount = (): Promise<User> => createOrganizationUser(true).then(grantOrganizationOwner);
+
+  const deleteUser = async (userId: string): Promise<void> => {
+    await deleteOrganisationUser(adminAccessToken, userId);
+    createdUserIds.splice(createdUserIds.indexOf(userId), 1);
   };
 
   const loginStatus = (username: string, password: string): Promise<number> =>
@@ -79,13 +110,26 @@ export const setupOrganisationUserAccessFixture = async (): Promise<Organisation
     return response.status;
   };
 
-  const createAccountToken = async (userId: string): Promise<string> => {
+  const automationStatus = async (bearer: string): Promise<number> => {
+    const response = await performGet(automationUrl(), `${envPath()}/domains`, {
+      Authorization: `Bearer ${bearer}`,
+    });
+    return response.status;
+  };
+
+  const createAccountTokenWithId = async (userId: string): Promise<{ tokenId: string; token: string }> => {
     const token = await getUserApi(adminAccessToken).createAccountAccessToken({
       organizationId,
       user: userId,
       newAccountAccessToken: { name: uniqueName('token', true) },
     });
-    return token.token;
+    return { tokenId: token.tokenId, token: token.token };
+  };
+
+  const createAccountToken = (userId: string): Promise<string> => createAccountTokenWithId(userId).then(({ token }) => token);
+
+  const revokeAccountToken = async (userId: string, tokenId: string): Promise<void> => {
+    await getUserApi(adminAccessToken).revokeAccountAccessToken({ organizationId, user: userId, tokenId });
   };
 
   // the generated SDK types this endpoint as a single token, so read the list from the raw response
@@ -137,10 +181,16 @@ export const setupOrganisationUserAccessFixture = async (): Promise<Organisation
   return {
     adminAccessToken,
     createUser,
+    createAdministrator,
+    createServiceAccount,
+    deleteUser,
     login: requestAccessToken,
     loginStatus,
     currentUserStatus,
+    automationStatus,
     createAccountToken,
+    createAccountTokenWithId,
+    revokeAccountToken,
     listAccountTokens,
     updateStatus,
     updateProfile,

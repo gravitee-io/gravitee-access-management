@@ -110,3 +110,58 @@ describe('Organisation user access - password reset', () => {
     expect(await fixture.currentUserStatus(newJwt)).toEqual(200);
   });
 });
+
+describe('Organisation user access - take away an administrator access', () => {
+  it('should reject the session JWT of a disabled administrator on the management and Automation APIs', async () => {
+    const administrator = await fixture.createAdministrator();
+    const jwt = await fixture.login(administrator.username, ORG_USER_ACCESS_TEST.PASSWORD);
+    expect(await fixture.currentUserStatus(jwt)).toEqual(200);
+    expect(await fixture.automationStatus(jwt)).toEqual(200);
+
+    await fixture.updateStatus(administrator.id, false);
+
+    expect(await fixture.currentUserStatus(jwt)).toEqual(401);
+    expect(await fixture.automationStatus(jwt)).toEqual(401);
+    expect(await fixture.loginStatus(administrator.username, ORG_USER_ACCESS_TEST.PASSWORD)).toEqual(401);
+  });
+
+  it('should reject the session JWT of a removed administrator on the management and Automation APIs', async () => {
+    const administrator = await fixture.createAdministrator();
+    const jwt = await fixture.login(administrator.username, ORG_USER_ACCESS_TEST.PASSWORD);
+    expect(await fixture.currentUserStatus(jwt)).toEqual(200);
+    expect(await fixture.automationStatus(jwt)).toEqual(200);
+
+    await fixture.deleteUser(administrator.id);
+
+    expect(await fixture.currentUserStatus(jwt)).toEqual(401);
+    expect(await fixture.automationStatus(jwt)).toEqual(401);
+    expect(await fixture.loginStatus(administrator.username, ORG_USER_ACCESS_TEST.PASSWORD)).toEqual(401);
+  });
+});
+
+describe('Organisation user access - take away a service account access', () => {
+  it('should revoke and reject the token of a disabled service account on the management and Automation APIs', async () => {
+    const serviceAccount = await fixture.createServiceAccount();
+    const token = await fixture.createAccountToken(serviceAccount.id);
+    expect(await fixture.currentUserStatus(token)).toEqual(200);
+    expect(await fixture.automationStatus(token)).toEqual(200);
+
+    await fixture.updateStatus(serviceAccount.id, false);
+
+    expect(await fixture.currentUserStatus(token)).toEqual(401);
+    expect(await fixture.automationStatus(token)).toEqual(401);
+    expect(await fixture.listAccountTokens(serviceAccount.id)).toEqual([]);
+  });
+
+  it('should reject a revoked service-account token on the management and Automation APIs', async () => {
+    const serviceAccount = await fixture.createServiceAccount();
+    const { tokenId, token } = await fixture.createAccountTokenWithId(serviceAccount.id);
+    expect(await fixture.currentUserStatus(token)).toEqual(200);
+    expect(await fixture.automationStatus(token)).toEqual(200);
+
+    await fixture.revokeAccountToken(serviceAccount.id, tokenId);
+
+    expect(await fixture.currentUserStatus(token)).toEqual(401);
+    expect(await fixture.automationStatus(token)).toEqual(401);
+  });
+});
