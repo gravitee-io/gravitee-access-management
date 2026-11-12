@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.service.i18n;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,8 +44,9 @@ import org.thymeleaf.standard.expression.StandardExpressionExecutionContext;
  * <p>Thymeleaf only blocks a fixed list of type names, which leaves every other class on the classpath reachable
  * from an expression. This evaluator inspects the parsed OGNL expression before it is evaluated and rejects the
  * constructs that allow to leave the model exposed by the template context: object creation, static access,
- * assignment, type checks, runtime evaluation of expressions held in strings, OGNL internals and reflective members. Property navigation, method calls on the model
- * and operators remain available, as they are what the default templates rely on.
+ * assignment, type checks, runtime evaluation of expressions held in strings, OGNL internals and reflective
+ * members. Property navigation, method calls on the model and operators remain available, as they are what the
+ * default templates rely on.
  */
 public class RestrictedExpressionEvaluator implements IStandardVariableExpressionEvaluator {
 
@@ -70,46 +69,9 @@ public class RestrictedExpressionEvaluator implements IStandardVariableExpressio
     }
 
     /**
-     * Validates every {@code ${...}} and {@code *{...}} expression embedded in a Thymeleaf template, without
-     * rendering it. Used to reject a custom form at save time rather than at render time.
-     *
-     * @throws TemplateProcessingException if any embedded expression is not valid or uses a construct that is not allowed
-     */
-    public void validateContent(String content) {
-        if (content == null) {
-            return;
-        }
-        for (String expression : extractExpressions(content)) {
-            validate(expression);
-        }
-    }
-
-    private static List<String> extractExpressions(String content) {
-        List<String> expressions = new ArrayList<>();
-        for (String marker : List.of("${", "*{")) {
-            int from = 0;
-            while ((from = content.indexOf(marker, from)) >= 0) {
-                int depth = 0;
-                int end = from + 1;
-                for (; end < content.length(); end++) {
-                    char c = content.charAt(end);
-                    if (c == '{') {
-                        depth++;
-                    } else if (c == '}' && --depth == 0) {
-                        break;
-                    }
-                }
-                expressions.add(content.substring(from + 2, end));
-                from = end;
-            }
-        }
-        return expressions;
-    }
-
-    /**
      * @throws TemplateProcessingException if the expression is not valid or uses a construct that is not allowed
      */
-    private void validate(String expression) {
+    public void validate(String expression) {
         if (validated.contains(expression)) {
             return;
         }
