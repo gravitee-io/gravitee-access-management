@@ -465,7 +465,7 @@ public class BulkServiceTest {
         bulkRequest.setOperations(of(validDeleteUserOperation(method, bulkId)));
 
 
-        when(userService.delete(any(), any())).thenReturn(Completable.complete());
+        when(userService.delete(any(), any(), any())).thenReturn(Completable.complete());
 
         final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
 
@@ -501,7 +501,7 @@ public class BulkServiceTest {
         bulkRequest.setOperations(of(validDeleteUserOperation(method, bulkId)));
 
 
-        when(userService.delete(any(), any())).thenReturn(Completable.error(new UserNotFoundException()));
+        when(userService.delete(any(), any(), any())).thenReturn(Completable.error(new UserNotFoundException()));
 
         final var subscriber = bulkService.processBulkRequest(bulkRequest, this.authenticationContext, BASE_BULK_URL, client, null).test();
 
