@@ -37,12 +37,14 @@ import { REDIRECT_URI, reachOAuthAuthorizationCallback, submitLogin } from '../u
 export const PAYMENT_TYPE = 'payment_initiation';
 export const PAYMENT_TYPE_NAME = 'Payment initiation';
 export const PAYMENT_DETAIL = { type: PAYMENT_TYPE, instructedAmount: { currency: 'EUR', amount: '10.00' } };
+export const ACCOUNT_TYPE = 'account_information';
+export const ACCOUNT_DETAIL = { type: ACCOUNT_TYPE, actions: ['list_accounts'] };
 const USERNAME = 'pw_rar_consent_user';
 
 export type UserAuthorizationDetailConsentsBundle = {
   domain: Domain;
   gatewayUrl: string;
-  /** Enables the payment type, and requests no scope by default. */
+  /** Enables the payment and account types, and requests no scope by default. */
   detailApp: Application;
   /** Enables no type. */
   scopeApp: Application;
@@ -79,6 +81,7 @@ export const test = base.extend<{ consentsBundle: UserAuthorizationDetailConsent
       }),
     );
     await quietly(() => createAuthorizationDetailType(domain.id, adminToken, { type: PAYMENT_TYPE, name: PAYMENT_TYPE_NAME }));
+    await quietly(() => createAuthorizationDetailType(domain.id, adminToken, { type: ACCOUNT_TYPE, name: 'Account information' }));
     const identityProviders = new Set([{ identity: idp.id, priority: 0 }]);
     const detailApp = await quietly(() =>
       createTestApp(uniqueTestName('pw-rar-detail-app'), domain, adminToken, 'WEB', {
@@ -88,7 +91,7 @@ export const test = base.extend<{ consentsBundle: UserAuthorizationDetailConsent
             redirectUris: [REDIRECT_URI],
             grantTypes: ['authorization_code'],
             scopeSettings: [{ scope: 'openid', defaultScope: false }],
-            authorizationDetailTypes: [{ type: PAYMENT_TYPE }],
+            authorizationDetailTypes: [{ type: PAYMENT_TYPE }, { type: ACCOUNT_TYPE }],
           },
         },
       }),

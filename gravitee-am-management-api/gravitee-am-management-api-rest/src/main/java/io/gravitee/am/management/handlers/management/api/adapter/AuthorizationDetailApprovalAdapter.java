@@ -17,14 +17,15 @@ package io.gravitee.am.management.handlers.management.api.adapter;
 
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailApprovalEntity;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.cursor.CursorPage;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
 
 public interface AuthorizationDetailApprovalAdapter {
 
     /**
      * Fails with {@link io.gravitee.am.service.exception.UserNotFoundException} when the domain has no such user.
      */
-    Single<List<AuthorizationDetailApprovalEntity>> getUserConsents(Domain domain, String userId, String clientId);
+    Single<CursorPage<AuthorizationDetailApprovalEntity, AuthorizationDetailApprovalCursorRequest>> getUserConsents(
+            Domain domain, String userId, AuthorizationDetailApprovalCursorRequest cursor, int limit);
 }

@@ -16,7 +16,14 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
-import { listUserAuthorizationDetailConsents, listUserConsents, listUsers } from '@management-commands/user-management-commands';
+import {
+  followUserAuthorizationDetailConsentsCursor,
+  listUserAuthorizationDetailConsents,
+  ListUserAuthorizationDetailConsentsParams,
+  listUserConsentsDeprecated,
+  listUserScopeConsents,
+  listUsers,
+} from '@management-commands/user-management-commands';
 import {
   createAuthorizationDetailType,
   deleteAuthorizationDetailTypeRaw,
@@ -57,8 +64,11 @@ const userIdOf = async (user: TestUser): Promise<string> => {
   return page.data[0].id;
 };
 
-const consentsOf = (userId: string, clientId?: string): Promise<AuthorizationDetailApprovalEntity[]> =>
-  listUserAuthorizationDetailConsents(fixture.domain.id, fixture.accessToken, userId, clientId);
+const consentsOf = async (
+  userId: string,
+  params: ListUserAuthorizationDetailConsentsParams = {},
+): Promise<AuthorizationDetailApprovalEntity[]> =>
+  (await listUserAuthorizationDetailConsents(fixture.domain.id, fixture.accessToken, userId, params)).data;
 
 const byType = (consents: AuthorizationDetailApprovalEntity[], type: string): AuthorizationDetailApprovalEntity =>
   consents.find((consent) => consent.type === type);
@@ -104,8 +114,8 @@ describe('Authorization detail consents in the Management API', () => {
     await fixture.approve(user, [payment()]);
     const userId = await userIdOf(user);
 
-    expect(await consentsOf(userId, fixture.clientId)).toHaveLength(1);
-    expect(await consentsOf(userId, 'another-client')).toEqual([]);
+    expect(await consentsOf(userId, { clientId: fixture.clientId })).toHaveLength(1);
+    expect(await consentsOf(userId, { clientId: 'another-client' })).toEqual([]);
   });
 
   it(jira`should keep listing a consent after its type is deleted ${'AM-8127'}`, async () => {
@@ -127,16 +137,82 @@ describe('Authorization detail consents in the Management API', () => {
     expect(consents[0].typeEntity).toBeUndefined();
   });
 
+  it(jira`should only list the consents whose type matches, ignoring case and with wildcards ${'AM-8127'}`, async () => {
+    const user = fixture.nextUser();
+    await fixture.approve(user, [payment(), account()]);
+    const userId = await userIdOf(user);
+
+    const exact = await consentsOf(userId, { type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE.toUpperCase() });
+    const wildcard = await consentsOf(userId, { type: '*' + AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE.slice(1, -1) + '*' });
+
+    expect(exact.map((consent) => consent.type)).toEqual([AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE]);
+    expect(wildcard.map((consent) => consent.type)).toEqual([AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE]);
+  });
+
+  it(jira`should page through the consents in the requested order ${'AM-8127'}`, async () => {
+    const user = fixture.nextUser();
+    await fixture.approve(user, [payment('EUR', '10.00'), account(), payment('EUR', '20.00')]);
+    const userId = await userIdOf(user);
+
+    const firstPage = await listUserAuthorizationDetailConsents(fixture.domain.id, fixture.accessToken, userId, {
+      sort: 'type',
+      dir: 'ASC',
+      limit: 2,
+    });
+    expect(firstPage.totalCount).toEqual(3);
+    expect(firstPage.page).toEqual(0);
+    expect(firstPage.data).toHaveLength(2);
+    expect(firstPage.nextCursor).toBeDefined();
+
+    const secondPage = await followUserAuthorizationDetailConsentsCursor(
+      fixture.domain.id,
+      fixture.accessToken,
+      userId,
+      firstPage.nextCursor,
+    );
+    expect(secondPage.page).toEqual(1);
+    expect(secondPage.nextCursor).toBeUndefined();
+
+    const consents = [...firstPage.data, ...secondPage.data];
+    expect(new Set(consents.map((consent) => consent.id)).size).toEqual(3);
+    expect(consents.map((consent) => consent.type)).toEqual([
+      AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE,
+      AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE,
+      AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE,
+    ]);
+  });
+
+  it(jira`should reject an unknown sort field ${'AM-8127'}`, async () => {
+    const user = fixture.nextUser();
+    await fixture.approve(user, [payment()]);
+
+    await expect(
+      consentsOf(await userIdOf(user), { sort: 'detail' as ListUserAuthorizationDetailConsentsParams['sort'] }),
+    ).rejects.toMatchObject({ response: { status: 400 } });
+  });
+
   it(jira`should leave the scope consents out ${'AM-8127'}`, async () => {
     const user = fixture.nextUser();
     await fixture.approve(user, [account()], { scope: CONSENT_TEST.SCOPE });
     const userId = await userIdOf(user);
 
-    const scopeConsents = await listUserConsents(fixture.domain.id, fixture.accessToken, userId);
+    const scopeConsents = await listUserScopeConsents(fixture.domain.id, fixture.accessToken, userId);
     const detailConsents = await consentsOf(userId);
 
     expect(scopeConsents.map((consent) => consent.scope)).toEqual([CONSENT_TEST.SCOPE]);
     expect(detailConsents.map((consent) => consent.type)).toEqual([AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE]);
+  });
+
+  it(jira`should list the scope consents on the scopes path and the deprecated one ${'AM-8129'}`, async () => {
+    const user = fixture.nextUser();
+    await fixture.approve(user, [account()], { scope: CONSENT_TEST.SCOPE });
+    const userId = await userIdOf(user);
+
+    const scopeConsents = await listUserScopeConsents(fixture.domain.id, fixture.accessToken, userId);
+    const deprecatedScopeConsents = await listUserConsentsDeprecated(fixture.domain.id, fixture.accessToken, userId);
+
+    expect(scopeConsents.map((consent) => consent.scope)).toEqual([CONSENT_TEST.SCOPE]);
+    expect(deprecatedScopeConsents.map((consent) => consent.id)).toEqual(scopeConsents.map((consent) => consent.id));
   });
 
   it(jira`should return 404 for an unknown user ${'AM-8127'}`, async () => {

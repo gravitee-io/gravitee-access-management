@@ -15,8 +15,9 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { listUserConsents, revokeUserConsent, revokeUserConsents } from '@management-commands/user-management-commands';
+import { listUserScopeConsents, revokeUserScopeConsent, revokeUserScopeConsents } from '@management-commands/user-management-commands';
 import { retryUntil } from '@utils-commands/retry';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { setupRevocationFixture, RevocationFixture } from './fixtures/revocation-fixture';
 
@@ -45,7 +46,7 @@ describe('Revoke user consents', () => {
     expect((await introspectToken(subjectAccessToken)).active).toBe(true);
     expect((await introspectToken(exchangedToken)).active).toBe(true);
 
-    await revokeUserConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
+    await revokeUserScopeConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
 
     await retryUntil(
       () => introspectToken(subjectAccessToken).then((body) => ({ active: body.active })),
@@ -78,7 +79,7 @@ describe('Revoke user consents', () => {
     expect((await introspectToken(subjectRefreshToken!)).active).toBe(true);
     expect((await introspectToken(exchangedToken)).active).toBe(true);
 
-    await revokeUserConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
+    await revokeUserScopeConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
 
     await retryUntil(
       () => introspectToken(subjectRefreshToken!).then((body) => ({ active: body.active })),
@@ -107,7 +108,7 @@ describe('Revoke user consents', () => {
     expect(refreshToken).toBeDefined();
     expect((await introspectToken(refreshToken!)).active).toBe(true);
 
-    await revokeUserConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
+    await revokeUserScopeConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
 
     await retryUntil(
       () => introspectToken(refreshToken!).then((body) => ({ active: body.active })),
@@ -128,7 +129,7 @@ describe('Revoke user consents', () => {
 
     expect((await introspectToken(issuedAccessToken)).active).toBe(true);
 
-    await revokeUserConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
+    await revokeUserScopeConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
 
     await retryUntil(
       () => introspectToken(issuedAccessToken).then((body) => ({ active: body.active })),
@@ -140,7 +141,7 @@ describe('Revoke user consents', () => {
     );
   });
 
-  it('should invalidate access token issued by authorization_code after revokeUserConsent by id', async () => {
+  it(jira`should invalidate access token issued by authorization_code after revokeUserConsent by id ${'AM-8129'}`, async () => {
     const { obtainAuthorizationCodeTokens, introspectToken, application, domain, user, accessToken } = fixture;
 
     const authorizationCodeTokens = await obtainAuthorizationCodeTokens();
@@ -148,14 +149,14 @@ describe('Revoke user consents', () => {
     expect(issuedAccessToken).toBeDefined();
     expect((await introspectToken(issuedAccessToken)).active).toBe(true);
 
-    const consents = await listUserConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
+    const consents = await listUserScopeConsents(domain.id, accessToken, user.id, application.settings.oauth.clientId);
     expect(consents).toBeDefined();
     expect(consents.length).toBeGreaterThan(0);
 
     const consentId = consents[0]?.id;
     expect(consentId).toBeDefined();
 
-    await revokeUserConsent(domain.id, accessToken, user.id, consentId!);
+    await revokeUserScopeConsent(domain.id, accessToken, user.id, consentId!);
 
     await retryUntil(
       () => introspectToken(issuedAccessToken).then((body) => ({ active: body.active })),

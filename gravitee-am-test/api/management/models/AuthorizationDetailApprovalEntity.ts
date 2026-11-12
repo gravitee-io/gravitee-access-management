@@ -108,7 +108,7 @@ export interface AuthorizationDetailApprovalEntity {
    * @type {string}
    * @memberof AuthorizationDetailApprovalEntity
    */
-  type?: string;
+  readonly type?: string;
   /**
    *
    * @type {AuthorizationDetailTypeEntity}
@@ -176,7 +176,7 @@ export function AuthorizationDetailApprovalEntityToJSON(json: any): Authorizatio
 }
 
 export function AuthorizationDetailApprovalEntityToJSONTyped(
-  value?: AuthorizationDetailApprovalEntity | null,
+  value?: Omit<AuthorizationDetailApprovalEntity, 'type'> | null,
   ignoreDiscriminator: boolean = false,
 ): any {
   if (value == null) {
@@ -193,7 +193,6 @@ export function AuthorizationDetailApprovalEntityToJSONTyped(
     expiresAt: value['expiresAt'],
     id: value['id'],
     status: value['status'],
-    type: value['type'],
     typeEntity: AuthorizationDetailTypeEntityToJSON(value['typeEntity']),
     updatedAt: value['updatedAt'],
     userId: UserIdToJSON(value['userId']),

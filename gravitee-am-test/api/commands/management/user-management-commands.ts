@@ -15,7 +15,8 @@
  */
 import { getDomainApi, getUserApi } from './service/utils';
 import { expect } from '@jest/globals';
-import { NewOrganizationUser, NewUser } from '../../management/models';
+import { AuthorizationDetailConsentCursorPage, NewOrganizationUser, NewUser } from '../../management/models';
+import { ListUserAuthorizationDetailConsentsRequest } from '../../management/apis/UserApi';
 
 export const createUser = (domainId, accessToken, user) =>
   getUserApi(accessToken).createUser({
@@ -152,8 +153,8 @@ export const deleteUser = (domainId, accessToken, userId) =>
     user: userId,
   });
 
-export const revokeUserConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
-  getUserApi(accessToken).revokeUserConsents({
+export const revokeUserScopeConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+  getUserApi(accessToken).revokeUserScopeConsents({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -161,7 +162,25 @@ export const revokeUserConsents = (domainId: string, accessToken: string, userId
     clientId,
   });
 
-export const listUserConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+export const listUserScopeConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+  getUserApi(accessToken).listUserScopeConsents({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    clientId,
+  });
+
+export const revokeUserScopeConsent = (domainId: string, accessToken: string, userId: string, consentId: string) =>
+  getUserApi(accessToken).revokeUserScopeConsent({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    consent: consentId,
+  });
+
+export const listUserConsentsDeprecated = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
   getUserApi(accessToken).listUserConsents({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -170,23 +189,43 @@ export const listUserConsents = (domainId: string, accessToken: string, userId: 
     clientId,
   });
 
-export const listUserAuthorizationDetailConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+export type ListUserAuthorizationDetailConsentsParams = Omit<
+  ListUserAuthorizationDetailConsentsRequest,
+  'organizationId' | 'environmentId' | 'domain' | 'user'
+>;
+
+export const listUserAuthorizationDetailConsents = (
+  domainId: string,
+  accessToken: string,
+  userId: string,
+  params: ListUserAuthorizationDetailConsentsParams = {},
+): Promise<AuthorizationDetailConsentCursorPage> =>
   getUserApi(accessToken).listUserAuthorizationDetailConsents({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: userId,
-    clientId,
+    ...params,
   });
 
-export const revokeUserConsent = (domainId: string, accessToken: string, userId: string, consentId: string) =>
-  getUserApi(accessToken).revokeUserConsent({
-    organizationId: process.env.AM_DEF_ORG_ID,
-    environmentId: process.env.AM_DEF_ENV_ID,
-    domain: domainId,
-    user: userId,
-    consent: consentId,
+export const followUserAuthorizationDetailConsentsCursor = (
+  domainId: string,
+  accessToken: string,
+  userId: string,
+  nextCursor: string,
+): Promise<AuthorizationDetailConsentCursorPage> => {
+  const query = new URLSearchParams(nextCursor.substring(nextCursor.indexOf('?') + 1));
+  const number = (name: string) => (query.has(name) ? Number(query.get(name)) : undefined);
+  return listUserAuthorizationDetailConsents(domainId, accessToken, userId, {
+    clientId: query.get('clientId') ?? undefined,
+    type: query.get('type') ?? undefined,
+    limit: number('limit'),
+    sort: (query.get('sort') ?? undefined) as ListUserAuthorizationDetailConsentsParams['sort'],
+    dir: (query.get('dir') ?? undefined) as ListUserAuthorizationDetailConsentsParams['dir'],
+    page: number('page'),
+    cursor: query.get('cursor') ?? undefined,
   });
+};
 
 export function buildTestUser(
   i: number,

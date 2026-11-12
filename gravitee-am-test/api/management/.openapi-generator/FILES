@@ -78,6 +78,7 @@ models/AuditOutcome.ts
 models/AuditPage.ts
 models/AuthenticationDeviceNotifier.ts
 models/AuthorizationDetailApprovalEntity.ts
+models/AuthorizationDetailConsentCursorPage.ts
 models/AuthorizationDetailType.ts
 models/AuthorizationDetailTypeCursorPage.ts
 models/AuthorizationDetailTypeEntity.ts

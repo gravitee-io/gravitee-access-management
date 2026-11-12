@@ -2690,7 +2690,6 @@ export const routes: Routes = [
                                     resolve: {
                                       application: ApplicationResolver,
                                       consents: ConsentsResolver,
-                                      authorizationDetailConsents: AuthorizationDetailConsentsResolver,
                                     },
                                     data: {
                                       breadcrumb: {

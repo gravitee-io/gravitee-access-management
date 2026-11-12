@@ -19,7 +19,9 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -31,6 +33,7 @@ import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
@@ -52,10 +55,11 @@ public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDeta
     private AuditService auditService;
 
     @Override
-    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(Domain domain, UserId userId) {
+    public Single<CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest>> findByDomainAndUser(
+            Domain domain, UserId userId, AuthorizationDetailApprovalCursorRequest cursor, int limit) {
         log.debug("Find authorization detail approvals by domain: {} and user: {}", domain.getId(), userId);
-        return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).findByDomainAndUser(domain.getId(), userId)
-                .onErrorResumeNext(ex -> Flowable.error(new TechnicalManagementException(
+        return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).findByDomainAndUser(domain.getId(), userId, cursor, limit)
+                .onErrorResumeNext(ex -> Single.error(new TechnicalManagementException(
                         String.format("An error occurred while trying to find authorization detail approvals for domain: %s and user: %s",
                                 domain.getId(), userId), ex)));
     }
@@ -73,7 +77,8 @@ public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDeta
     public Completable saveConsent(Domain domain, Client client, User principal, AuthorizationDetails authorizationDetails,
                                    List<AuthorizationDetailApproval> approvals, boolean approved) {
         final var repository = dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain);
-        return Observable.fromIterable(approvals).flatMapSingle(repository::upsert).ignoreElements()
+        return Completable.fromAction(() -> requireTypeAndStatus(approvals))
+                .andThen(Observable.fromIterable(approvals).flatMapSingle(repository::upsert).ignoreElements())
                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                         .reference(domain.asReference())
                         .client(client)
@@ -89,6 +94,14 @@ public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDeta
                 .onErrorResumeNext(ex -> Completable.error(new TechnicalManagementException(
                         String.format("An error occurred while trying to save authorization detail consent for domain: %s and client: %s",
                                 domain.getId(), client.getId()), ex)));
+    }
+
+    private static void requireTypeAndStatus(List<AuthorizationDetailApproval> approvals) {
+        for (AuthorizationDetailApproval approval : approvals) {
+            if (approval.getType() == null || approval.getStatus() == null) {
+                throw new IllegalArgumentException("An authorization detail approval must have a type and a status");
+            }
+        }
     }
 
     @Override

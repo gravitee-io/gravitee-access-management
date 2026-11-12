@@ -19,7 +19,7 @@ import { createTokenExchangeFixture, TOKEN_EXCHANGE_DEFAULTS } from '../../../fi
 import { linkJira } from '../../../utils/jira';
 import { obtainAuthorizationCodeTokens, waitForTokenInactive } from '../../../utils/auth-code-helpers';
 import { exchangeToken } from '../../../utils/token-exchange-helpers';
-import { revokeUserConsents } from '@management-commands/user-management-commands';
+import { revokeUserScopeConsents } from '@management-commands/user-management-commands';
 import { API_USER_PASSWORD } from '../../../utils/test-constants';
 
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token';
@@ -714,7 +714,7 @@ consentFixture.describe('AM-6623/AM-6624: Consent revocation propagates to token
     expect((await doIntrospect(exchangedToken)).active).toBe(true);
 
     // Revoke user consent via Management API
-    await revokeUserConsents(tokenExchangeDomain.id, teAdminToken, tokenExchangeUser.id, clientId);
+    await revokeUserScopeConsents(tokenExchangeDomain.id, teAdminToken, tokenExchangeUser.id, clientId);
 
     // Poll until tokens become inactive (consent revocation is async via a REVOKE_TOKEN sync event).
     // Keep the poll well under the 180s test timeout so a lost event fails with a clear error.
@@ -756,7 +756,7 @@ consentFixture.describe('AM-6623/AM-6624: Consent revocation propagates to token
     expect((await doIntrospect(branch2.body.access_token)).active).toBe(true);
 
     // Revoke consent
-    await revokeUserConsents(tokenExchangeDomain.id, teAdminToken, tokenExchangeUser.id, clientId);
+    await revokeUserScopeConsents(tokenExchangeDomain.id, teAdminToken, tokenExchangeUser.id, clientId);
 
     // Both branches should become inactive (consent revocation is async via a REVOKE_TOKEN sync event).
     // Keep the polls well under the 180s test timeout so a lost event fails with a clear error.
