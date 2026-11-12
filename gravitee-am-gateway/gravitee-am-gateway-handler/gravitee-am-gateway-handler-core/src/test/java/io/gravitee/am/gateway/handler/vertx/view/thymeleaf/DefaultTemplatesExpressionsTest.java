@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import io.gravitee.am.service.i18n.RestrictedExpressionEvaluator;
+import io.gravitee.am.service.i18n.FormContentValidator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +32,7 @@ class DefaultTemplatesExpressionsTest {
 
     private static final Path VIEWS = Path.of("src/main/resources/webroot/views");
 
-    private final RestrictedExpressionEvaluator evaluator = new RestrictedExpressionEvaluator();
+    private final FormContentValidator validator = new FormContentValidator();
 
     @Test
     void should_allow_every_variable_expression_of_the_default_templates() throws IOException {
@@ -43,7 +43,7 @@ class DefaultTemplatesExpressionsTest {
         assertFalse(templates.isEmpty());
         for (Path template : templates) {
             try {
-                evaluator.validateContent(Files.readString(template));
+                validator.validate(Files.readString(template));
             } catch (RuntimeException e) {
                 throw new AssertionError("A rejected expression was found in " + template, e);
             }

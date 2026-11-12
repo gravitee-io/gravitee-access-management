@@ -100,36 +100,4 @@ class RestrictedExpressionEvaluatorTest {
     void should_reject_expression_that_is_not_valid_ognl() {
         assertThrows(TemplateProcessingException.class, () -> render("<p th:text=\"${name.}\"></p>"));
     }
-
-    @Test
-    void should_accept_null_content() {
-        new RestrictedExpressionEvaluator().validateContent(null);
-    }
-
-    @Test
-    void should_validate_content_without_rendering_it() {
-        RestrictedExpressionEvaluator evaluator = new RestrictedExpressionEvaluator();
-        evaluator.validateContent("<form th:object=\"${command}\"><input th:field=\"*{username}\"/>[[${name}]]</form>");
-    }
-
-    @Test
-    void should_reject_dangerous_expression_found_anywhere_in_the_content() {
-        RestrictedExpressionEvaluator evaluator = new RestrictedExpressionEvaluator();
-        assertThrows(TemplateProcessingException.class, () ->
-                evaluator.validateContent("<p th:text=\"${name}\"></p><p th:text=\"${new java.util.Date()}\"></p>"));
-    }
-
-    @Test
-    void shouldRejectInstantiationWrappedInEvalExpression() {
-        RestrictedExpressionEvaluator evaluator = new RestrictedExpressionEvaluator();
-        assertThrows(TemplateProcessingException.class, () ->
-                evaluator.validateContent("<p th:text=\"${('new com.example.Whatever()')(0)}\"></p>"));
-    }
-
-    @Test
-    void should_reject_dangerous_selection_expression() {
-        RestrictedExpressionEvaluator evaluator = new RestrictedExpressionEvaluator();
-        assertThrows(TemplateProcessingException.class, () ->
-                evaluator.validateContent("<form th:object=\"${command}\"><input th:field=\"*{getClass()}\"/></form>"));
-    }
 }

@@ -149,11 +149,11 @@ public class PreviewBuilder {
             previewForm.setContent(convertAssertsPath(processedTemplate, baseUrl));
         } catch (TemplateInputException e) {
             logger.debug("Preview error on domain {}", this.domain.getId(), e);
-            throw new PreviewException("Preview error, document structure maybe invalid." +
+            throw new PreviewException("Preview error, document structure may be invalid." +
                     " (error at line: " + e.getLine() + ", col: " + e.getCol() + " )");
         } catch (TemplateProcessingException e) {
             logger.debug("Preview error on domain {}", this.domain.getId(), e);
-            throw new PreviewException("Preview error, expression or variable maybe invalid (error at line: " + e.getLine() + ", col: " + e.getCol() + ")");
+            throw new PreviewException("Preview error, expression or variable may be invalid (error at line: " + e.getLine() + ", col: " + e.getCol() + ")");
         } catch (TemplateEngineException e) {
             logger.info("Unexpected preview error on domain {}", this.domain.getId(), e);
             throw new PreviewException("Unexpected preview error");
