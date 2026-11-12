@@ -715,6 +715,126 @@
           "request_object_signing_alg": "RS256"
         }
       }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_REDIRECT_TRUST/logo-redirect-internal"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://cimd-trusted.example.test:8080/cimd/ENABLED_REDIRECT_TRUST/logo-redirect-internal",
+          "client_name": "CIMD Logo Client",
+          "client_uri": "https://example.com/redirect-trust",
+          "logo_uri": "http://cimd-trusted.example.test:8080/cimd/logos/redirect-internal.png",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_REDIRECT_TRUST/logo-redirect-allowed"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://cimd-trusted.example.test:8080/cimd/ENABLED_REDIRECT_TRUST/logo-redirect-allowed",
+          "client_name": "CIMD Logo Client",
+          "client_uri": "https://example.com/redirect-trust",
+          "logo_uri": "http://cimd-trusted.example.test:8080/cimd/logos/redirect-allowed.png",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_REDIRECT_TRUST/logo-not-image"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://cimd-trusted.example.test:8080/cimd/ENABLED_REDIRECT_TRUST/logo-not-image",
+          "client_name": "CIMD Logo Client",
+          "client_uri": "https://example.com/redirect-trust",
+          "logo_uri": "http://cimd-trusted.example.test:8080/cimd/logos/not-an-image",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/logos/redirect-internal.png"
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Location": "http://cimd-internal.example.test:8080/cimd/internal/secret"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/logos/redirect-allowed.png"
+      },
+      "response": {
+        "status": 302,
+        "headers": {
+          "Location": "http://cimd-trusted.example.test:8080/cimd/logos/example.png"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/logos/not-an-image"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "secret": "internal-only"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/internal/secret"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "secret": "internal-only"
+        }
+      }
     }
   ],
   "importOptions": {
