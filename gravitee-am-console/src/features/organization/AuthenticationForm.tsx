@@ -35,6 +35,8 @@ function selectionOf(settings: OrganizationSettings, providers: readonly Organiz
     return { identityProviders: selected(false), socialIdentities: selected(true) };
 }
 
+export const sameIds = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every(id => b.includes(id));
+
 interface AuthenticationFormProps {
     readonly organizationId: string;
     readonly settings: OrganizationSettings;
@@ -53,7 +55,8 @@ export function AuthenticationForm({ organizationId, settings, providers, onSave
         onSuccess: onSaved,
         onError: error => toast.error(`Could not update the settings. ${error.message}`),
     });
-    const dirty = JSON.stringify(selection) !== JSON.stringify(saved);
+    const dirty =
+        !sameIds(selection.identityProviders, saved.identityProviders) || !sameIds(selection.socialIdentities, saved.socialIdentities);
     const submit = (event: FormEvent) => {
         event.preventDefault();
         save.mutate();

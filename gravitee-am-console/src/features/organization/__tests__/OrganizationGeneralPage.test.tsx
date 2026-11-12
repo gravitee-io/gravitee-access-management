@@ -16,8 +16,10 @@
 import { toast } from '@gravitee/graphene-core';
 import { buttonHarness } from '@gravitee/graphene-core/testing';
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Route } from 'react-router-dom';
 import { getOrganizationSettings, listOrganizationIdentityProviders, patchOrganizationSettings } from '../../../lib/api/organization';
+import { sameIds } from '../AuthenticationForm';
 import { OrganizationGeneralPage } from '../OrganizationGeneralPage';
 import { currentEnvironment, ORG, organizationPath, renderRoutes, session } from './render';
 
@@ -76,11 +78,41 @@ describe('OrganizationGeneralPage', () => {
         expect(toast.success).toHaveBeenCalledWith('Settings updated');
     });
 
+    it('does not offer to save when providers are removed and added back in another order', async () => {
+        vi.mocked(getOrganizationSettings).mockResolvedValue({ identities: ['google', 'github'] });
+        renderPage();
+
+        await screen.findByRole('button', { name: 'Remove Google' });
+        await buttonHarness({ name: 'Remove Google' }).click();
+        await buttonHarness({ name: 'Remove GitHub' }).click();
+        expect(await screen.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+        const social = () => screen.getByRole('combobox', { name: 'Social providers' });
+        await userEvent.click(social());
+        await userEvent.click(await screen.findByRole('option', { name: 'GitHub' }));
+        await userEvent.keyboard('{Escape}');
+        await userEvent.click(social());
+        await userEvent.click(await screen.findByRole('option', { name: 'Google' }));
+
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Remove Google' })).toBeInTheDocument());
+        expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    });
+
     it('is read-only without organization_settings_update', async () => {
         renderPage(['organization_settings_read']);
 
         expect(await screen.findByText('Inline users')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
         expect(screen.getByRole('combobox', { name: 'Identity providers' })).toBeDisabled();
+    });
+});
+
+describe('sameIds', () => {
+    it('ignores the order of the ids', () => {
+        expect(sameIds(['google', 'github'], ['github', 'google'])).toBe(true);
+    });
+
+    it('tells a different selection apart', () => {
+        expect(sameIds(['google'], ['google', 'github'])).toBe(false);
+        expect(sameIds(['google', 'github'], ['google', 'gitlab'])).toBe(false);
     });
 });
