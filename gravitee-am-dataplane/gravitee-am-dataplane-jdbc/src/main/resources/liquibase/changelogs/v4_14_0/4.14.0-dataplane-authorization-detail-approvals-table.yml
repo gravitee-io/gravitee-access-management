@@ -13,8 +13,9 @@ databaseChangeLog:
               - column: { name: user_external_id, type: nvarchar(255) }
               - column: { name: user_source, type: nvarchar(64) }
               - column: { name: detail, type: clob }
+              - column: { name: type, type: nvarchar(512), constraints: { nullable: false } }
               - column: { name: digest, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: status, type: nvarchar(64) }
+              - column: { name: status, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: expires_at, type: timestamp(6) }
               - column: { name: created_at, type: timestamp(6) }
               - column: { name: updated_at, type: timestamp(6) }

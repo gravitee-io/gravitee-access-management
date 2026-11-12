@@ -19,9 +19,10 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailTypeEntity;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuthorizationDetailApprovalService;
@@ -32,7 +33,6 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -44,29 +44,25 @@ public class AuthorizationDetailApprovalAdapterImpl implements AuthorizationDeta
     private final DataPlaneRegistry dataPlaneRegistry;
 
     @Override
-    public Single<List<AuthorizationDetailApprovalEntity>> getUserConsents(Domain domain, String rawUserId, String clientId) {
+    public Single<CursorPage<AuthorizationDetailApprovalEntity, AuthorizationDetailApprovalCursorRequest>> getUserConsents(
+            Domain domain, String rawUserId, AuthorizationDetailApprovalCursorRequest cursor, int limit) {
         var userId = UserId.internal(rawUserId);
         return dataPlaneRegistry.getUserRepository(domain)
                 .findById(domain.asReference(), userId)
                 .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                .flatMap(user -> authorizationDetailTypeService.findByDomain(domain.getId())
+                .flatMap(user -> authorizationDetailApprovalService.findByDomainAndUser(domain, user.getFullId(), cursor, limit))
+                .flatMap(page -> authorizationDetailTypeService.findByDomain(domain.getId())
                         .toMap(AuthorizationDetailType::getType)
                         .flatMap(types -> {
                             Map<String, Single<ApplicationEntity>> clients = new HashMap<>();
-                            return approvals(domain, user, clientId)
+                            return Flowable.fromIterable(page.getData())
                                     .concatMapSingle(approval -> clients
                                             .computeIfAbsent(approval.getClientId(),
                                                     id -> consentApplicationEntityFactory.resolve(approval.getDomain(), id).cache())
                                             .map(client -> toEntity(approval, client, types)))
-                                    .toList();
+                                    .toList()
+                                    .map(entities -> new CursorPage<>(entities, page.getNextCursor(), page.getTotalCount()));
                         }));
-    }
-
-    private Flowable<AuthorizationDetailApproval> approvals(Domain domain, User user, String clientId) {
-        if (clientId == null || clientId.isEmpty()) {
-            return authorizationDetailApprovalService.findByDomainAndUser(domain, user.getFullId());
-        }
-        return authorizationDetailApprovalService.findByDomainAndUserAndClient(domain, user.getFullId(), clientId);
     }
 
     private static AuthorizationDetailApprovalEntity toEntity(AuthorizationDetailApproval approval, ApplicationEntity client,

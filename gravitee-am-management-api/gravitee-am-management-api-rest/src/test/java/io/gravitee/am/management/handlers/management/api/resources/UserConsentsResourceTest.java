@@ -26,7 +26,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -41,8 +42,9 @@ import static org.mockito.Mockito.doReturn;
  */
 public class UserConsentsResourceTest extends JerseySpringTest {
 
-    @Test
-    public void shouldGetUserConsents() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldGetUserConsents(String consentsPath) {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -65,7 +67,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path(mockUser.getId())
-                .path("consents")
+                .path(consentsPath)
                 .queryParam("clientId", "clientId")
                 .request()
                 .get();
@@ -73,8 +75,9 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
-    @Test
-    public void shouldGetUserConsents_technicalManagementException() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldGetUserConsents_technicalManagementException(String consentsPath) {
         final String domainId = "domain-1";
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
@@ -82,13 +85,14 @@ public class UserConsentsResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path("user1")
-                .path("consents")
+                .path(consentsPath)
                 .request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
-    @Test
-    public void shouldRevokeUserConsents() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldRevokeUserConsents(String consentsPath) {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -103,7 +107,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path(mockUser.getId())
-                .path("consents")
+                .path(consentsPath)
                 .queryParam("clientId", "clientId")
                 .request()
                 .delete();

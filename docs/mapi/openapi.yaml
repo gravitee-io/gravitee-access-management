@@ -9755,9 +9755,11 @@ paths:
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents:
     delete:
+      deprecated: true
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
-        \ DOMAIN_USER[UPDATE] permission on the specified organization"
+        \ DOMAIN_USER[UPDATE] permission on the specified organization. Deprecated:\
+        \ use DELETE /consents/scopes instead."
       operationId: revokeUserConsents
       parameters:
       - in: path
@@ -9794,9 +9796,11 @@ paths:
       - user
       - domain
     get:
+      deprecated: true
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
-        \ permission on the specified organization"
+        \ permission on the specified organization. Deprecated: use GET /consents/scopes\
+        \ instead."
       operationId: listUserConsents
       parameters:
       - in: path
@@ -9843,8 +9847,145 @@ paths:
       description: "Lists the authorization details the user approved or denied that\
         \ have not expired. User must have the DOMAIN_USER[READ] permission on the\
         \ specified domain or DOMAIN_USER[READ] permission on the specified environment\
-        \ or DOMAIN_USER[READ] permission on the specified organization"
+        \ or DOMAIN_USER[READ] permission on the specified organization. Consents\
+        \ are sorted by the requested field, then by id. Follow nextCursor to get\
+        \ the next page."
       operationId: listUserAuthorizationDetailConsents
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - description: Keeps only the consents given to this client
+        in: query
+        name: clientId
+        schema:
+          type: string
+      - description: "Type to match, ignoring case; * matches any characters"
+        in: query
+        name: type
+        schema:
+          type: string
+      - description: "Page size, at most 100; a larger value is reduced to 100"
+        in: query
+        name: limit
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+      - description: Field to sort by
+        in: query
+        name: sort
+        schema:
+          type: string
+          default: updatedAt
+          enum:
+          - updatedAt
+          - expiresAt
+          - type
+          - status
+      - description: Sort direction
+        in: query
+        name: dir
+        schema:
+          type: string
+          default: DESC
+          enum:
+          - ASC
+          - DESC
+      - description: "Page number, starting at 0. Without a cursor, the response starts\
+          \ at this page."
+        in: query
+        name: page
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          minimum: 0
+      - description: "Position to continue from, as given in a previous page's nextCursor"
+        in: query
+        name: cursor
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationDetailConsentCursorPage"
+          description: A page of the user's authorization detail consents
+        "400":
+          description: "Invalid limit, page, sort, dir or cursor"
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+      summary: List a user's authorization detail consents with cursor-based pagination
+      tags:
+      - user
+      - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/scopes:
+    delete:
+      description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
+        \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
+        \ DOMAIN_USER[UPDATE] permission on the specified organization"
+      operationId: revokeUserScopeConsents
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: clientId
+        schema:
+          type: string
+      responses:
+        "204":
+          description: User scope consents successfully revoked
+        "500":
+          description: Internal server error
+      summary: Revoke a user's scope consents
+      tags:
+      - user
+      - domain
+    get:
+      description: "User must have the DOMAIN_USER[READ] permission on the specified\
+        \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
+        \ permission on the specified organization"
+      operationId: listUserScopeConsents
       parameters:
       - in: path
         name: organizationId
@@ -9877,21 +10018,106 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AuthorizationDetailApprovalEntity"
-          description: User authorization detail consents successfully fetched
-        "404":
-          description: User not found
+                  $ref: "#/components/schemas/ScopeApprovalEntity"
+          description: User scope consents successfully fetched
         "500":
           description: Internal server error
-      summary: Get a user's authorization detail consents
+      summary: List a user's scope consents
+      tags:
+      - user
+      - domain
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/scopes/{consent}:
+    delete:
+      description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
+        \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
+        \ DOMAIN_USER[UPDATE] permission on the specified organization"
+      operationId: revokeUserScopeConsent
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: consent
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: User scope consent successfully revoked
+        "500":
+          description: Internal server error
+      summary: Revoke a user's scope consent
+      tags:
+      - user
+      - domain
+    get:
+      description: "User must have the DOMAIN_USER[READ] permission on the specified\
+        \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
+        \ permission on the specified organization"
+      operationId: getUserScopeConsent
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: consent
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScopeApprovalEntity"
+          description: User scope consent successfully fetched
+        "500":
+          description: Internal server error
+      summary: Get a user's scope consent
       tags:
       - user
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/{consent}:
     delete:
+      deprecated: true
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
-        \ DOMAIN_USER[UPDATE] permission on the specified organization"
+        \ DOMAIN_USER[UPDATE] permission on the specified organization. Deprecated:\
+        \ use DELETE /consents/scopes/{consent} instead."
       operationId: revokeUserConsent
       parameters:
       - in: path
@@ -9929,9 +10155,11 @@ paths:
       - user
       - domain
     get:
+      deprecated: true
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
-        \ permission on the specified organization"
+        \ permission on the specified organization. Deprecated: use GET /consents/scopes/{consent}\
+        \ instead."
       operationId: getUserConsent
       parameters:
       - in: path
@@ -14177,6 +14405,7 @@ components:
           - DENIED
         type:
           type: string
+          readOnly: true
         typeEntity:
           $ref: "#/components/schemas/AuthorizationDetailTypeEntity"
         updatedAt:
@@ -14185,6 +14414,21 @@ components:
           description: Epoch timestamp in milliseconds.
         userId:
           $ref: "#/components/schemas/UserId"
+    AuthorizationDetailConsentCursorPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthorizationDetailApprovalEntity"
+        nextCursor:
+          type: string
+        page:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
     AuthorizationDetailType:
       type: object
       properties:

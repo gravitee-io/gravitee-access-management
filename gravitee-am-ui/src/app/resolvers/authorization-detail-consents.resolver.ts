@@ -26,7 +26,6 @@ export class AuthorizationDetailConsentsResolver {
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const domainId = route.parent.data['domain'].id;
     const userId = route.paramMap.get('userId');
-    const clientId = route.paramMap.get('clientId') ?? route.queryParamMap.get('clientId');
-    return this.userService.authorizationDetailConsents(domainId, userId, clientId);
+    return this.userService.allAuthorizationDetailConsents(domainId, userId);
   }
 }

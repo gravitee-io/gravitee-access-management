@@ -80,11 +80,22 @@
       </ngx-datatable-column>
     </ngx-datatable>
     <div
-      *ngIf="authorizationDetailConsents.length > 0"
+      *ngIf="hasAuthorizationDetailConsents"
       class="user-application-authorization-details"
       data-testid="userAuthorizationDetailConsents"
     >
       <h3>Authorization details</h3>
+      <mat-form-field appearance="fill" floatLabel="always" class="user-application-authorization-details-filter">
+        <mat-icon matPrefix>filter_list</mat-icon>
+        <mat-label>Filter by type</mat-label>
+        <input
+          type="text"
+          matInput
+          placeholder="Type"
+          data-testid="userAuthorizationDetailConsentsTypeFilter"
+          (input)="onDetailsTypeFilter($event)"
+        />
+      </mat-form-field>
       <ngx-datatable
         #authorizationDetailsTable
         class="material"
@@ -93,7 +104,16 @@
         [footerHeight]="50"
         [rowHeight]="50"
         [rows]="authorizationDetailConsents"
-        [sorts]="[{ prop: 'status', dir: 'desc' }]"
+        [externalPaging]="true"
+        [externalSorting]="true"
+        [count]="detailsPage.totalElements"
+        [offset]="detailsPage.pageNumber"
+        [limit]="detailsPage.size"
+        [loadingIndicator]="detailsLoading"
+        [sorts]="detailsSorts"
+        [messages]="{ emptyMessage: 'No authorization details of this type' }"
+        (sort)="setDetailsSort($event)"
+        (page)="setDetailsPage($event)"
         [rowClass]="getRowClass"
       >
         <ngx-datatable-row-detail [rowHeight]="220">
@@ -132,8 +152,8 @@
             <span *ngIf="row.typeEntity?.name"
               >| <small>{{ row.typeEntity.name }}</small></span
             >
-            <span *ngIf="row.typeEntity?.description"
-              >| <small>{{ row.typeEntity.description }}</small></span
+            <span *ngIf="row.typeEntity?.description">
+              | <small>{{ row.typeEntity.description }}</small></span
             >
           </ng-template>
         </ngx-datatable-column>
@@ -142,7 +162,7 @@
             {{ row.updatedAt | humanDate }}
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Expires at" [width]="120" [minWidth]="100">
+        <ngx-datatable-column name="Expires at" prop="expiresAt" [width]="120" [minWidth]="100">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <span>{{ row.expiresAt | humanDate }}</span>
           </ng-template>

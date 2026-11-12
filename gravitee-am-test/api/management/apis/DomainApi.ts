@@ -64,9 +64,9 @@ import {
   AuthenticationDeviceNotifier,
   AuthenticationDeviceNotifierFromJSON,
   AuthenticationDeviceNotifierToJSON,
-  AuthorizationDetailApprovalEntity,
-  AuthorizationDetailApprovalEntityFromJSON,
-  AuthorizationDetailApprovalEntityToJSON,
+  AuthorizationDetailConsentCursorPage,
+  AuthorizationDetailConsentCursorPageFromJSON,
+  AuthorizationDetailConsentCursorPageToJSON,
   AuthorizationDetailType,
   AuthorizationDetailTypeFromJSON,
   AuthorizationDetailTypeToJSON,
@@ -1372,6 +1372,14 @@ export interface GetUserCredentialRequest {
   credential: string;
 }
 
+export interface GetUserScopeConsentRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  consent: string;
+}
+
 export interface ListAlertNotifiersRequest {
   organizationId: string;
   environmentId: string;
@@ -1647,6 +1655,12 @@ export interface ListUserAuthorizationDetailConsentsRequest {
   domain: string;
   user: string;
   clientId?: string;
+  type?: string;
+  limit?: number;
+  sort?: ListUserAuthorizationDetailConsentsSortEnum;
+  dir?: ListUserAuthorizationDetailConsentsDirEnum;
+  page?: number;
+  cursor?: string;
 }
 
 export interface ListUserCertificateCredentialsRequest {
@@ -1698,6 +1712,14 @@ export interface ListUserRolesRequest {
   domain: string;
   user: string;
   dynamic?: boolean;
+}
+
+export interface ListUserScopeConsentsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  clientId?: string;
 }
 
 export interface ListUsersRequest {
@@ -1888,6 +1910,22 @@ export interface RevokeUserRoleRequest {
   domain: string;
   user: string;
   role: string;
+}
+
+export interface RevokeUserScopeConsentRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  consent: string;
+}
+
+export interface RevokeUserScopeConsentsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  clientId?: string;
 }
 
 export interface RotateCertificateRequest {
@@ -12138,7 +12176,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization. Deprecated: use GET /consents/scopes/{consent} instead.
    * Get a user consent
    */
   async getUserConsentRaw(
@@ -12211,7 +12249,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization. Deprecated: use GET /consents/scopes/{consent} instead.
    * Get a user consent
    */
   async getUserConsent(
@@ -12304,6 +12342,91 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Credential> {
     const response = await this.getUserCredentialRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get a user\'s scope consent
+   */
+  async getUserScopeConsentRaw(
+    requestParameters: GetUserScopeConsentRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ScopeApprovalEntity>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling getUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.consent === null || requestParameters.consent === undefined) {
+      throw new runtime.RequiredError(
+        'consent',
+        'Required parameter requestParameters.consent was null or undefined when calling getUserScopeConsent.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/scopes/{consent}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'consent'}}`, encodeURIComponent(String(requestParameters.consent))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ScopeApprovalEntityFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get a user\'s scope consent
+   */
+  async getUserScopeConsent(
+    requestParameters: GetUserScopeConsentRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ScopeApprovalEntity> {
+    const response = await this.getUserScopeConsentRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -14932,13 +15055,13 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the authorization details the user approved or denied that have not expired. User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-   * Get a user\'s authorization detail consents
+   * Lists the authorization details the user approved or denied that have not expired. User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization. Consents are sorted by the requested field, then by id. Follow nextCursor to get the next page.
+   * List a user\'s authorization detail consents with cursor-based pagination
    */
   async listUserAuthorizationDetailConsentsRaw(
     requestParameters: ListUserAuthorizationDetailConsentsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<AuthorizationDetailApprovalEntity>>> {
+  ): Promise<runtime.ApiResponse<AuthorizationDetailConsentCursorPage>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -14973,6 +15096,30 @@ export class DomainApi extends runtime.BaseAPI {
       queryParameters['clientId'] = requestParameters.clientId;
     }
 
+    if (requestParameters.type !== undefined) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.sort !== undefined) {
+      queryParameters['sort'] = requestParameters.sort;
+    }
+
+    if (requestParameters.dir !== undefined) {
+      queryParameters['dir'] = requestParameters.dir;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.cursor !== undefined) {
+      queryParameters['cursor'] = requestParameters.cursor;
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     if (this.configuration && this.configuration.accessToken) {
@@ -14997,17 +15144,17 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthorizationDetailApprovalEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationDetailConsentCursorPageFromJSON(jsonValue));
   }
 
   /**
-   * Lists the authorization details the user approved or denied that have not expired. User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-   * Get a user\'s authorization detail consents
+   * Lists the authorization details the user approved or denied that have not expired. User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization. Consents are sorted by the requested field, then by id. Follow nextCursor to get the next page.
+   * List a user\'s authorization detail consents with cursor-based pagination
    */
   async listUserAuthorizationDetailConsents(
     requestParameters: ListUserAuthorizationDetailConsentsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<AuthorizationDetailApprovalEntity>> {
+  ): Promise<AuthorizationDetailConsentCursorPage> {
     const response = await this.listUserAuthorizationDetailConsentsRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -15090,7 +15237,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization. Deprecated: use GET /consents/scopes instead.
    * Get a user consents
    */
   async listUserConsentsRaw(
@@ -15159,7 +15306,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization. Deprecated: use GET /consents/scopes instead.
    * Get a user consents
    */
   async listUserConsents(
@@ -15556,6 +15703,87 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<Role>> {
     const response = await this.listUserRolesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * List a user\'s scope consents
+   */
+  async listUserScopeConsentsRaw(
+    requestParameters: ListUserScopeConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<ScopeApprovalEntity>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listUserScopeConsents.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listUserScopeConsents.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listUserScopeConsents.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling listUserScopeConsents.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.clientId !== undefined) {
+      queryParameters['clientId'] = requestParameters.clientId;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/scopes`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ScopeApprovalEntityFromJSON));
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * List a user\'s scope consents
+   */
+  async listUserScopeConsents(
+    requestParameters: ListUserScopeConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<ScopeApprovalEntity>> {
+    const response = await this.listUserScopeConsentsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -17202,7 +17430,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization. Deprecated: use DELETE /consents/scopes/{consent} instead.
    * Revoke a user consent
    */
   async revokeUserConsentRaw(
@@ -17275,7 +17503,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization. Deprecated: use DELETE /consents/scopes/{consent} instead.
    * Revoke a user consent
    */
   async revokeUserConsent(
@@ -17286,7 +17514,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization. Deprecated: use DELETE /consents/scopes instead.
    * Revoke user consents
    */
   async revokeUserConsentsRaw(
@@ -17355,7 +17583,7 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization. Deprecated: use DELETE /consents/scopes instead.
    * Revoke user consents
    */
   async revokeUserConsents(
@@ -17529,6 +17757,170 @@ export class DomainApi extends runtime.BaseAPI {
   async revokeUserRole(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<User> {
     const response = await this.revokeUserRoleRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s scope consent
+   */
+  async revokeUserScopeConsentRaw(
+    requestParameters: RevokeUserScopeConsentRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling revokeUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling revokeUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling revokeUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling revokeUserScopeConsent.',
+      );
+    }
+
+    if (requestParameters.consent === null || requestParameters.consent === undefined) {
+      throw new runtime.RequiredError(
+        'consent',
+        'Required parameter requestParameters.consent was null or undefined when calling revokeUserScopeConsent.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/scopes/{consent}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'consent'}}`, encodeURIComponent(String(requestParameters.consent))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s scope consent
+   */
+  async revokeUserScopeConsent(
+    requestParameters: RevokeUserScopeConsentRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.revokeUserScopeConsentRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s scope consents
+   */
+  async revokeUserScopeConsentsRaw(
+    requestParameters: RevokeUserScopeConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling revokeUserScopeConsents.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling revokeUserScopeConsents.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling revokeUserScopeConsents.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling revokeUserScopeConsents.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.clientId !== undefined) {
+      queryParameters['clientId'] = requestParameters.clientId;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/scopes`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s scope consents
+   */
+  async revokeUserScopeConsents(
+    requestParameters: RevokeUserScopeConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.revokeUserScopeConsentsRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -21158,6 +21550,26 @@ export const ListTrustedDomainsCursorUsageEnum = {
   CrossAppAccess: 'CROSS_APP_ACCESS',
 } as const;
 export type ListTrustedDomainsCursorUsageEnum = typeof ListTrustedDomainsCursorUsageEnum[keyof typeof ListTrustedDomainsCursorUsageEnum];
+/**
+ * @export
+ */
+export const ListUserAuthorizationDetailConsentsSortEnum = {
+  UpdatedAt: 'updatedAt',
+  ExpiresAt: 'expiresAt',
+  Type: 'type',
+  Status: 'status',
+} as const;
+export type ListUserAuthorizationDetailConsentsSortEnum =
+  typeof ListUserAuthorizationDetailConsentsSortEnum[keyof typeof ListUserAuthorizationDetailConsentsSortEnum];
+/**
+ * @export
+ */
+export const ListUserAuthorizationDetailConsentsDirEnum = {
+  Asc: 'ASC',
+  Desc: 'DESC',
+} as const;
+export type ListUserAuthorizationDetailConsentsDirEnum =
+  typeof ListUserAuthorizationDetailConsentsDirEnum[keyof typeof ListUserAuthorizationDetailConsentsDirEnum];
 /**
  * @export
  */

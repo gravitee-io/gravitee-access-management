@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.dataplane.mongodb.repository;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.AuthorizationDetailApprovalRepository;
 import io.gravitee.am.dataplane.mongodb.repository.model.AuthorizationDetailApprovalMongo;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.reactivex.rxjava3.core.Completable;
@@ -34,12 +37,19 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.regex;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.DEFAULT_USER_FIELDS;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
@@ -51,6 +61,7 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_DIGEST = "digest";
     private static final String FIELD_EXPIRES_AT = "expiresAt";
+    private static final String FIELD_TYPE = "type";
     private MongoCollection<AuthorizationDetailApprovalMongo> collection;
 
     @PostConstruct
@@ -68,11 +79,50 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     }
 
     @Override
-    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
-        return Flowable.fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain),
-                        userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date()))))
-                .map(this::convert)
+    public Single<CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest>> findByDomainAndUser(
+            String domain, UserId userId, AuthorizationDetailApprovalCursorRequest cursor, int limit) {
+        List<Bson> filters = new ArrayList<>(List.of(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS),
+                gte(FIELD_EXPIRES_AT, new Date())));
+        if (cursor.getClientId() != null) {
+            filters.add(eq(FIELD_CLIENT_ID, cursor.getClientId()));
+        }
+        if (cursor.getType() != null) {
+            filters.add(regex(FIELD_TYPE, typePattern(cursor.getType())));
+        }
+        Bson filter = and(filters);
+        Single<Long> count = Single.fromPublisher(collection.countDocuments(filter, countOptions()));
+        if (!cursor.isFirstPage()) {
+            filter = and(filter, beyondCursor(cursor));
+        }
+        int direction = cursor.getSortDirection().toInt();
+        var find = withMaxTime(collection.find(filter))
+                .sort(new BasicDBObject(cursor.getSortField(), direction).append(FIELD_ID, direction))
+                .skip(cursor.isFirstPage() ? cursor.getPage() * limit : 0)
+                .limit(limit + 1);
+        Single<List<AuthorizationDetailApproval>> items = Flowable.fromPublisher(find).map(this::convert).toList();
+        return Single.zip(count, items, (totalCount, found) -> {
+                    if (found.size() <= limit) {
+                        return new CursorPage<>(found, (AuthorizationDetailApprovalCursorRequest) null, totalCount);
+                    }
+                    List<AuthorizationDetailApproval> data = found.subList(0, limit);
+                    return new CursorPage<>(data, cursor.next(data.get(limit - 1)), totalCount);
+                })
                 .observeOn(Schedulers.computation());
+    }
+
+    private static Pattern typePattern(String type) {
+        // -1 keeps the empty parts around leading and trailing wildcards
+        String regex = Arrays.stream(type.split("\\*+", -1))
+                .map(part -> part.isEmpty() ? "" : Pattern.quote(part))
+                .collect(Collectors.joining(".*", "^", "$"));
+        return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+    }
+
+    private static Bson beyondCursor(AuthorizationDetailApprovalCursorRequest cursor) {
+        Object lastValue = cursor.isDateSort() ? new Date(Long.parseLong(cursor.getLastSortValue())) : cursor.getLastSortValue();
+        String operator = cursor.getSortDirection().isAscending() ? "$gt" : "$lt";
+        return or(new BasicDBObject(cursor.getSortField(), new BasicDBObject(operator, lastValue)),
+                and(eq(cursor.getSortField(), lastValue), new BasicDBObject(FIELD_ID, new BasicDBObject(operator, cursor.getLastId()))));
     }
 
     @Override
@@ -163,6 +213,7 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
         approvalMongo.setClientId(approval.getClientId());
         approvalMongo.setDomain(approval.getDomain());
         approvalMongo.setDetail(approval.getDetail() == null ? null : new Document(approval.getDetail()));
+        approvalMongo.setType(approval.getType());
         approvalMongo.setDigest(approval.getDigest());
         approvalMongo.setStatus(approval.getStatus() == null ? null : approval.getStatus().name());
         approvalMongo.setExpiresAt(approval.getExpiresAt());

@@ -28,7 +28,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,8 +42,9 @@ import static org.mockito.Mockito.doReturn;
  */
 public class UserConsentResourceTest extends JerseySpringTest {
 
-    @Test
-    public void shouldGetUserConsent() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldGetUserConsent(String consentsPath) {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -67,7 +69,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path(mockUser.getId())
-                .path("consents")
+                .path(consentsPath)
                 .path(scopeApproval.getId())
                 .request()
                 .get();
@@ -75,8 +77,9 @@ public class UserConsentResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
-    @Test
-    public void shouldNotGetUserConsent_notOwnedByUser() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldNotGetUserConsent_notOwnedByUser(String consentsPath) {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -88,7 +91,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path("user-id-1")
-                .path("consents")
+                .path(consentsPath)
                 .path("consent-id")
                 .request()
                 .get();
@@ -96,8 +99,9 @@ public class UserConsentResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
-    @Test
-    public void shouldGetUserConsent_technicalManagementException() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldGetUserConsent_technicalManagementException(String consentsPath) {
         final String domainId = "domain-1";
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
@@ -105,14 +109,15 @@ public class UserConsentResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path("user1")
-                .path("consents")
+                .path(consentsPath)
                 .path("consent1")
                 .request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
-    @Test
-    public void shouldRevokeUserConsent() {
+    @ParameterizedTest
+    @ValueSource(strings = {"consents", "consents/scopes"})
+    public void shouldRevokeUserConsent(String consentsPath) {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -127,7 +132,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("users")
                 .path(mockUser.getId())
-                .path("consents")
+                .path(consentsPath)
                 .path("consent1")
                 .request()
                 .delete();

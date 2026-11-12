@@ -46,6 +46,7 @@ public class JdbcAuthorizationDetailApproval {
     private String clientId;
     private String domain;
     private String detail;
+    private String type;
     private String digest;
 
     private String status;
@@ -65,6 +66,7 @@ public class JdbcAuthorizationDetailApproval {
         approval.setClientId(entity.getClientId());
         approval.setDomain(entity.getDomain());
         approval.setDetail(JSONMapper.toJson(entity.getDetail()));
+        approval.setType(entity.getType());
         approval.setDigest(entity.getDigest());
         approval.setStatus(entity.getStatus() == null ? null : entity.getStatus().name());
         approval.setExpiresAt(DateHelper.toLocalDateTime(entity.getExpiresAt()));

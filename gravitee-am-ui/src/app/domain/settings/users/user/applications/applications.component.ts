@@ -93,7 +93,7 @@ export class UserApplicationsComponent implements OnInit {
   loadConsents() {
     forkJoin([
       this.userService.consents(this.domainId, this.user.id, null),
-      this.userService.authorizationDetailConsents(this.domainId, this.user.id, null),
+      this.userService.allAuthorizationDetailConsents(this.domainId, this.user.id),
     ]).subscribe(([consents, authorizationDetailConsents]) => this.setConsents(consents, authorizationDetailConsents));
   }
 

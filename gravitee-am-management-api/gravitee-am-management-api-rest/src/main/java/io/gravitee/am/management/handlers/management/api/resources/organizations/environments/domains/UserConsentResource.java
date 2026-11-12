@@ -15,22 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
-import io.gravitee.am.management.handlers.management.api.adapter.ConsentApplicationEntityFactory;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.RevokeTokenManagementService;
-import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.UserId;
-import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ScopeApprovalService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,9 +28,9 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
-import jakarta.ws.rs.core.Response;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.ws.rs.core.Context;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,31 +38,25 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class UserConsentResource extends AbstractResource {
 
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private ScopeApprovalService scopeApprovalService;
-
-    @Autowired
-    private ConsentApplicationEntityFactory consentApplicationEntityFactory;
-
-    @Autowired
-    private RevokeTokenManagementService revokeTokenManagementService;
+    @Context
+    private ResourceContext resourceContext;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "getUserConsent",
+            deprecated = true,
             summary = "Get a user consent",
             description = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
-                    "or DOMAIN_USER[READ] permission on the specified organization")
+                    "or DOMAIN_USER[READ] permission on the specified organization. " +
+                    "Deprecated: use GET /consents/scopes/{consent} instead.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User consent successfully fetched",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ScopeApprovalEntity.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @Deprecated
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -83,31 +64,22 @@ public class UserConsentResource extends AbstractResource {
             @PathParam("user") String user,
             @PathParam("consent") String consent,
             @Suspended final AsyncResponse response) {
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> scopeApprovalService.findByIdAndUser(domain, consent, UserId.internal(user)))
-                        .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consent)))
-                        .flatMapSingle(scopeApproval -> getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
-                                .map(clientEntity -> {
-                                    ScopeApprovalEntity scopeApprovalEntity = new ScopeApprovalEntity(scopeApproval);
-                                    scopeApprovalEntity.setClientEntity(clientEntity);
-                                    return scopeApprovalEntity;
-                                })))
-                .subscribe(response::resume, response::resume);
+        resourceContext.getResource(UserScopeConsentResource.class).get(organizationId, environmentId, domainId, user, consent, response);
     }
 
     @DELETE
     @Operation(
             operationId = "revokeUserConsent",
+            deprecated = true,
             summary = "Revoke a user consent",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization. " +
+                    "Deprecated: use DELETE /consents/scopes/{consent} instead.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User consent successfully revoked"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @Deprecated
     public void revoke(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -115,17 +87,6 @@ public class UserConsentResource extends AbstractResource {
             @PathParam("user") String user,
             @PathParam("consent") String consent,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapCompletable(domain -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, (d, t) -> revokeTokenManagementService.sendProcessRequest(d, t), authenticatedUser)))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
-
-    private Single<ApplicationEntity> getClient(String domain, String clientId) {
-        return consentApplicationEntityFactory.resolve(domain, clientId);
+        resourceContext.getResource(UserScopeConsentResource.class).revoke(organizationId, environmentId, domainId, user, consent, response);
     }
 }

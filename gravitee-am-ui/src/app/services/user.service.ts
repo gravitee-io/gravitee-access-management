@@ -15,12 +15,14 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { EMPTY, Observable } from 'rxjs';
+import { expand, map, reduce } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
+import { CursorResponse } from '../utils/cursor';
 
+import { Sort } from './api.model';
 import { OrganizationService } from './organization.service';
 import { SearchParams } from './search';
 
@@ -106,21 +108,50 @@ export class UserService {
   }
 
   consents(domainId, userId, clientId): Observable<any> {
-    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/consents' + (clientId ? '?clientId=' + clientId : ''));
-  }
-
-  authorizationDetailConsents(domainId, userId, clientId): Observable<any> {
     return this.http.get<any>(
-      this.usersURL + domainId + '/users/' + userId + '/consents/authorization-details' + (clientId ? '?clientId=' + clientId : ''),
+      this.usersURL + domainId + '/users/' + userId + '/consents/scopes' + (clientId ? '?clientId=' + clientId : ''),
     );
   }
 
+  authorizationDetailConsents(
+    domainId: string,
+    userId: string,
+    filters: { clientId?: string; type?: string },
+    size: number,
+    page: number,
+    sort: Sort,
+  ): Observable<CursorResponse> {
+    const params = [`page=${page}`, `limit=${size}`, `sort=${sort.prop}`, `dir=${sort.dir.toUpperCase()}`];
+    if (filters.clientId) {
+      params.push('clientId=' + encodeURIComponent(filters.clientId));
+    }
+    if (filters.type) {
+      params.push('type=' + encodeURIComponent(filters.type));
+    }
+    return this.http.get<CursorResponse>(
+      this.usersURL + domainId + '/users/' + userId + '/consents/authorization-details?' + params.join('&'),
+    );
+  }
+
+  allAuthorizationDetailConsents(domainId: string, userId: string): Observable<any[]> {
+    return this.authorizationDetailConsents(domainId, userId, {}, 100, 0, { prop: 'updatedAt', dir: 'desc' }).pipe(
+      expand((page) => (page.nextCursor ? this.nextAuthorizationDetailConsents(page.nextCursor) : EMPTY)),
+      reduce((all, page) => all.concat(page.data), []),
+    );
+  }
+
+  nextAuthorizationDetailConsents(nextCursor: string): Observable<CursorResponse> {
+    return this.http.get<CursorResponse>(AppConfig.settings.baseURL + nextCursor);
+  }
+
   revokeConsents(domainId, userId, clientId): Observable<any> {
-    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents' + (clientId ? '?clientId=' + clientId : ''));
+    return this.http.delete<any>(
+      this.usersURL + domainId + '/users/' + userId + '/consents/scopes' + (clientId ? '?clientId=' + clientId : ''),
+    );
   }
 
   revokeConsent(domainId, userId, consentId): Observable<any> {
-    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents/' + consentId);
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents/scopes/' + consentId);
   }
 
   roles(domainId, userId, dynamic = false): Observable<any> {

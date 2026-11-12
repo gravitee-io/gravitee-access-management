@@ -21,7 +21,7 @@ import {
   performPost,
   extractXsrfTokenAndActionResponse,
 } from '@gateway-commands/oauth-oidc-commands';
-import { createUser, listUserConsents } from '@management-commands/user-management-commands';
+import { createUser, listUserScopeConsents } from '@management-commands/user-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 import { SelfAccountFixture, setupFixture, accountApiUrl, createUserWithToken, tokenFor } from './fixture/self-account-fixture';
@@ -171,7 +171,7 @@ describe('SelfAccount - Consent', () => {
 
     // Checked through the management API rather than by signing the owner in again: a fresh
     // sign-in records a new approval and would mask whether the original survived.
-    const ownerConsents: any = await listUserConsents(fixture.domain.id, fixture.accessToken, owner.id);
+    const ownerConsents: any = await listUserScopeConsents(fixture.domain.id, fixture.accessToken, owner.id);
     expect(ownerConsents.map((c: any) => c.id)).toContain(consentId);
   });
 

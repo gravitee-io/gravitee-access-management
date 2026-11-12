@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.oauth2;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.UserId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -50,4 +51,12 @@ public class AuthorizationDetailApproval {
 
     @Schema(type = "java.lang.Long")
     private Date updatedAt;
+
+    /**
+     * The {@code type} member of {@code detail}.
+     */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getType() {
+        return detail != null && detail.get("type") instanceof String type ? type : null;
+    }
 }

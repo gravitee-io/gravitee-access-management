@@ -16,7 +16,9 @@
 package io.gravitee.am.dataplane.api.repository;
 
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.reactivex.rxjava3.core.Completable;
@@ -31,9 +33,10 @@ public interface AuthorizationDetailApprovalRepository extends CrudRepository<Au
     Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId);
 
     /**
-     * Returns the approvals that have not expired.
+     * Returns a page of the approvals that have not expired.
      */
-    Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId);
+    Single<CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest>> findByDomainAndUser(
+            String domain, UserId userId, AuthorizationDetailApprovalCursorRequest cursor, int limit);
 
     /**
      * Creates the approval, or replaces the one with the same domain, client, user and digest.
