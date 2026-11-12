@@ -41,6 +41,14 @@ export class UserDetailPage extends BasePage {
     return this.page.locator('[data-testid="userAuthorizationDetailConsents"]');
   }
 
+  get authorizationDetailConsentRows(): Locator {
+    return this.authorizationDetailConsents.locator('datatable-body-row');
+  }
+
+  async filterAuthorizationDetailConsentsByType(type: string): Promise<void> {
+    await this.page.locator('[data-testid="userAuthorizationDetailConsentsTypeFilter"]').fill(type);
+  }
+
   authorizationDetailConsentRow(type: string): Locator {
     return this.authorizationDetailConsents.locator('datatable-body-row').filter({ hasText: type });
   }

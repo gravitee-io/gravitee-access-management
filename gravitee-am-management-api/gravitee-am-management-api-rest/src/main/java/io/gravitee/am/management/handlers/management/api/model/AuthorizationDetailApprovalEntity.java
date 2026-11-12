@@ -26,8 +26,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AuthorizationDetailApprovalEntity extends AuthorizationDetailApproval {
 
-    private String type;
-
     private ApplicationEntity clientEntity;
 
     @Schema(description = "The domain's definition of the type, absent when the type has been deleted.")
@@ -44,8 +42,5 @@ public class AuthorizationDetailApprovalEntity extends AuthorizationDetailApprov
         setExpiresAt(approval.getExpiresAt());
         setCreatedAt(approval.getCreatedAt());
         setUpdatedAt(approval.getUpdatedAt());
-        if (approval.getDetail() != null && approval.getDetail().get("type") instanceof String detailType) {
-            this.type = detailType;
-        }
     }
 }

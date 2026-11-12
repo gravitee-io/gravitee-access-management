@@ -15,16 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,8 +34,6 @@ import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,25 +44,22 @@ public class UserConsentsResource extends AbstractResource {
     @Context
     private ResourceContext resourceContext;
 
-    @Context
-    private DomainService domainService;
-
-    @Autowired
-    private ScopeApprovalAdapter approvalAdapter;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             operationId = "listUserConsents",
+            deprecated = true,
             summary = "Get a user consents",
             description = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
-                    "or DOMAIN_USER[READ] permission on the specified organization")
+                    "or DOMAIN_USER[READ] permission on the specified organization. " +
+                    "Deprecated: use GET /consents/scopes instead.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User consents successfully fetched",
                     content = @Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = ScopeApprovalEntity.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @Deprecated
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -79,24 +67,22 @@ public class UserConsentsResource extends AbstractResource {
             @PathParam("user") String user,
             @QueryParam("clientId") String clientId,
             @Suspended final AsyncResponse response) {
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> approvalAdapter.getUserConsents(domain, user, clientId)))
-                .subscribe(response::resume, response::resume);
+        resourceContext.getResource(UserScopeConsentsResource.class).list(organizationId, environmentId, domainId, user, clientId, response);
     }
 
     @DELETE
     @Operation(
             operationId = "revokeUserConsents",
+            deprecated = true,
             summary = "Revoke user consents",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization. " +
+                    "Deprecated: use DELETE /consents/scopes instead.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User consents successfully revoked"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
+    @Deprecated
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -104,13 +90,12 @@ public class UserConsentsResource extends AbstractResource {
             @PathParam("user") String user,
             @QueryParam("clientId") String clientId,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
+        resourceContext.getResource(UserScopeConsentsResource.class).delete(organizationId, environmentId, domainId, user, clientId, response);
+    }
 
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domainId)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapCompletable(domain -> approvalAdapter.revokeUserConsents(domain, user, clientId, authenticatedUser)))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    @Path("scopes")
+    public UserScopeConsentsResource getUserScopeConsentsResource() {
+        return resourceContext.getResource(UserScopeConsentsResource.class);
     }
 
     @Path("authorization-details")

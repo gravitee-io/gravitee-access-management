@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { find } from 'lodash';
 import { DatatableComponent } from '@swimlane/ngx-datatable';
 
@@ -23,6 +24,7 @@ import { SnackbarService } from '../../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../../services/dialog.service';
 import { UserService } from '../../../../../../services/user.service';
 import { AuthService } from '../../../../../../services/auth.service';
+import { CursorResponse, NgxTablePageInfo } from '../../../../../../utils/cursor';
 
 @Component({
   selector: 'app-user-application',
@@ -30,14 +32,28 @@ import { AuthService } from '../../../../../../services/auth.service';
   styleUrls: ['./application.component.scss'],
   standalone: false,
 })
-export class UserApplicationComponent implements OnInit {
+export class UserApplicationComponent implements OnInit, OnDestroy {
   private domainId: string;
   private userId: string;
+  private detailsLoadSubject = new Subject<{ cursor?: string }>();
+  private detailsTypeFilterSubject = new Subject<string>();
+  private detailsSubscriptions: Subscription[] = [];
+  private detailsTypeFilter: string;
   application: any;
   applicationDisplayName: string;
   clientId: string;
   consents: any[];
-  authorizationDetailConsents: any[];
+  authorizationDetailConsents: any[] = [];
+  hasAuthorizationDetailConsents = false;
+  authorizationDetailConsentsLoaded = false;
+  detailsLoading = false;
+  detailsPage = {
+    totalElements: 0,
+    pageNumber: 0,
+    size: 10,
+  };
+  detailsNextCursor: string;
+  detailsSorts = [{ prop: 'updatedAt', dir: 'desc' }];
   canRevoke: boolean;
   detailEditorOptions = {
     lineWrapping: true,
@@ -65,10 +81,32 @@ export class UserApplicationComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.userId = this.route.snapshot.params['userId'];
     this.consents = this.route.snapshot.data['consents'] ?? [];
-    this.authorizationDetailConsents = this.route.snapshot.data['authorizationDetailConsents'] ?? [];
     this.clientId = this.route.snapshot.queryParamMap.get('clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
     this.applicationDisplayName = this.resolveApplicationDisplayName();
+
+    this.detailsSubscriptions.push(
+      this.detailsLoadSubject
+        .pipe(
+          switchMap(({ cursor }) => {
+            this.detailsLoading = true;
+            return this.detailsRequest(cursor).pipe(
+              catchError(() => EMPTY),
+              finalize(() => (this.detailsLoading = false)),
+            );
+          }),
+        )
+        .subscribe((page) => this.applyDetailsPage(page)),
+      this.detailsTypeFilterSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe((type) => {
+        this.detailsTypeFilter = type || undefined;
+        this.restartDetails();
+      }),
+    );
+    this.loadDetails();
+  }
+
+  ngOnDestroy() {
+    this.detailsSubscriptions.forEach((subscription) => subscription.unsubscribe());
   }
 
   private resolveApplicationDisplayName(): string {
@@ -106,7 +144,7 @@ export class UserApplicationComponent implements OnInit {
         switchMap(() => this.userService.revokeConsent(this.domainId, this.userId, consent.id)),
         tap(() => {
           this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
-          if (this.consents.length === 1 && this.authorizationDetailConsents.length === 0) {
+          if (this.consents.length === 1 && !this.hasAuthorizationDetailConsents) {
             this.router.navigate(['..'], { relativeTo: this.route });
           } else {
             this.loadConsents();
@@ -125,7 +163,62 @@ export class UserApplicationComponent implements OnInit {
   }
 
   get showScopeConsents() {
-    return this.consents.length > 0 || this.authorizationDetailConsents.length === 0;
+    return this.consents.length > 0 || (this.authorizationDetailConsentsLoaded && !this.hasAuthorizationDetailConsents);
+  }
+
+  onDetailsTypeFilter(event) {
+    this.detailsTypeFilterSubject.next(event?.target?.value?.trim());
+  }
+
+  setDetailsPage(pageInfo: NgxTablePageInfo) {
+    const cursor = this.detailsPage.pageNumber + 1 === pageInfo.offset ? this.detailsNextCursor : undefined;
+    this.detailsPage.pageNumber = pageInfo.offset;
+    this.loadDetails(cursor);
+  }
+
+  setDetailsSort($event: any) {
+    const sort = $event?.sorts?.[0];
+    if (!sort) {
+      return;
+    }
+    this.detailsSorts = [sort];
+    this.restartDetails();
+  }
+
+  private restartDetails() {
+    this.detailsPage.pageNumber = 0;
+    this.detailsNextCursor = undefined;
+    this.loadDetails();
+  }
+
+  private loadDetails(cursor?: string) {
+    this.detailsLoadSubject.next({ cursor });
+  }
+
+  private detailsRequest(cursor?: string) {
+    if (cursor) {
+      return this.userService.nextAuthorizationDetailConsents(cursor);
+    }
+    return this.userService.authorizationDetailConsents(
+      this.domainId,
+      this.userId,
+      { clientId: this.clientId, type: this.detailsTypeFilter ? '*' + this.detailsTypeFilter + '*' : undefined },
+      this.detailsPage.size,
+      this.detailsPage.pageNumber,
+      this.detailsSorts[0],
+    );
+  }
+
+  private applyDetailsPage(page: CursorResponse) {
+    this.authorizationDetailConsents = page.data;
+    this.detailsPage.totalElements = page.totalCount;
+    this.detailsPage.pageNumber = page.page;
+    this.detailsNextCursor = page.nextCursor;
+    if (!this.detailsTypeFilter) {
+      this.hasAuthorizationDetailConsents = page.totalCount > 0;
+    }
+    this.authorizationDetailConsentsLoaded = true;
+    this.applicationDisplayName = this.resolveApplicationDisplayName();
   }
 
   toggleExpandRow(row) {

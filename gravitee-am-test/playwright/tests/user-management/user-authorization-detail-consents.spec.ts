@@ -16,6 +16,8 @@
 import {
   test,
   expect,
+  ACCOUNT_DETAIL,
+  ACCOUNT_TYPE,
   PAYMENT_DETAIL,
   PAYMENT_TYPE,
   PAYMENT_TYPE_NAME,
@@ -32,9 +34,9 @@ test.describe('User authorization detail consents - Console', () => {
     linkJira(testInfo, 'AM-8126');
     const userPage = new UserDetailPage(page);
 
-    await test.step('consent to a payment detail on the gateway', async () => {
+    await test.step('consent to a payment and an account detail on the gateway', async () => {
       await signInAndConsent(page, consentsBundle.gatewayUrl, consentsBundle.detailApp, {
-        authorization_details: JSON.stringify([PAYMENT_DETAIL]),
+        authorization_details: JSON.stringify([PAYMENT_DETAIL, ACCOUNT_DETAIL]),
       });
     });
 
@@ -52,6 +54,13 @@ test.describe('User authorization detail consents - Console', () => {
       await userPage.expandAuthorizationDetailConsent(PAYMENT_TYPE);
       await expect(userPage.authorizationDetailConsentDetail).toContainText('"amount": "10.00"');
     });
+
+    await test.step('filter the details by part of their type', async () => {
+      await expect(userPage.authorizationDetailConsentRows).toHaveCount(2);
+      await userPage.filterAuthorizationDetailConsentsByType('COUNT_INFO');
+      await expect(userPage.authorizationDetailConsentRows).toHaveCount(1);
+      await expect(userPage.authorizationDetailConsentRow(ACCOUNT_TYPE)).toBeVisible();
+    });
   });
 
   test('AM-8126: an application without authorization detail consents shows no authorization details section', async ({
@@ -67,7 +76,9 @@ test.describe('User authorization detail consents - Console', () => {
 
     await test.step('open the application from the authorized applications', async () => {
       await userPage.navigateToApplications(consentsBundle.domain.id, await consentsBundle.userId());
+      const detailsLoaded = page.waitForResponse((response) => response.url().includes('/consents/authorization-details'));
       await userPage.openApplication(consentsBundle.scopeApp.name);
+      await detailsLoaded;
     });
 
     await test.step('see its scopes and no authorization details', async () => {

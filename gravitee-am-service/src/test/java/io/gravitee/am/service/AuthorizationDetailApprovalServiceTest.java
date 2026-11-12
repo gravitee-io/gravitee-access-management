@@ -23,8 +23,11 @@ import io.gravitee.am.dataplane.api.repository.AuthorizationDetailApprovalReposi
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -45,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -80,7 +85,7 @@ class AuthorizationDetailApprovalServiceTest {
 
     @Test
     void shouldStoreAndAuditAnApproval() {
-        AuthorizationDetailApproval approval = new AuthorizationDetailApproval();
+        AuthorizationDetailApproval approval = approval(ScopeApproval.ApprovalStatus.APPROVED);
         when(repository.upsert(approval)).thenReturn(Single.just(approval));
 
         service.saveConsent(DOMAIN, client, new DefaultUser("user"), REQUESTED, List.of(approval), true).test().assertComplete();
@@ -102,7 +107,7 @@ class AuthorizationDetailApprovalServiceTest {
 
     @Test
     void shouldStoreAndAuditARejection() {
-        AuthorizationDetailApproval denial = new AuthorizationDetailApproval();
+        AuthorizationDetailApproval denial = approval(ScopeApproval.ApprovalStatus.DENIED);
         when(repository.upsert(denial)).thenReturn(Single.just(denial));
 
         service.saveConsent(DOMAIN, client, new DefaultUser("user"), REQUESTED, List.of(denial), false)
@@ -113,8 +118,22 @@ class AuthorizationDetailApprovalServiceTest {
     }
 
     @Test
+    void shouldRejectAnApprovalWithoutATypeOrAStatus() {
+        AuthorizationDetailApproval withoutType = approval(ScopeApproval.ApprovalStatus.APPROVED);
+        withoutType.setDetail(Map.of("actions", List.of("initiate")));
+        AuthorizationDetailApproval withoutStatus = approval(null);
+
+        for (AuthorizationDetailApproval invalid : List.of(withoutType, withoutStatus)) {
+            service.saveConsent(DOMAIN, client, new DefaultUser("user"), REQUESTED, List.of(approval(ScopeApproval.ApprovalStatus.APPROVED), invalid), true)
+                    .test().assertError(TechnicalManagementException.class);
+        }
+
+        verify(repository, never()).upsert(any());
+    }
+
+    @Test
     void shouldAuditAFailureToStore() {
-        AuthorizationDetailApproval approval = new AuthorizationDetailApproval();
+        AuthorizationDetailApproval approval = approval(ScopeApproval.ApprovalStatus.APPROVED);
         when(repository.upsert(approval)).thenReturn(Single.error(new IllegalStateException("unavailable")));
 
         service.saveConsent(DOMAIN, client, new DefaultUser("user"), REQUESTED, List.of(approval), true)
@@ -138,17 +157,20 @@ class AuthorizationDetailApprovalServiceTest {
     void shouldFindTheApprovalsOfTheUser() {
         UserId userId = UserId.internal("user-id");
         AuthorizationDetailApproval approval = new AuthorizationDetailApproval();
-        when(repository.findByDomainAndUser("domain-id", userId)).thenReturn(Flowable.just(approval));
+        var cursor = AuthorizationDetailApprovalCursorRequest.initialCursor("updatedAt", "DESC", 0, null, null);
+        var page = new CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest>(List.of(approval), null, 1L);
+        when(repository.findByDomainAndUser("domain-id", userId, cursor, 10)).thenReturn(Single.just(page));
 
-        service.findByDomainAndUser(DOMAIN, userId).test().assertValues(approval);
+        service.findByDomainAndUser(DOMAIN, userId, cursor, 10).test().assertValue(page);
     }
 
     @Test
     void shouldWrapAFailureToFindTheApprovalsOfTheUser() {
         UserId userId = UserId.internal("user-id");
-        when(repository.findByDomainAndUser("domain-id", userId)).thenReturn(Flowable.error(new IllegalStateException("unavailable")));
+        var cursor = AuthorizationDetailApprovalCursorRequest.initialCursor("updatedAt", "DESC", 0, null, null);
+        when(repository.findByDomainAndUser("domain-id", userId, cursor, 10)).thenReturn(Single.error(new IllegalStateException("unavailable")));
 
-        service.findByDomainAndUser(DOMAIN, userId).test().assertError(TechnicalManagementException.class);
+        service.findByDomainAndUser(DOMAIN, userId, cursor, 10).test().assertError(TechnicalManagementException.class);
     }
 
     @Test
@@ -158,6 +180,13 @@ class AuthorizationDetailApprovalServiceTest {
         service.purgeDataPlane(DOMAIN, new DefaultUser("admin")).test().assertComplete();
 
         verify(repository).deleteByDomain("domain-id");
+    }
+
+    private static AuthorizationDetailApproval approval(ScopeApproval.ApprovalStatus status) {
+        AuthorizationDetailApproval approval = new AuthorizationDetailApproval();
+        approval.setDetail(Map.of("type", "payment_initiation"));
+        approval.setStatus(status);
+        return approval;
     }
 
     private Audit reportedAudit() {

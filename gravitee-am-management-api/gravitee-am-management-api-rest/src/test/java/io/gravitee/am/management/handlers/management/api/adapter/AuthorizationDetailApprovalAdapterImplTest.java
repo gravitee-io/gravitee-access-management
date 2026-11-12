@@ -23,7 +23,9 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetailType;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -34,6 +36,7 @@ import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +45,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -53,6 +57,8 @@ class AuthorizationDetailApprovalAdapterImplTest {
     private static final String DOMAIN_ID = "test-domain";
     private static final Domain DOMAIN = new Domain(DOMAIN_ID);
     private static final String USER_ID = "internal-user-id";
+    private static final AuthorizationDetailApprovalCursorRequest CURSOR =
+            AuthorizationDetailApprovalCursorRequest.initialCursor("updatedAt", "DESC", 0, null, null);
 
     private final DataPlaneRegistry dataPlaneRegistry = mock();
     private final UserRepository userRepository = mock();
@@ -80,42 +86,31 @@ class AuthorizationDetailApprovalAdapterImplTest {
     }
 
     @Test
-    void shouldListTheApprovalsOfEveryClientWithTheirApplicationAndType() {
+    void shouldListAPageOfApprovalsWithTheirApplicationAndType() {
         Map<String, Object> detail = Map.of("type", "payment_initiation", "instructedAmount", Map.of("currency", "EUR", "amount", "10.00"));
-        when(approvalService.findByDomainAndUser(DOMAIN, user.getFullId()))
-                .thenReturn(Flowable.just(approval("client-id", detail, ScopeApproval.ApprovalStatus.APPROVED)));
+        var next = AuthorizationDetailApprovalCursorRequest.initialCursor("updatedAt", "DESC", 1, null, null);
+        givenApprovals(next, approval("client-id", detail, ScopeApproval.ApprovalStatus.APPROVED));
 
-        AuthorizationDetailApprovalEntity entity = underTest.getUserConsents(DOMAIN, USER_ID, null)
-                .test().assertComplete().values().get(0).get(0);
+        var page = underTest.getUserConsents(DOMAIN, USER_ID, CURSOR, 10).test().assertComplete().values().get(0);
 
+        assertThat(page.getNextCursor()).isSameAs(next);
+        assertThat(page.getTotalCount()).isEqualTo(1L);
+        AuthorizationDetailApprovalEntity entity = page.getData().get(0);
         assertThat(entity.getType()).isEqualTo("payment_initiation");
         assertThat(entity.getDetail()).isEqualTo(detail);
         assertThat(entity.getStatus()).isEqualTo(ScopeApproval.ApprovalStatus.APPROVED);
         assertThat(entity.getClientEntity().getId()).isEqualTo("app-id");
         assertThat(entity.getClientEntity().getName()).isEqualTo("My app");
         assertThat(entity.getTypeEntity()).isEqualTo(new AuthorizationDetailTypeEntity("payment_initiation", "Payment", "Initiate a payment"));
-        verify(approvalService, never()).findByDomainAndUserAndClient(any(), any(), any());
-    }
-
-    @Test
-    void shouldOnlyListTheApprovalsOfTheGivenClient() {
-        when(approvalService.findByDomainAndUserAndClient(DOMAIN, user.getFullId(), "client-id"))
-                .thenReturn(Flowable.just(approval("client-id", Map.of("type", "payment_initiation"), ScopeApproval.ApprovalStatus.DENIED)));
-
-        List<AuthorizationDetailApprovalEntity> entities = underTest.getUserConsents(DOMAIN, USER_ID, "client-id")
-                .test().assertComplete().values().get(0);
-
-        assertThat(entities).extracting(AuthorizationDetailApprovalEntity::getStatus).containsExactly(ScopeApproval.ApprovalStatus.DENIED);
-        verify(approvalService, never()).findByDomainAndUser(any(), any());
+        verify(approvalService).findByDomainAndUser(DOMAIN, user.getFullId(), CURSOR, 10);
     }
 
     @Test
     void shouldKeepTheTypeOfAnApprovalWhoseTypeWasDeleted() {
-        when(approvalService.findByDomainAndUser(DOMAIN, user.getFullId()))
-                .thenReturn(Flowable.just(approval("client-id", Map.of("type", "deleted_type"), ScopeApproval.ApprovalStatus.APPROVED)));
+        givenApprovals(null, approval("client-id", Map.of("type", "deleted_type"), ScopeApproval.ApprovalStatus.APPROVED));
 
-        AuthorizationDetailApprovalEntity entity = underTest.getUserConsents(DOMAIN, USER_ID, null)
-                .test().assertComplete().values().get(0).get(0);
+        AuthorizationDetailApprovalEntity entity = underTest.getUserConsents(DOMAIN, USER_ID, CURSOR, 10)
+                .test().assertComplete().values().get(0).getData().get(0);
 
         assertThat(entity.getType()).isEqualTo("deleted_type");
         assertThat(entity.getTypeEntity()).isNull();
@@ -124,11 +119,10 @@ class AuthorizationDetailApprovalAdapterImplTest {
     @Test
     void shouldResolveAnUnknownClient() {
         when(applicationService.findByDomainAndClientId(DOMAIN_ID, "gone-client")).thenReturn(Maybe.empty());
-        when(approvalService.findByDomainAndUser(DOMAIN, user.getFullId()))
-                .thenReturn(Flowable.just(approval("gone-client", Map.of("type", "payment_initiation"), ScopeApproval.ApprovalStatus.APPROVED)));
+        givenApprovals(null, approval("gone-client", Map.of("type", "payment_initiation"), ScopeApproval.ApprovalStatus.APPROVED));
 
-        AuthorizationDetailApprovalEntity entity = underTest.getUserConsents(DOMAIN, USER_ID, null)
-                .test().assertComplete().values().get(0).get(0);
+        AuthorizationDetailApprovalEntity entity = underTest.getUserConsents(DOMAIN, USER_ID, CURSOR, 10)
+                .test().assertComplete().values().get(0).getData().get(0);
 
         assertThat(entity.getClientEntity().getId()).isEqualTo(ScopeApprovalAdapterImpl.UNKNOWN_ID);
         assertThat(entity.getClientEntity().getName()).isEqualTo("unknown-client-name");
@@ -136,11 +130,11 @@ class AuthorizationDetailApprovalAdapterImplTest {
 
     @Test
     void shouldResolveEachClientOnce() {
-        when(approvalService.findByDomainAndUser(DOMAIN, user.getFullId())).thenReturn(Flowable.just(
+        givenApprovals(null,
                 approval("client-id", Map.of("type", "payment_initiation"), ScopeApproval.ApprovalStatus.APPROVED),
-                approval("client-id", Map.of("type", "account_information"), ScopeApproval.ApprovalStatus.APPROVED)));
+                approval("client-id", Map.of("type", "account_information"), ScopeApproval.ApprovalStatus.APPROVED));
 
-        underTest.getUserConsents(DOMAIN, USER_ID, null).test().assertComplete().assertValue(entities -> entities.size() == 2);
+        underTest.getUserConsents(DOMAIN, USER_ID, CURSOR, 10).test().assertComplete().assertValue(page -> page.getData().size() == 2);
 
         verify(applicationService, times(1)).findByDomainAndClientId(DOMAIN_ID, "client-id");
     }
@@ -149,9 +143,14 @@ class AuthorizationDetailApprovalAdapterImplTest {
     void shouldFailForAnUnknownUser() {
         when(userRepository.findById(Reference.domain(DOMAIN_ID), UserId.internal("unknown"))).thenReturn(Maybe.empty());
 
-        underTest.getUserConsents(DOMAIN, "unknown", null).test().assertError(UserNotFoundException.class);
+        underTest.getUserConsents(DOMAIN, "unknown", CURSOR, 10).test().assertError(UserNotFoundException.class);
 
-        verify(approvalService, never()).findByDomainAndUser(any(), any());
+        verify(approvalService, never()).findByDomainAndUser(any(), any(), any(), anyInt());
+    }
+
+    private void givenApprovals(AuthorizationDetailApprovalCursorRequest next, AuthorizationDetailApproval... approvals) {
+        when(approvalService.findByDomainAndUser(DOMAIN, user.getFullId(), CURSOR, 10))
+                .thenReturn(Single.just(new CursorPage<>(List.of(approvals), next, (long) approvals.length)));
     }
 
     private static AuthorizationDetailApproval approval(String clientId, Map<String, Object> detail, ScopeApproval.ApprovalStatus status) {

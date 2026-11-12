@@ -60,6 +60,7 @@ export * from './AuditOutcome';
 export * from './AuditPage';
 export * from './AuthenticationDeviceNotifier';
 export * from './AuthorizationDetailApprovalEntity';
+export * from './AuthorizationDetailConsentCursorPage';
 export * from './AuthorizationDetailType';
 export * from './AuthorizationDetailTypeCursorPage';
 export * from './AuthorizationDetailTypeEntity';

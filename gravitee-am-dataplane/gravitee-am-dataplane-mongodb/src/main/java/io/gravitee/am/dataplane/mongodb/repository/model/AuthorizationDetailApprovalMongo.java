@@ -38,6 +38,8 @@ public class AuthorizationDetailApprovalMongo extends Auditable {
 
     private Document detail;
 
+    private String type;
+
     private String digest;
 
     private String status;
