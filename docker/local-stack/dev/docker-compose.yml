@@ -99,6 +99,12 @@ services:
     command: ["--verbose", "--global-response-templating"]
     volumes:
       - ./wiremock/cimd-private-key-jwt-jwks.json:/home/wiremock/__files/cimd-private-key-jwt-jwks.json:ro
+    # Two more host names for the same server: CIMD logo tests trust one and must reject a redirect to the other.
+    networks:
+      default:
+        aliases:
+          - cimd-trusted.example.test
+          - cimd-internal.example.test
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/mappings"]
       interval: 5s

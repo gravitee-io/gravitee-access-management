@@ -119,6 +119,19 @@ public class CimdLogoEndpointTest {
     }
 
     @Test
+    public void shouldServeLogoWithHeadersThatPreventContentSniffingAndScripts() {
+        final String canonical = ClientIds.canonicalize(RAW_CLIENT_ID);
+        when(request.getParam("clientId")).thenReturn(RAW_CLIENT_ID);
+        when(documentManager.getLogoByClientId(canonical))
+                .thenReturn(Optional.of(new CachedLogo(new byte[]{9, 9, 9}, "image/svg+xml", 42L)));
+
+        endpoint.handle(routingContext);
+
+        verify(response).putHeader(eq("X-Content-Type-Options"), eq("nosniff"));
+        verify(response).putHeader(eq("Content-Security-Policy"), eq("default-src 'none'; sandbox"));
+    }
+
+    @Test
     public void shouldFetchAndServeLogoOnCacheMissWhenMetadataContainsLogoUri() {
         final String canonical = ClientIds.canonicalize(RAW_CLIENT_ID);
         when(request.getParam("clientId")).thenReturn(RAW_CLIENT_ID);
