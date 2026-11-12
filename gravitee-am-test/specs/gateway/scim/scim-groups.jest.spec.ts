@@ -16,6 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { performDelete, performGet, performPatch, performPost, performPut } from '@gateway-commands/oauth-oidc-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { waitForDomainAudit } from '@management-commands/audit-management-commands';
 import { createScimGroupBody, createScimUserBody, ScimFixture, setupFixture } from './fixture/scim-fixture';
 import { setup } from '../../test-fixture';
 
@@ -278,6 +279,26 @@ describe('SCIM Groups', () => {
         Authorization: `Bearer ${fixture.scimAccessToken}`,
       });
       expect(response.status).toEqual(404);
+    });
+  });
+
+  describe('Audits', () => {
+    const expectClientActor = (audit) => {
+      expect(audit.actor.id).toBe(fixture.application.id);
+      expect(audit.actor.type).toBe('APPLICATION');
+      expect(audit.actor.displayName).toBe(fixture.application.name);
+      expect(audit.accessPoint.alternativeId).toBe(fixture.application.settings.oauth.clientId);
+    };
+
+    it('should report the client as actor of group CRUD performed with client_credentials', async () => {
+      const created = await fixture.createGroup(createScimGroupBody(uniqueName('audit-group', true)));
+
+      await performDelete(fixture.scimEndpoint, `/Groups/${created.id}`, {
+        Authorization: `Bearer ${fixture.scimAccessToken}`,
+      }).expect(204);
+
+      expectClientActor(await waitForDomainAudit(fixture.domain.id, fixture.accessToken, 'GROUP_CREATED', created.id));
+      expectClientActor(await waitForDomainAudit(fixture.domain.id, fixture.accessToken, 'GROUP_DELETED', created.id));
     });
   });
 });
