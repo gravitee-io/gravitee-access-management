@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.service.reporter.builder.management;
 
+import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 
 /**
@@ -39,6 +42,17 @@ public abstract class ManagementAuditBuilder<T extends ManagementAuditBuilder<T>
 
     public T systemPrincipal() {
         setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
+        return (T) this;
+    }
+
+    public T actor(User principal, Client client) {
+        client(client);
+        if (principal != null) {
+            return principal(principal);
+        }
+        if (client != null) {
+            setActor(client.getId(), EntityType.APPLICATION, client.getClientName(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
+        }
         return (T) this;
     }
 

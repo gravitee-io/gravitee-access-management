@@ -24,6 +24,9 @@ import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { getUserPage } from '@management-commands/user-management-commands';
+import { waitForDomainAudit } from '@management-commands/audit-management-commands';
+
+const request = require('supertest');
 
 const GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA = 'urn:gravitee:params:scim:api:messages:1.0:ErrorDetails';
 
@@ -288,5 +291,43 @@ describe('SCIM with custom parameters', () => {
     expect(duplicateResponse.body[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA]).toBeDefined();
     expect(duplicateResponse.body[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUserId).toBe(createdUser.body.id);
     expect(duplicateResponse.body[GRAVITEE_SCIM_ERROR_DETAILS_SCHEMA].existingUsername).toBe(createdUser.body.userName);
+  });
+});
+
+describe('SCIM audits', () => {
+  const expectClientActor = (audit) => {
+    expect(audit.actor.id).toBe(scimClient.id);
+    expect(audit.actor.type).toBe('APPLICATION');
+    expect(audit.actor.displayName).toBe(scimClient.name);
+    expect(audit.accessPoint.alternativeId).toBe(scimClient.settings.oauth.clientId);
+  };
+
+  it('should report the client as actor of user CRUD performed with client_credentials', async () => {
+    const userName = uniqueName('audit-user', true);
+    const created = await performPost(
+      scimEndpoint,
+      '/Users',
+      JSON.stringify({ schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], userName, active: true }),
+      { 'Content-type': 'application/json', Authorization: `Bearer ${scimAccessToken}` },
+    ).expect(201);
+
+    await request(scimEndpoint).delete(`/Users/${created.body.id}`).set('Authorization', `Bearer ${scimAccessToken}`).expect(204);
+
+    expectClientActor(await waitForDomainAudit(domain.id, mngAccessToken, 'USER_CREATED', created.body.id));
+    expectClientActor(await waitForDomainAudit(domain.id, mngAccessToken, 'USER_DELETED', created.body.id));
+  });
+
+  it('should report the client as actor of group CRUD performed with client_credentials', async () => {
+    const created = await performPost(
+      scimEndpoint,
+      '/Groups',
+      JSON.stringify({ schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'], displayName: uniqueName('audit-group', true) }),
+      { 'Content-type': 'application/json', Authorization: `Bearer ${scimAccessToken}` },
+    ).expect(201);
+
+    await request(scimEndpoint).delete(`/Groups/${created.body.id}`).set('Authorization', `Bearer ${scimAccessToken}`).expect(204);
+
+    expectClientActor(await waitForDomainAudit(domain.id, mngAccessToken, 'GROUP_CREATED', created.body.id));
+    expectClientActor(await waitForDomainAudit(domain.id, mngAccessToken, 'GROUP_DELETED', created.body.id));
   });
 });
