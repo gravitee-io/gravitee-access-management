@@ -207,6 +207,19 @@ public class CimdMetadataDocumentManager extends AbstractService<CimdMetadataDoc
                 && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
             return "image/webp";
         }
+        if (bytes.length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D) {
+            return "image/bmp";
+        }
+        if (bytes.length >= 4
+                && bytes[0] == 0x00 && bytes[1] == 0x00 && bytes[2] == 0x01 && bytes[3] == 0x00) {
+            return "image/x-icon";
+        }
+        if (bytes.length >= 12
+                && bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70
+                && bytes[8] == 0x61 && bytes[9] == 0x76 && bytes[10] == 0x69
+                && (bytes[11] == 0x66 || bytes[11] == 0x73)) {
+            return "image/avif";
+        }
         final int o = skipLeadingBomAndAsciiWhitespace(bytes);
         final int n = bytes.length - o;
         if (n >= 4 && bytes[o] == '<' && bytes[o + 1] == 's' && bytes[o + 2] == 'v' && bytes[o + 3] == 'g') {

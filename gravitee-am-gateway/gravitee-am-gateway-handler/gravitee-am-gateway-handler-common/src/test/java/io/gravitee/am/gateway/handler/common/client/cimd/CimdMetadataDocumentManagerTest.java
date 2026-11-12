@@ -399,6 +399,66 @@ public class CimdMetadataDocumentManagerTest {
     }
 
     @Test
+    public void detectMimeType_shouldReturnIcoWhenIconDirectoryHeaderPresent() {
+        // reserved 0x0000, type 0x0001 (icon), one image
+        byte[] ico = {0x00, 0x00, 0x01, 0x00, 0x01, 0x00};
+        assertEquals("image/x-icon", CimdMetadataDocumentManager.detectMimeType(ico));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenIconHeaderIsCursorType() {
+        // reserved 0x0000, type 0x0002 is a cursor, not an icon
+        byte[] cur = {0x00, 0x00, 0x02, 0x00, 0x01, 0x00};
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(cur));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnBmpWhenMagicMatches() {
+        byte[] bmp = {0x42, 0x4D, 0x36, 0x00, 0x0C, 0x00};
+        assertEquals("image/bmp", CimdMetadataDocumentManager.detectMimeType(bmp));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnAvifWhenFtypAvifBrandPresent() {
+        // 4-byte box size + "ftyp" + major brand "avif"
+        byte[] avif = {
+                0x00, 0x00, 0x00, 0x1C,
+                0x66, 0x74, 0x79, 0x70,
+                0x61, 0x76, 0x69, 0x66
+        };
+        assertEquals("image/avif", CimdMetadataDocumentManager.detectMimeType(avif));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnAvifWhenFtypAvisBrandPresent() {
+        // 4-byte box size + "ftyp" + major brand "avis" (AVIF image sequence)
+        byte[] avis = {
+                0x00, 0x00, 0x00, 0x1C,
+                0x66, 0x74, 0x79, 0x70,
+                0x61, 0x76, 0x69, 0x73
+        };
+        assertEquals("image/avif", CimdMetadataDocumentManager.detectMimeType(avis));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenFtypBrandIsNotAvif() {
+        // 4-byte box size + "ftyp" + major brand "heic"
+        byte[] heic = {
+                0x00, 0x00, 0x00, 0x1C,
+                0x66, 0x74, 0x79, 0x70,
+                0x68, 0x65, 0x69, 0x63
+        };
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(heic));
+    }
+
+    @Test
+    public void detectMimeType_shouldReturnOctetStreamWhenAvifBufferTooShort() {
+        // "ftyp" present but fewer than 12 bytes — the brand cannot be read
+        byte[] tooShort = {0x00, 0x00, 0x00, 0x1C, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69};
+        assertEquals("application/octet-stream", CimdMetadataDocumentManager.detectMimeType(tooShort));
+    }
+
+    @Test
     public void detectMimeType_shouldReturnOctetStreamWhenWebpBufferTooShort() {
         // RIFF prefix but fewer than 12 bytes — no format matches
         byte[] tooShort = {0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42};
