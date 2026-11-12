@@ -35,7 +35,7 @@ vi.mock('../../../lib/api/organization', () => ({
 vi.mock('../../../lib/session/session', () => ({ useSession: () => session }));
 vi.mock('../../../lib/session/environment', () => ({ useCurrentEnvironment: () => currentEnvironment }));
 
-const editor = ['organization_settings_read', 'organization_settings_update'];
+const editor = ['organization_settings_read', 'organization_settings_update', 'organization_identity_provider_list'];
 
 function renderPage(permissions = editor) {
     return renderRoutes(
@@ -98,9 +98,18 @@ describe('OrganizationGeneralPage', () => {
     });
 
     it('is read-only without organization_settings_update', async () => {
-        renderPage(['organization_settings_read']);
+        renderPage(['organization_settings_read', 'organization_identity_provider_list']);
 
         expect(await screen.findByText('Inline users')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: 'Identity providers' })).toBeDisabled();
+    });
+
+    it('does not load the providers nor offer to save without organization_identity_provider_list', async () => {
+        renderPage(['organization_settings_read', 'organization_settings_update']);
+
+        expect(await screen.findByText(/not allowed to list the identity providers/)).toBeInTheDocument();
+        expect(listOrganizationIdentityProviders).not.toHaveBeenCalled();
         expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
         expect(screen.getByRole('combobox', { name: 'Identity providers' })).toBeDisabled();
     });

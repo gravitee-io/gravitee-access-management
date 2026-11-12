@@ -28,7 +28,7 @@ type Selection = {
     readonly socialIdentities: readonly string[];
 };
 
-function selectionOf(settings: OrganizationSettings, providers: readonly OrganizationIdentityProvider[]): Selection {
+function selectionOf(settings: OrganizationSettings, providers: readonly OrganizationIdentityProvider[] = []): Selection {
     const identities = settings.identities ?? [];
     const selected = (external: boolean) =>
         providers.filter(provider => provider.external === external && identities.includes(provider.id)).map(provider => provider.id);
@@ -40,13 +40,14 @@ export const sameIds = (a: readonly string[], b: readonly string[]) => a.length 
 interface AuthenticationFormProps {
     readonly organizationId: string;
     readonly settings: OrganizationSettings;
-    readonly providers: readonly OrganizationIdentityProvider[];
+    /** Undefined when the user may not list the identity providers: the form is then read-only, as a save would drop the selection. */
+    readonly providers?: readonly OrganizationIdentityProvider[];
     readonly onSaved: (settings: OrganizationSettings) => void;
 }
 
 export function AuthenticationForm({ organizationId, settings, providers, onSaved }: AuthenticationFormProps) {
     const { has } = usePermissions();
-    const canEdit = has('organization_settings_update');
+    const canEdit = has('organization_settings_update') && providers !== undefined;
     const saved = selectionOf(settings, providers);
     const [selection, setSelection] = useState<Selection>(saved);
     const save = useMutation({
@@ -64,6 +65,11 @@ export function AuthenticationForm({ organizationId, settings, providers, onSave
 
     return (
         <>
+            {providers === undefined && (
+                <p className="text-sm text-muted-foreground">
+                    You are not allowed to list the identity providers, so the selection is not shown.
+                </p>
+            )}
             <form id={FORM_ID} className="flex flex-col gap-6" onSubmit={submit}>
                 <Card>
                     <CardHeader>
@@ -75,7 +81,7 @@ export function AuthenticationForm({ organizationId, settings, providers, onSave
                             id="organization-identity-providers"
                             label="Identity providers"
                             placeholder="Identity providers"
-                            options={providers.filter(provider => !provider.external)}
+                            options={(providers ?? []).filter(provider => !provider.external)}
                             value={selection.identityProviders}
                             disabled={!canEdit}
                             onChange={identityProviders => setSelection(current => ({ ...current, identityProviders }))}
@@ -94,7 +100,7 @@ export function AuthenticationForm({ organizationId, settings, providers, onSave
                             id="organization-social-identities"
                             label="Social providers"
                             placeholder="Social providers"
-                            options={providers.filter(provider => provider.external)}
+                            options={(providers ?? []).filter(provider => provider.external)}
                             value={selection.socialIdentities}
                             disabled={!canEdit}
                             onChange={socialIdentities => setSelection(current => ({ ...current, socialIdentities }))}

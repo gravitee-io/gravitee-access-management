@@ -19,6 +19,7 @@ import { ErrorPanel } from '../../app/components/ErrorPanel';
 import { PageHeader } from '../../app/components/PageHeader';
 import { getOrganizationSettings, listOrganizationIdentityProviders } from '../../lib/api/organization';
 import { useBreadcrumbs } from '../../lib/layout/useBreadcrumbs';
+import { usePermissions } from '../../lib/session/permissions';
 import { useSession } from '../../lib/session/session';
 import { AuthenticationForm } from './AuthenticationForm';
 import { useOrganizationPath } from './useOrganizationPath';
@@ -27,11 +28,14 @@ export function OrganizationGeneralPage() {
     const { user } = useSession();
     const queryClient = useQueryClient();
     const base = useOrganizationPath();
+    const { has } = usePermissions();
+    const canListProviders = has('organization_identity_provider_list');
     useBreadcrumbs([{ label: 'Organization', to: `${base}/general` }, { label: 'Authentication' }]);
     const settings = useQuery({ queryKey: ['organization-settings', user.org], queryFn: () => getOrganizationSettings(user.org) });
     const providers = useQuery({
         queryKey: ['organization-identity-providers', user.org],
         queryFn: () => listOrganizationIdentityProviders(user.org),
+        enabled: canListProviders,
     });
 
     const error = settings.error ?? providers.error;
@@ -47,14 +51,14 @@ export function OrganizationGeneralPage() {
                     error={error}
                     onRetry={() => void Promise.all([settings.refetch(), providers.refetch()])}
                 />
-            ) : !settings.data || !providers.data ? (
+            ) : !settings.data || (canListProviders && !providers.data) ? (
                 <Skeleton className="h-72 w-full" />
             ) : (
                 <AuthenticationForm
                     key={String(settings.dataUpdatedAt)}
                     organizationId={user.org}
                     settings={settings.data}
-                    providers={providers.data}
+                    providers={canListProviders ? providers.data : undefined}
                     onSaved={updated => {
                         queryClient.setQueryData(['organization-settings', user.org], updated);
                         toast.success('Settings updated');
