@@ -56,6 +56,8 @@ export interface DpopFixture extends Fixture {
   webApp: Application;
   /** SERVICE, client_credentials, per-app dpopBoundAccessTokens = true (requires DPoP). */
   requireApp: Application;
+  /** WEB, password, openid + scope1, per-app dpopBoundAccessTokens = true (requires DPoP). */
+  requireWebApp: Application;
 }
 
 const USER_PASSWORD = '#CoMpL3X-P@SsW0Rd';
@@ -92,6 +94,17 @@ export const setupDpopFixture = async (): Promise<DpopFixture> => {
     scopeSettings: [{ scope: 'scope1', defaultScope: true }],
     dpopBoundAccessTokens: true,
   });
+  const requireWebApp = await createApp(domain, accessToken, {
+    type: 'WEB',
+    grantTypes: ['password'],
+    scopeSettings: [
+      { scope: 'scope1', defaultScope: true },
+      { scope: 'openid', defaultScope: true },
+    ],
+    identityProviders: idps,
+    skipConsent: true,
+    dpopBoundAccessTokens: true,
+  });
 
   await startDomain(domain.id, accessToken);
   const { oidcConfig } = await waitForDomainStart(domain);
@@ -104,6 +117,7 @@ export const setupDpopFixture = async (): Promise<DpopFixture> => {
     ccApp,
     webApp,
     requireApp,
+    requireWebApp,
     cleanUp: async () => {
       if (domain?.id && accessToken) {
         await safeDeleteDomain(domain.id, accessToken);
@@ -225,10 +239,10 @@ export function clientCredentialsToken(fixture: WithOidc, app: Application, proo
   return performPost(fixture.oidc.token_endpoint, '', 'grant_type=client_credentials', headers);
 }
 
-/** POST the token endpoint with a password grant for the fixture's user (openid scope). */
-export function passwordToken(fixture: DpopFixture, proof?: string) {
+/** POST the token endpoint with a password grant for the fixture's user (openid scope); `webApp` by default. */
+export function passwordToken(fixture: DpopFixture, proof?: string, app: Application = fixture.webApp) {
   const user = fixture.users[0];
-  const headers: Record<string, string> = { 'Content-type': FORM, Authorization: basicAuth(fixture.webApp) };
+  const headers: Record<string, string> = { 'Content-type': FORM, Authorization: basicAuth(app) };
   if (proof) {
     headers.DPoP = proof;
   }

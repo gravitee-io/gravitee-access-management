@@ -26,7 +26,7 @@ import {
   setupDpopFixture,
   userInfo,
 } from './fixture/dpop-fixture';
-import { createDpopKey } from './dpop-proof';
+import { createDpopKey, DpopKey } from './dpop-proof';
 
 setup(200000);
 
@@ -218,6 +218,45 @@ describe('DPoP (RFC 9449 §9) — resource access at /userinfo', () => {
     const accessToken = (await passwordToken(fixture, tokenProof)).body.access_token;
 
     const response = await userInfo(fixture, 'Bearer ' + accessToken);
+    expect(response.status).toBe(401);
+    expect(response.headers['www-authenticate']).toContain('DPoP');
+    expect(response.headers['www-authenticate']).toContain('error="invalid_token"');
+  });
+});
+
+describe('DPoP (RFC 9449 §7) — a token issued to a DPoP-requiring app is useless without its key', () => {
+  let key: DpopKey;
+  let accessToken: string;
+
+  beforeAll(async () => {
+    key = await createDpopKey();
+    const tokenProof = await key.proof({ htu: fixture.oidc.token_endpoint, htm: 'POST' });
+    const response = await passwordToken(fixture, tokenProof, fixture.requireWebApp);
+    expect(response.status).toBe(200);
+    expect(response.body.token_type).toBe('DPoP');
+    accessToken = response.body.access_token;
+  });
+
+  it('accepts the token with a fresh proof from the bound key', async () => {
+    const proof = await key.proof({ htu: fixture.oidc.userinfo_endpoint, htm: 'GET', accessToken });
+
+    const response = await userInfo(fixture, 'DPoP ' + accessToken, proof);
+    expect(response.status).toBe(200);
+    expect(response.body.sub).toEqual(expect.any(String));
+  });
+
+  it('rejects the token with a valid proof signed by another key', async () => {
+    const otherKey = await createDpopKey();
+    const proof = await otherKey.proof({ htu: fixture.oidc.userinfo_endpoint, htm: 'GET', accessToken });
+
+    const response = await userInfo(fixture, 'DPoP ' + accessToken, proof);
+    expect(response.status).toBe(401);
+    expect(response.headers['www-authenticate']).toContain('DPoP');
+    expect(response.headers['www-authenticate']).toContain('error="invalid_token"');
+  });
+
+  it('rejects the token under the DPoP scheme with no proof', async () => {
+    const response = await userInfo(fixture, 'DPoP ' + accessToken);
     expect(response.status).toBe(401);
     expect(response.headers['www-authenticate']).toContain('DPoP');
     expect(response.headers['www-authenticate']).toContain('error="invalid_token"');
