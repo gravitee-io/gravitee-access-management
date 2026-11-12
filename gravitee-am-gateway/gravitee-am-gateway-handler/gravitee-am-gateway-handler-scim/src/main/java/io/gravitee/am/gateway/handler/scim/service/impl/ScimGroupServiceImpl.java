@@ -34,6 +34,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
@@ -150,7 +151,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
     }
 
     @Override
-    public Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Create a new group {} for domain {}", group.getDisplayName(), domain.getName());
 
         io.gravitee.am.model.Group groupModel = convert(group);
@@ -176,7 +177,7 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                 .flatMap(group1 -> {
                     return groupRepository.create(groupModel);
                 })
-                .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(grp)))
+                .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).actor(principal, client).type(EventType.GROUP_CREATED).group(grp)))
                 .map(group1 -> convert(group1, baseUrl, true))
                 // set members
                 .flatMap(group1 -> setMembers(group1, baseUrl))
@@ -188,11 +189,11 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                         return Single.error(new TechnicalManagementException("An error occurs while trying to router a group", ex));
                     }
                 })
-                .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(groupModel).throwable(error)));
+                .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).actor(principal, client).type(EventType.GROUP_CREATED).group(groupModel).throwable(error)));
     }
 
     @Override
-    public Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
         return groupRepository
                 .findById(groupId)
@@ -220,8 +221,8 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
                             groupToUpdate.setDescription(existingGroup.getDescription());
                             return groupRepository.update(groupToUpdate);
                         })
-                        .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(existingGroup).group(grp)))
-                        .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).group(existingGroup).throwable(error))))
+                        .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).actor(principal, client).type(EventType.GROUP_UPDATED).oldValue(existingGroup).group(grp)))
+                        .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).actor(principal, client).type(EventType.GROUP_UPDATED).group(existingGroup).throwable(error))))
                 .map(group1 -> convert(group1, baseUrl, false))
                 // set members
                 .flatMap(group1 -> setMembers(group1, baseUrl))
@@ -236,14 +237,14 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
     }
 
     @Override
-    public Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Patch a group {} for domain {}", groupId, domain.getName());
         return get(groupId, baseUrl)
                 .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
                 .flatMap(group -> {
                     ObjectNode node = objectMapper.convertValue(group, ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
-                    return update(groupId, objectMapper.treeToValue(node, Group.class), baseUrl, principal);
+                    return update(groupId, objectMapper.treeToValue(node, Group.class), baseUrl, principal, client);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -257,19 +258,19 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
     }
 
     @Override
-    public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Delete group {}", groupId);
         return groupRepository
                 .findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
-                        .andThen(Completable.fromAction(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))))
+                        .andThen(Completable.fromAction(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).actor(principal, client).type(EventType.GROUP_DELETED).group(group)))))
                 .doOnError(error -> {
                     io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
                     group.setId(groupId);
                     group.setReferenceId(domain.getId());
                     group.setReferenceType(ReferenceType.DOMAIN);
-                    auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(error));
+                    auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).actor(principal, client).type(EventType.GROUP_DELETED).group(group).throwable(error));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

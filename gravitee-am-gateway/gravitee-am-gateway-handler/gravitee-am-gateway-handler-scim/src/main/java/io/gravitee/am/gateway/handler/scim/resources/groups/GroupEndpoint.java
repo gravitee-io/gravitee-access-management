@@ -125,7 +125,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
             principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> groupService.update(groupId, group, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal -> groupService.update(groupId, group, baseUrl, optPrincipal.orElse(null), context.get(ConstantKeys.CLIENT_CONTEXT_KEY)))
                     .subscribe(
                             group1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -196,7 +196,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
             principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal -> groupService.patch(groupId, patchOp, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal -> groupService.patch(groupId, patchOp, baseUrl, optPrincipal.orElse(null), context.get(ConstantKeys.CLIENT_CONTEXT_KEY)))
                     .subscribe(
                             group1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -235,7 +235,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
         principal(accessToken)
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
-                .flatMapCompletable(optPrincipal -> groupService.delete(groupId, optPrincipal.orElse(null)))
+                .flatMapCompletable(optPrincipal -> groupService.delete(groupId, optPrincipal.orElse(null), context.get(ConstantKeys.CLIENT_CONTEXT_KEY)))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
                         context::fail);

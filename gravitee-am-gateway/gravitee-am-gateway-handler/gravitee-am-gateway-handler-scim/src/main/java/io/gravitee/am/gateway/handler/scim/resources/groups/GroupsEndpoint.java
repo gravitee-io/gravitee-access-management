@@ -167,7 +167,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
             principal(accessToken)
                     .map(Optional::ofNullable)
                     .switchIfEmpty(Maybe.just(Optional.empty()))
-                    .flatMapSingle(optPrincipal ->  groupService.create(group, baseUrl, optPrincipal.orElse(null)))
+                    .flatMapSingle(optPrincipal ->  groupService.create(group, baseUrl, optPrincipal.orElse(null), context.get(ConstantKeys.CLIENT_CONTEXT_KEY)))
                     .subscribe(
                             group1 -> context.response()
                                     .setStatusCode(201)

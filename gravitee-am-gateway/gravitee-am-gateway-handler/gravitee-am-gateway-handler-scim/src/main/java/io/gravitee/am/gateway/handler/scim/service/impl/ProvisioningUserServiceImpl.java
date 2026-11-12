@@ -345,7 +345,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                 }
                                                 return Single.error(ex);
                                             }))
-                                    .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                    .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).actor(principal, client).type(EventType.USER_CREATED).user(user1)))
                                     .doOnSuccess(user1 -> {
                                         if (user1.isPreRegistration() && emailEnabled) {
                                             // Send email with client information if available
@@ -359,7 +359,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                     });
                         }))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                        .principal(principal)
+                        .actor(principal, client)
                         .type(EventType.USER_CREATED)
                         .user(userModel)
                         .reference(Reference.domain(domain.getId()))
@@ -482,10 +482,10 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                                                     return Single.error(ex);
                                                 })
                                                 .doOnSuccess(updatedUser -> {
-                                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser));
+                                                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).actor(principal, client).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser));
                                                     publishUserUpdateEvent(domain, userToUpdate);
                                                 })
-                                                .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))));
+                                                .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).actor(principal, client).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))));
                             }));
                 })
                 .map(user1 -> UserMapper.convert(user1, baseUrl, false))
@@ -565,7 +565,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     }
 
     @Override
-    public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal, Client client) {
         LOGGER.debug("Delete user {}", userId);
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(() -> new UserNotFoundException(userId)))
@@ -593,12 +593,12 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         .andThen(credentialService.deleteByUserId(domain, userId))
                         .andThen(userRepository.delete(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                .principal(principal)
+                                .actor(principal, client)
                                 .reference(Reference.domain(domain.getId()))
                                 .type(EventType.USER_DELETED)
                                 .user(user)))
                         .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
-                                .principal(principal)
+                                .actor(principal, client)
                                 .reference(Reference.domain(domain.getId()))
                                 .type(EventType.USER_DELETED)
                                 .throwable(error))));
@@ -610,7 +610,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
             return false;
         } else if (!passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user)) {
             Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
-            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(eventType).user(user).throwable(exception));
+            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).actor(principal, client).type(eventType).user(user).throwable(exception));
             return true;
         }
         return false;
