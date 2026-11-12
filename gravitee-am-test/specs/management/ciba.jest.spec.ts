@@ -544,6 +544,73 @@ describe('CIBA valid Flow', () => {
     expect(response2.status).toBe(400);
     expect(response2.body.error).toBe('access_denied');
   });
+
+  it('Request Expired before the User answers', async () => {
+    const requestedExpiry = 5;
+    const response = await performPost(
+      `${managementUrl}${cibaDomain.id}/auth-device-notifiers`,
+      '',
+      {
+        type: 'http-am-authdevice-notifier',
+        configuration: cibaNotifier.notifierConfiguration('no-answer'),
+        name: 'Never answering notifier',
+      },
+      {
+        'Content-type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    );
+    expect(response.status).toBe(201);
+    const cibaNotifierPluginNoAnswer = response.body.id;
+
+    await patchDomain(cibaDomain.id, accessToken, {
+      oidc: {
+        clientRegistrationSettings: {
+          allowLocalhostRedirectUri: true,
+          allowHttpSchemeRedirectUri: true,
+          allowWildCardRedirectUri: true,
+          isDynamicClientRegistrationEnabled: true,
+          isOpenDynamicClientRegistrationEnabled: true,
+        },
+        cibaSettings: {
+          authReqExpiry: 600,
+          tokenReqInterval: 5,
+          bindingMessageLength: 256,
+          deviceNotifiers: [{ id: cibaNotifierPluginNoAnswer }],
+          enabled: true,
+        },
+      },
+    });
+
+    await delay(6000);
+
+    const response1 = await performPost(
+      `${process.env.AM_GATEWAY_URL}/${cibaDomain.hrid}/oidc/ciba/authenticate`,
+      '',
+      `scope=openid profile&login_hint=${cibaUser.username}&requested_expiry=${requestedExpiry}`,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + getBase64BasicAuth(cibaApp.client_id, cibaApp.client_secret),
+      },
+    );
+    expect(response1.status).toBe(200);
+    expect(response1.body.expires_in).toEqual(requestedExpiry);
+    const auth_req_id = response1.body.auth_req_id;
+
+    // wait past the requested expiry, the notifier never calls back
+    await delay((requestedExpiry + 1) * 1000);
+    const response2 = await performPost(
+      `${process.env.AM_GATEWAY_URL}/${cibaDomain.hrid}/oauth/token?auth_req_id=${auth_req_id}&grant_type=urn:openid:params:grant-type:ciba`,
+      '',
+      {},
+      {
+        Authorization: 'Basic ' + getBase64BasicAuth(cibaApp.client_id, cibaApp.client_secret),
+      },
+    );
+    expect(response2.status).toBe(400);
+    expect(response2.body.error).toBe('expired_token');
+    expect(response2.body.access_token).toBeUndefined();
+  });
 });
 
 afterAll(async () => {
