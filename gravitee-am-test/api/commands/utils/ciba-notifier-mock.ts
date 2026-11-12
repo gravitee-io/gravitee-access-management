@@ -21,7 +21,7 @@ const WIREMOCK_ADMIN = (process.env.SFR_URL || 'http://localhost:8181') + '/__ad
 const WIREMOCK_INTERNAL = process.env.INTERNAL_SFR_URL || 'http://wiremock:8080';
 const CALLBACK_DELAY_MS = 2000;
 
-export type CibaNotifierOutcome = 'accept-all' | 'reject-all';
+export type CibaNotifierOutcome = 'accept-all' | 'reject-all' | 'no-answer';
 
 export interface CibaNotifierCallback {
   url: string;
@@ -60,8 +60,22 @@ export const createCibaNotifierMock = (): CibaNotifierMock => {
   const register = async (callback: CibaNotifierCallback) => {
     await remove();
     const credentials = Buffer.from(`${encodeURIComponent(callback.clientId)}:${callback.clientSecret ?? ''}`).toString('base64');
-    for (const outcome of ['accept-all', 'reject-all'] as CibaNotifierOutcome[]) {
+    for (const outcome of ['accept-all', 'reject-all', 'no-answer'] as CibaNotifierOutcome[]) {
       const validated = outcome === 'accept-all';
+      // 'no-answer' acknowledges the notification but never calls back, so the request stays pending until it expires.
+      const callbackWebhook = {
+        name: 'webhook',
+        parameters: {
+          method: 'POST',
+          url: callback.url,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${credentials}`,
+          },
+          body: `{{formData originalRequest.body 'form' urlDecode=true}}tid={{urlEncode form.tid}}&state={{urlEncode form.state}}&validated=${validated}`,
+          delay: { type: 'fixed', milliseconds: CALLBACK_DELAY_MS },
+        },
+      };
       const response = await crossFetch(`${WIREMOCK_ADMIN}/mappings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,21 +86,7 @@ export const createCibaNotifierMock = (): CibaNotifierMock => {
             headers: { 'Content-Type': 'application/json' },
             body: `{{formData request.body 'form' urlDecode=true}}{"tid":"{{{form.tid}}}","state":"{{{form.state}}}"}`,
           },
-          serveEventListeners: [
-            {
-              name: 'webhook',
-              parameters: {
-                method: 'POST',
-                url: callback.url,
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                  Authorization: `Basic ${credentials}`,
-                },
-                body: `{{formData originalRequest.body 'form' urlDecode=true}}tid={{urlEncode form.tid}}&state={{urlEncode form.state}}&validated=${validated}`,
-                delay: { type: 'fixed', milliseconds: CALLBACK_DELAY_MS },
-              },
-            },
-          ],
+          serveEventListeners: outcome === 'no-answer' ? [] : [callbackWebhook],
         }),
       });
       expect(response.status).toEqual(201);
