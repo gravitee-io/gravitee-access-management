@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.service.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
@@ -1294,6 +1295,44 @@ public class UserServiceTest {
         testObserver.assertValue(userToken -> userToken.getUser().equals(user) && userToken.getUser().isEnabled() && userToken.getClient().equals(client));
 
         verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldReportUserAsActorOnVerifyAccount() {
+        final User user = new User();
+        user.setId("user-id");
+        user.setUsername("john");
+        user.setPreRegistration(true);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("id");
+
+        final Client client = new Client();
+        client.setId("clientId");
+        client.setClientId("client-id");
+
+        final JWT jwt = new JWT(Map.of(
+                "sub", user.getId(),
+                "aud", client.getId()
+        ));
+
+        when(jwtParser.parse("someToken")).thenReturn(jwt);
+        when(commonUserService.findById(jwt.getSub())).thenReturn(Maybe.just(user));
+        when(clientSyncService.findById(jwt.getAud())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId(jwt.getAud())).thenReturn(Maybe.empty());
+        when(commonUserService.update(user)).thenReturn(Single.just(user));
+
+        var testObserver = userService.confirmVerifyRegistration("someToken").test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        verify(auditService).report(argThat(builder -> {
+            final Audit audit = builder.build(new ObjectMapper());
+            return audit.getType().equals(EventType.REGISTRATION_VERIFY_ACCOUNT)
+                    && "user-id".equals(audit.getActor().getId())
+                    && EntityType.USER.equals(audit.getActor().getType())
+                    && "john".equals(audit.getActor().getAlternativeId())
+                    && "client-id".equals(audit.getAccessPoint().getAlternativeId());
+        }));
     }
 
     @Test
