@@ -35,7 +35,8 @@ function fromEntrypoint(entrypoint: OrganizationEntrypoint): EntrypointDraft {
 
 interface EntrypointDetailProps {
     readonly entrypoint: OrganizationEntrypoint;
-    readonly tags: Awaited<ReturnType<typeof listTags>>;
+    /** Undefined when the user may not list the tags: the sharding tags field is then hidden. */
+    readonly tags?: Awaited<ReturnType<typeof listTags>>;
     readonly listPath: string;
 }
 

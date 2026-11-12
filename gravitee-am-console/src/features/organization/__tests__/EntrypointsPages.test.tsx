@@ -55,6 +55,7 @@ const ALL = [
     'organization_entrypoint_read',
     'organization_entrypoint_update',
     'organization_entrypoint_delete',
+    'organization_tag_list',
 ];
 const fallback = {
     id: 'default',
@@ -232,6 +233,17 @@ describe('OrganizationEntrypointPage', () => {
             }),
         );
         expect(toast.success).toHaveBeenCalledWith('Entrypoint updated');
+    });
+
+    it('does not load the tags without organization_tag_list and hides the sharding tags field', async () => {
+        renderEntrypoints(
+            `${entrypointsPath}/eu-entry`,
+            ALL.filter(permission => permission !== 'organization_tag_list'),
+        );
+
+        expect(await screen.findByRole('textbox', { name: 'Name' })).toBeInTheDocument();
+        expect(listTags).not.toHaveBeenCalled();
+        expect(screen.queryByText('Sharding tags')).not.toBeInTheDocument();
     });
 
     it('keeps the name, description and tags of the default entrypoint read-only and offers no delete', async () => {
