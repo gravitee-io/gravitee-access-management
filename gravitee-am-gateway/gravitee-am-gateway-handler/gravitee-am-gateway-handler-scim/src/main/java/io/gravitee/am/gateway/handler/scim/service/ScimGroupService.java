@@ -19,6 +19,7 @@ import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -36,11 +37,11 @@ public interface ScimGroupService {
 
     Maybe<Group> get(String groupId, String baseUrl);
 
-    Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
-    Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
-    Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
-    Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal);
+    Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal, Client client);
 }

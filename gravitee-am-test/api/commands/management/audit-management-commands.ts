@@ -78,3 +78,10 @@ export async function waitForNewAudit(
 export async function countAuditsOfType(domainId: string, accessToken: string, type: string): Promise<number> {
   return (await auditsOfType(domainId, accessToken, type)).length;
 }
+
+export const waitForDomainAudit = (domainId: string, accessToken: string, type: string, targetId: string) =>
+  retryUntil(
+    () => auditsOfType(domainId, accessToken, type),
+    (audits) => audits.some((audit) => audit.target?.id === targetId),
+    { timeoutMillis: 20000, intervalMillis: 500 },
+  ).then((audits) => audits.find((audit) => audit.target?.id === targetId));
