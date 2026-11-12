@@ -220,7 +220,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
         principal(accessToken)
                 .map(Optional::ofNullable)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
-                .flatMapCompletable(optPrincipal -> userService.delete(userId, optPrincipal.orElse(null)))
+                .flatMapCompletable(optPrincipal -> userService.delete(userId, optPrincipal.orElse(null), context.get(CLIENT_CONTEXT_KEY)))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
                         context::fail);

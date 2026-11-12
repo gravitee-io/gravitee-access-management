@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.scim.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.scim.filter.AttributePath;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.filter.Operator;
@@ -30,13 +32,18 @@ import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.service.impl.ScimGroupServiceImpl;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -44,6 +51,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -53,9 +61,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -89,6 +99,8 @@ public class ScimGroupServiceTest {
     @Mock
     private AuditService auditService;
 
+    private static final String DOMAIN_ID = "domain";
+
     @Test
     public void shouldCreateGroup() {
         final String domainId = "domain";
@@ -104,10 +116,68 @@ public class ScimGroupServiceTest {
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
 
-        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null).test();
+        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my-group".equals(g.getDisplayName()));
+    }
+
+    @Test
+    public void shouldReportClientAsActorOnCreateGroupWhenNoPrincipal() {
+        when(domain.getId()).thenReturn(DOMAIN_ID);
+        Group newGroup = new Group();
+        newGroup.setDisplayName("my-group");
+        when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN_ID, "my-group")).thenReturn(Maybe.empty());
+        when(groupRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null, scimClient()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        var audit = reportedAudit(EventType.GROUP_CREATED);
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-name", audit.getActor().getDisplayName());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
+    }
+
+    @Test
+    public void shouldReportUserAsActorOnCreateGroupWhenPrincipal() {
+        when(domain.getId()).thenReturn(DOMAIN_ID);
+        Group newGroup = new Group();
+        newGroup.setDisplayName("my-group");
+        when(groupRepository.findByName(ReferenceType.DOMAIN, DOMAIN_ID, "my-group")).thenReturn(Maybe.empty());
+        when(groupRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        var principal = new DefaultUser("john");
+        principal.setId("user-id");
+
+        TestObserver<Group> testObserver = groupService.create(newGroup, "/", principal, scimClient()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        var audit = reportedAudit(EventType.GROUP_CREATED);
+        assertEquals("user-id", audit.getActor().getId());
+        assertEquals(EntityType.USER, audit.getActor().getType());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
+    }
+
+    @Test
+    public void shouldReportClientAsActorOnDeleteGroup() {
+        io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
+        group.setId("group-id");
+        group.setReferenceType(ReferenceType.DOMAIN);
+        group.setReferenceId(DOMAIN_ID);
+        when(groupRepository.findById("group-id")).thenReturn(Maybe.just(group));
+        when(groupRepository.delete("group-id")).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = groupService.delete("group-id", null, scimClient()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        var audit = reportedAudit(EventType.GROUP_DELETED);
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
     }
 
     @Test
@@ -135,7 +205,7 @@ public class ScimGroupServiceTest {
         when(userRepository.findByIdIn(eq(Reference.domain(domain.getId())), any())).thenReturn(Flowable.just(user));
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
 
-        TestObserver<Group> testObserver = groupService.create(newGroup, "https://mydomain/scim/Groups", null).test();
+        TestObserver<Group> testObserver = groupService.create(newGroup, "https://mydomain/scim/Groups", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my-group".equals(g.getDisplayName()));
@@ -152,7 +222,7 @@ public class ScimGroupServiceTest {
         when(domain.getId()).thenReturn(domainId);
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.just(new io.gravitee.am.model.Group()));
 
-        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null).test();
+        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null, null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UniquenessException.class);
         verify(groupRepository, never()).create(any());
@@ -195,10 +265,15 @@ public class ScimGroupServiceTest {
             return Single.just(groupToUpdate);
         }).when(groupRepository).update(any());
 
-        TestObserver<Group> testObserver = groupService.patch(groupId, patchOp, "/", null).test();
+        TestObserver<Group> testObserver = groupService.patch(groupId, patchOp, "/", null, scimClient()).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my group 2".equals(g.getDisplayName()));
+
+        var audit = reportedAudit(EventType.GROUP_UPDATED);
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
     }
 
     @Test
@@ -247,7 +322,7 @@ public class ScimGroupServiceTest {
             return Single.just(groupToUpdate);
         }).when(groupRepository).update(any());
 
-        TestObserver<Group> testObserver = groupService.patch(groupId, patchOp, "/", null).test();
+        TestObserver<Group> testObserver = groupService.patch(groupId, patchOp, "/", null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my group 2".equals(g.getDisplayName()));
@@ -292,5 +367,24 @@ public class ScimGroupServiceTest {
         observer.assertComplete();
 
         verify(groupRepository, times(1)).searchScim(any(ReferenceType.class), anyString(), any(FilterCriteria.class), anyInt(), anyInt());
+    }
+
+    private Audit reportedAudit(String eventType) {
+        ArgumentCaptor<AuditBuilder<?>> captor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, atLeastOnce()).report(captor.capture());
+        return captor.getAllValues().stream()
+                .map(builder -> builder.build(new ObjectMapper()))
+                .filter(audit -> eventType.equals(audit.getType()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static Client scimClient() {
+        Client client = new Client();
+        client.setId("app-id");
+        client.setClientId("client-id");
+        client.setClientName("client-name");
+        client.setDomain(DOMAIN_ID);
+        return client;
     }
 }
