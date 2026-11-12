@@ -53,7 +53,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.REGISTRATION_VERIFY_SUCCESS;
+import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_URL_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -149,11 +160,11 @@ public class PreviewBuilder {
             previewForm.setContent(convertAssertsPath(processedTemplate, baseUrl));
         } catch (TemplateInputException e) {
             logger.debug("Preview error on domain {}", this.domain.getId(), e);
-            throw new PreviewException("Preview error, document structure maybe invalid." +
+            throw new PreviewException("Preview error, document structure may be invalid." +
                     " (error at line: " + e.getLine() + ", col: " + e.getCol() + " )");
         } catch (TemplateProcessingException e) {
             logger.debug("Preview error on domain {}", this.domain.getId(), e);
-            throw new PreviewException("Preview error, expression or variable maybe invalid (error at line: " + e.getLine() + ", col: " + e.getCol() + ")");
+            throw new PreviewException("Preview error, expression or variable may be invalid (error at line: " + e.getLine() + ", col: " + e.getCol() + ")");
         } catch (TemplateEngineException e) {
             logger.info("Unexpected preview error on domain {}", this.domain.getId(), e);
             throw new PreviewException("Unexpected preview error");

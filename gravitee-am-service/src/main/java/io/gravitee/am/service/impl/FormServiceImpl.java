@@ -35,7 +35,7 @@ import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.exception.FormNotFoundException;
 import io.gravitee.am.service.exception.FormTemplateInvalidException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.i18n.RestrictedExpressionEvaluator;
+import io.gravitee.am.service.i18n.FormContentValidator;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -76,16 +76,16 @@ public class FormServiceImpl implements FormService {
     @Autowired
     private AuditService auditService;
 
-    private final RestrictedExpressionEvaluator formContentValidator = new RestrictedExpressionEvaluator();
+    private final FormContentValidator formContentValidator = new FormContentValidator();
 
     /**
-     * Rejects form content that contains an expression forbidden by {@link RestrictedExpressionEvaluator}, so a
+     * Rejects form content that contains an expression forbidden by {@link FormContentValidator}, so a
      * malicious form is caught at save time rather than at render time.
      */
     private Completable validateContent(String content) {
         return Completable.fromAction(() -> {
             try {
-                formContentValidator.validateContent(content);
+                formContentValidator.validate(content);
             } catch (TemplateProcessingException e) {
                 throw new FormTemplateInvalidException(e);
             }
