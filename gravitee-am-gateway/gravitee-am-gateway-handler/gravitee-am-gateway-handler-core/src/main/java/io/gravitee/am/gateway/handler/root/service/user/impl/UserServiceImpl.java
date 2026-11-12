@@ -198,6 +198,7 @@ public class UserServiceImpl implements UserService {
                 .type(EventType.REGISTRATION_VERIFY_ACCOUNT)
                 .reference(Reference.domain(domain.getId()))
                 .client(userToken.getClient())
+                .principal(reloadPrincipal(null, userToken.getUser()))
                 .user(userToken.getUser()))
         ).doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                 .type(EventType.REGISTRATION_VERIFY_ACCOUNT)
