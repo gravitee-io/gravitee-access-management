@@ -40,6 +40,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -169,17 +170,6 @@ public class CimdLogoCacheServiceTest {
     }
 
     @Test
-    public void fetchAndCacheNowUsesFollowRedirectsTrue() {
-        mockLogoPipeline();
-        when(response.statusCode()).thenReturn(200);
-        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}));
-
-        cacheService.fetchAndCacheNow("cid", "https://localhost/logo.png", 60L, settings).test().assertValue(Optional::isPresent);
-
-        verify(request).followRedirects(true);
-    }
-
-    @Test
     public void fetchAndCacheNowDoesNotPutLogoWhenResponseNotOk() {
         mockLogoPipeline();
         when(response.statusCode()).thenReturn(404);
@@ -212,11 +202,11 @@ public class CimdLogoCacheServiceTest {
     }
 
     @Test
-    public void fetchAndCacheNowUsesContentTypeHeaderWhenPresent() {
+    public void fetchAndCacheNowServesTheSniffedTypeEvenWhenTheHeaderDisagrees() {
         mockLogoPipeline();
         when(response.statusCode()).thenReturn(200);
-        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{1, 2, 3}));
-        when(response.getHeader("Content-Type")).thenReturn("image/jpeg");
+        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{(byte)0xFF, (byte)0xD8, 2, 3}));
+        when(response.getHeader("Content-Type")).thenReturn("image/png");
 
         cacheService.fetchAndCacheNow("cid", "https://localhost/logo.png", 60L, settings).test().assertValue(Optional::isPresent);
 
@@ -243,7 +233,7 @@ public class CimdLogoCacheServiceTest {
     public void fetchAndCacheNowPassesMetadataTtlAsLogoMaxAge() {
         mockLogoPipeline();
         when(response.statusCode()).thenReturn(200);
-        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{1, 2, 3}));
+        when(response.bodyAsBuffer()).thenReturn(Buffer.buffer(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}));
 
         cacheService.fetchAndCacheNow("cid", "https://localhost/logo.png", 900L, settings).test().assertComplete();
 
@@ -252,10 +242,132 @@ public class CimdLogoCacheServiceTest {
         assertEquals(900L, captor.getValue().maxAgeSeconds());
     }
 
+    @Test
+    public void fetchAndCacheNowRevalidatesTheRedirectTargetBeforeFollowingIt() {
+        final String internal = "http://169.254.169.254/latest/meta-data";
+        mockHop("https://cdn.example.com/logo.png", 302, internal, null, null);
+        doThrow(new InvalidClientMetadataException("private"))
+                .when(cimdUriTrustValidator)
+                .validateTrust(argThat(uri -> uri != null && "169.254.169.254".equals(uri.getHost())), any(CIMDSettings.class), eq("logo_uri"));
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertResult(Optional.empty());
+
+        verify(webClient, never()).getAbs(internal);
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void fetchAndCacheNowRejectsARedirectTargetResolvingToAPrivateHost() {
+        final String internal = "https://rebind.example.com/secret";
+        mockHop("https://cdn.example.com/logo.png", 302, internal, null, null);
+        when(cimdUriTrustValidator.validateResolvableHost(eq("rebind.example.com"), eq("logo_uri"), any()))
+                .thenReturn(Completable.error(new InvalidClientMetadataException("private")));
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertResult(Optional.empty());
+
+        verify(webClient, never()).getAbs(internal);
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void fetchAndCacheNowFollowsARedirectToAnotherTrustedHost() {
+        mockHop("https://cdn.example.com/logo.png", 302, "https://static.example.com/logo.png", null, null);
+        mockHop("https://static.example.com/logo.png", 200, null, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}, "image/png");
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertValue(Optional::isPresent);
+
+        verify(cimdUriTrustValidator).validateTrust(argThat(uri -> uri != null && "static.example.com".equals(uri.getHost())), any(CIMDSettings.class), eq("logo_uri"));
+        verify(cimdMetadataDocumentManager).putLogo(eq("cid"), any());
+    }
+
+    @Test
+    public void fetchAndCacheNowResolvesARelativeRedirectAgainstTheCurrentUrl() {
+        mockHop("https://cdn.example.com/a/logo.png", 301, "/b/logo.png", null, null);
+        mockHop("https://cdn.example.com/b/logo.png", 200, null, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}, "image/png");
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/a/logo.png", 60L, settings).test().assertValue(Optional::isPresent);
+    }
+
+    @Test
+    public void fetchAndCacheNowGivesUpAfterTooManyRedirects() {
+        for (int i = 0; i <= CimdLogoCacheService.MAX_REDIRECTS + 1; i++) {
+            mockHop("https://cdn.example.com/" + i, 302, "https://cdn.example.com/" + (i + 1), null, null);
+        }
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/0", 60L, settings).test().assertResult(Optional.empty());
+
+        verify(webClient).getAbs("https://cdn.example.com/" + CimdLogoCacheService.MAX_REDIRECTS);
+        verify(webClient, never()).getAbs("https://cdn.example.com/" + (CimdLogoCacheService.MAX_REDIRECTS + 1));
+    }
+
+    @Test
+    public void fetchAndCacheNowIgnoresARedirectWithoutLocation() {
+        mockHop("https://cdn.example.com/logo.png", 302, null, null, null);
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertResult(Optional.empty());
+    }
+
+    @Test
+    public void fetchAndCacheNowDoesNotFollowRedirectsAutomatically() {
+        mockHop("https://cdn.example.com/logo.png", 200, null, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}, "image/png");
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertValue(Optional::isPresent);
+
+        verify(hopRequests.get("https://cdn.example.com/logo.png")).followRedirects(false);
+    }
+
+    @Test
+    public void fetchAndCacheNowRejectsAResponseThatIsNotAnImage() {
+        mockHop("https://cdn.example.com/logo.png", 200, null, "{\"iam\":\"secret\"}".getBytes(), "application/json");
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertResult(Optional.empty());
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void fetchAndCacheNowRejectsATextBodyWithoutContentType() {
+        mockHop("https://cdn.example.com/logo.png", 200, null, "plain text".getBytes(), null);
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertResult(Optional.empty());
+
+        verify(cimdMetadataDocumentManager, never()).putLogo(anyString(), any());
+    }
+
+    @Test
+    public void fetchAndCacheNowServesTheSniffedImageTypeWhenTheHeaderIsNotAnImage() {
+        mockHop("https://cdn.example.com/logo.png", 200, null, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}, "text/html");
+
+        cacheService.fetchAndCacheNow("cid", "https://cdn.example.com/logo.png", 60L, settings).test().assertValue(Optional::isPresent);
+
+        ArgumentCaptor<CachedLogo> captor = ArgumentCaptor.forClass(CachedLogo.class);
+        verify(cimdMetadataDocumentManager).putLogo(eq("cid"), captor.capture());
+        assertEquals("image/png", captor.getValue().contentType());
+    }
+
+    private final java.util.Map<String, HttpRequest<Buffer>> hopRequests = new java.util.HashMap<>();
+
+    /** Mocks one HTTP exchange of a (possibly redirecting) logo fetch, with redirects followed by hand. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void mockHop(String url, int status, String location, byte[] body, String contentType) {
+        final HttpRequest<Buffer> hopRequest = org.mockito.Mockito.mock(HttpRequest.class);
+        final HttpResponse<Buffer> hopResponse = org.mockito.Mockito.mock(HttpResponse.class);
+        hopRequests.put(url, hopRequest);
+        lenient().when(webClient.getAbs(url)).thenReturn(hopRequest);
+        lenient().when(hopRequest.timeout(anyLong())).thenReturn(hopRequest);
+        lenient().when(hopRequest.followRedirects(false)).thenReturn(hopRequest);
+        lenient().when(hopRequest.as(any())).thenReturn((HttpRequest) hopRequest);
+        lenient().when(hopRequest.rxSend()).thenReturn(Single.just(hopResponse));
+        lenient().when(hopResponse.statusCode()).thenReturn(status);
+        lenient().when(hopResponse.getHeader("Location")).thenReturn(location);
+        lenient().when(hopResponse.getHeader("Content-Type")).thenReturn(contentType);
+        lenient().when(hopResponse.bodyAsBuffer()).thenReturn(body == null ? null : Buffer.buffer(body));
+    }
+
     private void mockLogoPipeline() {
         when(webClient.getAbs(anyString())).thenReturn(request);
         when(request.timeout(anyLong())).thenReturn(request);
-        when(request.followRedirects(true)).thenReturn(request);
+        when(request.followRedirects(false)).thenReturn(request);
         when(request.as(any())).thenReturn((HttpRequest) request);
         when(request.rxSend()).thenReturn(Single.just(response));
     }
