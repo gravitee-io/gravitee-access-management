@@ -338,6 +338,7 @@ public class ApplicationOAuthSettings {
     @Schema(description = "Resource servers this application may request an ID-JAG for. Absent means "
             + "Cross App Access disabled.")
     private ApplicationCrossAppAccessSettings crossAppAccessSettings;
+    private ApplicationDeviceFlowSettings deviceFlowSettings;
 
     @Schema(description = "Lightweight JWT settings. Absent means Lightweight JWT disabled.")
     private ApplicationLightweightJwtSettings lightweightJwtSettings;
@@ -422,6 +423,7 @@ public class ApplicationOAuthSettings {
         this.tokenExchangeOAuthSettings = other.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(other.tokenExchangeOAuthSettings) : null;
         this.crossAppAccessSettings = other.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(other.crossAppAccessSettings) : null;
         this.lightweightJwtSettings = other.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(other.lightweightJwtSettings) : null;
+        this.deviceFlowSettings = other.deviceFlowSettings != null ? new ApplicationDeviceFlowSettings(other.deviceFlowSettings) : null;
     }
 
     public String getClientId() {
@@ -1057,6 +1059,14 @@ public class ApplicationOAuthSettings {
         this.lightweightJwtSettings = lightweightJwtSettings;
     }
 
+    public ApplicationDeviceFlowSettings getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettings deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -1130,5 +1140,6 @@ public class ApplicationOAuthSettings {
         client.setTokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings != null ? new TokenExchangeOAuthSettings(this.tokenExchangeOAuthSettings) : null);
         client.setCrossAppAccessSettings(this.crossAppAccessSettings != null ? new ApplicationCrossAppAccessSettings(this.crossAppAccessSettings) : null);
         client.setLightweightJwtSettings(this.lightweightJwtSettings != null ? new ApplicationLightweightJwtSettings(this.lightweightJwtSettings) : null);
+        client.setDeviceFlowSettings(this.deviceFlowSettings != null ? new ApplicationDeviceFlowSettings(this.deviceFlowSettings) : null);
     }
 }

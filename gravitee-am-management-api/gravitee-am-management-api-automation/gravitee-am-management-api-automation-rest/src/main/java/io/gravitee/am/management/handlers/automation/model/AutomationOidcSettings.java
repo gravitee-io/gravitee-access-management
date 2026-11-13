@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.oidc.SpiffeDomainSettings;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -66,4 +67,7 @@ public class AutomationOidcSettings {
     @Schema(description = "Client-Initiated Backchannel Authentication (CIBA) settings for the domain.")
     @Valid
     private AutomationCIBASettings cibaSettings;
+
+    @Schema(description = "Device authorization grant (RFC 8628) settings for the domain.")
+    private DeviceFlowSettings deviceFlowSettings;
 }

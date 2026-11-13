@@ -24,6 +24,14 @@ import {
   TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS,
   DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING,
 } from '../../../settings/oauth/token-exchange/token-exchange.types';
+import {
+  ApplicationDeviceFlowSettings,
+  DEVICE_CODE_GRANT_TYPE,
+  DEVICE_FLOW_TIMINGS_ERROR,
+  DEVICE_FLOW_TIMING_MIN,
+  deviceFlowTimingsValid,
+  effectiveDomainDeviceFlowSettings,
+} from '../../../settings/openid/device-flow/device-flow.types';
 
 @Component({
   selector: 'app-grant-flows-settings',
@@ -59,6 +67,9 @@ export class GrantFlowsComponent implements OnInit {
   readonly DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING = DEFAULT_TOKEN_EXCHANGE_SCOPE_HANDLING;
   readonly TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS = TOKEN_EXCHANGE_SCOPE_HANDLING_OPTIONS;
 
+  readonly DEVICE_FLOW_TIMING_MIN = DEVICE_FLOW_TIMING_MIN;
+  readonly DEVICE_FLOW_TIMINGS_ERROR = DEVICE_FLOW_TIMINGS_ERROR;
+
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange';
   private ID_JAG_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:id-jag';
@@ -84,6 +95,7 @@ export class GrantFlowsComponent implements OnInit {
     { name: 'UMA TICKET', value: this.UMA_GRANT_TYPE, checked: false, disabled: false },
     { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false },
     { name: 'TOKEN EXCHANGE', value: this.TOKEN_EXCHANGE_GRANT_TYPE, checked: false, disabled: false },
+    { name: 'DEVICE CODE', value: DEVICE_CODE_GRANT_TYPE, checked: false, disabled: false },
   ];
 
   constructor(
@@ -169,11 +181,22 @@ export class GrantFlowsComponent implements OnInit {
 
   isGrantTypeVisuallyChecked(grantType: any): boolean {
     if (grantType.disabled) {
-      if (grantType.value === this.CIBA_GRANT_TYPE || grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE) {
+      if (
+        grantType.value === this.CIBA_GRANT_TYPE ||
+        grantType.value === this.TOKEN_EXCHANGE_GRANT_TYPE ||
+        grantType.value === DEVICE_CODE_GRANT_TYPE
+      ) {
         return false;
       }
     }
     return grantType.checked;
+  }
+
+  grantTypeDisabledReason(grantType: any): string | null {
+    if (grantType?.disabled && grantType.value === DEVICE_CODE_GRANT_TYPE) {
+      return 'Device Flow is disabled on the security domain';
+    }
+    return null;
   }
 
   selectGrantType(event) {
@@ -259,6 +282,39 @@ export class GrantFlowsComponent implements OnInit {
     this.modelChanged();
   }
 
+  isDeviceFlowEnabledAtDomain(): boolean {
+    return effectiveDomainDeviceFlowSettings(this.domainStore.current).enabled;
+  }
+
+  isDeviceFlowSelected(): boolean {
+    return this.selectedGrantTypes.includes(DEVICE_CODE_GRANT_TYPE);
+  }
+
+  get inheritedDeviceFlowSettings(): ApplicationDeviceFlowSettings {
+    const domainSettings = effectiveDomainDeviceFlowSettings(this.domainStore.current);
+    return {
+      deviceCodeExpiry: domainSettings.deviceCodeExpiry,
+      pollingInterval: domainSettings.pollingInterval,
+    };
+  }
+
+  isDeviceFlowOverridden(): boolean {
+    return !!this.oauthSettings.deviceFlowSettings;
+  }
+
+  enableDeviceFlowOverride(event: any) {
+    this.oauthSettings.deviceFlowSettings = event.checked ? { ...this.inheritedDeviceFlowSettings } : null;
+    this.modelChanged();
+  }
+
+  isDeviceFlowOverrideValid(): boolean {
+    const override = this.oauthSettings.deviceFlowSettings;
+    if (!override) {
+      return true;
+    }
+    return deviceFlowTimingsValid(Number(override.deviceCodeExpiry), Number(override.pollingInterval));
+  }
+
   disableRefreshTokenRotation(event) {
     this.oauthSettings.disableRefreshTokenRotation = event.checked;
     this.modelChanged();
@@ -339,6 +395,9 @@ export class GrantFlowsComponent implements OnInit {
       if (this.CIBA_GRANT_TYPE === grantType.value && this.domainStore.current) {
         const domain = deepClone(this.domainStore.current);
         grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
+      }
+      if (DEVICE_CODE_GRANT_TYPE === grantType.value) {
+        grantType.disabled = !this.isDeviceFlowEnabledAtDomain();
       }
       if (this.TOKEN_EXCHANGE_GRANT_TYPE === grantType.value && this.domainStore.current) {
         const domain = deepClone(this.domainStore.current);

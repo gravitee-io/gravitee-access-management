@@ -38,6 +38,7 @@ public class JdbcRateLimit {
     private String client;
     @Column("factor_id")
     private String factorId;
+    private String purpose;
     @Column("token_left")
     private long tokenLeft;
     @Column("allow_request")
@@ -77,6 +78,14 @@ public class JdbcRateLimit {
 
     public void setFactorId(String factorId) {
         this.factorId = factorId;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
     }
 
     public long getTokenLeft() {
