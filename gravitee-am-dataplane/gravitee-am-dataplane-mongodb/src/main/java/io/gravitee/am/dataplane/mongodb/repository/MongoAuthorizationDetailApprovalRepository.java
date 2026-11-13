@@ -79,6 +79,14 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     }
 
     @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
+        return Flowable.fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain),
+                        userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date()))))
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest>> findByDomainAndUser(
             String domain, UserId userId, AuthorizationDetailApprovalCursorRequest cursor, int limit) {
         List<Bson> filters = new ArrayList<>(List.of(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS),
@@ -173,6 +181,19 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndUser(String domain, UserId userId) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS))))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId),
+                        userIdMatches(userId, DEFAULT_USER_FIELDS))))
                 .observeOn(Schedulers.computation());
     }
 

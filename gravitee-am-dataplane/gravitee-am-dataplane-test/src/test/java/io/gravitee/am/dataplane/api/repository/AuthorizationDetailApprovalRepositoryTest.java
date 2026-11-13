@@ -268,6 +268,74 @@ public class AuthorizationDetailApprovalRepositoryTest extends AbstractDataPlane
                 .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
     }
 
+    @Test
+    public void shouldFindEveryApprovalOfAUser() {
+        repository.create(approval(fullUserId, "digest-1", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherClient = approval(fullUserId, "digest-2", inDays(30));
+        otherClient.setClientId("other-client");
+        repository.create(otherClient).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        repository.create(approval(fullUserId, "digest-3", inDays(-1))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherDomain = approval(fullUserId, "digest-4", inDays(30));
+        otherDomain.setDomain("other-domain");
+        repository.create(otherDomain).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        repository.create(approval(new UserId("other-user", null, null), "digest-5", inDays(30)))
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        var found = repository.findByDomainAndUser(DOMAIN, externalUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values();
+
+        assertThat(found).extracting(AuthorizationDetailApproval::getDigest).containsExactlyInAnyOrder("digest-1", "digest-2");
+    }
+
+    @Test
+    public void shouldNotFindAnExpiredApprovalById() {
+        AuthorizationDetailApproval expired = repository.create(approval(fullUserId, "digest-1", inDays(-1)))
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values().get(0);
+
+        repository.findById(expired.getId()).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
+    }
+
+    @Test
+    public void shouldDeleteTheApprovalsOfAUser() {
+        repository.create(approval(fullUserId, "digest-1", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherClient = approval(fullUserId, "digest-2", inDays(30));
+        otherClient.setClientId("other-client");
+        repository.create(otherClient).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherDomain = approval(fullUserId, "digest-3", inDays(30));
+        otherDomain.setDomain("other-domain");
+        repository.create(otherDomain).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        UserId otherUser = new UserId("other-user", null, null);
+        repository.create(approval(otherUser, "digest-4", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.deleteByDomainAndUser(DOMAIN, externalUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.findByDomainAndUser(DOMAIN, fullUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
+        repository.findByDomainAndUser("other-domain", fullUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+        repository.findByDomainAndUser(DOMAIN, otherUser).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+    }
+
+    @Test
+    public void shouldDeleteTheApprovalsOfAUserForAClient() {
+        repository.create(approval(fullUserId, "digest-1", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval denied = approval(fullUserId, "digest-2", inDays(30));
+        denied.setStatus(ScopeApproval.ApprovalStatus.DENIED);
+        repository.create(denied).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        AuthorizationDetailApproval otherClient = approval(fullUserId, "digest-3", inDays(30));
+        otherClient.setClientId("other-client");
+        repository.create(otherClient).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+        UserId otherUser = new UserId("other-user", null, null);
+        repository.create(approval(otherUser, "digest-4", inDays(30))).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.deleteByDomainAndUserAndClient(DOMAIN, fullUserId, CLIENT).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        var remaining = repository.findByDomainAndUser(DOMAIN, fullUserId)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values();
+        assertThat(remaining).extracting(AuthorizationDetailApproval::getDigest).containsExactly("digest-3");
+        repository.findByDomainAndUserAndClient(DOMAIN, otherUser, CLIENT)
+                .test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+    }
+
     private CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest> page(
             UserId userId, AuthorizationDetailApprovalCursorRequest cursor, int limit) {
         return repository.findByDomainAndUser(DOMAIN, userId, cursor, limit)

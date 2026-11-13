@@ -76,6 +76,18 @@ public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepos
     }
 
     @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("findByDomainAndUser({}, {})", domain, userId);
+        return fluxToFlowable(getTemplate().select(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(userId)
+                        .and(domain(domain))
+                        .and(notExpiredAt(LocalDateTime.now(UTC)))))
+                .all())
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Single<CursorPage<AuthorizationDetailApproval, AuthorizationDetailApprovalCursorRequest>> findByDomainAndUser(
             String domain, UserId userId, AuthorizationDetailApprovalCursorRequest cursor, int limit) {
         LOGGER.debug("findByDomainAndUser({}, {}, {}, {})", domain, userId, cursor.getSortField(), limit);
@@ -178,6 +190,22 @@ public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepos
                     approval.setUpdatedAt(new Date());
                     return update(approval);
                 })
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("deleteByDomainAndUser({}, {})", domain, userId);
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(userId).and(domain(domain)))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
+        LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, userId, clientId);
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(userId).and(client(clientId)).and(domain(domain)))).all())
                 .observeOn(Schedulers.computation());
     }
 

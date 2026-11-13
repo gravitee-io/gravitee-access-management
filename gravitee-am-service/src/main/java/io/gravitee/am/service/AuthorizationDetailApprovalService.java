@@ -23,12 +23,14 @@ import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.service.dataplane.DomainDataPlaneCleanup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 public interface AuthorizationDetailApprovalService extends DomainDataPlaneCleanup {
 
@@ -42,4 +44,16 @@ public interface AuthorizationDetailApprovalService extends DomainDataPlaneClean
      */
     Completable saveConsent(Domain domain, Client client, User principal, AuthorizationDetails authorizationDetails,
                             List<AuthorizationDetailApproval> approvals, boolean approved);
+
+    /**
+     * Fails as not found when the approval is missing, expired or another user's.
+     */
+    Completable revokeByConsent(Domain domain, UserId userId, String consentId,
+                                BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
+
+    Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId,
+                                      BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
+
+    Completable revokeByUser(Domain domain, UserId userId,
+                             BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
 }

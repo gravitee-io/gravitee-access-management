@@ -30,6 +30,7 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.WebTarget;
@@ -45,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -179,6 +181,56 @@ class UserAuthorizationDetailConsentsResourceTest extends JerseySpringTest {
                 .when(authorizationDetailApprovalAdapter).getUserConsents(eq(domain), eq(USER_ID), any(), anyInt());
 
         Response response = consents().request().get();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatusCode.INTERNAL_SERVER_ERROR_500);
+    }
+
+    @Test
+    void shouldRevokeTheConsentsOfAUserForEveryClient() {
+        doReturn(Completable.complete()).when(authorizationDetailApprovalAdapter).revokeUserConsents(eq(domain), eq(USER_ID), isNull(), any(User.class));
+
+        Response response = consents().request().delete();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatusCode.NO_CONTENT_204);
+        verify(authorizationDetailApprovalAdapter).revokeUserConsents(eq(domain), eq(USER_ID), isNull(), any(User.class));
+    }
+
+    @Test
+    void shouldRevokeTheConsentsOfAUserForAClient() {
+        doReturn(Completable.complete()).when(authorizationDetailApprovalAdapter).revokeUserConsents(eq(domain), eq(USER_ID), eq("client-id"), any(User.class));
+
+        Response response = consents().queryParam("clientId", "client-id").request().delete();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatusCode.NO_CONTENT_204);
+        verify(authorizationDetailApprovalAdapter).revokeUserConsents(eq(domain), eq(USER_ID), eq("client-id"), any(User.class));
+    }
+
+    @Test
+    void shouldNotRevokeTheConsentsWithoutPermission() {
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+
+        Response response = consents().request().delete();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatusCode.FORBIDDEN_403);
+        verify(authorizationDetailApprovalAdapter, never()).revokeUserConsents(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldNotRevokeTheConsentsOfAnUnknownUser() {
+        doReturn(Completable.error(new UserNotFoundException(UserId.internal(USER_ID))))
+                .when(authorizationDetailApprovalAdapter).revokeUserConsents(eq(domain), eq(USER_ID), any(), any(User.class));
+
+        Response response = consents().request().delete();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatusCode.NOT_FOUND_404);
+    }
+
+    @Test
+    void shouldReturnAnInternalErrorWhenRevokingFails() {
+        doReturn(Completable.error(new TechnicalManagementException("unavailable")))
+                .when(authorizationDetailApprovalAdapter).revokeUserConsents(eq(domain), eq(USER_ID), any(), any(User.class));
+
+        Response response = consents().request().delete();
 
         assertThat(response.getStatus()).isEqualTo(HttpStatusCode.INTERNAL_SERVER_ERROR_500);
     }

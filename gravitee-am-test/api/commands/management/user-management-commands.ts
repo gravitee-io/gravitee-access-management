@@ -227,6 +227,24 @@ export const followUserAuthorizationDetailConsentsCursor = (
   });
 };
 
+export const revokeUserAuthorizationDetailConsents = (domainId: string, accessToken: string, userId: string, clientId?: string) =>
+  getUserApi(accessToken).revokeUserAuthorizationDetailConsents({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    clientId,
+  });
+
+export const revokeUserAuthorizationDetailConsent = (domainId: string, accessToken: string, userId: string, consentId: string) =>
+  getUserApi(accessToken).revokeUserAuthorizationDetailConsent({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    consent: consentId,
+  });
+
 export function buildTestUser(
   i: number,
   options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean; lastPasswordReset?: Date } = {},

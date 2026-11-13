@@ -64,7 +64,7 @@
             <a mat-button [routerLink]="[row.clientEntity.id]" [queryParams]="{ clientId: row.clientId }"
               ><mat-icon matTooltip="More info">more_horiz</mat-icon></a
             >
-            <button *ngIf="canRevokeAccessForClient(row.clientId) && canRevoke" mat-icon-button (click)="revoke($event, row)">
+            <button *ngIf="isApprovedForClient(row.clientId) && canRevoke" mat-icon-button (click)="revoke($event, row)">
               <mat-icon style="color: #f44336" matTooltip="Revoke application">highlight_off</mat-icon>
             </button>
           </div>

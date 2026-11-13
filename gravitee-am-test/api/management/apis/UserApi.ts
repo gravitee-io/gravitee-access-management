@@ -377,6 +377,22 @@ export interface RevokeAccountAccessTokenRequest {
   tokenId: string;
 }
 
+export interface RevokeUserAuthorizationDetailConsentRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  consent: string;
+}
+
+export interface RevokeUserAuthorizationDetailConsentsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  clientId?: string;
+}
+
 export interface RevokeUserCertificateCredentialRequest {
   organizationId: string;
   environmentId: string;
@@ -3383,6 +3399,170 @@ export class UserApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.revokeAccountAccessTokenRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Revokes one authorization detail the user approved or denied, then the user\'s tokens for its application. User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s authorization detail consent
+   */
+  async revokeUserAuthorizationDetailConsentRaw(
+    requestParameters: RevokeUserAuthorizationDetailConsentRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling revokeUserAuthorizationDetailConsent.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling revokeUserAuthorizationDetailConsent.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling revokeUserAuthorizationDetailConsent.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling revokeUserAuthorizationDetailConsent.',
+      );
+    }
+
+    if (requestParameters.consent === null || requestParameters.consent === undefined) {
+      throw new runtime.RequiredError(
+        'consent',
+        'Required parameter requestParameters.consent was null or undefined when calling revokeUserAuthorizationDetailConsent.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/authorization-details/{consent}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'consent'}}`, encodeURIComponent(String(requestParameters.consent))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Revokes one authorization detail the user approved or denied, then the user\'s tokens for its application. User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s authorization detail consent
+   */
+  async revokeUserAuthorizationDetailConsent(
+    requestParameters: RevokeUserAuthorizationDetailConsentRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.revokeUserAuthorizationDetailConsentRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Revokes the approved and denied authorization details of the user, then the user\'s tokens. User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s authorization detail consents
+   */
+  async revokeUserAuthorizationDetailConsentsRaw(
+    requestParameters: RevokeUserAuthorizationDetailConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling revokeUserAuthorizationDetailConsents.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling revokeUserAuthorizationDetailConsents.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling revokeUserAuthorizationDetailConsents.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling revokeUserAuthorizationDetailConsents.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.clientId !== undefined) {
+      queryParameters['clientId'] = requestParameters.clientId;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/authorization-details`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Revokes the approved and denied authorization details of the user, then the user\'s tokens. User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user\'s authorization detail consents
+   */
+  async revokeUserAuthorizationDetailConsents(
+    requestParameters: RevokeUserAuthorizationDetailConsentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.revokeUserAuthorizationDetailConsentsRaw(requestParameters, initOverrides);
   }
 
   /**
