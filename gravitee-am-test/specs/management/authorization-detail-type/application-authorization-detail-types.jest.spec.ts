@@ -26,14 +26,13 @@ import {
   setupAuthorizationDetailTypeFixture,
   uniqueType,
   waitForApplicationUpdateOf,
-  waitForAuditReporter,
 } from './fixtures/authorization-detail-type-fixture';
 import {
   createAuthorizationDetailType,
   deleteAuthorizationDetailTypeRaw,
 } from '@management-commands/authorization-detail-type-management-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
-import { auditIdsOfType, waitForNewAudit } from '@management-commands/audit-management-commands';
+import { auditIdsOfType, waitForNewAudit, waitForAuditReporter } from '@management-commands/audit-management-commands';
 import { ApplicationAuthorizationDetailTypeSettings } from '@management-models/ApplicationAuthorizationDetailTypeSettings';
 import { Application } from '@management-models/Application';
 
@@ -182,7 +181,7 @@ describe('Validation', () => {
 });
 
 describe('Audit', () => {
-  beforeAll(() => waitForAuditReporter(fixture), 60000);
+  beforeAll(() => waitForAuditReporter(fixture.domain.id, fixture.accessToken), 60000);
 
   it(jira`should audit a successful update ${'AM-8024'}`, async () => {
     const app = await createApp();

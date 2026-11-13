@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.adapter;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailApprovalEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.cursor.CursorPage;
 import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
 public interface AuthorizationDetailApprovalAdapter {
@@ -28,4 +30,11 @@ public interface AuthorizationDetailApprovalAdapter {
      */
     Single<CursorPage<AuthorizationDetailApprovalEntity, AuthorizationDetailApprovalCursorRequest>> getUserConsents(
             Domain domain, String userId, AuthorizationDetailApprovalCursorRequest cursor, int limit);
+
+    /**
+     * Revokes the user's consents for {@code clientId}, or for every client when it is empty.
+     */
+    Completable revokeUserConsents(Domain domain, String userId, String clientId, User authenticatedUser);
+
+    Completable revokeUserConsent(Domain domain, String userId, String consentId, User authenticatedUser);
 }

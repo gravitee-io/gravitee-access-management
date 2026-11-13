@@ -18,7 +18,6 @@ import { requestAdminAccessToken } from '@management-commands/token-management-c
 import { setupDomainForTest, safeDeleteDomain } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { retryUntil } from '@utils-commands/retry';
-import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
 import { AuditEntry, auditsOfType } from '@management-commands/audit-management-commands';
 import { createApplication, getApplication, patchApplication } from '@management-commands/application-management-commands';
 import { Application } from '@management-models/Application';
@@ -124,18 +123,6 @@ export const waitForApplicationUpdateOf = async (
       throw new Error(`No new ${APPLICATION_UPDATED_AUDIT} audit${actor ? ` by ${actor}` : ''} for application ${app.id} within 30000ms`);
     })
   )[0];
-
-/** Creates probe types in the fixture domain until one is audited. */
-export const waitForAuditReporter = async (fixture: AuthorizationDetailTypeFixture): Promise<void> => {
-  await retryUntil(
-    async () => {
-      await createAuthorizationDetailType(fixture.domain.id, fixture.accessToken, newType(uniqueType('audit_probe')));
-      return (await auditsOfType(fixture.domain.id, fixture.accessToken, 'AUTHORIZATION_DETAIL_TYPE_CREATED')).length;
-    },
-    (count) => count > 0,
-    { timeoutMillis: 30000, intervalMillis: 1000 },
-  );
-};
 
 export const setupAuthorizationDetailTypeFixture = async (): Promise<AuthorizationDetailTypeFixture> => {
   const domains: Domain[] = [];

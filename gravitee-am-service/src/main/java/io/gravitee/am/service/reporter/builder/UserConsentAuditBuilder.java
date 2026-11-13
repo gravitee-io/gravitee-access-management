@@ -18,20 +18,29 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.reporter.builder.management.ManagementAuditBuilder;
 
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentAuditBuilder> {
+
+    private static final String AUTHORIZATION_DETAILS = "authorization_details";
+    private static final String CLIENT_ID = "clientId";
 
     public UserConsentAuditBuilder() {
         super();
@@ -43,11 +52,38 @@ public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentA
     }
 
     public UserConsentAuditBuilder authorizationDetails(AuthorizationDetails authorizationDetails, boolean approved) {
-        Map<String, Object> consent = new LinkedHashMap<>();
-        consent.put("authorization_details", authorizationDetails.getRaw());
-        consent.put("status", approved ? ScopeApproval.ApprovalStatus.APPROVED : ScopeApproval.ApprovalStatus.DENIED);
-        setNewValue(List.of(consent));
+        setNewValue(List.of(toConsentEntry(authorizationDetails.getRaw(),
+                approved ? ScopeApproval.ApprovalStatus.APPROVED : ScopeApproval.ApprovalStatus.DENIED)));
         return this;
+    }
+
+    /**
+     * Records the approvals grouped by client, then by status.
+     */
+    public UserConsentAuditBuilder authorizationDetails(Collection<AuthorizationDetailApproval> approvals) {
+        setNewValue(approvals.stream()
+                .collect(groupingBy(AuthorizationDetailApproval::getClientId, LinkedHashMap::new,
+                        groupingBy(AuthorizationDetailApproval::getStatus, () -> new EnumMap<>(ScopeApproval.ApprovalStatus.class),
+                                mapping(AuthorizationDetailApproval::getDetail, toList()))))
+                .entrySet().stream()
+                .flatMap(byClient -> byClient.getValue().entrySet().stream()
+                        .map(byStatus -> toConsentEntry(byClient.getKey(), byStatus.getValue(), byStatus.getKey())))
+                .toList());
+        return this;
+    }
+
+    private static Map<String, Object> toConsentEntry(String clientId, List<? extends Map<String, Object>> details, ScopeApproval.ApprovalStatus status) {
+        Map<String, Object> consent = new LinkedHashMap<>();
+        consent.put(CLIENT_ID, clientId);
+        consent.putAll(toConsentEntry(details, status));
+        return consent;
+    }
+
+    private static Map<String, Object> toConsentEntry(List<? extends Map<String, Object>> details, ScopeApproval.ApprovalStatus status) {
+        Map<String, Object> consent = new LinkedHashMap<>();
+        consent.put(AUTHORIZATION_DETAILS, details);
+        consent.put("status", status);
+        return consent;
     }
 
     public UserConsentAuditBuilder user(User user) {

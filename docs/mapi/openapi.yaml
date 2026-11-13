@@ -9843,6 +9843,49 @@ paths:
       - user
       - domain
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/authorization-details:
+    delete:
+      description: "Revokes the approved and denied authorization details of the user,\
+        \ then the user's tokens. User must have the DOMAIN_USER[UPDATE] permission\
+        \ on the specified domain or DOMAIN_USER[UPDATE] permission on the specified\
+        \ environment or DOMAIN_USER[UPDATE] permission on the specified organization"
+      operationId: revokeUserAuthorizationDetailConsents
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - description: Revokes only the consents given to this client
+        in: query
+        name: clientId
+        schema:
+          type: string
+      responses:
+        "204":
+          description: User authorization detail consents successfully revoked
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+      summary: Revoke a user's authorization detail consents
+      tags:
+      - user
+      - domain
     get:
       description: "Lists the authorization details the user approved or denied that\
         \ have not expired. User must have the DOMAIN_USER[READ] permission on the\
@@ -9938,6 +9981,51 @@ paths:
         "500":
           description: Internal server error
       summary: List a user's authorization detail consents with cursor-based pagination
+      tags:
+      - user
+      - domain
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents/authorization-details/{consent}
+  : delete:
+      description: "Revokes one authorization detail the user approved or denied,\
+        \ then the user's tokens for its application. User must have the DOMAIN_USER[UPDATE]\
+        \ permission on the specified domain or DOMAIN_USER[UPDATE] permission on\
+        \ the specified environment or DOMAIN_USER[UPDATE] permission on the specified\
+        \ organization"
+      operationId: revokeUserAuthorizationDetailConsent
+      parameters:
+      - in: path
+        name: organizationId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: environmentId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: domain
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: user
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: consent
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: User authorization detail consent successfully revoked
+        "404":
+          description: "User or consent not found, or the consent has expired"
+        "500":
+          description: Internal server error
+      summary: Revoke a user's authorization detail consent
       tags:
       - user
       - domain
