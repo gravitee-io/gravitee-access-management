@@ -22,7 +22,6 @@ import {
   setupAuthorizationDetailTypeFixture,
   uniqueType,
   validSchema,
-  waitForAuditReporter,
 } from './fixtures/authorization-detail-type-fixture';
 import {
   createAuthorizationDetailType,
@@ -31,7 +30,7 @@ import {
   patchAuthorizationDetailType,
   patchAuthorizationDetailTypeJson,
 } from '@management-commands/authorization-detail-type-management-commands';
-import { auditIdsOfType, waitForNewAudit } from '@management-commands/audit-management-commands';
+import { auditIdsOfType, waitForNewAudit, waitForAuditReporter } from '@management-commands/audit-management-commands';
 import { addDomainMembership, userMembership } from '@management-commands/membership-management-commands';
 import { findOrganizationRoleByName } from '@management-commands/role-management-commands';
 import { deleteOrganisationUser } from '@management-commands/organisation-user-commands';
@@ -217,7 +216,7 @@ describe('Not found', () => {
 });
 
 describe('Audit', () => {
-  beforeAll(() => waitForAuditReporter(fixture), 60000);
+  beforeAll(() => waitForAuditReporter(fixture.domain.id, fixture.accessToken), 60000);
 
   it(jira`should audit a successful update with the change ${'AM-7924'}`, async () => {
     const existing = await createFullType();

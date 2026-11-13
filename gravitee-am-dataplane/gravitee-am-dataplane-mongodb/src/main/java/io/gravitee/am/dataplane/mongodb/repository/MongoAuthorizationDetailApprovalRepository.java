@@ -39,6 +39,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Filters.regex;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.DEFAULT_USER_FIELDS;
@@ -73,6 +75,14 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     @Override
     public Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
         return Flowable.fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId),
+                        userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date()))))
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
+        return Flowable.fromPublisher(collection.find(and(eq(FIELD_DOMAIN, domain),
                         userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date()))))
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
@@ -173,6 +183,12 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndIds(String domain, Collection<String> ids) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_DOMAIN, domain), in(FIELD_ID, ids))))
                 .observeOn(Schedulers.computation());
     }
 

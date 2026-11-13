@@ -66,7 +66,7 @@ export class UserApplicationsComponent implements OnInit {
       .confirm('Revoke access', 'Are you sure you want to revoke authorization ?')
       .pipe(
         filter((res) => res),
-        switchMap(() => this.userService.revokeConsents(this.domainId, this.user.id, consent.clientId)),
+        switchMap(() => this.userService.revokeAllConsents(this.domainId, this.user.id, consent.clientId)),
         tap(() => {
           this.snackbarService.open('Access for application ' + consent.clientEntity.name + ' revoked');
           this.loadConsents();
@@ -81,7 +81,7 @@ export class UserApplicationsComponent implements OnInit {
       .confirm('Revoke access', 'Are you sure you want to revoke access to all these applications ?')
       .pipe(
         filter((res) => res),
-        switchMap(() => this.userService.revokeConsents(this.domainId, this.user.id, null)),
+        switchMap(() => this.userService.revokeAllConsents(this.domainId, this.user.id)),
         tap(() => {
           this.snackbarService.open('Access revoked');
           this.loadConsents();
@@ -112,14 +112,13 @@ export class UserApplicationsComponent implements OnInit {
   };
 
   isApprovedForClient(clientId) {
-    return this.canRevokeAccessForClient(clientId) || find(this.appAuthorizationDetailConsentsGrouped[clientId], { status: 'approved' });
-  }
-
-  canRevokeAccessForClient(clientId) {
-    return find(this.appConsentsGrouped[clientId], { status: 'approved' });
+    return (
+      find(this.appConsentsGrouped[clientId], { status: 'approved' }) ||
+      find(this.appAuthorizationDetailConsentsGrouped[clientId], { status: 'approved' })
+    );
   }
 
   canRevokeAllAccess() {
-    return find(this.consents, { status: 'approved' });
+    return find(this.consents, { status: 'approved' }) || find(this.authorizationDetailConsents, { status: 'approved' });
   }
 }

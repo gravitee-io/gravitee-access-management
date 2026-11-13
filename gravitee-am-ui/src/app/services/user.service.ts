@@ -16,7 +16,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EMPTY, Observable } from 'rxjs';
-import { expand, map, reduce } from 'rxjs/operators';
+import { expand, map, reduce, switchMap } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
 import { toHttpParams } from '../utils/http-utils';
@@ -133,8 +133,8 @@ export class UserService {
     );
   }
 
-  allAuthorizationDetailConsents(domainId: string, userId: string): Observable<any[]> {
-    return this.authorizationDetailConsents(domainId, userId, {}, 100, 0, { prop: 'updatedAt', dir: 'desc' }).pipe(
+  allAuthorizationDetailConsents(domainId: string, userId: string, clientId?: string): Observable<any[]> {
+    return this.authorizationDetailConsents(domainId, userId, { clientId }, 100, 0, { prop: 'updatedAt', dir: 'desc' }).pipe(
       expand((page) => (page.nextCursor ? this.nextAuthorizationDetailConsents(page.nextCursor) : EMPTY)),
       reduce((all, page) => all.concat(page.data), []),
     );
@@ -152,6 +152,30 @@ export class UserService {
 
   revokeConsent(domainId, userId, consentId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents/scopes/' + consentId);
+  }
+
+  revokeAuthorizationDetailConsents(domainId: string, userId: string, clientId?: string): Observable<any> {
+    return this.http.delete<any>(
+      this.usersURL +
+        domainId +
+        '/users/' +
+        userId +
+        '/consents/authorization-details' +
+        (clientId ? '?clientId=' + encodeURIComponent(clientId) : ''),
+    );
+  }
+
+  revokeAuthorizationDetailConsent(domainId: string, userId: string, consentId: string): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents/authorization-details/' + consentId);
+  }
+
+  /**
+   * Revokes the user's scope and authorization detail consents for the client, or for every client without one.
+   */
+  revokeAllConsents(domainId: string, userId: string, clientId?: string): Observable<any> {
+    return this.revokeConsents(domainId, userId, clientId).pipe(
+      switchMap(() => this.revokeAuthorizationDetailConsents(domainId, userId, clientId)),
+    );
   }
 
   roles(domainId, userId, dynamic = false): Observable<any> {
