@@ -15,8 +15,8 @@
  */
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, Subject, Subscription } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, forkJoin, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, filter, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { find } from 'lodash';
 import { DatatableComponent } from '@swimlane/ngx-datatable';
 
@@ -45,6 +45,7 @@ export class UserApplicationComponent implements OnInit, OnDestroy {
   consents: any[];
   authorizationDetailConsents: any[] = [];
   hasAuthorizationDetailConsents = false;
+  hasApprovedAuthorizationDetailConsents = false;
   authorizationDetailConsentsLoaded = false;
   detailsLoading = false;
   detailsPage = {
@@ -103,6 +104,7 @@ export class UserApplicationComponent implements OnInit, OnDestroy {
       }),
     );
     this.loadDetails();
+    this.loadAuthorizationDetailApprovals().subscribe((approvals) => this.setAuthorizationDetailApprovals(approvals));
   }
 
   ngOnDestroy() {
@@ -126,7 +128,7 @@ export class UserApplicationComponent implements OnInit, OnDestroy {
       .confirm('Revoke access', 'Are you sure you want to revoke application access ?')
       .pipe(
         filter((res) => res),
-        switchMap(() => this.userService.revokeConsents(this.domainId, this.userId, this.clientId)),
+        switchMap(() => this.userService.revokeAllConsents(this.domainId, this.userId, this.clientId)),
         tap(() => {
           this.snackbarService.open('Access for application ' + this.applicationDisplayName + ' revoked');
           this.router.navigate(['..'], { relativeTo: this.route });
@@ -142,24 +144,52 @@ export class UserApplicationComponent implements OnInit, OnDestroy {
       .pipe(
         filter((res) => res),
         switchMap(() => this.userService.revokeConsent(this.domainId, this.userId, consent.id)),
-        tap(() => {
-          this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
-          if (this.consents.length === 1 && !this.hasAuthorizationDetailConsents) {
-            this.router.navigate(['..'], { relativeTo: this.route });
-          } else {
-            this.loadConsents();
-          }
-        }),
+        tap(() => this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked')),
+        switchMap(() => this.reloadAfterRevoke()),
       )
       .subscribe();
   }
 
-  loadConsents() {
-    this.userService.consents(this.domainId, this.userId, null).subscribe((consents) => {
-      this.consents = consents.filter((consent) => consent.clientId === this.clientId);
-      this.consents = [...this.consents];
-      this.applicationDisplayName = this.resolveApplicationDisplayName();
-    });
+  revokeAuthorizationDetailConsent(event, consent) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Revoke access', 'Are you sure you want to revoke this authorization detail ?')
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.userService.revokeAuthorizationDetailConsent(this.domainId, this.userId, consent.id)),
+        tap(() => this.snackbarService.open('Authorization detail ' + consent.type + ' revoked')),
+        switchMap(() => this.reloadAfterRevoke()),
+      )
+      .subscribe();
+  }
+
+  private reloadAfterRevoke() {
+    return forkJoin([this.loadConsents(), this.loadAuthorizationDetailApprovals()]).pipe(
+      tap(([consents, approvals]) => {
+        if (consents.length === 0 && approvals.length === 0) {
+          this.router.navigate(['..'], { relativeTo: this.route });
+          return;
+        }
+        this.consents = consents;
+        this.setAuthorizationDetailApprovals(approvals);
+        this.applicationDisplayName = this.resolveApplicationDisplayName();
+        this.restartDetails();
+      }),
+    );
+  }
+
+  private loadConsents() {
+    return this.userService
+      .consents(this.domainId, this.userId, null)
+      .pipe(map((consents: any[]) => consents.filter((consent) => consent.clientId === this.clientId)));
+  }
+
+  private loadAuthorizationDetailApprovals() {
+    return this.userService.allAuthorizationDetailConsents(this.domainId, this.userId, this.clientId);
+  }
+
+  private setAuthorizationDetailApprovals(approvals: any[]) {
+    this.hasApprovedAuthorizationDetailConsents = approvals.some((approval) => approval.status === 'approved');
   }
 
   get showScopeConsents() {
@@ -230,7 +260,7 @@ export class UserApplicationComponent implements OnInit, OnDestroy {
   }
 
   canRevokeAccess() {
-    return find(this.consents, { status: 'approved' });
+    return find(this.consents, { status: 'approved' }) || this.hasApprovedAuthorizationDetailConsents;
   }
 
   getRowClass(row) {

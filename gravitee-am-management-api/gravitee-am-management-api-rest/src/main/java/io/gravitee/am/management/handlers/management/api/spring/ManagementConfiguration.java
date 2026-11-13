@@ -86,9 +86,10 @@ public class ManagementConfiguration {
     AuthorizationDetailApprovalAdapter authorizationDetailApprovalAdapter(AuthorizationDetailApprovalService authorizationDetailApprovalService,
         AuthorizationDetailTypeService authorizationDetailTypeService,
         ConsentApplicationEntityFactory consentApplicationEntityFactory,
-        DataPlaneRegistry dataPlaneRegistry) {
+        DataPlaneRegistry dataPlaneRegistry,
+        RevokeTokenManagementService revokeTokenManagementService) {
         return new AuthorizationDetailApprovalAdapterImpl(authorizationDetailApprovalService, authorizationDetailTypeService,
-                consentApplicationEntityFactory, dataPlaneRegistry);
+                consentApplicationEntityFactory, dataPlaneRegistry, revokeTokenManagementService);
     }
 
     @Bean

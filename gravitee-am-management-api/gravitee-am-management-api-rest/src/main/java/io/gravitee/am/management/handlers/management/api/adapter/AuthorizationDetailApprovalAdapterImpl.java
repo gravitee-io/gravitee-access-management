@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.adapter;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailTypeEntity;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.cursor.CursorPage;
@@ -28,6 +30,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +45,7 @@ public class AuthorizationDetailApprovalAdapterImpl implements AuthorizationDeta
     private final AuthorizationDetailTypeService authorizationDetailTypeService;
     private final ConsentApplicationEntityFactory consentApplicationEntityFactory;
     private final DataPlaneRegistry dataPlaneRegistry;
+    private final RevokeTokenManagementService revokeTokenManagementService;
 
     @Override
     public Single<CursorPage<AuthorizationDetailApprovalEntity, AuthorizationDetailApprovalCursorRequest>> getUserConsents(
@@ -73,5 +77,21 @@ public class AuthorizationDetailApprovalAdapterImpl implements AuthorizationDeta
             entity.setTypeEntity(new AuthorizationDetailTypeEntity(types.get(entity.getType())));
         }
         return entity;
+    }
+
+    @Override
+    public Completable revokeUserConsents(Domain domain, String rawUserId, String clientId, User authenticatedUser) {
+        var userId = UserId.internal(rawUserId);
+        if (clientId == null || clientId.isEmpty()) {
+            return authorizationDetailApprovalService.revokeByUser(domain, userId, revokeTokenManagementService::sendProcessRequest, authenticatedUser);
+        }
+        return authorizationDetailApprovalService.revokeByUserAndClient(domain, userId, clientId,
+                revokeTokenManagementService::sendProcessRequest, authenticatedUser);
+    }
+
+    @Override
+    public Completable revokeUserConsent(Domain domain, String rawUserId, String consentId, User authenticatedUser) {
+        return authorizationDetailApprovalService.revokeByConsent(domain, UserId.internal(rawUserId), consentId,
+                revokeTokenManagementService::sendProcessRequest, authenticatedUser);
     }
 }

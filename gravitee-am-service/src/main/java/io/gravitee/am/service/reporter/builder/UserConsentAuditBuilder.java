@@ -18,10 +18,12 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oauth2.AuthorizationDetailApproval;
 import io.gravitee.am.model.oauth2.AuthorizationDetails;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.reporter.builder.management.ManagementAuditBuilder;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +35,8 @@ import java.util.Map;
  */
 public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentAuditBuilder> {
 
+    private static final String AUTHORIZATION_DETAILS = "authorization_details";
+
     public UserConsentAuditBuilder() {
         super();
     }
@@ -43,11 +47,30 @@ public class UserConsentAuditBuilder extends ManagementAuditBuilder<UserConsentA
     }
 
     public UserConsentAuditBuilder authorizationDetails(AuthorizationDetails authorizationDetails, boolean approved) {
-        Map<String, Object> consent = new LinkedHashMap<>();
-        consent.put("authorization_details", authorizationDetails.getRaw());
-        consent.put("status", approved ? ScopeApproval.ApprovalStatus.APPROVED : ScopeApproval.ApprovalStatus.DENIED);
-        setNewValue(List.of(consent));
+        setNewValue(List.of(toConsentEntry(authorizationDetails.getRaw(),
+                approved ? ScopeApproval.ApprovalStatus.APPROVED : ScopeApproval.ApprovalStatus.DENIED)));
         return this;
+    }
+
+    /**
+     * Records the approvals grouped by status.
+     */
+    public UserConsentAuditBuilder authorizationDetails(Collection<AuthorizationDetailApproval> approvals) {
+        setNewValue(Arrays.stream(ScopeApproval.ApprovalStatus.values())
+                .map(status -> toConsentEntry(approvals.stream()
+                        .filter(approval -> approval.getStatus() == status)
+                        .map(AuthorizationDetailApproval::getDetail)
+                        .toList(), status))
+                .filter(consent -> !((List<?>) consent.get(AUTHORIZATION_DETAILS)).isEmpty())
+                .toList());
+        return this;
+    }
+
+    private static Map<String, Object> toConsentEntry(List<? extends Map<String, Object>> details, ScopeApproval.ApprovalStatus status) {
+        Map<String, Object> consent = new LinkedHashMap<>();
+        consent.put(AUTHORIZATION_DETAILS, details);
+        consent.put("status", status);
+        return consent;
     }
 
     public UserConsentAuditBuilder user(User user) {
