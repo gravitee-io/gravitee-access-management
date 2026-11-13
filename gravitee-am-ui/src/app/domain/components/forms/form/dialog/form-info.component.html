@@ -376,8 +376,8 @@
           <h3><span th:text="${client.clientName}"></span> is requesting access to your account</h3>
           <form role="form" th:action="${action}" method="post">
             <div th:each="detail : ${authorizationDetails.all}">
-              <h4 th:text="${authorizationDetailTypes[detail.type].name}"></h4>
-              <p th:text="${authorizationDetailTypes[detail.type].description}"></p>
+              <h4 th:text="${authorizationDetailTypes.get(detail.type).name}"></h4>
+              <p th:text="${authorizationDetailTypes.get(detail.type).description}"></p>
               <div th:each="field : ${detail}" th:unless="${field.key == 'type'}">
                 <span th:text="${field.key}"></span>: <span th:text="${field.value}"></span>
               </div>

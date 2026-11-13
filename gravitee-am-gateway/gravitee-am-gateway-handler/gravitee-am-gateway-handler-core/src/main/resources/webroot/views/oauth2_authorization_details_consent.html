@@ -37,7 +37,7 @@
 
             <div class="authorization-detail-consent-section">
                 <table class="scope-consent-table authorization-detail-consent-table" th:each="detail : ${authorizationDetails.all}"
-                       th:with="detailType=${authorizationDetailTypes[detail.type]}">
+                       th:with="detailType=${authorizationDetailTypes.get(detail.type)}">
                     <thead>
                         <tr>
                             <th colspan="2" class="authorization-detail-consent-type">

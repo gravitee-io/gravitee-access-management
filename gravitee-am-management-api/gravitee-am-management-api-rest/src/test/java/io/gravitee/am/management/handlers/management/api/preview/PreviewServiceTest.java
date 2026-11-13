@@ -207,7 +207,7 @@ public class PreviewServiceTest {
         final PreviewRequest previewRequest = new PreviewRequest();
         previewRequest.setContent(
                 "<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><body>" +
-                        "<div th:each=\"detail : ${authorizationDetails.all}\"><b th:text=\"${authorizationDetailTypes[detail.type].name}\"></b>" +
+                        "<div th:each=\"detail : ${authorizationDetails.all}\"><b th:text=\"${authorizationDetailTypes.get(detail.type).name}\"></b>" +
                         "<i th:each=\"field : ${detail}\" th:unless=\"${field.key == 'type'}\" th:text=\"${field.key}\"></i></div>" +
                         "</body></html>");
         previewRequest.setTemplate(Template.OAUTH2_AUTHORIZATION_DETAILS_CONSENT.template());
