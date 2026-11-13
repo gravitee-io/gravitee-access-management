@@ -15,6 +15,7 @@
  */
 
 import { expect } from '@jest/globals';
+import { resetUserPassword, updateUsername, updateUserStatus } from '@management-commands/user-management-commands';
 import { logoutUser, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import {
@@ -337,6 +338,147 @@ describe('remember me', () => {
       expect(afterExpiry.headers['location']).toContain('/login');
     });
 
+    it('remember-me cookie with a forged signature should not authenticate the user', async () => {
+      fixture = await initEnv({
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 3600,
+          },
+          cookieSettings: {
+            inherited: false,
+            session: {
+              persistent: false,
+            },
+          },
+        },
+      });
+
+      const clientId = fixture.app.settings.oauth.clientId;
+      const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
+      const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
+      const rememberMeCookie = postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='));
+      expect(rememberMeCookie).toBeDefined();
+
+      const [name, jwt] = rememberMeCookie.split(';')[0].split('=');
+      const [header, payload] = jwt.split('.');
+      const forgedCookie = `${name}=${header}.${payload}.${Buffer.from('forged-signature').toString('base64url')}`;
+
+      const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+
+      const forged = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
+        Cookie: forgedCookie,
+      }).expect(302);
+      expect(forged.headers['location']).toContain('/login');
+      expect(forged.headers['location']).not.toContain('/rememberedLogin');
+    });
+
+    afterEach(async () => {
+      if (fixture) {
+        await fixture.cleanUp();
+      }
+    });
+  });
+
+  describe('cookies issued before an admin change on the user', () => {
+    const userChanges = [
+      {
+        name: 'password reset',
+        apply: () => resetUserPassword(fixture.domain.id, fixture.accessToken, fixture.user.id, 'NewZxcPrm7123!!'),
+      },
+      {
+        name: 'username reset',
+        apply: () => updateUsername(fixture.domain.id, fixture.accessToken, fixture.user.id, `renamed-${fixture.user.username}`),
+      },
+    ];
+
+    it('remember-me cookie should lead to the sign-in page and be cleared once the user is disabled', async () => {
+      fixture = await initEnv({
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 3600,
+          },
+          cookieSettings: {
+            inherited: false,
+            session: {
+              persistent: false,
+            },
+          },
+        },
+      });
+
+      const clientId = fixture.app.settings.oauth.clientId;
+      const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
+      const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
+      const rememberMeCookie = postLogin.headers['set-cookie']
+        .find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='))
+        ?.split(';')[0];
+      expect(rememberMeCookie).toBeDefined();
+
+      await updateUserStatus(fixture.domain.id, fixture.accessToken, fixture.user.id, false);
+
+      const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+      const afterDisable = await performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, {
+        Cookie: rememberMeCookie,
+      }).expect(302);
+
+      expect(afterDisable.headers['location']).toContain('/login');
+      expect(afterDisable.headers['location']).not.toContain('/rememberedLogin');
+      const clearedCookie = afterDisable.headers['set-cookie']?.find((cookie) => cookie.startsWith('GRAVITEE_IO_REMEMBER_ME='));
+      expect(clearedCookie).toBeDefined();
+      expect(clearedCookie).toContain('Max-Age=0');
+    });
+
+    it.each(userChanges)('session and remember-me cookies should not authenticate the user after a $name', async ({ apply }) => {
+      fixture = await initEnv({
+        settings: {
+          account: {
+            inherited: false,
+            rememberMe: true,
+            rememberMeDuration: 3600,
+          },
+          cookieSettings: {
+            inherited: false,
+            session: {
+              persistent: false,
+            },
+          },
+        },
+      });
+
+      const clientId = fixture.app.settings.oauth.clientId;
+      const authResponse = await initiateLoginFlow(clientId, fixture.openIdConfiguration, fixture.domain);
+      const postLogin = await login(authResponse, fixture.user.username, clientId, fixture.userPassword, true);
+      const cookieFor = (name: string) => postLogin.headers['set-cookie'].find((cookie) => cookie.startsWith(`${name}=`))?.split(';')[0];
+      const sessionCookie = cookieFor('GRAVITEE_IO_AM_SESSION');
+      const rememberMeCookie = cookieFor('GRAVITEE_IO_REMEMBER_ME');
+      expect(sessionCookie).toBeDefined();
+      expect(rememberMeCookie).toBeDefined();
+
+      const authorizeParams = `?response_type=code&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+      const authorizeWith = (cookie: string) =>
+        performGet(fixture.openIdConfiguration.authorization_endpoint, authorizeParams, { Cookie: cookie }).expect(302);
+
+      // both cookies are accepted while the user is untouched
+      const sessionBefore = await authorizeWith(sessionCookie);
+      expect(sessionBefore.headers['location']).not.toContain('/login');
+      const rememberMeBefore = await authorizeWith(rememberMeCookie);
+      expect(rememberMeBefore.headers['location']).toContain('/rememberedLogin');
+
+      // the gateway tolerates one second between the sign-in and the change
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await apply();
+
+      const sessionAfter = await authorizeWith(sessionCookie);
+      expect(sessionAfter.headers['location']).not.toContain('code=');
+      const rememberMeAfter = await authorizeWith(rememberMeCookie);
+      expect(rememberMeAfter.headers['location']).toContain('/login');
+      expect(rememberMeAfter.headers['location']).not.toContain('/rememberedLogin');
+    });
+
     afterEach(async () => {
       if (fixture) {
         await fixture.cleanUp();
@@ -344,4 +486,3 @@ describe('remember me', () => {
     });
   });
 });
-
