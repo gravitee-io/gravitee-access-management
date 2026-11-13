@@ -1090,9 +1090,9 @@ jobs:
           at: .
       - restore_cache:
           keys:
-            - gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-
-            - gravitee-access-management-v2-sonarcloud-analysis-
+            - gravitee-access-management-v3-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gravitee-access-management-v3-sonarcloud-analysis-{{ .Branch }}-
+            - gravitee-access-management-v3-sonarcloud-analysis-
       - keeper/env-export:
           secret-url: keeper://9x9YgyU6DWzux4DPoHAzDQ/field/password
           var-name: SONAR_TOKEN
@@ -1105,7 +1105,7 @@ jobs:
       - save_cache:
           paths:
             - /opt/sonar-scanner/.sonar/cache
-          key: gravitee-access-management-v2-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
+          key: gravitee-access-management-v3-sonarcloud-analysis-{{ .Branch }}-{{ checksum "pom.xml" }}
           when: always
 
   schema-compat-check:
