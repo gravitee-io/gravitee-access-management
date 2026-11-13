@@ -156,9 +156,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - gravitee-access-management-v2-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gravitee-access-management-v2-<< parameters.jobName >>-{{ .Branch }}-
-            - gravitee-access-management-v2-<< parameters.jobName >>-
+            - gravitee-access-management-v3-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gravitee-access-management-v3-<< parameters.jobName >>-{{ .Branch }}-
+            - gravitee-access-management-v3-<< parameters.jobName >>-
   save-maven-job-cache:
     description: Restore Maven cache for a dedicated job
     parameters:
@@ -173,7 +173,7 @@ commands:
       - save_cache:
           paths:
             - ~/.m2
-          key: gravitee-access-management-v2-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
+          key: gravitee-access-management-v3-<< parameters.jobName >>-{{ .Branch }}-{{ checksum "pom.xml" }}
           when: always
   notify-on-failure:
     steps:
