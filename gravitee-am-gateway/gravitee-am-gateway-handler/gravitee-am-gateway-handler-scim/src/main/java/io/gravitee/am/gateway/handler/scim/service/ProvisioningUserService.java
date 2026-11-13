@@ -40,5 +40,5 @@ public interface ProvisioningUserService {
 
     Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal, Client client);
 
-    Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal, Client client);
 }

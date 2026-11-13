@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
@@ -59,11 +60,13 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -116,6 +119,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -367,7 +371,35 @@ public class ProvisioningUserServiceTest {
         verify(userRepository, never()).create(any());
     }
 
+    @Test
+    public void shouldReportClientAsActorOnCreateUserWhenNoPrincipal() {
+        innerCreateUser(null, null, scimClient());
+
+        var audit = reportedAudit(EventType.USER_CREATED);
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-name", audit.getActor().getDisplayName());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
+    }
+
+    @Test
+    public void shouldReportUserAsActorOnCreateUserWhenPrincipal() {
+        var principal = new DefaultUser("john");
+        principal.setId("user-id");
+
+        innerCreateUser(null, principal, scimClient());
+
+        var audit = reportedAudit(EventType.USER_CREATED);
+        assertEquals("user-id", audit.getActor().getId());
+        assertEquals(EntityType.USER, audit.getActor().getType());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
+    }
+
     private void innerCreateUser(String pwd) {
+        innerCreateUser(pwd, null, new Client());
+    }
+
+    private void innerCreateUser(String pwd, io.gravitee.am.identityprovider.api.User principal, Client client) {
 
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
@@ -404,7 +436,7 @@ public class ProvisioningUserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(createdUser));
 
-        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", principal, client).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
@@ -454,6 +486,38 @@ public class ProvisioningUserServiceTest {
         verify(tokenService, never()).deleteByUser(any());
         verify(eventService).create(any(), any());
         assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldReportClientAsActorOnUpdateUser() {
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId("user-id");
+        existingUser.setSource("user-idp");
+        existingUser.setUsername("username");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId(DOMAIN_ID);
+
+        User scimUser = mock(User.class);
+        when(scimUser.isActive()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(mock(io.gravitee.am.identityprovider.api.User.class)));
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(userRepository.update(any(), any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, scimClient()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        var audit = reportedAudit(EventType.USER_UPDATED);
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
     }
 
     @Test
@@ -914,7 +978,7 @@ public class ProvisioningUserServiceTest {
         when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
 
-        var testObserver = userService.delete(userId, null).test();
+        var testObserver = userService.delete(userId, null, scimClient()).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         verify(userRepository, times(1)).delete(userId);
@@ -925,6 +989,11 @@ public class ProvisioningUserServiceTest {
         verify(userProvider, times(1)).findByUsername(endUser.getUsername());
         // delete must be called with the id resolved through findByUsername, not the stored external id
         verify(userProvider, times(1)).delete(argThat(id -> id.equals(idpUser.getId()) && !id.equals(endUser.getExternalId())));
+
+        var audit = reportedAudit(EventType.USER_DELETED);
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
     }
 
     @Test
@@ -952,7 +1021,7 @@ public class ProvisioningUserServiceTest {
         when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
         // even though the idp user cannot be resolved, the AM user deletion must still proceed
-        var testObserver = userService.delete(userId, null).test();
+        var testObserver = userService.delete(userId, null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         verify(userRepository, times(1)).delete(userId);
@@ -981,7 +1050,7 @@ public class ProvisioningUserServiceTest {
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
         when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
 
-        var testObserver = userService.delete(userId, null).test();
+        var testObserver = userService.delete(userId, null, null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         verify(userRepository, times(1)).delete(userId);
@@ -1635,5 +1704,24 @@ public class ProvisioningUserServiceTest {
         io.gravitee.am.model.scim.Attribute attribute = new io.gravitee.am.model.scim.Attribute();
         attribute.setValue(value);
         return attribute;
+    }
+
+    private Audit reportedAudit(String eventType) {
+        ArgumentCaptor<AuditBuilder<?>> captor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, atLeastOnce()).report(captor.capture());
+        return captor.getAllValues().stream()
+                .map(builder -> builder.build(new ObjectMapper()))
+                .filter(audit -> eventType.equals(audit.getType()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static Client scimClient() {
+        Client client = new Client();
+        client.setId("app-id");
+        client.setClientId("client-id");
+        client.setClientName("client-name");
+        client.setDomain(DOMAIN_ID);
+        return client;
     }
 }

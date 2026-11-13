@@ -152,7 +152,7 @@ public class BulkServiceImpl implements BulkService {
                             return operation.asResponse();
                         });
             case DELETE:
-                return userService.delete(extractUserIdFromPath(operation), principal)
+                return userService.delete(extractUserIdFromPath(operation), principal, client)
                         .andThen(Single.fromSupplier(() -> {
                             operation.setStatus(valueOf(HttpStatusCode.NO_CONTENT_204));
                             operation.setLocation(updateBaseUrl(baseUrl, operation.getPath()));

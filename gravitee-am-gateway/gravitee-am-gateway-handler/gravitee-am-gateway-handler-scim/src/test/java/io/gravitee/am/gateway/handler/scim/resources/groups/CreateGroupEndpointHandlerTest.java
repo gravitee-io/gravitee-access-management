@@ -90,7 +90,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvokeSCIMCreateGroupsEndpoint() throws Exception {
         router.route("/Groups").handler(groupsEndpoint::create);
-        when(groupService.create(any(), any(), any())).thenReturn(Single.just(getGroup()));
+        when(groupService.create(any(), any(), any(), any())).thenReturn(Single.just(getGroup()));
 
         testRequest(
                 HttpMethod.POST,
@@ -107,7 +107,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn409WhenNameAlreadyExists() throws Exception {
         router.route("/Groups").handler(groupsEndpoint::create);
-        when(groupService.create(any(), any(), any())).thenReturn(Single.error(new UniquenessException("Display name already exists")));
+        when(groupService.create(any(), any(), any(), any())).thenReturn(Single.error(new UniquenessException("Display name already exists")));
 
         testRequest(
                 HttpMethod.POST,
@@ -129,7 +129,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidGroupException() throws Exception {
         router.route("/Groups").handler(groupsEndpoint::create);
-        when(groupService.create(any(), any(), any())).thenReturn(Single.error(new InvalidGroupException("Invalid group infos")));
+        when(groupService.create(any(), any(), any(), any())).thenReturn(Single.error(new InvalidGroupException("Invalid group infos")));
 
         testRequest(
                 HttpMethod.POST,
