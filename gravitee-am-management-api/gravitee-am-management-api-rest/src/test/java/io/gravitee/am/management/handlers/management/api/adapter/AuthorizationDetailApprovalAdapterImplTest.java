@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.adapter;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailTypeEntity;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
@@ -68,7 +69,8 @@ class AuthorizationDetailApprovalAdapterImplTest {
     private final CimdMetadataDocumentService cimdMetadataDocumentService = mock();
 
     private final AuthorizationDetailApprovalAdapterImpl underTest = new AuthorizationDetailApprovalAdapterImpl(approvalService,
-            typeService, new ConsentApplicationEntityFactory(applicationService, cimdMetadataDocumentService), dataPlaneRegistry);
+            typeService, new ConsentApplicationEntityFactory(applicationService, cimdMetadataDocumentService), dataPlaneRegistry,
+            mock(RevokeTokenManagementService.class));
 
     private User user;
 

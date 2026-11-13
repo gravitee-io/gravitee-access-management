@@ -36,6 +36,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +54,7 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepository implements AuthorizationDetailApprovalRepository {
 
+    private static final int DELETE_BATCH_SIZE = 500;
     private static final Map<String, String> SORT_COLUMNS = Map.of(
             AuthorizationDetailApprovalCursorRequest.SORT_FIELD_UPDATED_AT, "updated_at",
             AuthorizationDetailApprovalCursorRequest.SORT_FIELD_EXPIRES_AT, "expires_at",
@@ -68,6 +70,18 @@ public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepos
         return fluxToFlowable(getTemplate().select(JdbcAuthorizationDetailApproval.class)
                 .matching(Query.query(userIdMatches(userId)
                         .and(client(clientId))
+                        .and(domain(domain))
+                        .and(notExpiredAt(LocalDateTime.now(UTC)))))
+                .all())
+                .map(JdbcAuthorizationDetailApproval::toEntity)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("findByDomainAndUser({}, {})", domain, userId);
+        return fluxToFlowable(getTemplate().select(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(userIdMatches(userId)
                         .and(domain(domain))
                         .and(notExpiredAt(LocalDateTime.now(UTC)))))
                 .all())
@@ -178,6 +192,16 @@ public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepos
                     approval.setUpdatedAt(new Date());
                     return update(approval);
                 })
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndIds(String domain, Collection<String> ids) {
+        LOGGER.debug("deleteByDomainAndIds({}, {} ids)", domain, ids.size());
+        return Flowable.fromIterable(ids)
+                .buffer(DELETE_BATCH_SIZE)
+                .concatMapCompletable(batch -> monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                        .matching(Query.query(where("id").in(batch).and(domain(domain)))).all()))
                 .observeOn(Schedulers.computation());
     }
 

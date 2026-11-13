@@ -15,6 +15,8 @@
  */
 import { getAuditApi } from '@management-commands/service/utils';
 import { retryUntil } from '@utils-commands/retry';
+import { uniqueName } from '@utils-commands/misc';
+import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
 
 /** An audit entry as the Management API returns it. */
 export interface AuditEntry {
@@ -85,3 +87,14 @@ export const waitForDomainAudit = (domainId: string, accessToken: string, type: 
     (audits) => audits.some((audit) => audit.target?.id === targetId),
     { timeoutMillis: 20000, intervalMillis: 500 },
   ).then((audits) => audits.find((audit) => audit.target?.id === targetId));
+
+/** The Management API drops a new domain's audits until its reporter is deployed. */
+export const waitForAuditReporter = (domainId: string, accessToken: string): Promise<number> =>
+  retryUntil(
+    async () => {
+      await createAuthorizationDetailType(domainId, accessToken, { type: uniqueName('audit_probe', true), name: 'Probe' });
+      return (await auditsOfType(domainId, accessToken, 'AUTHORIZATION_DETAIL_TYPE_CREATED')).length;
+    },
+    (count) => count > 0,
+    { timeoutMillis: 30000, intervalMillis: 1000 },
+  );

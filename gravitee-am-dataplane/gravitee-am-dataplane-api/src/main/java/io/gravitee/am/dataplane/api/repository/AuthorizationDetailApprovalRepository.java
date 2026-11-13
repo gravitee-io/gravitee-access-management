@@ -25,12 +25,19 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.Collection;
+
 public interface AuthorizationDetailApprovalRepository extends CrudRepository<AuthorizationDetailApproval, String>, ExpiredDataSweeper {
 
     /**
      * Returns the approvals that have not expired.
      */
     Flowable<AuthorizationDetailApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId);
+
+    /**
+     * Returns the approvals that have not expired, for every client.
+     */
+    Flowable<AuthorizationDetailApproval> findByDomainAndUser(String domain, UserId userId);
 
     /**
      * Returns a page of the approvals that have not expired.
@@ -42,6 +49,8 @@ public interface AuthorizationDetailApprovalRepository extends CrudRepository<Au
      * Creates the approval, or replaces the one with the same domain, client, user and digest.
      */
     Single<AuthorizationDetailApproval> upsert(AuthorizationDetailApproval approval);
+
+    Completable deleteByDomainAndIds(String domain, Collection<String> ids);
 
     Completable deleteByDomain(String domain);
 }

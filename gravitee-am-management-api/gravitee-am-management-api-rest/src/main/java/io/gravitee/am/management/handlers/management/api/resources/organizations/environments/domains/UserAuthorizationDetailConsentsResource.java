@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.adapter.AuthorizationDetailApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.model.AuthorizationDetailApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -26,6 +27,7 @@ import io.gravitee.am.model.oauth2.AuthorizationDetailApprovalCursorRequest;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,14 +37,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.Min;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -52,6 +58,9 @@ public class UserAuthorizationDetailConsentsResource extends AbstractResource {
 
     @Context
     private DomainService domainService;
+
+    @Context
+    private ResourceContext resourceContext;
 
     @Autowired
     private AuthorizationDetailApprovalAdapter approvalAdapter;
@@ -120,6 +129,40 @@ public class UserAuthorizationDetailConsentsResource extends AbstractResource {
                                 found.getTotalCount(),
                                 cursor.getPage())))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Operation(
+            operationId = "revokeUserAuthorizationDetailConsents",
+            summary = "Revoke a user's authorization detail consents",
+            description = "Revokes the approved and denied authorization details of the user, then the user's tokens. " +
+                    "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "User authorization detail consents successfully revoked"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("user") String user,
+            @Parameter(description = "Revokes only the consents given to this client")
+            @QueryParam("clientId") String clientId,
+            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> approvalAdapter.revokeUserConsents(domain, user, clientId, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
+
+    @Path("{consent}")
+    public UserAuthorizationDetailConsentResource getUserAuthorizationDetailConsentResource() {
+        return resourceContext.getResource(UserAuthorizationDetailConsentResource.class);
     }
 
     public static final class AuthorizationDetailConsentCursorPage extends CursorApiPage<AuthorizationDetailApprovalEntity> {
