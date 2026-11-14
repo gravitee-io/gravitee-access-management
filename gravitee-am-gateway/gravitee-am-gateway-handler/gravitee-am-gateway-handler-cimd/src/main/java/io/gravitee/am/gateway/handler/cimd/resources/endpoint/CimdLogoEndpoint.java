@@ -101,6 +101,8 @@ public class CimdLogoEndpoint implements Handler<RoutingContext> {
                 .response()
                 .putHeader("Content-Type", cachedLogo.contentType())
                 .putHeader("Cache-Control", "max-age=" + cachedLogo.maxAgeSeconds())
+                .putHeader("X-Content-Type-Options", "nosniff")
+                .putHeader("Content-Security-Policy", "default-src 'none'; sandbox")
                 .setStatusCode(200)
                 .end(Buffer.buffer(cachedLogo.bytes()));
     }

@@ -19,6 +19,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.service.utils.RetryAtMostWithDelay;
 import io.gravitee.am.service.utils.vertx.BoundedBufferWriteStream;
 import io.gravitee.common.http.HttpStatusCode;
+import io.netty.handler.codec.http.HttpStatusClass;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.rxjava3.core.streams.WriteStream;
@@ -27,8 +28,13 @@ import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
+import static java.util.Optional.ofNullable;
 
 /**
  * Fetches CIMD client logos with the same trust and size bounds as metadata pre-fetch, and stores
@@ -40,6 +46,7 @@ public class CimdLogoCacheService {
     private static final int FETCH_RETRY_ATTEMPTS = 3;
     private static final int FETCH_RETRY_DELAY_MS = 100;
     static final long MAX_LOGO_SIZE_BYTES = 256L * 1024L;
+    static final int MAX_REDIRECTS = 3;
 
     private final WebClient webClient;
     private final CimdMetadataDocumentManager cimdMetadataDocumentManager;
@@ -132,34 +139,7 @@ public class CimdLogoCacheService {
 
     private Single<Optional<CachedLogo>> fetchLogoSingle(
             String logoUri, long metadataTtlSeconds, CIMDSettings settings) {
-        final long timeoutMs = resolveTimeoutMs(settings);
-
-        return Single.defer(() -> {
-                    final var logoCollector = new BoundedBufferWriteStream(MAX_LOGO_SIZE_BYTES);
-                    return webClient.getAbs(logoUri)
-                        .timeout(timeoutMs)
-                        .followRedirects(true)
-                        .as(BodyCodec.pipe(WriteStream.newInstance(logoCollector), false))
-                        .rxSend()
-                        .map(response -> {
-                            if (response.statusCode() != HttpStatusCode.OK_200) {
-                                log.debug(
-                                        "CIMD logo fetch returned {} for uri {}",
-                                        response.statusCode(),
-                                        logoUri);
-                                return Optional.<CachedLogo>empty();
-                            }
-                            final Buffer body =
-                                    logoCollector.body().length() > 0 ? logoCollector.body() : response.bodyAsBuffer();
-                            if (body == null || body.length() <= 0 || body.length() > MAX_LOGO_SIZE_BYTES) {
-                                return Optional.<CachedLogo>empty();
-                            }
-                            final byte[] bytes = body.getBytes();
-                            final String contentType = resolveContentType(response.getHeader("Content-Type"), bytes);
-                            return Optional.of(new CachedLogo(bytes, contentType, metadataTtlSeconds));
-                        });
-                })
-                .retryWhen(new RetryAtMostWithDelay(FETCH_RETRY_ATTEMPTS, FETCH_RETRY_DELAY_MS))
+        return fetchLogoFollowing(logoUri, MAX_REDIRECTS, metadataTtlSeconds, settings)
                 .onErrorResumeNext(throwable -> {
                     if (throwable instanceof TimeoutException) {
                         log.debug("CIMD logo fetch timed out for uri {}", logoUri);
@@ -172,11 +152,96 @@ public class CimdLogoCacheService {
                 });
     }
 
-    private static String resolveContentType(String headerValue, byte[] bytes) {
-        if (headerValue != null && !headerValue.isBlank()) {
-            return headerValue.trim();
+    /**
+     * Fetches {@code logoUri} without letting the HTTP client follow redirects: each redirect target goes through
+     * the same trust and DNS checks as the initial URI before it is requested, up to {@code redirectsLeft} hops.
+     */
+    private Single<Optional<CachedLogo>> fetchLogoFollowing(
+            String logoUri, int redirectsLeft, long metadataTtlSeconds, CIMDSettings settings) {
+        final long timeoutMs = resolveTimeoutMs(settings);
+
+        return Single.defer(() -> {
+                    final var logoCollector = new BoundedBufferWriteStream(MAX_LOGO_SIZE_BYTES);
+                    return webClient.getAbs(logoUri)
+                        .timeout(timeoutMs)
+                        .followRedirects(false)
+                        .as(BodyCodec.pipe(WriteStream.newInstance(logoCollector), false))
+                        .rxSend()
+                        .map(response -> {
+                            if (isRedirect(response.statusCode())) {
+                                return Hop.redirectTo(response.getHeader("Location"));
+                            }
+                            if (response.statusCode() != HttpStatusCode.OK_200) {
+                                log.debug(
+                                        "CIMD logo fetch returned {} for uri {}",
+                                        response.statusCode(),
+                                        logoUri);
+                                return Hop.NOTHING;
+                            }
+                            final Buffer body =
+                                    logoCollector.body().length() > 0 ? logoCollector.body() : response.bodyAsBuffer();
+                            if (body == null || body.length() <= 0 || body.length() > MAX_LOGO_SIZE_BYTES) {
+                                return Hop.NOTHING;
+                            }
+                            final byte[] bytes = body.getBytes();
+                            return validateImageContentType(response.getHeader("Content-Type"), bytes)
+                                    .map(contentType -> Hop.logo(new CachedLogo(bytes, contentType, metadataTtlSeconds)))
+                                    .orElse(Hop.NOTHING);
+                        });
+                })
+                .retryWhen(new RetryAtMostWithDelay(FETCH_RETRY_ATTEMPTS, FETCH_RETRY_DELAY_MS))
+                .flatMap(hop -> hop.redirect() == null
+                        ? Single.just(Optional.ofNullable(hop.logo()))
+                        : followRedirect(logoUri, hop.redirect(), redirectsLeft, metadataTtlSeconds, settings));
+    }
+
+    private Single<Optional<CachedLogo>> followRedirect(
+            String fromUri, String location, int redirectsLeft, long metadataTtlSeconds, CIMDSettings settings) {
+        if (redirectsLeft <= 0 || location.isBlank()) {
+            log.debug("CIMD logo fetch not redirected from uri {}", fromUri);
+            return Single.just(Optional.empty());
         }
-        return CimdMetadataDocumentManager.detectMimeType(bytes);
+        final URI target;
+        try {
+            target = cimdUriTrustValidator.parseHttpUrl(URI.create(fromUri).resolve(location.trim()).toString(), "logo_uri");
+            cimdUriTrustValidator.validateTrust(target, settings, "logo_uri");
+        } catch (Exception ex) {
+            log.debug("CIMD logo fetch stopped — redirect from {} is not trusted", fromUri);
+            return Single.just(Optional.empty());
+        }
+        return cimdUriTrustValidator.validateResolvableHost(target.getHost(), "logo_uri", settings)
+                .andThen(Single.defer(
+                        () -> fetchLogoFollowing(target.toString(), redirectsLeft - 1, metadataTtlSeconds, settings)))
+                .onErrorResumeNext(e -> {
+                    log.debug("CIMD logo fetch stopped — redirect from {} rejected: {}", fromUri, e.getMessage());
+                    return Single.just(Optional.empty());
+                });
+    }
+
+    /** Outcome of one request: a logo, a redirect to validate, or nothing usable. */
+    private record Hop(CachedLogo logo, String redirect) {
+        static final Hop NOTHING = new Hop(null, null);
+
+        static Hop logo(CachedLogo logo) {
+            return new Hop(logo, null);
+        }
+
+        static Hop redirectTo(String location) {
+            return new Hop(null, location == null ? "" : location);
+        }
+    }
+
+    private static boolean isRedirect(int statusCode) {
+        return HttpStatusClass.REDIRECTION.contains(statusCode);
+    }
+
+    /**
+     * The content type to serve, or empty when the body is not an image: a logo is only replayed when its bytes
+     * look like an image or the server declared one, never as arbitrary remote content.
+     */
+    private static Optional<String> validateImageContentType(String declaredContentType, byte[] bytes) {
+        final String sniffed = CimdMetadataDocumentManager.detectMimeType(bytes);
+        return sniffed.startsWith("image/") ? of(sniffed) : empty();
     }
 
     private static long resolveTimeoutMs(CIMDSettings settings) {

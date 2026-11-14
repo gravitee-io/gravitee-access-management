@@ -57,7 +57,8 @@ export type CimdAuthorizeProfile =
   | 'DISABLED_BASE'
   | 'ENABLED_DOMAIN_DENY'
   | 'ENABLED_HTTPS_ONLY'
-  | 'ENABLED_PRIVATE_IP_DENY';
+  | 'ENABLED_PRIVATE_IP_DENY'
+  | 'ENABLED_REDIRECT_TRUST';
 
 const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
   ENABLED_BASE: {
@@ -126,6 +127,17 @@ const PROFILE_SETTINGS: Record<CimdAuthorizeProfile, PatchCIMDSettings> = {
     allowUnsecuredHttpUri: true,
     allowPrivateIpAddress: false,
     allowedDomains: [],
+    fetchTimeoutMs: 1500,
+    maxResponseSizeKb: 10,
+    cacheTtlSeconds: 3600,
+    cacheMaxEntries: 500,
+  },
+  // Only "cimd-trusted.example.test" is trusted: a redirect to its "cimd-internal.example.test" alias must be rejected.
+  ENABLED_REDIRECT_TRUST: {
+    enabled: true,
+    allowUnsecuredHttpUri: true,
+    allowPrivateIpAddress: true,
+    allowedDomains: ['cimd-trusted.example.test'],
     fetchTimeoutMs: 1500,
     maxResponseSizeKb: 10,
     cacheTtlSeconds: 3600,
