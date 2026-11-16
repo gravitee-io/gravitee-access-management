@@ -1579,7 +1579,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
 
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(List.of(enrolledFactor, factorRecovery));
-            rc.getDelegate().setUser(new User(endUser));
+            setUser(rc, new User(endUser));
 
             rc.session().put(STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
