@@ -677,7 +677,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         return passwordHistoryService
-                .addPasswordToHistory(domain, user, rawPassword, principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
+                .addPasswordToHistory(domain, user, rawPassword, principal, client, passwordPolicyManager.getPolicy(client, provider).orElse(null));
     }
 
     private io.gravitee.am.model.User convertUserToUpdate(io.gravitee.am.model.User existingUser, User scimUser) {
