@@ -11211,7 +11211,7 @@ __metadata:
     tslib: "npm:2.6.3"
     typescript: "npm:5.6.3"
     ulid: "npm:3.0.2"
-    vis-data: "npm:8.0.3"
+    vis-data: "npm:8.0.6"
     vis-network: "npm:10.0.2"
     webpack: "npm:5.99.9"
     zone.js: "npm:0.15.1"
@@ -18323,13 +18323,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vis-data@npm:8.0.3":
-  version: 8.0.3
-  resolution: "vis-data@npm:8.0.3"
+"vis-data@npm:8.0.6":
+  version: 8.0.6
+  resolution: "vis-data@npm:8.0.6"
   peerDependencies:
-    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
+    uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0 || ^14.0.0
     vis-util: ">=6.0.0"
-  checksum: 10c0/c344a8c6ce2ce31bd00b6a51da3c3d20ac0bef735b76644d937b999d70d6a3a847f5f0fa78222f1d7d659f80be877302edd78f2747a972b15368686eff6a9034
+  checksum: 10c0/fdeb2f29e0b7d7bfc7b3c63f77335a68df163859040496972f3743a835200d23da1a6318c66a33260ff07a81a6282f8bc11e187948d1b303e945f97b7160f541
   languageName: node
   linkType: hard
 

@@ -61,7 +61,7 @@
     "regex-escape": "3.4.11",
     "rxjs": "7.8.2",
     "ulid": "3.0.2",
-    "vis-data": "8.0.3",
+    "vis-data": "8.0.6",
     "vis-network": "10.0.2",
     "zone.js": "0.15.1"
   },
