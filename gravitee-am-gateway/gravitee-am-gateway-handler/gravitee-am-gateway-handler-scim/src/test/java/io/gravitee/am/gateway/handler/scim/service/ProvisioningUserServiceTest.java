@@ -122,6 +122,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -222,7 +223,7 @@ public class ProvisioningUserServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(userRepository.findByExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.empty());
         domain.setId(DOMAIN_ID);
         when(registry.getUserRepository(any())).thenReturn(userRepository);
@@ -543,6 +544,41 @@ public class ProvisioningUserServiceTest {
         assertEquals("app-id", audit.getActor().getId());
         assertEquals(EntityType.APPLICATION, audit.getActor().getType());
         assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
+    }
+
+    @Test
+    public void shouldPassClientToPasswordHistoryOnUpdateUser() {
+        io.gravitee.am.model.User existingUser = new io.gravitee.am.model.User();
+        existingUser.setId("user-id");
+        existingUser.setSource("user-idp");
+        existingUser.setUsername("username");
+        existingUser.setExternalId("external-id");
+        existingUser.setReferenceType(ReferenceType.DOMAIN);
+        existingUser.setReferenceId(DOMAIN_ID);
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(true);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.update(any(), any())).thenReturn(Single.just(idpUser));
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(userRepository.update(any(), any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        var client = scimClient();
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, client).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(passwordHistoryService).addPasswordToHistory(any(), any(), eq(PASSWORD), isNull(), eq(client), any());
     }
 
     @Test
