@@ -52,5 +52,15 @@ public interface AuthorizationDetailApprovalRepository extends CrudRepository<Au
 
     Completable deleteByDomainAndIds(String domain, Collection<String> ids);
 
+    /**
+     * Deletes the approvals, expired or not.
+     */
+    Completable deleteByDomainAndUser(String domain, UserId userId);
+
+    /**
+     * Deletes the approvals, expired or not.
+     */
+    Completable deleteByDomainAndClient(String domain, String clientId);
+
     Completable deleteByDomain(String domain);
 }

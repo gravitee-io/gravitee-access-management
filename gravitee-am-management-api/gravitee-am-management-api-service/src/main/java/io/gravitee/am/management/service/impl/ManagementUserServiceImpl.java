@@ -59,10 +59,12 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -153,6 +155,12 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @Autowired
     protected CertificateCredentialService certificateCredentialService;
+
+    @Autowired
+    private ScopeApprovalService scopeApprovalService;
+
+    @Autowired
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
 
     @Autowired
     protected UserActivityManagementService userActivityService;
@@ -830,6 +838,8 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         .andThen(certificateCredentialService.deleteByUserId(domain, userId))
                         // Delete WebAuthn credentials for the user
                         .andThen(credentialService.deleteByUserId(domain, userId))
+                        .andThen(scopeApprovalService.deleteByUser(domain, user.getFullId()))
+                        .andThen(authorizationDetailApprovalService.deleteByUser(domain, user.getFullId()))
                         .andThen(repository.delete(userId))
                         .andThen(eventService.create(deleteUseEvent).ignoreElement())
                         .toSingleDefault(user))

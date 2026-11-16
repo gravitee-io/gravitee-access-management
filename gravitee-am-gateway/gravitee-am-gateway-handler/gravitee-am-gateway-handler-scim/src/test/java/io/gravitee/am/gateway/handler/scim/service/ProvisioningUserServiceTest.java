@@ -55,6 +55,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oidc.Client;
@@ -63,8 +64,11 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -105,6 +109,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -127,6 +132,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -205,6 +211,12 @@ public class ProvisioningUserServiceTest {
 
     @Mock
     private CredentialGatewayService credentialService;
+
+    @Mock
+    private ScopeApprovalService scopeApprovalService;
+
+    @Mock
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
 
     @Mock
     private ApplicationService applicationService;
@@ -1020,6 +1032,8 @@ public class ProvisioningUserServiceTest {
         when(endUser.getSource()).thenReturn("user-idp");
         when(endUser.getReferenceId()).thenReturn(DOMAIN_ID);
         when(endUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        UserId fullId = new UserId(userId, "user-external-id", "user-idp");
+        when(endUser.getFullId()).thenReturn(fullId);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
         // the id resolved from the IdP is different from the (potentially stale) AM external id
@@ -1037,6 +1051,8 @@ public class ProvisioningUserServiceTest {
         when(passwordHistoryService.deleteByUser(any(), eq(userId))).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
         when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
+        when(scopeApprovalService.deleteByUser(domain, endUser.getFullId())).thenReturn(complete());
+        when(authorizationDetailApprovalService.deleteByUser(domain, endUser.getFullId())).thenReturn(complete());
 
 
         var testObserver = userService.delete(userId, null, scimClient()).test();
@@ -1045,6 +1061,8 @@ public class ProvisioningUserServiceTest {
         verify(userRepository, times(1)).delete(userId);
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
         verify(credentialService, times(1)).deleteByUserId(domain, userId);
+        verify(scopeApprovalService).deleteByUser(domain, fullId);
+        verify(authorizationDetailApprovalService).deleteByUser(domain, fullId);
         verify(userProvider, times(1)).findByUsername(endUser.getUsername());
         // delete must be called with the id resolved through findByUsername, not the stored external id
         verify(userProvider, times(1)).delete(argThat(id -> id.equals(idpUser.getId()) && !id.equals(endUser.getExternalId())));
@@ -1078,6 +1096,8 @@ public class ProvisioningUserServiceTest {
         when(passwordHistoryService.deleteByUser(any(), eq(userId))).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
         when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
+        when(scopeApprovalService.deleteByUser(domain, endUser.getFullId())).thenReturn(complete());
+        when(authorizationDetailApprovalService.deleteByUser(domain, endUser.getFullId())).thenReturn(complete());
 
         // even though the idp user cannot be resolved, the AM user deletion must still proceed
         var testObserver = userService.delete(userId, null, null).test();
@@ -1108,6 +1128,8 @@ public class ProvisioningUserServiceTest {
         when(passwordHistoryService.deleteByUser(any(), any())).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
         when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
+        when(scopeApprovalService.deleteByUser(domain, endUser.getFullId())).thenReturn(complete());
+        when(authorizationDetailApprovalService.deleteByUser(domain, endUser.getFullId())).thenReturn(complete());
 
         var testObserver = userService.delete(userId, null, null).test();
         testObserver.assertNoErrors();
@@ -1116,6 +1138,34 @@ public class ProvisioningUserServiceTest {
         verify(identityProviderManager, times(1)).getUserProvider(anyString());
         verify(userProvider, never()).delete(anyString());
         verify(credentialService, times(1)).deleteByUserId(domain, userId);
+    }
+
+    @Test
+    public void shouldKeepUser_whenConsentsCannotBeDeleted() {
+        final String userId = "userId";
+        final UserId fullId = new UserId(userId, null, "user-idp");
+
+        io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
+        when(endUser.getSource()).thenReturn("user-idp");
+        when(endUser.getFullId()).thenReturn(fullId);
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
+        when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
+        when(passwordHistoryService.deleteByUser(any(), any())).thenReturn(complete());
+        when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
+        when(credentialService.deleteByUserId(any(), eq(userId))).thenReturn(complete());
+        when(scopeApprovalService.deleteByUser(domain, fullId))
+                .thenReturn(Completable.error(new TechnicalManagementException("unavailable")));
+        lenient().when(authorizationDetailApprovalService.deleteByUser(domain, fullId)).thenReturn(complete());
+        AtomicBoolean userDeleted = new AtomicBoolean();
+        lenient().when(userRepository.delete(userId)).thenReturn(Completable.fromAction(() -> userDeleted.set(true)));
+
+        userService.delete(userId, null, null).test()
+                .assertError(error -> "unavailable".equals(error.getMessage()));
+
+        assertFalse(userDeleted.get());
     }
 
     @Test

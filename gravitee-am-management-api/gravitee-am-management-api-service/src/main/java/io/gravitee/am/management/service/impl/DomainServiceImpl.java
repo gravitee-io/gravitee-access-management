@@ -836,11 +836,7 @@ public class DomainServiceImpl implements DomainService {
                     if (domain.getOidc() != null && domain.getOidc().getCimdSettings() != null) {
                         domain.getOidc().getCimdSettings().setTemplateId(null);
                     }
-                    return applicationService.findByDomain(domainId)
-                            .flatMapCompletable(applications -> {
-                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId(), domain)).toList();
-                                return Completable.concat(deleteApplicationsCompletable);
-                            })
+                    return applicationService.deleteByDomain(domain)
                             .andThen(identityProviderService.deleteByDomain(domainId))
                             .andThen(protectedResourceService.findByDomain(domainId)
                                     .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))

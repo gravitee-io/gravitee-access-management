@@ -56,4 +56,16 @@ public interface AuthorizationDetailApprovalService extends DomainDataPlaneClean
 
     Completable revokeByUser(Domain domain, UserId userId,
                              BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
+
+    Completable revokeByClient(Domain domain, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor);
+
+    /**
+     * Unaudited; tokens stay valid.
+     */
+    Completable deleteByUser(Domain domain, UserId userId);
+
+    /**
+     * Unaudited; tokens stay valid.
+     */
+    Completable deleteByClient(Domain domain, String clientId);
 }

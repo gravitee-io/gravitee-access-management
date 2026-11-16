@@ -30,6 +30,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.model.CimdClientState;
+import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.ScopeApprovalService;
@@ -65,6 +67,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -123,6 +126,9 @@ public class CimdMetadataServiceImplTest {
     private ScopeApprovalService scopeApprovalService;
 
     @Mock
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
+
+    @Mock
     private RevokeTokenGatewayService revokeTokenGatewayService;
 
     private CimdMetadataService cimdMetadataService;
@@ -174,6 +180,7 @@ public class CimdMetadataServiceImplTest {
                 logoCacheService,
                 cimdClientStateService,
                 scopeApprovalService,
+                authorizationDetailApprovalService,
                 revokeTokenGatewayService);
     }
 
@@ -1226,6 +1233,7 @@ public class CimdMetadataServiceImplTest {
         verify(cimdClientStateService, never()).findByDomainAndClientId(any(Domain.class), anyString());
         verify(cimdClientStateService, never()).upsert(any(Domain.class), anyString(), anyString());
         verify(scopeApprovalService, never()).revokeByClient(any(), anyString(), any());
+        verify(authorizationDetailApprovalService, never()).revokeByClient(any(), anyString(), any());
     }
 
     @Test
@@ -1240,6 +1248,7 @@ public class CimdMetadataServiceImplTest {
 
         verify(cimdClientStateService).upsert(eq(domain), eq(CLIENT_URL), anyString());
         verify(scopeApprovalService, never()).revokeByClient(any(), anyString(), any());
+        verify(authorizationDetailApprovalService, never()).revokeByClient(any(), anyString(), any());
         verify(revokeTokenGatewayService, never()).process(any(), any());
     }
 
@@ -1264,6 +1273,7 @@ public class CimdMetadataServiceImplTest {
 
         verify(cimdClientStateService, never()).upsert(any(Domain.class), anyString(), anyString());
         verify(scopeApprovalService, never()).revokeByClient(any(), anyString(), any());
+        verify(authorizationDetailApprovalService, never()).revokeByClient(any(), anyString(), any());
         verify(revokeTokenGatewayService, never()).process(any(), any());
     }
 
@@ -1276,7 +1286,10 @@ public class CimdMetadataServiceImplTest {
         when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
                 .thenReturn(Maybe.just(existingState));
         when(scopeApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
-                .thenReturn(Completable.complete());
+                .thenAnswer(invocation -> revokeTokensWith(invocation.getArgument(2)));
+        when(authorizationDetailApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenAnswer(invocation -> revokeTokensWith(invocation.getArgument(2)));
+        when(revokeTokenGatewayService.process(eq(domain), any())).thenReturn(Completable.complete());
         mockFetchSuccess(metadataPayload(CLIENT_URL));
 
         cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
@@ -1284,10 +1297,16 @@ public class CimdMetadataServiceImplTest {
                 .assertComplete();
 
         verify(scopeApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+        verify(authorizationDetailApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+        verify(revokeTokenGatewayService, times(1)).process(eq(domain), any());
         verify(cimdClientStateService).upsert(eq(domain), eq(CLIENT_URL), anyString());
     }
 
     // --- helpers ---
+
+    private Completable revokeTokensWith(BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor) {
+        return revokeTokenProcessor.apply(domain, RevokeToken.byClientId(domain, CLIENT_URL));
+    }
 
     private CimdMetadataDocument cachedDocument(boolean expired) {
         CimdMetadataDocument doc = new CimdMetadataDocument();

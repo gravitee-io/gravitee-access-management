@@ -43,6 +43,7 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import io.gravitee.am.gateway.handler.common.web.HostSsrfGuard;
 import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServiceImpl;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.ScopeApprovalService;
@@ -301,6 +302,7 @@ public class CommonConfiguration {
                                                    CimdLogoCacheService cimdLogoCacheService,
                                                    CimdClientStateService cimdClientStateService,
                                                    ScopeApprovalService scopeApprovalService,
+                                                   AuthorizationDetailApprovalService authorizationDetailApprovalService,
                                                    RevokeTokenGatewayService revokeTokenGatewayService) {
         return new CimdMetadataServiceImpl(
                 domain,
@@ -311,6 +313,7 @@ public class CommonConfiguration {
                 cimdLogoCacheService,
                 cimdClientStateService,
                 scopeApprovalService,
+                authorizationDetailApprovalService,
                 revokeTokenGatewayService);
     }
 
