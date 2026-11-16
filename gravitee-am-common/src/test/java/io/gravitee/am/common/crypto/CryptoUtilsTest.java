@@ -55,8 +55,8 @@ class CryptoUtilsTest {
         var input = encoder.encodeToString("aaaa".getBytes()) + "$" + encoder.encodeToString("bbbb".getBytes()) + "$" + encoder.encodeToString("cccc".getBytes());
 
         assertThatThrownBy(()->CryptoUtils.decrypt(input, sourceKey))
-                .isExactlyInstanceOf(RuntimeException.class)
-                .hasMessageMatching("\\[errorId=.+] Error decrypting data");
+                .isExactlyInstanceOf(IllegalStateException.class)
+                .hasMessageMatching("Unable to decrypt data");
     }
 
 }
