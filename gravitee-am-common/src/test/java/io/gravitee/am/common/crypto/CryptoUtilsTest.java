@@ -47,16 +47,33 @@ class CryptoUtilsTest {
     }
 
     @Test
-    void malformedInput_shouldThrowExceptionWithMinimumInfo() {
+    void tamperedInput_shouldThrowExceptionWithMinimumInfo() {
         var defaultSecret = "s3cR3t4grAv1t3310AMS1g1ingDftK3y";
         var sourceKey = new SecretKeySpec(defaultSecret.getBytes(), "HmacSHA512");
 
-        var encoder = Base64.getUrlEncoder();
-        var input = encoder.encodeToString("aaaa".getBytes()) + "$" + encoder.encodeToString("bbbb".getBytes()) + "$" + encoder.encodeToString("cccc".getBytes());
+        // flip the last byte of the ciphertext: the GCM tag check fails whatever the JDK version
+        var parts = CryptoUtils.encrypt("data", sourceKey).split("\\$");
+        var cipherText = Base64.getUrlDecoder().decode(parts[2]);
+        cipherText[cipherText.length - 1] ^= 1;
+        var input = parts[0] + "$" + parts[1] + "$" + Base64.getUrlEncoder().encodeToString(cipherText);
 
-        assertThatThrownBy(()->CryptoUtils.decrypt(input, sourceKey))
+        assertThatThrownBy(() -> CryptoUtils.decrypt(input, sourceKey))
                 .isExactlyInstanceOf(IllegalStateException.class)
-                .hasMessageMatching("Unable to decrypt data");
+                .hasMessage("Unable to decrypt data");
+    }
+
+    @Test
+    void unexpectedFailure_shouldThrowExceptionWithErrorIdOnly() {
+        var defaultSecret = "s3cR3t4grAv1t3310AMS1g1ingDftK3y";
+        var sourceKey = new SecretKeySpec(defaultSecret.getBytes(), "HmacSHA512");
+
+        // an empty PBKDF2 salt is rejected with an unchecked exception which is not part of the expected crypto failures
+        var encoder = Base64.getUrlEncoder();
+        var input = "$" + encoder.encodeToString(new byte[16]) + "$" + encoder.encodeToString(new byte[32]);
+
+        assertThatThrownBy(() -> CryptoUtils.decrypt(input, sourceKey))
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasMessageMatching("\\[errorId=.+] Error decrypting data");
     }
 
 }
