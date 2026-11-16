@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -76,6 +77,10 @@ public class PasswordHistoryService {
      * @return Single containing {@link PasswordHistory} or an error if the password was already in the history.
      */
     public Maybe<PasswordHistory> addPasswordToHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, User principal, PasswordPolicy passwordPolicy) {
+        return addPasswordToHistory(domain, user, rawPassword, principal, null, passwordPolicy);
+    }
+
+    public Maybe<PasswordHistory> addPasswordToHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, User principal, Client client, PasswordPolicy passwordPolicy) {
         LOGGER.debug("Adding password history entry for user {}", user);
         if (rawPassword == null || passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
             LOGGER.debug("Password history not added for user {} due to null password or settings, or because paswword history is disabled.", user.getUsername());
@@ -99,11 +104,11 @@ public class PasswordHistoryService {
                          })
                          .doOnSuccess(a -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                                                            .user(user)
-                                                                           .principal(principal)
+                                                                           .actor(principal, client)
                                                                            .type(EventType.PASSWORD_HISTORY_CREATED)))
                          .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                                                                  .user(user)
-                                                                                 .principal(principal)
+                                                                                 .actor(principal, client)
                                                                                  .type(EventType.PASSWORD_HISTORY_CREATED)
                                                                                  .throwable(throwable))).toMaybe();
 
