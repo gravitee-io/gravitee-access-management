@@ -605,8 +605,6 @@ jobs:
           command: |
 
             # Prepare AM
-            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
-            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
@@ -715,8 +713,6 @@ jobs:
           name: Run Jest tests
           command: |
             # Prepare AM
-            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
-            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
             export AM_VERSION=$(mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             
@@ -2210,6 +2206,7 @@ workflows:
                 - master
                 - /^\d\.\d+\.x$/
       - build:
+          context: cicd-orchestrator
           requires:
             - setup
           filters:
