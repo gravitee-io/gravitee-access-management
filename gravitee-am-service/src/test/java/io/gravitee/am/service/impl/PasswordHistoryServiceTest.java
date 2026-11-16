@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
@@ -22,6 +25,7 @@ import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -117,6 +121,31 @@ class PasswordHistoryServiceTest {
         assertEquals(encrypted_password, captured.getPassword());
 
         verify(auditService).report(isA(UserAuditBuilder.class));
+    }
+
+    @Test
+    void shouldReportClientAsActorWhenNoPrincipal() {
+        given(repository.findUserHistory(DOMAIN.asReference(), userId)).willReturn(fromIterable(List.of()));
+        given(repository.create(any(PasswordHistory.class))).willAnswer(a -> Single.just(a.getArgument(0)));
+
+        var client = new Client();
+        client.setId("app-id");
+        client.setClientId("client-id");
+        client.setClientName("client-name");
+        client.setDomain(DOMAIN.getId());
+
+        var testObserver = service.addPasswordToHistory(DOMAIN, user, password, null, client, getPasswordSettings(5)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        var captor = ArgumentCaptor.forClass(UserAuditBuilder.class);
+        verify(auditService).report(captor.capture());
+        var audit = captor.getValue().build(new ObjectMapper());
+        assertEquals(EventType.PASSWORD_HISTORY_CREATED, audit.getType());
+        assertEquals("app-id", audit.getActor().getId());
+        assertEquals(EntityType.APPLICATION, audit.getActor().getType());
+        assertEquals("client-name", audit.getActor().getDisplayName());
+        assertEquals("client-id", audit.getAccessPoint().getAlternativeId());
     }
 
     @Test
