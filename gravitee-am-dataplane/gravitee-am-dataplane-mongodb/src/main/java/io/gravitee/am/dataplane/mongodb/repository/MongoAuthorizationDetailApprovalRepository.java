@@ -193,6 +193,18 @@ public class MongoAuthorizationDetailApprovalRepository extends AbstractDataPlan
     }
 
     @Override
+    public Completable deleteByDomainAndUser(String domain, UserId userId) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS))))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndClient(String domain, String clientId) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Completable deleteByDomain(String domain) {
         return Completable.fromPublisher(collection.deleteMany(eq(FIELD_DOMAIN, domain)))
                 .observeOn(Schedulers.computation());

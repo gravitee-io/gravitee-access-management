@@ -159,6 +159,43 @@ public class AuthorizationDetailApprovalServiceImpl implements AuthorizationDeta
                         "An error occurred while trying to revoke authorization detail approvals of user: %s for domain: %s", userId, domain.getId())));
     }
 
+    @Override
+    public Completable revokeByClient(Domain domain, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor) {
+        log.debug("Revoke authorization detail approvals for domain: {} and client: {}", domain.getId(), clientId);
+        return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).deleteByDomainAndClient(domain.getId(), clientId)
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                        .type(EventType.USER_CONSENT_REVOKED)
+                        .reference(domain.asReference())
+                        .client(clientId)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
+                        .type(EventType.USER_CONSENT_REVOKED)
+                        .reference(domain.asReference())
+                        .client(clientId)
+                        .throwable(throwable)))
+                .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byClientId(domain, clientId)))
+                .onErrorResumeNext(ex -> toRevokeError(ex, String.format(
+                        "An error occurred while trying to revoke authorization detail approvals for domain: %s and client: %s",
+                        domain.getId(), clientId)));
+    }
+
+    @Override
+    public Completable deleteByUser(Domain domain, UserId userId) {
+        log.debug("Delete authorization detail approvals of user: {} for domain: {}", userId, domain.getId());
+        return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).deleteByDomainAndUser(domain.getId(), userId)
+                .onErrorResumeNext(ex -> Completable.error(new TechnicalManagementException(String.format(
+                        "An error occurred while trying to delete authorization detail approvals of user: %s for domain: %s",
+                        userId, domain.getId()), ex)));
+    }
+
+    @Override
+    public Completable deleteByClient(Domain domain, String clientId) {
+        log.debug("Delete authorization detail approvals for domain: {} and client: {}", domain.getId(), clientId);
+        return dataPlaneRegistry.getAuthorizationDetailApprovalRepository(domain).deleteByDomainAndClient(domain.getId(), clientId)
+                .onErrorResumeNext(ex -> Completable.error(new TechnicalManagementException(String.format(
+                        "An error occurred while trying to delete authorization detail approvals for domain: %s and client: %s",
+                        domain.getId(), clientId), ex)));
+    }
+
     private Maybe<io.gravitee.am.model.User> findUser(Domain domain, UserId userId) {
         return dataPlaneRegistry.getUserRepository(domain).findById(domain.asReference(), userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)));

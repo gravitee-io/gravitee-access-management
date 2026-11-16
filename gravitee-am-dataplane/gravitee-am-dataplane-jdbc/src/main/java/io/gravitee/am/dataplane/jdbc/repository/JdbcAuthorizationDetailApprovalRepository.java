@@ -206,6 +206,22 @@ public class JdbcAuthorizationDetailApprovalRepository extends AbstractJdbcRepos
     }
 
     @Override
+    public Completable deleteByDomainAndUser(String domain, UserId userId) {
+        LOGGER.debug("deleteByDomainAndUser({}, {})", domain, userId);
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(domain(domain).and(userIdMatches(userId)))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByDomainAndClient(String domain, String clientId) {
+        LOGGER.debug("deleteByDomainAndClient({}, {})", domain, clientId);
+        return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)
+                .matching(Query.query(domain(domain).and(client(clientId)))).all())
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
     public Completable deleteByDomain(String domain) {
         LOGGER.debug("deleteByDomain({})", domain);
         return monoToCompletable(getTemplate().delete(JdbcAuthorizationDetailApproval.class)

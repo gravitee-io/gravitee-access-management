@@ -119,11 +119,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import org.mockito.ArgumentMatchers;
@@ -134,6 +136,7 @@ import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -176,6 +179,12 @@ public class ApplicationServiceTest {
 
     @Mock
     private AuthorizationDetailTypeService authorizationDetailTypeService;
+
+    @Mock
+    private ScopeApprovalService scopeApprovalService;
+
+    @Mock
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
 
     @Mock
     private IdentityProviderService identityProviderService;
@@ -1792,6 +1801,13 @@ public class ApplicationServiceTest {
         Application existingClient = Mockito.mock(Application.class);
         when(existingClient.getId()).thenReturn("my-client");
         when(existingClient.getDomain()).thenReturn(DOMAIN.getId());
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(CLIENT_ID);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        when(existingClient.getSettings()).thenReturn(settings);
+        when(scopeApprovalService.deleteByClient(DOMAIN, CLIENT_ID)).thenReturn(Completable.complete());
+        when(authorizationDetailApprovalService.deleteByClient(DOMAIN, CLIENT_ID)).thenReturn(Completable.complete());
         when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
@@ -1818,6 +1834,8 @@ public class ApplicationServiceTest {
         verify(formService, times(1)).delete(eq(DOMAIN.getId()), anyString());
         verify(emailTemplateService, times(1)).delete(anyString());
         verify(membershipService, times(1)).delete(any(), anyString());
+        verify(scopeApprovalService).deleteByClient(DOMAIN, CLIENT_ID);
+        verify(authorizationDetailApprovalService).deleteByClient(DOMAIN, CLIENT_ID);
     }
 
     @Test
@@ -1842,6 +1860,68 @@ public class ApplicationServiceTest {
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
         verify(membershipService, never()).delete(any(), anyString());
+        verify(scopeApprovalService, never()).deleteByClient(any(), any());
+        verify(authorizationDetailApprovalService, never()).deleteByClient(any(), any());
+    }
+
+    @Test
+    public void shouldDeleteByDomain_withoutReachingTheDataPlane() {
+        Application existingClient = Mockito.mock(Application.class);
+        when(existingClient.getId()).thenReturn("my-client");
+        when(existingClient.getDomain()).thenReturn(DOMAIN.getId());
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(CLIENT_ID);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        lenient().when(existingClient.getSettings()).thenReturn(settings);
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), ArgumentMatchers.<ApplicationType>isNull(), eq(0), eq(Integer.MAX_VALUE)))
+                .thenReturn(Single.just(new Page<>(Collections.singleton(existingClient), 0, 1)));
+        when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
+        when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.empty());
+        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.empty());
+        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.empty());
+
+        TestObserver testObserver = applicationService.deleteByDomain(DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        verify(applicationRepository).delete(existingClient.getId());
+        verify(scopeApprovalService, never()).deleteByClient(any(), any());
+        verify(authorizationDetailApprovalService, never()).deleteByClient(any(), any());
+    }
+
+    @Test
+    public void shouldKeepTheApplication_whenItsConsentsCannotBeDeleted() {
+        Application existingClient = Mockito.mock(Application.class);
+        when(existingClient.getId()).thenReturn("my-client");
+        when(existingClient.getDomain()).thenReturn(DOMAIN.getId());
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setClientId(CLIENT_ID);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(oAuthSettings);
+        when(existingClient.getSettings()).thenReturn(settings);
+        when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
+        when(scopeApprovalService.deleteByClient(DOMAIN, CLIENT_ID)).thenReturn(Completable.error(new TechnicalManagementException("unavailable")));
+        lenient().when(authorizationDetailApprovalService.deleteByClient(DOMAIN, CLIENT_ID)).thenReturn(Completable.complete());
+        AtomicBoolean applicationDeleted = new AtomicBoolean();
+        lenient().when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.fromAction(() -> applicationDeleted.set(true)));
+        AtomicBoolean eventPublished = new AtomicBoolean();
+        lenient().when(eventService.create(any(), any())).thenReturn(Single.fromCallable(() -> {
+            eventPublished.set(true);
+            return new Event();
+        }));
+        lenient().when(emailTemplateService.findByClient(ReferenceType.DOMAIN, DOMAIN.getId(), existingClient.getId())).thenReturn(Flowable.empty());
+        lenient().when(formService.findByDomainAndClient(DOMAIN.getId(), existingClient.getId())).thenReturn(Flowable.empty());
+        lenient().when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.empty());
+
+        TestObserver testObserver = applicationService.delete(existingClient.getId(), DOMAIN).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(error -> "unavailable".equals(((Throwable) error).getMessage()));
+        assertFalse(applicationDeleted.get());
+        assertFalse(eventPublished.get());
     }
 
     @Test

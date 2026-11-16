@@ -364,6 +364,43 @@ public class ScopeApprovalServiceTest {
         verify(auditService, timeout(3_000).times(1)).report(any(UserConsentAuditBuilder.class));
     }
 
+    @Test
+    public void shouldDeleteByUserWithoutAudit() {
+        UserId userId = new UserId("user-id", "external-id", "idp");
+        when(scopeApprovalRepository.deleteByDomainAndUser(DOMAIN_ID, userId)).thenReturn(Completable.complete());
+
+        scopeApprovalService.deleteByUser(DOMAIN, userId).test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(scopeApprovalRepository).deleteByDomainAndUser(DOMAIN_ID, userId);
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldDeleteByUser_technicalException() {
+        when(scopeApprovalRepository.deleteByDomainAndUser(DOMAIN_ID, UserId.internal("user-id"))).thenReturn(Completable.error(new TechnicalException()));
+
+        scopeApprovalService.deleteByUser(DOMAIN, UserId.internal("user-id")).test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    public void shouldDeleteByClientWithoutAudit() {
+        when(scopeApprovalRepository.deleteByDomainAndClient(DOMAIN_ID, "client-id")).thenReturn(Completable.complete());
+
+        scopeApprovalService.deleteByClient(DOMAIN, "client-id").test().awaitDone(10, TimeUnit.SECONDS).assertComplete();
+
+        verify(scopeApprovalRepository).deleteByDomainAndClient(DOMAIN_ID, "client-id");
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    public void shouldDeleteByClient_technicalException() {
+        when(scopeApprovalRepository.deleteByDomainAndClient(DOMAIN_ID, "client-id")).thenReturn(Completable.error(new TechnicalException()));
+
+        scopeApprovalService.deleteByClient(DOMAIN, "client-id").test().awaitDone(10, TimeUnit.SECONDS)
+                .assertError(TechnicalManagementException.class);
+    }
+
     private static User user(String id) {
         User user = new User();
         user.setId(id);

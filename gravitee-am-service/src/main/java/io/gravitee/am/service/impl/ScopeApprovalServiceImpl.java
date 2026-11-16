@@ -253,6 +253,22 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                 });
     }
 
+    @Override
+    public Completable deleteByUser(Domain domain, UserId userId) {
+        LOGGER.debug("Delete approvals for domain: {}, user: {}", domain.getId(), userId);
+        return dataPlaneRegistry.getScopeApprovalRepository(domain).deleteByDomainAndUser(domain.getId(), userId)
+                .onErrorResumeNext(ex -> Completable.error(new TechnicalManagementException(
+                        String.format("An error occurred while trying to delete scope approvals for domain: %s, user: %s", domain.getId(), userId), ex)));
+    }
+
+    @Override
+    public Completable deleteByClient(Domain domain, String clientId) {
+        LOGGER.debug("Delete approvals for domain: {}, client: {}", domain.getId(), clientId);
+        return dataPlaneRegistry.getScopeApprovalRepository(domain).deleteByDomainAndClient(domain.getId(), clientId)
+                .onErrorResumeNext(ex -> Completable.error(new TechnicalManagementException(
+                        String.format("An error occurred while trying to delete scope approvals for domain: %s, client: %s", domain.getId(), clientId), ex)));
+    }
+
     private static boolean isOwnedBy(ScopeApproval scopeApproval, UserId userId) {
         UserId owner = scopeApproval.getUserId();
         if (owner.id() != null && owner.id().equals(userId.id())) {

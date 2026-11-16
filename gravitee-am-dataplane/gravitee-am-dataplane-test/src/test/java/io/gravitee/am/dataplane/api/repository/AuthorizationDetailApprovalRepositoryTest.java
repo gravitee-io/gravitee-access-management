@@ -329,6 +329,56 @@ public class AuthorizationDetailApprovalRepositoryTest extends AbstractDataPlane
         repository.findByDomainAndUser(DOMAIN, fullUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
     }
 
+    @Test
+    public void shouldDeleteTheApprovalsOfAUserForEveryClient() {
+        create(approval(fullUserId, "digest-1", inDays(30)));
+        AuthorizationDetailApproval otherClient = approval(fullUserId, "digest-2", inDays(30));
+        otherClient.setClientId("other-client");
+        create(otherClient);
+        AuthorizationDetailApproval otherDomain = create(inDomain("other-domain", approval(fullUserId, "digest-3", inDays(30))));
+        UserId otherUserId = new UserId("other-user", null, null);
+        create(approval(otherUserId, "digest-4", inDays(30)));
+
+        repository.deleteByDomainAndUser(DOMAIN, fullUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.findByDomainAndUser(DOMAIN, fullUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
+        repository.findByDomainAndUser(DOMAIN, otherUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+        repository.findById(otherDomain.getId()).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+    }
+
+    @Test
+    public void shouldDeleteTheApprovalsOfAUserMatchedByExternalId() {
+        create(approval(fullUserId, "digest-1", inDays(30)));
+
+        repository.deleteByDomainAndUser(DOMAIN, externalUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.findByDomainAndUser(DOMAIN, fullUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
+    }
+
+    @Test
+    public void shouldDeleteTheApprovalsOfAClientForEveryUser() {
+        create(approval(fullUserId, "digest-1", inDays(30)));
+        UserId otherUserId = new UserId("other-user", null, null);
+        create(approval(otherUserId, "digest-2", inDays(30)));
+        AuthorizationDetailApproval otherClient = approval(fullUserId, "digest-3", inDays(30));
+        otherClient.setClientId("other-client");
+        create(otherClient);
+        AuthorizationDetailApproval otherDomain = create(inDomain("other-domain", approval(fullUserId, "digest-4", inDays(30))));
+
+        repository.deleteByDomainAndClient(DOMAIN, CLIENT).test().awaitDone(5, TimeUnit.SECONDS).assertComplete();
+
+        repository.findByDomainAndUserAndClient(DOMAIN, fullUserId, CLIENT).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
+        repository.findByDomainAndUserAndClient(DOMAIN, otherUserId, CLIENT).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertNoValues();
+        var remaining = repository.findByDomainAndUser(DOMAIN, fullUserId).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values();
+        assertThat(remaining).extracting(AuthorizationDetailApproval::getDigest).containsExactly("digest-3");
+        repository.findById(otherDomain.getId()).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().assertValueCount(1);
+    }
+
+    private static AuthorizationDetailApproval inDomain(String domain, AuthorizationDetailApproval approval) {
+        approval.setDomain(domain);
+        return approval;
+    }
+
     private AuthorizationDetailApproval create(AuthorizationDetailApproval approval) {
         return repository.create(approval).test().awaitDone(5, TimeUnit.SECONDS).assertComplete().values().get(0);
     }

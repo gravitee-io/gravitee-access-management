@@ -393,6 +393,70 @@ class AuthorizationDetailApprovalServiceTest {
     }
 
     @Test
+    void shouldRevokeTheConsentsOfAClientForEveryUser() {
+        when(repository.deleteByDomainAndClient("domain-id", "client-id")).thenReturn(Completable.complete());
+
+        service.revokeByClient(DOMAIN, "client-id", revokeTokens).test().assertComplete();
+
+        verify(repository).deleteByDomainAndClient("domain-id", "client-id");
+        Audit audit = reportedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.USER_CONSENT_REVOKED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.SUCCESS);
+        assertThat(audit.getAccessPoint().getAlternativeId()).isEqualTo("client-id");
+        assertThat(revokedTokens).singleElement().satisfies(revokeToken -> {
+            assertThat(revokeToken.getRevokeType()).isEqualTo(RevokeType.BY_CLIENT);
+            assertThat(revokeToken.getApplication().getClientId()).isEqualTo("client-id");
+        });
+    }
+
+    @Test
+    void shouldAuditAFailureToRevokeTheConsentsOfAClient() {
+        when(repository.deleteByDomainAndClient("domain-id", "client-id")).thenReturn(Completable.error(new IllegalStateException("unavailable")));
+
+        service.revokeByClient(DOMAIN, "client-id", revokeTokens).test().assertError(TechnicalManagementException.class);
+
+        Audit audit = reportedAudit();
+        assertThat(audit.getType()).isEqualTo(EventType.USER_CONSENT_REVOKED);
+        assertThat(audit.getOutcome().getStatus()).isEqualTo(Status.FAILURE);
+        assertThat(revokedTokens).isEmpty();
+    }
+
+    @Test
+    void shouldDeleteTheConsentsOfAUserWithoutAudit() {
+        UserId userId = new UserId("user-id", "external-id", "idp");
+        when(repository.deleteByDomainAndUser("domain-id", userId)).thenReturn(Completable.complete());
+
+        service.deleteByUser(DOMAIN, userId).test().assertComplete();
+
+        verify(repository).deleteByDomainAndUser("domain-id", userId);
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldWrapAFailureToDeleteTheConsentsOfAUser() {
+        when(repository.deleteByDomainAndUser("domain-id", UserId.internal("user-id"))).thenReturn(Completable.error(new IllegalStateException("unavailable")));
+
+        service.deleteByUser(DOMAIN, UserId.internal("user-id")).test().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    void shouldDeleteTheConsentsOfAClientWithoutAudit() {
+        when(repository.deleteByDomainAndClient("domain-id", "client-id")).thenReturn(Completable.complete());
+
+        service.deleteByClient(DOMAIN, "client-id").test().assertComplete();
+
+        verify(repository).deleteByDomainAndClient("domain-id", "client-id");
+        verify(auditService, never()).report(any());
+    }
+
+    @Test
+    void shouldWrapAFailureToDeleteTheConsentsOfAClient() {
+        when(repository.deleteByDomainAndClient("domain-id", "client-id")).thenReturn(Completable.error(new IllegalStateException("unavailable")));
+
+        service.deleteByClient(DOMAIN, "client-id").test().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
     void shouldPurgeTheDomain() {
         when(repository.deleteByDomain("domain-id")).thenReturn(Completable.complete());
 
