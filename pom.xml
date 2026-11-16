@@ -165,7 +165,7 @@
         <gravitee-policy-ratelimit.version>5.0.4</gravitee-policy-ratelimit.version>
         <gravitee-gateway-services-ratelimit.version>5.0.4</gravitee-gateway-services-ratelimit.version>
         <gravitee-exchange-api.version>3.0.1</gravitee-exchange-api.version>
-        <gravitee-spec-gen-api.version>1.1.0</gravitee-spec-gen-api.version>
+        <gravitee-spec-gen-api.version>1.1.1</gravitee-spec-gen-api.version>
 
         <!-- EE plugin included in default bundle -->
         <gravitee-am-idp-ldap.version>3.1.0</gravitee-am-idp-ldap.version>
