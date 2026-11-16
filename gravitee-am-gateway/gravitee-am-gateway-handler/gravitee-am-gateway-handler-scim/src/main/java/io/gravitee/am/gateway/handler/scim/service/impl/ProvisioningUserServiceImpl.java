@@ -66,8 +66,10 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -177,6 +179,12 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
 
     @Autowired
     private CredentialGatewayService credentialService;
+
+    @Autowired
+    private ScopeApprovalService scopeApprovalService;
+
+    @Autowired
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
 
     @Autowired
     private ApplicationService applicationService;
@@ -590,6 +598,8 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         .andThen(passwordHistoryService.deleteByUser(domain, userId))
                         .andThen(verifyAttemptService.deleteByUser(user))
                         .andThen(credentialService.deleteByUserId(domain, userId))
+                        .andThen(scopeApprovalService.deleteByUser(domain, user.getFullId()))
+                        .andThen(authorizationDetailApprovalService.deleteByUser(domain, user.getFullId()))
                         .andThen(userRepository.delete(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                                 .principal(principal)

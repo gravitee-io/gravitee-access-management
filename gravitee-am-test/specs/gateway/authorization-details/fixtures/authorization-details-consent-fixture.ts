@@ -20,6 +20,7 @@ import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domai
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createIdp, defaultIdpId, deleteIdp } from '@management-commands/idp-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
+import { listUsers } from '@management-commands/user-management-commands';
 import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
 import { auditIdsOfType, auditsOfType, AuditEntry } from '@management-commands/audit-management-commands';
 import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
@@ -51,6 +52,14 @@ export interface TestUser {
   password: string;
 }
 
+/** Another application of the fixture's domain, signing users in through the fixture's identity provider. */
+export interface ConsentApplication {
+  application: Application;
+  clientId: string;
+  /** Approves the scopes in `params.scope` when given, then the details, in a session that is already signed in. */
+  approve: (session: Step, details: unknown[], params?: Record<string, string>) => Promise<Step>;
+}
+
 export interface ConsentFixture extends Fixture {
   domain: Domain;
   accessToken: string;
@@ -58,6 +67,9 @@ export interface ConsentFixture extends Fixture {
   clientId: string;
   /** Hands out a user that no other test has consented with. */
   nextUser: () => TestUser;
+  userIdOf: (user: TestUser) => Promise<string>;
+  /** Creates an application that enables the given authorization detail types. */
+  createApplication: (types: string[]) => Promise<ConsentApplication>;
   /** Sends an authorization request; with a cookie, the user is already signed in. */
   authorize: (params: Record<string, string>, cookie?: string) => Promise<Step>;
   /** Signs the user in and returns their session cookie and the redirect that follows login. */
@@ -148,15 +160,26 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
       discovery: true,
     });
 
+    const oauthSettings = (types: string[]) => ({
+      redirectUris: [CONSENT_TEST.REDIRECT_URI],
+      grantTypes: ['authorization_code', 'implicit', 'refresh_token', 'client_credentials', 'password'],
+      responseTypes: ['code', 'token', 'code token'],
+      // not a default scope, so a request without scope requests none
+      scopeSettings: [{ scope: CONSENT_TEST.SCOPE, defaultScope: false }],
+      authorizationDetailTypes: types.map((type) => ({ type })),
+    });
+    const newApplication = (clientId: string, clientSecret?: string) =>
+      createApplication(domainId, accessToken, {
+        name: clientId,
+        type: 'WEB',
+        clientId,
+        clientSecret,
+        redirectUris: [CONSENT_TEST.REDIRECT_URI],
+      });
+
     const clientId = uniqueName('authz-consent-app', true);
     const clientSecret = uniqueName('authz-consent-secret', true);
-    const application = await createApplication(domainId, accessToken, {
-      name: clientId,
-      type: 'WEB',
-      clientId,
-      clientSecret,
-      redirectUris: [CONSENT_TEST.REDIRECT_URI],
-    });
+    const application = await newApplication(clientId, clientSecret);
     const patchAdvanced = (skipConsent: boolean) =>
       waitForSyncAfter(domainId, () =>
         patchApplication(domainId, accessToken, { settings: { advanced: { skipConsent } } }, application.id),
@@ -168,19 +191,11 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
         {
           settings: {
             oauth: {
-              redirectUris: [CONSENT_TEST.REDIRECT_URI],
-              grantTypes: ['authorization_code', 'implicit', 'refresh_token', 'client_credentials', 'password'],
-              responseTypes: ['code', 'token', 'code token'],
-              // not a default scope, so a request without scope requests none
-              scopeSettings: [{ scope: CONSENT_TEST.SCOPE, defaultScope: false }],
+              ...oauthSettings([AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE, AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE]),
               ...(options.tokenValiditySeconds !== undefined && {
                 accessTokenValiditySeconds: options.tokenValiditySeconds,
                 refreshTokenValiditySeconds: options.tokenValiditySeconds,
               }),
-              authorizationDetailTypes: [
-                { type: AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE },
-                { type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE },
-              ],
             },
             advanced: { skipConsent: options.skipConsent ?? false },
           },
@@ -230,6 +245,13 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
         ...params,
       });
 
+    const consentTo = async (step: Step, params: Record<string, string>): Promise<Step> => {
+      if (params.scope) {
+        step = await submitConsent(await openConsentPage(step), true, params.scope.split(' '));
+      }
+      return follow(await submitConsent(await openConsentPage(step), true));
+    };
+
     let handedOut = 0;
     return {
       domain,
@@ -244,12 +266,33 @@ export const setupConsentFixture = async (options: ConsentFixtureOptions = {}): 
       },
       authorize,
       signIn,
-      approve: async (user, details, params = {}) => {
-        let step = await signIn(user, { ...params, authorization_details: toDetailsParam(...details) });
-        if (params.scope) {
-          step = await submitConsent(await openConsentPage(step), true, params.scope.split(' '));
-        }
-        return follow(await submitConsent(await openConsentPage(step), true));
+      approve: async (user, details, params = {}) =>
+        consentTo(await signIn(user, { ...params, authorization_details: toDetailsParam(...details) }), params),
+      userIdOf: async (user) => {
+        const page = await listUsers(domainId, accessToken, user.username);
+        expect(page.data).toHaveLength(1);
+        return page.data[0].id;
+      },
+      createApplication: async (types) => {
+        const otherClientId = uniqueName('authz-consent-other-app', true);
+        const other = await newApplication(otherClientId);
+        await waitForSyncAfter(domainId, () =>
+          patchApplication(
+            domainId,
+            accessToken,
+            { settings: { oauth: oauthSettings(types) }, identityProviders: new Set([{ identity: idp.id, priority: 0 }]) },
+            other.id,
+          ),
+        );
+        return {
+          application: other,
+          clientId: otherClientId,
+          approve: async (session, details, params = {}) =>
+            consentTo(
+              await authorize({ ...params, client_id: otherClientId, authorization_details: toDetailsParam(...details) }, session.cookie),
+              params,
+            ),
+        };
       },
       setSkipConsent: async (skipConsent) => {
         await patchAdvanced(skipConsent);

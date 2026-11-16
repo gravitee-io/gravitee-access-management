@@ -56,12 +56,14 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -109,6 +111,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
@@ -202,6 +205,12 @@ public class ManagementUserServiceTest {
 
     @Mock
     private CertificateCredentialService certificateCredentialService;
+
+    @Mock
+    private ScopeApprovalService scopeApprovalService;
+
+    @Mock
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
 
     @Mock
     private PasswordPolicyService passwordPolicyService;
@@ -611,6 +620,8 @@ public class ManagementUserServiceTest {
         when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
         when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+        when(scopeApprovalService.deleteByUser(domain, user.getFullId())).thenReturn(Completable.complete());
+        when(authorizationDetailApprovalService.deleteByUser(domain, user.getFullId())).thenReturn(Completable.complete());
 
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
         when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
@@ -627,6 +638,8 @@ public class ManagementUserServiceTest {
         // Verify that both certificate and WebAuthn credentials are deleted
         verify(certificateCredentialService, times(1)).deleteByUserId(domain, user.getId());
         verify(credentialService, times(1)).deleteByUserId(domain, user.getId());
+        verify(scopeApprovalService).deleteByUser(domain, new UserId("user-id", "ext-user-id", "idp-id"));
+        verify(authorizationDetailApprovalService).deleteByUser(domain, new UserId("user-id", "ext-user-id", "idp-id"));
 
         var revokeTokenCaptor = ArgumentCaptor.forClass(RevokeToken.class);
         verify(tokenService).sendProcessRequest(eq(domain), revokeTokenCaptor.capture());
@@ -671,6 +684,8 @@ public class ManagementUserServiceTest {
         when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
         when(certificateCredentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
         when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+        when(scopeApprovalService.deleteByUser(domain, user.getFullId())).thenReturn(Completable.complete());
+        when(authorizationDetailApprovalService.deleteByUser(domain, user.getFullId())).thenReturn(Completable.complete());
 
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
         when(tokenService.sendProcessRequest(any(), any(RevokeToken.class))).thenReturn(Completable.complete());
@@ -688,6 +703,39 @@ public class ManagementUserServiceTest {
         verify(userProvider).findByUsername(user.getUsername());
         verify(userProvider, never()).delete(any());
         verify(userRepository).delete(user.getId());
+    }
+
+    @Test
+    void should_keep_user_when_consents_cannot_be_deleted() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setUsername("john.doe");
+        user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        when(userRepository.findById(any(Reference.class), any(UserId.class))).thenReturn(Maybe.just(user));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
+        when(userActivityManagementService.deleteByDomainAndUser(any(), any())).thenReturn(Completable.complete());
+        when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
+        when(certificateCredentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
+        when(scopeApprovalService.deleteByUser(domain, user.getFullId()))
+                .thenReturn(Completable.error(new TechnicalManagementException("unavailable")));
+        lenient().when(authorizationDetailApprovalService.deleteByUser(domain, user.getFullId())).thenReturn(Completable.complete());
+        AtomicBoolean userDeleted = new AtomicBoolean();
+        lenient().when(userRepository.delete(user.getId())).thenReturn(Completable.fromAction(() -> userDeleted.set(true)));
+        lenient().when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
+
+        userService.delete(domain, user.getId(), mock(io.gravitee.am.identityprovider.api.DefaultUser.class))
+                .test()
+                .assertError(error -> "unavailable".equals(error.getMessage()));
+
+        assertFalse(userDeleted.get());
+        verify(tokenService, never()).sendProcessRequest(any(), any(RevokeToken.class));
     }
 
     @Test

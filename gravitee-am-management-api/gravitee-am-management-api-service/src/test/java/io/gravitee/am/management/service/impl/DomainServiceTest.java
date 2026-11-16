@@ -1924,16 +1924,6 @@ public class DomainServiceTest {
         protectedResource.setId("pr-1");
         when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(protectedResource));
         when(protectedResourceService.delete(any(Domain.class), eq("pr-1"), isNull(), any())).thenReturn(complete());
-        Application mockApp1 = new Application();
-        mockApp1.setId("client-1");
-
-        Application mockApp2 = new Application();
-        mockApp2.setId("client-2");
-
-        Set<Application> mockApplications = new HashSet<>();
-        mockApplications.add(mockApp1);
-        mockApplications.add(mockApp2);
-
         final AlertTrigger alertTrigger = new AlertTrigger();
         alertTrigger.setId(ALERT_TRIGGER_ID);
         alertTrigger.setReferenceType(DOMAIN);
@@ -1949,8 +1939,7 @@ public class DomainServiceTest {
 
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
-        when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
-        when(applicationService.delete(anyString(), any())).thenReturn(complete());
+        when(applicationService.deleteByDomain(domain)).thenReturn(complete());
         when(certificateService.deleteByDomain(DOMAIN_ID, null)).thenReturn(complete());
         when(identityProviderService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
         when(extensionGrantService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
@@ -1997,7 +1986,7 @@ public class DomainServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(applicationService, times(2)).delete(anyString(), any());
+        verify(applicationService).deleteByDomain(domain);
         // the plugins are deleted without being read, so one whose configuration cannot be decrypted does not prevent it
         verify(certificateService, times(1)).deleteByDomain(DOMAIN_ID, null);
         verify(identityProviderService, times(1)).deleteByDomain(DOMAIN_ID);
@@ -2036,7 +2025,7 @@ public class DomainServiceTest {
         when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
-        when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.deleteByDomain(domain)).thenReturn(complete());
         when(certificateService.deleteByDomain(DOMAIN_ID, null)).thenReturn(complete());
         when(identityProviderService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
         when(extensionGrantService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
@@ -2073,7 +2062,6 @@ public class DomainServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationService, never()).delete(anyString(), any());
         verify(certificateService, never()).delete(anyString(), anyString(), any(), anyBoolean());
         verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(extensionGrantService, never()).delete(anyString(), anyString());
@@ -2147,7 +2135,7 @@ public class DomainServiceTest {
     @Test
     public void shouldDelete2_technicalException() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
-        when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationService.deleteByDomain(domain)).thenReturn(Completable.error(TechnicalException::new));
 
         domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test().assertError(TechnicalManagementException.class).assertNotComplete();
     }

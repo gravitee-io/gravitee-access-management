@@ -157,6 +157,11 @@ public interface ApplicationService {
 
     Completable delete(String id, User principal, Domain domain);
 
+    /**
+     * The applications' consents are left to the purge of the domain's data plane.
+     */
+    Completable deleteByDomain(Domain domain);
+
     Single<Long> count();
 
     Single<Long> countByDomain(String domainId);

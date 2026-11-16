@@ -222,6 +222,42 @@ public class ScopeApprovalRepositoryTest extends AbstractDataPlaneTest {
         repository.findById(kept.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1);
     }
 
+    @Test
+    public void shouldDeleteByDomainAndUser() {
+        var otherClient = basicApprovalFor(fullUserId);
+        otherClient.setClientId("other-client-id");
+        var purged = List.of(repository.create(basicApprovalFor(fullUserId)).blockingGet(), repository.create(otherClient).blockingGet());
+        var otherDomain = basicApprovalFor(fullUserId);
+        otherDomain.setDomain("another-domain");
+        var kept = List.of(repository.create(basicApprovalFor(randomUserId)).blockingGet(), repository.create(otherDomain).blockingGet());
+
+        repository.deleteByDomainAndUser(TEST_DOMAIN, externalUserId)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        purged.forEach(approval -> repository.findById(approval.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertNoValues());
+        kept.forEach(approval -> repository.findById(approval.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1));
+    }
+
+    @Test
+    public void shouldDeleteByDomainAndClient() {
+        var purged = List.of(repository.create(basicApprovalFor(fullUserId)).blockingGet(), repository.create(basicApprovalFor(randomUserId)).blockingGet());
+        var otherClient = basicApprovalFor(fullUserId);
+        otherClient.setClientId("other-client-id");
+        var otherDomain = basicApprovalFor(fullUserId);
+        otherDomain.setDomain("another-domain");
+        var kept = List.of(repository.create(otherClient).blockingGet(), repository.create(otherDomain).blockingGet());
+
+        repository.deleteByDomainAndClient(TEST_DOMAIN, "test-client-id")
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete();
+
+        purged.forEach(approval -> repository.findById(approval.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertNoValues());
+        kept.forEach(approval -> repository.findById(approval.getId()).test().awaitDone(10, TimeUnit.SECONDS).assertValueCount(1));
+    }
+
     private ScopeApproval basicApproval() {
         var it = new ScopeApproval();
         it.setId(UUID.randomUUID().toString());

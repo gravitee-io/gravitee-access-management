@@ -32,6 +32,7 @@ import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
 import io.gravitee.am.service.cimd.CimdValidationRules;
@@ -100,6 +101,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     private final CimdLogoCacheService cimdLogoCacheService;
     private final CimdClientStateService cimdClientStateService;
     private final ScopeApprovalService scopeApprovalService;
+    private final AuthorizationDetailApprovalService authorizationDetailApprovalService;
     private final RevokeTokenGatewayService revokeTokenGatewayService;
 
     public CimdMetadataServiceImpl(Domain domain,
@@ -110,6 +112,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                                    CimdLogoCacheService cimdLogoCacheService,
                                    CimdClientStateService cimdClientStateService,
                                    ScopeApprovalService scopeApprovalService,
+                                   AuthorizationDetailApprovalService authorizationDetailApprovalService,
                                    RevokeTokenGatewayService revokeTokenGatewayService) {
         this.domain = domain;
         this.webClient = webClient;
@@ -119,6 +122,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         this.cimdLogoCacheService = cimdLogoCacheService;
         this.cimdClientStateService = cimdClientStateService;
         this.scopeApprovalService = scopeApprovalService;
+        this.authorizationDetailApprovalService = authorizationDetailApprovalService;
         this.revokeTokenGatewayService = revokeTokenGatewayService;
     }
 
@@ -483,7 +487,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                     }
                     if (existing.getId() != null) {
                         log.info("CIMD monitored properties changed for domain={}, clientId={} — revoking tokens and consents", domain.getId(), clientId);
-                        return scopeApprovalService.revokeByClient(domain, clientId, revokeTokenGatewayService::process)
+                        // the scope revocation revokes the client's tokens once both kinds of consent are gone
+                        return authorizationDetailApprovalService.revokeByClient(domain, clientId, (revokeDomain, revokeToken) -> Completable.complete())
+                                .andThen(scopeApprovalService.revokeByClient(domain, clientId, revokeTokenGatewayService::process))
                                 .andThen(cimdClientStateService.upsert(domain, clientId, newHash).ignoreElement());
                     }
                     return cimdClientStateService.upsert(domain, clientId, newHash).ignoreElement();

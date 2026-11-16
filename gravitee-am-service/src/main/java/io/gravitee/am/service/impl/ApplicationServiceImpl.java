@@ -54,6 +54,7 @@ import io.gravitee.am.service.model.CimdClientMetadata;
 import io.gravitee.am.service.model.NewCimdApplication;
 import io.gravitee.am.service.ApplicationTemplateManager;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.AuthorizationDetailTypeService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
@@ -63,6 +64,7 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationConcurrentModificationException;
@@ -185,6 +187,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private AuthorizationDetailTypeService authorizationDetailTypeService;
+
+    @Autowired
+    private ScopeApprovalService scopeApprovalService;
+
+    @Autowired
+    private AuthorizationDetailApprovalService authorizationDetailApprovalService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -1028,6 +1036,18 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Completable delete(String id, User principal, Domain domain) {
+        return delete(id, principal, domain, this::deleteConsents);
+    }
+
+    @Override
+    public Completable deleteByDomain(Domain domain) {
+        return findByDomain(domain.getId())
+                .flatMapCompletable(applications -> Completable.concat(applications.stream()
+                        .map(application -> delete(application.getId(), null, domain, (consentDomain, deleted) -> Completable.complete()))
+                        .toList()));
+    }
+
+    private Completable delete(String id, User principal, Domain domain, BiFunction<Domain, Application, Completable> consentCleanup) {
         log.debug("Delete application {}", id);
         return applicationRepository.findById(id)
                 .filter(application -> belongsToDomain(application, domain.getId()))
@@ -1040,7 +1060,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     // create event for sync process
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
-                    return applicationRepository.delete(id)
+                    return consentCleanup.apply(domain, application)
+                            .andThen(applicationRepository.delete(id))
                             .andThen(Completable.fromSingle(eventService.create(event, domain)))
                             // delete email templates
                             .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
@@ -1072,6 +1093,15 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete application: %s", id), ex));
                 });
+    }
+
+    private Completable deleteConsents(Domain domain, Application application) {
+        return Optional.ofNullable(application.getSettings())
+                .map(ApplicationSettings::getOauth)
+                .map(ApplicationOAuthSettings::getClientId)
+                .map(clientId -> scopeApprovalService.deleteByClient(domain, clientId)
+                        .andThen(authorizationDetailApprovalService.deleteByClient(domain, clientId)))
+                .orElse(Completable.complete());
     }
 
     @Override
