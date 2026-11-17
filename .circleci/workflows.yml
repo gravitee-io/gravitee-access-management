@@ -471,9 +471,9 @@ jobs:
           jobName: build_branch
       - azure-artifacts-token
       - run:
-          name: Maven Package & deploy on artifactory
+          name: Maven Test & Package
           command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean deploy
+            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,full-bundle clean verify
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
@@ -1304,10 +1304,10 @@ jobs:
             not: << parameters.dry_run>>
           steps:
             - run:
-                name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
+                name: "Maven Test and Package"
                 command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
-            # A fresh token: the deploy above runs the whole test suite and may outlive the first one (one hour).
+                  mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean verify
+            # A fresh token: the build above runs the whole test suite and may outlive the first one (one hour).
             - azure-artifacts-token
             - run:
                 name: "Maven deploy to the Azure feed (releases)"
