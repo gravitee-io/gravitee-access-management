@@ -40,7 +40,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationDetailTypeNotFoundException;
 import io.gravitee.am.service.exception.InvalidAuthorizationDetailTypeException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationDetailType;
 import io.gravitee.am.service.model.PatchAuthorizationDetailType;
@@ -60,6 +60,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException.Reason.UNKNOWN_TYPE;
 
 /**
  * @author GraviteeSource Team
@@ -281,8 +283,7 @@ public class AuthorizationDetailTypeServiceImpl implements AuthorizationDetailTy
                 .flatMap(domainTypes -> types.stream()
                         .filter(type -> !domainTypes.contains(type))
                         .findFirst()
-                        .<Single<Boolean>>map(unknown -> Single.error(new InvalidClientMetadataException(
-                                "authorizationDetailTypes: type '" + unknown + "' is not an authorization detail type of the domain")))
+                        .<Single<Boolean>>map(unknown -> Single.error(new InvalidApplicationAuthorizationDetailTypesException(UNKNOWN_TYPE, unknown)))
                         .orElseGet(() -> Single.just(true)));
     }
 }

@@ -270,10 +270,10 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
         oAuthSettings.setBackchannelTokenDeliveryMode(client.getBackchannelTokenDeliveryMode());
         oAuthSettings.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
+        oAuthSettings.setAuthorizationDetailTypes(client.getAuthorizationDetailTypes());
         // not part of the DCR contract: kept from the stored client on registration updates and secret renewals
         oAuthSettings.setTokenExchangeOAuthSettings(client.getTokenExchangeOAuthSettings());
         oAuthSettings.setLightweightJwtSettings(client.getLightweightJwtSettings());
-        oAuthSettings.setAuthorizationDetailTypes(client.getAuthorizationDetailTypes());
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings

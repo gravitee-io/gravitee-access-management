@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import org.checkerframework.checker.units.qual.A;
@@ -22,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -151,6 +153,59 @@ public class DynamicClientRegistrationRequestTest {
         Client result = patcher.update(toPatch);
 
         assertTrue("dpop_bound_access_tokens should have been applied", result.isDpopBoundAccessTokens());
+    }
+
+    @Test
+    public void testPatch_authorizationDetailsTypes_keepSettingsOfResentTypes() {
+        toPatch.setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("internal_transfer", 300)));
+        patcher.setAuthorizationDetailsTypes(Optional.of(List.of("payment_initiation", "account_information", "Internal_Transfer")));
+
+        Client result = patcher.patch(toPatch);
+
+        assertEquals(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information"),
+                new ApplicationAuthorizationDetailTypeSettings("Internal_Transfer")), result.getAuthorizationDetailTypes());
+    }
+
+    @Test
+    public void testPatch_authorizationDetailsTypes_keptWhenAbsent() {
+        List<ApplicationAuthorizationDetailTypeSettings> existing = List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600));
+        toPatch.setAuthorizationDetailTypes(existing);
+
+        Client result = patcher.patch(toPatch);
+
+        assertEquals(existing, result.getAuthorizationDetailTypes());
+    }
+
+    @Test
+    public void testPatch_authorizationDetailsTypes_clearedWhenNull() {
+        toPatch.setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation")));
+        patcher.setAuthorizationDetailsTypes(Optional.empty());
+
+        Client result = patcher.patch(toPatch);
+
+        assertNull(result.getAuthorizationDetailTypes());
+    }
+
+    @Test
+    public void testUpdate_authorizationDetailsTypes_keepSettingsOfResentTypes() {
+        toPatch.setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600)));
+        patcher.setAuthorizationDetailsTypes(Optional.of(List.of("payment_initiation", "account_information")));
+
+        Client result = patcher.update(toPatch);
+
+        assertEquals(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information")), result.getAuthorizationDetailTypes());
+    }
+
+    @Test
+    public void testUpdate_authorizationDetailsTypes_clearedWhenAbsent() {
+        toPatch.setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation")));
+
+        Client result = patcher.update(toPatch);
+
+        assertNull(result.getAuthorizationDetailTypes());
     }
 
     @Test

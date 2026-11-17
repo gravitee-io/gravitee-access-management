@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
@@ -31,6 +32,8 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.CustomLog;
+
+import java.util.Objects;
 
 /**
  * Dynamic Client Registration is a protocol that allows OAuth client applications to register with an OAuth server.
@@ -92,7 +95,22 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
                 String sanitizedMessage = ex.getMessage().substring(0, ex.getMessage().indexOf(" (through reference chain:"));
                 return Single.error(new InvalidClientMetadataException(sanitizedMessage));
             }
+            if (ex instanceof IllegalArgumentException && ex.getCause() instanceof JsonMappingException mappingException) {
+                return Single.error(invalidMember(mappingException));
+            }
             return Single.error(ex);
         }
+    }
+
+    /**
+     * Jackson's message names Java types, so only the offending member is reported.
+     */
+    private static InvalidClientMetadataException invalidMember(JsonMappingException ex) {
+        return ex.getPath().stream()
+                .map(JsonMappingException.Reference::getFieldName)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(member -> new InvalidClientMetadataException(member + ": invalid value"))
+                .orElseGet(InvalidClientMetadataException::new);
     }
 }

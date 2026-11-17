@@ -74,6 +74,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException;
 import io.gravitee.am.service.utils.jwk.converter.JWKConverter;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
@@ -113,6 +114,8 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
+import static io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException.Reason.DUPLICATE_TYPE;
+import static io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException.Reason.TYPE_REQUIRED;
 import static io.gravitee.am.service.utils.OptimisticConcurrency.isConcurrentModification;
 import static io.gravitee.am.service.utils.OptimisticConcurrency.nextUpdatedAt;
 import static java.util.Objects.nonNull;
@@ -1588,10 +1591,10 @@ public class ApplicationServiceImpl implements ApplicationService {
         Set<String> types = new HashSet<>();
         for (ApplicationAuthorizationDetailTypeSettings item : settings) {
             if (item == null || item.getType() == null || item.getType().isBlank()) {
-                return Single.error(new InvalidClientMetadataException("authorizationDetailTypes: type is required"));
+                return Single.error(new InvalidApplicationAuthorizationDetailTypesException(TYPE_REQUIRED, null));
             }
             if (!types.add(item.getType())) {
-                return Single.error(new InvalidClientMetadataException("authorizationDetailTypes: type '" + item.getType() + "' appears more than once"));
+                return Single.error(new InvalidApplicationAuthorizationDetailTypesException(DUPLICATE_TYPE, item.getType()));
             }
             if (item.getExpiresIn() != null && item.getExpiresIn() < 1) {
                 return Single.error(new InvalidClientMetadataException("authorizationDetailTypes: expiresIn " + item.getExpiresIn()
