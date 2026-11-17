@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.gravitee.am.service.utils.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -27,7 +28,9 @@ import io.gravitee.am.service.utils.SetterUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -217,6 +220,13 @@ public class DynamicClientRegistrationRequest {
 
     @JsonProperty("backchannel_user_code_parameter")
     private Optional<Boolean> backchannelUserCodeParameter;
+
+    /*******************************************************************************
+     * OAuth 2.0 Rich Authorization Requests
+     * https://www.rfc-editor.org/rfc/rfc9396#section-10
+     ********************************************************************************/
+    @JsonProperty("authorization_details_types")
+    private Optional<List<String>> authorizationDetailsTypes;
 
     // GETTER AND SETTERS //
 
@@ -624,6 +634,14 @@ public class DynamicClientRegistrationRequest {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public Optional<List<String>> getAuthorizationDetailsTypes() {
+        return authorizationDetailsTypes;
+    }
+
+    public void setAuthorizationDetailsTypes(Optional<List<String>> authorizationDetailsTypes) {
+        this.authorizationDetailsTypes = authorizationDetailsTypes;
+    }
+
     @Override
     public String toString() {
         return "ClientPayload{clientName='" + (clientName != null ? clientName.orElse("") : "") + "\'}";
@@ -691,6 +709,8 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+
+        SetterUtils.safeSet(client::setAuthorizationDetailTypes, this.getAuthorizationDetailTypeSettings(client));
 
         return client;
     }
@@ -763,7 +783,22 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
 
+        SetterUtils.set(client::setAuthorizationDetailTypes, this.getAuthorizationDetailTypeSettings(client));
+
         return client;
+    }
+
+    private Optional<List<ApplicationAuthorizationDetailTypeSettings>> getAuthorizationDetailTypeSettings(Client client) {
+        if (this.getAuthorizationDetailsTypes() == null) {
+            return null;
+        }
+        final List<ApplicationAuthorizationDetailTypeSettings> current = client.getAuthorizationDetailTypes() == null ? List.of() : client.getAuthorizationDetailTypes();
+        return this.getAuthorizationDetailsTypes().map(types -> types.stream()
+                .map(type -> current.stream()
+                        .filter(settings -> Objects.equals(type, settings.getType()))
+                        .findFirst()
+                        .orElseGet(() -> new ApplicationAuthorizationDetailTypeSettings(type)))
+                .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     private void updateScopeSettings(Client client) {

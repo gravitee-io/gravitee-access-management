@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 
@@ -225,6 +226,13 @@ public class DynamicClientRegistrationResponse {
 
     @JsonProperty("backchannel_user_code_parameter")
     private boolean backchannelUserCodeParameter;
+
+    /*******************************************************************************
+     * OAuth 2.0 Rich Authorization Requests
+     * https://www.rfc-editor.org/rfc/rfc9396#section-10
+     ********************************************************************************/
+    @JsonProperty("authorization_details_types")
+    private List<String> authorizationDetailsTypes;
 
     /*******************************************************************************
      * Additional metadata
@@ -653,6 +661,14 @@ public class DynamicClientRegistrationResponse {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public List<String> getAuthorizationDetailsTypes() {
+        return authorizationDetailsTypes;
+    }
+
+    public void setAuthorizationDetailsTypes(List<String> authorizationDetailsTypes) {
+        this.authorizationDetailsTypes = authorizationDetailsTypes;
+    }
+
     public static DynamicClientRegistrationResponse fromClient(Client client) {
         DynamicClientRegistrationResponse response = new DynamicClientRegistrationResponse();
 
@@ -708,7 +724,15 @@ public class DynamicClientRegistrationResponse {
         response.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
         response.setBackchannelAuthRequestSignAlg(client.getBackchannelAuthRequestSignAlg());
         response.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
+        response.setAuthorizationDetailsTypes(extractAuthorizationDetailsTypes(client));
         return response;
+    }
+
+    private static List<String> extractAuthorizationDetailsTypes(Client client) {
+        if (client.getAuthorizationDetailTypes() == null || client.getAuthorizationDetailTypes().isEmpty()) {
+            return null;
+        }
+        return client.getAuthorizationDetailTypes().stream().map(ApplicationAuthorizationDetailTypeSettings::getType).toList();
     }
 
     private static String extractScope(Client client) {

@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -35,6 +38,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.mockito.Mockito.*;
 
 /**
@@ -43,6 +49,8 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DynamicClientRegistrationEndpointTest {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
     @Mock
     private ClientSyncService clientSyncService;
@@ -133,5 +141,43 @@ public class DynamicClientRegistrationEndpointTest {
         verify(routingContext, times(1)).response();
         verify(serverResponse,times(3)).putHeader(anyString(),anyString());
         verify(serverResponse,times(1)).end(anyString());
+    }
+
+    @Test
+    public void register_authorizationDetailsTypesNotAnArray() {
+        givenBody(Map.of("authorization_details_types", "payment_initiation"));
+
+        endpoint.handle(routingContext);
+
+        verifyRejectedWith("authorization_details_types: invalid value");
+    }
+
+    @Test
+    public void register_authorizationDetailsTypesHoldingAnObject() {
+        givenBody(Map.of("authorization_details_types", List.of(Map.of("type", "payment_initiation"))));
+
+        endpoint.handle(routingContext);
+
+        verifyRejectedWith("authorization_details_types: invalid value");
+    }
+
+    @Test
+    public void register_redirectUrisNotAnArray() {
+        givenBody(Map.of("redirect_uris", "https://callback"));
+
+        endpoint.handle(routingContext);
+
+        verifyRejectedWith("redirect_uris: invalid value");
+    }
+
+    private void givenBody(Map<String, Object> body) {
+        when(json.mapTo(DynamicClientRegistrationRequest.class))
+                .thenAnswer(invocation -> MAPPER.convertValue(body, DynamicClientRegistrationRequest.class));
+    }
+
+    private void verifyRejectedWith(String expectedMessage) {
+        verify(routingContext).fail(argThat(error -> error instanceof InvalidClientMetadataException
+                && expectedMessage.equals(error.getMessage())));
+        verify(dcrService, never()).create(any(), any());
     }
 }
