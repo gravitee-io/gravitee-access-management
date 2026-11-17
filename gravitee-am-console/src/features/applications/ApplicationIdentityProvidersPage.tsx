@@ -240,14 +240,14 @@ function ProviderTable({ title, description, rows, typeName, canEdit, onChange, 
                 <p aria-live="polite" className="sr-only">
                     {announcement}
                 </p>
-                <Table aria-label={title}>
+                <Table aria-label={title} className="min-w-[48rem] table-fixed">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-28">Priority</TableHead>
+                            <TableHead className="w-32">Priority</TableHead>
                             <TableHead>Name</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Selection rule</TableHead>
-                            <TableHead>Selected</TableHead>
+                            <TableHead className="w-44">Type</TableHead>
+                            <TableHead className="w-40">Selection rule</TableHead>
+                            <TableHead className="w-24">Selected</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -305,9 +305,13 @@ function ProviderTable({ title, description, rows, typeName, canEdit, onChange, 
                                         )}
                                     </div>
                                 </TableCell>
-                                <TableCell className="font-medium">{row.name}</TableCell>
+                                <TableCell className="truncate font-medium" title={row.name}>
+                                    {row.name}
+                                </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline">{typeName(row.type)}</Badge>
+                                    <Badge variant="outline" className="max-w-full" title={typeName(row.type)}>
+                                        <span className="truncate">{typeName(row.type)}</span>
+                                    </Badge>
                                 </TableCell>
                                 <TableCell>
                                     {row.selectionRule || canEdit ? (
