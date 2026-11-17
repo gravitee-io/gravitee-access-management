@@ -20,7 +20,7 @@ set -euo pipefail
 #                        Use this if the module is not already compiled locally.
 #
 #   --maven-settings <file>
-#                        Pass -s <file> to every Maven invocation (CI Artifactory).
+#                        Pass -s <file> to every Maven invocation (CI Azure Artifacts feed).
 #
 #   --version-only       Skip generation: read project.version from Maven, strip
 #                        a trailing -SNAPSHOT for public info.version, and patch
