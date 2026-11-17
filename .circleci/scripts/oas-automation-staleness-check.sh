@@ -21,7 +21,7 @@ set -euo pipefail
 # Options forwarded to scripts/regen-automation-oas.sh:
 #   --also-make   Build upstream Maven modules before generating.
 #   --maven-settings <path>
-#                 Pass-through -s for CI (Artifactory).
+#                 Pass-through -s for CI (Azure Artifacts feed).
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
