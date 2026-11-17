@@ -43,6 +43,7 @@ import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
@@ -55,6 +56,7 @@ import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.impl.SecretService;
@@ -99,6 +101,9 @@ import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.imp
 import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.OPENID_DCR_ACCESS_TOKEN_VALIDITY;
 import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.OPENID_DCR_ID_TOKEN_VALIDITY;
 import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.OPENID_DCR_REFRESH_TOKEN_VALIDITY;
+import static io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException.Reason.DUPLICATE_TYPE;
+import static io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException.Reason.TYPE_REQUIRED;
+import static io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException.Reason.UNKNOWN_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -106,7 +111,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -1664,4 +1671,201 @@ public class DynamicClientRegistrationServiceTest {
         return jwsObject.serialize();
     }
 
+
+    @Test
+    public void create_authorizationDetailsTypes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("payment_initiation", "account_information")));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        verify(clientService).create(any(), argThat(client -> client.getAuthorizationDetailTypes().equals(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation"),
+                new ApplicationAuthorizationDetailTypeSettings("account_information")))));
+    }
+
+    @Test
+    public void create_withoutAuthorizationDetailsTypes() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        verify(clientService).create(any(), argThat(client -> client.getAuthorizationDetailTypes() == null));
+    }
+
+    @Test
+    public void create_invalidAuthorizationDetailsTypes() {
+        doReturn(Single.error(
+                new InvalidApplicationAuthorizationDetailTypesException(UNKNOWN_TYPE, "unknown_type"))).when(clientService).create(any(), any());
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("unknown_type")));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+
+        assertInvalidAuthorizationDetailsTypes(testObserver,
+                "authorization_details_types: type 'unknown_type' is not an authorization detail type of the domain");
+    }
+
+    @Test
+    public void patch_authorizationDetailsTypes_replaceList() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("account_information")));
+
+        TestObserver<Client> testObserver = dcrService.patch(clientWithTypes(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600)), request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().equals(List.of(new ApplicationAuthorizationDetailTypeSettings("account_information"))));
+    }
+
+    @Test
+    public void patch_withoutAuthorizationDetailsTypes_keepsList() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setClientName(Optional.of("renamed"));
+        ApplicationAuthorizationDetailTypeSettings existing = new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600);
+
+        TestObserver<Client> testObserver = dcrService.patch(clientWithTypes(existing), request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().equals(List.of(existing)));
+    }
+
+    @Test
+    public void patch_invalidAuthorizationDetailsTypes() {
+        doReturn(Single.error(
+                new InvalidApplicationAuthorizationDetailTypesException(DUPLICATE_TYPE, "payment_initiation"))).when(clientService).update(any());
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("payment_initiation", "payment_initiation")));
+
+        TestObserver<Client> testObserver = dcrService.patch(clientWithTypes(), request, BASE_PATH).test();
+
+        assertInvalidAuthorizationDetailsTypes(testObserver, "authorization_details_types: type 'payment_initiation' appears more than once");
+    }
+
+    @Test
+    public void update_withoutAuthorizationDetailsTypes_keepsList() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        ApplicationAuthorizationDetailTypeSettings existing = new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600);
+
+        TestObserver<Client> testObserver = dcrService.update(clientWithTypes(existing), request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().equals(List.of(existing)));
+    }
+
+    @Test
+    public void update_emptyAuthorizationDetailsTypes_clearsList() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setAuthorizationDetailsTypes(Optional.of(List.of()));
+
+        TestObserver<Client> testObserver = dcrService.update(clientWithTypes(new ApplicationAuthorizationDetailTypeSettings("payment_initiation")), request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().isEmpty());
+    }
+
+    @Test
+    public void update_invalidAuthorizationDetailsTypes() {
+        doReturn(Single.error(
+                new InvalidApplicationAuthorizationDetailTypesException(TYPE_REQUIRED, null))).when(clientService).update(any());
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("")));
+
+        TestObserver<Client> testObserver = dcrService.update(clientWithTypes(), request, BASE_PATH).test();
+
+        assertInvalidAuthorizationDetailsTypes(testObserver, "authorization_details_types: type is required");
+    }
+
+    @Test
+    public void createFromTemplate_inheritsAuthorizationDetailsTypes() {
+        ApplicationAuthorizationDetailTypeSettings templateType = new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600);
+        givenTemplate(templateType);
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setSoftwareId(Optional.of(ID_SOURCE));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().equals(List.of(templateType)));
+    }
+
+    @Test
+    public void createFromTemplate_requestAuthorizationDetailsTypesReplaceTemplateTypes() {
+        givenTemplate(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("internal_transfer", 300));
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setSoftwareId(Optional.of(ID_SOURCE));
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("payment_initiation", "account_information")));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().equals(List.of(
+                new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information"))));
+    }
+
+    @Test
+    public void createFromTemplate_invalidAuthorizationDetailsTypes() {
+        givenTemplate();
+        doReturn(Single.error(
+                new InvalidApplicationAuthorizationDetailTypesException(UNKNOWN_TYPE, "unknown_type"))).when(clientService).create(any(), any());
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setSoftwareId(Optional.of(ID_SOURCE));
+        request.setAuthorizationDetailsTypes(Optional.of(List.of("unknown_type")));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+
+        assertInvalidAuthorizationDetailsTypes(testObserver,
+                "authorization_details_types: type 'unknown_type' is not an authorization detail type of the domain");
+        verify(flowService, never()).copyFromClient(any(), any(), any());
+    }
+
+    @Test
+    public void renewSecret_invalidAuthorizationDetailsTypes() {
+        Client toRenew = clientWithTypes(new ApplicationAuthorizationDetailTypeSettings("deleted_type"));
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setId("secret-id");
+        toRenew.setClientSecrets(new ArrayList<>(List.of(clientSecret)));
+        when(clientSecretService.determineClientSecret(toRenew)).thenReturn(Optional.of(clientSecret));
+        when(clientSecretService.getSecretId(any(), any(), any())).thenReturn("secret-id");
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> Single.just(i.getArgument(1)));
+        doReturn(Single.error(new InvalidApplicationAuthorizationDetailTypesException(UNKNOWN_TYPE, "deleted_type")))
+                .when(clientService).update(any());
+
+        TestObserver<Client> testObserver = dcrService.renewSecret(toRenew, BASE_PATH).test();
+
+        assertInvalidAuthorizationDetailsTypes(testObserver,
+                "authorization_details_types: type 'deleted_type' is not an authorization detail type of the domain");
+    }
+
+    private void givenTemplate(ApplicationAuthorizationDetailTypeSettings... types) {
+        Client template = new Client();
+        template.setId(ID_SOURCE);
+        template.setTemplate(true);
+        template.setAuthorizationDetailTypes(new ArrayList<>(List.of(types)));
+        when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
+        when(clientService.findById(ID_SOURCE)).thenReturn(Maybe.just(template));
+        lenient().when(flowService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
+        lenient().when(formService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
+        lenient().when(emailTemplateService.copyFromClient(any(Domain.class), eq(ID_SOURCE), eq(ID_TARGET))).thenReturn(Flowable.empty());
+    }
+
+    private static Client clientWithTypes(ApplicationAuthorizationDetailTypeSettings... types) {
+        Client client = new Client();
+        client.setAuthorizationDetailTypes(new ArrayList<>(List.of(types)));
+        return client;
+    }
+
+    private static void assertInvalidAuthorizationDetailsTypes(TestObserver<Client> testObserver, String expectedMessage) {
+        testObserver.assertError(error -> error.getClass() == InvalidClientMetadataException.class
+                && expectedMessage.equals(error.getMessage()));
+    }
 }

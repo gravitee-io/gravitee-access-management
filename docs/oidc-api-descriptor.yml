@@ -600,6 +600,11 @@ definitions:
       software_statement:
         type: string
         description: A software statement containing client metadata values about the client software as claims.  This is a string value containing the entire signed JWT.
+      authorization_details_types:
+        type: array
+        description: Authorization detail types the client uses in authorization_details [RFC9396]. Each type must be one of the domain's authorization detail types, matched exactly. Omitted in responses when the client has none.
+        items:
+          type: string
   ClientRegistrationResponse:
     allOf:
     - $ref: '#/definitions/ClientRegistrationRequest'

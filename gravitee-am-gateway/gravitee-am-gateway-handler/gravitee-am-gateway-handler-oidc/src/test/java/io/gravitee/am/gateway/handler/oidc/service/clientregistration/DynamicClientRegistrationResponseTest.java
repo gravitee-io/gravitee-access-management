@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.OCTKey;
@@ -24,6 +25,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -75,5 +77,26 @@ public class DynamicClientRegistrationResponseTest {
         assertEquals(response.getClientId(),"clientId");
         assertEquals(response.getClientName(),"clientName");
         assertTrue(response.getJwks().getKeys().size()==4);
+    }
+
+    @Test
+    public void convert_authorizationDetailsTypes() {
+        Client client = new Client();
+        client.setAuthorizationDetailTypes(List.of(new ApplicationAuthorizationDetailTypeSettings("payment_initiation", 600),
+                new ApplicationAuthorizationDetailTypeSettings("account_information")));
+
+        DynamicClientRegistrationResponse response = DynamicClientRegistrationResponse.fromClient(client);
+
+        assertEquals(List.of("payment_initiation", "account_information"), response.getAuthorizationDetailsTypes());
+    }
+
+    @Test
+    public void convert_noAuthorizationDetailsTypes() {
+        Client client = new Client();
+        client.setAuthorizationDetailTypes(List.of());
+
+        DynamicClientRegistrationResponse response = DynamicClientRegistrationResponse.fromClient(client);
+
+        assertNull(response.getAuthorizationDetailsTypes());
     }
 }

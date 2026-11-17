@@ -49,6 +49,7 @@ import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.InvalidApplicationAuthorizationDetailTypesException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -149,9 +150,13 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     public Single<Client> create(DynamicClientRegistrationRequest request, String basePath) {
         //If Dynamic client registration from template is enabled and request contains a software_id
         if (domain.isDynamicClientRegistrationTemplateEnabled() && request.getSoftwareId() != null && request.getSoftwareId().isPresent()) {
-            return this.createClientFromTemplate(request, basePath).map(this::mapClientSecret);
+            return this.createClientFromTemplate(request, basePath)
+                    .map(this::mapClientSecret)
+                    .onErrorResumeNext(DynamicClientRegistrationServiceImpl::nameAuthorizationDetailsTypes);
         }
-        return this.createClientFromRequest(request, basePath).map(this::mapClientSecret);
+        return this.createClientFromRequest(request, basePath)
+                .map(this::mapClientSecret)
+                .onErrorResumeNext(DynamicClientRegistrationServiceImpl::nameAuthorizationDetailsTypes);
     }
 
     @Override
@@ -161,7 +166,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .map(req -> req.patch(toPatch))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::update)
-                .map(this::mapClientSecret);
+                .map(this::mapClientSecret)
+                .onErrorResumeNext(DynamicClientRegistrationServiceImpl::nameAuthorizationDetailsTypes);
     }
 
     @Override
@@ -171,7 +177,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .map(req -> req.patch(toUpdate))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::update)
-                .map(this::mapClientSecret);
+                .map(this::mapClientSecret)
+                .onErrorResumeNext(DynamicClientRegistrationServiceImpl::nameAuthorizationDetailsTypes);
     }
 
     @Override
@@ -197,7 +204,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                                             return app;
                                         });
                             });
-                });
+                })
+                .onErrorResumeNext(DynamicClientRegistrationServiceImpl::nameAuthorizationDetailsTypes);
     }
 
     private Client mapClientSecret(Client client) {
@@ -217,6 +225,13 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             }
         }
         return client;
+    }
+
+    private static Single<Client> nameAuthorizationDetailsTypes(Throwable error) {
+        if (error instanceof InvalidApplicationAuthorizationDetailTypesException invalidTypes) {
+            return Single.error(new InvalidClientMetadataException(invalidTypes.describe("authorization_details_types")));
+        }
+        return Single.error(error);
     }
 
     private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {
